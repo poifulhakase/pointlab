@@ -14,7 +14,7 @@
   --text-primary: #111111;
   --text-secondary: #666666;
   --text-time: #333333;
-  --send-button: #7A9FCC;
+  --send-button: #4285f4;
   --send-button-disabled: #CCCCCC;
 }
 
@@ -351,7 +351,7 @@ body {
 }
 
 .send-button:hover:not(:disabled) {
-  background: #5A8ABB;
+  background: #3367d6;
 }
 
 .send-button:active:not(:disabled) {
@@ -696,7 +696,7 @@ body.dark-mode {
   --text-primary: #FFFFFF;
   --text-secondary: #AAAAAA;
   --text-time: #CCCCCC;
-  --send-button: #7A9FCC;
+  --send-button: #5a9cff;
   background: #1a1a1a;
 }
 
