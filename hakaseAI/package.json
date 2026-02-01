@@ -1,0 +1,27 @@
+{
+  "name": "hakase-ai",
+  "version": "1.0.0",
+  "description": "ぽいふる博士のお金相談室 - 節約・ポイント活用AIアシスタント",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "ai",
+    "chatbot",
+    "money",
+    "savings",
+    "points"
+  ],
+  "author": "ぽいふる博士のぽいんとらぼ",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}
+
+

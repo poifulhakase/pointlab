@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ハカセAI</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header">
+      <h1 class="header-title">ハカセAI</h1>
+      <button id="settingsButton" class="settings-icon-button" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 設定モーダル -->
+    <div id="settingsModal" class="settings-modal hidden">
+      <div class="settings-modal__overlay"></div>
+      <div class="settings-modal__content">
+        <div class="settings-modal__header">
+          <h2 class="settings-modal__title">設定</h2>
+          <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="settings-modal__body">
+          <div class="settings-modal__item">
+            <label class="settings-modal__label">テーマ</label>
+            <button id="themeToggle" class="settings-modal__theme-toggle">
+              <span class="theme-icon">🌙</span>
+              <span class="theme-text">ダークモード</span>
+            </button>
+          </div>
+          <div class="settings-modal__item">
+            <label class="settings-modal__label">会話履歴</label>
+            <button id="clearHistoryBtn" class="settings-modal__clear-btn">
+              <span>🗑️</span>
+              <span>履歴をクリア</span>
+            </button>
+          </div>
+          <div class="settings-modal__item">
+            <label class="settings-modal__label">全てリセット</label>
+            <button id="resetAllBtn" class="settings-modal__reset-btn">
+              <span>⚠️</span>
+              <span>全データをリセット</span>
+            </button>
+            <p class="settings-modal__hint">履歴・テーマ設定を全て初期化します</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- チャットエリア -->
+    <main class="chat-container" id="chatContainer">
+      <!-- 初期メッセージ -->
+      <div class="message-wrapper hakase-wrapper">
+        <div class="avatar">
+          <img src="hakase.png" alt="ハカセ" class="avatar-img">
+        </div>
+        <div class="message-group">
+          <div class="message-bubble hakase-bubble">
+            <p>やあ、諸君。わしは「ぽいふる博士」じゃ。</p>
+            <p>節約やポイント活用について、何でも聞いてくれ。一緒に考えようではないか。</p>
+          </div>
+          <span class="message-time" id="initialTime"></span>
+        </div>
+      </div>
+    </main>
+
+    <!-- 入力エリア -->
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea 
+          id="userInput" 
+          placeholder="メッセージを入力"
+          rows="1"
+        ></textarea>
+        <button id="sendButton" class="send-button" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="note-banner">
+      <a
+        href="https://note.com/pointlab"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="note-banner__link"
+      >
+        <span class="note-banner__text"><img src="/poinavi/poyonkun_full.png" alt="ぽいふる" class="note-banner__icon" /> ぽいふる博士のぽいんとらぼ</span>
+      </a>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
