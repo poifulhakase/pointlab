@@ -20,6 +20,13 @@
   <div class="app-container">
     <!-- ヘッダー -->
     <header class="header">
+      <button id="infoButton" class="info-icon-button" type="button" aria-label="免責事項">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
       <h1 class="header-title"><img src="logo.svg" alt="ハカセAI" class="header-logo"></h1>
       <button id="settingsButton" class="settings-icon-button" type="button" aria-label="設定">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -65,6 +72,32 @@
             </button>
             <p class="settings-modal__hint">履歴・テーマ設定を全て初期化します</p>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 免責事項モーダル -->
+    <div id="disclaimerModal" class="settings-modal hidden">
+      <div class="settings-modal__overlay"></div>
+      <div class="settings-modal__content">
+        <div class="settings-modal__header">
+          <h2 class="settings-modal__title">免責事項</h2>
+          <button class="settings-modal__close" id="disclaimerModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="settings-modal__body disclaimer-body">
+          <p class="disclaimer-text">本サービス「ハカセAI」は、AIによる参考情報を提供するものです。</p>
+          <ul class="disclaimer-list">
+            <li>提供される情報は参考情報であり、正確性・完全性を保証するものではありません</li>
+            <li>投資判断・金融判断は、ご自身の責任において行ってください</li>
+            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+            <li>重要な判断をされる際は、専門家への相談を推奨いたします</li>
+          </ul>
+          <p class="disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
         </div>
       </div>
     </div>

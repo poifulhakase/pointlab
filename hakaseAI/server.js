@@ -5,6 +5,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
@@ -14,10 +15,47 @@ const PORT = process.env.PORT || 3001;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
 
+// 本番環境のドメイン設定
+const ALLOWED_ORIGINS = [
+  'http://localhost:3001',
+  'https://pointlab-24k4.vercel.app',
+  'https://pointlab.vercel.app'
+];
+
+// CORS設定（許可されたドメインのみ）
+const corsOptions = {
+  origin: function (origin, callback) {
+    // originがない場合（同一オリジンリクエスト）も許可
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy violation'));
+    }
+  },
+  credentials: true
+};
+
+// レート制限（1日30回/IP）
+const dailyLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24時間
+  max: 30, // 30回まで
+  message: { 
+    error: 'rate_limit',
+    comment_text: '今日はここまでのようじゃ。また明日、わしのところへ来ておくれ。'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Vercelの場合はx-forwarded-forヘッダーからIPを取得
+  validate: { xForwardedForHeader: false }
+});
+
 // ミドルウェア
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
+
+// /api/chat にレート制限を適用
+app.use('/api/chat', dailyLimiter);
 
 // ルートパスでindex.htmlを返す
 app.get('/', (req, res) => {

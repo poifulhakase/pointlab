@@ -12,6 +12,12 @@ const settingsModalClose = document.getElementById('settingsModalClose');
 const settingsModalOverlay = document.querySelector('.settings-modal__overlay');
 const themeToggle = document.getElementById('themeToggle');
 
+// 免責事項モーダル
+const infoButton = document.getElementById('infoButton');
+const disclaimerModal = document.getElementById('disclaimerModal');
+const disclaimerModalClose = document.getElementById('disclaimerModalClose');
+const disclaimerModalOverlay = disclaimerModal?.querySelector('.settings-modal__overlay');
+
 // 会話履歴（コンテキスト保持用）
 let conversationHistory = [];
 
@@ -49,6 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
   settingsButton.addEventListener('click', openSettingsModal);
   settingsModalClose.addEventListener('click', closeSettingsModal);
   settingsModalOverlay.addEventListener('click', closeSettingsModal);
+  
+  // 免責事項モーダル
+  if (infoButton && disclaimerModal) {
+    infoButton.addEventListener('click', openDisclaimerModal);
+    disclaimerModalClose.addEventListener('click', closeDisclaimerModal);
+    disclaimerModalOverlay.addEventListener('click', closeDisclaimerModal);
+  }
   
   // テーマ切り替え
   themeToggle.addEventListener('click', toggleDarkMode);
@@ -183,11 +196,17 @@ async function callHakaseAPI(question) {
     body: JSON.stringify(requestBody)
   });
   
+  const data = await response.json();
+  
+  // レート制限エラーの場合
+  if (response.status === 429 || data.error === 'rate_limit') {
+    return data.comment_text || '今日はここまでのようじゃ。また明日、わしのところへ来ておくれ。';
+  }
+  
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
   }
   
-  const data = await response.json();
   return data.comment_text;
 }
 
@@ -353,6 +372,17 @@ function openSettingsModal() {
 
 function closeSettingsModal() {
   settingsModal.classList.add('hidden');
+}
+
+// ========================================
+// 免責事項モーダル
+// ========================================
+function openDisclaimerModal() {
+  disclaimerModal.classList.remove('hidden');
+}
+
+function closeDisclaimerModal() {
+  disclaimerModal.classList.add('hidden');
 }
 
 // ========================================
