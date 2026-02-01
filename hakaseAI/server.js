@@ -18,8 +18,11 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
-// poinaviフォルダの画像を /poinavi/ パスで提供
-app.use('/poinavi', express.static(path.join(__dirname, '..', 'poinavi')));
+
+// ルートパスでindex.htmlを返す
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // ========================================
 // システムプロンプト（博士のキャラクター設定）
