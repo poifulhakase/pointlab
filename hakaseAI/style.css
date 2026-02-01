@@ -228,6 +228,24 @@ body {
   margin-bottom: 0;
 }
 
+.message-bubble a {
+  color: #4285f4;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.message-bubble a:hover {
+  color: #3367d6;
+}
+
+body.dark-mode .message-bubble a {
+  color: #5a9cff;
+}
+
+body.dark-mode .message-bubble a:hover {
+  color: #7ab8ff;
+}
+
 /* 時刻表示 */
 .message-time {
   font-size: 11px;

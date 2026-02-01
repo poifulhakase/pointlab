@@ -335,7 +335,13 @@ function scrollToBottom() {
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
-  return div.innerHTML.replace(/\n/g, '<br>');
+  let html = div.innerHTML.replace(/\n/g, '<br>');
+  
+  // URLをリンクに変換
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  html = html.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  return html;
 }
 
 // ========================================
