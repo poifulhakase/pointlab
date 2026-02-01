@@ -35,12 +35,6 @@ const STORAGE_KEY_MESSAGES = 'hakaseai-messages';
 // 初期化
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // 初期メッセージの時刻を設定
-  const initialTimeEl = document.getElementById('initialTime');
-  if (initialTimeEl) {
-    initialTimeEl.textContent = formatTime(new Date());
-  }
-  
   // 入力監視
   userInput.addEventListener('input', handleInputChange);
   userInput.addEventListener('keydown', handleKeyDown);
@@ -81,9 +75,75 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存されたテーマを適用
   loadSavedTheme();
   
-  // 保存された会話履歴を読み込み
+  // 履歴があるか確認
+  const hasHistory = checkHasHistory();
+  
+  // 初期メッセージを表示（履歴がない場合はアニメーション付き）
+  showInitialMessage(!hasHistory);
+  
+  // 保存された会話履歴を読み込み・表示
   loadSavedHistory();
 });
+
+// ========================================
+// 履歴チェック
+// ========================================
+function checkHasHistory() {
+  try {
+    const savedMessagesStr = localStorage.getItem(STORAGE_KEY_MESSAGES);
+    if (savedMessagesStr) {
+      const messages = JSON.parse(savedMessagesStr);
+      return messages.length > 0;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ========================================
+// 初期メッセージ表示
+// ========================================
+function showInitialMessage(animate = true) {
+  const initialText = 'やあ、諸君。わしは「ぽいふる博士」じゃ。\n節約やポイント活用について、何でも聞いてくれ。一緒に考えようではないか。';
+  const now = new Date();
+  const time = formatTime(now);
+  
+  const messageWrapper = document.createElement('div');
+  messageWrapper.className = 'message-wrapper hakase-wrapper';
+  
+  if (animate) {
+    messageWrapper.innerHTML = `
+      <div class="avatar">
+        <img src="hakase.png" alt="ハカセ" class="avatar-img">
+      </div>
+      <div class="message-group">
+        <div class="message-bubble hakase-bubble">
+          <p class="typing-text"></p>
+        </div>
+        <span class="message-time">${time}</span>
+      </div>
+    `;
+    chatContainer.appendChild(messageWrapper);
+    
+    // タイピングアニメーション
+    const textElement = messageWrapper.querySelector('.typing-text');
+    typeText(textElement, initialText);
+  } else {
+    messageWrapper.innerHTML = `
+      <div class="avatar">
+        <img src="hakase.png" alt="ハカセ" class="avatar-img">
+      </div>
+      <div class="message-group">
+        <div class="message-bubble hakase-bubble">
+          <p>${escapeHtml(initialText)}</p>
+        </div>
+        <span class="message-time">${time}</span>
+      </div>
+    `;
+    chatContainer.appendChild(messageWrapper);
+  }
+}
 
 // ========================================
 // 入力ハンドラー
@@ -287,11 +347,17 @@ function addMessage(text, sender, isError = false) {
       </div>
       <div class="message-group">
         <div class="message-bubble hakase-bubble${isError ? ' error-bubble' : ''}">
-          <p>${escapeHtml(text)}</p>
+          <p class="typing-text"></p>
         </div>
         <span class="message-time">${time}</span>
       </div>
     `;
+    chatContainer.appendChild(messageWrapper);
+    scrollToBottom();
+    
+    // タイピングアニメーション
+    const textElement = messageWrapper.querySelector('.typing-text');
+    typeText(textElement, text);
   } else {
     messageWrapper.className = 'message-wrapper user-wrapper';
     messageWrapper.innerHTML = `
@@ -302,10 +368,42 @@ function addMessage(text, sender, isError = false) {
         <span class="message-time">${time}</span>
       </div>
     `;
+    chatContainer.appendChild(messageWrapper);
+    scrollToBottom();
+  }
+}
+
+// タイピングアニメーション
+function typeText(element, text, speed = 70) {
+  const processedText = escapeHtml(text);
+  let index = 0;
+  
+  function type() {
+    if (index < processedText.length) {
+      // <br>タグの処理
+      if (processedText.substring(index, index + 4) === '&lt;') {
+        // HTMLエンティティはそのまま追加
+        let endIndex = processedText.indexOf(';', index) + 1;
+        element.innerHTML += processedText.substring(index, endIndex);
+        index = endIndex;
+      } else if (processedText.substring(index, index + 4) === '<br>') {
+        element.innerHTML += '<br>';
+        index += 4;
+      } else if (processedText.substring(index, index + 3) === '<a ') {
+        // リンクタグは一括で追加
+        let endIndex = processedText.indexOf('</a>', index) + 4;
+        element.innerHTML += processedText.substring(index, endIndex);
+        index = endIndex;
+      } else {
+        element.innerHTML += processedText[index];
+        index++;
+      }
+      scrollToBottom();
+      setTimeout(type, speed);
+    }
   }
   
-  chatContainer.appendChild(messageWrapper);
-  scrollToBottom();
+  type();
 }
 
 // ========================================
@@ -439,10 +537,13 @@ function loadSavedHistory() {
       // 保存されたメッセージを表示
       if (savedMessages.length > 0) {
         displaySavedMessages();
+        return true; // 履歴あり
       }
     }
+    return false; // 履歴なし
   } catch (e) {
     console.error('履歴の読み込みに失敗:', e);
+    return false;
   }
 }
 

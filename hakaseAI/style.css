@@ -255,6 +255,11 @@ body {
   margin-bottom: 0;
 }
 
+/* タイピングアニメーション */
+.typing-text {
+  display: inline;
+}
+
 .message-bubble a {
   color: #4285f4;
   text-decoration: underline;
