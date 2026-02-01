@@ -75,6 +75,17 @@ body {
   font-size: 17px;
   font-weight: 600;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.header-logo {
+  height: 20px;
+  width: auto;
+  display: block;
+  vertical-align: middle;
 }
 
 /* 設定アイコンボタン */
