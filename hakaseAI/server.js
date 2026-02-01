@@ -177,12 +177,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // ========================================
-// サーバー起動
+// サーバー起動（ローカル開発用）
 // ========================================
-app.listen(PORT, () => {
-  console.log(`\n🎓 ぽいふる博士のお金相談室`);
-  console.log(`   サーバー起動: http://localhost:${PORT}`);
-  console.log(`   Gemini APIキー: ${GEMINI_API_KEY ? '設定済み ✓' : '未設定（モックモード）'}\n`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🎓 ぽいふる博士のお金相談室`);
+    console.log(`   サーバー起動: http://localhost:${PORT}`);
+    console.log(`   Gemini APIキー: ${GEMINI_API_KEY ? '設定済み ✓' : '未設定（モックモード）'}\n`);
+  });
+}
 
-
+// Vercel用にエクスポート
+module.exports = app;
