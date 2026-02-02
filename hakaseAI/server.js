@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 
 // Gemini API設定
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent';
 
 // 本番環境のドメイン設定
 const ALLOWED_ORIGINS = [
@@ -45,12 +45,8 @@ const dailyLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Vercelの場合のヘッダー検証を無効化
-  validate: { xForwardedForHeader: false, forwardedHeader: false },
-  // X-Forwarded-ForからIPを取得
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
-  }
+  // Vercelの場合のすべての検証を無効化
+  validate: false
 });
 
 // グローバルレート制限（全ユーザー合計で1日1000回まで）
@@ -63,8 +59,8 @@ const globalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Vercelの場合のヘッダー検証を無効化
-  validate: { xForwardedForHeader: false, forwardedHeader: false },
+  // Vercelの場合のすべての検証を無効化
+  validate: false,
   // 全リクエストを同じキーでカウント（グローバル制限）
   keyGenerator: () => 'global'
 });
