@@ -4,9 +4,45 @@
     {
       "src": "hakaseAI/server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "hakaseAI/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.png",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.svg",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.json",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/hakaseAI/api/(.*)",
+      "dest": "hakaseAI/server.js"
+    },
+    {
+      "src": "/hakaseAI/(.*\\.(html|css|js|png|svg|json))",
+      "dest": "hakaseAI/$1"
+    },
+    {
+      "src": "/hakaseAI/?$",
+      "dest": "hakaseAI/index.html"
+    },
     {
       "src": "/(.*)",
       "dest": "hakaseAI/server.js"
