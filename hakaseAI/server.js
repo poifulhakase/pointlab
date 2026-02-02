@@ -49,13 +49,27 @@ const dailyLimiter = rateLimit({
   validate: { xForwardedForHeader: false }
 });
 
+// グローバルレート制限（全ユーザー合計で1日1000回まで）
+const globalLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24時間
+  max: 1000, // 全体で1000回まで
+  message: { 
+    error: 'global_rate_limit',
+    comment_text: '今日はたくさんの相談があったのう。また明日、来ておくれ。'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // 全リクエストを同じキーでカウント（グローバル制限）
+  keyGenerator: () => 'global'
+});
+
 // ミドルウェア
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// /api/chat にレート制限を適用
-app.use('/api/chat', dailyLimiter);
+// /api/chat にレート制限を適用（グローバル制限 + IP制限）
+app.use('/api/chat', globalLimiter, dailyLimiter);
 
 // ルートパスでindex.htmlを返す
 app.get('/', (req, res) => {
