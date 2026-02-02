@@ -45,8 +45,12 @@ const dailyLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Vercelの場合はx-forwarded-forヘッダーからIPを取得
-  validate: { xForwardedForHeader: false }
+  // Vercelの場合のヘッダー検証を無効化
+  validate: { xForwardedForHeader: false, forwardedHeader: false },
+  // X-Forwarded-ForからIPを取得
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+  }
 });
 
 // グローバルレート制限（全ユーザー合計で1日1000回まで）
@@ -59,6 +63,8 @@ const globalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Vercelの場合のヘッダー検証を無効化
+  validate: { xForwardedForHeader: false, forwardedHeader: false },
   // 全リクエストを同じキーでカウント（グローバル制限）
   keyGenerator: () => 'global'
 });
