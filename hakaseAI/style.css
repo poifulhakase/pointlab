@@ -357,8 +357,8 @@ body.dark-mode .message-bubble a:hover {
   align-items: center;
   gap: 8px;
   background: #FFFFFF;
-  border-radius: 10px;
-  padding: 10px 6px 10px 16px;
+  border-radius: 50px;
+  padding: 10px 8px 10px 20px;
   border: 1px solid #e0e0e0;
 }
 
@@ -388,8 +388,8 @@ body.dark-mode .message-bubble a:hover {
 /* 送信ボタン */
 .send-button {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: 50%;
   background: var(--send-button);
@@ -399,6 +399,7 @@ body.dark-mode .message-bubble a:hover {
   align-items: center;
   justify-content: center;
   transition: background 0.2s, transform 0.15s;
+  margin-right: 2px;
 }
 
 .send-button:hover:not(:disabled) {
@@ -415,9 +416,9 @@ body.dark-mode .message-bubble a:hover {
 }
 
 .send-button svg {
-  width: 20px;
-  height: 20px;
-  margin-left: 2px;
+  width: 18px;
+  height: 18px;
+  margin-left: 1px;
 }
 
 /* ========================================
