@@ -32,15 +32,15 @@
   ],
   "routes": [
     {
-      "src": "/hakaseAI/api/(.*)",
+      "src": "/api/(.*)",
       "dest": "hakaseAI/server.js"
     },
     {
-      "src": "/hakaseAI/(.*\\.(html|css|js|png|svg|json))",
+      "src": "/(.*\\.(png|svg|css|js|json|ico))$",
       "dest": "hakaseAI/$1"
     },
     {
-      "src": "/hakaseAI/?$",
+      "src": "/",
       "dest": "hakaseAI/index.html"
     },
     {
