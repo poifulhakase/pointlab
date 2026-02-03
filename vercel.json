@@ -4,16 +4,36 @@
     {
       "src": "hakaseAI/server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.css",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/hakaseAI/api/(.*)",
       "dest": "hakaseAI/server.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/hakaseAI/(.*)",
       "dest": "hakaseAI/server.js"
+    },
+    {
+      "src": "/(.*\\.html)",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*\\.css)",
+      "dest": "/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
     }
   ]
 }
