@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 3001;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
 
+// デバッグ: APIキーの確認（最初の10文字のみ）
+console.log('API Key prefix:', GEMINI_API_KEY ? GEMINI_API_KEY.substring(0, 10) + '...' : 'NOT SET');
+
 // 本番環境のドメイン設定
 const ALLOWED_ORIGINS = [
   'http://localhost:3001',
