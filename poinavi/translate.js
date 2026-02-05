@@ -717,9 +717,10 @@ async function startOCRProcess() {
   if (progressFill) progressFill.style.width = "0%";
   
   try {
-    // クロップした画像を取得
-    const croppedImage = getCroppedImage();
-    console.log("クロップ画像取得完了, OCR言語:", ocrLang);
+    // 一時的にクロップをスキップして元の画像を使用（デバッグ用）
+    // const croppedImage = getCroppedImage();
+    const croppedImage = capturedImageData; // 元の画像をそのまま使用
+    console.log("元画像を使用, OCR言語:", ocrLang);
     console.log("画像データ長:", croppedImage?.length || 0);
     
     // 画像データの確認
