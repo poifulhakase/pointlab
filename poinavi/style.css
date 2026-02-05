@@ -2422,38 +2422,49 @@ body.dark-mode .translate-result-item {
 /* フッター（ページ遷移） */
 .translate-footer {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  padding: 10px 16px;
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
+  height: 56px;
 }
 
 .translate-footer__btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 0 20px;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   text-decoration: none;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  border: 1px solid var(--border-color);
+  border: none;
+  border-right: 1px solid var(--border-color);
+  min-width: 90px;
+}
+
+.translate-footer__btn:last-child {
+  border-right: none;
+  border-left: 1px solid var(--border-color);
 }
 
 .translate-footer__btn:hover {
   background-color: var(--accent-color);
   color: #ffffff;
-  border-color: var(--accent-color);
+}
+
+.translate-footer__btn:active {
+  background-color: var(--primary-color);
+  color: #ffffff;
 }
 
 .translate-footer__btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .translate-footer__btn--invisible {
@@ -2614,17 +2625,18 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-footer {
-    padding: 8px 12px;
+    height: 50px;
   }
 
   .translate-footer__btn {
-    padding: 6px 10px;
-    font-size: 0.75rem;
+    padding: 0 14px;
+    font-size: 0.8125rem;
+    min-width: 80px;
   }
 
   .translate-footer__btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 
   .translate-footer__banner {
