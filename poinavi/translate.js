@@ -697,6 +697,7 @@ async function startOCRProcess() {
   try {
     // クロップした画像を取得
     const croppedImage = getCroppedImage();
+    console.log("クロップ画像取得完了, OCR言語:", ocrLang);
     
     // OCR実行
     const ocrResult = await performOCR(croppedImage, (progress) => {
@@ -704,6 +705,7 @@ async function startOCRProcess() {
         progressFill.style.width = (progress * 50) + "%"; // OCRは50%まで
       }
     });
+    console.log("OCR結果:", ocrResult);
     
     if (!ocrResult || ocrResult.trim() === "") {
       throw new Error("文字を認識できませんでした");
@@ -726,8 +728,18 @@ async function startOCRProcess() {
     
   } catch (err) {
     console.error("OCR/翻訳エラー:", err);
-    alert(err.message || "処理中にエラーが発生しました。もう一度お試しください。");
-    goBackToCamera();
+    
+    // エラーメッセージを表示して選択肢を提供
+    const retry = confirm(
+      (err.message || "処理中にエラーが発生しました") + 
+      "\n\n再撮影しますか？\n（キャンセルで閉じます）"
+    );
+    
+    if (retry) {
+      goBackToCamera();
+    } else {
+      closeCameraModal();
+    }
   }
 }
 
@@ -766,11 +778,30 @@ function getCroppedImage() {
 
 async function performOCR(imageData, onProgress) {
   try {
+    // 処理中のテキストを更新
+    const processingText = document.getElementById("processingText");
+    
     // Tesseract.js を使用してOCR実行
     const result = await Tesseract.recognize(imageData, ocrLang, {
       logger: (m) => {
-        if (m.status === "recognizing text" && onProgress) {
-          onProgress(m.progress);
+        console.log("Tesseract:", m.status, m.progress);
+        
+        // ステータスに応じてUIを更新
+        if (processingText) {
+          if (m.status === "loading tesseract core") {
+            processingText.textContent = "OCRエンジンを読み込み中...";
+          } else if (m.status === "initializing tesseract") {
+            processingText.textContent = "OCRエンジンを初期化中...";
+          } else if (m.status === "loading language traineddata") {
+            processingText.textContent = "言語データを読み込み中...";
+          } else if (m.status === "initializing api") {
+            processingText.textContent = "APIを初期化中...";
+          } else if (m.status === "recognizing text") {
+            processingText.textContent = "文字を認識中...";
+            if (onProgress) {
+              onProgress(m.progress);
+            }
+          }
         }
       }
     });
@@ -778,7 +809,15 @@ async function performOCR(imageData, onProgress) {
     return result.data.text;
   } catch (err) {
     console.error("OCRエラー:", err);
-    throw new Error("文字認識に失敗しました");
+    
+    // エラーの種類に応じてメッセージを変更
+    if (err.message && err.message.includes("network")) {
+      throw new Error("ネットワークエラー: 言語データの読み込みに失敗しました");
+    } else if (err.message && err.message.includes("language")) {
+      throw new Error("言語データの読み込みに失敗しました。別の言語を試してください");
+    }
+    
+    throw new Error("文字認識に失敗しました。もう一度お試しください");
   }
 }
 
