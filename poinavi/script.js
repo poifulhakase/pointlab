@@ -1195,6 +1195,27 @@ function setupTransportButtons(buttons) {
   });
 }
 
+// 移動手段を選択（onclick用）
+function selectTransportMode(btn, mode) {
+  // すべてのボタンからactiveを削除
+  const allButtons = document.querySelectorAll(".transport-mode-btn");
+  allButtons.forEach(b => b.classList.remove("active"));
+  
+  // クリックされたボタンにactiveを追加
+  btn.classList.add("active");
+  
+  // モードを更新
+  transportMode = mode;
+  
+  // localStorageに保存
+  localStorage.setItem("poinavi_transport_mode", mode);
+  
+  // 結果を再表示（移動時間を更新）
+  if (typeof currentResults !== 'undefined' && currentResults && currentResults.length > 0) {
+    displayResultsList(currentResults);
+  }
+}
+
 // 設定を初期化
 function resetAllSettings() {
   if (!confirm("すべての設定を初期化しますか？\\n（タグ、テーマ、移動手段、起動ページなどがリセットされます）")) {

@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=51" />
+    <link rel="stylesheet" href="./style.css?v=53" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -162,13 +162,13 @@
           <div class="settings-modal__item">
             <label class="settings-modal__label">移動手段</label>
             <div class="transport-mode-buttons">
-              <button type="button" class="transport-mode-btn active" data-mode="walk">
+              <button type="button" class="transport-mode-btn active" data-mode="walk" onclick="selectTransportMode(this, 'walk');">
                 🚶 徒歩
               </button>
-              <button type="button" class="transport-mode-btn" data-mode="bicycle">
+              <button type="button" class="transport-mode-btn" data-mode="bicycle" onclick="selectTransportMode(this, 'bicycle');">
                 🚲 自転車
               </button>
-              <button type="button" class="transport-mode-btn" data-mode="car">
+              <button type="button" class="transport-mode-btn" data-mode="car" onclick="selectTransportMode(this, 'car');">
                 🚗 車
               </button>
             </div>
@@ -187,7 +187,7 @@
           <!-- 起動ページ -->
           <div class="settings-modal__item">
             <label class="settings-modal__label">起動時のページ</label>
-            <select id="mapStartPageSelect" class="settings-modal__select">
+            <select id="mapStartPageSelect" class="settings-modal__select" onchange="localStorage.setItem('poinavi_start_page', this.value);">
               <option value="index.html">メモ</option>
               <option value="translate.html">翻訳</option>
               <option value="map.html">地図</option>
@@ -362,7 +362,7 @@
         <img src="./poyonkun_full.png" alt="ぽいふる" class="translate-footer__banner-icon" />
         <span>ぽいんとらぼ</span>
       </a>
-      <a href="./index.html" class="translate-footer__btn" aria-label="メモページへ">
+      <a href="./index.html?from=nav" class="translate-footer__btn" aria-label="メモページへ">
         <!-- メモアイコン -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -375,6 +375,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=51"></script>
+    <script src="./script.js?v=52"></script>
   </body>
 </html>
