@@ -362,16 +362,9 @@ function createTranslationResultHTML(type, data) {
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
       </svg>`
-    : `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-        <rect x="2" y="2" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
-        <rect x="4" y="4" width="4" height="4" rx="0.5"/>
-        <rect x="14" y="2" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
-        <rect x="16" y="4" width="4" height="4" rx="0.5"/>
-        <rect x="2" y="14" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
-        <rect x="4" y="16" width="4" height="4" rx="0.5"/>
-        <rect x="14" y="14" width="3" height="3" rx="0.5"/>
-        <rect x="19" y="14" width="3" height="3" rx="0.5"/>
-        <rect x="14" y="19" width="3" height="3" rx="0.5"/>
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="13" r="4"></circle>
       </svg>`;
   
   const now = new Date();
