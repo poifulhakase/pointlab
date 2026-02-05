@@ -867,14 +867,7 @@ const LOCATION_CACHE_KEY = "poinavi_cached_location";
 const LOCATION_CACHE_DURATION = 10 * 60 * 1000; // 10分間キャッシュ
 
 function requestUserLocation() {
-  // ローディング画面を表示
-  showLoading();
-  
-  // 安全策: 最大5秒後に強制的にローディングを非表示
-  const safetyTimeout = setTimeout(function() {
-    console.warn("位置情報取得のセーフティタイムアウト（5秒）");
-    hideLoading();
-  }, 5000);
+  console.log("requestUserLocation 開始");
   
   // セッションストレージからキャッシュを確認
   const cachedData = sessionStorage.getItem(LOCATION_CACHE_KEY);
@@ -886,32 +879,36 @@ function requestUserLocation() {
       // キャッシュが有効期限内かチェック
       if (cached.timestamp && (now - cached.timestamp) < LOCATION_CACHE_DURATION) {
         // キャッシュされた位置情報を使用
-        clearTimeout(safetyTimeout);
+        console.log("キャッシュから位置情報を使用");
         applyUserLocation(cached.lat, cached.lng);
         return;
       }
     } catch (e) {
       // キャッシュのパースに失敗した場合は無視
+      console.warn("キャッシュパース失敗:", e);
     }
   }
   
   // キャッシュがない場合は新たに取得
-  fetchUserLocation(safetyTimeout);
+  fetchUserLocation(null);
 }
 
 function fetchUserLocation(safetyTimeout) {
   if (navigator.geolocation) {
-    // タイムアウト設定（20秒に延長）
+    // タイムアウト設定（10秒）
     const geolocationOptions = {
-      enableHighAccuracy: true,
-      timeout: 20000, // 20秒でタイムアウト
+      enableHighAccuracy: false, // 高精度モードをオフにして高速化
+      timeout: 10000, // 10秒でタイムアウト
       maximumAge: 300000 // 5分以内のキャッシュを使用
     };
+    
+    console.log("位置情報を取得中...");
     
     navigator.geolocation.getCurrentPosition(
       function (position) {
         if (safetyTimeout) clearTimeout(safetyTimeout);
         
+        console.log("位置情報取得成功");
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         
@@ -928,7 +925,6 @@ function fetchUserLocation(safetyTimeout) {
           applyUserLocation(lat, lng);
         } catch (e) {
           console.error("位置情報の適用に失敗:", e);
-          hideLoading();
         }
       },
       function (error) {
@@ -949,16 +945,12 @@ function fetchUserLocation(safetyTimeout) {
             break;
         }
         console.warn(errorMessage);
-        // ローディング画面を非表示
-        hideLoading();
       },
       geolocationOptions
     );
   } else {
     if (safetyTimeout) clearTimeout(safetyTimeout);
     console.warn("このブラウザは位置情報をサポートしていません");
-    // ローディング画面を非表示
-    hideLoading();
   }
 }
 
