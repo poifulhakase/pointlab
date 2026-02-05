@@ -53,9 +53,10 @@
           </button>
         </div>
         <div class="translate-modal__body">
-          <!-- マイク入力言語 -->
+          <!-- マイクセクション -->
+          <div class="translate-modal__section-title">マイク</div>
           <div class="translate-modal__item">
-            <label class="translate-modal__label">マイク入力する言語</label>
+            <label class="translate-modal__label">読み取り</label>
             <select id="micInputLangSelect" class="translate-modal__select">
               <option value="ja">日本語</option>
               <option value="en" selected>英語</option>
@@ -71,9 +72,8 @@
               <option value="vi">ベトナム語</option>
             </select>
           </div>
-          <!-- マイク翻訳後言語 -->
           <div class="translate-modal__item">
-            <label class="translate-modal__label">マイク翻訳後の言語</label>
+            <label class="translate-modal__label">翻訳後</label>
             <select id="micTargetLangSelect" class="translate-modal__select">
               <option value="en">英語</option>
               <option value="ja" selected>日本語</option>
@@ -89,9 +89,11 @@
               <option value="vi">ベトナム語</option>
             </select>
           </div>
-          <!-- OCR認識言語 -->
+          
+          <!-- カメラセクション -->
+          <div class="translate-modal__section-title">カメラ</div>
           <div class="translate-modal__item">
-            <label class="translate-modal__label">カメラ撮影する言語</label>
+            <label class="translate-modal__label">読み取り</label>
             <select id="ocrLanguageSelect" class="translate-modal__select">
               <option value="jpn">日本語</option>
               <option value="eng" selected>英語</option>
@@ -108,9 +110,8 @@
               <option value="vie">ベトナム語</option>
             </select>
           </div>
-          <!-- 翻訳後言語 -->
           <div class="translate-modal__item">
-            <label class="translate-modal__label">カメラ翻訳後の言語</label>
+            <label class="translate-modal__label">翻訳後</label>
             <select id="translateTargetLang" class="translate-modal__select">
               <option value="en">英語</option>
               <option value="ja" selected>日本語</option>
@@ -126,9 +127,10 @@
               <option value="vi">ベトナム語</option>
             </select>
           </div>
-          <!-- テーマ切り替え -->
+          
+          <!-- テーマセクション -->
+          <div class="translate-modal__section-title">テーマ</div>
           <div class="translate-modal__item">
-            <label class="translate-modal__label">テーマ</label>
             <button id="translateThemeToggle" class="translate-modal__theme-toggle">
               <span class="theme-icon">🌙</span>
               <span class="theme-text">ダークモード</span>

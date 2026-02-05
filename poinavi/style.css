@@ -2301,6 +2301,20 @@ body.dark-mode .translate-result-item {
   margin-bottom: 0;
 }
 
+.translate-modal__section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  margin-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.translate-modal__section-title:first-child {
+  margin-top: 0;
+}
+
 .translate-modal__label {
   display: block;
   font-size: 0.875rem;
