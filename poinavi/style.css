@@ -300,7 +300,7 @@ body {
 .settings-bar__toggle {
   position: absolute;
   top: -40px;
-  right: 60px;
+  left: 16px;
   z-index: 100;
   background-color: var(--accent-color);
   color: #ffffff;
