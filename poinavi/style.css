@@ -3172,61 +3172,6 @@ body.dark-mode .translate-result-item__ocr-preview {
   .crop-handle--e { right: -12px; }
 }
 
-/* ============================================
-   フッターナビゲーション
-   ============================================ */
-.footer-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background-color: var(--bg-primary);
-  border-top: 1px solid var(--border-color);
-  padding: 8px 0;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom));
-  z-index: 100;
-}
-
-.footer-nav__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: var(--text-secondary);
-  padding: 8px 16px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  min-width: 64px;
-}
-
-.footer-nav__item:hover {
-  background-color: var(--bg-secondary);
-}
-
-.footer-nav__item--active {
-  color: var(--primary-color);
-}
-
-.footer-nav__item--active .footer-nav__icon {
-  stroke: var(--primary-color);
-}
-
-.footer-nav__icon {
-  width: 24px;
-  height: 24px;
-  stroke: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.footer-nav__label {
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
 /* メモページ用プレースホルダー */
 .memo-main {
   flex: 1;
@@ -3241,13 +3186,4 @@ body.dark-mode .translate-result-item__ocr-preview {
   text-align: center;
   color: var(--text-secondary);
   font-size: 1rem;
-}
-
-/* フッターナビ用にメインコンテンツの下部余白を調整 */
-.translate-main {
-  padding-bottom: 80px;
-}
-
-.map-container {
-  padding-bottom: 70px;
 }
