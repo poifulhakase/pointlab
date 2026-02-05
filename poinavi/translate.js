@@ -710,6 +710,17 @@ async function startOCRProcess() {
   const processingText = document.getElementById("processingText");
   const progressFill = document.getElementById("ocrProgressFill");
   
+  // 重要: 画面を非表示にする前にクロップ画像を取得
+  // getBoundingClientRectは要素が表示されている必要がある
+  let croppedImage = getCroppedImage();
+  
+  // クロップ失敗時は元画像を使用
+  if (!croppedImage || croppedImage.length < 100) {
+    console.log("クロップ失敗、元画像を使用");
+    croppedImage = capturedImageData;
+  }
+  
+  // 画面を切り替え
   cropScreen?.classList.add("hidden");
   processingScreen?.classList.remove("hidden");
   
@@ -717,15 +728,6 @@ async function startOCRProcess() {
   if (progressFill) progressFill.style.width = "0%";
   
   try {
-    // クロップした画像を取得（失敗時は元画像を使用）
-    let croppedImage = getCroppedImage();
-    
-    // クロップ失敗時は元画像を使用
-    if (!croppedImage || croppedImage.length < 100) {
-      console.log("クロップ失敗、元画像を使用");
-      croppedImage = capturedImageData;
-    }
-    
     console.log("OCR画像準備完了, 言語:", ocrLang);
     console.log("画像データ長:", croppedImage?.length || 0);
     
