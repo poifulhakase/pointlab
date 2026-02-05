@@ -127,7 +127,6 @@ document.addEventListener("DOMContentLoaded", function() {
   initCameraTranslation();
   initResetButton();
   initSettingsModal();
-  initDisclaimerModal();
   initThemeToggle();
   initLanguageSelect();
   initCameraModal();
@@ -158,32 +157,6 @@ function initSettingsModal() {
   const modal = document.getElementById("translateSettingsModal");
   const openBtn = document.getElementById("translateSettingsButton");
   const closeBtn = document.getElementById("translateSettingsClose");
-  const overlay = modal?.querySelector(".translate-modal__overlay");
-
-  if (!modal || !openBtn || !closeBtn) return;
-
-  openBtn.addEventListener("click", function() {
-    modal.classList.remove("hidden");
-  });
-
-  closeBtn.addEventListener("click", function() {
-    modal.classList.add("hidden");
-  });
-
-  if (overlay) {
-    overlay.addEventListener("click", function() {
-      modal.classList.add("hidden");
-    });
-  }
-}
-
-// ============================================
-// 免責事項モーダル
-// ============================================
-function initDisclaimerModal() {
-  const modal = document.getElementById("translateDisclaimerModal");
-  const openBtn = document.getElementById("disclaimerButton");
-  const closeBtn = document.getElementById("translateDisclaimerClose");
   const overlay = modal?.querySelector(".translate-modal__overlay");
 
   if (!modal || !openBtn || !closeBtn) return;

@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=53" />
+    <link rel="stylesheet" href="./style.css?v=54" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -29,14 +29,8 @@
   <body>
     <!-- ヘッダー -->
     <header class="translate-header">
-      <!-- 免責事項ボタン（左上） -->
-      <button id="memoDisclaimerButton" class="translate-header__icon-btn translate-header__icon-btn--left" type="button" aria-label="免責事項">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-      </button>
+      <!-- 左側のスペーサー -->
+      <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
       
       <h1 class="translate-header__title">
         <img src="./logo.svg" alt="ぽいナビ" class="translate-header__logo" />
@@ -82,31 +76,17 @@
               <span class="theme-text">ダークモード</span>
             </button>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 免責事項モーダル -->
-    <div id="memoDisclaimerModal" class="translate-modal hidden">
-      <div class="translate-modal__overlay"></div>
-      <div class="translate-modal__content">
-        <div class="translate-modal__header">
-          <h2 class="translate-modal__title">免責事項</h2>
-          <button class="translate-modal__close" id="memoDisclaimerClose" aria-label="閉じる">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        <div class="translate-modal__body translate-disclaimer-body">
-          <p class="translate-disclaimer-text">本サービス「ぽいナビ」は、AIによる参考情報を提供するものです。</p>
-          <ul class="translate-disclaimer-list">
-            <li>翻訳結果は参考情報であり、正確性・完全性を保証するものではありません</li>
-            <li>重要な場面では、プロの通訳や翻訳者への相談を推奨いたします</li>
-            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
-          </ul>
-          <p class="translate-disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
+          <!-- 免責事項セクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">免責事項</div>
+            <div class="settings-modal__disclaimer-text">
+              <p>本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
+              <ul>
+                <li>メモ内容はデバイスに保存されます。バックアップはご自身で行ってください</li>
+                <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -230,30 +210,6 @@
         }
       }
 
-      // 免責事項モーダル
-      function initDisclaimerModal() {
-        const modal = document.getElementById("memoDisclaimerModal");
-        const openBtn = document.getElementById("memoDisclaimerButton");
-        const closeBtn = document.getElementById("memoDisclaimerClose");
-        const overlay = modal?.querySelector(".translate-modal__overlay");
-
-        if (!modal || !openBtn || !closeBtn) return;
-
-        openBtn.addEventListener("click", function() {
-          modal.classList.remove("hidden");
-        });
-
-        closeBtn.addEventListener("click", function() {
-          modal.classList.add("hidden");
-        });
-
-        if (overlay) {
-          overlay.addEventListener("click", function() {
-            modal.classList.add("hidden");
-          });
-        }
-      }
-
       // テーマ切り替え
       function initThemeToggle() {
         const themeToggle = document.getElementById("memoThemeToggle");
@@ -278,7 +234,6 @@
       document.addEventListener("DOMContentLoaded", function() {
         initTheme();
         initSettingsModal();
-        initDisclaimerModal();
         initThemeToggle();
         initStartPageSelect();
       });

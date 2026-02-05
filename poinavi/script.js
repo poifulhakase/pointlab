@@ -33,7 +33,7 @@ let stationMarkers = []; // 駅マーカー
 let railwayInfoWindow = null; // 鉄道用InfoWindow
 let railwayDataCache = null; // 鉄道データキャッシュ
 let railwayCacheLocation = null; // キャッシュ時の位置
-const RAILWAY_RADIUS = 10000; // 取得半径（10km）
+const RAILWAY_RADIUS = 8000; // 取得半径（8km）
 
 // ============================================
 // タグ管理

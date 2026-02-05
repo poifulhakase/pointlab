@@ -1657,37 +1657,27 @@ body.dark-mode .settings-modal__select {
   right: 16px;
   z-index: 9999;
   pointer-events: auto !important;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   border: none;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
-  color: #374151;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 2px 4px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
 
 .map-settings-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.12),
-    0 4px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background-color: var(--border-color);
 }
 
 .map-settings-button:active {
-  transform: translateY(0);
+  transform: scale(0.95);
 }
 
 .map-settings-button:focus,
@@ -1697,8 +1687,8 @@ body.dark-mode .settings-modal__select {
 }
 
 .map-settings-button svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 /* トグルボタン（共通） */
@@ -1899,19 +1889,12 @@ body.dark-mode .settings-modal__select {
 
 /* ダークモード対応 */
 body.dark-mode .map-settings-button {
-  background: linear-gradient(135deg, rgba(45, 45, 45, 0.95) 0%, rgba(38, 38, 38, 0.95) 100%);
-  color: #e5e7eb;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 body.dark-mode .map-settings-button:hover {
-  box-shadow: 
-    0 8px 20px rgba(0, 0, 0, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background-color: var(--border-color);
 }
 
 body.dark-mode .layer-toggle {
@@ -2827,14 +2810,14 @@ body.dark-mode .translate-result-item__divider svg {
   .map-settings-button {
     top: 10px;
     right: 10px;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
   }
 
   .map-settings-button svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
   .layer-toggle {
