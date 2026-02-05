@@ -1120,12 +1120,15 @@ function hideSettingsModal() {
 // キャッシュ関連関数
 // ============================================
 
+// キャッシュバージョン（検索ロジック変更時にインクリメント）
+const CACHE_VERSION = 2;
+
 // キャッシュキーを生成
 function generateCacheKey(tag, query, location) {
   // 位置を100m単位で丸める（近い位置では同じキーになる）
   const roundedLat = Math.round(location.lat * 100) / 100;
   const roundedLng = Math.round(location.lng * 100) / 100;
-  return `${tag || 'all'}_${query || ''}_${roundedLat}_${roundedLng}`;
+  return `v${CACHE_VERSION}_${tag || 'all'}_${query || ''}_${roundedLat}_${roundedLng}`;
 }
 
 // キャッシュが有効かチェック
