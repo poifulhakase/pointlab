@@ -736,14 +736,15 @@ async function startOCRProcess() {
       debugInfo = `\n\n【デバッグ情報】\n` +
         `言語: ${ocrLang}\n` +
         `Tesseract: ${typeof Tesseract !== 'undefined' ? 'あり' : 'なし'}\n` +
-        `エラー: ${err.message || '不明'}`;
+        `最終ステータス: ${typeof ocrLastStatus !== 'undefined' ? ocrLastStatus : '不明'}\n` +
+        `エラー詳細: ${err.message || '不明'}`;
     } catch (e) {
-      debugInfo = "";
+      debugInfo = `\n\nエラー: ${err.message || '不明'}`;
     }
     
     // エラーメッセージを表示して選択肢を提供
     const retry = confirm(
-      (err.message || "処理中にエラーが発生しました") + 
+      "処理中にエラーが発生しました" + 
       debugInfo +
       "\n\n再撮影しますか？\n（キャンセルで閉じます）"
     );
@@ -789,26 +790,31 @@ function getCroppedImage() {
   return croppedCanvas.toDataURL("image/jpeg", 0.9);
 }
 
+// OCR処理の進捗追跡用
+let ocrLastStatus = "";
+
 async function performOCR(imageData, onProgress) {
   const processingText = document.getElementById("processingText");
+  ocrLastStatus = "開始";
   
   try {
     console.log("OCR開始, 言語:", ocrLang);
     console.log("Tesseract available:", typeof Tesseract !== 'undefined');
-    console.log("Tesseract.recognize available:", typeof Tesseract?.recognize === 'function');
     
     // Tesseractライブラリの存在確認
     if (typeof Tesseract === 'undefined') {
-      console.error("Tesseract.js が読み込まれていません");
-      throw new Error("OCRライブラリの読み込みに失敗しました。ページを再読み込みしてください。");
+      ocrLastStatus = "ライブラリなし";
+      throw new Error("OCRライブラリが読み込まれていません");
     }
     
     if (processingText) processingText.textContent = "OCRエンジンを準備中...";
+    ocrLastStatus = "準備中";
     
-    // シンプルなrecognize関数を使用（Worker APIより互換性が高い）
     console.log("Tesseract.recognize 開始...");
+    
     const result = await Tesseract.recognize(imageData, ocrLang, {
       logger: (m) => {
+        ocrLastStatus = m.status || "unknown";
         console.log("Tesseract:", m.status, m.progress);
         
         if (processingText) {
@@ -837,6 +843,7 @@ async function performOCR(imageData, onProgress) {
       }
     });
     
+    ocrLastStatus = "完了";
     console.log("OCR完了, 結果:", result);
     console.log("認識テキスト:", result?.data?.text);
     
@@ -844,24 +851,11 @@ async function performOCR(imageData, onProgress) {
     
   } catch (err) {
     console.error("OCRエラー:", err);
-    console.error("エラー詳細:", err.message, err.stack);
+    console.error("最後のステータス:", ocrLastStatus);
     
-    // エラーの種類に応じてメッセージを変更
-    let errorMessage = "文字認識に失敗しました。";
-    
-    if (err.message) {
-      if (err.message.includes("network") || err.message.includes("fetch") || err.message.includes("Failed to fetch")) {
-        errorMessage = "ネットワークエラー: 言語データの読み込みに失敗しました。\nWi-Fi接続を確認してください。";
-      } else if (err.message.includes("language") || err.message.includes("lang")) {
-        errorMessage = "言語データの読み込みに失敗しました。";
-      } else if (err.message.includes("memory") || err.message.includes("heap")) {
-        errorMessage = "メモリ不足です。ブラウザを再起動してください。";
-      } else {
-        errorMessage = `文字認識に失敗しました: ${err.message}`;
-      }
-    }
-    
-    throw new Error(errorMessage);
+    // 元のエラーメッセージを保持
+    const originalError = err.message || String(err);
+    throw new Error(`OCRエラー (${ocrLastStatus}): ${originalError}`);
   }
 }
 
