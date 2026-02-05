@@ -809,13 +809,16 @@ async function startOCRProcess() {
 
 function getCroppedImage() {
   const canvas = document.getElementById("capturedCanvas");
+  const wrapper = document.getElementById("cropWrapper");
+  const cropBoxEl = document.getElementById("cropBox");
   
-  if (!canvas) {
-    console.error("Canvas not found");
+  if (!canvas || !wrapper || !cropBoxEl) {
+    console.error("Required elements not found");
     return capturedImageData;
   }
   
-  console.log("Canvas size:", canvas.width, "x", canvas.height);
+  console.log("=== getCroppedImage START ===");
+  console.log("Canvas actual size:", canvas.width, "x", canvas.height);
   
   // キャンバスが無効な場合は元画像を使用
   if (canvas.width === 0 || canvas.height === 0) {
@@ -823,43 +826,44 @@ function getCroppedImage() {
     return capturedImageData;
   }
   
-  // クロップボックスが初期化されていない場合は元画像を使用
-  if (!cropBox || cropBox.width < 10 || cropBox.height < 10) {
-    console.log("Crop box not initialized, using original");
-    return capturedImageData;
-  }
-  
   try {
+    // 要素の表示位置を取得
     const canvasRect = canvas.getBoundingClientRect();
+    const cropBoxRect = cropBoxEl.getBoundingClientRect();
     
-    // 表示サイズと実際のキャンバスサイズの比率
+    console.log("Canvas display size:", canvasRect.width, "x", canvasRect.height);
+    console.log("Canvas position:", canvasRect.left, canvasRect.top);
+    console.log("CropBox display:", cropBoxRect.width, "x", cropBoxRect.height);
+    console.log("CropBox position:", cropBoxRect.left, cropBoxRect.top);
+    
+    // クロップボックスがキャンバス上のどこにあるかを計算
+    // （画面座標からの相対位置）
+    const relativeLeft = cropBoxRect.left - canvasRect.left;
+    const relativeTop = cropBoxRect.top - canvasRect.top;
+    const relativeWidth = cropBoxRect.width;
+    const relativeHeight = cropBoxRect.height;
+    
+    console.log("Relative to canvas:", relativeLeft, relativeTop, relativeWidth, relativeHeight);
+    
+    // 表示サイズから実際のキャンバスピクセルへの変換比率
     const scaleX = canvas.width / canvasRect.width;
     const scaleY = canvas.height / canvasRect.height;
     
-    // クロップボックスの位置をキャンバス座標に変換
-    // cropBoxはwrapper内の絶対座標、canvasはwrapperの中央に配置されている
-    const wrapper = document.getElementById("cropWrapper");
-    const wrapperRect = wrapper.getBoundingClientRect();
+    console.log("Scale factors:", scaleX, scaleY);
     
-    // キャンバスのwrapper内でのオフセット
-    const canvasOffsetX = canvasRect.left - wrapperRect.left;
-    const canvasOffsetY = canvasRect.top - wrapperRect.top;
+    // 実際のキャンバス座標に変換
+    let cropX = Math.round(relativeLeft * scaleX);
+    let cropY = Math.round(relativeTop * scaleY);
+    let cropWidth = Math.round(relativeWidth * scaleX);
+    let cropHeight = Math.round(relativeHeight * scaleY);
     
-    // クロップ座標を計算
-    let cropX = (cropBox.x - canvasOffsetX) * scaleX;
-    let cropY = (cropBox.y - canvasOffsetY) * scaleY;
-    let cropWidth = cropBox.width * scaleX;
-    let cropHeight = cropBox.height * scaleY;
+    console.log("Before bounds check:", { cropX, cropY, cropWidth, cropHeight });
     
-    console.log("Before normalize:", { cropX, cropY, cropWidth, cropHeight });
+    // 範囲を0以上に制限
+    cropX = Math.max(0, cropX);
+    cropY = Math.max(0, cropY);
     
-    // 座標を正規化
-    cropX = Math.max(0, Math.round(cropX));
-    cropY = Math.max(0, Math.round(cropY));
-    cropWidth = Math.round(cropWidth);
-    cropHeight = Math.round(cropHeight);
-    
-    // 範囲を制限
+    // キャンバスの範囲内に収める
     if (cropX + cropWidth > canvas.width) {
       cropWidth = canvas.width - cropX;
     }
@@ -867,11 +871,15 @@ function getCroppedImage() {
       cropHeight = canvas.height - cropY;
     }
     
-    console.log("After normalize:", { cropX, cropY, cropWidth, cropHeight });
+    // 最小サイズチェック
+    cropWidth = Math.max(20, cropWidth);
+    cropHeight = Math.max(20, cropHeight);
     
-    // 有効なサイズか確認
-    if (cropWidth < 20 || cropHeight < 20) {
-      console.log("Crop area too small, using original");
+    console.log("Final crop params:", { cropX, cropY, cropWidth, cropHeight });
+    
+    // 有効な範囲かチェック
+    if (cropX < 0 || cropY < 0 || cropWidth <= 0 || cropHeight <= 0) {
+      console.log("Invalid crop area, using original");
       return capturedImageData;
     }
     
@@ -888,13 +896,14 @@ function getCroppedImage() {
     );
     
     const dataUrl = croppedCanvas.toDataURL("image/png");
-    console.log("Cropped image created successfully, size:", cropWidth, "x", cropHeight);
+    console.log("Cropped image created, data length:", dataUrl.length);
+    console.log("=== getCroppedImage END ===");
     
     // 結果が有効か確認
     if (dataUrl && dataUrl.length > 1000) {
       return dataUrl;
     } else {
-      console.log("Cropped image too small, using original");
+      console.log("Cropped data too small, using original");
       return capturedImageData;
     }
   } catch (err) {
