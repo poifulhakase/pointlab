@@ -204,7 +204,7 @@ function initStartPageSelect() {
   select.addEventListener("change", function() {
     localStorage.setItem("poinavi_start_page", this.value);
   });
-});
+}
 
 // ============================================
 // タグUI描画
