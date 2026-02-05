@@ -204,6 +204,13 @@ async function callGemini(question, context) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API Response Error:', errorText);
+      
+      // 429エラー（クォータ超過）の場合はモック応答にフォールバック
+      if (response.status === 429) {
+        console.log('Gemini API quota exceeded. Falling back to mock response.');
+        return getMockResponse(question);
+      }
+      
       throw new Error(`Gemini API error: ${response.status}`);
     }
     

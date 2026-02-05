@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ぽいロボ">
+  <meta name="theme-color" content="#ffffff">
+  <title>ぽいロボ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header">
+      <button id="menuButton" class="header-icon-button" type="button" aria-label="メニュー">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
+      <a href="index.html" class="header-logo">
+        <img src="logo.svg" alt="ぽいロボ" class="header-logo-img">
+      </a>
+      <button id="settingsButton" class="header-icon-button" type="button" aria-label="設定">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- タブナビゲーション -->
+    <nav class="tab-nav">
+      <button class="tab-button active" data-tab="prediction">明日の予想</button>
+      <button class="tab-button" data-tab="history">過去データ</button>
+      <button class="tab-button" data-tab="signal">シグナル</button>
+    </nav>
+
+    <!-- 免責事項モーダル -->
+    <div id="disclaimerModal" class="modal hidden">
+      <div class="modal__overlay"></div>
+      <div class="modal__content">
+        <div class="modal__header">
+          <h2 class="modal__title">免責事項</h2>
+          <button class="modal__close" id="disclaimerModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal__body">
+          <p class="disclaimer-text">本サービス「ぽいロボ」は、ユーザー投票による予測を表示するエンターテインメントサービスです。</p>
+          <ul class="disclaimer-list">
+            <li>表示される予測は投資助言ではありません</li>
+            <li>投資判断は、ご自身の責任において行ってください</li>
+            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+            <li>実際の投資判断は、専門家への相談を推奨いたします</li>
+          </ul>
+          <p class="disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div id="settingsModal" class="modal hidden">
+      <div class="modal__overlay"></div>
+      <div class="modal__content">
+        <div class="modal__header">
+          <h2 class="modal__title">設定</h2>
+          <button class="modal__close" id="settingsModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal__body">
+          <div class="settings-item">
+            <label class="settings-label">テーマ</label>
+            <button id="themeToggle" class="theme-toggle-btn">
+              <span class="theme-icon">🌙</span>
+              <span class="theme-text">ダークモード</span>
+            </button>
+          </div>
+          <div class="settings-item">
+            <label class="settings-label">投票</label>
+            <button id="cancelVoteBtn" class="cancel-vote-btn">
+              <span>本日の投票をキャンセル</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+      <!-- 明日の予想タブ -->
+      <div class="tab-content active" id="tabPrediction">
+        <!-- ロボットアイコン -->
+        <div class="robot-icon">
+          <img src="robot.png" alt="ぽいロボ" class="robot-image">
+        </div>
+        <!-- 質問セクション -->
+      <div class="question-section">
+        <h2 class="question-text">明日（<span id="targetDate"></span>）の日経平均は？</h2>
+        <p class="question-note">※前営業日終値と翌営業日終値で判定</p>
+      </div>
+
+      <!-- 予測ゲージセクション -->
+      <div class="gauge-section">
+        <div class="gauge-container">
+          <div class="gauge-bar">
+            <div class="gauge-bull" id="gaugeBull" style="width: 50%"></div>
+            <div class="gauge-bear" id="gaugeBear" style="width: 50%"></div>
+          </div>
+          <div class="gauge-labels">
+            <span class="gauge-label bull">上がる</span>
+            <span class="gauge-label bear">下がる</span>
+          </div>
+        </div>
+
+        <!-- 予測表示 -->
+        <div class="prediction-display">
+          <div class="prediction-title">現在の予測</div>
+          <div class="prediction-values">
+            <div class="prediction-item bull">
+              <span class="prediction-label">上がる：</span>
+              <span class="prediction-value" id="bullPercent">50</span>%
+            </div>
+            <div class="prediction-item bear">
+              <span class="prediction-label">下がる：</span>
+              <span class="prediction-value" id="bearPercent">50</span>%
+            </div>
+          </div>
+        </div>
+
+        <!-- 投票人数 -->
+        <div class="vote-count">
+          ラボメン投票数：<span id="totalVotes">0</span>人
+        </div>
+      </div>
+
+      </div>
+
+      <!-- 過去データタブ -->
+      <div class="tab-content" id="tabHistory">
+        <div class="history-section">
+          <div class="history-empty">
+            <span class="history-icon">📊</span>
+            <p class="history-text">過去の予測データは準備中です</p>
+            <p class="history-subtext">近日公開予定</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- シグナルタブ -->
+      <div class="tab-content" id="tabSignal">
+        <div class="history-section">
+          <div class="history-empty">
+            <span class="history-icon">📡</span>
+            <p class="history-text">シグナル機能は準備中です</p>
+            <p class="history-subtext">近日公開予定</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 投票済みメッセージ -->
+    <div class="voted-message hidden" id="votedMessage">
+      あなたは <span id="votedChoice"></span> に投票しました
+    </div>
+
+    <!-- 投票ボタン -->
+    <div class="vote-buttons">
+      <button class="vote-button bull" id="voteBull">
+        <span class="vote-text">上がる</span>
+      </button>
+      <button class="vote-button bear" id="voteBear">
+        <span class="vote-text">下がる</span>
+      </button>
+    </div>
+
+    <!-- フッター -->
+    <footer class="footer">
+      <a href="https://note.com/pointlab" target="_blank" rel="noopener noreferrer" class="footer-link">
+        <img src="../poinavi/poyonkun_full.png" alt="ぽよん君" class="footer-icon">
+        ぽいんとらぼ
+      </a>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

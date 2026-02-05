@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
+    <title>ポイントラブの部屋（生成AI対応版） | ぽいふる博士</title>
+    <meta
+      name="description"
+      content="相談が重なるほど、中央の♡と空気が少しずつ変化する、ぽいふる博士の実験的な相談部屋です。"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <!--
+    bodyクラスで「部屋の成長段階」を表現する想定
+    level-1 ～ level-4
+  -->
+  <body class="level-2">
+    <div class="room">
+      <header class="room__header">
+        <h1 class="room__title">ポイントラブの部屋</h1>
+        <p class="room__subtitle">ぽいふる博士の、小さな相談室</p>
+      </header>
+
+      <main class="room__main">
+        <!-- ハートエリア -->
+        <section class="room__heart-area">
+          <div class="heart-wrapper" id="heart">
+            <div class="heart-glow"></div>
+            <div class="heart"></div>
+          </div>
+
+          <p class="room__message">
+            「相談が重なるほど、<br />
+            　この部屋は、静かに色づいていきます。」
+          </p>
+        </section>
+
+        <!-- 相談入力 -->
+        <section class="room__talk-area">
+          <textarea
+            id="userInput"
+            class="room__textarea"
+            rows="3"
+            placeholder="博士に、そっと相談を書いてみる…"
+          ></textarea>
+
+          <button id="sendBtn" class="room__button">
+            相談する
+          </button>
+
+          <!-- ローディング表示 -->
+          <div id="loadingIndicator" class="room__loading" style="display: none;">
+            <span class="room__loading-dot"></span>
+            <span class="room__loading-dot"></span>
+            <span class="room__loading-dot"></span>
+            <span class="room__loading-text">博士、考察中…</span>
+          </div>
+
+          <!-- AI返答表示エリア -->
+          <div id="aiResponse" class="room__response" aria-live="polite"></div>
+        </section>
+
+        <!-- 注意文 -->
+        <section class="room__note-area">
+          <p class="room__note">
+            ・この部屋は実験的なファン向け体験です。<br />
+            ・表示される内容は参考情報であり、助言・診断・保証を行うものではありません。<br />
+            ・最終的な判断はご自身で行ってください。
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // ============================================
+        // DOM 要素の取得
+        // ============================================
+        const sendBtn = document.getElementById("sendBtn");
+        const input = document.getElementById("userInput");
+        const response = document.getElementById("aiResponse");
+        const heart = document.getElementById("heart");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+
+        if (!sendBtn || !input || !response || !heart || !loadingIndicator) return;
+
+        // ============================================
+        // localStorage で相談回数を管理
+        // ============================================
+        const STORAGE_KEY = "pointlove_count";
+
+        function getCount() {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? Number(raw) || 0 : 0;
+        }
+
+        function setCount(n) {
+          localStorage.setItem(STORAGE_KEY, String(n));
+        }
+
+        // 初期相談回数 & レベル反映
+        let count = getCount();
+        applyLevel(count);
+
+        // ============================================
+        // ハートのレベル反映
+        // ============================================
+        function applyLevel(n) {
+          document.body.classList.remove("level-1", "level-2", "level-3", "level-4");
+          if (n >= 20) document.body.classList.add("level-4");
+          else if (n >= 10) document.body.classList.add("level-3");
+          else if (n >= 4) document.body.classList.add("level-2");
+          else document.body.classList.add("level-1");
+        }
+
+        // ============================================
+        // ローディング表示の制御
+        // ============================================
+        function showLoading() {
+          loadingIndicator.style.display = "flex";
+          sendBtn.disabled = true;
+          sendBtn.textContent = "相談中…";
+          response.textContent = "";
+        }
+
+        function hideLoading() {
+          loadingIndicator.style.display = "none";
+          sendBtn.disabled = false;
+          sendBtn.textContent = "相談する";
+        }
+
+        // ============================================
+        // 返答表示 & エラー表示
+        // ============================================
+        function displayResponseText(text) {
+          const formatted = text.replace(/\n/g, "<br>");
+          response.innerHTML = formatted;
+        }
+
+        function displayError(message) {
+          response.innerHTML =
+            '<span style="color: rgba(248, 113, 113, 0.9);">エラー: ' +
+            message +
+            "</span>";
+        }
+
+        // ============================================
+        // 【重要】API設定エリア
+        // ここを書き換えることで、OpenAI / Claude / Gemini などに差し替え可能
+        // ============================================
+        const API_CONFIG = {
+          // ▼ エンドポイント（必ず自分の環境のURLに変更すること）
+          // 例: OpenAI → "https://api.openai.com/v1/chat/completions"
+          // 例: Claude → "https://api.anthropic.com/v1/messages"
+          // 例: 自前バックエンド → "https://your-backend.example.com/generate"
+          endpoint: "https://api.example.com/v1/generate",
+
+          // ▼ APIキー（ここにはダミー値のみを置き、本番では環境変数やサーバー側で管理すること）
+          apiKey: "sk-your-api-key-here",
+
+          // ▼ リクエストヘッダー（プロバイダに応じて書き換える）
+          headers: {
+            "Content-Type": "application/json",
+            // OpenAI の場合: Authorization: "Bearer " + apiKey
+            // Claude の場合: "x-api-key": apiKey
+            Authorization: "Bearer sk-your-api-key-here",
+          },
+
+          // ▼ リクエストボディの構築
+          //   - ここを編集することで、各プロバイダの仕様に合わせられます
+          buildRequestBody(userMessage, n) {
+            // 【OpenAI の例】
+            // return {
+            //   model: "gpt-4o-mini",
+            //   messages: [
+            //     {
+            //       role: "system",
+            //       content:
+            //         "あなたは『ぽいふる博士』です。観察者視点で穏やかにコメントします。" +
+            //         "断定的な言い切り・煽り・成功の保証は絶対に行わず、" +
+            //         "あくまで一つの見方として、短めの日本語で返答してください。"
+            //     },
+            //     {
+            //       role: "user",
+            //       content:
+            //         "これは " + n + " 回目の相談です。\n\n" + userMessage
+            //     }
+            //   ],
+            //   temperature: 0.7,
+            //   max_tokens: 300
+            // };
+
+            // 【Claude / Gemini / 自前API の場合は、ここを好きな形に書き換えてください】
+
+            // デフォルト（バックエンド側で解釈してもらう想定）
+            return {
+              persona: "poiful-doctor",
+              consultationCount: n,
+              userMessage: userMessage,
+              style: {
+                observerTone: true,
+                forbidAssertion: true,
+                forbidHype: true,
+                forbidGuarantee: true,
+              },
+            };
+          },
+
+          // ▼ レスポンスからテキストを取り出す処理
+          //   - プロバイダごとにレスポンス形式が違うので、ここを書き換える
+          extractResponseText(data) {
+            // OpenAI例: data.choices[0].message.content
+            // Claude例: data.content[0].text
+            // Gemini例: data.candidates[0].content.parts[0].text
+
+            if (!data) return "";
+            if (typeof data === "string") return data;
+
+            if (data.choices && data.choices[0]) {
+              const choice = data.choices[0];
+              if (choice.message && choice.message.content) {
+                return choice.message.content;
+              }
+              if (choice.text) return choice.text;
+            }
+
+            if (data.content && Array.isArray(data.content) && data.content[0]) {
+              if (typeof data.content[0].text === "string") {
+                return data.content[0].text;
+              }
+            }
+
+            if (
+              data.candidates &&
+              data.candidates[0] &&
+              data.candidates[0].content &&
+              data.candidates[0].content.parts &&
+              data.candidates[0].content.parts[0] &&
+              typeof data.candidates[0].content.parts[0].text === "string"
+            ) {
+              return data.candidates[0].content.parts[0].text;
+            }
+
+            return data.response || data.text || "";
+          },
+        };
+
+        // ============================================
+        // 生成AI呼び出し（fetch）
+        // ============================================
+        async function callDoctorAPI(userMessage, n) {
+          const body = API_CONFIG.buildRequestBody(userMessage, n);
+
+          const res = await fetch(API_CONFIG.endpoint, {
+            method: "POST",
+            headers: API_CONFIG.headers,
+            body: JSON.stringify(body),
+          });
+
+          if (!res.ok) {
+            throw new Error("APIエラー: " + res.status + " " + res.statusText);
+          }
+
+          const data = await res.json();
+          const text = API_CONFIG.extractResponseText(data);
+
+          if (!text || !text.trim()) {
+            throw new Error("返答テキストが取得できませんでした。");
+          }
+
+          return text;
+        }
+
+        // ============================================
+        // メイン処理：相談ボタンクリック
+        // ============================================
+        sendBtn.addEventListener("click", async function () {
+          const text = input.value.trim();
+          if (!text) {
+            alert("博士に届けたい言葉を、少しだけ書いてみてください。");
+            return;
+          }
+
+          showLoading();
+
+          try {
+            // 現在の相談回数（増加前）
+            const current = count;
+
+            // API呼び出し
+            const answer = await callDoctorAPI(text, current + 1);
+            displayResponseText(answer);
+
+            // カウント加算＆保存
+            count = current + 1;
+            setCount(count);
+            applyLevel(count);
+
+            // ハート演出（一度だけ強く脈打つ）
+            heart.classList.add("heart-wrapper--pulse-once");
+            setTimeout(() => {
+              heart.classList.remove("heart-wrapper--pulse-once");
+            }, 800);
+
+            // 入力欄リセット
+            input.value = "";
+          } catch (err) {
+            console.error(err);
+            displayError(
+              err.message ||
+                "博士との通信に失敗しました。エンドポイントとAPIキーの設定をご確認ください。"
+            );
+          } finally {
+            hideLoading();
+          }
+        });
+
+        // ============================================
+        // Enter 送信（Shift+Enter で改行）
+        // ============================================
+        input.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendBtn.click();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+
+
+
+

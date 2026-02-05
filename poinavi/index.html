@@ -2,301 +2,184 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
     <meta name="theme-color" content="#ffffff" />
-    <title>ぽいナビ MVP - 近くの店舗・スポット検索</title>
-    <meta
-      name="description"
-      content="現在地から近い店舗・スポットを直感的に検索・ナビゲーション"
-    />
+    <title>ぽいナビ - 翻訳</title>
+    <meta name="description" content="音声翻訳とメニュー翻訳で旅行をサポート" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="./style.css" />
-    <!-- Google Maps API -->
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDA62Ge5UHqpZOFQhMhVSvQI_xWABrftL0&libraries=places,geometry&callback=initGoogleMaps"
-      defer
-    ></script>
-    <script>
-      // Google Maps API の読み込みエラーハンドリング
-      window.gm_authFailure = function() {
-        showMapError("Google Maps API の認証に失敗しました。APIキーを確認してください。");
-      };
-
-      // APIキーチェック
-      function checkApiKey() {
-        const scriptTag = document.querySelector('script[src*="maps.googleapis.com"]');
-        if (scriptTag && scriptTag.src.includes('YOUR_GOOGLE_MAPS_API_KEY')) {
-          showMapError(
-            "Google Maps API キーが設定されていません。\n\n" +
-            "index.html の14行目付近の YOUR_GOOGLE_MAPS_API_KEY を実際のAPIキーに置き換えてください。\n\n" +
-            "APIキーの取得方法:\n" +
-            "1. https://console.cloud.google.com/ にアクセス\n" +
-            "2. プロジェクトを作成\n" +
-            "3. Maps JavaScript API と Places API を有効化\n" +
-            "4. API キーを取得して設定"
-          );
-          return false;
-        }
-        return true;
-      }
-
-      function showMapError(message) {
-        const mapContainer = document.getElementById("map");
-        if (mapContainer) {
-          mapContainer.innerHTML = `
-            <div style="
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 100%;
-              padding: 20px;
-              text-align: center;
-              background-color: #f5f5f5;
-              color: #d32f2f;
-            ">
-              <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-              <div style="font-size: 18px; font-weight: 600; margin-bottom: 12px;">マップの読み込みエラー</div>
-              <div style="font-size: 14px; line-height: 1.6; white-space: pre-line;">${message}</div>
-            </div>
-          `;
-        }
-      }
-
-      // ページ読み込み時にAPIキーをチェック
-      window.addEventListener("DOMContentLoaded", function() {
-        setTimeout(function() {
-          if (typeof google === "undefined" || typeof google.maps === "undefined") {
-            if (!checkApiKey()) {
-              return;
-            }
-            showMapError(
-              "Google Maps API が読み込めませんでした。\n\n" +
-              "考えられる原因:\n" +
-              "・APIキーが正しく設定されていない\n" +
-              "・Maps JavaScript API が有効化されていない\n" +
-              "・ネットワーク接続の問題\n\n" +
-              "ブラウザのコンソール（F12）でエラー詳細を確認してください。"
-            );
-          }
-        }, 2000); // 2秒後にチェック
-      });
-    </script>
   </head>
   <body class="light-mode">
-    <!-- ローディング画面 -->
-    <div id="loadingOverlay" class="loading-overlay">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p class="loading-text">現在地を取得中...</p>
-      </div>
-    </div>
-
-    <!-- 現在地住所モーダル -->
-    <div id="locationModal" class="location-modal hidden">
-      <div class="location-modal__overlay"></div>
-      <div class="location-modal__content">
-        <div class="location-modal__header">
-          <h2 class="location-modal__title">現在地</h2>
-          <button class="location-modal__close" id="locationModalClose" aria-label="閉じる">×</button>
-        </div>
-        <div class="location-modal__body">
-          <p class="location-modal__address" id="locationModalAddress">住所を取得中...</p>
-        </div>
-      </div>
-    </div>
+    <!-- ヘッダー -->
+    <header class="translate-header">
+      <!-- 免責事項ボタン（左上） -->
+      <button id="disclaimerButton" class="translate-header__icon-btn translate-header__icon-btn--left" type="button" aria-label="免責事項">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
+      
+      <h1 class="translate-header__title">
+        <img src="./logo.svg" alt="ぽいナビ" class="translate-header__logo" />
+      </h1>
+      
+      <!-- 設定ボタン（右上） -->
+      <button id="translateSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
 
     <!-- 設定モーダル -->
-    <div id="settingsModal" class="settings-modal hidden">
-      <div class="settings-modal__overlay"></div>
-      <div class="settings-modal__content">
-        <div class="settings-modal__header">
-          <h2 class="settings-modal__title">設定</h2>
-          <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる">
+    <div id="translateSettingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="translateSettingsClose" aria-label="閉じる">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
-        <div class="settings-modal__body">
-          <!-- タグ管理 -->
-          <div class="settings-modal__item settings-modal__item--tags">
-            <label class="settings-modal__label">タグ管理</label>
-            
-            <!-- タグ追加フォーム -->
-            <div class="tag-add-form">
-              <input 
-                type="text" 
-                id="newTagInput" 
-                class="tag-add-form__input" 
-                placeholder="新しいタグ名"
-                maxlength="20"
-              />
-              <button id="addTagButton" class="tag-add-form__button" type="button">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                追加
-              </button>
-            </div>
-            
-            <!-- タグ一覧（削除可能） -->
-            <div class="tag-manage-list" id="tagManageList">
-              <!-- JavaScriptで動的に生成 -->
-            </div>
+        <div class="translate-modal__body">
+          <!-- 翻訳前言語 -->
+          <div class="translate-modal__item">
+            <label class="translate-modal__label">翻訳前（入力言語）</label>
+            <select id="translateSourceLang" class="translate-modal__select">
+              <option value="en" selected>英語</option>
+              <option value="ja">日本語</option>
+              <option value="zh">中国語</option>
+              <option value="ko">韓国語</option>
+            </select>
           </div>
-          
-          <!-- 移動手段 -->
-          <div class="settings-modal__item">
-            <label class="settings-modal__label">移動手段</label>
-            <div class="transport-mode-buttons">
-              <button type="button" class="transport-mode-btn active" data-mode="walk">
-                🚶 徒歩
-              </button>
-              <button type="button" class="transport-mode-btn" data-mode="bicycle">
-                🚲 自転車
-              </button>
-              <button type="button" class="transport-mode-btn" data-mode="car">
-                🚗 車
-              </button>
-            </div>
+          <!-- 翻訳後言語 -->
+          <div class="translate-modal__item">
+            <label class="translate-modal__label">翻訳後（出力言語）</label>
+            <select id="translateTargetLang" class="translate-modal__select">
+              <option value="en">英語</option>
+              <option value="ja" selected>日本語</option>
+              <option value="zh">中国語</option>
+              <option value="ko">韓国語</option>
+            </select>
           </div>
-          
           <!-- テーマ切り替え -->
-          <div class="settings-modal__item">
-            <label class="settings-modal__label">テーマ</label>
-            <button id="themeToggle" class="settings-modal__theme-toggle">
+          <div class="translate-modal__item">
+            <label class="translate-modal__label">テーマ</label>
+            <button id="translateThemeToggle" class="translate-modal__theme-toggle">
               <span class="theme-icon">🌙</span>
               <span class="theme-text">ダークモード</span>
             </button>
           </div>
-          
-          <!-- 表示件数 -->
-          <div class="settings-modal__item">
-            <label class="settings-modal__label">表示件数</label>
-            <select id="resultCount" class="settings-modal__select">
-              <option value="3">3件</option>
-              <option value="4">4件</option>
-              <option value="5" selected>5件</option>
-            </select>
-          </div>
-          
-          <!-- 営業中のみ表示 -->
-          <div class="settings-modal__item">
-            <label class="settings-modal__label settings-modal__label--checkbox">
-              <input type="checkbox" id="openOnly" class="settings-modal__checkbox" />
-              <span class="settings-modal__checkbox-custom"></span>
-              営業中のみ表示
-            </label>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- 1️⃣ マップ表示（上部） -->
-    <main class="main-content">
-      <div class="map-container">
-        <div id="map" class="map"></div>
-        
-        <!-- 雨雲レーダートグル（左上フロート） -->
-        <div class="rain-viewer-control">
-          <button 
-            id="rainViewerToggle" 
-            class="rain-viewer-toggle" 
-            type="button"
-            aria-pressed="false"
-            aria-label="雨雲レーダー切替"
-          >
-            <svg class="rain-viewer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path>
-              <line x1="8" y1="16" x2="8.01" y2="16"></line>
-              <line x1="8" y1="20" x2="8.01" y2="20"></line>
-              <line x1="12" y1="18" x2="12.01" y2="18"></line>
-              <line x1="12" y1="22" x2="12.01" y2="22"></line>
-              <line x1="16" y1="16" x2="16.01" y2="16"></line>
-              <line x1="16" y1="20" x2="16.01" y2="20"></line>
+    <!-- 免責事項モーダル -->
+    <div id="translateDisclaimerModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">免責事項</h2>
+          <button class="translate-modal__close" id="translateDisclaimerClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-            <span class="rain-viewer-toggle__text">雨雲</span>
           </button>
-          
-          <!-- 雨雲ON時のステータスパネル -->
-          <div id="rainViewerStatus" class="rain-viewer-status hidden">
-            <div class="rain-viewer-status__title">雨雲観測モード</div>
-            <div class="rain-viewer-status__desc">降雨状況の参考表示です</div>
-          </div>
         </div>
-        
-        <!-- 免責表示（常時） -->
-        <div class="rain-viewer-disclaimer">
-          ※ 天気情報は参考表示です。実際の状況は現地でご確認ください。
+        <div class="translate-modal__body translate-disclaimer-body">
+          <p class="translate-disclaimer-text">本サービス「ぽいナビ」は、AIによる参考情報を提供するものです。</p>
+          <ul class="translate-disclaimer-list">
+            <li>翻訳結果は参考情報であり、正確性・完全性を保証するものではありません</li>
+            <li>重要な場面では、プロの通訳や翻訳者への相談を推奨いたします</li>
+            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+          </ul>
+          <p class="translate-disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
         </div>
-        
-        <!-- トップ3～5件リスト（距離順） -->
-        <div class="results-list" id="resultsList"></div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <main class="translate-main">
+      <!-- テキスト表示エリア -->
+      <div class="translate-result-area" id="translateResultArea">
+        <div class="translate-result-placeholder">
+          <p>翻訳結果がここに表示されます</p>
+        </div>
+      </div>
+
+      <!-- メニュー翻訳（QRコードアイコン） -->
+      <div class="translate-camera-area">
+        <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
+          <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <!-- 左上の位置検出パターン -->
+            <rect x="2" y="2" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="4" y="4" width="4" height="4" rx="0.5"/>
+            <!-- 右上の位置検出パターン -->
+            <rect x="14" y="2" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="16" y="4" width="4" height="4" rx="0.5"/>
+            <!-- 左下の位置検出パターン -->
+            <rect x="2" y="14" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="4" y="16" width="4" height="4" rx="0.5"/>
+            <!-- 右下のデータ部分 -->
+            <rect x="14" y="14" width="3" height="3" rx="0.5"/>
+            <rect x="19" y="14" width="3" height="3" rx="0.5"/>
+            <rect x="14" y="19" width="3" height="3" rx="0.5"/>
+          </svg>
+        </button>
+        <p class="translate-camera-label">メニュー翻訳</p>
+      </div>
+
+      <!-- 音声翻訳ボタン（中央大きめの丸ボタン） -->
+      <div class="translate-voice-area">
+        <button class="translate-voice-btn" id="voiceTranslateBtn" type="button" aria-label="音声翻訳">
+          <svg class="translate-voice-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </button>
+        <p class="translate-voice-label">タップして話す</p>
       </div>
     </main>
 
-    <!-- 2️⃣ 設定バー（画面下部・noteバナーの上） -->
-    <div class="settings-bar">
-      <button class="settings-bar__toggle" id="settingsToggle" aria-label="設定を開閉">
-        <span class="settings-bar__toggle-icon">▲</span>
-      </button>
-      <div class="settings-bar__inner" id="settingsContent">
-        <!-- 1行目: 検索テキスト入力 + 設定 -->
-        <section class="settings-section">
-          <div class="search-row">
-            <div class="search-group">
-              <input
-                type="text"
-                id="searchInput"
-                class="search-input search-input--short"
-                placeholder="研究所"
-              />
-            <button id="searchButton" class="search-button" type="button" aria-label="検索">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </button>
-            </div>
-            <button id="settingsButton" class="settings-icon-button" type="button" aria-label="設定">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </button>
-          </div>
-        </section>
-
-        <!-- 2行目: タグ選択（JavaScriptで動的に生成） -->
-        <section class="settings-section">
-          <div class="tag-list" id="tagList">
-            <!-- タグはJavaScriptで動的に生成されます -->
-          </div>
-        </section>
+    <!-- フッター -->
+    <footer class="translate-footer">
+      <div class="translate-footer__btn translate-footer__btn--invisible" aria-hidden="true">
+        <span>地図</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
       </div>
-    </div>
-
-    <!-- 3️⃣ 固定要素（画面最下部） -->
-    <footer class="note-banner">
       <a
         href="https://note.com/pointlab"
         target="_blank"
         rel="noopener noreferrer"
-        class="note-banner__link"
+        class="translate-footer__banner"
       >
-        <span class="note-banner__text"><img src="./poyonkun_full.png" alt="ぽいふる" class="note-banner__icon" /> ぽいんとらぼ</span>
+        <img src="./poyonkun_full.png" alt="ぽいふる" class="translate-footer__banner-icon" />
+        <span>ぽいんとらぼ</span>
+      </a>
+      <a href="./map.html" class="translate-footer__btn" aria-label="地図ページへ">
+        <span>地図</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
       </a>
     </footer>
 
-    <script src="./script.js"></script>
+    <script src="./translate.js"></script>
   </body>
 </html>
-

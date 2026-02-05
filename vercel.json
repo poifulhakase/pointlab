@@ -12,6 +12,10 @@
     {
       "src": "*.css",
       "use": "@vercel/static"
+    },
+    {
+      "src": "poinavi/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -22,6 +26,10 @@
     {
       "src": "/hakaseAI/(.*)",
       "dest": "hakaseAI/server.js"
+    },
+    {
+      "src": "/poinavi/(.*)",
+      "dest": "/poinavi/$1"
     },
     {
       "src": "/(.*\\.html)",
