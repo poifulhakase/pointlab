@@ -6,6 +6,26 @@
       "use": "@vercel/node"
     },
     {
+      "src": "hakaseAI/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.png",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "hakaseAI/*.svg",
+      "use": "@vercel/static"
+    },
+    {
       "src": "*.html",
       "use": "@vercel/static"
     },
@@ -24,8 +44,32 @@
       "dest": "hakaseAI/server.js"
     },
     {
-      "src": "/hakaseAI/(.*)",
-      "dest": "hakaseAI/server.js"
+      "src": "/hakaseAI/style\\.css",
+      "dest": "/hakaseAI/style.css"
+    },
+    {
+      "src": "/hakaseAI/script\\.js",
+      "dest": "/hakaseAI/script.js"
+    },
+    {
+      "src": "/hakaseAI/favicon\\.png",
+      "dest": "/hakaseAI/favicon.png"
+    },
+    {
+      "src": "/hakaseAI/icon-192\\.png",
+      "dest": "/hakaseAI/icon-192.png"
+    },
+    {
+      "src": "/hakaseAI/logo\\.svg",
+      "dest": "/hakaseAI/logo.svg"
+    },
+    {
+      "src": "/hakaseAI/poyonkun_full\\.png",
+      "dest": "/hakaseAI/poyonkun_full.png"
+    },
+    {
+      "src": "/hakaseAI/?$",
+      "dest": "/hakaseAI/index.html"
     },
     {
       "src": "/poinavi$",
