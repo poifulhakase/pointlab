@@ -1068,6 +1068,8 @@ function initSettingsModal() {
   const closeButton = document.getElementById("settingsModalClose");
   const overlay = modal?.querySelector(".settings-modal__overlay");
 
+  console.log("initSettingsModal called", { modal: !!modal, mapSettingsButton: !!mapSettingsButton, closeButton: !!closeButton });
+
   if (!modal || !closeButton) {
     console.warn("設定モーダルの要素が見つかりません");
     return;
@@ -1076,15 +1078,21 @@ function initSettingsModal() {
   // 設定ボタンのクリックイベント（設定バー内）
   if (settingsButton) {
     settingsButton.addEventListener("click", function() {
+      console.log("settingsButton clicked");
       showSettingsModal();
     });
   }
 
   // 設定ボタンのクリックイベント（地図右上）
   if (mapSettingsButton) {
-    mapSettingsButton.addEventListener("click", function() {
+    console.log("mapSettingsButton event listener added");
+    mapSettingsButton.addEventListener("click", function(e) {
+      console.log("mapSettingsButton clicked");
+      e.stopPropagation();
       showSettingsModal();
     });
+  } else {
+    console.warn("mapSettingsButton not found");
   }
 
   // 閉じるボタンのクリックイベント
