@@ -1625,7 +1625,8 @@ body.dark-mode .settings-modal__select {
   position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 1000;
+  z-index: 9999;
+  pointer-events: auto !important;
   width: 44px;
   height: 44px;
   border-radius: 14px;
