@@ -777,47 +777,87 @@ function getCroppedImage() {
 }
 
 async function performOCR(imageData, onProgress) {
+  const processingText = document.getElementById("processingText");
+  let worker = null;
+  
   try {
-    // 処理中のテキストを更新
-    const processingText = document.getElementById("processingText");
+    console.log("OCR開始, 言語:", ocrLang);
     
-    // Tesseract.js を使用してOCR実行
-    const result = await Tesseract.recognize(imageData, ocrLang, {
+    // Tesseract Workerを作成
+    if (processingText) processingText.textContent = "OCRエンジンを準備中...";
+    
+    worker = await Tesseract.createWorker(ocrLang, 1, {
       logger: (m) => {
         console.log("Tesseract:", m.status, m.progress);
         
-        // ステータスに応じてUIを更新
         if (processingText) {
-          if (m.status === "loading tesseract core") {
-            processingText.textContent = "OCRエンジンを読み込み中...";
-          } else if (m.status === "initializing tesseract") {
-            processingText.textContent = "OCRエンジンを初期化中...";
-          } else if (m.status === "loading language traineddata") {
-            processingText.textContent = "言語データを読み込み中...";
-          } else if (m.status === "initializing api") {
-            processingText.textContent = "APIを初期化中...";
-          } else if (m.status === "recognizing text") {
-            processingText.textContent = "文字を認識中...";
-            if (onProgress) {
-              onProgress(m.progress);
-            }
+          switch (m.status) {
+            case "loading tesseract core":
+              processingText.textContent = "OCRエンジンを読み込み中...";
+              break;
+            case "initializing tesseract":
+              processingText.textContent = "初期化中...";
+              break;
+            case "loading language traineddata":
+              processingText.textContent = "言語データを読み込み中...（初回は時間がかかります）";
+              break;
+            case "loaded language traineddata":
+              processingText.textContent = "言語データ読み込み完了";
+              break;
+            case "initializing api":
+              processingText.textContent = "API初期化中...";
+              break;
+            case "recognizing text":
+              processingText.textContent = `文字を認識中... ${Math.round((m.progress || 0) * 100)}%`;
+              if (onProgress) onProgress(m.progress);
+              break;
           }
         }
+      },
+      errorHandler: (err) => {
+        console.error("Tesseract Worker Error:", err);
       }
     });
     
+    console.log("Worker作成完了、認識開始");
+    if (processingText) processingText.textContent = "文字を認識中...";
+    
+    // OCR実行
+    const result = await worker.recognize(imageData);
+    console.log("OCR完了, 文字数:", result.data.text?.length);
+    
+    // Workerを終了
+    await worker.terminate();
+    
     return result.data.text;
+    
   } catch (err) {
     console.error("OCRエラー:", err);
+    console.error("エラー詳細:", err.message, err.stack);
     
-    // エラーの種類に応じてメッセージを変更
-    if (err.message && err.message.includes("network")) {
-      throw new Error("ネットワークエラー: 言語データの読み込みに失敗しました");
-    } else if (err.message && err.message.includes("language")) {
-      throw new Error("言語データの読み込みに失敗しました。別の言語を試してください");
+    // Workerがあれば終了
+    if (worker) {
+      try {
+        await worker.terminate();
+      } catch (e) {
+        console.error("Worker終了エラー:", e);
+      }
     }
     
-    throw new Error("文字認識に失敗しました。もう一度お試しください");
+    // エラーの種類に応じてメッセージを変更
+    let errorMessage = "文字認識に失敗しました。";
+    
+    if (err.message) {
+      if (err.message.includes("network") || err.message.includes("fetch")) {
+        errorMessage = "ネットワークエラー: 言語データの読み込みに失敗しました。\nインターネット接続を確認してください。";
+      } else if (err.message.includes("language") || err.message.includes("lang")) {
+        errorMessage = "言語データの読み込みに失敗しました。\n設定から別の言語を選択してお試しください。";
+      } else if (err.message.includes("memory") || err.message.includes("heap")) {
+        errorMessage = "メモリ不足です。\nブラウザを再起動してお試しください。";
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 }
 
