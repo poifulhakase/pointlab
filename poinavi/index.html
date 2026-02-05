@@ -53,24 +53,42 @@
           </button>
         </div>
         <div class="translate-modal__body">
-          <!-- 翻訳前言語 -->
+          <!-- OCR認識言語 -->
           <div class="translate-modal__item">
-            <label class="translate-modal__label">翻訳前（入力言語）</label>
-            <select id="translateSourceLang" class="translate-modal__select">
-              <option value="en" selected>英語</option>
-              <option value="ja">日本語</option>
-              <option value="zh">中国語</option>
-              <option value="ko">韓国語</option>
+            <label class="translate-modal__label">カメラ認識言語</label>
+            <select id="ocrLanguageSelect" class="translate-modal__select">
+              <option value="jpn" selected>日本語</option>
+              <option value="eng">英語</option>
+              <option value="chi_sim">中国語（簡体）</option>
+              <option value="chi_tra">中国語（繁体）</option>
+              <option value="kor">韓国語</option>
+              <option value="fra">フランス語</option>
+              <option value="deu">ドイツ語</option>
+              <option value="spa">スペイン語</option>
+              <option value="ita">イタリア語</option>
+              <option value="por">ポルトガル語</option>
+              <option value="rus">ロシア語</option>
+              <option value="tha">タイ語</option>
+              <option value="vie">ベトナム語</option>
             </select>
+            <p class="translate-modal__hint-text">撮影する文字の言語を選択</p>
           </div>
           <!-- 翻訳後言語 -->
           <div class="translate-modal__item">
-            <label class="translate-modal__label">翻訳後（出力言語）</label>
+            <label class="translate-modal__label">翻訳後の言語</label>
             <select id="translateTargetLang" class="translate-modal__select">
               <option value="en">英語</option>
               <option value="ja" selected>日本語</option>
               <option value="zh">中国語</option>
               <option value="ko">韓国語</option>
+              <option value="fr">フランス語</option>
+              <option value="de">ドイツ語</option>
+              <option value="es">スペイン語</option>
+              <option value="it">イタリア語</option>
+              <option value="pt">ポルトガル語</option>
+              <option value="ru">ロシア語</option>
+              <option value="th">タイ語</option>
+              <option value="vi">ベトナム語</option>
             </select>
           </div>
           <!-- テーマ切り替え -->
@@ -106,6 +124,80 @@
             <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
           </ul>
           <p class="translate-disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- カメラ撮影モーダル -->
+    <div id="cameraModal" class="camera-modal hidden">
+      <div class="camera-modal__container">
+        <!-- カメラプレビュー画面 -->
+        <div id="cameraPreviewScreen" class="camera-modal__screen">
+          <div class="camera-modal__header">
+            <button class="camera-modal__close-btn" id="cameraCloseBtn" aria-label="閉じる">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <span class="camera-modal__title">カメラ翻訳</span>
+            <div class="camera-modal__spacer"></div>
+          </div>
+          <div class="camera-modal__video-wrapper">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <div class="camera-modal__guide">
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--tl"></div>
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--tr"></div>
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--bl"></div>
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--br"></div>
+            </div>
+          </div>
+          <div class="camera-modal__controls">
+            <button class="camera-modal__capture-btn" id="cameraCaptureBtn" aria-label="撮影">
+              <span class="camera-modal__capture-inner"></span>
+            </button>
+          </div>
+          <p class="camera-modal__hint">翻訳したい文字を枠内に収めて撮影</p>
+        </div>
+
+        <!-- 範囲選択画面 -->
+        <div id="cropScreen" class="camera-modal__screen hidden">
+          <div class="camera-modal__header">
+            <button class="camera-modal__back-btn" id="cropBackBtn" aria-label="戻る">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <span class="camera-modal__title">範囲を選択</span>
+            <button class="camera-modal__done-btn" id="cropDoneBtn">完了</button>
+          </div>
+          <div class="camera-modal__crop-wrapper" id="cropWrapper">
+            <canvas id="capturedCanvas"></canvas>
+            <div class="camera-modal__crop-overlay" id="cropOverlay">
+              <div class="camera-modal__crop-box" id="cropBox">
+                <div class="crop-handle crop-handle--nw" data-handle="nw"></div>
+                <div class="crop-handle crop-handle--ne" data-handle="ne"></div>
+                <div class="crop-handle crop-handle--sw" data-handle="sw"></div>
+                <div class="crop-handle crop-handle--se" data-handle="se"></div>
+                <div class="crop-handle crop-handle--n" data-handle="n"></div>
+                <div class="crop-handle crop-handle--s" data-handle="s"></div>
+                <div class="crop-handle crop-handle--w" data-handle="w"></div>
+                <div class="crop-handle crop-handle--e" data-handle="e"></div>
+              </div>
+            </div>
+          </div>
+          <p class="camera-modal__hint">ドラッグして翻訳したい範囲を調整</p>
+        </div>
+
+        <!-- OCR処理中画面 -->
+        <div id="ocrProcessingScreen" class="camera-modal__screen hidden">
+          <div class="camera-modal__processing">
+            <div class="camera-modal__spinner"></div>
+            <p class="camera-modal__processing-text" id="processingText">文字を認識中...</p>
+            <div class="camera-modal__progress-bar">
+              <div class="camera-modal__progress-fill" id="ocrProgressFill"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -183,6 +275,8 @@
       </a>
     </footer>
 
+    <!-- Tesseract.js OCRライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="./translate.js"></script>
   </body>
 </html>

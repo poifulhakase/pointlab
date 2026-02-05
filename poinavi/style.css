@@ -2702,3 +2702,449 @@ body.dark-mode .translate-result-item__divider svg {
     left: 6px;
   }
 }
+
+/* ============================================
+   カメラ翻訳モーダル
+   ============================================ */
+.camera-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-modal.hidden {
+  display: none;
+}
+
+.camera-modal__container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-modal__screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.camera-modal__screen.hidden {
+  display: none;
+}
+
+/* ヘッダー */
+.camera-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  min-height: 56px;
+}
+
+.camera-modal__close-btn,
+.camera-modal__back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.camera-modal__close-btn:hover,
+.camera-modal__back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.camera-modal__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.camera-modal__spacer {
+  width: 40px;
+}
+
+.camera-modal__done-btn {
+  padding: 8px 16px;
+  background-color: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.camera-modal__done-btn:hover {
+  background-color: #3367d6;
+}
+
+/* ビデオプレビュー */
+.camera-modal__video-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #000;
+}
+
+#cameraVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ガイド枠 */
+.camera-modal__guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 320px;
+  aspect-ratio: 4/3;
+  pointer-events: none;
+}
+
+.camera-modal__guide-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #fff;
+  border-style: solid;
+  border-width: 0;
+}
+
+.camera-modal__guide-corner--tl {
+  top: 0;
+  left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
+  border-top-left-radius: 8px;
+}
+
+.camera-modal__guide-corner--tr {
+  top: 0;
+  right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
+  border-top-right-radius: 8px;
+}
+
+.camera-modal__guide-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
+  border-bottom-left-radius: 8px;
+}
+
+.camera-modal__guide-corner--br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
+  border-bottom-right-radius: 8px;
+}
+
+/* 撮影ボタンエリア */
+.camera-modal__controls {
+  padding: 24px;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+}
+
+.camera-modal__capture-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 4px solid #fff;
+  padding: 4px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.camera-modal__capture-btn:active {
+  transform: scale(0.95);
+}
+
+.camera-modal__capture-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+.camera-modal__hint {
+  padding: 12px 16px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+/* 範囲選択画面 */
+.camera-modal__crop-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1a1a1a;
+}
+
+#capturedCanvas {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.camera-modal__crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.camera-modal__crop-box {
+  position: absolute;
+  border: 2px solid #4285f4;
+  background-color: transparent;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  cursor: move;
+  min-width: 50px;
+  min-height: 50px;
+}
+
+/* クロップハンドル */
+.crop-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #4285f4;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+.crop-handle--nw {
+  top: -10px;
+  left: -10px;
+  cursor: nwse-resize;
+}
+
+.crop-handle--ne {
+  top: -10px;
+  right: -10px;
+  cursor: nesw-resize;
+}
+
+.crop-handle--sw {
+  bottom: -10px;
+  left: -10px;
+  cursor: nesw-resize;
+}
+
+.crop-handle--se {
+  bottom: -10px;
+  right: -10px;
+  cursor: nwse-resize;
+}
+
+.crop-handle--n {
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.crop-handle--s {
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.crop-handle--w {
+  top: 50%;
+  left: -10px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.crop-handle--e {
+  top: 50%;
+  right: -10px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+/* 処理中画面 */
+.camera-modal__processing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  background-color: #1a1a1a;
+}
+
+.camera-modal__spinner {
+  width: 56px;
+  height: 56px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #4285f4;
+  border-radius: 50%;
+  animation: camera-spinner 1s linear infinite;
+}
+
+@keyframes camera-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.camera-modal__processing-text {
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.camera-modal__progress-bar {
+  width: 200px;
+  max-width: 80%;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.camera-modal__progress-fill {
+  height: 100%;
+  width: 0%;
+  background-color: #4285f4;
+  transition: width 0.3s ease;
+}
+
+/* 設定モーダルのヒントテキスト */
+.translate-modal__hint-text {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* 翻訳結果アイテムのコピーボタン */
+.translate-result-item__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.translate-result-item__action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.translate-result-item__action-btn:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #fff;
+}
+
+.translate-result-item__action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.translate-result-item__action-btn--copied {
+  background-color: #22c55e;
+  border-color: #22c55e;
+  color: #fff;
+}
+
+/* OCR結果プレビュー */
+.translate-result-item__ocr-preview {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+body.dark-mode .translate-result-item__ocr-preview {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.translate-result-item__ocr-image {
+  max-width: 100%;
+  max-height: 150px;
+  border-radius: 4px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 480px) {
+  .camera-modal__guide {
+    width: 85%;
+  }
+
+  .camera-modal__capture-btn {
+    width: 64px;
+    height: 64px;
+  }
+
+  .crop-handle {
+    width: 24px;
+    height: 24px;
+  }
+
+  .crop-handle--nw { top: -12px; left: -12px; }
+  .crop-handle--ne { top: -12px; right: -12px; }
+  .crop-handle--sw { bottom: -12px; left: -12px; }
+  .crop-handle--se { bottom: -12px; right: -12px; }
+  .crop-handle--n { top: -12px; }
+  .crop-handle--s { bottom: -12px; }
+  .crop-handle--w { left: -12px; }
+  .crop-handle--e { right: -12px; }
+}
