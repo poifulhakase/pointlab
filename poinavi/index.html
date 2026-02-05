@@ -17,16 +17,78 @@
   <body class="light-mode">
     <!-- ヘッダー -->
     <header class="translate-header">
-      <!-- 左側スペーサー（高さ揃え用） -->
-      <div class="translate-header__icon-btn translate-header__icon-btn--left translate-header__icon-btn--invisible" aria-hidden="true"></div>
+      <!-- 免責事項ボタン（左上） -->
+      <button id="memoDisclaimerButton" class="translate-header__icon-btn translate-header__icon-btn--left" type="button" aria-label="免責事項">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </button>
       
       <h1 class="translate-header__title">
         <img src="./logo.svg" alt="ぽいナビ" class="translate-header__logo" />
       </h1>
       
-      <!-- 右側スペーサー（高さ揃え用） -->
-      <div class="translate-header__icon-btn translate-header__icon-btn--right translate-header__icon-btn--invisible" aria-hidden="true"></div>
+      <!-- 設定ボタン（右上） -->
+      <button id="memoSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </header>
+
+    <!-- 設定モーダル -->
+    <div id="memoSettingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="memoSettingsClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body">
+          <!-- テーマセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">テーマ</div>
+            <button id="memoThemeToggle" class="translate-modal__theme-toggle">
+              <span class="theme-icon">🌙</span>
+              <span class="theme-text">ダークモード</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 免責事項モーダル -->
+    <div id="memoDisclaimerModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">免責事項</h2>
+          <button class="translate-modal__close" id="memoDisclaimerClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body translate-disclaimer-body">
+          <p class="translate-disclaimer-text">本サービス「ぽいナビ」は、AIによる参考情報を提供するものです。</p>
+          <ul class="translate-disclaimer-list">
+            <li>翻訳結果は参考情報であり、正確性・完全性を保証するものではありません</li>
+            <li>重要な場面では、プロの通訳や翻訳者への相談を推奨いたします</li>
+            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+          </ul>
+          <p class="translate-disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
+        </div>
+      </div>
+    </div>
 
     <!-- メインコンテンツ -->
     <main class="memo-main">
@@ -62,11 +124,105 @@
 
     <script>
       // テーマ初期化
-      const savedTheme = localStorage.getItem("poinavi_theme") || "light";
-      if (savedTheme === "dark") {
-        document.body.classList.add("dark-mode");
-        document.body.classList.remove("light-mode");
+      function initTheme() {
+        const savedTheme = localStorage.getItem("poinavi_theme") || "light";
+        if (savedTheme === "dark") {
+          document.body.classList.add("dark-mode");
+          document.body.classList.remove("light-mode");
+        } else {
+          document.body.classList.add("light-mode");
+          document.body.classList.remove("dark-mode");
+        }
+        updateThemeButton();
       }
+
+      function updateThemeButton() {
+        const themeToggle = document.getElementById("memoThemeToggle");
+        if (!themeToggle) return;
+
+        const isDark = document.body.classList.contains("dark-mode");
+        const icon = themeToggle.querySelector(".theme-icon");
+        const text = themeToggle.querySelector(".theme-text");
+
+        if (icon) icon.textContent = isDark ? "☀️" : "🌙";
+        if (text) text.textContent = isDark ? "ライトモード" : "ダークモード";
+      }
+
+      // 設定モーダル
+      function initSettingsModal() {
+        const modal = document.getElementById("memoSettingsModal");
+        const openBtn = document.getElementById("memoSettingsButton");
+        const closeBtn = document.getElementById("memoSettingsClose");
+        const overlay = modal?.querySelector(".translate-modal__overlay");
+
+        if (!modal || !openBtn || !closeBtn) return;
+
+        openBtn.addEventListener("click", function() {
+          modal.classList.remove("hidden");
+        });
+
+        closeBtn.addEventListener("click", function() {
+          modal.classList.add("hidden");
+        });
+
+        if (overlay) {
+          overlay.addEventListener("click", function() {
+            modal.classList.add("hidden");
+          });
+        }
+      }
+
+      // 免責事項モーダル
+      function initDisclaimerModal() {
+        const modal = document.getElementById("memoDisclaimerModal");
+        const openBtn = document.getElementById("memoDisclaimerButton");
+        const closeBtn = document.getElementById("memoDisclaimerClose");
+        const overlay = modal?.querySelector(".translate-modal__overlay");
+
+        if (!modal || !openBtn || !closeBtn) return;
+
+        openBtn.addEventListener("click", function() {
+          modal.classList.remove("hidden");
+        });
+
+        closeBtn.addEventListener("click", function() {
+          modal.classList.add("hidden");
+        });
+
+        if (overlay) {
+          overlay.addEventListener("click", function() {
+            modal.classList.add("hidden");
+          });
+        }
+      }
+
+      // テーマ切り替え
+      function initThemeToggle() {
+        const themeToggle = document.getElementById("memoThemeToggle");
+        if (!themeToggle) return;
+
+        themeToggle.addEventListener("click", function() {
+          const isDark = document.body.classList.contains("dark-mode");
+          if (isDark) {
+            document.body.classList.remove("dark-mode");
+            document.body.classList.add("light-mode");
+            localStorage.setItem("poinavi_theme", "light");
+          } else {
+            document.body.classList.remove("light-mode");
+            document.body.classList.add("dark-mode");
+            localStorage.setItem("poinavi_theme", "dark");
+          }
+          updateThemeButton();
+        });
+      }
+
+      // 初期化
+      document.addEventListener("DOMContentLoaded", function() {
+        initTheme();
+        initSettingsModal();
+        initDisclaimerModal();
+        initThemeToggle();
+      });
     </script>
   </body>
 </html>
