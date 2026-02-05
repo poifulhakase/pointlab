@@ -118,11 +118,11 @@
 
     <!-- 設定モーダル -->
     <div id="settingsModal" class="settings-modal hidden">
-      <div class="settings-modal__overlay"></div>
+      <div class="settings-modal__overlay" onclick="document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').style.display='none';"></div>
       <div class="settings-modal__content">
         <div class="settings-modal__header">
           <h2 class="settings-modal__title">設定</h2>
-          <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる">
+          <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる" onclick="document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').style.display='none';">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -204,6 +204,7 @@
           </div>
 
           <!-- 免責事項 -->
+          <hr class="settings-modal__divider" />
           <div class="settings-modal__item settings-modal__item--disclaimer">
             <label class="settings-modal__label">免責事項</label>
             <div class="settings-modal__disclaimer-text">
@@ -365,6 +366,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=48"></script>
+    <script src="./script.js?v=49"></script>
   </body>
 </html>
