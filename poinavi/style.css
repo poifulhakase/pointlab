@@ -38,7 +38,8 @@ body {
   --accent-hover: #3367d6;
 }
 
-body.dark-mode {
+body.dark-mode,
+html.dark-mode body {
   /* ダークモード */
   --bg-primary: #1a1a1a;
   --bg-secondary: #2d2d2d;

@@ -13,8 +13,20 @@
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="./style.css" />
+    <!-- FOUC対策: CSSロード前にテーマを適用 -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poinavi_theme") || "light";
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+    </script>
+    <style>
+      /* FOUC対策: 初期背景色 */
+      html.light-mode { background-color: #f5f5f7; }
+      html.dark-mode { background-color: #1a1a1a; }
+    </style>
   </head>
-  <body class="light-mode">
+  <body>
     <!-- ヘッダー -->
     <header class="translate-header">
       <!-- 免責事項ボタン（左上） -->
