@@ -131,7 +131,25 @@ document.addEventListener("DOMContentLoaded", function() {
   initThemeToggle();
   initLanguageSelect();
   initCameraModal();
+  initStartPageSelect();
 });
+
+// ============================================
+// 起動ページ設定
+// ============================================
+function initStartPageSelect() {
+  const select = document.getElementById("translateStartPageSelect");
+  if (!select) return;
+
+  // 保存された値を読み込み
+  const savedStartPage = localStorage.getItem("poinavi_start_page") || "index.html";
+  select.value = savedStartPage;
+
+  // 変更時に保存
+  select.addEventListener("change", function() {
+    localStorage.setItem("poinavi_start_page", this.value);
+  });
+}
 
 // ============================================
 // 設定モーダル

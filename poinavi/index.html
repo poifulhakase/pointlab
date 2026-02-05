@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=23" />
+    <link rel="stylesheet" href="./style.css?v=24" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -65,6 +65,17 @@
           </button>
         </div>
         <div class="translate-modal__body">
+          <!-- 起動ページセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">起動時のページ</div>
+            <div class="translate-modal__item">
+              <select id="memoStartPageSelect" class="translate-modal__select">
+                <option value="index.html">メモ</option>
+                <option value="translate.html">翻訳</option>
+                <option value="map.html">地図</option>
+              </select>
+            </div>
+          </div>
           <!-- テーマセクション -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">テーマ</div>
@@ -111,6 +122,24 @@
 
     <!-- フッター -->
     <footer class="translate-footer">
+      <a href="./map.html" class="translate-footer__btn" aria-label="地図ページへ">
+        <!-- 地図アイコン -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span class="translate-footer__label">地図</span>
+      </a>
+      <a
+        href="https://note.com/pointlab"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="translate-footer__banner"
+      >
+        <img src="./poyonkun_full.png" alt="ぽいふる" class="translate-footer__banner-icon" />
+        <span>ぽいんとらぼ</span>
+      </a>
       <a href="./translate.html" class="translate-footer__btn" aria-label="翻訳ページへ">
         <!-- 翻訳アイコン（言語切り替え） -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -123,27 +152,24 @@
         </svg>
         <span class="translate-footer__label">翻訳</span>
       </a>
-      <a
-        href="https://note.com/pointlab"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="translate-footer__banner"
-      >
-        <img src="./poyonkun_full.png" alt="ぽいふる" class="translate-footer__banner-icon" />
-        <span>ぽいんとらぼ</span>
-      </a>
-      <a href="./map.html" class="translate-footer__btn" aria-label="地図ページへ">
-        <!-- 地図アイコン -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-          <line x1="8" y1="2" x2="8" y2="18"/>
-          <line x1="16" y1="6" x2="16" y2="22"/>
-        </svg>
-        <span class="translate-footer__label">地図</span>
-      </a>
     </footer>
 
     <script>
+      // 起動ページリダイレクト（DOMContentLoadedより前に実行）
+      (function() {
+        // URLにnoredirectパラメータがある場合はリダイレクトしない
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("noredirect")) return;
+        
+        var startPage = localStorage.getItem("poinavi_start_page") || "index.html";
+        var currentPage = window.location.pathname.split("/").pop() || "index.html";
+        
+        // 現在のページが起動ページと異なる場合のみリダイレクト
+        if (currentPage === "index.html" && startPage !== "index.html") {
+          window.location.replace("./" + startPage);
+        }
+      })();
+
       // テーマ初期化
       function initTheme() {
         const savedTheme = localStorage.getItem("poinavi_theme") || "light";
@@ -163,6 +189,21 @@
 
         if (icon) icon.textContent = isDark ? "☀️" : "🌙";
         if (text) text.textContent = isDark ? "ライトモード" : "ダークモード";
+      }
+
+      // 起動ページ設定を初期化
+      function initStartPageSelect() {
+        const select = document.getElementById("memoStartPageSelect");
+        if (!select) return;
+
+        // 保存された値を読み込み
+        const savedStartPage = localStorage.getItem("poinavi_start_page") || "index.html";
+        select.value = savedStartPage;
+
+        // 変更時に保存
+        select.addEventListener("change", function() {
+          localStorage.setItem("poinavi_start_page", this.value);
+        });
       }
 
       // 設定モーダル
@@ -239,6 +280,7 @@
         initSettingsModal();
         initDisclaimerModal();
         initThemeToggle();
+        initStartPageSelect();
       });
     </script>
   </body>

@@ -179,6 +179,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initTagManagement(); // タグ管理機能を初期化
   initRainViewer(); // RainViewer 雨雲レーダー機能を初期化
   initRailwayLayer(); // 鉄道レイヤー機能を初期化
+  initStartPageSelect(); // 起動ページ設定を初期化
   
   // Google Maps API が読み込まれるまで待つ
   // initGoogleMaps コールバックで initMap() と requestUserLocation() が呼ばれる
@@ -186,6 +187,23 @@ document.addEventListener("DOMContentLoaded", function () {
     initMap();
     requestUserLocation();
   }
+});
+
+// ============================================
+// 起動ページ設定
+// ============================================
+function initStartPageSelect() {
+  const select = document.getElementById("mapStartPageSelect");
+  if (!select) return;
+
+  // 保存された値を読み込み
+  const savedStartPage = localStorage.getItem("poinavi_start_page") || "index.html";
+  select.value = savedStartPage;
+
+  // 変更時に保存
+  select.addEventListener("change", function() {
+    localStorage.setItem("poinavi_start_page", this.value);
+  });
 });
 
 // ============================================

@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=23" />
+    <link rel="stylesheet" href="./style.css?v=24" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -181,6 +181,16 @@
             </div>
           </div>
           
+          <!-- 起動ページ -->
+          <div class="settings-modal__item">
+            <label class="settings-modal__label">起動時のページ</label>
+            <select id="mapStartPageSelect" class="settings-modal__select">
+              <option value="index.html">メモ</option>
+              <option value="translate.html">翻訳</option>
+              <option value="map.html">地図</option>
+            </select>
+          </div>
+
           <!-- テーマ切り替え -->
           <div class="settings-modal__item">
             <label class="settings-modal__label">テーマ</label>
@@ -327,6 +337,27 @@
 
     <!-- フッター -->
     <footer class="translate-footer">
+      <a href="./translate.html" class="translate-footer__btn" aria-label="翻訳ページへ">
+        <!-- 翻訳アイコン -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"/>
+          <path d="M4 14h6"/>
+          <path d="M2 5h12"/>
+          <path d="M7 2v3"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
+        </svg>
+        <span class="translate-footer__label">翻訳</span>
+      </a>
+      <a
+        href="https://note.com/pointlab"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="translate-footer__banner"
+      >
+        <img src="./poyonkun_full.png" alt="ぽいふる" class="translate-footer__banner-icon" />
+        <span>ぽいんとらぼ</span>
+      </a>
       <a href="./index.html" class="translate-footer__btn" aria-label="メモページへ">
         <!-- メモアイコン -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -338,26 +369,8 @@
         </svg>
         <span class="translate-footer__label">メモ</span>
       </a>
-      <a
-        href="https://note.com/pointlab"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="translate-footer__banner"
-      >
-        <img src="./poyonkun_full.png" alt="ぽいふる" class="translate-footer__banner-icon" />
-        <span>ぽいんとらぼ</span>
-      </a>
-      <div class="translate-footer__btn translate-footer__btn--invisible" aria-hidden="true">
-        <!-- 地図アイコン（不可視） -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-          <line x1="8" y1="2" x2="8" y2="18"/>
-          <line x1="16" y1="6" x2="16" y2="22"/>
-        </svg>
-        <span class="translate-footer__label">地図</span>
-      </div>
     </footer>
 
-    <script src="./script.js?v=20"></script>
+    <script src="./script.js?v=24"></script>
   </body>
 </html>
