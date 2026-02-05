@@ -2986,8 +2986,8 @@ function clearMarkers() {
 function displayNoResults(isNeutral = false) {
   const resultsList = document.getElementById("resultsList");
   if (isNeutral) {
-    // ニュートラル状態：タグや検索語を選んでくださいというメッセージ
-    resultsList.innerHTML = '<div class="result-item result-item--neutral">カテゴリまたは検索語を入力してください</div>';
+    // ニュートラル状態：何も表示しない
+    resultsList.innerHTML = '';
   } else {
     resultsList.innerHTML = '<div class="result-item">該当する場所が見つかりませんでした</div>';
   }
