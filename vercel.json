@@ -41,7 +41,7 @@
   "routes": [
     {
       "src": "/hakaseAI/api/(.*)",
-      "dest": "/hakaseAI/server.js"
+      "dest": "hakaseAI/server.js"
     },
     {
       "src": "/hakaseAI/style.css",
