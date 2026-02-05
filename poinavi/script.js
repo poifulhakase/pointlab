@@ -1549,15 +1549,26 @@ function searchPlaces() {
 
     const keyword = placeType ? tagToKeywordMap[placeType] : undefined;
 
-    const request = {
-      location: location,
-      radius: 3000, // 3km範囲に拡大
-      type: placeType,
-    };
-
-    // キーワードがある場合は追加（検索精度向上）
-    if (keyword) {
-      request.keyword = keyword;
+    let request;
+    
+    if (placeType) {
+      // カテゴリ検索の場合は距離順（rankBy: DISTANCE）を使用
+      // 注意: rankBy: DISTANCE を使う場合、radius は使用不可
+      request = {
+        location: location,
+        rankBy: google.maps.places.RankBy.DISTANCE,
+        type: placeType,
+      };
+      // キーワードがある場合は追加
+      if (keyword) {
+        request.keyword = keyword;
+      }
+    } else {
+      // カテゴリなしの場合は範囲検索
+      request = {
+        location: location,
+        radius: 3000,
+      };
     }
 
     console.log("検索リクエスト:", { selectedTags, placeType, keyword, request });
