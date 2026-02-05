@@ -71,13 +71,25 @@ const globalLimiter = rateLimit({
 // ミドルウェア
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// 静的ファイルの配信（ルートと/hakaseAI/両方に対応）
 app.use(express.static(path.join(__dirname)));
+app.use('/hakaseAI', express.static(path.join(__dirname)));
 
 // /api/chat にレート制限を適用（グローバル制限 + IP制限）
 app.use('/api/chat', globalLimiter, dailyLimiter);
+app.use('/hakaseAI/api/chat', globalLimiter, dailyLimiter);
 
 // ルートパスでindex.htmlを返す
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// /hakaseAI/ パスでもindex.htmlを返す
+app.get('/hakaseAI', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+app.get('/hakaseAI/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -140,7 +152,7 @@ const HAKASE_SYSTEM_PROMPT = `あなたは「ぽいふる博士」というキ�
 // ========================================
 // チャットAPIエンドポイント
 // ========================================
-app.post('/api/chat', async (req, res) => {
+const chatHandler = async (req, res) => {
   try {
     const { question_text, context, preferences } = req.body;
     
@@ -163,7 +175,11 @@ app.post('/api/chat', async (req, res) => {
       comment_text: 'すまんのう、ちょっと調子が悪いようじゃ。もう一度試してくれんか？'
     });
   }
-});
+};
+
+// 両方のパスでチャットAPIを登録
+app.post('/api/chat', chatHandler);
+app.post('/hakaseAI/api/chat', chatHandler);
 
 // ========================================
 // Gemini API呼び出し（REST API直接）
