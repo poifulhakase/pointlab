@@ -1318,7 +1318,7 @@ function searchPlaces() {
     const request = {
       query: originalQuery,
       location: location,
-      radius: 2000, // 2km範囲
+      radius: 3000, // 2km範囲
     };
 
     console.log("テキスト検索リクエスト:", { query: request.query, useTextSearch });
@@ -1375,7 +1375,7 @@ function searchPlaces() {
             const retryRequest = {
               query: alternativeQuery,
               location: location,
-              radius: 2000,
+              radius: 3000,
             };
             
             placesService.textSearch(retryRequest, function (retryResults, retryStatus) {
@@ -1483,7 +1483,7 @@ function searchPlaces() {
           const retryRequest = {
             query: splitQuery,
             location: location,
-            radius: 2000,
+            radius: 3000,
           };
           
           placesService.textSearch(retryRequest, function (retryResults, retryStatus) {
@@ -1534,17 +1534,33 @@ function searchPlaces() {
       train_station: "train_station",
     };
 
+    // 検索キーワードのマッピング（より正確な検索のため）
+    const tagToKeywordMap = {
+      convenience_store: "コンビニ",
+      gas_station: "ガソリンスタンド",
+      pharmacy: "薬局 ドラッグストア",
+      hospital: "病院 クリニック",
+      train_station: "駅",
+    };
+
     const placeType = selectedTags.length > 0 
       ? (tagToTypeMap[selectedTags[0]] || selectedTags[0])
       : undefined;
 
+    const keyword = placeType ? tagToKeywordMap[placeType] : undefined;
+
     const request = {
       location: location,
-      radius: 2000, // 2km範囲
+      radius: 3000, // 3km範囲に拡大
       type: placeType,
     };
 
-    console.log("検索リクエスト:", { selectedTags, placeType, request });
+    // キーワードがある場合は追加（検索精度向上）
+    if (keyword) {
+      request.keyword = keyword;
+    }
+
+    console.log("検索リクエスト:", { selectedTags, placeType, keyword, request });
 
     placesService.nearbySearch(request, function (results, status) {
       if (status === google.maps.places.PlacesServiceStatus.OK) {
