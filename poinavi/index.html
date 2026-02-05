@@ -119,15 +119,30 @@
         </div>
       </div>
 
-      <!-- メニュー翻訳（QRコードアイコン） -->
+      <!-- メニュー翻訳エリア -->
       <div class="translate-camera-area">
-        <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
-          <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-            <circle cx="12" cy="13" r="4"></circle>
-          </svg>
-        </button>
-        <p class="translate-camera-label">メニュー翻訳</p>
+        <div class="translate-camera-area__buttons">
+          <!-- リセットボタン -->
+          <div class="translate-camera-area__btn-wrapper">
+            <button class="translate-camera-btn translate-reset-btn" id="resetTranslateBtn" type="button" aria-label="リセット">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+            </button>
+            <p class="translate-camera-label">リセット</p>
+          </div>
+          <!-- メニュー翻訳ボタン -->
+          <div class="translate-camera-area__btn-wrapper">
+            <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+            <p class="translate-camera-label">メニュー翻訳</p>
+          </div>
+        </div>
       </div>
 
       <!-- 音声翻訳ボタン（中央大きめの丸ボタン） -->

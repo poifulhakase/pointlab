@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", function() {
   initTheme();
   initVoiceTranslation();
   initCameraTranslation();
+  initResetButton();
   initSettingsModal();
   initDisclaimerModal();
   initThemeToggle();
@@ -296,6 +297,50 @@ function initCameraTranslation() {
       showOCRTranslationResult();
     }, 2000);
   });
+}
+
+// ============================================
+// リセットボタンの初期化
+// ============================================
+function initResetButton() {
+  const resetBtn = document.getElementById("resetTranslateBtn");
+  
+  if (!resetBtn) return;
+  
+  resetBtn.addEventListener("click", function() {
+    // 翻訳結果があるか確認
+    const resultArea = document.getElementById("translateResultArea");
+    const hasResults = resultArea && !resultArea.querySelector(".translate-result-placeholder");
+    
+    if (!hasResults) {
+      // 結果がなければ何もしない
+      return;
+    }
+    
+    // 削除確認
+    if (confirm("翻訳結果をすべて削除しますか？")) {
+      resetTranslationArea();
+    }
+  });
+}
+
+// ============================================
+// 翻訳エリアをリセット
+// ============================================
+function resetTranslationArea() {
+  const resultArea = document.getElementById("translateResultArea");
+  if (!resultArea) return;
+  
+  // 翻訳結果をすべて削除してプレースホルダーを復元
+  resultArea.innerHTML = `
+    <div class="translate-result-placeholder">
+      <p>翻訳結果がここに表示されます</p>
+    </div>
+  `;
+  
+  // カウンターもリセット
+  voiceTranslationCount = 0;
+  ocrTranslationCount = 0;
 }
 
 // ============================================
