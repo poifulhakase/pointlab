@@ -853,24 +853,11 @@ function initMap() {
 // ローディング画面の表示/非表示
 // ============================================
 function showLoading() {
-  const loadingOverlay = document.getElementById("loadingOverlay");
-  if (loadingOverlay) {
-    loadingOverlay.classList.remove("hidden");
-    loadingOverlay.style.display = "flex";
-    loadingOverlay.style.opacity = "1";
-    loadingOverlay.style.visibility = "visible";
-  }
+  // ローディング画面は削除済み - 何もしない
 }
 
 function hideLoading() {
-  const loadingOverlay = document.getElementById("loadingOverlay");
-  if (loadingOverlay) {
-    loadingOverlay.classList.add("hidden");
-    loadingOverlay.style.display = "none";
-    loadingOverlay.style.opacity = "0";
-    loadingOverlay.style.visibility = "hidden";
-  }
-  console.log("hideLoading called");
+  // ローディング画面は削除済み - 何もしない
 }
 
 // ============================================
