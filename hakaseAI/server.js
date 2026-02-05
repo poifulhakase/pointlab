@@ -168,15 +168,23 @@ const HAKASE_SYSTEM_PROMPT = `あなたは「ぽいふる博士」というキ�
 // チャットAPIエンドポイント
 // ========================================
 const chatHandler = async (req, res) => {
+  console.log('Chat API called, path:', req.path);
+  console.log('Request body:', JSON.stringify(req.body).substring(0, 200));
+  
   try {
     const { question_text, context, preferences } = req.body;
     
     if (!question_text) {
+      console.log('Error: question_text is missing');
       return res.status(400).json({ error: '質問文が必要じゃ' });
     }
     
+    console.log('Calling Gemini API...');
+    
     // Gemini APIを使用
     const response = await callGemini(question_text, context);
+    
+    console.log('Gemini response received, length:', response?.length);
     
     res.json({
       comment_text: response,
@@ -184,10 +192,15 @@ const chatHandler = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Chat API Error:', error);
-    res.status(500).json({ 
-      error: 'すまんのう、エラーが発生したようじゃ',
-      comment_text: 'すまんのう、ちょっと調子が悪いようじゃ。もう一度試してくれんか？'
+    console.error('Chat API Error:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // エラーでもモック応答を返す（500エラーを避ける）
+    const mockResponse = getMockResponse(req.body?.question_text || '');
+    res.json({ 
+      comment_text: mockResponse,
+      timestamp: new Date().toISOString(),
+      fallback: true
     });
   }
 };
@@ -216,6 +229,8 @@ async function callGemini(question, context) {
     
     prompt += `【ユーザーの質問】\n${question}\n\n【博士の回答】`;
     
+    console.log('Fetching Gemini API...');
+    
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
@@ -232,17 +247,15 @@ async function callGemini(question, context) {
       })
     });
     
+    console.log('Gemini API response status:', response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API Response Error:', errorText);
+      console.error('Gemini API Response Error:', errorText.substring(0, 500));
       
-      // 429エラー（クォータ超過）の場合はモック応答にフォールバック
-      if (response.status === 429) {
-        console.log('Gemini API quota exceeded. Falling back to mock response.');
-        return getMockResponse(question);
-      }
-      
-      throw new Error(`Gemini API error: ${response.status}`);
+      // エラーの場合はモック応答にフォールバック
+      console.log('Falling back to mock response due to API error');
+      return getMockResponse(question);
     }
     
     const data = await response.json();
@@ -251,11 +264,15 @@ async function callGemini(question, context) {
       return data.candidates[0].content.parts[0].text;
     }
     
-    throw new Error('Unexpected API response format');
+    // 予期しないレスポンス形式の場合もフォールバック
+    console.log('Unexpected response format, falling back to mock');
+    return getMockResponse(question);
     
   } catch (error) {
-    console.error('Gemini API Error:', error);
-    throw error;
+    console.error('Gemini API Error:', error.message);
+    // エラー時はモック応答にフォールバック
+    console.log('Falling back to mock response due to error');
+    return getMockResponse(question);
   }
 }
 
