@@ -609,6 +609,17 @@ body {
   background-color: var(--bg-secondary);
 }
 
+.result-item--neutral {
+  cursor: default;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px 16px;
+}
+
+.result-item--neutral:hover {
+  background-color: transparent;
+}
+
 .result-item.active {
   background-color: var(--accent-color);
   color: #ffffff;

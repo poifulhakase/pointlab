@@ -1298,6 +1298,12 @@ function searchPlaces() {
   if (directionsRenderer) {
     directionsRenderer.setDirections({ routes: [] });
   }
+  
+  // タグも検索クエリもない場合は検索しない（ニュートラル状態）
+  if (selectedTags.length === 0 && (!searchQuery || searchQuery.trim() === "")) {
+    displayNoResults(true); // true = ニュートラル状態（メッセージなし）
+    return;
+  }
 
   const location = userLocation || { lat: 35.6812, lng: 139.7671 };
   
@@ -2967,9 +2973,14 @@ function clearMarkers() {
 // ============================================
 // 結果なし表示
 // ============================================
-function displayNoResults() {
+function displayNoResults(isNeutral = false) {
   const resultsList = document.getElementById("resultsList");
-  resultsList.innerHTML = '<div class="result-item">該当する場所が見つかりませんでした</div>';
+  if (isNeutral) {
+    // ニュートラル状態：タグや検索語を選んでくださいというメッセージ
+    resultsList.innerHTML = '<div class="result-item result-item--neutral">カテゴリまたは検索語を入力してください</div>';
+  } else {
+    resultsList.innerHTML = '<div class="result-item">該当する場所が見つかりませんでした</div>';
+  }
   clearMarkers();
 }
 
