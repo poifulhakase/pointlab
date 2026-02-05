@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=27" />
+    <link rel="stylesheet" href="./style.css?v=34" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -223,55 +223,55 @@
         <!-- レイヤーコントロール（左上フロート） -->
         <div class="layer-control">
           <!-- 鉄道レイヤートグル -->
-          <button 
-            id="railwayToggle" 
-            class="layer-toggle" 
-            type="button"
-            aria-pressed="false"
-            aria-label="鉄道路線切替"
-          >
-            <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="3" width="16" height="18" rx="2"></rect>
-              <line x1="12" y1="8" x2="12" y2="21"></line>
-              <line x1="8" y1="8" x2="8" y2="8.01"></line>
-              <line x1="16" y1="8" x2="16" y2="8.01"></line>
-              <path d="M4 11h16"></path>
-              <circle cx="8.5" cy="15.5" r="1.5"></circle>
-              <circle cx="15.5" cy="15.5" r="1.5"></circle>
-            </svg>
-            <span class="layer-toggle__text">鉄道</span>
-          </button>
-          
-          <!-- 雨雲レーダートグル -->
-          <button 
-            id="rainViewerToggle" 
-            class="layer-toggle" 
-            type="button"
-            aria-pressed="false"
-            aria-label="雨雲レーダー切替"
-          >
-            <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path>
-              <line x1="8" y1="16" x2="8.01" y2="16"></line>
-              <line x1="8" y1="20" x2="8.01" y2="20"></line>
-              <line x1="12" y1="18" x2="12.01" y2="18"></line>
-              <line x1="12" y1="22" x2="12.01" y2="22"></line>
-              <line x1="16" y1="16" x2="16.01" y2="16"></line>
-              <line x1="16" y1="20" x2="16.01" y2="20"></line>
-            </svg>
-            <span class="layer-toggle__text">雨雲</span>
-          </button>
-          
-          <!-- 鉄道ON時のステータスパネル -->
-          <div id="railwayStatus" class="layer-status hidden">
-            <div class="layer-status__title">鉄道路線表示中</div>
-            <div class="layer-status__desc">半径10km以内の路線・駅</div>
+          <div class="layer-control__row">
+            <button 
+              id="railwayToggle" 
+              class="layer-toggle" 
+              type="button"
+              aria-pressed="false"
+              aria-label="鉄道路線切替"
+            >
+              <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                <line x1="12" y1="8" x2="12" y2="21"></line>
+                <line x1="8" y1="8" x2="8" y2="8.01"></line>
+                <line x1="16" y1="8" x2="16" y2="8.01"></line>
+                <path d="M4 11h16"></path>
+                <circle cx="8.5" cy="15.5" r="1.5"></circle>
+                <circle cx="15.5" cy="15.5" r="1.5"></circle>
+              </svg>
+              <span class="layer-toggle__text">路線</span>
+            </button>
+            <!-- 鉄道ON時のステータス -->
+            <div id="railwayStatus" class="layer-status layer-status--inline hidden">
+              <span class="layer-status__text">路線表示中</span>
+            </div>
           </div>
           
-          <!-- 雨雲ON時のステータスパネル -->
-          <div id="rainViewerStatus" class="layer-status hidden">
-            <div class="layer-status__title">雨雲観測モード</div>
-            <div class="layer-status__desc">降雨状況の参考表示です</div>
+          <!-- 雨雲レーダートグル -->
+          <div class="layer-control__row">
+            <button 
+              id="rainViewerToggle" 
+              class="layer-toggle" 
+              type="button"
+              aria-pressed="false"
+              aria-label="雨雲レーダー切替"
+            >
+              <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path>
+                <line x1="8" y1="16" x2="8.01" y2="16"></line>
+                <line x1="8" y1="20" x2="8.01" y2="20"></line>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                <line x1="12" y1="22" x2="12.01" y2="22"></line>
+                <line x1="16" y1="16" x2="16.01" y2="16"></line>
+                <line x1="16" y1="20" x2="16.01" y2="20"></line>
+              </svg>
+              <span class="layer-toggle__text">雨雲</span>
+            </button>
+            <!-- 雨雲ON時のステータス -->
+            <div id="rainViewerStatus" class="layer-status layer-status--inline hidden">
+              <span class="layer-status__text">雨雲観測中</span>
+            </div>
           </div>
         </div>
         
@@ -356,6 +356,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=33"></script>
+    <script src="./script.js?v=34"></script>
   </body>
 </html>
