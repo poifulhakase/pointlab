@@ -466,18 +466,23 @@ function initTagSelection() {
   const tagList = document.getElementById("tagList");
   if (!tagList) return;
   
-  // ダブルタップ防止用フラグ
-  let isProcessingTag = false;
+  // 最後のタップ時刻とボタンを記録
+  let lastTapTime = 0;
+  let lastTapBtn = null;
   
   // イベント委譲：親要素でクリックを監視
   tagList.addEventListener("click", function(event) {
     const btn = event.target.closest(".tag-btn");
     if (!btn) return;
     
-    // ダブルタップ防止
-    if (isProcessingTag) return;
-    isProcessingTag = true;
-    setTimeout(() => { isProcessingTag = false; }, 300);
+    const now = Date.now();
+    
+    // 同じボタンを100ms以内に連打した場合のみ無視（誤タップ防止）
+    if (lastTapBtn === btn && (now - lastTapTime) < 100) {
+      return;
+    }
+    lastTapTime = now;
+    lastTapBtn = btn;
     
     // 既に選択されている場合は選択解除
     const wasActive = btn.classList.contains("active");
