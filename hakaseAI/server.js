@@ -72,9 +72,11 @@ const globalLimiter = rateLimit({
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// 静的ファイルの配信（ルートと/hakaseAI/両方に対応）
-app.use(express.static(path.join(__dirname)));
+// 静的ファイルの配信（/hakaseAI/ プレフィックス付きのリクエストに対応）
+// /hakaseAI/style.css -> __dirname/style.css として配信
 app.use('/hakaseAI', express.static(path.join(__dirname)));
+// ルートパスからも配信（ローカル開発用）
+app.use(express.static(path.join(__dirname)));
 
 // /api/chat にレート制限を適用（グローバル制限 + IP制限）
 app.use('/api/chat', globalLimiter, dailyLimiter);
@@ -91,6 +93,19 @@ app.get('/hakaseAI', (req, res) => {
 });
 app.get('/hakaseAI/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// /hakaseAI/以下の静的ファイルを明示的に処理（Vercel対応）
+app.get('/hakaseAI/:filename', (req, res, next) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, filename);
+  
+  // ファイルが存在すれば送信、なければ次のミドルウェアへ
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      next();
+    }
+  });
 });
 
 // ========================================
