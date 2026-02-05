@@ -6,15 +6,15 @@
       "use": "@vercel/node"
     },
     {
-      "src": "hakaseAI/*.html",
+      "src": "hakaseAI/index.html",
       "use": "@vercel/static"
     },
     {
-      "src": "hakaseAI/*.css",
+      "src": "hakaseAI/style.css",
       "use": "@vercel/static"
     },
     {
-      "src": "hakaseAI/*.js",
+      "src": "hakaseAI/script.js",
       "use": "@vercel/static"
     },
     {
@@ -41,31 +41,23 @@
   "routes": [
     {
       "src": "/hakaseAI/api/(.*)",
-      "dest": "hakaseAI/server.js"
+      "dest": "/hakaseAI/server.js"
     },
     {
-      "src": "/hakaseAI/style\\.css",
+      "src": "/hakaseAI/style.css",
       "dest": "/hakaseAI/style.css"
     },
     {
-      "src": "/hakaseAI/script\\.js",
+      "src": "/hakaseAI/script.js",
       "dest": "/hakaseAI/script.js"
     },
     {
-      "src": "/hakaseAI/favicon\\.png",
-      "dest": "/hakaseAI/favicon.png"
+      "src": "/hakaseAI/(.*\\.png)",
+      "dest": "/hakaseAI/$1"
     },
     {
-      "src": "/hakaseAI/icon-192\\.png",
-      "dest": "/hakaseAI/icon-192.png"
-    },
-    {
-      "src": "/hakaseAI/logo\\.svg",
-      "dest": "/hakaseAI/logo.svg"
-    },
-    {
-      "src": "/hakaseAI/poyonkun_full\\.png",
-      "dest": "/hakaseAI/poyonkun_full.png"
+      "src": "/hakaseAI/(.*\\.svg)",
+      "dest": "/hakaseAI/$1"
     },
     {
       "src": "/hakaseAI/?$",
