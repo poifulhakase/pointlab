@@ -728,10 +728,23 @@ async function startOCRProcess() {
     
   } catch (err) {
     console.error("OCR/翻訳エラー:", err);
+    console.error("エラースタック:", err.stack);
+    
+    // デバッグ情報を含めたエラーメッセージ
+    let debugInfo = "";
+    try {
+      debugInfo = `\n\n【デバッグ情報】\n` +
+        `言語: ${ocrLang}\n` +
+        `Tesseract: ${typeof Tesseract !== 'undefined' ? 'あり' : 'なし'}\n` +
+        `エラー: ${err.message || '不明'}`;
+    } catch (e) {
+      debugInfo = "";
+    }
     
     // エラーメッセージを表示して選択肢を提供
     const retry = confirm(
       (err.message || "処理中にエラーが発生しました") + 
+      debugInfo +
       "\n\n再撮影しますか？\n（キャンセルで閉じます）"
     );
     
@@ -778,11 +791,11 @@ function getCroppedImage() {
 
 async function performOCR(imageData, onProgress) {
   const processingText = document.getElementById("processingText");
-  let worker = null;
   
   try {
     console.log("OCR開始, 言語:", ocrLang);
     console.log("Tesseract available:", typeof Tesseract !== 'undefined');
+    console.log("Tesseract.recognize available:", typeof Tesseract?.recognize === 'function');
     
     // Tesseractライブラリの存在確認
     if (typeof Tesseract === 'undefined') {
@@ -790,11 +803,11 @@ async function performOCR(imageData, onProgress) {
       throw new Error("OCRライブラリの読み込みに失敗しました。ページを再読み込みしてください。");
     }
     
-    // Tesseract Workerを作成
     if (processingText) processingText.textContent = "OCRエンジンを準備中...";
     
-    console.log("Creating Tesseract worker...");
-    worker = await Tesseract.createWorker(ocrLang, 1, {
+    // シンプルなrecognize関数を使用（Worker APIより互換性が高い）
+    console.log("Tesseract.recognize 開始...");
+    const result = await Tesseract.recognize(imageData, ocrLang, {
       logger: (m) => {
         console.log("Tesseract:", m.status, m.progress);
         
@@ -807,7 +820,7 @@ async function performOCR(imageData, onProgress) {
               processingText.textContent = "初期化中...";
               break;
             case "loading language traineddata":
-              processingText.textContent = "言語データを読み込み中...（初回は時間がかかります）";
+              processingText.textContent = "言語データを読み込み中...";
               break;
             case "loaded language traineddata":
               processingText.textContent = "言語データ読み込み完了";
@@ -821,21 +834,11 @@ async function performOCR(imageData, onProgress) {
               break;
           }
         }
-      },
-      errorHandler: (err) => {
-        console.error("Tesseract Worker Error:", err);
       }
     });
     
-    console.log("Worker作成完了、認識開始");
-    if (processingText) processingText.textContent = "文字を認識中...";
-    
-    // OCR実行
-    const result = await worker.recognize(imageData);
-    console.log("OCR完了, 文字数:", result.data.text?.length);
-    
-    // Workerを終了
-    await worker.terminate();
+    console.log("OCR完了, 結果:", result);
+    console.log("認識テキスト:", result?.data?.text);
     
     return result.data.text;
     
@@ -843,25 +846,18 @@ async function performOCR(imageData, onProgress) {
     console.error("OCRエラー:", err);
     console.error("エラー詳細:", err.message, err.stack);
     
-    // Workerがあれば終了
-    if (worker) {
-      try {
-        await worker.terminate();
-      } catch (e) {
-        console.error("Worker終了エラー:", e);
-      }
-    }
-    
     // エラーの種類に応じてメッセージを変更
     let errorMessage = "文字認識に失敗しました。";
     
     if (err.message) {
-      if (err.message.includes("network") || err.message.includes("fetch")) {
-        errorMessage = "ネットワークエラー: 言語データの読み込みに失敗しました。\nインターネット接続を確認してください。";
+      if (err.message.includes("network") || err.message.includes("fetch") || err.message.includes("Failed to fetch")) {
+        errorMessage = "ネットワークエラー: 言語データの読み込みに失敗しました。\nWi-Fi接続を確認してください。";
       } else if (err.message.includes("language") || err.message.includes("lang")) {
-        errorMessage = "言語データの読み込みに失敗しました。\n設定から別の言語を選択してお試しください。";
+        errorMessage = "言語データの読み込みに失敗しました。";
       } else if (err.message.includes("memory") || err.message.includes("heap")) {
-        errorMessage = "メモリ不足です。\nブラウザを再起動してお試しください。";
+        errorMessage = "メモリ不足です。ブラウザを再起動してください。";
+      } else {
+        errorMessage = `文字認識に失敗しました: ${err.message}`;
       }
     }
     
