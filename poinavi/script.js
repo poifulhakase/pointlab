@@ -876,6 +876,12 @@ function requestUserLocation() {
   // ローディング画面を表示
   showLoading();
   
+  // 安全策: 最大30秒後に強制的にローディングを非表示
+  const safetyTimeout = setTimeout(function() {
+    console.warn("位置情報取得のセーフティタイムアウト");
+    hideLoading();
+  }, 30000);
+  
   // セッションストレージからキャッシュを確認
   const cachedData = sessionStorage.getItem(LOCATION_CACHE_KEY);
   if (cachedData) {
@@ -886,6 +892,7 @@ function requestUserLocation() {
       // キャッシュが有効期限内かチェック
       if (cached.timestamp && (now - cached.timestamp) < LOCATION_CACHE_DURATION) {
         // キャッシュされた位置情報を使用
+        clearTimeout(safetyTimeout);
         applyUserLocation(cached.lat, cached.lng);
         return;
       }
@@ -895,20 +902,22 @@ function requestUserLocation() {
   }
   
   // キャッシュがない場合は新たに取得
-  fetchUserLocation();
+  fetchUserLocation(safetyTimeout);
 }
 
-function fetchUserLocation() {
+function fetchUserLocation(safetyTimeout) {
   if (navigator.geolocation) {
-    // タイムアウト設定（10秒）
+    // タイムアウト設定（20秒に延長）
     const geolocationOptions = {
       enableHighAccuracy: true,
-      timeout: 10000, // 10秒でタイムアウト
+      timeout: 20000, // 20秒でタイムアウト
       maximumAge: 300000 // 5分以内のキャッシュを使用
     };
     
     navigator.geolocation.getCurrentPosition(
       function (position) {
+        if (safetyTimeout) clearTimeout(safetyTimeout);
+        
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         
@@ -921,9 +930,16 @@ function fetchUserLocation() {
         sessionStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(cacheData));
         
         // 位置情報を適用
-        applyUserLocation(lat, lng);
+        try {
+          applyUserLocation(lat, lng);
+        } catch (e) {
+          console.error("位置情報の適用に失敗:", e);
+          hideLoading();
+        }
       },
       function (error) {
+        if (safetyTimeout) clearTimeout(safetyTimeout);
+        
         console.warn("位置情報の取得に失敗しました:", error);
         // エラーコードに応じたメッセージ
         let errorMessage = "位置情報を取得できませんでした";
@@ -945,6 +961,7 @@ function fetchUserLocation() {
       geolocationOptions
     );
   } else {
+    if (safetyTimeout) clearTimeout(safetyTimeout);
     console.warn("このブラウザは位置情報をサポートしていません");
     // ローディング画面を非表示
     hideLoading();
