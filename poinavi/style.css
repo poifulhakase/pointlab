@@ -1593,23 +1593,35 @@ body.dark-mode .settings-modal__select {
   z-index: 10;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+  color: #374151;
   cursor: pointer;
   display: flex;
   align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
 
 .map-settings-button:hover {
-  background-color: var(--bg-secondary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.12),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.map-settings-button:active {
+  transform: translateY(0);
 }
 
 .map-settings-button:focus,
@@ -1796,6 +1808,22 @@ body.dark-mode .settings-modal__select {
 }
 
 /* ダークモード対応 */
+body.dark-mode .map-settings-button {
+  background: linear-gradient(135deg, rgba(45, 45, 45, 0.95) 0%, rgba(38, 38, 38, 0.95) 100%);
+  color: #e5e7eb;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .map-settings-button:hover {
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 body.dark-mode .layer-toggle {
   background: linear-gradient(135deg, rgba(45, 45, 45, 0.95) 0%, rgba(38, 38, 38, 0.95) 100%);
   color: #e5e7eb;
