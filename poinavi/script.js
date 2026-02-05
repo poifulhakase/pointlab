@@ -2048,6 +2048,7 @@ function stopMarkerPulse() {
 function displayResultsList(results) {
   const resultsList = document.getElementById("resultsList");
   resultsList.innerHTML = "";
+  resultsList.style.display = ''; // 結果リストを表示
 
   if (results.length === 0) {
     resultsList.innerHTML = '<div class="result-item">結果が見つかりませんでした</div>';
@@ -2986,9 +2987,11 @@ function clearMarkers() {
 function displayNoResults(isNeutral = false) {
   const resultsList = document.getElementById("resultsList");
   if (isNeutral) {
-    // ニュートラル状態：何も表示しない
+    // ニュートラル状態：結果リスト自体を非表示
     resultsList.innerHTML = '';
+    resultsList.style.display = 'none';
   } else {
+    resultsList.style.display = '';
     resultsList.innerHTML = '<div class="result-item">該当する場所が見つかりませんでした</div>';
   }
   clearMarkers();
