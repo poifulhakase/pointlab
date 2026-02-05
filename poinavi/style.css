@@ -2001,6 +2001,9 @@ body.dark-mode .rain-viewer-disclaimer {
   padding: 16px;
   overflow-y: auto;
   min-height: 150px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .translate-result-placeholder {
