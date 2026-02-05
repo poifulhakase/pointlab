@@ -10,8 +10,8 @@
 let voiceTranslationCount = 0;
 let ocrTranslationCount = 0;
 
-// 現在の言語設定
-let ocrLang = localStorage.getItem("poinavi_ocr_lang") || "jpn";
+// 現在の言語設定（デフォルトを英語に変更 - 日本語データは重いため）
+let ocrLang = localStorage.getItem("poinavi_ocr_lang") || "eng";
 let targetLang = localStorage.getItem("poinavi_target_lang") || "ja";
 
 // カメラ関連
@@ -782,10 +782,18 @@ async function performOCR(imageData, onProgress) {
   
   try {
     console.log("OCR開始, 言語:", ocrLang);
+    console.log("Tesseract available:", typeof Tesseract !== 'undefined');
+    
+    // Tesseractライブラリの存在確認
+    if (typeof Tesseract === 'undefined') {
+      console.error("Tesseract.js が読み込まれていません");
+      throw new Error("OCRライブラリの読み込みに失敗しました。ページを再読み込みしてください。");
+    }
     
     // Tesseract Workerを作成
     if (processingText) processingText.textContent = "OCRエンジンを準備中...";
     
+    console.log("Creating Tesseract worker...");
     worker = await Tesseract.createWorker(ocrLang, 1, {
       logger: (m) => {
         console.log("Tesseract:", m.status, m.progress);
