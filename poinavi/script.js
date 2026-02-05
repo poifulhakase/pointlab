@@ -26,6 +26,15 @@ let rainViewerLayer = null; // RainViewer レイヤー
 let rainViewerEnabled = false; // RainViewer 有効フラグ
 let rainViewerLayerIndex = -1; // overlayMapTypes での位置
 
+// 鉄道レイヤー関連
+let railwayEnabled = false; // 鉄道レイヤー有効フラグ
+let railwayPolylines = []; // 鉄道路線のポリライン
+let stationMarkers = []; // 駅マーカー
+let railwayInfoWindow = null; // 鉄道用InfoWindow
+let railwayDataCache = null; // 鉄道データキャッシュ
+let railwayCacheLocation = null; // キャッシュ時の位置
+const RAILWAY_RADIUS = 10000; // 取得半径（10km）
+
 // ============================================
 // タグ管理
 // ============================================
@@ -169,6 +178,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initSettingsModal();
   initTagManagement(); // タグ管理機能を初期化
   initRainViewer(); // RainViewer 雨雲レーダー機能を初期化
+  initRailwayLayer(); // 鉄道レイヤー機能を初期化
   
   // Google Maps API が読み込まれるまで待つ
   // initGoogleMaps コールバックで initMap() と requestUserLocation() が呼ばれる
@@ -3120,5 +3130,323 @@ function initRainViewer() {
     toggleBtn.addEventListener("click", function() {
       toggleRainViewer();
     });
+  }
+}
+
+// ============================================
+// 鉄道レイヤー機能（Overpass API）
+// ============================================
+
+// 鉄道レイヤー初期化
+function initRailwayLayer() {
+  const toggleBtn = document.getElementById("railwayToggle");
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function() {
+      toggleRailwayLayer();
+    });
+  }
+}
+
+// 鉄道レイヤー表示/非表示をトグル
+async function toggleRailwayLayer() {
+  const toggleBtn = document.getElementById("railwayToggle");
+  const statusPanel = document.getElementById("railwayStatus");
+
+  if (railwayEnabled) {
+    // 非表示にする
+    clearRailwayLayer();
+    railwayEnabled = false;
+
+    // UI を更新
+    if (toggleBtn) {
+      toggleBtn.classList.remove("active");
+      toggleBtn.setAttribute("aria-pressed", "false");
+    }
+    if (statusPanel) {
+      statusPanel.classList.add("hidden");
+    }
+
+    console.log("鉄道レイヤーをOFFにしました");
+  } else {
+    // 表示する
+    if (!userLocation) {
+      alert("現在地を取得してから鉄道レイヤーを表示してください");
+      return;
+    }
+
+    if (toggleBtn) {
+      toggleBtn.classList.add("loading");
+    }
+
+    try {
+      await fetchAndDisplayRailwayData();
+      railwayEnabled = true;
+
+      // UI を更新
+      if (toggleBtn) {
+        toggleBtn.classList.add("active");
+        toggleBtn.classList.remove("loading");
+        toggleBtn.setAttribute("aria-pressed", "true");
+      }
+      if (statusPanel) {
+        statusPanel.classList.remove("hidden");
+      }
+
+      console.log("鉄道レイヤーをONにしました");
+    } catch (error) {
+      console.error("鉄道データの取得に失敗しました:", error);
+      if (toggleBtn) {
+        toggleBtn.classList.remove("loading");
+      }
+      alert("鉄道データの取得に失敗しました。しばらく経ってから再度お試しください。");
+    }
+  }
+}
+
+// Overpass API から鉄道データを取得して表示
+async function fetchAndDisplayRailwayData() {
+  // キャッシュが有効かチェック（位置が1km以上移動していなければ使用）
+  if (railwayDataCache && railwayCacheLocation) {
+    const distance = calculateDistance(
+      railwayCacheLocation.lat,
+      railwayCacheLocation.lng,
+      userLocation.lat,
+      userLocation.lng
+    );
+    if (distance < 1000) {
+      console.log("キャッシュされた鉄道データを使用");
+      displayRailwayData(railwayDataCache);
+      return;
+    }
+  }
+
+  const lat = userLocation.lat;
+  const lng = userLocation.lng;
+
+  // Overpass API クエリ
+  const query = `
+    [out:json][timeout:25];
+    (
+      way["railway"="rail"](around:${RAILWAY_RADIUS},${lat},${lng});
+      node["railway"="station"](around:${RAILWAY_RADIUS},${lat},${lng});
+    );
+    out geom;
+  `;
+
+  const url = "https://overpass-api.de/api/interpreter";
+
+  console.log("Overpass API クエリ送信:", { lat, lng, radius: RAILWAY_RADIUS });
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: `data=${encodeURIComponent(query)}`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log("Overpass API レスポンス:", {
+    elements: data.elements?.length || 0
+  });
+
+  // キャッシュに保存
+  railwayDataCache = data;
+  railwayCacheLocation = { ...userLocation };
+
+  // データを表示
+  displayRailwayData(data);
+}
+
+// 鉄道データを地図に表示
+function displayRailwayData(data) {
+  if (!data || !data.elements) {
+    console.warn("鉄道データが空です");
+    return;
+  }
+
+  // 既存のレイヤーをクリア
+  clearRailwayLayer();
+
+  const isDarkMode = document.body.classList.contains("dark-mode");
+  
+  // 路線の色（複数の色を用意して路線ごとに変える）
+  const lineColors = isDarkMode
+    ? ["#34d399", "#60a5fa", "#f472b6", "#fbbf24", "#a78bfa"]
+    : ["#10b981", "#3b82f6", "#ec4899", "#f59e0b", "#8b5cf6"];
+
+  // 路線をグループ化するためのマップ
+  const railwayLines = new Map();
+  const stations = [];
+
+  // データを分類
+  data.elements.forEach((element) => {
+    if (element.type === "way" && element.geometry) {
+      // 路線データ
+      const lineName = element.tags?.name || element.tags?.ref || "不明な路線";
+      if (!railwayLines.has(lineName)) {
+        railwayLines.set(lineName, []);
+      }
+      railwayLines.get(lineName).push(element);
+    } else if (element.type === "node" && element.tags?.railway === "station") {
+      // 駅データ
+      stations.push(element);
+    }
+  });
+
+  console.log(`路線数: ${railwayLines.size}, 駅数: ${stations.length}`);
+
+  // 路線を描画
+  let colorIndex = 0;
+  railwayLines.forEach((ways, lineName) => {
+    const color = lineColors[colorIndex % lineColors.length];
+    colorIndex++;
+
+    ways.forEach((way) => {
+      // 座標を間引き（パフォーマンス向上）
+      const coordinates = simplifyCoordinates(way.geometry, 0.0002);
+      
+      const path = coordinates.map((coord) => ({
+        lat: coord.lat,
+        lng: coord.lon
+      }));
+
+      const polyline = new google.maps.Polyline({
+        path: path,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
+        map: map
+      });
+
+      // クリックで路線名を表示
+      polyline.addListener("click", function(e) {
+        showRailwayInfoWindow(e.latLng, lineName, "路線");
+      });
+
+      railwayPolylines.push(polyline);
+    });
+  });
+
+  // 駅を描画
+  stations.forEach((station) => {
+    const stationName = station.tags?.name || "不明な駅";
+    const operator = station.tags?.operator || "";
+    const lines = station.tags?.railway_line || station.tags?.["railway:ref"] || "";
+
+    // 駅マーカー
+    const marker = new google.maps.Marker({
+      position: { lat: station.lat, lng: station.lon },
+      map: map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: isDarkMode ? "#ffffff" : "#1a1a1a",
+        fillOpacity: 1,
+        strokeColor: isDarkMode ? "#10b981" : "#059669",
+        strokeWeight: 3
+      },
+      title: stationName
+    });
+
+    // クリックで駅情報を表示
+    marker.addListener("click", function() {
+      let info = stationName;
+      if (operator) info += `<br>事業者: ${operator}`;
+      if (lines) info += `<br>路線: ${lines}`;
+      showRailwayInfoWindow(marker.getPosition(), info, "駅");
+    });
+
+    stationMarkers.push(marker);
+  });
+}
+
+// 座標を間引き（Douglas-Peucker 簡易版）
+function simplifyCoordinates(coords, tolerance) {
+  if (!coords || coords.length <= 2) return coords;
+  
+  const result = [coords[0]];
+  let prevCoord = coords[0];
+  
+  for (let i = 1; i < coords.length - 1; i++) {
+    const coord = coords[i];
+    const distance = Math.sqrt(
+      Math.pow(coord.lat - prevCoord.lat, 2) +
+      Math.pow(coord.lon - prevCoord.lon, 2)
+    );
+    
+    if (distance > tolerance) {
+      result.push(coord);
+      prevCoord = coord;
+    }
+  }
+  
+  result.push(coords[coords.length - 1]);
+  return result;
+}
+
+// 鉄道用InfoWindowを表示
+function showRailwayInfoWindow(position, content, type) {
+  if (!railwayInfoWindow) {
+    railwayInfoWindow = new google.maps.InfoWindow();
+  }
+
+  const isDarkMode = document.body.classList.contains("dark-mode");
+  const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
+  const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
+  const accentColor = isDarkMode ? "#34d399" : "#10b981";
+
+  const html = `
+    <div style="
+      padding: 12px 16px;
+      min-width: 150px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+      background-color: ${bgColor};
+      color: ${textColor};
+      border-radius: 8px;
+    ">
+      <div style="
+        font-size: 11px;
+        font-weight: 600;
+        color: ${accentColor};
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      ">${type}</div>
+      <div style="
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.5;
+      ">${content}</div>
+    </div>
+  `;
+
+  railwayInfoWindow.setContent(html);
+  railwayInfoWindow.setPosition(position);
+  railwayInfoWindow.open(map);
+}
+
+// 鉄道レイヤーをクリア
+function clearRailwayLayer() {
+  // ポリラインを削除
+  railwayPolylines.forEach((polyline) => {
+    polyline.setMap(null);
+  });
+  railwayPolylines = [];
+
+  // 駅マーカーを削除
+  stationMarkers.forEach((marker) => {
+    marker.setMap(null);
+  });
+  stationMarkers = [];
+
+  // InfoWindowを閉じる
+  if (railwayInfoWindow) {
+    railwayInfoWindow.close();
   }
 }
