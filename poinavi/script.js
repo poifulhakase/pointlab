@@ -1136,8 +1136,37 @@ function initTransportMode() {
     transportMode = savedMode;
   }
   
-  const buttons = document.querySelectorAll(".transport-mode-btn");
+  // 設定バー内のボタン
+  const settingsBarButtons = document.querySelectorAll(".settings-bar .transport-mode-btn");
+  setupTransportButtons(settingsBarButtons);
   
+  // 設定モーダル内のボタン（イベント委譲で対応）
+  document.addEventListener("click", function(e) {
+    const btn = e.target.closest(".settings-modal .transport-mode-btn");
+    if (btn) {
+      const allModalButtons = document.querySelectorAll(".settings-modal .transport-mode-btn");
+      allModalButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      transportMode = btn.dataset.mode;
+      localStorage.setItem("poinavi_transport_mode", transportMode);
+      // 設定バーのボタンも同期
+      settingsBarButtons.forEach(b => {
+        if (b.dataset.mode === transportMode) {
+          b.classList.add("active");
+        } else {
+          b.classList.remove("active");
+        }
+      });
+      // 結果を再表示
+      if (currentResults && currentResults.length > 0) {
+        displayResultsList(currentResults);
+      }
+    }
+  });
+}
+
+// 移動手段ボタンのセットアップ
+function setupTransportButtons(buttons) {
   // 初期状態を反映
   buttons.forEach(btn => {
     if (btn.dataset.mode === transportMode) {
@@ -1166,12 +1195,38 @@ function initTransportMode() {
   });
 }
 
+// 設定を初期化
+function resetAllSettings() {
+  if (!confirm("すべての設定を初期化しますか？\\n（タグ、テーマ、移動手段、起動ページなどがリセットされます）")) {
+    return;
+  }
+  
+  // localStorageから設定を削除
+  localStorage.removeItem("poinavi_theme");
+  localStorage.removeItem("poinavi_transport_mode");
+  localStorage.removeItem("poinavi_start_page");
+  localStorage.removeItem("poinavi_result_count");
+  localStorage.removeItem("poinavi_custom_tags");
+  localStorage.removeItem("poinavi_search_cache");
+  
+  // sessionStorageもクリア
+  sessionStorage.removeItem("poinavi_session_started");
+  
+  alert("設定を初期化しました。ページを再読み込みします。");
+  window.location.reload();
+}
+
 function showSettingsModal() {
   const modal = document.getElementById("settingsModal");
   if (modal) {
     modal.classList.remove("hidden");
+    modal.style.display = "flex";
     // タグ管理リストを更新
     renderTagManageList();
+    // 移動手段ボタンの状態を更新
+    updateTransportModeButtons();
+    // 起動ページセレクトの状態を更新
+    updateStartPageSelect();
   }
 }
 
@@ -1179,6 +1234,30 @@ function hideSettingsModal() {
   const modal = document.getElementById("settingsModal");
   if (modal) {
     modal.classList.add("hidden");
+    modal.style.display = "none";
+  }
+}
+
+// 移動手段ボタンの状態を更新
+function updateTransportModeButtons() {
+  const buttons = document.querySelectorAll(".settings-modal .transport-mode-btn");
+  const savedMode = localStorage.getItem("poinavi_transport_mode") || "walk";
+  
+  buttons.forEach(btn => {
+    if (btn.dataset.mode === savedMode) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
+
+// 起動ページセレクトの状態を更新
+function updateStartPageSelect() {
+  const select = document.getElementById("mapStartPageSelect");
+  if (select) {
+    const savedStartPage = localStorage.getItem("poinavi_start_page") || "index.html";
+    select.value = savedStartPage;
   }
 }
 

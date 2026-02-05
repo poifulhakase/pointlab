@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=50" />
+    <link rel="stylesheet" href="./style.css?v=51" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -118,11 +118,11 @@
 
     <!-- 設定モーダル -->
     <div id="settingsModal" class="settings-modal hidden">
-      <div class="settings-modal__overlay" onclick="document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').style.display='none';"></div>
+      <div class="settings-modal__overlay" onclick="hideSettingsModal();"></div>
       <div class="settings-modal__content">
         <div class="settings-modal__header">
           <h2 class="settings-modal__title">設定</h2>
-          <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる" onclick="document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('settingsModal').style.display='none';">
+          <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる" onclick="hideSettingsModal();">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -218,6 +218,14 @@
             </div>
           </div>
           
+          <!-- 設定初期化 -->
+          <hr class="settings-modal__divider" />
+          <div class="settings-modal__item">
+            <button type="button" class="settings-modal__reset-btn" onclick="resetAllSettings();">
+              設定を初期化
+            </button>
+          </div>
+          
         </div>
       </div>
     </div>
@@ -225,7 +233,7 @@
     <!-- 1️⃣ マップ表示（上部） -->
     <main class="main-content">
       <!-- 設定ボタン（右上フロート） -->
-      <button id="mapSettingsButton" class="map-settings-button" type="button" aria-label="設定" onclick="document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('settingsModal').style.display='flex';">
+      <button id="mapSettingsButton" class="map-settings-button" type="button" aria-label="設定" onclick="showSettingsModal();">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -367,6 +375,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=49"></script>
+    <script src="./script.js?v=51"></script>
   </body>
 </html>
