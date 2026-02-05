@@ -1088,8 +1088,18 @@ function initSettingsModal() {
     console.log("mapSettingsButton event listener added");
     mapSettingsButton.addEventListener("click", function(e) {
       console.log("mapSettingsButton clicked");
+      e.preventDefault();
       e.stopPropagation();
-      showSettingsModal();
+      // 直接モーダルを開く
+      const m = document.getElementById("settingsModal");
+      console.log("Modal element:", m);
+      if (m) {
+        m.classList.remove("hidden");
+        m.style.display = "flex";
+        m.style.opacity = "1";
+        m.style.visibility = "visible";
+        console.log("Modal should be visible now");
+      }
     });
   } else {
     console.warn("mapSettingsButton not found");
