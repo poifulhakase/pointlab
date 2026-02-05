@@ -101,8 +101,28 @@ function getLangNameFromOcr(ocrCode) {
   return OCR_LANG_NAMES[ocrCode] || ocrCode;
 }
 
-// 翻訳API（MyMemory - 無料）
-const TRANSLATE_API_URL = "https://api.mymemory.translated.net/get";
+// 翻訳API（LibreTranslate - 完全無料・オープンソース）
+const LIBRETRANSLATE_API_URL = "https://libretranslate.com/translate";
+
+// Web Speech API 用の言語コードマッピング
+const SPEECH_LANG_CODES = {
+  "ja": "ja-JP",
+  "en": "en-US",
+  "zh": "zh-CN",
+  "ko": "ko-KR",
+  "fr": "fr-FR",
+  "de": "de-DE",
+  "es": "es-ES",
+  "it": "it-IT",
+  "pt": "pt-PT",
+  "ru": "ru-RU",
+  "th": "th-TH",
+  "vi": "vi-VN"
+};
+
+// 音声認識の状態
+let isListening = false;
+let speechRecognition = null;
 
 // ============================================
 // テーマ管理
@@ -250,44 +270,158 @@ function getLanguageLabel() {
 }
 
 // ============================================
-// 音声翻訳の初期化（ダミー版）
+// 音声翻訳の初期化（Web Speech API版）
 // ============================================
-const DUMMY_VOICE_TRANSLATIONS = [
-  {
-    original: "Excuse me, where is the nearest station?",
-    translated: "すみません、一番近い駅はどこですか？"
-  },
-  {
-    original: "How much is this?",
-    translated: "これはいくらですか？"
-  },
-  {
-    original: "Could you take a picture of us?",
-    translated: "写真を撮っていただけますか？"
-  }
-];
-
 function initVoiceTranslation() {
   const voiceBtn = document.getElementById("voiceTranslateBtn");
   
   if (!voiceBtn) return;
   
-  voiceBtn.addEventListener("click", function() {
+  // Web Speech API のサポート確認
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  
+  if (!SpeechRecognition) {
+    console.warn("Web Speech APIがサポートされていません");
+    voiceBtn.addEventListener("click", function() {
+      alert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
+    });
+    return;
+  }
+  
+  // 音声認識の初期化
+  speechRecognition = new SpeechRecognition();
+  speechRecognition.continuous = false;
+  speechRecognition.interimResults = true;
+  speechRecognition.maxAlternatives = 1;
+  
+  // イベントハンドラ
+  speechRecognition.onstart = function() {
+    isListening = true;
     voiceBtn.classList.add("active");
+    updateVoiceButtonState("listening");
+  };
+  
+  speechRecognition.onend = function() {
+    isListening = false;
+    voiceBtn.classList.remove("active");
+    updateVoiceButtonState("idle");
+  };
+  
+  speechRecognition.onerror = function(event) {
+    console.error("音声認識エラー:", event.error);
+    isListening = false;
+    voiceBtn.classList.remove("active");
+    updateVoiceButtonState("idle");
     
-    setTimeout(function() {
-      voiceBtn.classList.remove("active");
-      showVoiceTranslationResult();
-    }, 1500);
+    if (event.error === "no-speech") {
+      alert("音声が検出されませんでした。\nもう一度お試しください。");
+    } else if (event.error === "not-allowed") {
+      alert("マイクへのアクセスが許可されていません。\n設定からマイクへのアクセスを許可してください。");
+    } else if (event.error === "network") {
+      alert("ネットワークエラーが発生しました。\nインターネット接続を確認してください。");
+    }
+  };
+  
+  speechRecognition.onresult = async function(event) {
+    const result = event.results[event.results.length - 1];
+    
+    if (result.isFinal) {
+      const transcript = result[0].transcript;
+      console.log("認識結果:", transcript);
+      
+      // 翻訳処理
+      await processVoiceTranslation(transcript);
+    }
+  };
+  
+  // ボタンクリックイベント
+  voiceBtn.addEventListener("click", function() {
+    if (isListening) {
+      // 停止
+      speechRecognition.stop();
+    } else {
+      // 開始
+      startVoiceRecognition();
+    }
   });
 }
 
-function showVoiceTranslationResult() {
+function startVoiceRecognition() {
+  if (!speechRecognition) return;
+  
+  // 設定から入力言語を取得
+  const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
+  const langCode = SPEECH_LANG_CODES[micInputLang] || "en-US";
+  
+  speechRecognition.lang = langCode;
+  
+  try {
+    speechRecognition.start();
+  } catch (err) {
+    console.error("音声認識の開始に失敗:", err);
+    if (err.message.includes("already started")) {
+      speechRecognition.stop();
+    }
+  }
+}
+
+function updateVoiceButtonState(state) {
+  const voiceLabel = document.querySelector(".translate-voice-label");
+  if (!voiceLabel) return;
+  
+  switch (state) {
+    case "listening":
+      voiceLabel.textContent = "聞き取り中...";
+      break;
+    case "translating":
+      voiceLabel.textContent = "翻訳中...";
+      break;
+    default:
+      voiceLabel.textContent = "音声翻訳";
+  }
+}
+
+async function processVoiceTranslation(transcript) {
+  const voiceBtn = document.getElementById("voiceTranslateBtn");
+  
+  updateVoiceButtonState("translating");
+  voiceBtn?.classList.add("active");
+  
+  try {
+    // 設定から言語を取得
+    const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
+    const micTargetLang = document.getElementById("micTargetLangSelect")?.value || "ja";
+    
+    // 翻訳実行
+    const translatedText = await translateTextLibre(transcript, micInputLang, micTargetLang);
+    
+    // 結果を表示
+    showVoiceTranslationResult(transcript, translatedText, micInputLang, micTargetLang);
+    
+    // 翻訳結果を読み上げ（オプション）
+    speakText(translatedText, micTargetLang);
+    
+  } catch (err) {
+    console.error("翻訳エラー:", err);
+    alert("翻訳に失敗しました。\n" + err.message);
+  } finally {
+    voiceBtn?.classList.remove("active");
+    updateVoiceButtonState("idle");
+  }
+}
+
+function showVoiceTranslationResult(originalText, translatedText, sourceLang, targetLang) {
   const resultArea = document.getElementById("translateResultArea");
   if (!resultArea) return;
   
-  const data = DUMMY_VOICE_TRANSLATIONS[voiceTranslationCount % DUMMY_VOICE_TRANSLATIONS.length];
   voiceTranslationCount++;
+  
+  const data = {
+    original: originalText,
+    translated: translatedText,
+    sourceLang: sourceLang,
+    targetLang: targetLang
+  };
   
   const resultHTML = createTranslationResultHTML("voice", data);
   
@@ -296,8 +430,35 @@ function showVoiceTranslationResult() {
     placeholder.remove();
   }
   
+  // 以前の最新マークを削除
+  resultArea.querySelectorAll(".translate-result-item--latest").forEach(item => {
+    item.classList.remove("translate-result-item--latest");
+  });
+  
   resultArea.insertAdjacentHTML("afterbegin", resultHTML);
+  
+  // 最新の結果にマークを付ける
+  const latestItem = resultArea.querySelector(".translate-result-item");
+  if (latestItem) {
+    latestItem.classList.add("translate-result-item--latest");
+  }
+  
   resultArea.scrollTop = 0;
+  
+  // コピーボタンのイベントを設定
+  setupCopyButtons();
+}
+
+// 翻訳結果を読み上げる
+function speakText(text, lang) {
+  if (!window.speechSynthesis) return;
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = SPEECH_LANG_CODES[lang] || "ja-JP";
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  
+  window.speechSynthesis.speak(utterance);
 }
 
 // ============================================
@@ -975,53 +1136,121 @@ async function performOCR(imageData, onProgress) {
 }
 
 // ============================================
-// 翻訳API
+// 翻訳API（LibreTranslate - 完全無料）
 // ============================================
-async function translateText(text, sourceLang, targetLang) {
+
+// LibreTranslateの公開サーバーリスト（フォールバック用）
+const LIBRETRANSLATE_SERVERS = [
+  "https://libretranslate.com",
+  "https://translate.argosopentech.com",
+  "https://translate.terraprint.co"
+];
+
+let currentServerIndex = 0;
+
+// LibreTranslate用の言語コードマッピング
+const LIBRE_LANG_CODES = {
+  "ja": "ja",
+  "en": "en",
+  "zh": "zh",
+  "ko": "ko",
+  "fr": "fr",
+  "de": "de",
+  "es": "es",
+  "it": "it",
+  "pt": "pt",
+  "ru": "ru",
+  "th": "th",
+  "vi": "vi"
+};
+
+async function translateTextLibre(text, sourceLang, targetLang) {
   // 同じ言語なら翻訳不要
   if (sourceLang === targetLang) {
     return text;
   }
   
-  // 文字数が多い場合は分割
-  const MAX_CHARS = 500;
-  if (text.length > MAX_CHARS) {
-    const chunks = splitText(text, MAX_CHARS);
-    const translatedChunks = [];
+  const source = LIBRE_LANG_CODES[sourceLang] || sourceLang;
+  const target = LIBRE_LANG_CODES[targetLang] || targetLang;
+  
+  // 複数のサーバーを試す
+  let lastError = null;
+  
+  for (let i = 0; i < LIBRETRANSLATE_SERVERS.length; i++) {
+    const serverIndex = (currentServerIndex + i) % LIBRETRANSLATE_SERVERS.length;
+    const server = LIBRETRANSLATE_SERVERS[serverIndex];
     
-    for (const chunk of chunks) {
-      const translated = await translateChunk(chunk, sourceLang, targetLang);
-      translatedChunks.push(translated);
+    try {
+      const result = await translateWithServer(server, text, source, target);
+      currentServerIndex = serverIndex; // 成功したサーバーを記憶
+      return result;
+    } catch (err) {
+      console.warn(`サーバー ${server} でエラー:`, err.message);
+      lastError = err;
     }
-    
-    return translatedChunks.join("\n");
   }
   
-  return translateChunk(text, sourceLang, targetLang);
+  // すべてのサーバーが失敗した場合、MyMemoryにフォールバック
+  console.log("LibreTranslate失敗、MyMemoryにフォールバック");
+  return translateWithMyMemory(text, sourceLang, targetLang);
+}
+
+async function translateWithServer(server, text, source, target) {
+  const url = `${server}/translate`;
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      q: text,
+      source: source,
+      target: target,
+      format: "text"
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  
+  const data = await response.json();
+  
+  if (data.error) {
+    throw new Error(data.error);
+  }
+  
+  return data.translatedText;
+}
+
+// MyMemoryへのフォールバック（バックアップ）
+async function translateWithMyMemory(text, sourceLang, targetLang) {
+  const langPair = `${sourceLang}|${targetLang}`;
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+  
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    throw new Error("翻訳APIエラー");
+  }
+  
+  const data = await response.json();
+  
+  if (data.responseStatus !== 200) {
+    throw new Error(data.responseDetails || "翻訳に失敗しました");
+  }
+  
+  return data.responseData.translatedText;
+}
+
+// カメラ翻訳用（既存の関数を維持）
+async function translateText(text, sourceLang, targetLang) {
+  return translateTextLibre(text, sourceLang, targetLang);
 }
 
 async function translateChunk(text, sourceLang, targetLang) {
-  try {
-    const langPair = `${sourceLang}|${targetLang}`;
-    const url = `${TRANSLATE_API_URL}?q=${encodeURIComponent(text)}&langpair=${langPair}`;
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error("翻訳APIエラー");
-    }
-    
-    const data = await response.json();
-    
-    if (data.responseStatus !== 200) {
-      throw new Error(data.responseDetails || "翻訳に失敗しました");
-    }
-    
-    return data.responseData.translatedText;
-  } catch (err) {
-    console.error("翻訳エラー:", err);
-    throw new Error("翻訳に失敗しました。しばらく待ってからお試しください。");
-  }
+  return translateTextLibre(text, sourceLang, targetLang);
 }
 
 function splitText(text, maxLength) {
@@ -1067,7 +1296,19 @@ function showOCRTranslationResult(originalText, translatedText, imageData) {
     placeholder.remove();
   }
   
+  // 以前の最新マークを削除
+  resultArea.querySelectorAll(".translate-result-item--latest").forEach(item => {
+    item.classList.remove("translate-result-item--latest");
+  });
+  
   resultArea.insertAdjacentHTML("afterbegin", resultHTML);
+  
+  // 最新の結果にマークを付ける
+  const latestItem = resultArea.querySelector(".translate-result-item");
+  if (latestItem) {
+    latestItem.classList.add("translate-result-item--latest");
+  }
+  
   resultArea.scrollTop = 0;
   
   // コピーボタンのイベントを設定
@@ -1106,12 +1347,20 @@ function createTranslationResultHTML(type, data) {
   const plainOriginal = data.original || "";
   const plainTranslated = data.translated || "";
   
+  // 言語ラベルを取得（音声翻訳の場合はdataから、カメラ翻訳の場合はグローバル設定から）
+  let languageLabel;
+  if (data.sourceLang && data.targetLang) {
+    languageLabel = `${getLangName(data.sourceLang)} → ${getLangName(data.targetLang)}`;
+  } else {
+    languageLabel = getLanguageLabel();
+  }
+  
   return `
     <div class="translate-result-item translate-result-item--${type}" data-original="${encodeURIComponent(plainOriginal)}" data-translated="${encodeURIComponent(plainTranslated)}">
       <div class="translate-result-item__header">
         <span class="translate-result-item__icon">${typeIcon}</span>
         <span class="translate-result-item__label">${typeLabel}</span>
-        <span class="translate-result-item__lang">${getLanguageLabel()}</span>
+        <span class="translate-result-item__lang">${languageLabel}</span>
         <span class="translate-result-item__time">${timeStr}</span>
       </div>
       ${imagePreview}

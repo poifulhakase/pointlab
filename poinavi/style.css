@@ -2139,6 +2139,27 @@ body.dark-mode .translate-result-item {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* 最新の翻訳結果を強調表示 */
+.translate-result-item--latest {
+  border: 2px solid var(--accent-color);
+  background-color: rgba(74, 144, 226, 0.05);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+}
+
+body.dark-mode .translate-result-item--latest {
+  background-color: rgba(74, 144, 226, 0.1);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+}
+
+.translate-result-item--latest .translate-result-item__header {
+  border-bottom-color: var(--accent-color);
+}
+
+.translate-result-item--latest .translate-result-item__label {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
 .translate-result-item:last-child {
   margin-bottom: 0;
 }
