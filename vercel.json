@@ -28,6 +28,15 @@
       "dest": "hakaseAI/server.js"
     },
     {
+      "src": "/poinavi$",
+      "status": 308,
+      "headers": { "Location": "/poinavi/" }
+    },
+    {
+      "src": "/poinavi/$",
+      "dest": "/poinavi/index.html"
+    },
+    {
       "src": "/poinavi/(.*)",
       "dest": "/poinavi/$1"
     },
