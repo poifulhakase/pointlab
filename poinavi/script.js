@@ -466,13 +466,23 @@ function initTagSelection() {
   const tagList = document.getElementById("tagList");
   if (!tagList) return;
   
+  // ダブルタップ防止用フラグ
+  let isProcessingTag = false;
+  
   // イベント委譲：親要素でクリックを監視
   tagList.addEventListener("click", function(event) {
     const btn = event.target.closest(".tag-btn");
     if (!btn) return;
     
+    // ダブルタップ防止
+    if (isProcessingTag) return;
+    isProcessingTag = true;
+    setTimeout(() => { isProcessingTag = false; }, 300);
+    
     // 既に選択されている場合は選択解除
-    if (btn.classList.contains("active")) {
+    const wasActive = btn.classList.contains("active");
+    
+    if (wasActive) {
       btn.classList.remove("active");
     } else {
       // 他のタグの選択を解除
@@ -485,7 +495,7 @@ function initTagSelection() {
     }
     
     // タグを選択した場合、検索フィルタをクリア
-    if (btn.classList.contains("active")) {
+    if (!wasActive) {
       const searchInput = document.getElementById("searchInput");
       if (searchInput) {
         searchInput.value = "";
