@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./style.css?v=20" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -112,10 +112,15 @@
     <!-- フッター -->
     <footer class="translate-footer">
       <a href="./translate.html" class="translate-footer__btn" aria-label="翻訳ページへ">
+        <!-- 翻訳アイコン（言語切り替え） -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 18l-6-6 6-6"/>
+          <path d="M5 8l6 6"/>
+          <path d="M4 14h6"/>
+          <path d="M2 5h12"/>
+          <path d="M7 2v3"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
         </svg>
-        <span>翻訳</span>
       </a>
       <a
         href="https://note.com/pointlab"
@@ -127,9 +132,11 @@
         <span>ぽいんとらぼ</span>
       </a>
       <a href="./map.html" class="translate-footer__btn" aria-label="地図ページへ">
-        <span>地図</span>
+        <!-- 地図アイコン -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 18l6-6-6-6"/>
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
         </svg>
       </a>
     </footer>
