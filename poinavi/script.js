@@ -826,10 +826,36 @@ function hideLoading() {
 // ============================================
 // 現在地取得
 // ============================================
+const LOCATION_CACHE_KEY = "poinavi_cached_location";
+const LOCATION_CACHE_DURATION = 10 * 60 * 1000; // 10分間キャッシュ
+
 function requestUserLocation() {
   // ローディング画面を表示
   showLoading();
   
+  // セッションストレージからキャッシュを確認
+  const cachedData = sessionStorage.getItem(LOCATION_CACHE_KEY);
+  if (cachedData) {
+    try {
+      const cached = JSON.parse(cachedData);
+      const now = Date.now();
+      
+      // キャッシュが有効期限内かチェック
+      if (cached.timestamp && (now - cached.timestamp) < LOCATION_CACHE_DURATION) {
+        // キャッシュされた位置情報を使用
+        applyUserLocation(cached.lat, cached.lng);
+        return;
+      }
+    } catch (e) {
+      // キャッシュのパースに失敗した場合は無視
+    }
+  }
+  
+  // キャッシュがない場合は新たに取得
+  fetchUserLocation();
+}
+
+function fetchUserLocation() {
   if (navigator.geolocation) {
     // タイムアウト設定（10秒）
     const geolocationOptions = {
@@ -840,39 +866,19 @@ function requestUserLocation() {
     
     navigator.geolocation.getCurrentPosition(
       function (position) {
-        userLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        map.setCenter(userLocation);
-        map.setZoom(15);
-
-        // 現在地マーカー
-        // ダークモードかどうかを判定
-        const isDarkMode = document.body.classList.contains("dark-mode");
-        const currentLocationColor = isDarkMode ? "#00ff00" : "#39ff14"; // ダークモード時はより強い蛍光グリーン
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
         
-        currentLocationMarker = new google.maps.Marker({
-          position: userLocation,
-          map: map,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12, // 1.5倍サイズ（8 * 1.5 = 12）
-            fillColor: currentLocationColor,
-            fillOpacity: 1,
-            strokeColor: "#ffffff",
-            strokeWeight: 2,
-          },
-          title: "現在地",
-        });
-
-        // 現在地マーカーのクリックイベント
-        currentLocationMarker.addListener("click", function() {
-          showLocationModal();
-        });
-
-        // ローディング画面を非表示
-        hideLoading();
+        // セッションストレージにキャッシュ
+        const cacheData = {
+          lat: lat,
+          lng: lng,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(cacheData));
+        
+        // 位置情報を適用
+        applyUserLocation(lat, lng);
       },
       function (error) {
         console.warn("位置情報の取得に失敗しました:", error);
@@ -900,6 +906,39 @@ function requestUserLocation() {
     // ローディング画面を非表示
     hideLoading();
   }
+}
+
+function applyUserLocation(lat, lng) {
+  userLocation = { lat: lat, lng: lng };
+  map.setCenter(userLocation);
+  map.setZoom(15);
+
+  // 現在地マーカー
+  // ダークモードかどうかを判定
+  const isDarkMode = document.body.classList.contains("dark-mode");
+  const currentLocationColor = isDarkMode ? "#00ff00" : "#39ff14"; // ダークモード時はより強い蛍光グリーン
+  
+  currentLocationMarker = new google.maps.Marker({
+    position: userLocation,
+    map: map,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 12, // 1.5倍サイズ（8 * 1.5 = 12）
+      fillColor: currentLocationColor,
+      fillOpacity: 1,
+      strokeColor: "#ffffff",
+      strokeWeight: 2,
+    },
+    title: "現在地",
+  });
+
+  // 現在地マーカーのクリックイベント
+  currentLocationMarker.addListener("click", function() {
+    showLocationModal();
+  });
+
+  // ローディング画面を非表示
+  hideLoading();
 }
 
 // ============================================
