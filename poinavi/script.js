@@ -856,6 +856,9 @@ function showLoading() {
   const loadingOverlay = document.getElementById("loadingOverlay");
   if (loadingOverlay) {
     loadingOverlay.classList.remove("hidden");
+    loadingOverlay.style.display = "flex";
+    loadingOverlay.style.opacity = "1";
+    loadingOverlay.style.visibility = "visible";
   }
 }
 
@@ -863,7 +866,11 @@ function hideLoading() {
   const loadingOverlay = document.getElementById("loadingOverlay");
   if (loadingOverlay) {
     loadingOverlay.classList.add("hidden");
+    loadingOverlay.style.display = "none";
+    loadingOverlay.style.opacity = "0";
+    loadingOverlay.style.visibility = "hidden";
   }
+  console.log("hideLoading called");
 }
 
 // ============================================
@@ -876,11 +883,11 @@ function requestUserLocation() {
   // ローディング画面を表示
   showLoading();
   
-  // 安全策: 最大30秒後に強制的にローディングを非表示
+  // 安全策: 最大5秒後に強制的にローディングを非表示
   const safetyTimeout = setTimeout(function() {
-    console.warn("位置情報取得のセーフティタイムアウト");
+    console.warn("位置情報取得のセーフティタイムアウト（5秒）");
     hideLoading();
-  }, 30000);
+  }, 5000);
   
   // セッションストレージからキャッシュを確認
   const cachedData = sessionStorage.getItem(LOCATION_CACHE_KEY);
