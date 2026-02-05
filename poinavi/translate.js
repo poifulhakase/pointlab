@@ -79,6 +79,28 @@ const LANG_NAMES = {
   "vi": "ベトナム語"
 };
 
+// OCR言語コードから表示名
+const OCR_LANG_NAMES = {
+  "jpn": "日本語",
+  "eng": "英語",
+  "chi_sim": "中国語（簡体）",
+  "chi_tra": "中国語（繁体）",
+  "kor": "韓国語",
+  "fra": "フランス語",
+  "deu": "ドイツ語",
+  "spa": "スペイン語",
+  "ita": "イタリア語",
+  "por": "ポルトガル語",
+  "rus": "ロシア語",
+  "tha": "タイ語",
+  "vie": "ベトナム語"
+};
+
+// OCR言語コードから表示名を取得
+function getLangNameFromOcr(ocrCode) {
+  return OCR_LANG_NAMES[ocrCode] || ocrCode;
+}
+
 // 翻訳API（MyMemory - 無料）
 const TRANSLATE_API_URL = "https://api.mymemory.translated.net/get";
 
@@ -714,7 +736,22 @@ async function startOCRProcess() {
     console.log("OCR結果:", ocrResult);
     
     if (!ocrResult || ocrResult.trim() === "") {
-      throw new Error("文字を認識できませんでした");
+      // 文字が認識されなかった場合、確認を求める
+      const retry = confirm(
+        "文字を認識できませんでした。\n\n" +
+        "【確認事項】\n" +
+        "・撮影した画像に文字が含まれていますか？\n" +
+        "・言語設定は正しいですか？（現在: " + getLangNameFromOcr(ocrLang) + "）\n" +
+        "・文字がはっきり見えていますか？\n\n" +
+        "再撮影しますか？"
+      );
+      if (retry) {
+        goBackToCamera();
+        return;
+      } else {
+        closeCameraModal();
+        return;
+      }
     }
     
     if (processingText) processingText.textContent = "翻訳中...";
