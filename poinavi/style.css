@@ -1898,6 +1898,10 @@ body.dark-mode .rain-viewer-disclaimer {
   outline: none;
 }
 
+.translate-header__icon-btn--invisible {
+  visibility: hidden;
+}
+
 .translate-header__title {
   font-size: 1.25rem;
   font-weight: 700;
