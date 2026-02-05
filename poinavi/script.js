@@ -177,9 +177,8 @@ document.addEventListener("DOMContentLoaded", function () {
   initLocationModal();
   initSettingsModal();
   initTagManagement(); // タグ管理機能を初期化
-  initRainViewer(); // RainViewer 雨雲レーダー機能を初期化
-  initRailwayLayer(); // 鉄道レイヤー機能を初期化
   initStartPageSelect(); // 起動ページ設定を初期化
+  // initRainViewer と initRailwayLayer は initGoogleMaps 内で呼び出し
   
   // Google Maps API が読み込まれるまで待つ
   // initGoogleMaps コールバックで initMap() と requestUserLocation() が呼ばれる
@@ -629,6 +628,9 @@ window.initGoogleMaps = function() {
   console.log("Google Maps API が正常に読み込まれました");
   initMap();
   requestUserLocation();
+  // Google Maps初期化後にレイヤー機能を有効化
+  initRainViewer();
+  initRailwayLayer();
 };
 
 // ============================================
