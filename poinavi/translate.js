@@ -194,6 +194,33 @@ function initSettingsModal() {
       modal.classList.add("hidden");
     });
   }
+  
+  // 設定初期化ボタン
+  const resetBtn = document.getElementById("translateResetBtn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", function() {
+      resetTranslateSettings();
+    });
+  }
+}
+
+// 翻訳設定を初期化
+function resetTranslateSettings() {
+  if (!confirm("すべての設定を初期化しますか？\n（言語設定、テーマ、起動ページなどがリセットされます）")) {
+    return;
+  }
+  
+  // localStorageから翻訳関連の設定を削除
+  localStorage.removeItem("poinavi_ocr_lang");
+  localStorage.removeItem("poinavi_target_lang");
+  localStorage.removeItem("poinavi_mic_input_lang");
+  localStorage.removeItem("poinavi_mic_output_lang");
+  localStorage.removeItem("poinavi_theme");
+  localStorage.removeItem("poinavi_start_page");
+  
+  // ページをリロードして初期状態に戻す
+  alert("設定を初期化しました。ページを再読み込みします。");
+  location.reload();
 }
 
 // ============================================
@@ -242,12 +269,24 @@ function updateThemeButton() {
 function initLanguageSelect() {
   const ocrSelect = document.getElementById("ocrLanguageSelect");
   const targetSelect = document.getElementById("translateTargetLang");
+  const micInputSelect = document.getElementById("micInputLangSelect");
+  const micTargetSelect = document.getElementById("micTargetLangSelect");
   
   if (!ocrSelect || !targetSelect) return;
 
-  // 保存された言語を復元
+  // 保存された言語を復元（カメラ）
   ocrSelect.value = ocrLang;
   targetSelect.value = targetLang;
+
+  // 保存された言語を復元（音声）
+  if (micInputSelect) {
+    const savedMicInput = localStorage.getItem("poinavi_mic_input_lang") || "en";
+    micInputSelect.value = savedMicInput;
+  }
+  if (micTargetSelect) {
+    const savedMicTarget = localStorage.getItem("poinavi_mic_output_lang") || "ja";
+    micTargetSelect.value = savedMicTarget;
+  }
 
   // OCR言語の変更
   ocrSelect.addEventListener("change", function() {
@@ -260,6 +299,20 @@ function initLanguageSelect() {
     targetLang = this.value;
     localStorage.setItem("poinavi_target_lang", targetLang);
   });
+
+  // 音声入力言語の変更
+  if (micInputSelect) {
+    micInputSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_mic_input_lang", this.value);
+    });
+  }
+
+  // 音声出力言語の変更
+  if (micTargetSelect) {
+    micTargetSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_mic_output_lang", this.value);
+    });
+  }
 }
 
 // 言語コードから表示名を取得

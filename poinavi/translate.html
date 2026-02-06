@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=65" />
+    <link rel="stylesheet" href="./style.css?v=66" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -167,6 +167,12 @@
                 <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
               </ul>
             </div>
+          </div>
+          <!-- 設定初期化セクション -->
+          <div class="translate-modal__section">
+            <button id="translateResetBtn" class="settings-modal__reset-btn" type="button">
+              設定を初期化
+            </button>
           </div>
         </div>
       </div>
@@ -328,6 +334,6 @@
 
     <!-- Tesseract.js OCRライブラリ（unpkg CDNを使用） -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
-    <script src="./translate.js?v=60"></script>
+    <script src="./translate.js?v=61"></script>
   </body>
 </html>
