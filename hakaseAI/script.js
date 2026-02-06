@@ -171,9 +171,15 @@ function autoResize() {
 // ========================================
 // メッセージ送信
 // ========================================
+let isSending = false; // 送信中フラグ
+
 async function sendMessage() {
   const text = userInput.value.trim();
   if (!text) return;
+  
+  // 二重送信防止
+  if (isSending) return;
+  isSending = true;
   
   // ユーザーメッセージを表示
   addMessage(text, 'user');
@@ -227,6 +233,9 @@ async function sendMessage() {
     console.error('API Error:', error);
     removeLoading(loadingId);
     addMessage('すまんのう、ちょっと調子が悪いようじゃ。もう一度試してくれんか？', 'hakase', true);
+  } finally {
+    // 送信中フラグをリセット
+    isSending = false;
   }
 }
 
