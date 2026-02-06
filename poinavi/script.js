@@ -1843,7 +1843,6 @@ function enrichPlacesWithDetails(results, callback) {
   const remainingResults = results.slice(limit);
 
   let completed = 0;
-  const enrichedResults = [];
 
   // 詳細情報を取得する結果がない場合は、そのまま返す
   if (resultsToEnrich.length === 0) {
@@ -1851,6 +1850,9 @@ function enrichPlacesWithDetails(results, callback) {
     return;
   }
 
+  // インデックスで順序を保持するための配列を初期化
+  const enrichedResults = new Array(resultsToEnrich.length);
+  
   resultsToEnrich.forEach((place, index) => {
     // 詳細情報を取得
     const detailsRequest = {
@@ -1895,7 +1897,8 @@ function enrichPlacesWithDetails(results, callback) {
           console.warn(`詳細情報の取得に失敗: ${place.name}`, status);
         }
 
-      enrichedResults.push(place);
+      // インデックスを使って順序を保持
+      enrichedResults[index] = place;
       completed++;
 
       // すべての詳細情報が取得できたらコールバック
