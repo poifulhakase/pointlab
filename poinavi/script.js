@@ -319,6 +319,14 @@ function handleAddTag() {
   
   if (result.success) {
     input.value = "";
+    // キーボードを閉じる（Android対応）
+    input.blur();
+    // 少し遅延してから再度blur（Androidで確実に閉じるため）
+    setTimeout(function() {
+      if (document.activeElement === input) {
+        input.blur();
+      }
+    }, 100);
     renderMainTagList(); // メインUIを更新
     renderTagManageList(); // 設定モーダルを更新
   } else {
