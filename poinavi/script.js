@@ -289,10 +289,19 @@ function initTagManagement() {
     handleAddTag();
   });
   
-  // Enterキーで追加
-  newTagInput.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
+  // Enterキーで追加（keydownとkeypressの両方で対応）
+  newTagInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
       e.preventDefault();
+      newTagInput.blur(); // キーボードを閉じる
+      handleAddTag();
+    }
+  });
+  
+  newTagInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
+      e.preventDefault();
+      newTagInput.blur(); // キーボードを閉じる
       handleAddTag();
     }
   });
@@ -378,6 +387,14 @@ function initThemeToggle() {
   themeToggle.addEventListener("click", function () {
     document.body.classList.toggle("dark-mode");
     const isDark = document.body.classList.contains("dark-mode");
+    // htmlタグのクラスも更新（FOUC対策との整合性）
+    if (isDark) {
+      document.documentElement.classList.remove("light-mode");
+      document.documentElement.classList.add("dark-mode");
+    } else {
+      document.documentElement.classList.remove("dark-mode");
+      document.documentElement.classList.add("light-mode");
+    }
     localStorage.setItem("poinavi_theme", isDark ? "dark" : "light");
     themeIcon.textContent = isDark ? "🌙" : "☀️";
     themeText.textContent = isDark ? "ダークモード" : "ライトモード";

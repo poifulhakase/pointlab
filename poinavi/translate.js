@@ -210,10 +210,14 @@ function initThemeToggle() {
     if (isDark) {
       document.body.classList.remove("dark-mode");
       document.body.classList.add("light-mode");
+      document.documentElement.classList.remove("dark-mode");
+      document.documentElement.classList.add("light-mode");
       localStorage.setItem("poinavi_theme", "light");
     } else {
       document.body.classList.remove("light-mode");
       document.body.classList.add("dark-mode");
+      document.documentElement.classList.remove("light-mode");
+      document.documentElement.classList.add("dark-mode");
       localStorage.setItem("poinavi_theme", "dark");
     }
     updateThemeButton();
