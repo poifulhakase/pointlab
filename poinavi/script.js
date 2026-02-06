@@ -963,6 +963,51 @@ function initMap() {
         alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
       }
     };
+    
+    // グローバル関数として鉄道メモ追加関数を登録（InfoWindow内のボタンから呼び出せるように）
+    window.addRailwayToMemo = function(encodedType, encodedContent) {
+      const MEMO_STORAGE_KEY = "poinavi_memos";
+      const MEMO_MAX_COUNT = 50;
+      
+      const type = decodeURIComponent(encodedType);
+      const content = decodeURIComponent(encodedContent);
+      
+      // メモを取得
+      let memos = [];
+      try {
+        const data = localStorage.getItem(MEMO_STORAGE_KEY);
+        memos = data ? JSON.parse(data) : [];
+      } catch (e) {
+        console.error("メモの読み込みに失敗:", e);
+        memos = [];
+      }
+      
+      // 上限チェック
+      if (memos.length >= MEMO_MAX_COUNT) {
+        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+        return;
+      }
+      
+      // メモの内容を作成
+      const icon = type === "駅" ? "🚉" : "🚃";
+      const memoContent = `${icon} [${type}]\n${content}`;
+      
+      const newMemo = {
+        id: Date.now().toString(),
+        content: memoContent,
+        createdAt: new Date().toISOString()
+      };
+      memos.unshift(newMemo);
+      
+      // 保存
+      try {
+        localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+        alert("メモに追加しました");
+      } catch (e) {
+        console.error("メモの保存に失敗:", e);
+        alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+      }
+    };
   } catch (error) {
     console.error("マップの初期化に失敗しました:", error);
     const mapContainer = document.getElementById("map");
@@ -3726,6 +3771,9 @@ function showRailwayInfoWindow(position, content, type) {
   const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
   const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
   const accentColor = isDarkMode ? "#34d399" : "#10b981";
+  
+  // メモ用のテキスト（HTMLタグを除去）
+  const plainContent = content.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
 
   const html = `
     <div style="
@@ -3748,7 +3796,35 @@ function showRailwayInfoWindow(position, content, type) {
         font-size: 14px;
         font-weight: 500;
         line-height: 1.5;
+        margin-bottom: 12px;
       ">${content}</div>
+      <div style="
+        display: flex;
+        justify-content: flex-end;
+      ">
+        <button onclick="addRailwayToMemo('${encodeURIComponent(type)}', '${encodeURIComponent(plainContent)}')" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background-color: #10b981;
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: inherit;
+        ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          メモに追加
+        </button>
+      </div>
     </div>
   `;
 
