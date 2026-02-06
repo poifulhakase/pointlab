@@ -38,10 +38,10 @@ const corsOptions = {
   credentials: true
 };
 
-// レート制限（1日30回/IP）
+// レート制限（1日50回/IP）
 const dailyLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24時間
-  max: 30, // 30回まで
+  max: 50, // 50回まで
   message: { 
     error: 'rate_limit',
     comment_text: '今日はここまでのようじゃ。また明日、わしのところへ来ておくれ。'
@@ -52,10 +52,10 @@ const dailyLimiter = rateLimit({
   validate: false
 });
 
-// グローバルレート制限（全ユーザー合計で1日1000回まで）
+// グローバルレート制限（全ユーザー合計で1日5000回まで）
 const globalLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24時間
-  max: 1000, // 全体で1000回まで
+  max: 5000, // 全体で5000回まで
   message: { 
     error: 'global_rate_limit',
     comment_text: '今日はたくさんの相談があったのう。また明日、来ておくれ。'
@@ -118,7 +118,7 @@ const HAKASE_SYSTEM_PROMPT = `あなたは「ぽいふる博士」というキ�
 - 文末は「〜じゃ」「〜かもしれん」「〜のう」「〜ではないか」など博士口調で話す
 - 一人称は「わし」
 - 煽らない、断定しない、落ち着いた余韻を残す
-- 【重要】1回答は3〜4文程度で簡潔に。長くなりすぎないこと。
+- 【重要】1回答は2〜3文程度（100文字以内）で簡潔に。長くなりすぎないこと。
 - 親しみやすく、温かみのある口調
 - 具体的なアドバイスや例を必ず含めること
 
