@@ -2149,7 +2149,7 @@ body.dark-mode .rain-viewer-disclaimer {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(66, 133, 244, 0.4);
 }
@@ -2420,6 +2420,11 @@ body.dark-mode .translate-result-item--latest {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  min-width: 60px;
+}
+
+.translate-camera-area__btn-wrapper--placeholder {
+  visibility: hidden;
 }
 
 .translate-camera-btn {
@@ -2718,8 +2723,7 @@ body.dark-mode .translate-result-item--latest {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 24px;
-  min-width: 72px;
+  padding: 8px 29px;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   text-decoration: none;
@@ -2728,7 +2732,7 @@ body.dark-mode .translate-result-item--latest {
   transition: all 0.2s ease;
   border: none;
   border-right: 1px solid var(--border-color);
-  min-width: 90px;
+  min-width: 108px;
 }
 
 .translate-footer__btn:last-child {
@@ -2889,7 +2893,7 @@ body.dark-mode .translate-result-item__divider svg {
   .translate-voice-btn {
     width: 110px;
     height: 110px;
-    gap: 4px;
+    gap: 8px;
   }
 
   .translate-voice-btn__icon {
@@ -2923,6 +2927,10 @@ body.dark-mode .translate-result-item__divider svg {
     gap: 24px;
   }
 
+  .translate-camera-area__btn-wrapper {
+    min-width: 52px;
+  }
+
   .translate-camera-btn {
     width: 52px;
     height: 52px;
@@ -2938,8 +2946,8 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-footer__btn {
-    padding: 6px 17px;
-    min-width: 60px;
+    padding: 6px 20px;
+    min-width: 72px;
   }
 
   .translate-footer__btn svg {

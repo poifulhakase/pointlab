@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=75" />
+    <link rel="stylesheet" href="./style.css?v=76" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -264,7 +264,7 @@
       <!-- カメラ翻訳エリア -->
       <div class="translate-camera-area">
         <div class="translate-camera-area__buttons">
-          <!-- リセットボタン -->
+          <!-- リセットボタン（左側） -->
           <div class="translate-camera-area__btn-wrapper">
             <button class="translate-camera-btn translate-reset-btn" id="resetTranslateBtn" type="button" aria-label="リセット">
               <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -273,7 +273,7 @@
               </svg>
             </button>
           </div>
-          <!-- カメラ翻訳ボタン -->
+          <!-- カメラ翻訳ボタン（中央） -->
           <div class="translate-camera-area__btn-wrapper">
             <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
               <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -283,6 +283,8 @@
             </button>
             <p class="translate-camera-label">カメラ翻訳</p>
           </div>
+          <!-- 将来の右側ボタン用プレースホルダー -->
+          <div class="translate-camera-area__btn-wrapper translate-camera-area__btn-wrapper--placeholder"></div>
         </div>
       </div>
 
