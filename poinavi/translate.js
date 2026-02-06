@@ -298,12 +298,14 @@ function initVoiceTranslation() {
   speechRecognition.onstart = function() {
     isListening = true;
     voiceBtn.classList.add("active");
+    voiceBtn.classList.add("listening");
     updateVoiceButtonState("listening");
   };
   
   speechRecognition.onend = function() {
     isListening = false;
     voiceBtn.classList.remove("active");
+    voiceBtn.classList.remove("listening");
     updateVoiceButtonState("idle");
   };
   
@@ -311,6 +313,7 @@ function initVoiceTranslation() {
     console.error("音声認識エラー:", event.error);
     isListening = false;
     voiceBtn.classList.remove("active");
+    voiceBtn.classList.remove("listening");
     updateVoiceButtonState("idle");
     
     if (event.error === "no-speech") {

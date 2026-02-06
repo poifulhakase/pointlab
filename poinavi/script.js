@@ -8,7 +8,7 @@ let userLocation = null;
 let placesService;
 let selectedTags = [];
 let searchQuery = "";
-let resultCount = 5;
+let resultCount = 3;
 let openOnly = false;
 let markers = [];
 let currentResults = [];
