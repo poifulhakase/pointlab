@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=74" />
+    <link rel="stylesheet" href="./style.css?v=89" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -61,11 +61,11 @@
         <div class="translate-modal__body">
           <!-- 起動ページセクション -->
           <div class="translate-modal__section">
-            <div class="translate-modal__section-title">起動時のページ</div>
+            <div class="translate-modal__section-title">トップ設定</div>
             <select id="memoStartPageSelect" class="translate-modal__select">
-              <option value="index.html">メモ</option>
-              <option value="translate.html">翻訳</option>
-              <option value="map.html">地図</option>
+              <option value="index.html">メモ機能</option>
+              <option value="translate.html">翻訳機能</option>
+              <option value="map.html">地図機能</option>
             </select>
           </div>
           <!-- テーマセクション -->
@@ -120,7 +120,7 @@
           </svg>
         </div>
         <div class="memo-warning__text">
-          <p>本アプリは簡易メモ用途のみを目的としています。</p>
+          <p>メモはお使いの端末（ブラウザ）に保存されます。</p>
           <p>機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。</p>
         </div>
       </div>
@@ -133,6 +133,7 @@
             class="memo-input" 
             placeholder="メモを入力..."
             rows="3"
+            style="font-size: 17px !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif !important;"
           ></textarea>
           <button id="memoAddBtn" class="memo-add-btn" type="button" aria-label="メモを追加">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

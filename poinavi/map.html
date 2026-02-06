@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=79" />
+    <link rel="stylesheet" href="./style.css?v=83" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -104,20 +104,6 @@
   </head>
   <body>
 
-    <!-- 現在地住所モーダル -->
-    <div id="locationModal" class="location-modal hidden">
-      <div class="location-modal__overlay"></div>
-      <div class="location-modal__content">
-        <div class="location-modal__header">
-          <h2 class="location-modal__title">現在地</h2>
-          <button class="location-modal__close" id="locationModalClose" aria-label="閉じる">×</button>
-        </div>
-        <div class="location-modal__body">
-          <p class="location-modal__address" id="locationModalAddress">住所を取得中...</p>
-        </div>
-      </div>
-    </div>
-
     <!-- 設定モーダル -->
     <div id="settingsModal" class="settings-modal hidden">
       <div class="settings-modal__overlay" onclick="hideSettingsModal();"></div>
@@ -190,11 +176,11 @@
 
           <!-- 起動ページ -->
           <div class="settings-modal__item">
-            <label class="settings-modal__label">起動時のページ</label>
+            <label class="settings-modal__label">トップ設定</label>
             <select id="mapStartPageSelect" class="settings-modal__select" onchange="localStorage.setItem('poinavi_start_page', this.value);">
-              <option value="index.html">メモ</option>
-              <option value="translate.html">翻訳</option>
-              <option value="map.html">地図</option>
+              <option value="index.html">メモ機能</option>
+              <option value="translate.html">翻訳機能</option>
+              <option value="map.html">地図機能</option>
             </select>
           </div>
 
@@ -393,6 +379,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=74"></script>
+    <script src="./script.js?v=76"></script>
   </body>
 </html>

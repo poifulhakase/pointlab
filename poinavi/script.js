@@ -174,7 +174,6 @@ document.addEventListener("DOMContentLoaded", function () {
   initTagSelection();
   initSearchInput();
   initControls();
-  initLocationModal();
   initSettingsModal();
   initTagManagement(); // タグ管理機能を初期化
   initStartPageSelect(); // 起動ページ設定を初期化
@@ -1145,7 +1144,7 @@ function applyUserLocation(lat, lng) {
 
   // 現在地マーカー
   // ダークモードかどうかを判定
-  const isDarkMode = document.body.classList.contains("dark-mode");
+  const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
   const currentLocationColor = isDarkMode ? "#00ff00" : "#39ff14"; // ダークモード時はより強い蛍光グリーン
   
   currentLocationMarker = new google.maps.Marker({
@@ -1162,82 +1161,8 @@ function applyUserLocation(lat, lng) {
     title: "現在地",
   });
 
-  // 現在地マーカーのクリックイベント
-  currentLocationMarker.addListener("click", function() {
-    showLocationModal();
-  });
-
   // ローディング画面を非表示
   hideLoading();
-}
-
-// ============================================
-// 現在地住所モーダル
-// ============================================
-function initLocationModal() {
-  const modal = document.getElementById("locationModal");
-  const closeButton = document.getElementById("locationModalClose");
-  const overlay = modal?.querySelector(".location-modal__overlay");
-
-  if (!modal || !closeButton) {
-    console.warn("現在地モーダルの要素が見つかりません");
-    return;
-  }
-
-  // 閉じるボタンのクリックイベント
-  closeButton.addEventListener("click", function() {
-    hideLocationModal();
-  });
-
-  // オーバーレイのクリックイベント
-  if (overlay) {
-    overlay.addEventListener("click", function() {
-      hideLocationModal();
-    });
-  }
-
-  // ESCキーで閉じる
-  document.addEventListener("keydown", function(event) {
-    if (event.key === "Escape" && !modal.classList.contains("hidden")) {
-      hideLocationModal();
-    }
-  });
-}
-
-function showLocationModal() {
-  const modal = document.getElementById("locationModal");
-  const addressElement = document.getElementById("locationModalAddress");
-
-  if (!modal || !addressElement || !userLocation || !geocoder) {
-    console.warn("現在地モーダルの表示に必要な要素がありません");
-    return;
-  }
-
-  // モーダルを表示
-  modal.classList.remove("hidden");
-  addressElement.textContent = "住所を取得中...";
-
-  // 逆ジオコーディングで住所を取得
-  geocoder.geocode(
-    { location: userLocation },
-    function(results, status) {
-      if (status === "OK" && results && results.length > 0) {
-        // 最初の結果の住所を使用
-        const address = results[0].formatted_address || results[0].address_components.map(ac => ac.long_name).join(" ");
-        addressElement.textContent = address;
-      } else {
-        addressElement.textContent = "住所を取得できませんでした";
-        console.warn("逆ジオコーディングエラー:", status);
-      }
-    }
-  );
-}
-
-function hideLocationModal() {
-  const modal = document.getElementById("locationModal");
-  if (modal) {
-    modal.classList.add("hidden");
-  }
 }
 
 // ============================================
@@ -2176,7 +2101,7 @@ function displayMarkers(results, skipAutoZoom = false) {
   clearMarkerSelection();
   
   // ダークモードかどうかを判定
-  const isDarkMode = document.body.classList.contains("dark-mode");
+  const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
   
   // 重複位置を検出してオフセットを計算
   const usedPositions = [];
@@ -2737,7 +2662,7 @@ function showInfoWindow(place, marker) {
   const address = place.formatted_address || place.vicinity || "住所情報なし";
 
   // ダークモードかどうかを判定
-  const isDarkMode = document.body.classList.contains("dark-mode");
+  const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
   
   // ダークモード用のスタイル
   const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
@@ -2910,7 +2835,7 @@ function displayRoute(origin, destination) {
   directionsRenderer.setDirections({ routes: [] });
 
   // ダークモードかどうかを判定
-  const isDarkMode = document.body.classList.contains("dark-mode");
+  const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
   
   // 赤丸の配色を取得（50%透過）
   const markerColor = isDarkMode ? "#ff0080" : "#ff1744";

@@ -530,7 +530,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 22px;
+  padding: 12px 22px;
   border: none;
   border-radius: 0 9999px 9999px 0;
   background-color: var(--accent-color);
@@ -823,7 +823,7 @@ body.dark-mode .result-item__status.unknown {
   }
 
   .search-button {
-    padding: 13px 18px;
+    padding: 11px 18px;
   }
 
   .settings-section--controls {
@@ -868,7 +868,7 @@ body.dark-mode .result-item__status.unknown {
   }
 
   .search-button {
-    padding: 13px 16px;
+    padding: 11px 16px;
   }
 
   .control-label {
@@ -1000,128 +1000,6 @@ body.dark-mode .loading-overlay {
 }
 
 /* ============================================
-   現在地住所モーダル
-   ============================================ */
-.location-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 100000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.location-modal.hidden {
-  display: none;
-}
-
-.location-modal__overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
-.location-modal__content {
-  position: relative;
-  background-color: var(--bg-primary);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  max-width: 400px;
-  width: 85%;
-  max-height: 80vh;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.location-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.location-modal__title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.location-modal__close {
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.location-modal__close:hover {
-  background-color: var(--bg-secondary);
-}
-
-.location-modal__body {
-  padding: 24px;
-}
-
-.location-modal__address {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--text-primary);
-  margin: 0;
-  word-break: break-word;
-}
-
-/* ダークモード対応 */
-body.dark-mode .location-modal__content {
-  background-color: #2d2d2d;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-}
-
-body.dark-mode .location-modal__overlay {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-  .location-modal__content {
-    width: 90%;
-    max-height: 90vh;
-  }
-
-  .location-modal__header {
-    padding: 24px;
-  }
-
-  .location-modal__title {
-    font-size: 1.125rem;
-  }
-
-  .location-modal__body {
-    padding: 24px;
-  }
-
-  .location-modal__address {
-    font-size: 0.9375rem;
-  }
-}
-
-/* ============================================
    設定アイコンボタン
    ============================================ */
 .settings-icon-button {
@@ -1163,18 +1041,18 @@ body.dark-mode .location-modal__overlay {
 
 /* 検索入力 */
 .search-input--short {
-  max-width: 280px;
+  max-width: 224px;
 }
 
 @media (max-width: 768px) {
   .search-input--short {
-    max-width: 250px;
+    max-width: 200px;
   }
 }
 
 @media (max-width: 480px) {
   .search-input--short {
-    max-width: 210px;
+    max-width: 168px;
   }
   
   .settings-icon-button {
@@ -2462,7 +2340,7 @@ body.dark-mode .translate-result-item--latest {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 38px;
+  gap: 46px;
 }
 
 .translate-camera-area__btn-wrapper {
@@ -2974,7 +2852,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-camera-area__buttons {
-    gap: 29px;
+    gap: 35px;
   }
 
   .translate-camera-area__btn-wrapper {
@@ -3740,11 +3618,12 @@ body.dark-mode .memo-item {
   border-radius: 16px;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: 17px !important;
   font-family: inherit;
   line-height: 1.5;
   resize: none;
   transition: border-color 0.2s;
+  -webkit-text-size-adjust: 100%;
 }
 
 .memo-input:focus {
@@ -3789,6 +3668,7 @@ body.dark-mode .memo-item {
 }
 
 /* レスポンシブ */
+
 @media (max-width: 480px) {
   .memo-main {
     padding: 16px;
@@ -3819,7 +3699,6 @@ body.dark-mode .memo-item {
 
   .memo-input {
     padding: 10px 14px;
-    font-size: 0.875rem;
   }
 
   .memo-add-btn {
