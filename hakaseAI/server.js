@@ -115,7 +115,7 @@ const HAKASE_SYSTEM_PROMPT = `あなたは「ぽいふる博士」というキ�
 ユーザーのお金に関する質問に答えるAIとして振る舞ってください。
 
 【最重要ルール】
-- 文章を簡潔にまとめること。長文禁止。
+- 短い文で、概要だけ教えること。
 
 【話し方のルール】
 - 文末は「〜じゃ」「〜かもしれん」「〜のう」など博士口調
@@ -248,7 +248,12 @@ async function callGemini(question, context) {
     const data = await response.json();
     
     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      return data.candidates[0].content.parts[0].text;
+      let response = data.candidates[0].content.parts[0].text;
+      
+      // 回答を短くカット（150文字 + URL保持）
+      response = truncateResponse(response, 150);
+      
+      return response;
     }
     
     // 予期しないレスポンス形式の場合もフォールバック
@@ -261,6 +266,47 @@ async function callGemini(question, context) {
     console.log('Falling back to mock response due to error');
     return getMockResponse(question);
   }
+}
+
+// ========================================
+// 回答を短くカットする関数
+// ========================================
+function truncateResponse(text, maxLength) {
+  // URLを抽出して保持
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = text.match(urlRegex) || [];
+  
+  // URLを一時的に除去
+  let textWithoutUrls = text.replace(urlRegex, '').trim();
+  
+  // 既に短い場合はそのまま返す
+  if (textWithoutUrls.length <= maxLength) {
+    return text;
+  }
+  
+  // maxLength文字でカット
+  let truncated = textWithoutUrls.substring(0, maxLength);
+  
+  // 最後の「。」「じゃ」「のう」「ぞ」で終わるように調整
+  const lastPeriod = truncated.lastIndexOf('。');
+  const lastJa = truncated.lastIndexOf('じゃ');
+  const lastNou = truncated.lastIndexOf('のう');
+  const lastZo = truncated.lastIndexOf('ぞ');
+  
+  const cutPoint = Math.max(lastPeriod, lastJa + 1, lastNou + 1, lastZo);
+  
+  if (cutPoint > maxLength * 0.5) {
+    truncated = truncated.substring(0, cutPoint + 1);
+  } else {
+    truncated = truncated + '...';
+  }
+  
+  // URLがあれば末尾に追加
+  if (urls.length > 0) {
+    truncated += '\n\nわしのnoteも参考にしてみてくれ→ ' + urls[0];
+  }
+  
+  return truncated.trim();
 }
 
 // ========================================
