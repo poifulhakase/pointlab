@@ -267,7 +267,11 @@
             </button>
             <!-- 鉄道ON時のステータス -->
             <div id="railwayStatus" class="layer-status layer-status--inline hidden">
-              <span class="layer-status__text">路線表示中</span>
+              <span class="layer-status__text">路線表示中（半径8km）</span>
+            </div>
+            <!-- 鉄道ローディング中のステータス -->
+            <div id="railwayLoading" class="layer-status layer-status--inline hidden">
+              <span class="layer-status__text">路線取得中...</span>
             </div>
           </div>
           
@@ -374,6 +378,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=63"></script>
+    <script src="./script.js?v=64"></script>
   </body>
 </html>

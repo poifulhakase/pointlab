@@ -3367,8 +3367,14 @@ async function toggleRailwayLayer() {
       return;
     }
 
+    const loadingPanel = document.getElementById("railwayLoading");
+
     if (toggleBtn) {
       toggleBtn.classList.add("loading");
+    }
+    // ローディング表示
+    if (loadingPanel) {
+      loadingPanel.classList.remove("hidden");
     }
 
     try {
@@ -3381,6 +3387,10 @@ async function toggleRailwayLayer() {
         toggleBtn.classList.remove("loading");
         toggleBtn.setAttribute("aria-pressed", "true");
       }
+      // ローディング非表示、ステータス表示
+      if (loadingPanel) {
+        loadingPanel.classList.add("hidden");
+      }
       if (statusPanel) {
         statusPanel.classList.remove("hidden");
       }
@@ -3390,6 +3400,10 @@ async function toggleRailwayLayer() {
       console.error("鉄道データの取得に失敗しました:", error);
       if (toggleBtn) {
         toggleBtn.classList.remove("loading");
+      }
+      // ローディング非表示
+      if (loadingPanel) {
+        loadingPanel.classList.add("hidden");
       }
       alert("鉄道データの取得に失敗しました。しばらく経ってから再度お試しください。");
     }
