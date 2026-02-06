@@ -27,6 +27,36 @@ body {
 /* ============================================
    ライト／ダークモード
    ============================================ */
+/* デフォルトテキストの選択を無効化 */
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 生成されたテキスト（翻訳結果など）は選択可能 */
+.translate-result-item__original p,
+.translate-result-item__translated p,
+.memo-item__content,
+.memo-item__text,
+input,
+textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* 全てのアウトライン（青い枠）を無効化 */
+*:focus {
+  outline: none !important;
+}
+
+*:focus-visible {
+  outline: none !important;
+}
+
 :root {
   /* ライトモード */
   --bg-primary: #ffffff;
