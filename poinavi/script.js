@@ -493,27 +493,24 @@ function initTagSelection() {
   const tagList = document.getElementById("tagList");
   if (!tagList) return;
   
-  // 最後のタップ時刻とボタンを記録
-  let lastTapTime = 0;
-  let lastTapBtn = null;
+  // タップ処理用の変数
+  let lastProcessedTime = 0;
+  let touchStartTarget = null;
+  let isProcessing = false;
   
-  // イベント委譲：親要素でクリックを監視
-  tagList.addEventListener("click", function(event) {
-    const btn = event.target.closest(".tag-btn");
-    if (!btn) return;
-    
-    // イベントの伝播を停止（二重発火防止）
-    event.preventDefault();
-    event.stopPropagation();
+  // タグボタンのタップ処理（共通関数）
+  function handleTagTap(btn) {
+    if (isProcessing) return;
     
     const now = Date.now();
     
-    // 同じボタンを300ms以内に連打した場合は無視（誤タップ・ダブルタップ防止）
-    if (lastTapBtn === btn && (now - lastTapTime) < 300) {
+    // 500ms以内の連続タップは無視（ダブルタップ防止）
+    if (now - lastProcessedTime < 500) {
       return;
     }
-    lastTapTime = now;
-    lastTapBtn = btn;
+    
+    isProcessing = true;
+    lastProcessedTime = now;
     
     // 既に選択されている場合は選択解除
     const wasActive = btn.classList.contains("active");
@@ -541,6 +538,50 @@ function initTagSelection() {
     
     updateSelectedTags();
     searchPlaces();
+    
+    // 処理完了後にフラグをリセット
+    setTimeout(() => {
+      isProcessing = false;
+    }, 100);
+  }
+  
+  // タッチ開始時にターゲットを記録
+  tagList.addEventListener("touchstart", function(event) {
+    const btn = event.target.closest(".tag-btn");
+    if (btn) {
+      touchStartTarget = btn;
+    }
+  }, { passive: true });
+  
+  // タッチ終了時に処理
+  tagList.addEventListener("touchend", function(event) {
+    const btn = event.target.closest(".tag-btn");
+    if (!btn || btn !== touchStartTarget) {
+      touchStartTarget = null;
+      return;
+    }
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    touchStartTarget = null;
+    handleTagTap(btn);
+  }, { passive: false });
+  
+  // マウスクリック（PC用フォールバック）
+  tagList.addEventListener("click", function(event) {
+    // タッチデバイスの場合はtouchendで処理済みなのでスキップ
+    if (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents) {
+      return;
+    }
+    
+    const btn = event.target.closest(".tag-btn");
+    if (!btn) return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    handleTagTap(btn);
   });
 }
 
