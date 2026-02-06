@@ -26,6 +26,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "hakaseAI/*.json",
+      "use": "@vercel/static"
+    },
+    {
       "src": "*.html",
       "use": "@vercel/static"
     },
@@ -57,6 +61,10 @@
     },
     {
       "src": "/hakaseAI/(.*\\.svg)",
+      "dest": "/hakaseAI/$1"
+    },
+    {
+      "src": "/hakaseAI/(.*\\.json)",
       "dest": "/hakaseAI/$1"
     },
     {
