@@ -919,6 +919,50 @@ function initMap() {
       console.log("経路表示開始:", { origin, destination });
       displayRoute(origin, destination);
     };
+    
+    // グローバル関数としてメモ追加関数を登録（InfoWindow内のボタンから呼び出せるように）
+    window.addPlaceToMemo = function(encodedName, encodedAddress, distance) {
+      const MEMO_STORAGE_KEY = "poinavi_memos";
+      const MEMO_MAX_COUNT = 50;
+      
+      const name = decodeURIComponent(encodedName);
+      const address = decodeURIComponent(encodedAddress);
+      
+      // メモを取得
+      let memos = [];
+      try {
+        const data = localStorage.getItem(MEMO_STORAGE_KEY);
+        memos = data ? JSON.parse(data) : [];
+      } catch (e) {
+        console.error("メモの読み込みに失敗:", e);
+        memos = [];
+      }
+      
+      // 上限チェック
+      if (memos.length >= MEMO_MAX_COUNT) {
+        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+        return;
+      }
+      
+      // メモの内容を作成
+      const memoContent = `📍 ${name}\n${address}\n現在地からの距離: ${distance}`;
+      
+      const newMemo = {
+        id: Date.now().toString(),
+        content: memoContent,
+        createdAt: new Date().toISOString()
+      };
+      memos.unshift(newMemo);
+      
+      // 保存
+      try {
+        localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+        alert("メモに追加しました");
+      } catch (e) {
+        console.error("メモの保存に失敗:", e);
+        alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+      }
+    };
   } catch (error) {
     console.error("マップの初期化に失敗しました:", error);
     const mapContainer = document.getElementById("map");
@@ -2738,9 +2782,37 @@ function showInfoWindow(place, marker) {
         font-weight: 500;
         background-color: ${statusBgColor};
         color: ${statusTextColor};
-        margin-bottom: 4px;
+        margin-bottom: 12px;
       ">
         ${statusText}
+      </div>
+      <div style="
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+      ">
+        <button onclick="addPlaceToMemo('${encodeURIComponent(place.name)}', '${encodeURIComponent(address)}', '${distanceText}')" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background-color: ${isDarkMode ? '#10b981' : '#10b981'};
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: inherit;
+        ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          メモに追加
+        </button>
       </div>
     </div>
   `;
