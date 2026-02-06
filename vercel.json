@@ -68,7 +68,12 @@
       "dest": "/hakaseAI/$1"
     },
     {
-      "src": "/hakaseAI/?$",
+      "src": "/hakaseAI$",
+      "status": 308,
+      "headers": { "Location": "/hakaseAI/" }
+    },
+    {
+      "src": "/hakaseAI/$",
       "dest": "/hakaseAI/index.html"
     },
     {
