@@ -2246,12 +2246,11 @@ body.dark-mode .translate-voice-btn.listening::after {
 
 /* 翻訳結果エリア */
 .translate-result-area {
-  flex: 1;
   background-color: var(--bg-secondary);
   border-radius: 16px;
   padding: 16px;
   overflow-y: auto;
-  min-height: 150px;
+  height: 45vh;
   max-width: 600px;
   width: 100%;
   margin: 0 auto;
@@ -3553,12 +3552,11 @@ body.dark-mode .memo-warning {
 
 /* メモリスト */
 .memo-list {
-  flex: 1;
   background-color: var(--bg-secondary);
   border-radius: 16px;
   padding: 16px;
   overflow-y: auto;
-  min-height: 150px;
+  height: 45vh;
   max-width: 600px;
   width: 100%;
   margin: 0 auto;
