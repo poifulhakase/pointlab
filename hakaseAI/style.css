@@ -739,7 +739,14 @@ body.dark-mode .settings-modal__reset-btn:hover {
   border-top: 1px solid #e0e0e0;
   padding: 8px 16px;
   flex-shrink: 0;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.note-banner__disclaimer {
+  font-size: 11px;
+  color: #888888;
 }
 
 .note-banner__link {
@@ -812,6 +819,10 @@ body.dark-mode .settings-modal__theme-toggle:hover {
 body.dark-mode .note-banner {
   background-color: #2d2d2d;
   border-top-color: #404040;
+}
+
+body.dark-mode .note-banner__disclaimer {
+  color: #888888;
 }
 
 body.dark-mode .note-banner__link {
