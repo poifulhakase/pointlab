@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=68" />
+    <link rel="stylesheet" href="./style.css?v=79" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -247,6 +247,14 @@
       <div class="map-container">
         <div id="map" class="map"></div>
         
+        <!-- 路線ローディングオーバーレイ -->
+        <div id="railwayLoadingOverlay" class="railway-loading-overlay hidden">
+          <div class="railway-loading-overlay__content">
+            <div class="railway-loading-overlay__spinner"></div>
+            <p class="railway-loading-overlay__text">路線情報を取得中...</p>
+          </div>
+        </div>
+        
         <!-- レイヤーコントロール（左上フロート） -->
         <div class="layer-control">
           <!-- 鉄道レイヤートグル -->
@@ -385,6 +393,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=73"></script>
+    <script src="./script.js?v=74"></script>
   </body>
 </html>
