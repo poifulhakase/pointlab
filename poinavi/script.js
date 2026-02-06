@@ -502,10 +502,14 @@ function initTagSelection() {
     const btn = event.target.closest(".tag-btn");
     if (!btn) return;
     
+    // イベントの伝播を停止（二重発火防止）
+    event.preventDefault();
+    event.stopPropagation();
+    
     const now = Date.now();
     
-    // 同じボタンを100ms以内に連打した場合のみ無視（誤タップ防止）
-    if (lastTapBtn === btn && (now - lastTapTime) < 100) {
+    // 同じボタンを300ms以内に連打した場合は無視（誤タップ・ダブルタップ防止）
+    if (lastTapBtn === btn && (now - lastTapTime) < 300) {
       return;
     }
     lastTapTime = now;
