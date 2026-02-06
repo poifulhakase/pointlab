@@ -72,8 +72,8 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">テーマ</div>
             <button id="memoThemeToggle" class="translate-modal__theme-toggle">
-              <span class="theme-icon">🌙</span>
-              <span class="theme-text">ダークモード</span>
+              <span class="theme-icon">☀️</span>
+              <span class="theme-text">ライトモード</span>
             </button>
           </div>
           <!-- 免責事項セクション -->
@@ -166,8 +166,8 @@
         const icon = themeToggle.querySelector(".theme-icon");
         const text = themeToggle.querySelector(".theme-text");
 
-        if (icon) icon.textContent = isDark ? "☀️" : "🌙";
-        if (text) text.textContent = isDark ? "ライトモード" : "ダークモード";
+        if (icon) icon.textContent = isDark ? "🌙" : "☀️";
+        if (text) text.textContent = isDark ? "ダークモード" : "ライトモード";
       }
 
       // 起動ページ設定を初期化

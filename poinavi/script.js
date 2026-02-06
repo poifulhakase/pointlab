@@ -368,6 +368,9 @@ function initThemeToggle() {
   const savedTheme = localStorage.getItem("poinavi_theme") || "light";
   if (savedTheme === "dark") {
     document.body.classList.add("dark-mode");
+    themeIcon.textContent = "🌙";
+    themeText.textContent = "ダークモード";
+  } else {
     themeIcon.textContent = "☀️";
     themeText.textContent = "ライトモード";
   }
@@ -376,8 +379,8 @@ function initThemeToggle() {
     document.body.classList.toggle("dark-mode");
     const isDark = document.body.classList.contains("dark-mode");
     localStorage.setItem("poinavi_theme", isDark ? "dark" : "light");
-    themeIcon.textContent = isDark ? "☀️" : "🌙";
-    themeText.textContent = isDark ? "ライトモード" : "ダークモード";
+    themeIcon.textContent = isDark ? "🌙" : "☀️";
+    themeText.textContent = isDark ? "ダークモード" : "ライトモード";
     
     // 地図のテーマも更新
     applyMapTheme();

@@ -228,8 +228,8 @@ function updateThemeButton() {
   const icon = themeToggle.querySelector(".theme-icon");
   const text = themeToggle.querySelector(".theme-text");
 
-  if (icon) icon.textContent = isDark ? "☀️" : "🌙";
-  if (text) text.textContent = isDark ? "ライトモード" : "ダークモード";
+  if (icon) icon.textContent = isDark ? "🌙" : "☀️";
+  if (text) text.textContent = isDark ? "ダークモード" : "ライトモード";
 }
 
 // ============================================
