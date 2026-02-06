@@ -3465,12 +3465,11 @@ body.dark-mode .translate-result-item__ocr-preview {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 20px;
   padding-bottom: 80px;
   gap: 16px;
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
+  overflow: hidden;
+  background-color: var(--bg-primary);
 }
 
 /* 注意書き */
@@ -3481,6 +3480,10 @@ body.dark-mode .translate-result-item__ocr-preview {
   background-color: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 body.dark-mode .memo-warning {
@@ -3521,7 +3524,10 @@ body.dark-mode .memo-warning {
   border-radius: 16px;
   padding: 16px;
   overflow-y: auto;
-  min-height: 200px;
+  min-height: 150px;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .memo-empty {
@@ -3612,6 +3618,9 @@ body.dark-mode .memo-item {
 /* メモ入力エリア */
 .memo-input-area {
   flex-shrink: 0;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .memo-input-wrapper {
@@ -3677,8 +3686,9 @@ body.dark-mode .memo-item {
 /* レスポンシブ */
 @media (max-width: 480px) {
   .memo-main {
-    padding: 12px;
+    padding: 16px;
     padding-bottom: 75px;
+    gap: 12px;
   }
 
   .memo-warning {
