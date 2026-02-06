@@ -1564,3 +1564,187 @@ async function copyToClipboard(text, button) {
     console.error("コピーに失敗しました:", err);
   }
 }
+
+// ============================================
+// QRコードスキャン機能
+// ============================================
+let qrStream = null;
+let qrScanning = false;
+let barcodeDetector = null;
+let jsQRLoaded = false;
+
+// BarcodeDetector APIのサポートチェック
+function isBarcodeDetectorSupported() {
+  return 'BarcodeDetector' in window;
+}
+
+// jsQRライブラリを動的に読み込み（iOS用フォールバック）
+async function loadJsQR() {
+  if (jsQRLoaded) return true;
+  
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    script.onload = () => {
+      jsQRLoaded = true;
+      resolve(true);
+    };
+    script.onerror = () => reject(new Error('jsQRの読み込みに失敗しました'));
+    document.head.appendChild(script);
+  });
+}
+
+// QRコードスキャン初期化
+function initQRScanner() {
+  const qrScanBtn = document.getElementById('qrScanBtn');
+  const qrModal = document.getElementById('qrModal');
+  const qrCloseBtn = document.getElementById('qrCloseBtn');
+  const qrVideo = document.getElementById('qrVideo');
+  const qrResult = document.getElementById('qrResult');
+  const qrResultText = document.getElementById('qrResultText');
+  const qrCopyBtn = document.getElementById('qrCopyBtn');
+  const qrOpenBtn = document.getElementById('qrOpenBtn');
+  
+  if (!qrScanBtn || !qrModal) return;
+  
+  // QRスキャンボタン
+  qrScanBtn.addEventListener('click', async () => {
+    try {
+      // BarcodeDetector初期化
+      if (isBarcodeDetectorSupported()) {
+        barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+      } else {
+        // iOSなど非対応ブラウザ用にjsQRを読み込み
+        await loadJsQR();
+      }
+      
+      // カメラ起動
+      qrStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      
+      qrVideo.srcObject = qrStream;
+      qrModal.classList.remove('hidden');
+      qrResult.classList.add('hidden');
+      qrScanning = true;
+      
+      // スキャン開始
+      scanQRCode();
+    } catch (err) {
+      console.error('QRスキャナーの起動に失敗:', err);
+      if (err.name === 'NotAllowedError') {
+        alert('カメラへのアクセスが許可されていません。\n設定からカメラへのアクセスを許可してください。');
+      } else {
+        alert('QRコードスキャナーを起動できませんでした。');
+      }
+    }
+  });
+  
+  // 閉じるボタン
+  qrCloseBtn.addEventListener('click', () => {
+    stopQRScanner();
+  });
+  
+  // コピーボタン
+  qrCopyBtn.addEventListener('click', async () => {
+    const text = qrResultText.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      qrCopyBtn.textContent = 'コピーしました';
+      setTimeout(() => {
+        qrCopyBtn.textContent = 'コピー';
+      }, 2000);
+    } catch (err) {
+      console.error('コピーに失敗:', err);
+    }
+  });
+  
+  // 開くボタン
+  qrOpenBtn.addEventListener('click', () => {
+    const text = qrResultText.textContent;
+    // URLの場合は開く
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      window.open(text, '_blank');
+    } else {
+      // URLでない場合はGoogle検索
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(text), '_blank');
+    }
+  });
+}
+
+// QRコードスキャン処理
+async function scanQRCode() {
+  const qrVideo = document.getElementById('qrVideo');
+  const qrResult = document.getElementById('qrResult');
+  const qrResultText = document.getElementById('qrResultText');
+  
+  if (!qrScanning) return;
+  
+  try {
+    if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+      let qrData = null;
+      
+      if (barcodeDetector) {
+        // BarcodeDetector API使用
+        const barcodes = await barcodeDetector.detect(qrVideo);
+        if (barcodes.length > 0) {
+          qrData = barcodes[0].rawValue;
+        }
+      } else if (window.jsQR) {
+        // jsQR使用（iOSフォールバック）
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = qrVideo.videoWidth;
+        canvas.height = qrVideo.videoHeight;
+        ctx.drawImage(qrVideo, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          qrData = code.data;
+        }
+      }
+      
+      if (qrData) {
+        // QRコード検出成功
+        qrResultText.textContent = qrData;
+        qrResult.classList.remove('hidden');
+        
+        // バイブレーション（対応端末のみ）
+        if (navigator.vibrate) {
+          navigator.vibrate(100);
+        }
+        
+        // 一時停止（結果表示中）
+        qrScanning = false;
+        return;
+      }
+    }
+  } catch (err) {
+    console.error('QRコードスキャンエラー:', err);
+  }
+  
+  // 継続スキャン
+  if (qrScanning) {
+    requestAnimationFrame(scanQRCode);
+  }
+}
+
+// QRスキャナー停止
+function stopQRScanner() {
+  const qrModal = document.getElementById('qrModal');
+  
+  qrScanning = false;
+  
+  if (qrStream) {
+    qrStream.getTracks().forEach(track => track.stop());
+    qrStream = null;
+  }
+  
+  qrModal.classList.add('hidden');
+}
+
+// 初期化時にQRスキャナーも初期化
+document.addEventListener('DOMContentLoaded', function() {
+  // 既存の初期化処理は維持...
+  initQRScanner();
+});

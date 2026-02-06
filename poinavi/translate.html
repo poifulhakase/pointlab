@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=76" />
+    <link rel="stylesheet" href="./style.css?v=77" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -252,6 +252,39 @@
       </div>
     </div>
 
+    <!-- QRコードスキャンモーダル -->
+    <div id="qrModal" class="qr-modal hidden">
+      <div class="qr-modal__container">
+        <div class="qr-modal__header">
+          <button class="qr-modal__close-btn" id="qrCloseBtn" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <h2 class="qr-modal__title">QRコードをスキャン</h2>
+        </div>
+        <div class="qr-modal__preview">
+          <video id="qrVideo" autoplay playsinline></video>
+          <div class="qr-modal__scan-area">
+            <div class="qr-modal__corner qr-modal__corner--tl"></div>
+            <div class="qr-modal__corner qr-modal__corner--tr"></div>
+            <div class="qr-modal__corner qr-modal__corner--bl"></div>
+            <div class="qr-modal__corner qr-modal__corner--br"></div>
+          </div>
+        </div>
+        <p class="qr-modal__hint">QRコードを枠内に合わせてください</p>
+        <div id="qrResult" class="qr-modal__result hidden">
+          <p class="qr-modal__result-label">読み取り結果:</p>
+          <p class="qr-modal__result-text" id="qrResultText"></p>
+          <div class="qr-modal__result-actions">
+            <button class="qr-modal__action-btn" id="qrCopyBtn">コピー</button>
+            <button class="qr-modal__action-btn qr-modal__action-btn--primary" id="qrOpenBtn">開く</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- メインコンテンツ -->
     <main class="translate-main">
       <!-- テキスト表示エリア -->
@@ -283,8 +316,24 @@
             </button>
             <p class="translate-camera-label">カメラ翻訳</p>
           </div>
-          <!-- 将来の右側ボタン用プレースホルダー -->
-          <div class="translate-camera-area__btn-wrapper translate-camera-area__btn-wrapper--placeholder"></div>
+          <!-- QRコードボタン（右側） -->
+          <div class="translate-camera-area__btn-wrapper">
+            <button class="translate-camera-btn translate-qr-btn" id="qrScanBtn" type="button" aria-label="QRコード">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="3" height="3"></rect>
+                <line x1="21" y1="14" x2="21" y2="14.01"></line>
+                <line x1="21" y1="21" x2="21" y2="21.01"></line>
+                <line x1="14" y1="21" x2="14" y2="21.01"></line>
+                <line x1="17" y1="17" x2="17" y2="17.01"></line>
+                <line x1="21" y1="17" x2="21" y2="17.01"></line>
+                <line x1="17" y1="21" x2="17" y2="21.01"></line>
+              </svg>
+            </button>
+            <p class="translate-camera-label">QRコード</p>
+          </div>
         </div>
       </div>
 
@@ -336,6 +385,6 @@
 
     <!-- Tesseract.js OCRライブラリ（unpkg CDNを使用） -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
-    <script src="./translate.js?v=62"></script>
+    <script src="./translate.js?v=63"></script>
   </body>
 </html>
