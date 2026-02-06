@@ -3500,7 +3500,7 @@ body.dark-mode .translate-result-item__ocr-preview {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  padding-bottom: 40px;
+  padding-bottom: 120px;
   gap: 16px;
   overflow: hidden;
   background-color: var(--bg-primary);
@@ -3726,7 +3726,7 @@ body.dark-mode .memo-item {
 @media (max-width: 480px) {
   .memo-main {
     padding: 16px;
-    padding-bottom: 40px;
+    padding-bottom: 120px;
     gap: 12px;
   }
 
