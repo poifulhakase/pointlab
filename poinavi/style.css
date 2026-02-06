@@ -2412,7 +2412,7 @@ body.dark-mode .translate-result-item--latest {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 32px;
+  gap: 38px;
 }
 
 .translate-camera-area__btn-wrapper {
@@ -2924,7 +2924,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-camera-area__buttons {
-    gap: 24px;
+    gap: 29px;
   }
 
   .translate-camera-area__btn-wrapper {
