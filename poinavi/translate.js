@@ -1448,12 +1448,14 @@ function createTranslationResultHTML(type, data) {
           </svg>
           <span>原文をコピー</span>
         </button>
-        <button class="translate-result-item__action-btn copy-translated-btn" type="button">
+        <button class="translate-result-item__action-btn add-to-memo-btn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          <span>翻訳をコピー</span>
+          <span>メモに追加</span>
         </button>
       </div>
     </div>
@@ -1476,14 +1478,71 @@ function setupCopyButtons() {
     };
   });
   
-  // 翻訳コピーボタン
-  resultArea.querySelectorAll(".copy-translated-btn").forEach(btn => {
+  // メモに追加ボタン
+  resultArea.querySelectorAll(".add-to-memo-btn").forEach(btn => {
     btn.onclick = function() {
       const item = this.closest(".translate-result-item");
-      const text = decodeURIComponent(item.dataset.translated || "");
-      copyToClipboard(text, this);
+      const original = decodeURIComponent(item.dataset.original || "");
+      const translated = decodeURIComponent(item.dataset.translated || "");
+      const memoText = `${original}\n\n↓\n\n${translated}`;
+      addToMemo(memoText, this);
     };
   });
+}
+
+// ============================================
+// メモ機能連携
+// ============================================
+const MEMO_STORAGE_KEY = "poinavi_memos";
+const MEMO_MAX_COUNT = 50;
+
+function getMemos() {
+  try {
+    const data = localStorage.getItem(MEMO_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error("メモの読み込みに失敗:", e);
+    return [];
+  }
+}
+
+function saveMemos(memos) {
+  try {
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+  } catch (e) {
+    console.error("メモの保存に失敗:", e);
+    alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+  }
+}
+
+function addToMemo(content, button) {
+  if (!content || !content.trim()) return;
+  
+  const memos = getMemos();
+  
+  // 上限チェック
+  if (memos.length >= MEMO_MAX_COUNT) {
+    alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+    return;
+  }
+  
+  const newMemo = {
+    id: Date.now().toString(),
+    content: content.trim(),
+    createdAt: new Date().toISOString()
+  };
+  memos.unshift(newMemo);
+  saveMemos(memos);
+  
+  // ボタンの表示を一時的に変更
+  const originalText = button.querySelector("span").textContent;
+  button.querySelector("span").textContent = "追加しました";
+  button.classList.add("translate-result-item__action-btn--copied");
+  
+  setTimeout(() => {
+    button.querySelector("span").textContent = originalText;
+    button.classList.remove("translate-result-item__action-btn--copied");
+  }, 1500);
 }
 
 async function copyToClipboard(text, button) {
