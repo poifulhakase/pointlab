@@ -2841,8 +2841,8 @@ function showInfoWindow(place, marker) {
           align-items: center;
           gap: 6px;
           padding: 8px 14px;
-          background-color: ${isDarkMode ? '#10b981' : '#10b981'};
-          color: #ffffff;
+          background-color: ${isDarkMode ? '#34d399' : '#10b981'};
+          color: ${isDarkMode ? '#1a1a1a' : '#ffffff'};
           border: none;
           border-radius: 8px;
           font-size: 13px;
@@ -3807,8 +3807,8 @@ function showRailwayInfoWindow(position, content, type) {
           align-items: center;
           gap: 6px;
           padding: 8px 14px;
-          background-color: #10b981;
-          color: #ffffff;
+          background-color: ${isDarkMode ? '#34d399' : '#10b981'};
+          color: ${isDarkMode ? '#1a1a1a' : '#ffffff'};
           border: none;
           border-radius: 8px;
           font-size: 13px;
