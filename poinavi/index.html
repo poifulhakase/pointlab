@@ -305,11 +305,21 @@
         }
       }
 
+      // メモの上限
+      const MEMO_MAX_COUNT = 50;
+
       // メモを追加
       function addMemo(content) {
         if (!content || !content.trim()) return false;
 
         const memos = getMemos();
+        
+        // 上限チェック
+        if (memos.length >= MEMO_MAX_COUNT) {
+          alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+          return false;
+        }
+
         const newMemo = {
           id: Date.now().toString(),
           content: content.trim(),
