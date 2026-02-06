@@ -516,7 +516,8 @@ function updateThemeButton(isDark) {
 
 function loadSavedTheme() {
   const savedTheme = localStorage.getItem('hakaseai-theme');
-  if (savedTheme === 'dark') {
+  // デフォルトはダークモード（savedThemeがない場合、またはdarkの場合）
+  if (savedTheme !== 'light') {
     document.body.classList.add('dark-mode');
     updateThemeButton(true);
   }
