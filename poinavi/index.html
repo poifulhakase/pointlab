@@ -100,6 +100,16 @@
 
     <!-- メインコンテンツ -->
     <main class="memo-main">
+      <!-- 保存済メモ表示エリア -->
+      <div class="memo-list" id="memoList">
+        <!-- メモがない場合のプレースホルダー -->
+        <div class="memo-empty" id="memoEmpty">
+          <p>メモがありません</p>
+          <p class="memo-empty__hint">下の入力欄からメモを追加してください</p>
+        </div>
+        <!-- メモアイテムはJSで動的に追加 -->
+      </div>
+
       <!-- 注意書き -->
       <div class="memo-warning">
         <div class="memo-warning__icon">
@@ -113,16 +123,6 @@
           <p>本アプリは簡易メモ用途のみを目的としています。</p>
           <p>機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。</p>
         </div>
-      </div>
-
-      <!-- 保存済メモ表示エリア -->
-      <div class="memo-list" id="memoList">
-        <!-- メモがない場合のプレースホルダー -->
-        <div class="memo-empty" id="memoEmpty">
-          <p>メモがありません</p>
-          <p class="memo-empty__hint">下の入力欄からメモを追加してください</p>
-        </div>
-        <!-- メモアイテムはJSで動的に追加 -->
       </div>
 
       <!-- メモ入力エリア -->
