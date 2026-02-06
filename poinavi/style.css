@@ -2396,6 +2396,7 @@ body.dark-mode .translate-result-item--latest {
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
@@ -2436,6 +2437,7 @@ body.dark-mode .translate-result-item--latest {
 .translate-reset-btn {
   border-color: #dc3545;
   color: #dc3545;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
 }
 
 @media (hover: hover) {
@@ -2778,6 +2780,14 @@ body.dark-mode .translate-voice-btn {
 
 body.dark-mode .translate-voice-btn:hover {
   box-shadow: 0 6px 24px rgba(90, 156, 255, 0.5);
+}
+
+body.dark-mode .translate-camera-btn {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .translate-reset-btn {
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
 }
 
 body.dark-mode .translate-result-item__icon svg {
