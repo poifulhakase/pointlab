@@ -24,6 +24,22 @@
   box-sizing: border-box;
 }
 
+/* 画像の長押し保存を無効化 */
+img {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* リンク内の画像はクリック可能に */
+a img {
+  pointer-events: auto;
+}
+
 html, body {
   height: 100%;
   overflow: hidden;
