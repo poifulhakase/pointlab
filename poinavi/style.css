@@ -2250,7 +2250,7 @@ body.dark-mode .translate-voice-btn.listening::after {
   border-radius: 16px;
   padding: 16px;
   overflow-y: auto;
-  height: 45vh;
+  height: 340px;
   max-width: 600px;
   width: 100%;
   margin: 0 auto;
@@ -3556,7 +3556,7 @@ body.dark-mode .memo-warning {
   border-radius: 16px;
   padding: 16px;
   overflow-y: auto;
-  height: 45vh;
+  height: 340px;
   max-width: 600px;
   width: 100%;
   margin: 0 auto;
