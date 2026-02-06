@@ -748,7 +748,7 @@ body.dark-mode .settings-modal__reset-btn:hover {
 .note-banner__disclaimer {
   position: absolute;
   left: 16px;
-  font-size: 10px;
+  font-size: 12px;
   color: #888888;
   line-height: 1.3;
 }
