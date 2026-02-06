@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=67" />
+    <link rel="stylesheet" href="./style.css?v=68" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -374,10 +374,11 @@
           memoItem.className = "memo-item";
           memoItem.dataset.id = memo.id;
 
+          const formattedTime = formatDateTime(memo.createdAt);
           memoItem.innerHTML = `
             <div class="memo-item__header">
-              <span class="memo-item__time">${formatDateTime(memo.createdAt)}</span>
-              <button class="memo-item__delete" type="button" aria-label="削除" data-id="${memo.id}">
+              <span class="memo-item__time">${formattedTime}</span>
+              <button class="memo-item__delete" type="button" aria-label="削除" data-id="${memo.id}" data-time="${formattedTime}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -396,7 +397,8 @@
         memoList.querySelectorAll(".memo-item__delete").forEach(btn => {
           btn.addEventListener("click", function() {
             const id = this.dataset.id;
-            if (confirm("このメモを削除しますか？")) {
+            const time = this.dataset.time;
+            if (confirm(`[${time}] のメモを削除しますか？`)) {
               deleteMemo(id);
               renderMemoList();
             }
