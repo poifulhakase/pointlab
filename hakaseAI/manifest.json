@@ -2,7 +2,7 @@
   "name": "ハカセAI",
   "short_name": "ハカセAI",
   "description": "ぽいふる博士のお金相談室",
-  "start_url": "/",
+  "start_url": "/hakaseAI/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
