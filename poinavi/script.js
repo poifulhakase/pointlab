@@ -603,9 +603,27 @@ function initSearchInput() {
     return;
   }
 
-  // 検索ボタンクリックのみで検索（自動検索は無効）
+  // 検索ボタンクリックで検索
   searchButton.addEventListener("click", function () {
     performSearch();
+  });
+
+  // Enterキーで検索（keydownを使用してAndroidでも動作するように）
+  searchInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
+      e.preventDefault();
+      searchInput.blur(); // キーボードを閉じる
+      performSearch();
+    }
+  });
+
+  // IME確定時の検索対応（Android日本語入力用）
+  searchInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
+      e.preventDefault();
+      searchInput.blur(); // キーボードを閉じる
+      performSearch();
+    }
   });
 }
 
