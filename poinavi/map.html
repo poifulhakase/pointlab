@@ -20,7 +20,12 @@
     <script>
       (function() {
         var theme = localStorage.getItem("poinavi_theme") || "light";
-        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+        var themeClass = theme === "dark" ? "dark-mode" : "light-mode";
+        document.documentElement.className = themeClass;
+        // bodyにも適用（DOMContentLoaded前でも動作するように）
+        document.addEventListener("DOMContentLoaded", function() {
+          document.body.classList.add(themeClass);
+        });
       })();
     </script>
     <style>
@@ -378,6 +383,6 @@
       </a>
     </footer>
 
-    <script src="./script.js?v=68"></script>
+    <script src="./script.js?v=69"></script>
   </body>
 </html>

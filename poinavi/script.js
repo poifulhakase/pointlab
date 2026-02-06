@@ -484,7 +484,9 @@ const lightMapStyle = [
 function applyMapTheme() {
   if (!map) return;
   
-  const isDark = document.body.classList.contains("dark-mode");
+  // bodyまたはhtmlのどちらかにdark-modeクラスがあればダークモード
+  const isDark = document.body.classList.contains("dark-mode") || 
+                 document.documentElement.classList.contains("dark-mode");
   if (isDark) {
     map.setMapTypeId("dark_mode");
   } else {
