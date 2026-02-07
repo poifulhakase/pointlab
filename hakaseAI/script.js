@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存されたテーマを適用
   loadSavedTheme();
   
+  // 言語に応じたUI設定
+  applyLanguageSettings();
+  
   // 履歴があるか確認
   const hasHistory = checkHasHistory();
   
@@ -84,6 +87,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存された会話履歴を読み込み・表示
   loadSavedHistory();
 });
+
+// ========================================
+// 言語に応じたUI設定
+// ========================================
+function applyLanguageSettings() {
+  const userLang = detectUserLanguage();
+  
+  // プレースホルダーを言語に応じて変更
+  if (userLang === 'en') {
+    userInput.placeholder = 'Ask me anything...';
+  } else {
+    userInput.placeholder = '相談してみる';
+  }
+}
 
 // ========================================
 // 履歴チェック
@@ -564,6 +581,22 @@ function closeSettingsModal() {
 // 免責事項モーダル
 // ========================================
 function openDisclaimerModal() {
+  // 言語に応じて表示を切り替え
+  const userLang = detectUserLanguage();
+  const disclaimerJa = document.getElementById('disclaimerJa');
+  const disclaimerEn = document.getElementById('disclaimerEn');
+  const disclaimerTitle = document.getElementById('disclaimerTitle');
+  
+  if (userLang === 'en') {
+    disclaimerJa.style.display = 'none';
+    disclaimerEn.style.display = 'block';
+    disclaimerTitle.textContent = 'Disclaimer & Privacy';
+  } else {
+    disclaimerJa.style.display = 'block';
+    disclaimerEn.style.display = 'none';
+    disclaimerTitle.textContent = '免責事項・プライバシー';
+  }
+  
   disclaimerModal.classList.remove('hidden');
 }
 

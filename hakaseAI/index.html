@@ -97,7 +97,7 @@
       <div class="settings-modal__overlay"></div>
       <div class="settings-modal__content">
         <div class="settings-modal__header">
-          <h2 class="settings-modal__title">免責事項</h2>
+          <h2 class="settings-modal__title" id="disclaimerTitle">免責事項・プライバシー</h2>
           <button class="settings-modal__close" id="disclaimerModalClose" aria-label="閉じる">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -105,15 +105,47 @@
             </svg>
           </button>
         </div>
-        <div class="settings-modal__body disclaimer-body">
-          <p class="disclaimer-text">本サービス「ハカセAI」は、AIによる参考情報を提供するものです。</p>
-          <ul class="disclaimer-list">
-            <li>提供される情報は参考情報であり、正確性・完全性を保証するものではありません</li>
-            <li>投資判断・金融判断は、ご自身の責任において行ってください</li>
-            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
-            <li>重要な判断をされる際は、専門家への相談を推奨いたします</li>
-          </ul>
-          <p class="disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
+        <div class="settings-modal__body disclaimer-body" id="disclaimerBody">
+          <!-- 日本語版（デフォルト） -->
+          <div id="disclaimerJa">
+            <h3 class="disclaimer-section-title">免責事項</h3>
+            <p class="disclaimer-text">本サービス「ハカセAI」は、AIによる参考情報を提供するものです。</p>
+            <ul class="disclaimer-list">
+              <li>提供される情報は参考情報であり、正確性・完全性を保証するものではありません</li>
+              <li>投資判断・金融判断は、ご自身の責任において行ってください</li>
+              <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+              <li>重要な判断をされる際は、専門家への相談を推奨いたします</li>
+            </ul>
+            <h3 class="disclaimer-section-title">プライバシーポリシー</h3>
+            <p class="disclaimer-text">本サービスにおける個人情報の取り扱いについて説明します。</p>
+            <ul class="disclaimer-list">
+              <li><strong>入力データ：</strong>ご入力いただいた内容は、回答生成のため外部AIサービス（Google Gemini API）に送信されます</li>
+              <li><strong>データ保存：</strong>会話履歴はお使いのブラウザ（LocalStorage）にのみ保存され、サーバーには保存されません</li>
+              <li><strong>アクセス解析：</strong>サービス改善のため、Google Analyticsを使用してアクセス情報を収集しています</li>
+              <li><strong>機密情報：</strong>パスワード、クレジットカード番号、個人情報などの機密情報は入力しないでください</li>
+            </ul>
+            <p class="disclaimer-note">ご利用いただいた時点で、上記に同意いただいたものとみなします。</p>
+          </div>
+          <!-- 英語版 -->
+          <div id="disclaimerEn" style="display: none;">
+            <h3 class="disclaimer-section-title">Disclaimer</h3>
+            <p class="disclaimer-text">"HakaseAI" provides AI-generated reference information.</p>
+            <ul class="disclaimer-list">
+              <li>Information provided is for reference only; accuracy and completeness are not guaranteed</li>
+              <li>Investment and financial decisions are made at your own risk</li>
+              <li>The operator assumes no responsibility for any damages arising from the use of this service</li>
+              <li>We recommend consulting professionals for important decisions</li>
+            </ul>
+            <h3 class="disclaimer-section-title">Privacy Policy</h3>
+            <p class="disclaimer-text">This explains how we handle your information.</p>
+            <ul class="disclaimer-list">
+              <li><strong>Input Data:</strong> Your input is sent to an external AI service (Google Gemini API) to generate responses</li>
+              <li><strong>Data Storage:</strong> Conversation history is stored only in your browser (LocalStorage), not on our servers</li>
+              <li><strong>Analytics:</strong> We use Google Analytics to collect access information for service improvement</li>
+              <li><strong>Sensitive Info:</strong> Do not enter passwords, credit card numbers, or other personal/sensitive information</li>
+            </ul>
+            <p class="disclaimer-note">By using this service, you agree to the above terms.</p>
+          </div>
         </div>
       </div>
     </div>
