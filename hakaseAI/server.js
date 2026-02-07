@@ -1,5 +1,6 @@
 // ========================================
 // ぽいふる博士のお金相談室 - バックエンドAPI
+// Multi-language support (ja/en)
 // ========================================
 
 const express = require('express');
@@ -111,7 +112,7 @@ app.get('/hakaseAI/:filename', (req, res, next) => {
 // ========================================
 // システムプロンプト（博士のキャラクター設定）
 // ========================================
-const HAKASE_SYSTEM_PROMPT = `あなたは「ぽいふる博士」というキャラクターです。
+const HAKASE_SYSTEM_PROMPT_JA = `あなたは「ぽいふる博士」というキャラクターです。
 ユーザーのお金に関する質問に答えるAIとして振る舞ってください。
 
 【最重要ルール】
@@ -151,6 +152,47 @@ const HAKASE_SYSTEM_PROMPT = `あなたは「ぽいふる博士」というキ�
 
 これらを組み合わせれば、月に数千円は節約できるかもしれんぞ。参考にしてみてくれのう。`;
 
+// 英語版システムプロンプト
+const HAKASE_SYSTEM_PROMPT_EN = `You are "Professor Poiful", a friendly and wise character.
+Answer questions about money and finance as an AI assistant.
+
+【Important Rules】
+- Keep answers short and provide only the summary.
+- Speak in a warm, professorial tone like "Well now...", "I see...", "Indeed!"
+- Use first person "I" and address users warmly
+
+【Response Guidelines】
+- Focus on saving tips, point rewards, and everyday financial advice
+- Don't be too assertive; add phrases like "perhaps", "you might consider"
+
+【Prohibited】
+- Specific stock recommendations
+- Gambling advice
+- Illegal money-saving methods
+- Overly technical financial advice
+
+【Magazine Links - Include when relevant】
+If the question relates to these topics, add the link at the end:
+- Points/Rewards → Check my note: https://note.com/pointlab/m/m4188c60f3c9f
+- Stock investing → Check my note: https://note.com/pointlab/m/mb8056cb0b8ee
+- Self-employment/Taxes → Check my note: https://note.com/pointlab/m/mbb26c895445e
+- Side jobs → Check my note: https://note.com/pointlab/m/m7be629812c81
+
+【Example】
+User: How can I save on groceries?
+Professor: Ah, saving on groceries, excellent question! Here are my top 3 tips:
+
+1. "Weekly bulk shopping" - Going to the store daily leads to impulse buys, you see.
+2. "Target point reward days" - Many stores have double points on certain days, perhaps.
+3. "Use your freezer wisely" - Buy on sale days and freeze for later, indeed!
+
+Combine these and you might save quite a bit each month!`;
+
+// 言語に応じてプロンプトを選択
+function getSystemPrompt(language) {
+  return language === 'en' ? HAKASE_SYSTEM_PROMPT_EN : HAKASE_SYSTEM_PROMPT_JA;
+}
+
 // ========================================
 // チャットAPIエンドポイント
 // ========================================
@@ -159,17 +201,17 @@ const chatHandler = async (req, res) => {
   console.log('Request body:', JSON.stringify(req.body).substring(0, 200));
   
   try {
-    const { question_text, context, preferences } = req.body;
+    const { question_text, context, preferences, language } = req.body;
     
     if (!question_text) {
       console.log('Error: question_text is missing');
       return res.status(400).json({ error: '質問文が必要じゃ' });
     }
     
-    console.log('Calling Gemini API...');
+    console.log('Calling Gemini API... (language:', language || 'ja', ')');
     
-    // Gemini APIを使用
-    const response = await callGemini(question_text, context);
+    // Gemini APIを使用（言語を渡す）
+    const response = await callGemini(question_text, context, language);
     
     console.log('Gemini response received, length:', response?.length);
     
@@ -183,7 +225,7 @@ const chatHandler = async (req, res) => {
     console.error('Error stack:', error.stack);
     
     // エラーでもモック応答を返す（500エラーを避ける）
-    const mockResponse = getMockResponse(req.body?.question_text || '');
+    const mockResponse = getMockResponse(req.body?.question_text || '', req.body?.language || 'ja');
     res.json({ 
       comment_text: mockResponse,
       timestamp: new Date().toISOString(),
@@ -199,22 +241,28 @@ app.post('/hakaseAI/api/chat', chatHandler);
 // ========================================
 // Gemini API呼び出し（REST API直接）
 // ========================================
-async function callGemini(question, context) {
+async function callGemini(question, context, language = 'ja') {
   if (!GEMINI_API_KEY) {
     console.log('Gemini APIキーが設定されていません。モック応答を返します。');
-    return getMockResponse(question);
+    return getMockResponse(question, language);
   }
   
   try {
+    // 言語に応じたプロンプトを取得
+    const systemPrompt = getSystemPrompt(language);
+    
     // プロンプトを構築
-    let prompt = HAKASE_SYSTEM_PROMPT + '\n\n';
+    let prompt = systemPrompt + '\n\n';
     
     // コンテキストがあれば追加
     if (context && context.trim()) {
-      prompt += `【これまでの会話】\n${context}\n\n`;
+      const contextLabel = language === 'en' ? '【Previous conversation】' : '【これまでの会話】';
+      prompt += `${contextLabel}\n${context}\n\n`;
     }
     
-    prompt += `【ユーザーの質問】\n${question}\n\n【博士の回答】`;
+    const questionLabel = language === 'en' ? '【User question】' : '【ユーザーの質問】';
+    const answerLabel = language === 'en' ? '【Professor\'s answer】' : '【博士の回答】';
+    prompt += `${questionLabel}\n${question}\n\n${answerLabel}`;
     
     console.log('Fetching Gemini API...');
     
@@ -242,7 +290,7 @@ async function callGemini(question, context) {
       
       // エラーの場合はモック応答にフォールバック
       console.log('Falling back to mock response due to API error');
-      return getMockResponse(question);
+      return getMockResponse(question, language);
     }
     
     const data = await response.json();
@@ -258,13 +306,13 @@ async function callGemini(question, context) {
     
     // 予期しないレスポンス形式の場合もフォールバック
     console.log('Unexpected response format, falling back to mock');
-    return getMockResponse(question);
+    return getMockResponse(question, language);
     
   } catch (error) {
     console.error('Gemini API Error:', error.message);
     // エラー時はモック応答にフォールバック
     console.log('Falling back to mock response due to error');
-    return getMockResponse(question);
+    return getMockResponse(question, language);
   }
 }
 
@@ -312,7 +360,25 @@ function truncateResponse(text, maxLength) {
 // ========================================
 // モック応答（APIキーがない場合）
 // ========================================
-function getMockResponse(question) {
+function getMockResponse(question, language = 'ja') {
+  if (language === 'en') {
+    const responsesEn = {
+      'save': 'Hello there! The key to saving is "visibility". Try writing down all your expenses this month, perhaps.',
+      'point': 'Reward points can be quite rewarding indeed! The best approach is to earn them steadily through daily shopping.',
+      'food': 'For food expenses, bulk buying and cooking at home are the classics. Weekly shopping trips might help reduce waste.',
+      'bill': 'To lower utility bills, start by turning off lights in unused rooms. Small steps add up, indeed!',
+      'saving': '"Pay yourself first" is quite effective. When you get paid, move a fixed amount to a savings account right away.'
+    };
+    
+    for (const [keyword, response] of Object.entries(responsesEn)) {
+      if (question.toLowerCase().includes(keyword)) {
+        return response;
+      }
+    }
+    
+    return 'Hmm, I see. I\'m always here for money advice. Could you tell me more specifically what you\'d like to know?';
+  }
+  
   const responses = {
     '節約': 'やあ諸君。節約の基本は「見える化」じゃ。まずは今月の支出を書き出してみるのが良いかもしれん。',
     'ポイント': 'ポイントの活用はなかなか奥が深いのう。日常の買い物でコツコツ貯めるのが一番じゃ。',
