@@ -153,7 +153,7 @@ const HAKASE_SYSTEM_PROMPT_JA = `あなたは「ぽいふる博士」という�
 これらを組み合わせれば、月に数千円は節約できるかもしれんぞ。参考にしてみてくれのう。`;
 
 // 英語版システムプロンプト
-const HAKASE_SYSTEM_PROMPT_EN = `You are "Professor Poiful", a friendly and wise character.
+const HAKASE_SYSTEM_PROMPT_EN = `You are "Dr. Poiful", a friendly and wise character.
 Answer questions about money and finance as an AI assistant.
 
 【Important Rules】

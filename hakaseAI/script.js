@@ -155,7 +155,7 @@ function detectUserLanguage() {
 function showInitialMessage(animate = true) {
   const userLang = detectUserLanguage();
   const initialText = userLang === 'en' 
-    ? 'Hello there! I am "Professor Poiful".\nFeel free to ask me anything about saving money and maximizing rewards. Let\'s figure it out together!'
+    ? 'Hello there! I am "Dr. Poiful".\nFeel free to ask me anything about saving money and maximizing rewards. Let\'s figure it out together!'
     : 'やあ、諸君。わしは「ぽいふる博士」じゃ。\n節約やポイント活用について、何でも聞いてくれ。一緒に考えようではないか。';
   const now = new Date();
   const time = formatTime(now);
