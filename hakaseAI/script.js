@@ -94,10 +94,32 @@ document.addEventListener('DOMContentLoaded', () => {
 function applyLanguageSettings() {
   const userLang = detectUserLanguage();
   
-  // プレースホルダーを言語に応じて変更
   if (userLang === 'en') {
+    // 英語UI
     userInput.placeholder = 'Ask me anything...';
+    
+    // 設定モーダル
+    const settingsTitle = document.getElementById('settingsTitle');
+    const themeLabel = document.getElementById('themeLabel');
+    const historyLabel = document.getElementById('historyLabel');
+    const clearHistoryText = document.getElementById('clearHistoryText');
+    const resetLabel = document.getElementById('resetLabel');
+    const resetAllText = document.getElementById('resetAllText');
+    const resetHint = document.getElementById('resetHint');
+    
+    if (settingsTitle) settingsTitle.textContent = 'Settings';
+    if (themeLabel) themeLabel.textContent = 'Theme';
+    if (historyLabel) historyLabel.textContent = 'Chat History';
+    if (clearHistoryText) clearHistoryText.textContent = 'Clear History';
+    if (resetLabel) resetLabel.textContent = 'Reset All';
+    if (resetAllText) resetAllText.textContent = 'Reset All Data';
+    if (resetHint) resetHint.textContent = 'Resets history and theme settings';
+    
+    // フッター
+    const footerDisclaimer = document.getElementById('footerDisclaimer');
+    if (footerDisclaimer) footerDisclaimer.innerHTML = '*This is an<br>Entertainment AI';
   } else {
+    // 日本語UI（デフォルト）
     userInput.placeholder = '相談してみる';
   }
 }
@@ -616,13 +638,14 @@ function toggleDarkMode() {
 function updateThemeButton(isDark) {
   const themeIcon = themeToggle.querySelector('.theme-icon');
   const themeText = themeToggle.querySelector('.theme-text');
+  const userLang = detectUserLanguage();
   
   if (isDark) {
     themeIcon.textContent = '☀️';
-    themeText.textContent = 'ライトモード';
+    themeText.textContent = userLang === 'en' ? 'Light Mode' : 'ライトモード';
   } else {
     themeIcon.textContent = '🌙';
-    themeText.textContent = 'ダークモード';
+    themeText.textContent = userLang === 'en' ? 'Dark Mode' : 'ダークモード';
   }
 }
 
@@ -714,7 +737,12 @@ function addMessageWithTime(text, sender, timestamp) {
 }
 
 function clearHistory() {
-  if (confirm('会話履歴を削除しますか？')) {
+  const userLang = detectUserLanguage();
+  const confirmMsg = userLang === 'en' 
+    ? 'Delete chat history?' 
+    : '会話履歴を削除しますか？';
+  
+  if (confirm(confirmMsg)) {
     // LocalStorageをクリア
     localStorage.removeItem(STORAGE_KEY_HISTORY);
     localStorage.removeItem(STORAGE_KEY_MESSAGES);
@@ -734,7 +762,12 @@ function clearHistory() {
 }
 
 function resetAll() {
-  if (confirm('全てのデータ（会話履歴・テーマ設定）をリセットしますか？\n\nこの操作は取り消せません。')) {
+  const userLang = detectUserLanguage();
+  const confirmMsg = userLang === 'en'
+    ? 'Reset all data (chat history and theme settings)?\n\nThis action cannot be undone.'
+    : '全てのデータ（会話履歴・テーマ設定）をリセットしますか？\n\nこの操作は取り消せません。';
+  
+  if (confirm(confirmMsg)) {
     // ハカセAI関連のLocalStorageを全てクリア
     localStorage.removeItem(STORAGE_KEY_HISTORY);
     localStorage.removeItem(STORAGE_KEY_MESSAGES);

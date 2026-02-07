@@ -57,7 +57,7 @@
       <div class="settings-modal__overlay"></div>
       <div class="settings-modal__content">
         <div class="settings-modal__header">
-          <h2 class="settings-modal__title">設定</h2>
+          <h2 class="settings-modal__title" id="settingsTitle">設定</h2>
           <button class="settings-modal__close" id="settingsModalClose" aria-label="閉じる">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -67,26 +67,26 @@
         </div>
         <div class="settings-modal__body">
           <div class="settings-modal__item">
-            <label class="settings-modal__label">テーマ</label>
+            <label class="settings-modal__label" id="themeLabel">テーマ</label>
             <button id="themeToggle" class="settings-modal__theme-toggle">
               <span class="theme-icon">🌙</span>
               <span class="theme-text">ダークモード</span>
             </button>
           </div>
           <div class="settings-modal__item">
-            <label class="settings-modal__label">会話履歴</label>
+            <label class="settings-modal__label" id="historyLabel">会話履歴</label>
             <button id="clearHistoryBtn" class="settings-modal__clear-btn">
               <span>🗑️</span>
-              <span>履歴をクリア</span>
+              <span id="clearHistoryText">履歴をクリア</span>
             </button>
           </div>
           <div class="settings-modal__item">
-            <label class="settings-modal__label">全てリセット</label>
+            <label class="settings-modal__label" id="resetLabel">全てリセット</label>
             <button id="resetAllBtn" class="settings-modal__reset-btn">
               <span>⚠️</span>
-              <span>全データをリセット</span>
+              <span id="resetAllText">全データをリセット</span>
             </button>
-            <p class="settings-modal__hint">履歴・テーマ設定を全て初期化します</p>
+            <p class="settings-modal__hint" id="resetHint">履歴・テーマ設定を全て初期化します</p>
           </div>
         </div>
       </div>
@@ -173,7 +173,7 @@
 
     <!-- フッター -->
     <footer class="note-banner">
-      <span class="note-banner__disclaimer">※これは<br>エンタメAIです</span>
+      <span class="note-banner__disclaimer" id="footerDisclaimer">※これは<br>エンタメAIです</span>
       <a
         href="https://note.com/pointlab"
         target="_blank"
