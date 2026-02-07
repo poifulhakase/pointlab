@@ -205,6 +205,14 @@ async function sendMessage() {
   const loadingId = showLoading();
   
   try {
+    // GA4イベント: 質問送信
+    if (typeof gtag === 'function') {
+      gtag('event', 'ask_question', {
+        'event_category': 'hakase_ai',
+        'event_label': text.substring(0, 50) // 質問の先頭50文字
+      });
+    }
+    
     // API呼び出し
     const response = await callHakaseAPI(text);
     
@@ -213,6 +221,13 @@ async function sendMessage() {
     
     // 博士の回答を表示
     addMessage(response, 'hakase');
+    
+    // GA4イベント: 回答受信
+    if (typeof gtag === 'function') {
+      gtag('event', 'receive_answer', {
+        'event_category': 'hakase_ai'
+      });
+    }
     
     // 会話履歴に追加
     const hakaseTimestamp = new Date().toISOString();
