@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- セキュリティヘッダー -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <!-- Google Analytics 4 (自分除外対応) -->
+    <script>
+      if (localStorage.getItem('excludeFromAnalytics') !== 'true') {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-ERDSPE9CZM';
+        document.head.appendChild(script);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-ERDSPE9CZM');
+      }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>ぽいナビ - イベント</title>
+    <meta name="description" content="近くのイベント情報を表示。半径8km以内のイベントを最大30件表示します。" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="./style.css?v=97" />
+    <!-- FOUC対策: CSSロード前にテーマを適用 -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poinavi_theme") || "light";
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+    </script>
+    <style>
+      /* FOUC対策: 初期背景色 */
+      html.light-mode { background-color: #f5f5f7; }
+      html.dark-mode { background-color: #1a1a1a; }
+      
+      /* イベントページ専用スタイル */
+      .event-main {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 16px 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* ヘッダー情報（気温・位置） */
+      .event-header {
+        position: sticky;
+        top: 0;
+        background: var(--bg-primary);
+        padding: 16px 0;
+        z-index: 10;
+        border-bottom: 1px solid var(--border-color);
+      }
+      
+      .event-header__weather {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      
+      .event-header__temp {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      
+      .event-header__weather-icon {
+        font-size: 2rem;
+      }
+      
+      .event-header__weather-desc {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+      
+      .event-header__location {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+      }
+      
+      .event-header__location svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+      
+      /* イベントリスト */
+      .event-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-top: 16px;
+      }
+      
+      .event-list__title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .event-list__count {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+        padding: 2px 8px;
+        border-radius: 12px;
+      }
+      
+      /* イベントカード */
+      .event-card {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        border: 1px solid var(--border-color);
+      }
+      
+      .event-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      .event-card:active {
+        transform: scale(0.98);
+      }
+      
+      .event-card__title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      
+      .event-card__meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      
+      .event-card__meta-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+      }
+      
+      .event-card__meta-item svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      
+      .event-card__date {
+        color: #4CAF50;
+        font-weight: 500;
+      }
+      
+      /* ローディング */
+      .event-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+      }
+      
+      .event-loading__spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-color);
+        border-top-color: #4CAF50;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .event-loading__text {
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+      }
+      
+      /* エラー表示 */
+      .event-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+      }
+      
+      .event-error__icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+      }
+      
+      .event-error__title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+      
+      .event-error__message {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+      
+      .event-error__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      
+      /* 空状態 */
+      .event-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+      }
+      
+      .event-empty__icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+      }
+      
+      .event-empty__title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+      
+      .event-empty__message {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+      
+      /* 回数制限警告 */
+      .rate-limit-warning {
+        background: #FFF3E0;
+        border: 1px solid #FFB74D;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      
+      .dark-mode .rate-limit-warning {
+        background: rgba(255, 183, 77, 0.15);
+        border-color: rgba(255, 183, 77, 0.4);
+      }
+      
+      .rate-limit-warning__icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+      
+      .rate-limit-warning__text {
+        font-size: 0.8125rem;
+        color: #E65100;
+        line-height: 1.5;
+      }
+      
+      .dark-mode .rate-limit-warning__text {
+        color: #FFB74D;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 長押しコンテキストメニュー無効化 -->
+    <script>
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    </script>
+    
+    <!-- ヘッダー -->
+    <header class="translate-header">
+      <!-- 戻るボタン -->
+      <a href="./map.html" class="translate-header__icon-btn" aria-label="地図に戻る">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </a>
+      
+      <h1 class="translate-header__title">
+        <img src="./logo.svg" alt="ぽいナビ" class="translate-header__logo" />
+      </h1>
+      
+      <!-- 設定ボタン -->
+      <button id="eventSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 設定モーダル -->
+    <div id="eventSettingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="eventSettingsClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body">
+          <!-- 起動ページセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">トップ表示</div>
+            <select id="eventStartPageSelect" class="translate-modal__select">
+              <option value="index.html">📝 メモ</option>
+              <option value="translate.html">🌐 翻訳</option>
+              <option value="map.html">🗺️ 地図</option>
+            </select>
+          </div>
+          <!-- テーマセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">テーマ</div>
+            <button id="eventThemeToggle" class="translate-modal__theme-toggle">
+              <span class="theme-icon">☀️</span>
+              <span class="theme-text">ライトモード</span>
+            </button>
+          </div>
+          <!-- 免責事項セクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">免責事項</div>
+            <div class="settings-modal__disclaimer-text">
+              <p>本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
+              <ul>
+                <li>イベント情報は外部サービス（Eventbrite）から取得しています</li>
+                <li>イベントの開催状況は変更される可能性があります</li>
+                <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <main class="event-main" id="eventMain">
+      <!-- ローディング表示（初期） -->
+      <div class="event-loading" id="eventLoading">
+        <div class="event-loading__spinner"></div>
+        <p class="event-loading__text">イベント情報を取得中...</p>
+      </div>
+      
+      <!-- イベント内容（JS で挿入） -->
+      <div id="eventContent" style="display: none;">
+        <!-- ヘッダー（気温・位置） -->
+        <div class="event-header" id="eventHeader">
+          <div class="event-header__weather">
+            <span class="event-header__weather-icon" id="weatherIcon">🌤</span>
+            <span class="event-header__temp" id="weatherTemp">--°C</span>
+            <span class="event-header__weather-desc" id="weatherDesc">取得中...</span>
+          </div>
+          <div class="event-header__location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span id="locationText">位置情報取得中...</span>
+          </div>
+        </div>
+        
+        <!-- イベントリスト -->
+        <div class="event-list" id="eventList">
+          <div class="event-list__title">
+            📅 近くのイベント
+            <span class="event-list__count" id="eventCount">0件</span>
+          </div>
+          <!-- イベントカードはJSで挿入 -->
+        </div>
+      </div>
+      
+      <!-- エラー表示 -->
+      <div class="event-error" id="eventError" style="display: none;">
+        <div class="event-error__icon">😢</div>
+        <h2 class="event-error__title">エラーが発生しました</h2>
+        <p class="event-error__message" id="errorMessage">イベント情報の取得に失敗しました。</p>
+        <a href="./map.html" class="event-error__btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          地図に戻る
+        </a>
+      </div>
+      
+      <!-- 空状態 -->
+      <div class="event-empty" id="eventEmpty" style="display: none;">
+        <div class="event-empty__icon">📭</div>
+        <h2 class="event-empty__title">イベントが見つかりません</h2>
+        <p class="event-empty__message">半径8km以内に予定されているイベントはありません。<br>別の場所で試してみてください。</p>
+      </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="translate-footer">
+      <a href="./translate.html" class="translate-footer__btn" aria-label="翻訳ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"/>
+          <path d="M4 14h6"/>
+          <path d="M2 5h12"/>
+          <path d="M7 2v3"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
+        </svg>
+        <span class="translate-footer__label">翻訳</span>
+      </a>
+      <a
+        href="https://note.com/pointlab/magazines"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="translate-footer__banner"
+      >
+        <img src="./poyonkun_full.png" alt="ぽいんとらぼ" class="translate-footer__logo" />
+      </a>
+      <a href="./map.html" class="translate-footer__btn" aria-label="地図ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span class="translate-footer__label">地図</span>
+      </a>
+    </footer>
+
+    <script>
+      // ============================================
+      // イベントページ - メインスクリプト
+      // ============================================
+      
+      // 定数
+      const CACHE_KEY = 'poinavi_event_cache';
+      const CACHE_TTL = 10 * 60 * 1000; // 10分
+      const RATE_LIMIT_KEY = 'poinavi_event_rate';
+      const MAX_REQUESTS_PER_HOUR = 3;
+      const MIN_INTERVAL_MS = 10 * 60 * 1000; // 10分
+      const SEARCH_RADIUS_KM = 8;
+      const MAX_EVENTS = 30;
+      
+      // OpenWeather API（無料枠）
+      const OPENWEATHER_API_KEY = 'YOUR_OPENWEATHER_API_KEY'; // 実際のキーに置き換え
+      
+      // 天気アイコンマッピング
+      const WEATHER_ICONS = {
+        '01d': '☀️', '01n': '🌙',
+        '02d': '⛅', '02n': '☁️',
+        '03d': '☁️', '03n': '☁️',
+        '04d': '☁️', '04n': '☁️',
+        '09d': '🌧️', '09n': '🌧️',
+        '10d': '🌦️', '10n': '🌧️',
+        '11d': '⛈️', '11n': '⛈️',
+        '13d': '❄️', '13n': '❄️',
+        '50d': '🌫️', '50n': '🌫️'
+      };
+      
+      // ============================================
+      // 初期化
+      // ============================================
+      document.addEventListener('DOMContentLoaded', function() {
+        initTheme();
+        initSettingsModal();
+        initStartPageSelect();
+        
+        // URLパラメータから座標を取得
+        const params = new URLSearchParams(window.location.search);
+        const lat = parseFloat(params.get('lat'));
+        const lng = parseFloat(params.get('lng'));
+        
+        if (isNaN(lat) || isNaN(lng)) {
+          showError('位置情報が指定されていません。地図から位置を選択してください。');
+          return;
+        }
+        
+        // レート制限チェック
+        if (!checkRateLimit()) {
+          showRateLimitWarning();
+          // キャッシュがあれば表示
+          const cached = getCache(lat, lng);
+          if (cached) {
+            displayEvents(cached.events, lat, lng);
+            fetchWeather(lat, lng);
+          } else {
+            showError('しばらくお待ちください。<br>1時間に3回まで、10分間隔でご利用いただけます。');
+          }
+          return;
+        }
+        
+        // イベント取得
+        loadEvents(lat, lng);
+      });
+      
+      // ============================================
+      // テーマ管理
+      // ============================================
+      function initTheme() {
+        const savedTheme = localStorage.getItem("poinavi_theme") || "light";
+        const isDark = savedTheme === "dark";
+        document.body.classList.toggle("dark-mode", isDark);
+        document.body.classList.toggle("light-mode", !isDark);
+        updateThemeButton();
+      }
+      
+      function updateThemeButton() {
+        const themeToggle = document.getElementById("eventThemeToggle");
+        if (!themeToggle) return;
+        
+        const isDark = document.body.classList.contains("dark-mode");
+        const icon = themeToggle.querySelector(".theme-icon");
+        const text = themeToggle.querySelector(".theme-text");
+        
+        if (icon) icon.textContent = isDark ? "🌙" : "☀️";
+        if (text) text.textContent = isDark ? "ダークモード" : "ライトモード";
+      }
+      
+      // ============================================
+      // 設定モーダル
+      // ============================================
+      function initSettingsModal() {
+        const modal = document.getElementById("eventSettingsModal");
+        const openBtn = document.getElementById("eventSettingsButton");
+        const closeBtn = document.getElementById("eventSettingsClose");
+        const overlay = modal?.querySelector(".translate-modal__overlay");
+        const themeToggle = document.getElementById("eventThemeToggle");
+        
+        if (!modal || !openBtn || !closeBtn) return;
+        
+        openBtn.addEventListener("click", function() {
+          modal.classList.remove("hidden");
+          history.pushState({ modal: "eventSettings" }, "");
+        });
+        
+        closeBtn.addEventListener("click", function() {
+          modal.classList.add("hidden");
+        });
+        
+        if (overlay) {
+          overlay.addEventListener("click", function() {
+            modal.classList.add("hidden");
+          });
+        }
+        
+        if (themeToggle) {
+          themeToggle.addEventListener("click", function() {
+            const isDark = document.body.classList.contains("dark-mode");
+            document.body.classList.toggle("dark-mode", !isDark);
+            document.body.classList.toggle("light-mode", isDark);
+            document.documentElement.classList.toggle("dark-mode", !isDark);
+            document.documentElement.classList.toggle("light-mode", isDark);
+            localStorage.setItem("poinavi_theme", isDark ? "light" : "dark");
+            updateThemeButton();
+          });
+        }
+        
+        // Android戻るボタン対応
+        window.addEventListener("popstate", function(event) {
+          if (modal && !modal.classList.contains("hidden")) {
+            modal.classList.add("hidden");
+          }
+        });
+      }
+      
+      function initStartPageSelect() {
+        const select = document.getElementById("eventStartPageSelect");
+        if (!select) return;
+        
+        const savedStartPage = localStorage.getItem("poinavi_start_page") || "index.html";
+        select.value = savedStartPage;
+        
+        select.addEventListener("change", function() {
+          localStorage.setItem("poinavi_start_page", this.value);
+        });
+      }
+      
+      // ============================================
+      // レート制限
+      // ============================================
+      function checkRateLimit() {
+        const rateData = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"requests":[]}');
+        const now = Date.now();
+        const oneHourAgo = now - (60 * 60 * 1000);
+        
+        // 1時間以内のリクエストをフィルタ
+        rateData.requests = rateData.requests.filter(t => t > oneHourAgo);
+        
+        // 最大回数チェック
+        if (rateData.requests.length >= MAX_REQUESTS_PER_HOUR) {
+          return false;
+        }
+        
+        // 最小間隔チェック
+        const lastRequest = rateData.requests[rateData.requests.length - 1] || 0;
+        if (now - lastRequest < MIN_INTERVAL_MS) {
+          return false;
+        }
+        
+        return true;
+      }
+      
+      function recordRequest() {
+        const rateData = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"requests":[]}');
+        const now = Date.now();
+        const oneHourAgo = now - (60 * 60 * 1000);
+        
+        rateData.requests = rateData.requests.filter(t => t > oneHourAgo);
+        rateData.requests.push(now);
+        
+        localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rateData));
+      }
+      
+      function showRateLimitWarning() {
+        const content = document.getElementById('eventContent');
+        if (!content) return;
+        
+        const warning = document.createElement('div');
+        warning.className = 'rate-limit-warning';
+        warning.innerHTML = `
+          <span class="rate-limit-warning__icon">⚠️</span>
+          <span class="rate-limit-warning__text">
+            利用回数の制限に達しました。<br>
+            1時間に3回まで、10分間隔でご利用いただけます。
+          </span>
+        `;
+        content.insertBefore(warning, content.firstChild);
+      }
+      
+      // ============================================
+      // キャッシュ管理
+      // ============================================
+      function getCacheKey(lat, lng) {
+        // 8km範囲でグルーピング（約0.07度）
+        const gridLat = Math.floor(lat / 0.07) * 0.07;
+        const gridLng = Math.floor(lng / 0.07) * 0.07;
+        return `${gridLat.toFixed(2)}_${gridLng.toFixed(2)}`;
+      }
+      
+      function getCache(lat, lng) {
+        const cacheKey = getCacheKey(lat, lng);
+        const cacheData = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+        const cached = cacheData[cacheKey];
+        
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+          return cached;
+        }
+        
+        return null;
+      }
+      
+      function setCache(lat, lng, events) {
+        const cacheKey = getCacheKey(lat, lng);
+        const cacheData = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+        
+        // 古いキャッシュを削除（最大10エリア保持）
+        const keys = Object.keys(cacheData);
+        if (keys.length > 10) {
+          const oldestKey = keys.sort((a, b) => cacheData[a].timestamp - cacheData[b].timestamp)[0];
+          delete cacheData[oldestKey];
+        }
+        
+        cacheData[cacheKey] = {
+          events: events,
+          timestamp: Date.now()
+        };
+        
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      }
+      
+      // ============================================
+      // イベント取得
+      // ============================================
+      async function loadEvents(lat, lng) {
+        // キャッシュチェック
+        const cached = getCache(lat, lng);
+        if (cached) {
+          displayEvents(cached.events, lat, lng);
+          fetchWeather(lat, lng);
+          return;
+        }
+        
+        // リクエスト記録
+        recordRequest();
+        
+        try {
+          // 注: Eventbrite APIは実際にはサーバーサイドで呼び出す必要があります
+          // ここではデモ用のモックデータを使用
+          const events = await fetchEventsMock(lat, lng);
+          
+          // キャッシュ保存
+          setCache(lat, lng, events);
+          
+          // 表示
+          displayEvents(events, lat, lng);
+          fetchWeather(lat, lng);
+          
+        } catch (err) {
+          console.error('イベント取得エラー:', err);
+          showError('イベント情報の取得に失敗しました。<br>しばらくしてからお試しください。');
+        }
+      }
+      
+      // モックデータ（実際はサーバーサイドでEventbrite APIを呼び出す）
+      async function fetchEventsMock(lat, lng) {
+        // デモ用の遅延
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // デモ用イベントデータ
+        const now = new Date();
+        const events = [];
+        
+        const demoTitles = [
+          'テックミートアップ 2026',
+          'スタートアップピッチイベント',
+          'デザイン思考ワークショップ',
+          'AI/ML勉強会',
+          'ネットワーキングナイト',
+          'プログラミング初心者向け講座',
+          'ビジネスセミナー',
+          'クリエイティブ展示会'
+        ];
+        
+        const demoVenues = [
+          '〇〇コミュニティセンター',
+          '△△ホール',
+          '□□カンファレンスルーム',
+          '◇◇スペース'
+        ];
+        
+        const numEvents = Math.floor(Math.random() * 8) + 3; // 3-10件
+        
+        for (let i = 0; i < numEvents; i++) {
+          const startDate = new Date(now.getTime() + (i + 1) * 24 * 60 * 60 * 1000);
+          const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+          
+          events.push({
+            id: `demo_${i}`,
+            title: demoTitles[i % demoTitles.length],
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            venue_name: demoVenues[i % demoVenues.length],
+            address: `東京都渋谷区○○${i + 1}-${i + 2}-${i + 3}`,
+            event_url: 'https://www.eventbrite.com/'
+          });
+        }
+        
+        return events;
+      }
+      
+      // ============================================
+      // 天気取得
+      // ============================================
+      async function fetchWeather(lat, lng) {
+        try {
+          // デモ用（実際はOpenWeather APIを使用）
+          const temp = Math.floor(Math.random() * 15) + 10;
+          const icons = Object.values(WEATHER_ICONS);
+          const icon = icons[Math.floor(Math.random() * icons.length)];
+          const descs = ['晴れ', '曇り', '小雨', '快晴'];
+          const desc = descs[Math.floor(Math.random() * descs.length)];
+          
+          document.getElementById('weatherTemp').textContent = `${temp}°C`;
+          document.getElementById('weatherIcon').textContent = icon;
+          document.getElementById('weatherDesc').textContent = desc;
+          
+          // 位置情報（逆ジオコーディング）
+          document.getElementById('locationText').textContent = `北緯${lat.toFixed(4)}° 東経${lng.toFixed(4)}°`;
+          
+        } catch (err) {
+          console.error('天気取得エラー:', err);
+        }
+      }
+      
+      // ============================================
+      // 表示
+      // ============================================
+      function displayEvents(events, lat, lng) {
+        document.getElementById('eventLoading').style.display = 'none';
+        document.getElementById('eventError').style.display = 'none';
+        
+        if (!events || events.length === 0) {
+          document.getElementById('eventEmpty').style.display = 'flex';
+          return;
+        }
+        
+        document.getElementById('eventContent').style.display = 'block';
+        document.getElementById('eventCount').textContent = `${events.length}件`;
+        
+        const listEl = document.getElementById('eventList');
+        const titleEl = listEl.querySelector('.event-list__title');
+        
+        // 既存のカードを削除
+        listEl.querySelectorAll('.event-card').forEach(el => el.remove());
+        
+        // イベントカードを追加
+        events.forEach(event => {
+          const card = createEventCard(event);
+          listEl.appendChild(card);
+        });
+      }
+      
+      function createEventCard(event) {
+        const card = document.createElement('a');
+        card.className = 'event-card';
+        card.href = event.event_url;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+        
+        const dateStr = formatEventDate(startDate);
+        const timeStr = `${formatTime(startDate)} - ${formatTime(endDate)}`;
+        
+        card.innerHTML = `
+          <h3 class="event-card__title">${escapeHtml(event.title)}</h3>
+          <div class="event-card__meta">
+            <div class="event-card__meta-item event-card__date">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              ${dateStr} ${timeStr}
+            </div>
+            <div class="event-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              ${escapeHtml(event.venue_name)}
+            </div>
+            <div class="event-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              ${escapeHtml(event.address)}
+            </div>
+          </div>
+        `;
+        
+        return card;
+      }
+      
+      function formatEventDate(date) {
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        const weekday = weekdays[date.getDay()];
+        return `${month}/${day}(${weekday})`;
+      }
+      
+      function formatTime(date) {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+      
+      function showError(message) {
+        document.getElementById('eventLoading').style.display = 'none';
+        document.getElementById('eventContent').style.display = 'none';
+        document.getElementById('eventEmpty').style.display = 'none';
+        
+        const errorEl = document.getElementById('eventError');
+        document.getElementById('errorMessage').innerHTML = message;
+        errorEl.style.display = 'flex';
+      }
+      
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    </script>
+  </body>
+</html>

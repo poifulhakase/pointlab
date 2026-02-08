@@ -723,7 +723,223 @@ window.initGoogleMaps = function() {
   // Google Maps初期化後にレイヤー機能を有効化
   initRainViewer();
   initRailwayLayer();
+  // イベント機能の初期化
+  initEventFeature();
 };
+
+// ============================================
+// イベント機能（ぽいナビマーカー・確認モーダル）
+// ============================================
+let poinaviMarker = null;
+const EVENT_RATE_LIMIT_KEY = 'poinavi_event_rate';
+const EVENT_MAX_REQUESTS = 3;
+const EVENT_MIN_INTERVAL = 10 * 60 * 1000; // 10分
+
+function initEventFeature() {
+  // イベントボタンのクリックハンドラ
+  const eventNavBtn = document.getElementById('eventNavBtn');
+  if (eventNavBtn) {
+    eventNavBtn.addEventListener('click', handleEventNavClick);
+  }
+  
+  // 確認モーダルのボタン
+  const confirmModal = document.getElementById('eventConfirmModal');
+  const confirmOk = document.getElementById('eventConfirmOk');
+  const confirmCancel = document.getElementById('eventConfirmCancel');
+  const overlay = confirmModal?.querySelector('.event-confirm-modal__overlay');
+  
+  if (confirmOk) {
+    confirmOk.addEventListener('click', handleEventConfirm);
+  }
+  
+  if (confirmCancel) {
+    confirmCancel.addEventListener('click', hideEventConfirmModal);
+  }
+  
+  if (overlay) {
+    overlay.addEventListener('click', hideEventConfirmModal);
+  }
+}
+
+// イベントボタンクリック時の処理
+function handleEventNavClick() {
+  // レート制限チェック
+  if (!checkEventRateLimit()) {
+    alert('しばらくお待ちください。\n\n1時間に3回まで、10分間隔でご利用いただけます。');
+    return;
+  }
+  
+  // 現在位置を取得して確認モーダルを表示
+  showEventConfirmModal();
+}
+
+// 確認モーダルを表示
+function showEventConfirmModal() {
+  const modal = document.getElementById('eventConfirmModal');
+  const locationText = document.getElementById('confirmLocation');
+  
+  if (!modal) return;
+  
+  // 現在の地図中心座標を取得
+  let lat, lng;
+  if (map && typeof map.getCenter === 'function') {
+    const center = map.getCenter();
+    lat = center.lat();
+    lng = center.lng();
+  } else if (userLocation) {
+    lat = userLocation.lat;
+    lng = userLocation.lng;
+  } else {
+    // デフォルト（東京駅）
+    lat = 35.6812;
+    lng = 139.7671;
+  }
+  
+  // 座標を保存
+  modal.dataset.lat = lat;
+  modal.dataset.lng = lng;
+  
+  // 位置情報を表示
+  if (locationText) {
+    locationText.textContent = `北緯 ${lat.toFixed(4)}° / 東経 ${lng.toFixed(4)}°`;
+  }
+  
+  // ぽいナビマーカーを表示
+  showPoinaviMarker(lat, lng);
+  
+  // モーダルを表示
+  modal.classList.remove('hidden');
+  history.pushState({ modal: 'eventConfirm' }, '');
+}
+
+// 確認モーダルを非表示
+function hideEventConfirmModal() {
+  const modal = document.getElementById('eventConfirmModal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  // マーカーを削除
+  hidePoinaviMarker();
+}
+
+// イベント確認（OKボタン）
+function handleEventConfirm() {
+  const modal = document.getElementById('eventConfirmModal');
+  if (!modal) return;
+  
+  const lat = parseFloat(modal.dataset.lat);
+  const lng = parseFloat(modal.dataset.lng);
+  
+  if (isNaN(lat) || isNaN(lng)) {
+    alert('位置情報を取得できませんでした。');
+    hideEventConfirmModal();
+    return;
+  }
+  
+  // レート制限を記録
+  recordEventRequest();
+  
+  // イベントページへ遷移
+  window.location.href = `./event.html?lat=${lat}&lng=${lng}`;
+}
+
+// ぽいナビマーカーを表示
+function showPoinaviMarker(lat, lng) {
+  if (!map) return;
+  
+  // 既存のマーカーを削除
+  hidePoinaviMarker();
+  
+  // カスタムマーカーを作成
+  const markerContent = document.createElement('div');
+  markerContent.className = 'poinavi-marker';
+  markerContent.innerHTML = `
+    <div class="poinavi-marker__container">
+      <div class="poinavi-marker__pulse"></div>
+      <img src="./icon-192.png" alt="ぽいナビ" class="poinavi-marker__icon" />
+    </div>
+  `;
+  
+  // AdvancedMarkerElement が使えるか確認
+  if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+    poinaviMarker = new google.maps.marker.AdvancedMarkerElement({
+      map: map,
+      position: { lat, lng },
+      content: markerContent,
+      zIndex: 9999
+    });
+  } else {
+    // 従来のMarkerを使用（フォールバック）
+    poinaviMarker = new google.maps.Marker({
+      map: map,
+      position: { lat, lng },
+      icon: {
+        url: './icon-192.png',
+        scaledSize: new google.maps.Size(48, 48),
+        anchor: new google.maps.Point(24, 24)
+      },
+      zIndex: 9999
+    });
+  }
+  
+  // 地図を中心に移動
+  map.panTo({ lat, lng });
+}
+
+// ぽいナビマーカーを非表示
+function hidePoinaviMarker() {
+  if (poinaviMarker) {
+    if (poinaviMarker.setMap) {
+      poinaviMarker.setMap(null);
+    } else if (poinaviMarker.map) {
+      poinaviMarker.map = null;
+    }
+    poinaviMarker = null;
+  }
+}
+
+// イベントレート制限チェック
+function checkEventRateLimit() {
+  const rateData = JSON.parse(localStorage.getItem(EVENT_RATE_LIMIT_KEY) || '{"requests":[]}');
+  const now = Date.now();
+  const oneHourAgo = now - (60 * 60 * 1000);
+  
+  // 1時間以内のリクエストをフィルタ
+  rateData.requests = rateData.requests.filter(t => t > oneHourAgo);
+  
+  // 最大回数チェック
+  if (rateData.requests.length >= EVENT_MAX_REQUESTS) {
+    return false;
+  }
+  
+  // 最小間隔チェック
+  const lastRequest = rateData.requests[rateData.requests.length - 1] || 0;
+  if (now - lastRequest < EVENT_MIN_INTERVAL) {
+    return false;
+  }
+  
+  return true;
+}
+
+// イベントリクエスト記録
+function recordEventRequest() {
+  const rateData = JSON.parse(localStorage.getItem(EVENT_RATE_LIMIT_KEY) || '{"requests":[]}');
+  const now = Date.now();
+  const oneHourAgo = now - (60 * 60 * 1000);
+  
+  rateData.requests = rateData.requests.filter(t => t > oneHourAgo);
+  rateData.requests.push(now);
+  
+  localStorage.setItem(EVENT_RATE_LIMIT_KEY, JSON.stringify(rateData));
+}
+
+// Android戻るボタン対応（イベント確認モーダル）
+window.addEventListener('popstate', function(event) {
+  const modal = document.getElementById('eventConfirmModal');
+  if (modal && !modal.classList.contains('hidden')) {
+    hideEventConfirmModal();
+  }
+});
 
 // ============================================
 // マップ初期化
