@@ -630,6 +630,8 @@
       // ============================================
       // 初期化
       // ============================================
+      const LAST_EVENT_LOCATION_KEY = 'poinavi_last_event_location';
+      
       document.addEventListener('DOMContentLoaded', function() {
         initTheme();
         initSettingsModal();
@@ -637,9 +639,24 @@
         
         // URLパラメータから座標を取得
         const params = new URLSearchParams(window.location.search);
-        const lat = parseFloat(params.get('lat'));
-        const lng = parseFloat(params.get('lng'));
+        let lat = parseFloat(params.get('lat'));
+        let lng = parseFloat(params.get('lng'));
         
+        // URLパラメータがない場合、保存済みの位置情報を使用
+        if (isNaN(lat) || isNaN(lng)) {
+          const savedLocation = localStorage.getItem(LAST_EVENT_LOCATION_KEY);
+          if (savedLocation) {
+            try {
+              const loc = JSON.parse(savedLocation);
+              lat = loc.lat;
+              lng = loc.lng;
+            } catch (e) {
+              console.error('保存済み位置情報の読み込みエラー:', e);
+            }
+          }
+        }
+        
+        // それでも座標がない場合はエラー
         if (isNaN(lat) || isNaN(lng)) {
           showError('位置情報が指定されていません。地図から位置を選択してください。');
           return;
