@@ -2183,7 +2183,7 @@ body.dark-mode .translate-voice-btn.listening::after {
   overflow-y: auto;
   height: 480px;
   height: 55vh;
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   margin: 0 auto;
 }
@@ -3458,7 +3458,7 @@ body.dark-mode .translate-result-item__ocr-preview {
   background-color: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 12px;
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -3503,7 +3503,7 @@ body.dark-mode .memo-warning {
   overflow-y: auto;
   height: 480px;
   height: 55vh;
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   margin: 0 auto;
 }
@@ -3598,7 +3598,7 @@ body.dark-mode .memo-item {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   margin: 0 auto;
 }
@@ -3735,7 +3735,7 @@ body.dark-mode .memo-item {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 600px;
+  max-width: 500px;
   margin: 0 auto;
   width: 100%;
 }
