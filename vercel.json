@@ -6,31 +6,11 @@
       "use": "@vercel/node"
     },
     {
-      "src": "hakaseAI/index.html",
+      "src": "hakaseAI/**",
       "use": "@vercel/static"
     },
     {
-      "src": "hakaseAI/style.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "hakaseAI/script.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "hakaseAI/*.png",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "hakaseAI/*_thumb.jpg",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "hakaseAI/*.svg",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "hakaseAI/manifest.json",
+      "src": "poinavi/**",
       "use": "@vercel/static"
     },
     {
@@ -40,40 +20,12 @@
     {
       "src": "*.css",
       "use": "@vercel/static"
-    },
-    {
-      "src": "poinavi/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/hakaseAI/api/(.*)",
-      "dest": "hakaseAI/server.js"
-    },
-    {
-      "src": "/hakaseAI/style.css",
-      "dest": "/hakaseAI/style.css"
-    },
-    {
-      "src": "/hakaseAI/script.js",
-      "dest": "/hakaseAI/script.js"
-    },
-    {
-      "src": "/hakaseAI/(.*\\.png)",
-      "dest": "/hakaseAI/$1"
-    },
-    {
-      "src": "/hakaseAI/(.*_thumb\\.jpg)",
-      "dest": "/hakaseAI/$1"
-    },
-    {
-      "src": "/hakaseAI/(.*\\.svg)",
-      "dest": "/hakaseAI/$1"
-    },
-    {
-      "src": "/hakaseAI/manifest.json",
-      "dest": "/hakaseAI/manifest.json"
+      "dest": "/hakaseAI/server.js"
     },
     {
       "src": "/hakaseAI$",
@@ -81,11 +33,11 @@
       "headers": { "Location": "/hakaseAI/" }
     },
     {
-      "src": "/hakaseAI/$",
+      "src": "/hakaseAI/",
       "dest": "/hakaseAI/index.html"
     },
     {
-      "src": "/hakaseAI/(.*)",
+      "src": "/hakaseAI/(.*\\.(css|js|png|jpg|svg|json|ico))",
       "dest": "/hakaseAI/$1"
     },
     {
@@ -94,20 +46,12 @@
       "headers": { "Location": "/poinavi/" }
     },
     {
-      "src": "/poinavi/$",
+      "src": "/poinavi/",
       "dest": "/poinavi/index.html"
     },
     {
       "src": "/poinavi/(.*)",
       "dest": "/poinavi/$1"
-    },
-    {
-      "src": "/(.*\\.html)",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*\\.css)",
-      "dest": "/$1"
     },
     {
       "src": "/",
