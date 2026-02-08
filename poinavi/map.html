@@ -252,13 +252,19 @@
               aria-label="鉄道路線切替"
             >
               <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="4" y="3" width="16" height="18" rx="2"></rect>
-                <line x1="12" y1="8" x2="12" y2="21"></line>
-                <line x1="8" y1="8" x2="8" y2="8.01"></line>
-                <line x1="16" y1="8" x2="16" y2="8.01"></line>
-                <path d="M4 11h16"></path>
-                <circle cx="8.5" cy="15.5" r="1.5"></circle>
-                <circle cx="15.5" cy="15.5" r="1.5"></circle>
+                <!-- 電車の車体 -->
+                <path d="M4 11h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"></path>
+                <!-- 先頭部分 -->
+                <path d="M20 13l2-1v4l-2-1"></path>
+                <!-- 窓 -->
+                <rect x="4" y="13" width="3" height="2" rx="0.5"></rect>
+                <rect x="9" y="13" width="3" height="2" rx="0.5"></rect>
+                <rect x="14" y="13" width="3" height="2" rx="0.5"></rect>
+                <!-- 車輪 -->
+                <circle cx="6" cy="19" r="1.5"></circle>
+                <circle cx="16" cy="19" r="1.5"></circle>
+                <!-- レール -->
+                <line x1="1" y1="21" x2="23" y2="21"></line>
               </svg>
               <span class="layer-toggle__text">路線</span>
             </button>
