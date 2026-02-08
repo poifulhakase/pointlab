@@ -783,13 +783,15 @@ function updateThemeButton(isDark) {
 
 function loadSavedTheme() {
   const savedTheme = localStorage.getItem('hakaseai-theme');
-  // デフォルトはダークモード（savedThemeがない場合、またはdarkの場合）
-  if (savedTheme !== 'light') {
-    document.body.classList.add('dark-mode');
-    updateThemeButton(true);
-  } else {
+  
+  // ライトモードが明示的に保存されている場合のみライトモードに
+  if (savedTheme === 'light') {
     document.body.classList.remove('dark-mode');
     updateThemeButton(false);
+  } else {
+    // デフォルトはダークモード（HTMLに既にdark-modeクラスがある）
+    document.body.classList.add('dark-mode');
+    updateThemeButton(true);
   }
 }
 
