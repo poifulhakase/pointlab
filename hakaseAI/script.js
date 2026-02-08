@@ -152,7 +152,7 @@ const MAGAZINES = [
   {
     id: 'stock',
     name: '株式トレード研究室 〜 ぽいふる博士の研究録',
-    image: 'Future_Gadget_Top_thumb.jpg',
+    image: 'Stock_Trade_Lab_Top_thumb.jpg',
     url: 'https://note.com/pointlab/m/mb8056cb0b8ee',
     keywords: ['株式', '投資', 'チャート', '配当', '株価', '銘柄', '証券', 'NISA', 'つみたて', '資産運用']
   },
@@ -166,9 +166,9 @@ const MAGAZINES = [
   {
     id: 'side-biz',
     name: '未来ガジェット 〜 ぽいふる博士の発明品',
-    image: 'Unusual_Side_Biz_Encyclopedia_Top_thumb.jpg',
+    image: 'Future_Gadget_Top_thumb.jpg',
     url: 'https://note.com/pointlab/m/m7be629812c81',
-    keywords: ['副業', 'サイドビジネス', '稀ぐ', '収入', '起業', 'ビジネス', '独立', '在宅', 'リモート', '不労所得', 'お金', '金融']
+    keywords: ['副業', 'サイドビジネス', '稼ぐ', '収入', '起業', 'ビジネス', '独立', '在宅', 'リモート', '不労所得', 'お金', '金融']
   },
   {
     id: 'rashimban',
