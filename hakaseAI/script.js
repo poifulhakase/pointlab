@@ -590,10 +590,14 @@ function escapeHtml(text) {
 // ========================================
 function openSettingsModal() {
   settingsModal.classList.remove('hidden');
+  // 履歴に状態を追加（Android戻るボタン対応）
+  history.pushState({ modal: 'settings' }, '');
 }
 
 function closeSettingsModal() {
-  settingsModal.classList.add('hidden');
+  if (!settingsModal.classList.contains('hidden')) {
+    settingsModal.classList.add('hidden');
+  }
 }
 
 // ========================================
@@ -617,11 +621,30 @@ function openDisclaimerModal() {
   }
   
   disclaimerModal.classList.remove('hidden');
+  // 履歴に状態を追加（Android戻るボタン対応）
+  history.pushState({ modal: 'disclaimer' }, '');
 }
 
 function closeDisclaimerModal() {
-  disclaimerModal.classList.add('hidden');
+  if (disclaimerModal && !disclaimerModal.classList.contains('hidden')) {
+    disclaimerModal.classList.add('hidden');
+  }
 }
+
+// Android戻るボタン対応（popstateイベント）
+window.addEventListener('popstate', function(event) {
+  // 設定モーダルが開いている場合は閉じる
+  if (settingsModal && !settingsModal.classList.contains('hidden')) {
+    closeSettingsModal();
+    return;
+  }
+  
+  // 免責事項モーダルが開いている場合は閉じる
+  if (disclaimerModal && !disclaimerModal.classList.contains('hidden')) {
+    closeDisclaimerModal();
+    return;
+  }
+});
 
 // ========================================
 // ダークモード
