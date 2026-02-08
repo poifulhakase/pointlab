@@ -138,38 +138,43 @@ function detectUserLanguage() {
 }
 
 // ========================================
-// マガジン一覧データ
+// マガジン一覧データ（キーワードマッチング用）
 // ========================================
 const MAGAZINES = [
   {
     id: 'rashimban',
     name: 'らしんばん',
-    image: 'Compass_for_Living_Top_thumb.jpg',
-    url: 'https://note.com/pointlab/m/m0ae72a491f29'
+    image: '/hakaseAI/Compass_for_Living_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m0ae72a491f29',
+    keywords: ['生き方', '人生', '生活', '暮らし', 'らしんばん', '羅針盤', 'ライフ', 'life', '幸せ', '幸福', '目標', '夢', 'キャリア', '仕事', '働き方']
   },
   {
     id: 'future-gadget',
     name: '未来ガジェット',
-    image: 'Future_Gadget_Top_thumb.jpg',
-    url: 'https://note.com/pointlab/m/m43ef12ef0cf0'
+    image: '/hakaseAI/Future_Gadget_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m43ef12ef0cf0',
+    keywords: ['ガジェット', 'テクノロジー', '技術', 'AI', '人工知能', 'ロボット', 'スマート', 'デバイス', 'gadget', 'tech', '未来', 'イノベーション', 'アプリ', 'ツール', 'IT']
   },
   {
     id: 'side-biz',
     name: '副業',
-    image: 'Unusual_Side_Biz_Encyclopedia_Top_thumb.jpg',
-    url: 'https://note.com/pointlab/m/m28b2ad9a31eb'
+    image: '/hakaseAI/Unusual_Side_Biz_Encyclopedia_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m28b2ad9a31eb',
+    keywords: ['副業', 'サイドビジネス', '稼ぐ', '収入', '起業', 'ビジネス', 'フリーランス', '独立', '在宅', 'リモート', '投資', '資産', '不労所得', 'お金', '金融']
   },
   {
     id: 'poikatsu',
     name: 'ポイ活3分レシピ',
-    image: 'Poikatsu_3min_Recipe_Top_thumb.jpg',
-    url: 'https://note.com/pointlab/m/mf7a8dd8df498'
+    image: '/hakaseAI/Poikatsu_3min_Recipe_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/mf7a8dd8df498',
+    keywords: ['ポイ活', 'ポイント', '節約', 'お得', 'クーポン', 'キャッシュバック', '還元', 'マイル', '楽天', 'PayPay', 'dポイント', 'Tポイント', 'クレジットカード', 'ショッピング', '買い物']
   },
   {
     id: 'tax',
     name: '個人事業主の節税',
-    image: 'Sole_Proprietor_Tax_Limits_Top_thumb.jpg',
-    url: 'https://note.com/pointlab/m/m3a498b36a498'
+    image: '/hakaseAI/Sole_Proprietor_Tax_Limits_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m3a498b36a498',
+    keywords: ['節税', '税金', '確定申告', '個人事業主', 'フリーランス', '経費', '控除', '青色申告', '白色申告', '所得税', '住民税', '消費税', 'インボイス', '帳簿', '会計']
   }
 ];
 
@@ -221,30 +226,43 @@ function showInitialMessage(animate = true) {
 }
 
 // ========================================
-// マガジン一覧表示
+// マガジン関連表示（回答に基づいてマッチしたマガジンのみ表示）
 // ========================================
-let magazineListShown = false; // 一度だけ表示するフラグ
 
-function showMagazineList() {
-  // 既に表示済みの場合はスキップ
-  if (magazineListShown) return;
-  magazineListShown = true;
+// 回答内容からマッチするマガジンを検出
+function findMatchingMagazine(responseText) {
+  const lowerText = responseText.toLowerCase();
+  
+  for (const magazine of MAGAZINES) {
+    for (const keyword of magazine.keywords) {
+      if (lowerText.includes(keyword.toLowerCase())) {
+        return magazine;
+      }
+    }
+  }
+  return null;
+}
+
+// マッチしたマガジンを博士のメッセージ末尾に表示
+function showRelatedMagazine(responseText) {
+  const matchedMagazine = findMatchingMagazine(responseText);
+  
+  // マッチするマガジンがない場合は何も表示しない
+  if (!matchedMagazine) return;
   
   const userLang = detectUserLanguage();
-  const title = userLang === 'en' ? '📚 Magazines' : '📚 マガジン一覧';
+  const title = userLang === 'en' ? '📚 Related Magazine' : '📚 関連マガジン';
   
   const magazineWrapper = document.createElement('div');
   magazineWrapper.className = 'magazine-list-wrapper';
   magazineWrapper.innerHTML = `
     <div class="magazine-list">
       <p class="magazine-list__title">${title}</p>
-      <div class="magazine-list__grid">
-        ${MAGAZINES.map(mag => `
-          <a href="${mag.url}" target="_blank" rel="noopener noreferrer" class="magazine-item">
-            <img src="${mag.image}" alt="${mag.name}" class="magazine-item__image" loading="lazy">
-            <span class="magazine-item__name">${mag.name}</span>
-          </a>
-        `).join('')}
+      <div class="magazine-list__grid magazine-list__grid--single">
+        <a href="${matchedMagazine.url}" target="_blank" rel="noopener noreferrer" class="magazine-item">
+          <img src="${matchedMagazine.image}" alt="${matchedMagazine.name}" class="magazine-item__image" loading="lazy">
+          <span class="magazine-item__name">${matchedMagazine.name}</span>
+        </a>
       </div>
     </div>
   `;
@@ -397,11 +415,11 @@ async function sendMessage() {
     // 履歴を保存
     saveHistory();
     
-    // タイピングアニメーション完了後にマガジン一覧を表示
+    // タイピングアニメーション完了後に関連マガジンを表示
     const responseLength = response.length;
     const animationTime = Math.min(responseLength * 70, 5000) + 500; // 最大5秒 + 余裕
     setTimeout(() => {
-      showMagazineList();
+      showRelatedMagazine(response);
     }, animationTime);
     
   } catch (error) {

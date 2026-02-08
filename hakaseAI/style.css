@@ -925,6 +925,16 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
   gap: 10px;
 }
 
+/* 単一マガジン表示用 */
+.magazine-list__grid--single {
+  justify-content: flex-start;
+}
+
+.magazine-list__grid--single .magazine-item {
+  width: auto;
+  max-width: 120px;
+}
+
 .magazine-item {
   display: flex;
   flex-direction: column;
