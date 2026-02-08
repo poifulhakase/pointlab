@@ -5,7 +5,7 @@
 :root {
   /* LINEライクなカラーパレット */
   --header-bg: #FFFFFF;
-  --header-border: #E5E5E5;
+  --header-border: #e0e0e0;
   --chat-bg: #DCE6F1;
   --user-bubble: #FFF1F1;
   --hakase-bubble: #FFFFFF;
@@ -863,7 +863,7 @@ body.dark-mode .settings-modal__reset-btn:hover {
    ======================================== */
 body.dark-mode {
   --header-bg: #1a1a1a;
-  --header-border: #333333;
+  --header-border: #404040;
   --chat-bg: #2d3748;
   --user-bubble: #4a5568;
   --hakase-bubble: #2d2d2d;
