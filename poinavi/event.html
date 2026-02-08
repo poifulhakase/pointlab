@@ -1043,11 +1043,11 @@
         const MEMO_KEY = 'poinavi_memos';
         const memos = JSON.parse(localStorage.getItem(MEMO_KEY) || '[]');
         
-        // 新しいメモを追加
+        // 新しいメモを追加（メモページの形式に合わせる）
         const newMemo = {
           id: Date.now().toString(),
-          text: memoText,
-          timestamp: new Date().toISOString()
+          content: memoText,
+          createdAt: new Date().toISOString()
         };
         
         memos.unshift(newMemo);
