@@ -226,11 +226,36 @@ function showInitialMessage(animate = true) {
 }
 
 // ========================================
-// マガジン関連表示（回答に基づいてマッチしたマガジンのみ表示）
+// マガジン関連表示（回答内のnoteリンクからマガジンを検出）
 // ========================================
 
-// 回答内容からマッチするマガジンを検出
-function findMatchingMagazine(responseText) {
+// 回答内容からnote.comのリンクを抽出
+function extractNoteLink(responseText) {
+  const noteUrlPattern = /https?:\/\/note\.com\/pointlab\/[^\s）」』\]<>]+/g;
+  const matches = responseText.match(noteUrlPattern);
+  return matches ? matches[0] : null;
+}
+
+// noteリンクに対応するマガジンを検出
+function findMagazineByUrl(noteUrl) {
+  if (!noteUrl) return null;
+  
+  // URLに含まれるマガジンIDで判定
+  for (const magazine of MAGAZINES) {
+    // マガジンURLの一部が含まれているか確認
+    const magazineId = magazine.url.split('/').pop();
+    if (noteUrl.includes(magazineId) || noteUrl.includes('/m/')) {
+      // キーワードでも追加チェック
+      return magazine;
+    }
+  }
+  
+  // マガジンが見つからない場合はキーワードマッチにフォールバック
+  return null;
+}
+
+// キーワードでマガジンを検出（フォールバック用）
+function findMatchingMagazineByKeyword(responseText) {
   const lowerText = responseText.toLowerCase();
   
   for (const magazine of MAGAZINES) {
@@ -245,21 +270,27 @@ function findMatchingMagazine(responseText) {
 
 // 博士の吹き出し内にマガジンバナーを追加
 function addMagazineBannerToBubble(container, responseText) {
-  const matchedMagazine = findMatchingMagazine(responseText);
+  // 回答内からnoteリンクを抽出
+  const noteUrl = extractNoteLink(responseText);
   
-  // マッチするマガジンがない場合は何も表示しない
+  // リンクがない場合は表示しない
+  if (!noteUrl) {
+    container.remove();
+    return;
+  }
+  
+  // キーワードでマガジン情報を取得（画像と名前用）
+  const matchedMagazine = findMatchingMagazineByKeyword(responseText);
+  
   if (!matchedMagazine) {
     container.remove();
     return;
   }
   
-  const userLang = detectUserLanguage();
-  const title = userLang === 'en' ? '📚 Related Magazine' : '📚 関連マガジン';
-  
+  // 博士が提案したリンクをそのまま使用
   container.innerHTML = `
     <div class="magazine-banner">
-      <p class="magazine-banner__title">${title}</p>
-      <a href="${matchedMagazine.url}" target="_blank" rel="noopener noreferrer" class="magazine-banner__link">
+      <a href="${noteUrl}" target="_blank" rel="noopener noreferrer" class="magazine-banner__link">
         <img src="${matchedMagazine.image}" alt="${matchedMagazine.name}" class="magazine-banner__image" loading="lazy">
         <span class="magazine-banner__name">${matchedMagazine.name}</span>
       </a>

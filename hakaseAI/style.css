@@ -916,16 +916,8 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 }
 
 .magazine-banner {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--header-border);
-}
-
-.magazine-banner__title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-top: 12px;
+  padding-bottom: 4px;
 }
 
 .magazine-banner__link {
