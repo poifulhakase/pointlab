@@ -50,6 +50,21 @@
         -webkit-overflow-scrolling: touch;
       }
       
+      /* ダークモード用スクロールバー */
+      .dark-mode .event-main::-webkit-scrollbar {
+        width: 8px;
+      }
+      .dark-mode .event-main::-webkit-scrollbar-track {
+        background: #2a2a2a;
+      }
+      .dark-mode .event-main::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 4px;
+      }
+      .dark-mode .event-main::-webkit-scrollbar-thumb:hover {
+        background: #666;
+      }
+      
       /* ヘッダー情報（気温・位置） */
       .event-header {
         position: sticky;
@@ -152,7 +167,7 @@
       .event-card__date-badge {
         flex-shrink: 0;
         width: 52px;
-        background: linear-gradient(135deg, #4CAF50, #45a049);
+        background: linear-gradient(135deg, #2196F3, #1976D2);
         border-radius: 12px;
         padding: 8px 4px;
         text-align: center;
@@ -265,14 +280,14 @@
       }
       
       .event-card__btn--primary {
-        background: linear-gradient(135deg, #4CAF50, #45a049);
+        background: linear-gradient(135deg, #2196F3, #1976D2);
         color: white;
       }
       
       .event-card__btn--primary:hover {
-        background: linear-gradient(135deg, #45a049, #3d8b40);
+        background: linear-gradient(135deg, #1976D2, #1565C0);
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
       }
       
       .event-card__btn--primary:active {
@@ -287,8 +302,8 @@
       
       .event-card__btn--secondary:hover {
         background: var(--bg-secondary);
-        border-color: #4CAF50;
-        color: #4CAF50;
+        border-color: #2196F3;
+        color: #2196F3;
       }
       
       .event-card__btn--secondary:active {
@@ -297,9 +312,9 @@
       
       /* メモ追加成功フィードバック */
       .event-card__btn--success {
-        background: #4CAF50 !important;
+        background: #2196F3 !important;
         color: white !important;
-        border-color: #4CAF50 !important;
+        border-color: #2196F3 !important;
       }
       
       /* ローディング */
@@ -316,7 +331,7 @@
         width: 40px;
         height: 40px;
         border: 3px solid var(--border-color);
-        border-top-color: #4CAF50;
+        border-top-color: #2196F3;
         border-radius: 50%;
         animation: spin 1s linear infinite;
         margin-bottom: 16px;
@@ -365,7 +380,7 @@
         align-items: center;
         gap: 6px;
         padding: 10px 20px;
-        background: #4CAF50;
+        background: #2196F3;
         color: white;
         border: none;
         border-radius: 8px;
