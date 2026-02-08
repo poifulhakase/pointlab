@@ -921,13 +921,10 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 }
 
 .magazine-banner__link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: block;
   text-decoration: none;
-  padding: 8px;
-  border-radius: 10px;
-  background-color: var(--chat-bg);
+  border-radius: 8px;
+  overflow: hidden;
   transition: all 0.2s ease;
   pointer-events: auto !important;
   cursor: pointer;
@@ -935,7 +932,7 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 
 .magazine-banner__link:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .magazine-banner__link:active {
@@ -943,20 +940,12 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 }
 
 .magazine-banner__image {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
+  width: 100%;
+  height: auto;
+  display: block;
   border-radius: 8px;
-  flex-shrink: 0;
   pointer-events: auto !important;
   cursor: pointer;
-}
-
-.magazine-banner__name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  line-height: 1.4;
 }
 
 /* ========================================

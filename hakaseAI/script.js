@@ -276,12 +276,11 @@ function addMagazineBannerToBubble(container, responseText) {
     return;
   }
   
-  // 博士が提案したリンクをそのまま使用
+  // 博士が提案したリンクをそのまま使用（画像のみ、横幅いっぱい）
   container.innerHTML = `
     <div class="magazine-banner">
       <a href="${noteUrl}" target="_blank" rel="noopener noreferrer" class="magazine-banner__link">
         <img src="${matchedMagazine.image}" alt="${matchedMagazine.name}" class="magazine-banner__image" loading="lazy">
-        <span class="magazine-banner__name">${matchedMagazine.name}</span>
       </a>
     </div>
   `;
