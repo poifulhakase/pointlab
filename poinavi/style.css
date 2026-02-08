@@ -4194,10 +4194,22 @@ body.dark-mode .translate-qr-btn {
 }
 
 /* ============================================
-   回転式ナビボタン
+   回転式ナビボタン（イベント）
    ============================================ */
 .translate-footer__btn--rotate {
   position: relative;
+}
+
+/* 非活性状態 */
+.translate-footer__btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.translate-footer__btn--disabled:hover {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .translate-footer__btn--rotate .rotate-nav-icons {

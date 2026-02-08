@@ -878,94 +878,47 @@ function handleEventConfirm() {
 }
 
 // ============================================
-// 回転式ナビボタン
+// イベントナビボタン（フッター右下）
 // ============================================
-const ROTATE_NAV_ITEMS = [
-  { id: 'event', label: 'イベント', action: 'handleEventNav' },
-  { id: 'memo', label: 'メモ', href: './index.html?from=nav' }
-];
-let currentRotateNavIndex = 0;
 const LAST_EVENT_LOCATION_KEY = 'poinavi_last_event_location';
 
 function initRotateNav() {
-  const rotateBtn = document.getElementById('rotateNavBtn');
-  if (!rotateBtn) return;
+  const eventBtn = document.getElementById('rotateNavBtn');
+  if (!eventBtn) return;
   
-  rotateBtn.addEventListener('click', handleRotateNavClick);
-}
-
-function handleRotateNavClick() {
-  const btn = document.getElementById('rotateNavBtn');
-  const label = document.getElementById('rotateNavLabel');
-  const currentItem = ROTATE_NAV_ITEMS[currentRotateNavIndex];
-  
-  // アクション実行
-  if (currentItem.action === 'handleEventNav') {
-    handleEventNav();
-    return;
-  } else if (currentItem.href) {
-    window.location.href = currentItem.href;
-    return;
+  // 保存された位置があれば活性化
+  const lastLocation = localStorage.getItem(LAST_EVENT_LOCATION_KEY);
+  if (lastLocation) {
+    enableEventNavButton();
   }
   
-  // 次のアイテムに回転
-  rotateToNextNav();
+  eventBtn.addEventListener('click', handleEventNavClick);
 }
 
-// イベントナビの処理
-function handleEventNav() {
-  // 前回のイベント位置情報があるか確認
+function handleEventNavClick() {
+  // 保存された位置情報を取得
   const lastLocation = localStorage.getItem(LAST_EVENT_LOCATION_KEY);
   
   if (lastLocation) {
-    // 前回の位置がある場合 → 直接イベントページへ遷移
+    // 位置がある場合 → イベントページへ遷移
     const { lat, lng } = JSON.parse(lastLocation);
     window.location.href = `./event.html?lat=${lat}&lng=${lng}`;
-  } else {
-    // 初回の場合 → イベントモードをONにする
-    if (!eventPinEnabled) {
-      toggleEventPin();
-    }
-    // 次のアイテムに回転
-    rotateToNextNav();
   }
 }
 
-// イベント位置を保存
+// イベント位置を保存してボタンを活性化
 function saveEventLocation(lat, lng) {
   localStorage.setItem(LAST_EVENT_LOCATION_KEY, JSON.stringify({ lat, lng }));
+  enableEventNavButton();
 }
 
-function rotateToNextNav() {
-  const btn = document.getElementById('rotateNavBtn');
-  const label = document.getElementById('rotateNavLabel');
+// イベントナビボタンを活性化
+function enableEventNavButton() {
+  const eventBtn = document.getElementById('rotateNavBtn');
+  if (!eventBtn) return;
   
-  if (!btn || !label) return;
-  
-  const currentIcon = btn.querySelector('.rotate-nav-icon.active');
-  const nextIndex = (currentRotateNavIndex + 1) % ROTATE_NAV_ITEMS.length;
-  const nextItem = ROTATE_NAV_ITEMS[nextIndex];
-  const nextIcon = btn.querySelector(`.rotate-nav-icon--${nextItem.id}`);
-  
-  if (!currentIcon || !nextIcon) return;
-  
-  // アニメーション開始
-  btn.classList.add('rotating');
-  nextIcon.classList.add('next');
-  
-  setTimeout(() => {
-    // クラス切り替え
-    currentIcon.classList.remove('active');
-    nextIcon.classList.remove('next');
-    nextIcon.classList.add('active');
-    btn.classList.remove('rotating');
-    
-    // ラベル更新
-    label.textContent = nextItem.label;
-    
-    // インデックス更新
-    currentRotateNavIndex = nextIndex;
-  }, 300);
+  eventBtn.classList.remove('translate-footer__btn--disabled');
+  eventBtn.disabled = false;
 }
 
 // イベントレート制限チェック
