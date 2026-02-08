@@ -30,7 +30,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=98" />
+    <link rel="stylesheet" href="./style.css?v=99" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -323,6 +323,24 @@
               <span class="layer-status__text">雨雲観測中</span>
             </div>
           </div>
+          
+          <!-- イベントピントグル -->
+          <div class="layer-control__row">
+            <button 
+              id="eventPinToggle" 
+              class="layer-toggle" 
+              type="button"
+              aria-pressed="false"
+              aria-label="イベントピン切替"
+            >
+              <img src="./icon-192.png" alt="" class="layer-toggle__icon layer-toggle__icon--img" />
+              <span class="layer-toggle__text">イベント</span>
+            </button>
+            <!-- イベントON時のステータス -->
+            <div id="eventPinStatus" class="layer-status layer-status--inline hidden">
+              <span class="layer-status__text">ピンをドラッグで移動</span>
+            </div>
+          </div>
         </div>
         
         
@@ -417,23 +435,19 @@
       >
         <img src="./poyonkun_full.png" alt="ぽいんとらぼ" class="translate-footer__logo" />
       </a>
-      <button type="button" class="translate-footer__btn" id="eventNavBtn" aria-label="イベントページへ">
-        <!-- イベントアイコン -->
+      <a href="./index.html?from=nav" class="translate-footer__btn" aria-label="メモページへ">
+        <!-- メモアイコン -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-          <path d="M8 14h.01"></path>
-          <path d="M12 14h.01"></path>
-          <path d="M16 14h.01"></path>
-          <path d="M8 18h.01"></path>
-          <path d="M12 18h.01"></path>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
         </svg>
-        <span class="translate-footer__label">イベント</span>
-      </button>
+        <span class="translate-footer__label">メモ</span>
+      </a>
     </footer>
 
-    <script src="./script.js?v=79"></script>
+    <script src="./script.js?v=80"></script>
   </body>
 </html>

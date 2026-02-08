@@ -4144,3 +4144,35 @@ body.dark-mode .translate-qr-btn {
     opacity: 0;
   }
 }
+
+/* イベントトグルボタンの画像アイコン */
+.layer-toggle__icon--img {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: cover;
+  pointer-events: auto;
+}
+
+/* イベントトグルがアクティブな時 */
+.layer-toggle.active .layer-toggle__icon--img {
+  box-shadow: 0 0 0 2px #4CAF50;
+}
+
+/* ドラッグ可能なぽいナビマーカー */
+.poinavi-marker--draggable {
+  cursor: grab;
+}
+
+.poinavi-marker--draggable:active {
+  cursor: grabbing;
+}
+
+.poinavi-marker--draggable .poinavi-marker__icon {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.poinavi-marker--draggable:hover .poinavi-marker__icon {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
