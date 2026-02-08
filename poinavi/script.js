@@ -1402,16 +1402,29 @@ function showSettingsModal() {
     updateTransportModeButtons();
     // 起動ページセレクトの状態を更新
     updateStartPageSelect();
+    // 履歴に状態を追加（Android戻るボタン対応）
+    history.pushState({ modal: "settings" }, "");
   }
 }
 
 function hideSettingsModal() {
   const modal = document.getElementById("settingsModal");
-  if (modal) {
+  if (modal && !modal.classList.contains("hidden")) {
     modal.classList.add("hidden");
     modal.style.display = "none";
   }
 }
+
+// Android戻るボタン対応（popstateイベント）
+window.addEventListener("popstate", function(event) {
+  const settingsModal = document.getElementById("settingsModal");
+  
+  // 設定モーダルが開いている場合は閉じる
+  if (settingsModal && !settingsModal.classList.contains("hidden")) {
+    hideSettingsModal();
+    return;
+  }
+});
 
 // 移動手段ボタンの状態を更新
 function updateTransportModeButtons() {

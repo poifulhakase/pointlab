@@ -183,6 +183,8 @@ function initSettingsModal() {
 
   openBtn.addEventListener("click", function() {
     modal.classList.remove("hidden");
+    // 履歴に状態を追加（Android戻るボタン対応）
+    history.pushState({ modal: "translateSettings" }, "");
   });
 
   closeBtn.addEventListener("click", function() {
@@ -202,6 +204,31 @@ function initSettingsModal() {
       resetTranslateSettings();
     });
   }
+  
+  // Android戻るボタン対応（popstateイベント）
+  window.addEventListener("popstate", function(event) {
+    const settingsModal = document.getElementById("translateSettingsModal");
+    const cameraModal = document.getElementById("cameraModal");
+    const qrModal = document.getElementById("qrModal");
+    
+    // カメラモーダルが開いている場合は閉じる
+    if (cameraModal && !cameraModal.classList.contains("hidden")) {
+      closeCameraModal();
+      return;
+    }
+    
+    // QRモーダルが開いている場合は閉じる
+    if (qrModal && !qrModal.classList.contains("hidden")) {
+      closeQrModal();
+      return;
+    }
+    
+    // 設定モーダルが開いている場合は閉じる
+    if (settingsModal && !settingsModal.classList.contains("hidden")) {
+      settingsModal.classList.add("hidden");
+      return;
+    }
+  });
 }
 
 // 翻訳設定を初期化
@@ -612,13 +639,16 @@ function openCameraModal() {
   
   modal.classList.remove("hidden");
   
+  // 履歴に状態を追加（Android戻るボタン対応）
+  history.pushState({ modal: "camera" }, "");
+  
   // カメラを起動
   startCamera();
 }
 
 function closeCameraModal() {
   const modal = document.getElementById("cameraModal");
-  if (modal) {
+  if (modal && !modal.classList.contains("hidden")) {
     modal.classList.add("hidden");
   }
   stopCamera();
@@ -1628,6 +1658,9 @@ function initQRScanner() {
       qrResult.classList.add('hidden');
       qrScanning = true;
       
+      // 履歴に状態を追加（Android戻るボタン対応）
+      history.pushState({ modal: "qr" }, "");
+      
       // スキャン開始
       scanQRCode();
     } catch (err) {
@@ -1740,7 +1773,14 @@ function stopQRScanner() {
     qrStream = null;
   }
   
-  qrModal.classList.add('hidden');
+  if (qrModal && !qrModal.classList.contains('hidden')) {
+    qrModal.classList.add('hidden');
+  }
+}
+
+// QRモーダルを閉じる（Android戻るボタン対応用のエイリアス）
+function closeQrModal() {
+  stopQRScanner();
 }
 
 // 初期化時にQRスキャナーも初期化

@@ -257,6 +257,8 @@
 
         openBtn.addEventListener("click", function() {
           modal.classList.remove("hidden");
+          // 履歴に状態を追加（Android戻るボタン対応）
+          history.pushState({ modal: "memoSettings" }, "");
         });
 
         closeBtn.addEventListener("click", function() {
@@ -268,6 +270,15 @@
             modal.classList.add("hidden");
           });
         }
+        
+        // Android戻るボタン対応（popstateイベント）
+        window.addEventListener("popstate", function(event) {
+          // 設定モーダルが開いている場合は閉じる
+          if (modal && !modal.classList.contains("hidden")) {
+            modal.classList.add("hidden");
+            return;
+          }
+        });
       }
 
       // テーマ切り替え
