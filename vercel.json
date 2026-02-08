@@ -22,11 +22,15 @@
       "use": "@vercel/static"
     },
     {
+      "src": "hakaseAI/*_thumb.jpg",
+      "use": "@vercel/static"
+    },
+    {
       "src": "hakaseAI/*.svg",
       "use": "@vercel/static"
     },
     {
-      "src": "hakaseAI/*.json",
+      "src": "hakaseAI/manifest.json",
       "use": "@vercel/static"
     },
     {
@@ -60,12 +64,16 @@
       "dest": "/hakaseAI/$1"
     },
     {
+      "src": "/hakaseAI/(.*_thumb\\.jpg)",
+      "dest": "/hakaseAI/$1"
+    },
+    {
       "src": "/hakaseAI/(.*\\.svg)",
       "dest": "/hakaseAI/$1"
     },
     {
-      "src": "/hakaseAI/(.*\\.json)",
-      "dest": "/hakaseAI/$1"
+      "src": "/hakaseAI/manifest.json",
+      "dest": "/hakaseAI/manifest.json"
     },
     {
       "src": "/hakaseAI$",
@@ -75,6 +83,10 @@
     {
       "src": "/hakaseAI/$",
       "dest": "/hakaseAI/index.html"
+    },
+    {
+      "src": "/hakaseAI/(.*)",
+      "dest": "/hakaseAI/$1"
     },
     {
       "src": "/poinavi$",
