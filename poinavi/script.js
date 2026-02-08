@@ -733,7 +733,7 @@ window.initGoogleMaps = function() {
 let eventPinEnabled = false;
 const EVENT_RATE_LIMIT_KEY = 'poinavi_event_rate';
 const EVENT_MAX_REQUESTS = 3;
-const EVENT_MIN_INTERVAL = 10 * 60 * 1000; // 10分
+const EVENT_MIN_INTERVAL = 5 * 60 * 1000; // 5分
 
 function initEventFeature() {
   // イベントピントグルボタン
@@ -826,7 +826,7 @@ function showEventConfirmModalAtPosition(lat, lng) {
   
   // レート制限チェック
   if (!checkEventRateLimit()) {
-    alert('しばらくお待ちください。\n\n1時間に3回まで、10分間隔でご利用いただけます。');
+    alert('しばらくお待ちください。\n\n1時間に3回まで、5分間隔でご利用いただけます。');
     return;
   }
   
