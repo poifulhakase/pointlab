@@ -30,7 +30,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=99" />
+    <link rel="stylesheet" href="./style.css?v=111" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -42,6 +42,19 @@
       /* FOUC対策: 初期背景色 */
       html.light-mode { background-color: #f5f5f7; }
       html.dark-mode { background-color: #1a1a1a; }
+      
+      /* メモ内リンクスタイル */
+      .memo-link {
+        color: #2196F3;
+        text-decoration: none;
+        word-break: break-all;
+      }
+      .memo-link:hover {
+        text-decoration: underline;
+      }
+      .dark-mode .memo-link {
+        color: #64B5F6;
+      }
     </style>
   </head>
   <body>
@@ -453,7 +466,7 @@
                 </svg>
               </button>
             </div>
-            <div class="memo-item__content">${escapeHtml(memo.content)}</div>
+            <div class="memo-item__content">${linkifyUrls(memo.content)}</div>
           `;
 
           memoList.appendChild(memoItem);
@@ -477,6 +490,15 @@
         const div = document.createElement("div");
         div.textContent = text;
         return div.innerHTML;
+      }
+      
+      // URLをリンク化
+      function linkifyUrls(text) {
+        // まずHTMLエスケープ
+        const escaped = escapeHtml(text);
+        // URLパターンを検出してリンク化
+        const urlPattern = /(https?:\/\/[^\s<>"']+)/g;
+        return escaped.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="memo-link">$1</a>');
       }
 
       // メモ入力の初期化
