@@ -861,9 +861,8 @@
         }
         
         try {
-          // 注: Eventbrite APIは実際にはサーバーサイドで呼び出す必要があります
-          // ここではデモ用のモックデータを使用
-          const events = await fetchEventsMock(lat, lng);
+          // Vercel Serverless Function経由でEventbrite APIを呼び出し
+          const events = await fetchEventsFromAPI(lat, lng);
           
           // 開催終了イベントを除外
           const activeEvents = filterExpiredEvents(events);
@@ -881,51 +880,32 @@
         }
       }
       
-      // モックデータ（実際はサーバーサイドでEventbrite APIを呼び出す）
-      async function fetchEventsMock(lat, lng) {
-        // デモ用の遅延
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      // Eventbrite API呼び出し（サーバー経由）
+      async function fetchEventsFromAPI(lat, lng) {
+        const response = await fetch(`/api/events?lat=${lat}&lng=${lng}&radius=8km`);
         
-        // デモ用イベントデータ
-        const now = new Date();
-        const events = [];
-        
-        const demoTitles = [
-          'テックミートアップ 2026',
-          'スタートアップピッチイベント',
-          'デザイン思考ワークショップ',
-          'AI/ML勉強会',
-          'ネットワーキングナイト',
-          'プログラミング初心者向け講座',
-          'ビジネスセミナー',
-          'クリエイティブ展示会'
-        ];
-        
-        const demoVenues = [
-          '〇〇コミュニティセンター',
-          '△△ホール',
-          '□□カンファレンスルーム',
-          '◇◇スペース'
-        ];
-        
-        const numEvents = Math.floor(Math.random() * 8) + 3; // 3-10件
-        
-        for (let i = 0; i < numEvents; i++) {
-          const startDate = new Date(now.getTime() + (i + 1) * 24 * 60 * 60 * 1000);
-          const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
-          
-          events.push({
-            id: `demo_${i}`,
-            title: demoTitles[i % demoTitles.length],
-            start: startDate.toISOString(),
-            end: endDate.toISOString(),
-            venue_name: demoVenues[i % demoVenues.length],
-            address: `東京都渋谷区○○${i + 1}-${i + 2}-${i + 3}`,
-            event_url: 'https://www.eventbrite.com/'
-          });
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
         }
         
-        return events;
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        // APIレスポンスを統一フォーマットに変換
+        return (data.events || []).map(event => ({
+          id: event.id,
+          title: event.name || 'イベント名なし',
+          start: event.start,
+          end: event.end,
+          venue_name: event.venue?.name || '',
+          address: event.venue?.address || '',
+          event_url: event.event_url || event.url || 'https://www.eventbrite.com/',
+          description: event.description || '',
+          is_free: event.is_free
+        }));
       }
       
       // ============================================

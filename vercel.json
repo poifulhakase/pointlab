@@ -2,6 +2,10 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "hakaseAI/server.js",
       "use": "@vercel/node"
     },
@@ -23,6 +27,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/api/events",
+      "dest": "/api/events.js"
+    },
     {
       "src": "/hakaseAI/api/(.*)",
       "dest": "/hakaseAI/server.js"
