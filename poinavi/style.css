@@ -1994,6 +1994,9 @@ body.dark-mode .rain-viewer-disclaimer {
   justify-content: space-between;
   flex-shrink: 0;
   position: relative;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .translate-header__icon-btn {
@@ -2643,6 +2646,9 @@ body.dark-mode .translate-result-item--latest {
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
   height: 73px;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .translate-footer__btn {
