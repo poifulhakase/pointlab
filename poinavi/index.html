@@ -2,6 +2,10 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <!-- セキュリティヘッダー -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <!-- Google Analytics 4 (自分除外対応) -->
     <script>
       // localStorage.setItem('excludeFromAnalytics', 'true') をコンソールで実行すると除外
@@ -26,7 +30,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=96" />
+    <link rel="stylesheet" href="./style.css?v=99" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -151,6 +155,7 @@
             class="memo-input" 
             placeholder="メモを入力..."
             rows="3"
+            maxlength="2000"
             style="font-size: 17px !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif !important;"
           ></textarea>
           <button id="memoAddBtn" class="memo-add-btn" type="button" aria-label="メモを追加">
@@ -165,14 +170,20 @@
 
     <!-- フッター -->
     <footer class="translate-footer">
-      <a href="./map.html" class="translate-footer__btn" aria-label="地図ページへ">
-        <!-- 地図アイコン -->
+      <a href="./map.html" class="translate-footer__btn" aria-label="イベントページへ">
+        <!-- イベントアイコン -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-          <line x1="8" y1="2" x2="8" y2="18"/>
-          <line x1="16" y1="6" x2="16" y2="22"/>
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <path d="M8 14h.01"></path>
+          <path d="M12 14h.01"></path>
+          <path d="M16 14h.01"></path>
+          <path d="M8 18h.01"></path>
+          <path d="M12 18h.01"></path>
         </svg>
-        <span class="translate-footer__label">地図</span>
+        <span class="translate-footer__label">イベント</span>
       </a>
       <a
         href="https://note.com/pointlab/magazines"
@@ -337,6 +348,7 @@
 
       // メモの上限
       const MEMO_MAX_COUNT = 50;
+      const MEMO_MAX_LENGTH = 2000; // 1メモあたりの最大文字数
 
       // メモを追加
       function addMemo(content) {
@@ -349,15 +361,44 @@
           alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
           return false;
         }
+        
+        // 文字数チェック
+        const trimmedContent = content.trim();
+        if (trimmedContent.length > MEMO_MAX_LENGTH) {
+          alert("メモは" + MEMO_MAX_LENGTH + "文字以内で入力してください。\n現在: " + trimmedContent.length + "文字");
+          return false;
+        }
 
         const newMemo = {
           id: Date.now().toString(),
-          content: content.trim(),
+          content: trimmedContent,
           createdAt: new Date().toISOString()
         };
         memos.unshift(newMemo); // 新しいメモを先頭に追加
+        
+        // LocalStorage容量チェック
+        if (!checkStorageQuota()) {
+          return false;
+        }
+        
         saveMemos(memos);
         return true;
+      }
+      
+      // LocalStorage容量チェック
+      function checkStorageQuota() {
+        try {
+          const used = new Blob(Object.values(localStorage)).size;
+          const limit = 5 * 1024 * 1024; // 5MB（一般的な上限）
+          const usage = (used / limit) * 100;
+          
+          if (usage > 90) {
+            alert("ストレージ容量が残り少なくなっています。\n不要なメモを削除してください。");
+          }
+          return true;
+        } catch (e) {
+          return true; // エラー時は続行
+        }
       }
 
       // メモを削除
