@@ -206,47 +206,12 @@
             </select>
           </div>
 
-          <!-- 起動ページ -->
-          <div class="settings-modal__item">
-            <label class="settings-modal__label">トップ表示</label>
-            <select id="mapStartPageSelect" class="settings-modal__select" onchange="localStorage.setItem('poinavi_start_page', this.value);">
-              <option value="index.html">📝 ラボノート</option>
-              <option value="translate.html">🌐 翻訳</option>
-              <option value="map.html">🗺️ ぽいナビ</option>
-              <option value="lab.html">🔬 研究室</option>
-            </select>
-          </div>
-
-          <!-- テーマ切り替え -->
+          <!-- 案内 -->
           <hr class="settings-modal__divider" />
           <div class="settings-modal__item">
-            <label class="settings-modal__label">テーマ</label>
-            <button id="themeToggle" class="settings-modal__theme-toggle">
-              <span class="theme-icon">☀️</span>
-              <span class="theme-text">ライトモード</span>
-            </button>
-          </div>
-
-          <!-- 免責事項 -->
-          <hr class="settings-modal__divider" />
-          <div class="settings-modal__item settings-modal__item--disclaimer">
-            <label class="settings-modal__label">免責事項</label>
-            <div class="settings-modal__disclaimer-text">
-              <p>本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
-              <ul>
-                <li>検索結果・位置情報は参考情報であり、正確性・完全性を保証するものではありません</li>
-                <li>雨雲レーダー情報は参考表示です。実際の天候は現地でご確認ください</li>
-                <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
-              </ul>
-            </div>
-          </div>
-          
-          <!-- 設定初期化 -->
-          <hr class="settings-modal__divider" />
-          <div class="settings-modal__item">
-            <button type="button" class="settings-modal__reset-btn" onclick="resetAllSettings();">
-              設定を初期化
-            </button>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+              テーマ・トップ表示・免責事項などの設定は<br>「研究室」ページで変更できます。
+            </p>
           </div>
           
         </div>
