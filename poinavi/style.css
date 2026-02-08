@@ -4137,6 +4137,8 @@ body.dark-mode .translate-qr-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .poinavi-center-marker__icon {
@@ -4144,7 +4146,7 @@ body.dark-mode .translate-qr-btn {
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .poinavi-center-marker__pulse {
@@ -4157,7 +4159,7 @@ body.dark-mode .translate-qr-btn {
   border-radius: 50%;
   background: rgba(76, 175, 80, 0.3);
   animation: pulsate 2s ease-out infinite;
-  z-index: -1;
+  z-index: 1;
 }
 
 .poinavi-center-marker__hint {
@@ -4196,14 +4198,23 @@ body.dark-mode .translate-qr-btn {
    ============================================ */
 .translate-footer__btn--rotate {
   position: relative;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.translate-footer__btn--rotate .rotate-nav-icons {
+  position: relative;
+  width: 20px;
+  height: 20px;
 }
 
 .rotate-nav-icon {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) translateY(-6px);
+  top: 0;
+  left: 0;
   width: 20px;
   height: 20px;
   opacity: 0;
@@ -4213,10 +4224,11 @@ body.dark-mode .translate-qr-btn {
 
 .rotate-nav-icon.active {
   opacity: 1;
+  transform: rotate(0) scale(1);
 }
 
 .rotate-nav-icon:not(.active) {
-  transform: translate(-50%, -50%) translateY(-6px) rotate(180deg) scale(0.5);
+  transform: rotate(180deg) scale(0.5);
 }
 
 /* アニメーション用 */
@@ -4231,21 +4243,21 @@ body.dark-mode .translate-qr-btn {
 @keyframes rotateOut {
   0% {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(-6px) rotate(0) scale(1);
+    transform: rotate(0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(-6px) rotate(-180deg) scale(0.5);
+    transform: rotate(-180deg) scale(0.5);
   }
 }
 
 @keyframes rotateIn {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(-6px) rotate(180deg) scale(0.5);
+    transform: rotate(180deg) scale(0.5);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(-6px) rotate(0) scale(1);
+    transform: rotate(0) scale(1);
   }
 }
