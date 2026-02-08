@@ -165,9 +165,14 @@ body.dark-mode .gm-style-iw-tc {
 
 /* タイトル/ヘッダー部分を明示的にダーク化 */
 body.dark-mode .gm-style-iw-c > div:first-child,
-body.dark-mode .gm-style-iw-d > div:first-child,
-body.dark-mode .gm-style-iw button,
-body.dark-mode .gm-style-iw-c button {
+body.dark-mode .gm-style-iw-d > div:first-child {
+  background-color: #2d2d2d !important;
+  background: #2d2d2d !important;
+}
+
+/* InfoWindow内のボタン（メモに追加ボタン以外） */
+body.dark-mode .gm-style-iw button:not([onclick*="addPlaceToMemo"]):not([onclick*="addRailwayToMemo"]),
+body.dark-mode .gm-style-iw-c button:not([onclick*="addPlaceToMemo"]):not([onclick*="addRailwayToMemo"]) {
   background-color: #2d2d2d !important;
   background: #2d2d2d !important;
 }
