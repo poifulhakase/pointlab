@@ -354,6 +354,15 @@ async function sendMessage() {
 }
 
 // ========================================
+// 言語検出
+// ========================================
+function detectUserLanguage() {
+  const lang = navigator.language || navigator.userLanguage || 'ja';
+  // 日本語かどうかを判定
+  return lang.startsWith('ja') ? 'ja' : 'en';
+}
+
+// ========================================
 // API呼び出し（バックエンド経由）
 // ========================================
 async function callHakaseAPI(question) {
