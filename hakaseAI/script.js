@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存されたテーマを適用
   loadSavedTheme();
   
+  // 言語に応じたUI設定
+  applyLanguageSettings();
+  
   // 履歴があるか確認
   const hasHistory = checkHasHistory();
   
@@ -84,6 +87,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // 保存された会話履歴を読み込み・表示
   loadSavedHistory();
 });
+
+// ========================================
+// 言語に応じたUI設定
+// ========================================
+function applyLanguageSettings() {
+  const userLang = detectUserLanguage();
+  
+  if (userLang === 'en') {
+    // 英語UI
+    userInput.placeholder = 'Ask me anything...';
+    
+    // 設定モーダル
+    const settingsTitle = document.getElementById('settingsTitle');
+    const themeLabel = document.getElementById('themeLabel');
+    const historyLabel = document.getElementById('historyLabel');
+    const clearHistoryText = document.getElementById('clearHistoryText');
+    const resetLabel = document.getElementById('resetLabel');
+    const resetAllText = document.getElementById('resetAllText');
+    const resetHint = document.getElementById('resetHint');
+    
+    if (settingsTitle) settingsTitle.textContent = 'Settings';
+    if (themeLabel) themeLabel.textContent = 'Theme';
+    if (historyLabel) historyLabel.textContent = 'Chat History';
+    if (clearHistoryText) clearHistoryText.textContent = 'Clear History';
+    if (resetLabel) resetLabel.textContent = 'Reset All';
+    if (resetAllText) resetAllText.textContent = 'Reset All Data';
+    if (resetHint) resetHint.textContent = 'Resets history and theme settings';
+    
+    // フッター
+    const footerDisclaimer = document.getElementById('footerDisclaimer');
+    if (footerDisclaimer) footerDisclaimer.innerHTML = '*This is an<br>Entertainment AI';
+  } else {
+    // 日本語UI（デフォルト）
+    userInput.placeholder = '相談してみる';
+  }
+}
 
 // ========================================
 // 履歴チェック
@@ -102,10 +141,22 @@ function checkHasHistory() {
 }
 
 // ========================================
+// 言語検出
+// ========================================
+function detectUserLanguage() {
+  const lang = navigator.language || navigator.userLanguage || 'ja';
+  // 日本語かどうかを判定
+  return lang.startsWith('ja') ? 'ja' : 'en';
+}
+
+// ========================================
 // 初期メッセージ表示
 // ========================================
 function showInitialMessage(animate = true) {
-  const initialText = 'やあ、諸君。わしは「ぽいふる博士」じゃ。\n節約やポイント活用について、何でも聞いてくれ。一緒に考えようではないか。';
+  const userLang = detectUserLanguage();
+  const initialText = userLang === 'en' 
+    ? 'Hello there! I am "Dr. Poiful".\nFeel free to ask me anything about saving money and maximizing rewards. Let\'s figure it out together!'
+    : 'やあ、諸君。わしは「ぽいふる博士」じゃ。\n節約やポイント活用について、何でも聞いてくれ。一緒に考えようではないか。';
   const now = new Date();
   const time = formatTime(now);
   
@@ -169,6 +220,43 @@ function autoResize() {
 }
 
 // ========================================
+// 機密情報検出
+// ========================================
+const SENSITIVE_KEYWORDS = [
+  'パスワード', 'password', 'pwd',
+  'クレジットカード', 'credit card', 'カード番号',
+  '暗証番号', 'pin', 'ピン番号',
+  '口座番号', '銀行口座', 'bank account',
+  'マイナンバー', '社会保障番号', 'ssn',
+  '秘密の質問', 'secret question',
+  'cvv', 'cvc', 'セキュリティコード'
+];
+
+function containsSensitiveInfo(text) {
+  const lowerText = text.toLowerCase();
+  return SENSITIVE_KEYWORDS.some(keyword => lowerText.includes(keyword.toLowerCase()));
+}
+
+function showSensitiveWarning() {
+  return new Promise((resolve) => {
+    const userLang = detectUserLanguage();
+    const message = userLang === 'en'
+      ? '⚠️ Sensitive Information Warning\n\n' +
+        'Your message may contain sensitive information such as passwords, credit card numbers, or PINs.\n\n' +
+        'Your input will be sent to an external AI service.\n' +
+        'Please avoid entering sensitive information.\n\n' +
+        'Do you want to send this message?'
+      : '⚠️ 機密情報の入力について\n\n' +
+        'パスワード、クレジットカード番号、暗証番号などの機密情報が含まれている可能性があります。\n\n' +
+        '入力内容は外部のAIサービスに送信されます。\n' +
+        '機密情報の入力は避けてください。\n\n' +
+        'このまま送信しますか？';
+    const result = confirm(message);
+    resolve(result);
+  });
+}
+
+// ========================================
 // メッセージ送信
 // ========================================
 let isSending = false; // 送信中フラグ
@@ -179,6 +267,15 @@ async function sendMessage() {
   
   // 二重送信防止
   if (isSending) return;
+  
+  // 機密情報チェック
+  if (containsSensitiveInfo(text)) {
+    const proceed = await showSensitiveWarning();
+    if (!proceed) {
+      return; // 送信キャンセル
+    }
+  }
+  
   isSending = true;
   
   // ユーザーメッセージを表示
@@ -205,11 +302,10 @@ async function sendMessage() {
   const loadingId = showLoading();
   
   try {
-    // GA4イベント: 質問送信
+    // GA4イベント: 質問送信（プライバシー保護のため質問内容は送信しない）
     if (typeof gtag === 'function') {
       gtag('event', 'ask_question', {
-        'event_category': 'hakase_ai',
-        'event_label': text.substring(0, 50) // 質問の先頭50文字
+        'event_category': 'hakase_ai'
       });
     }
     
@@ -247,7 +343,10 @@ async function sendMessage() {
   } catch (error) {
     console.error('API Error:', error);
     removeLoading(loadingId);
-    addMessage('すまんのう、ちょっと調子が悪いようじゃ。もう一度試してくれんか？', 'hakase', true);
+    const errorMsg = detectUserLanguage() === 'en'
+      ? 'Oops, I seem to be having some trouble. Could you try again?'
+      : 'すまんのう、ちょっと調子が悪いようじゃ。もう一度試してくれんか？';
+    addMessage(errorMsg, 'hakase', true);
   } finally {
     // 送信中フラグをリセット
     isSending = false;
@@ -263,9 +362,13 @@ async function callHakaseAPI(question) {
     `${msg.role === 'user' ? 'ユーザー' : '博士'}: ${msg.content}`
   ).join('\n');
   
+  // ユーザーの言語を検出
+  const userLanguage = detectUserLanguage();
+  
   const requestBody = {
     question_text: question,
     context: recentContext,
+    language: userLanguage,
     preferences: {
       tone: 'hakase',
       focus: '節約・ポイント活用'
@@ -500,6 +603,22 @@ function closeSettingsModal() {
 // 免責事項モーダル
 // ========================================
 function openDisclaimerModal() {
+  // 言語に応じて表示を切り替え
+  const userLang = detectUserLanguage();
+  const disclaimerJa = document.getElementById('disclaimerJa');
+  const disclaimerEn = document.getElementById('disclaimerEn');
+  const disclaimerTitle = document.getElementById('disclaimerTitle');
+  
+  if (userLang === 'en') {
+    disclaimerJa.style.display = 'none';
+    disclaimerEn.style.display = 'block';
+    disclaimerTitle.textContent = 'Disclaimer & Privacy';
+  } else {
+    disclaimerJa.style.display = 'block';
+    disclaimerEn.style.display = 'none';
+    disclaimerTitle.textContent = '免責事項・プライバシー';
+  }
+  
   disclaimerModal.classList.remove('hidden');
 }
 
@@ -519,13 +638,14 @@ function toggleDarkMode() {
 function updateThemeButton(isDark) {
   const themeIcon = themeToggle.querySelector('.theme-icon');
   const themeText = themeToggle.querySelector('.theme-text');
+  const userLang = detectUserLanguage();
   
   if (isDark) {
     themeIcon.textContent = '☀️';
-    themeText.textContent = 'ライトモード';
+    themeText.textContent = userLang === 'en' ? 'Light Mode' : 'ライトモード';
   } else {
     themeIcon.textContent = '🌙';
-    themeText.textContent = 'ダークモード';
+    themeText.textContent = userLang === 'en' ? 'Dark Mode' : 'ダークモード';
   }
 }
 
@@ -617,7 +737,12 @@ function addMessageWithTime(text, sender, timestamp) {
 }
 
 function clearHistory() {
-  if (confirm('会話履歴を削除しますか？')) {
+  const userLang = detectUserLanguage();
+  const confirmMsg = userLang === 'en' 
+    ? 'Delete chat history?' 
+    : '会話履歴を削除しますか？';
+  
+  if (confirm(confirmMsg)) {
     // LocalStorageをクリア
     localStorage.removeItem(STORAGE_KEY_HISTORY);
     localStorage.removeItem(STORAGE_KEY_MESSAGES);
@@ -637,7 +762,12 @@ function clearHistory() {
 }
 
 function resetAll() {
-  if (confirm('全てのデータ（会話履歴・テーマ設定）をリセットしますか？\n\nこの操作は取り消せません。')) {
+  const userLang = detectUserLanguage();
+  const confirmMsg = userLang === 'en'
+    ? 'Reset all data (chat history and theme settings)?\n\nThis action cannot be undone.'
+    : '全てのデータ（会話履歴・テーマ設定）をリセットしますか？\n\nこの操作は取り消せません。';
+  
+  if (confirm(confirmMsg)) {
     // ハカセAI関連のLocalStorageを全てクリア
     localStorage.removeItem(STORAGE_KEY_HISTORY);
     localStorage.removeItem(STORAGE_KEY_MESSAGES);
