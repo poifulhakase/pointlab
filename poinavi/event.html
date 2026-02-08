@@ -968,8 +968,8 @@
         const weekday = weekdays[startDate.getDay()];
         const timeStr = `${formatTime(startDate)} - ${formatTime(endDate)}`;
         
-        // メモ用テキスト生成
-        const memoText = `【${escapeHtml(event.title)}】\n📅 ${month}/${day}(${weekday}) ${timeStr}\n📍 ${escapeHtml(event.venue_name)}\n🏠 ${escapeHtml(event.address)}`;
+        // メモ用テキスト生成（リンク付き）
+        const memoText = `【${escapeHtml(event.title)}】\n📅 ${month}/${day}(${weekday}) ${timeStr}\n📍 ${escapeHtml(event.venue_name)}\n🏠 ${escapeHtml(event.address)}\n🔗 ${event.event_url}`;
         
         card.innerHTML = `
           <div class="event-card__header">
