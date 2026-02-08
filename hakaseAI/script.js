@@ -767,6 +767,9 @@ function loadSavedTheme() {
   if (savedTheme !== 'light') {
     document.body.classList.add('dark-mode');
     updateThemeButton(true);
+  } else {
+    document.body.classList.remove('dark-mode');
+    updateThemeButton(false);
   }
 }
 
