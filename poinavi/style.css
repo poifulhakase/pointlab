@@ -4148,12 +4148,12 @@ body.dark-mode .translate-qr-btn {
 }
 
 .event-confirm-modal__btn--confirm {
-  background: #4CAF50;
+  background: #7A9FCC;
   color: white;
 }
 
 .event-confirm-modal__btn--confirm:hover {
-  background: #43A047;
+  background: #6289B8;
 }
 
 .event-confirm-modal__note {
