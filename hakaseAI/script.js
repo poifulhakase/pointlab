@@ -100,7 +100,7 @@ function applyLanguageSettings() {
     
     if (settingsTitle) settingsTitle.textContent = 'Settings';
     if (themeLabel) themeLabel.textContent = 'Theme';
-    if (historyLabel) historyLabel.textContent = 'Chat History';
+    if (historyLabel) historyLabel.textContent = 'History';
     if (clearHistoryText) clearHistoryText.textContent = 'Clear History';
     
     // フッター
