@@ -370,13 +370,9 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 60px 20px;
+        padding: 20px;
         text-align: center;
-      }
-      
-      .event-error__icon {
-        font-size: 3rem;
-        margin-bottom: 16px;
+        min-height: calc(100vh - 180px);
       }
       
       .event-error__title {
@@ -584,7 +580,6 @@
       
       <!-- エラー表示 -->
       <div class="event-error" id="eventError" style="display: none;">
-        <div class="event-error__icon">😢</div>
         <h2 class="event-error__title">エラーが発生しました</h2>
         <p class="event-error__message" id="errorMessage">イベント情報の取得に失敗しました。</p>
         <a href="./map.html" class="event-error__btn">
