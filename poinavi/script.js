@@ -35,6 +35,14 @@ let railwayDataCache = null; // 鉄道データキャッシュ
 let railwayCacheLocation = null; // キャッシュ時の位置
 const RAILWAY_RADIUS = 8000; // 取得半径（8km）
 
+// お手洗いレイヤー関連
+let toiletEnabled = false; // お手洗いレイヤー有効フラグ
+let toiletMarkers = []; // お手洗いマーカー
+let toiletInfoWindow = null; // お手洗い用InfoWindow
+let toiletDataCache = null; // お手洗いデータキャッシュ
+let toiletCacheLocation = null; // キャッシュ時の位置
+const TOILET_RADIUS = 2000; // 取得半径（2km）
+
 // ============================================
 // タグ管理
 // ============================================
@@ -723,6 +731,7 @@ window.initGoogleMaps = function() {
   // Google Maps初期化後にレイヤー機能を有効化
   initRainViewer();
   initRailwayLayer();
+  initToiletLayer();
 };
 
 // ============================================
@@ -3848,5 +3857,374 @@ function clearRailwayLayer() {
   // InfoWindowを閉じる
   if (railwayInfoWindow) {
     railwayInfoWindow.close();
+  }
+}
+
+// ============================================
+// お手洗いレイヤー（Overpass API）
+// ============================================
+
+// お手洗いレイヤー初期化
+function initToiletLayer() {
+  const toggleBtn = document.getElementById("toiletToggle");
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function() {
+      toggleToiletLayer();
+    });
+  }
+}
+
+// お手洗いレイヤー表示/非表示をトグル
+async function toggleToiletLayer() {
+  const toggleBtn = document.getElementById("toiletToggle");
+  const statusPanel = document.getElementById("toiletStatus");
+
+  if (toiletEnabled) {
+    // 非表示にする
+    clearToiletLayer();
+    toiletEnabled = false;
+
+    // UI を更新
+    if (toggleBtn) {
+      toggleBtn.classList.remove("active");
+      toggleBtn.setAttribute("aria-pressed", "false");
+    }
+    if (statusPanel) {
+      statusPanel.classList.add("hidden");
+    }
+
+    console.log("お手洗いレイヤーをOFFにしました");
+  } else {
+    // 表示する
+    if (!userLocation) {
+      alert("現在地を取得してからお手洗いを表示してください");
+      return;
+    }
+
+    const loadingPanel = document.getElementById("toiletLoading");
+
+    if (toggleBtn) {
+      toggleBtn.classList.add("loading");
+    }
+    // ローディング表示
+    if (loadingPanel) {
+      loadingPanel.classList.remove("hidden");
+    }
+
+    try {
+      await fetchAndDisplayToiletData();
+      toiletEnabled = true;
+
+      // UI を更新
+      if (toggleBtn) {
+        toggleBtn.classList.add("active");
+        toggleBtn.classList.remove("loading");
+        toggleBtn.setAttribute("aria-pressed", "true");
+      }
+      // ローディング非表示、ステータス表示
+      if (loadingPanel) {
+        loadingPanel.classList.add("hidden");
+      }
+      if (statusPanel) {
+        statusPanel.classList.remove("hidden");
+      }
+
+      console.log("お手洗いレイヤーをONにしました");
+    } catch (error) {
+      console.error("お手洗いデータの取得に失敗しました:", error);
+      if (toggleBtn) {
+        toggleBtn.classList.remove("loading");
+      }
+      // ローディング非表示
+      if (loadingPanel) {
+        loadingPanel.classList.add("hidden");
+      }
+      alert("お手洗いデータの取得に失敗しました。しばらく経ってから再度お試しください。");
+    }
+  }
+}
+
+// Overpass API からお手洗いデータを取得して表示
+async function fetchAndDisplayToiletData() {
+  // キャッシュが有効かチェック（位置が500m以上移動していなければ使用）
+  if (toiletDataCache && toiletCacheLocation) {
+    const distance = calculateDistance(
+      toiletCacheLocation.lat,
+      toiletCacheLocation.lng,
+      userLocation.lat,
+      userLocation.lng
+    );
+    if (distance < 500) {
+      console.log("キャッシュされたお手洗いデータを使用");
+      displayToiletData(toiletDataCache);
+      return;
+    }
+  }
+
+  const lat = userLocation.lat;
+  const lng = userLocation.lng;
+
+  // Overpass API クエリ（公衆トイレ）
+  const query = `
+    [out:json][timeout:25];
+    (
+      node["amenity"="toilets"](around:${TOILET_RADIUS},${lat},${lng});
+      way["amenity"="toilets"](around:${TOILET_RADIUS},${lat},${lng});
+    );
+    out center;
+  `;
+
+  const url = "https://overpass-api.de/api/interpreter";
+
+  console.log("Overpass API クエリ送信 (お手洗い):", { lat, lng, radius: TOILET_RADIUS });
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: `data=${encodeURIComponent(query)}`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log("Overpass API レスポンス (お手洗い):", {
+    elements: data.elements?.length || 0
+  });
+
+  // キャッシュに保存
+  toiletDataCache = data;
+  toiletCacheLocation = { ...userLocation };
+
+  displayToiletData(data);
+}
+
+// お手洗いデータを地図上に表示
+function displayToiletData(data) {
+  // 既存のマーカーをクリア
+  clearToiletLayer();
+
+  if (!data.elements || data.elements.length === 0) {
+    console.log("お手洗いデータがありません");
+    return;
+  }
+
+  const isDarkMode = document.body.classList.contains("dark-mode");
+
+  data.elements.forEach((element) => {
+    // 位置を取得（node または way の center）
+    let lat, lng;
+    if (element.type === "node") {
+      lat = element.lat;
+      lng = element.lon;
+    } else if (element.type === "way" && element.center) {
+      lat = element.center.lat;
+      lng = element.center.lon;
+    } else {
+      return; // 位置が不明な場合はスキップ
+    }
+
+    const position = new google.maps.LatLng(lat, lng);
+    const tags = element.tags || {};
+
+    // カスタムマーカーを作成
+    const marker = new google.maps.Marker({
+      position: position,
+      map: map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: isDarkMode ? "#60A5FA" : "#3B82F6",
+        fillOpacity: 1,
+        strokeColor: "#ffffff",
+        strokeWeight: 2,
+        scale: 10
+      },
+      title: tags.name || "お手洗い",
+      zIndex: 100
+    });
+
+    // クリック時に情報を表示
+    marker.addListener("click", () => {
+      showToiletInfoWindow(position, tags);
+    });
+
+    toiletMarkers.push(marker);
+  });
+
+  console.log(`${toiletMarkers.length} 件のお手洗いを表示しました`);
+}
+
+// お手洗い情報ウィンドウを表示
+function showToiletInfoWindow(position, tags) {
+  if (!toiletInfoWindow) {
+    toiletInfoWindow = new google.maps.InfoWindow();
+  }
+
+  const isDarkMode = document.body.classList.contains("dark-mode");
+  const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
+  const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
+  const accentColor = isDarkMode ? "#60A5FA" : "#3B82F6";
+
+  // 情報を整形
+  const name = tags.name || "公衆トイレ";
+  const wheelchair = tags.wheelchair;
+  const fee = tags.fee;
+  const openingHours = tags.opening_hours;
+
+  let infoHtml = `<strong>${name}</strong>`;
+
+  // 車椅子対応
+  if (wheelchair) {
+    const wheelchairText = wheelchair === "yes" ? "♿ バリアフリー対応" : 
+                          wheelchair === "limited" ? "♿ 一部対応" : "";
+    if (wheelchairText) {
+      infoHtml += `<br><span style="color: #10b981; font-size: 12px;">${wheelchairText}</span>`;
+    }
+  }
+
+  // 料金
+  if (fee) {
+    const feeText = fee === "yes" ? "💰 有料" : fee === "no" ? "無料" : "";
+    if (feeText) {
+      infoHtml += `<br><span style="font-size: 12px;">${feeText}</span>`;
+    }
+  }
+
+  // 営業時間
+  if (openingHours) {
+    infoHtml += `<br><span style="font-size: 11px; color: #888;">🕐 ${openingHours}</span>`;
+  }
+
+  // メモ用テキスト
+  const plainContent = `${name}${wheelchair === "yes" ? " (バリアフリー対応)" : ""}${fee === "yes" ? " (有料)" : ""}`;
+
+  const html = `
+    <div style="
+      padding: 12px 16px;
+      min-width: 160px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+      background-color: ${bgColor};
+      color: ${textColor};
+      border-radius: 8px;
+    ">
+      <div style="
+        font-size: 11px;
+        font-weight: 600;
+        color: ${accentColor};
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      ">🚻 お手洗い</div>
+      <div style="
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.6;
+        margin-bottom: 12px;
+      ">${infoHtml}</div>
+      <div style="
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      ">
+        <button onclick="openToiletInGoogleMaps(${position.lat()}, ${position.lng()})" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 8px 12px;
+          background-color: ${isDarkMode ? '#374151' : '#f3f4f6'};
+          color: ${textColor};
+          border: none;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: inherit;
+        ">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+          経路
+        </button>
+        <button onclick="addToiletToMemo('${encodeURIComponent(plainContent)}')" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 8px 12px;
+          background-color: #4CAF50;
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: inherit;
+        ">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          メモ
+        </button>
+      </div>
+    </div>
+  `;
+
+  toiletInfoWindow.setContent(html);
+  toiletInfoWindow.setPosition(position);
+  toiletInfoWindow.open(map);
+}
+
+// お手洗いをGoogleマップで開く（経路案内）
+function openToiletInGoogleMaps(lat, lng) {
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+  window.open(url, "_blank");
+}
+
+// お手洗いをメモに追加
+function addToiletToMemo(encodedContent) {
+  const content = decodeURIComponent(encodedContent);
+  const MEMO_STORAGE_KEY = "poinavi_memos";
+  
+  try {
+    const memos = JSON.parse(localStorage.getItem(MEMO_STORAGE_KEY) || "[]");
+    const newMemo = {
+      id: Date.now().toString(),
+      content: `🚻 ${content}`,
+      createdAt: new Date().toISOString()
+    };
+    memos.unshift(newMemo);
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+    
+    // InfoWindowを閉じる
+    if (toiletInfoWindow) {
+      toiletInfoWindow.close();
+    }
+    
+    alert("メモに追加しました");
+  } catch (e) {
+    console.error("メモの保存に失敗:", e);
+    alert("メモの保存に失敗しました");
+  }
+}
+
+// お手洗いレイヤーをクリア
+function clearToiletLayer() {
+  // マーカーを削除
+  toiletMarkers.forEach((marker) => {
+    marker.setMap(null);
+  });
+  toiletMarkers = [];
+
+  // InfoWindowを閉じる
+  if (toiletInfoWindow) {
+    toiletInfoWindow.close();
   }
 }
