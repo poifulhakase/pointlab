@@ -875,18 +875,23 @@ function addMessageWithTime(text, sender, timestamp) {
 function clearHistory() {
   const userLang = detectUserLanguage();
   const confirmMsg = userLang === 'en' 
-    ? 'Delete chat history?' 
-    : '会話履歴を削除しますか？';
+    ? 'Delete chat history and reset settings?' 
+    : '会話履歴と設定を削除しますか？';
   
   if (confirm(confirmMsg)) {
-    // LocalStorageをクリア
+    // LocalStorageをクリア（履歴とテーマ設定）
     localStorage.removeItem(STORAGE_KEY_HISTORY);
     localStorage.removeItem(STORAGE_KEY_MESSAGES);
+    localStorage.removeItem('hakaseai-theme');
     
     // 変数をクリア
     conversationHistory = [];
     savedMessages = [];
     lastDisplayedDate = null;
+    
+    // テーマをデフォルト（ダークモード）にリセット
+    document.body.classList.add('dark-mode');
+    updateThemeButton(true);
     
     // チャット表示をクリア（初期メッセージ以外）
     const messages = chatContainer.querySelectorAll('.message-wrapper:not(:first-child), .date-separator');
