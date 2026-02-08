@@ -4198,25 +4198,20 @@ body.dark-mode .translate-qr-btn {
    ============================================ */
 .translate-footer__btn--rotate {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
 }
 
 .translate-footer__btn--rotate .rotate-nav-icons {
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .rotate-nav-icon {
   position: absolute;
   top: 0;
   left: 0;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: none;
@@ -4229,6 +4224,19 @@ body.dark-mode .translate-qr-btn {
 
 .rotate-nav-icon:not(.active) {
   transform: rotate(180deg) scale(0.5);
+}
+
+/* スマホ対応 */
+@media (max-width: 400px) {
+  .translate-footer__btn--rotate .rotate-nav-icons {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .rotate-nav-icon {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 /* アニメーション用 */
