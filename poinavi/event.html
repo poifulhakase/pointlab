@@ -29,7 +29,7 @@
     <link rel="icon" type="image/png" href="icon-192.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=110" />
+    <link rel="stylesheet" href="./style.css?v=112" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -295,15 +295,15 @@
       }
       
       .event-card__btn--secondary {
-        background: var(--bg-primary);
-        color: #4CAF50;
-        border: 1px solid #4CAF50;
+        background: #4CAF50;
+        color: white;
+        border: none;
       }
       
       .event-card__btn--secondary:hover {
-        background: #4CAF50;
-        border-color: #4CAF50;
-        color: white;
+        background: #45a049;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
       }
       
       .event-card__btn--secondary:active {
@@ -312,9 +312,8 @@
       
       /* メモ追加成功フィードバック */
       .event-card__btn--success {
-        background: #4CAF50 !important;
+        background: #388E3C !important;
         color: white !important;
-        border-color: #4CAF50 !important;
       }
       
       /* ローディング */
