@@ -2692,7 +2692,7 @@ body.dark-mode .translate-result-item--latest {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 29px;
+  padding: 8px 12px;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   text-decoration: none;
@@ -2701,12 +2701,12 @@ body.dark-mode .translate-result-item--latest {
   transition: all 0.2s ease;
   border: none;
   border-right: 1px solid var(--border-color);
-  min-width: 108px;
+  min-width: 0;
+  flex: 1;
 }
 
 .translate-footer__btn:last-child {
   border-right: none;
-  border-left: 1px solid var(--border-color);
 }
 
 .translate-footer__btn:hover {
@@ -2716,6 +2716,17 @@ body.dark-mode .translate-result-item--latest {
 
 .translate-footer__btn:active {
   background-color: var(--primary-color);
+  color: #ffffff;
+}
+
+/* 現在のページ（アクティブ状態） */
+.translate-footer__btn--active {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.translate-footer__btn--active:hover {
+  background-color: var(--accent-color);
   color: #ffffff;
 }
 
