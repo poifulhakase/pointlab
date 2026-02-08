@@ -140,7 +140,7 @@
       
       /* イベントカード - モダンデザイン */
       .event-card {
-        background: var(--bg-secondary);
+        background: #ffffff;
         border-radius: 16px;
         padding: 16px;
         display: flex;
@@ -148,6 +148,10 @@
         gap: 12px;
         border: 1px solid var(--border-color);
         transition: box-shadow 0.2s ease;
+      }
+      
+      .dark-mode .event-card {
+        background: var(--bg-secondary);
       }
       
       .event-card:hover {
