@@ -1105,7 +1105,7 @@ body.dark-mode .loading-overlay {
   background-color: var(--bg-primary);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 360px;
+  max-width: 500px;
   width: 90%;
   z-index: 1;
   animation: slideUp 0.3s ease;
@@ -2458,7 +2458,7 @@ body.dark-mode .translate-result-item--latest {
 .translate-modal__content {
   position: relative;
   width: 90%;
-  max-width: 400px;
+  max-width: 500px;
   max-height: 85vh;
   background-color: var(--bg-primary);
   border-radius: 16px;
