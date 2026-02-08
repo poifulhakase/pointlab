@@ -237,35 +237,23 @@ function extractNoteLink(responseText) {
   return matches ? matches[0] : null;
 }
 
-// noteリンクに対応するマガジンを検出
-function findMagazineByUrl(noteUrl) {
+// noteリンクのURLからマガジンを特定
+function findMagazineByNoteUrl(noteUrl) {
   if (!noteUrl) return null;
   
-  // URLに含まれるマガジンIDで判定
+  // URLからマガジンID（/m/xxxxx の部分）を抽出
+  const magazineIdMatch = noteUrl.match(/\/m\/([a-zA-Z0-9]+)/);
+  if (!magazineIdMatch) return null;
+  
+  const urlMagazineId = magazineIdMatch[1];
+  
+  // マガジン一覧からURLが一致するものを探す
   for (const magazine of MAGAZINES) {
-    // マガジンURLの一部が含まれているか確認
-    const magazineId = magazine.url.split('/').pop();
-    if (noteUrl.includes(magazineId) || noteUrl.includes('/m/')) {
-      // キーワードでも追加チェック
+    if (magazine.url.includes(urlMagazineId)) {
       return magazine;
     }
   }
   
-  // マガジンが見つからない場合はキーワードマッチにフォールバック
-  return null;
-}
-
-// キーワードでマガジンを検出（フォールバック用）
-function findMatchingMagazineByKeyword(responseText) {
-  const lowerText = responseText.toLowerCase();
-  
-  for (const magazine of MAGAZINES) {
-    for (const keyword of magazine.keywords) {
-      if (lowerText.includes(keyword.toLowerCase())) {
-        return magazine;
-      }
-    }
-  }
   return null;
 }
 
@@ -280,8 +268,8 @@ function addMagazineBannerToBubble(container, responseText) {
     return;
   }
   
-  // キーワードでマガジン情報を取得（画像と名前用）
-  const matchedMagazine = findMatchingMagazineByKeyword(responseText);
+  // URLからマガジン情報を取得
+  const matchedMagazine = findMagazineByNoteUrl(noteUrl);
   
   if (!matchedMagazine) {
     container.remove();
