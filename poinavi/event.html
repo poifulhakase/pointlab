@@ -487,9 +487,6 @@
       // 定数
       const CACHE_KEY = 'poinavi_event_cache';
       const CACHE_TTL = 10 * 60 * 1000; // 10分
-      const RATE_LIMIT_KEY = 'poinavi_event_rate';
-      const MAX_REQUESTS_PER_HOUR = 3;
-      const MIN_INTERVAL_MS = 10 * 60 * 1000; // 10分
       const SEARCH_RADIUS_KM = 8;
       const MAX_EVENTS = 30;
       
@@ -527,21 +524,7 @@
           return;
         }
         
-        // レート制限チェック
-        if (!checkRateLimit()) {
-          showRateLimitWarning();
-          // キャッシュがあれば表示
-          const cached = getCache(lat, lng);
-          if (cached) {
-            displayEvents(cached.events, lat, lng);
-            fetchWeather(lat, lng);
-          } else {
-            showError('しばらくお待ちください。<br>1時間に3回まで、10分間隔でご利用いただけます。');
-          }
-          return;
-        }
-        
-        // イベント取得
+        // イベント取得（レート制限はmap.html側でチェック済み）
         loadEvents(lat, lng);
       });
       
@@ -627,57 +610,6 @@
         });
       }
       
-      // ============================================
-      // レート制限
-      // ============================================
-      function checkRateLimit() {
-        const rateData = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"requests":[]}');
-        const now = Date.now();
-        const oneHourAgo = now - (60 * 60 * 1000);
-        
-        // 1時間以内のリクエストをフィルタ
-        rateData.requests = rateData.requests.filter(t => t > oneHourAgo);
-        
-        // 最大回数チェック
-        if (rateData.requests.length >= MAX_REQUESTS_PER_HOUR) {
-          return false;
-        }
-        
-        // 最小間隔チェック
-        const lastRequest = rateData.requests[rateData.requests.length - 1] || 0;
-        if (now - lastRequest < MIN_INTERVAL_MS) {
-          return false;
-        }
-        
-        return true;
-      }
-      
-      function recordRequest() {
-        const rateData = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"requests":[]}');
-        const now = Date.now();
-        const oneHourAgo = now - (60 * 60 * 1000);
-        
-        rateData.requests = rateData.requests.filter(t => t > oneHourAgo);
-        rateData.requests.push(now);
-        
-        localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rateData));
-      }
-      
-      function showRateLimitWarning() {
-        const content = document.getElementById('eventContent');
-        if (!content) return;
-        
-        const warning = document.createElement('div');
-        warning.className = 'rate-limit-warning';
-        warning.innerHTML = `
-          <span class="rate-limit-warning__icon">⚠️</span>
-          <span class="rate-limit-warning__text">
-            利用回数の制限に達しました。<br>
-            1時間に3回まで、10分間隔でご利用いただけます。
-          </span>
-        `;
-        content.insertBefore(warning, content.firstChild);
-      }
       
       // ============================================
       // キャッシュ管理
@@ -731,9 +663,6 @@
           fetchWeather(lat, lng);
           return;
         }
-        
-        // リクエスト記録
-        recordRequest();
         
         try {
           // 注: Eventbrite APIは実際にはサーバーサイドで呼び出す必要があります
