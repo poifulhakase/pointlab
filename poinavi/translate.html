@@ -26,7 +26,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=95" />
+    <link rel="stylesheet" href="./style.css?v=96" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -41,6 +41,10 @@
     </style>
   </head>
   <body>
+    <!-- 長押しコンテキストメニュー無効化 -->
+    <script>
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    </script>
     <!-- ヘッダー -->
     <header class="translate-header">
       <!-- 左側のスペーサー -->

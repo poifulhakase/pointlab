@@ -22,6 +22,24 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* テキスト選択を無効化（入力欄は除く） */
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 入力欄・チャット内容は選択可能 */
+input, textarea, .hakase-bubble, .user-bubble {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 /* 画像の長押し保存を無効化 */
@@ -38,6 +56,12 @@ img {
 /* リンク内の画像はクリック可能に */
 a img {
   pointer-events: auto;
+}
+
+/* リンクの長押しコンテキストメニューを無効化 */
+a {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
 }
 
 html, body {

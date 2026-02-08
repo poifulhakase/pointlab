@@ -39,6 +39,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- 長押しコンテキストメニュー無効化 -->
+  <script>
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  </script>
   <div class="app-container">
     <!-- ヘッダー -->
     <header class="header">
