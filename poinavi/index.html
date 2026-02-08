@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <!-- セキュリティヘッダー -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <!-- Google Analytics 4 (自分除外対応) -->
     <script>
@@ -21,16 +20,16 @@
       }
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
     <meta name="theme-color" content="#ffffff" />
-    <title>ぽいナビ - メモ</title>
-    <meta name="description" content="地図・翻訳・メモ。旅先で「今すぐ使いたい」機能をひとつに。" />
+    <title>ぽいナビ - ラボノート</title>
+    <meta name="description" content="地図・翻訳・ラボノート。旅先で「今すぐ使いたい」機能をひとつに。" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=122" />
+    <link rel="stylesheet" href="./style.css?v=126" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -98,9 +97,10 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">トップ表示</div>
             <select id="memoStartPageSelect" class="translate-modal__select">
-              <option value="index.html">📝 メモ</option>
+              <option value="index.html">📝 ラボノート</option>
               <option value="translate.html">🌐 翻訳</option>
-              <option value="map.html">🗺️ 地図</option>
+              <option value="map.html">🗺️ ぽいナビ</option>
+              <option value="lab.html">🔬 研究室</option>
             </select>
           </div>
           <!-- テーマセクション -->
@@ -117,7 +117,7 @@
             <div class="settings-modal__disclaimer-text">
               <p>本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
               <ul>
-                <li>メモ内容はデバイスに保存されます。バックアップはご自身で行ってください</li>
+                <li>ラボノート内容はデバイスに保存されます。バックアップはご自身で行ってください</li>
                 <li>機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください</li>
                 <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません</li>
               </ul>
@@ -137,12 +137,12 @@
     <main class="memo-main">
       <!-- 保存済メモ表示エリア -->
       <div class="memo-list" id="memoList">
-        <!-- メモがない場合のプレースホルダー -->
+        <!-- ラボノートがない場合のプレースホルダー -->
         <div class="memo-empty" id="memoEmpty">
-          <p>メモがありません</p>
-          <p class="memo-empty__hint">下の入力欄からメモを追加してください</p>
+          <p>ラボノートがありません</p>
+          <p class="memo-empty__hint">下の入力欄からラボノートを追加してください</p>
         </div>
-        <!-- メモアイテムはJSで動的に追加 -->
+        <!-- ラボノートアイテムはJSで動的に追加 -->
       </div>
 
       <!-- 注意書き -->
@@ -155,7 +155,7 @@
           </svg>
         </div>
         <div class="memo-warning__text">
-          <p>メモはお使いの端末（ブラウザ）に保存されます。</p>
+          <p>ラボノートはお使いの端末（ブラウザ）に保存されます。</p>
           <p>機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。</p>
         </div>
       </div>
@@ -166,12 +166,12 @@
           <textarea 
             id="memoInput" 
             class="memo-input" 
-            placeholder="メモを入力..."
+            placeholder="ラボノートを入力..."
             rows="3"
             maxlength="2000"
             style="font-size: 17px !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif !important;"
           ></textarea>
-          <button id="memoAddBtn" class="memo-add-btn" type="button" aria-label="メモを追加">
+          <button id="memoAddBtn" class="memo-add-btn" type="button" aria-label="ラボノートを追加">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -183,7 +183,7 @@
 
     <!-- フッター -->
     <footer class="translate-footer">
-      <span class="translate-footer__btn translate-footer__btn--active" aria-label="メモページ（現在のページ）">
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="ラボノートページ（現在のページ）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
@@ -191,7 +191,7 @@
           <line x1="16" y1="17" x2="8" y2="17"></line>
           <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
-        <span class="translate-footer__label">メモ</span>
+        <span class="translate-footer__label">ラボノート</span>
       </span>
       <a href="./translate.html" class="translate-footer__btn" aria-label="翻訳ページへ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -204,13 +204,22 @@
         </svg>
         <span class="translate-footer__label">翻訳</span>
       </a>
-      <a href="./map.html" class="translate-footer__btn" aria-label="マップページへ">
+      <a href="./map.html" class="translate-footer__btn" aria-label="ぽいナビページへ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
           <line x1="8" y1="2" x2="8" y2="18"/>
           <line x1="16" y1="6" x2="16" y2="22"/>
         </svg>
-        <span class="translate-footer__label">マップ</span>
+        <span class="translate-footer__label">ぽいナビ</span>
+      </a>
+      <a href="./lab.html" class="translate-footer__btn" aria-label="研究室ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6v6"/>
+          <circle cx="6" cy="12" r="1"/>
+          <circle cx="18" cy="8" r="1"/>
+          <circle cx="15" cy="16" r="1"/>
+        </svg>
+        <span class="translate-footer__label">研究室</span>
       </a>
     </footer>
 
@@ -348,8 +357,8 @@
         try {
           localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
         } catch (e) {
-          console.error("メモの保存に失敗:", e);
-          alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+          console.error("ラボノートの保存に失敗:", e);
+          alert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
         }
       }
 
@@ -365,14 +374,14 @@
         
         // 上限チェック
         if (memos.length >= MEMO_MAX_COUNT) {
-          alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+          alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
           return false;
         }
         
         // 文字数チェック
         const trimmedContent = content.trim();
         if (trimmedContent.length > MEMO_MAX_LENGTH) {
-          alert("メモは" + MEMO_MAX_LENGTH + "文字以内で入力してください。\n現在: " + trimmedContent.length + "文字");
+          alert("ラボノートは" + MEMO_MAX_LENGTH + "文字以内で入力してください。\n現在: " + trimmedContent.length + "文字");
           return false;
         }
 
@@ -400,7 +409,7 @@
           const usage = (used / limit) * 100;
           
           if (usage > 90) {
-            alert("ストレージ容量が残り少なくなっています。\n不要なメモを削除してください。");
+            alert("ストレージ容量が残り少なくなっています。\n不要なラボノートを削除してください。");
           }
           return true;
         } catch (e) {
@@ -476,7 +485,7 @@
           btn.addEventListener("click", function() {
             const id = this.dataset.id;
             const time = this.dataset.time;
-            if (confirm(`[${time}] のメモを削除しますか？`)) {
+            if (confirm(`[${time}] のラボノートを削除しますか？`)) {
               deleteMemo(id);
               renderMemoList();
             }
@@ -535,7 +544,7 @@
         if (!resetBtn) return;
 
         resetBtn.addEventListener("click", function() {
-          if (!confirm("すべての設定を初期化しますか？\n（テーマ、起動ページなどがリセットされます。メモは保持されます）")) {
+          if (!confirm("すべての設定を初期化しますか？\n（テーマ、起動ページなどがリセットされます。ラボノートは保持されます）")) {
             return;
           }
           

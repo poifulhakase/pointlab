@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <!-- セキュリティヘッダー -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <!-- Google Analytics 4 (自分除外対応) -->
     <script>
@@ -21,16 +20,16 @@
       }
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
     <meta name="theme-color" content="#ffffff" />
     <title>ぽいナビ - 翻訳</title>
-    <meta name="description" content="地図・翻訳・メモ。旅先で「今すぐ使いたい」機能をひとつに。" />
+    <meta name="description" content="地図・翻訳・ラボノート。旅先で「今すぐ使いたい」機能をひとつに。" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=122" />
+    <link rel="stylesheet" href="./style.css?v=126" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -164,9 +163,10 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">トップ表示</div>
             <select id="translateStartPageSelect" class="translate-modal__select">
-              <option value="index.html">📝 メモ</option>
+              <option value="index.html">📝 ラボノート</option>
               <option value="translate.html">🌐 翻訳</option>
-              <option value="map.html">🗺️ 地図</option>
+              <option value="map.html">🗺️ ぽいナビ</option>
+              <option value="lab.html">🔬 研究室</option>
             </select>
           </div>
 
@@ -376,7 +376,7 @@
 
     <!-- フッター -->
     <footer class="translate-footer">
-      <a href="./index.html?from=nav" class="translate-footer__btn" aria-label="メモページへ">
+      <a href="./index.html?from=nav" class="translate-footer__btn" aria-label="ラボノートページへ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
@@ -384,7 +384,7 @@
           <line x1="16" y1="17" x2="8" y2="17"/>
           <polyline points="10 9 9 9 8 9"/>
         </svg>
-        <span class="translate-footer__label">メモ</span>
+        <span class="translate-footer__label">ラボノート</span>
       </a>
       <span class="translate-footer__btn translate-footer__btn--active" aria-label="翻訳ページ（現在のページ）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -397,13 +397,22 @@
         </svg>
         <span class="translate-footer__label">翻訳</span>
       </span>
-      <a href="./map.html" class="translate-footer__btn" aria-label="マップページへ">
+      <a href="./map.html" class="translate-footer__btn" aria-label="ぽいナビページへ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
           <line x1="8" y1="2" x2="8" y2="18"/>
           <line x1="16" y1="6" x2="16" y2="22"/>
         </svg>
-        <span class="translate-footer__label">マップ</span>
+        <span class="translate-footer__label">ぽいナビ</span>
+      </a>
+      <a href="./lab.html" class="translate-footer__btn" aria-label="研究室ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6v6"/>
+          <circle cx="6" cy="12" r="1"/>
+          <circle cx="18" cy="8" r="1"/>
+          <circle cx="15" cy="16" r="1"/>
+        </svg>
+        <span class="translate-footer__label">研究室</span>
       </a>
     </footer>
 

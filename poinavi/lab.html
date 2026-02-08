@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- セキュリティヘッダー -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <!-- Google Analytics 4 (自分除外対応) -->
+    <script>
+      // localStorage.setItem('excludeFromAnalytics', 'true') をコンソールで実行すると除外
+      if (localStorage.getItem('excludeFromAnalytics') !== 'true') {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-ERDSPE9CZM';
+        document.head.appendChild(script);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-ERDSPE9CZM');
+      }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>ぽいナビ - 研究室</title>
+    <meta name="description" content="地図・翻訳・ラボノート。旅先で「今すぐ使いたい」機能をひとつに。" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="./style.css?v=126" />
+    <!-- FOUC対策: CSSロード前にテーマを適用 -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poinavi_theme") || "light";
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+    </script>
+    <style>
+      /* FOUC対策: 初期背景色 */
+      html.light-mode { background-color: #f5f5f7; }
+      html.dark-mode { background-color: #1a1a1a; }
+    </style>
+  </head>
+  <body>
+    <!-- 長押しコンテキストメニュー無効化 -->
+    <script>
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    </script>
+    <!-- ヘッダー -->
+    <header class="translate-header">
+      <!-- 左側のスペーサー -->
+      <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
+      
+      <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
+        <img src="./poinabi.svg" alt="ぽいんとらぼ" class="translate-header__logo" style="height: 28px; width: auto;" />
+      </a>
+      
+      <!-- 設定ボタン（右上） -->
+      <button id="labSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 設定モーダル -->
+    <div id="labSettingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="labSettingsClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body">
+          <!-- 起動ページセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">トップ表示</div>
+            <select id="labStartPageSelect" class="translate-modal__select">
+              <option value="index.html">📝 ラボノート</option>
+              <option value="translate.html">🌐 翻訳</option>
+              <option value="map.html">🗺️ ぽいナビ</option>
+              <option value="lab.html">🔬 研究室</option>
+            </select>
+          </div>
+          <!-- テーマセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">テーマ</div>
+            <button id="labThemeToggle" class="translate-modal__theme-toggle">
+              <span class="theme-icon">☀️</span>
+              <span class="theme-text">ライトモード</span>
+            </button>
+          </div>
+          <!-- リセットセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">データ管理</div>
+            <button id="labResetButton" class="translate-modal__reset-btn">
+              設定を初期化
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <main class="lab-main">
+      <!-- 日付・時刻エリア（メイン） -->
+      <div class="lab-hero">
+        <div class="lab-hero__time" id="labTime">--:--</div>
+        <div class="lab-hero__date" id="labDate">----年--月--日</div>
+        <div class="lab-hero__day" id="labDay">--曜日</div>
+      </div>
+
+      <!-- ダッシュボードカード -->
+      <div class="lab-dashboard">
+        <!-- 天気カード -->
+        <div class="lab-card lab-card--weather">
+          <div class="lab-card__icon" id="weatherIcon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <div class="lab-card__content">
+            <div class="lab-card__label">天気</div>
+            <div class="lab-card__value" id="weatherText">取得中...</div>
+          </div>
+        </div>
+
+        <!-- 気温カード -->
+        <div class="lab-card lab-card--temp">
+          <div class="lab-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+            </svg>
+          </div>
+          <div class="lab-card__content">
+            <div class="lab-card__label">気温</div>
+            <div class="lab-card__value" id="tempValue">--°C</div>
+          </div>
+        </div>
+
+        <!-- 移動時間カード -->
+        <div class="lab-card lab-card--travel">
+          <div class="lab-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="lab-card__content">
+            <div class="lab-card__label">移動時間</div>
+            <div class="lab-card__value" id="travelTime">--分</div>
+          </div>
+        </div>
+
+        <!-- 歩数カード -->
+        <div class="lab-card lab-card--steps">
+          <div class="lab-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.5 2 10 3.5 10 5c0 1.03-.4 2-1 3"/>
+              <path d="M10 5c1 0 2 .5 2 2 0 1.03-.4 2-1 3"/>
+              <path d="M20 16v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.5 2 14 3.5 14 5c0 1.03.4 2 1 3"/>
+              <path d="M14 5c-1 0-2 .5-2 2 0 1.03.4 2 1 3"/>
+              <path d="M4 22v-6h4l1.5-3 2.5 6 2-3h4v6"/>
+            </svg>
+          </div>
+          <div class="lab-card__content">
+            <div class="lab-card__label">歩数</div>
+            <div class="lab-card__value" id="stepsValue">--歩</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 歩数入力エリア -->
+      <div class="lab-steps-input">
+        <label class="lab-steps-input__label">今日の歩数を記録</label>
+        <div class="lab-steps-input__row">
+          <input type="number" id="stepsInput" class="lab-steps-input__field" placeholder="歩数を入力" min="0" step="100" />
+          <button id="stepsSubmit" class="lab-steps-input__btn">記録</button>
+        </div>
+      </div>
+
+      <!-- 歩数履歴 -->
+      <div class="lab-history">
+        <div class="lab-history__title">歩数履歴（過去7日間）</div>
+        <div class="lab-history__chart" id="stepsChart">
+          <!-- JSで描画 -->
+        </div>
+      </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="translate-footer">
+      <a href="./index.html" class="translate-footer__btn" aria-label="ラボノートページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="translate-footer__label">ラボノート</span>
+      </a>
+      <a href="./translate.html" class="translate-footer__btn" aria-label="翻訳ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"/>
+          <path d="M4 14h6"/>
+          <path d="M2 5h12"/>
+          <path d="M7 2v3"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
+        </svg>
+        <span class="translate-footer__label">翻訳</span>
+      </a>
+      <a href="./map.html" class="translate-footer__btn" aria-label="ぽいナビページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span class="translate-footer__label">ぽいナビ</span>
+      </a>
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="研究室ページ（現在のページ）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6v6"/>
+          <circle cx="6" cy="12" r="1"/>
+          <circle cx="18" cy="8" r="1"/>
+          <circle cx="15" cy="16" r="1"/>
+        </svg>
+        <span class="translate-footer__label">研究室</span>
+      </span>
+    </footer>
+
+    <script>
+      // ============================================
+      // テーマ管理
+      // ============================================
+      function initTheme() {
+        const savedTheme = localStorage.getItem("poinavi_theme") || "light";
+        applyTheme(savedTheme);
+        updateThemeButton(savedTheme);
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+        document.body.className = theme === "dark" ? "dark-mode" : "light-mode";
+      }
+
+      function updateThemeButton(theme) {
+        const themeToggle = document.getElementById("labThemeToggle");
+        if (!themeToggle) return;
+        const icon = themeToggle.querySelector(".theme-icon");
+        const text = themeToggle.querySelector(".theme-text");
+        if (theme === "dark") {
+          icon.textContent = "🌙";
+          text.textContent = "ダークモード";
+        } else {
+          icon.textContent = "☀️";
+          text.textContent = "ライトモード";
+        }
+      }
+
+      function initThemeToggle() {
+        const themeToggle = document.getElementById("labThemeToggle");
+        if (!themeToggle) return;
+        themeToggle.addEventListener("click", function() {
+          const currentTheme = localStorage.getItem("poinavi_theme") || "light";
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+          localStorage.setItem("poinavi_theme", newTheme);
+          applyTheme(newTheme);
+          updateThemeButton(newTheme);
+        });
+      }
+
+      // ============================================
+      // 設定モーダル
+      // ============================================
+      function initSettingsModal() {
+        const settingsButton = document.getElementById("labSettingsButton");
+        const settingsModal = document.getElementById("labSettingsModal");
+        const settingsClose = document.getElementById("labSettingsClose");
+        const overlay = settingsModal.querySelector(".translate-modal__overlay");
+
+        settingsButton.addEventListener("click", function() {
+          settingsModal.classList.remove("hidden");
+        });
+
+        function closeModal() {
+          settingsModal.classList.add("hidden");
+        }
+
+        settingsClose.addEventListener("click", closeModal);
+        overlay.addEventListener("click", closeModal);
+      }
+
+      function initStartPageSelect() {
+        const startPageSelect = document.getElementById("labStartPageSelect");
+        const savedStartPage = localStorage.getItem("poinavi_start_page") || "index.html";
+        startPageSelect.value = savedStartPage;
+        
+        startPageSelect.addEventListener("change", function() {
+          localStorage.setItem("poinavi_start_page", this.value);
+        });
+      }
+
+      function initResetButton() {
+        const resetButton = document.getElementById("labResetButton");
+        resetButton.addEventListener("click", function() {
+          if (!confirm("設定を初期化しますか？歩数データは保持されます。")) return;
+          localStorage.removeItem("poinavi_theme");
+          localStorage.removeItem("poinavi_start_page");
+          alert("設定を初期化しました。ページを再読み込みします。");
+          location.reload();
+        });
+      }
+
+      // ============================================
+      // 日付・時刻表示
+      // ============================================
+      function updateDateTime() {
+        const now = new Date();
+        const timeEl = document.getElementById("labTime");
+        const dateEl = document.getElementById("labDate");
+        const dayEl = document.getElementById("labDay");
+        
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        timeEl.textContent = `${hours}:${minutes}`;
+        
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const date = now.getDate();
+        dateEl.textContent = `${year}年${month}月${date}日`;
+        
+        const days = ["日", "月", "火", "水", "木", "金", "土"];
+        dayEl.textContent = `${days[now.getDay()]}曜日`;
+      }
+
+      // ============================================
+      // 天気取得（Open-Meteo API - 無料）
+      // ============================================
+      const weatherCodeMap = {
+        0: { text: "快晴", icon: "clear" },
+        1: { text: "晴れ", icon: "clear" },
+        2: { text: "やや曇り", icon: "partly_cloudy" },
+        3: { text: "曇り", icon: "cloudy" },
+        45: { text: "霧", icon: "fog" },
+        48: { text: "霧", icon: "fog" },
+        51: { text: "小雨", icon: "drizzle" },
+        53: { text: "雨", icon: "drizzle" },
+        55: { text: "雨", icon: "drizzle" },
+        61: { text: "小雨", icon: "rain" },
+        63: { text: "雨", icon: "rain" },
+        65: { text: "大雨", icon: "rain" },
+        71: { text: "小雪", icon: "snow" },
+        73: { text: "雪", icon: "snow" },
+        75: { text: "大雪", icon: "snow" },
+        80: { text: "にわか雨", icon: "rain" },
+        81: { text: "雨", icon: "rain" },
+        82: { text: "大雨", icon: "rain" },
+        95: { text: "雷雨", icon: "thunderstorm" },
+        96: { text: "雷雨", icon: "thunderstorm" },
+        99: { text: "雷雨", icon: "thunderstorm" }
+      };
+
+      function getWeatherIcon(iconType) {
+        const icons = {
+          clear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>`,
+          partly_cloudy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2v2"/>
+            <path d="M4.93 4.93l1.41 1.41"/>
+            <path d="M20 12h2"/>
+            <path d="M19.07 4.93l-1.41 1.41"/>
+            <path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/>
+            <path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/>
+          </svg>`,
+          cloudy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>`,
+          fog: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14h16"/>
+            <path d="M4 18h16"/>
+            <path d="M4 10h16"/>
+            <path d="M4 6h16"/>
+          </svg>`,
+          drizzle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M8 19v1"/>
+            <path d="M8 14v1"/>
+            <path d="M16 19v1"/>
+            <path d="M16 14v1"/>
+            <path d="M12 21v1"/>
+            <path d="M12 16v1"/>
+          </svg>`,
+          rain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M16 14v6"/>
+            <path d="M8 14v6"/>
+            <path d="M12 16v6"/>
+          </svg>`,
+          snow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M8 15h.01"/>
+            <path d="M8 19h.01"/>
+            <path d="M12 17h.01"/>
+            <path d="M12 21h.01"/>
+            <path d="M16 15h.01"/>
+            <path d="M16 19h.01"/>
+          </svg>`,
+          thunderstorm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="m9.2 22 3-7H8l4-7"/>
+          </svg>`
+        };
+        return icons[iconType] || icons.clear;
+      }
+
+      async function fetchWeather() {
+        const weatherIcon = document.getElementById("weatherIcon");
+        const weatherText = document.getElementById("weatherText");
+        const tempValue = document.getElementById("tempValue");
+
+        try {
+          // まず位置情報を取得
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 300000 // 5分キャッシュ
+            });
+          });
+
+          const { latitude, longitude } = position.coords;
+          
+          // Open-Meteo API（無料、APIキー不要）
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`;
+          
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          const temp = Math.round(data.current.temperature_2m);
+          const weatherCode = data.current.weather_code;
+          const weather = weatherCodeMap[weatherCode] || { text: "不明", icon: "clear" };
+          
+          weatherIcon.innerHTML = getWeatherIcon(weather.icon);
+          weatherText.textContent = weather.text;
+          tempValue.textContent = `${temp}°C`;
+
+        } catch (error) {
+          console.error("天気取得エラー:", error);
+          weatherText.textContent = "取得失敗";
+          tempValue.textContent = "--°C";
+        }
+      }
+
+      // ============================================
+      // 移動時間（位置情報から計算）
+      // ============================================
+      let lastPosition = null;
+      let totalTravelTime = 0;
+      const MOVEMENT_THRESHOLD = 10; // 10m以上移動で記録
+
+      function initTravelTracking() {
+        const savedData = localStorage.getItem("poinavi_travel_" + getTodayKey());
+        if (savedData) {
+          totalTravelTime = parseInt(savedData, 10) || 0;
+        }
+        updateTravelDisplay();
+        
+        // 位置情報の監視開始
+        if (navigator.geolocation) {
+          navigator.geolocation.watchPosition(
+            handlePositionUpdate,
+            (err) => console.log("位置情報エラー:", err),
+            { enableHighAccuracy: true, maximumAge: 60000, timeout: 30000 }
+          );
+        }
+      }
+
+      function handlePositionUpdate(position) {
+        const now = Date.now();
+        
+        if (lastPosition) {
+          const distance = calculateDistance(
+            lastPosition.coords.latitude,
+            lastPosition.coords.longitude,
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          
+          if (distance > MOVEMENT_THRESHOLD) {
+            const timeDiff = (now - lastPosition.timestamp) / 1000 / 60; // 分
+            if (timeDiff < 30) { // 30分以内の移動のみカウント
+              totalTravelTime += timeDiff;
+              localStorage.setItem("poinavi_travel_" + getTodayKey(), Math.round(totalTravelTime));
+              updateTravelDisplay();
+            }
+          }
+        }
+        
+        lastPosition = {
+          coords: position.coords,
+          timestamp: now
+        };
+      }
+
+      function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // 地球の半径（メートル）
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c;
+      }
+
+      function updateTravelDisplay() {
+        const travelEl = document.getElementById("travelTime");
+        const hours = Math.floor(totalTravelTime / 60);
+        const mins = Math.round(totalTravelTime % 60);
+        
+        if (hours > 0) {
+          travelEl.textContent = `${hours}時間${mins}分`;
+        } else {
+          travelEl.textContent = `${mins}分`;
+        }
+      }
+
+      // ============================================
+      // 歩数管理
+      // ============================================
+      function getTodayKey() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      }
+
+      function getStepsData() {
+        const data = localStorage.getItem("poinavi_steps");
+        return data ? JSON.parse(data) : {};
+      }
+
+      function saveSteps(date, steps) {
+        const data = getStepsData();
+        data[date] = steps;
+        localStorage.setItem("poinavi_steps", JSON.stringify(data));
+      }
+
+      function initSteps() {
+        const stepsData = getStepsData();
+        const todayKey = getTodayKey();
+        const todaySteps = stepsData[todayKey] || 0;
+        
+        document.getElementById("stepsValue").textContent = todaySteps > 0 ? `${todaySteps.toLocaleString()}歩` : "--歩";
+        document.getElementById("stepsInput").value = todaySteps > 0 ? todaySteps : "";
+        
+        renderStepsChart();
+      }
+
+      function initStepsInput() {
+        const input = document.getElementById("stepsInput");
+        const submitBtn = document.getElementById("stepsSubmit");
+        
+        submitBtn.addEventListener("click", function() {
+          const steps = parseInt(input.value, 10);
+          if (isNaN(steps) || steps < 0) {
+            alert("正しい歩数を入力してください");
+            return;
+          }
+          
+          const todayKey = getTodayKey();
+          saveSteps(todayKey, steps);
+          document.getElementById("stepsValue").textContent = `${steps.toLocaleString()}歩`;
+          renderStepsChart();
+          
+          // フィードバック
+          submitBtn.textContent = "記録完了!";
+          submitBtn.style.backgroundColor = "#10b981";
+          setTimeout(() => {
+            submitBtn.textContent = "記録";
+            submitBtn.style.backgroundColor = "";
+          }, 1500);
+        });
+      }
+
+      function renderStepsChart() {
+        const chartEl = document.getElementById("stepsChart");
+        const stepsData = getStepsData();
+        
+        // 過去7日分のデータを取得
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+          const dayLabel = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+          days.push({
+            key: key,
+            label: dayLabel,
+            date: d.getDate(),
+            steps: stepsData[key] || 0
+          });
+        }
+        
+        const maxSteps = Math.max(...days.map(d => d.steps), 10000);
+        
+        chartEl.innerHTML = days.map(d => {
+          const heightPercent = maxSteps > 0 ? (d.steps / maxSteps) * 100 : 0;
+          const isToday = d.key === getTodayKey();
+          return `
+            <div class="lab-history__bar-wrapper ${isToday ? 'lab-history__bar-wrapper--today' : ''}">
+              <div class="lab-history__bar" style="height: ${Math.max(heightPercent, 2)}%"></div>
+              <div class="lab-history__bar-label">${d.label}</div>
+              <div class="lab-history__bar-value">${d.steps > 0 ? (d.steps >= 1000 ? Math.round(d.steps/1000) + 'k' : d.steps) : '-'}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // ============================================
+      // 初期化
+      // ============================================
+      document.addEventListener("DOMContentLoaded", function() {
+        initTheme();
+        initSettingsModal();
+        initThemeToggle();
+        initStartPageSelect();
+        initResetButton();
+        
+        // 時刻更新
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        // 天気取得
+        fetchWeather();
+        setInterval(fetchWeather, 600000); // 10分ごと
+        
+        // 移動時間
+        initTravelTracking();
+        
+        // 歩数
+        initSteps();
+        initStepsInput();
+      });
+    </script>
+  </body>
+</html>

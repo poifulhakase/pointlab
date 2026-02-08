@@ -710,15 +710,19 @@ function initControls() {
   const resultCountSelect = document.getElementById("resultCount");
   const openOnlyCheckbox = document.getElementById("openOnly");
 
-  resultCountSelect.addEventListener("change", function () {
-    resultCount = parseInt(this.value, 10);
-    searchPlaces();
-  });
+  if (resultCountSelect) {
+    resultCountSelect.addEventListener("change", function () {
+      resultCount = parseInt(this.value, 10);
+      searchPlaces();
+    });
+  }
 
-  openOnlyCheckbox.addEventListener("change", function () {
-    openOnly = this.checked;
-    searchPlaces();
-  });
+  if (openOnlyCheckbox) {
+    openOnlyCheckbox.addEventListener("change", function () {
+      openOnly = this.checked;
+      searchPlaces();
+    });
+  }
 }
 
 // ============================================
@@ -928,7 +932,7 @@ function initMap() {
       displayRoute(origin, destination);
     };
     
-    // グローバル関数としてメモ追加関数を登録（InfoWindow内のボタンから呼び出せるように）
+    // グローバル関数としてラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
     window.addPlaceToMemo = function(encodedName, encodedAddress, distance) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
       const MEMO_MAX_COUNT = 50;
@@ -936,23 +940,23 @@ function initMap() {
       const name = decodeURIComponent(encodedName);
       const address = decodeURIComponent(encodedAddress);
       
-      // メモを取得
+      // ラボノートを取得
       let memos = [];
       try {
         const data = localStorage.getItem(MEMO_STORAGE_KEY);
         memos = data ? JSON.parse(data) : [];
       } catch (e) {
-        console.error("メモの読み込みに失敗:", e);
+        console.error("ラボノートの読み込みに失敗:", e);
         memos = [];
       }
       
       // 上限チェック
       if (memos.length >= MEMO_MAX_COUNT) {
-        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
         return;
       }
       
-      // メモの内容を作成
+      // ラボノートの内容を作成
       const memoContent = `📍 ${name}\n${address}\n現在地からの距離: ${distance}`;
       
       const newMemo = {
@@ -965,14 +969,14 @@ function initMap() {
       // 保存
       try {
         localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
-        alert("メモに追加しました");
+        alert("ラボノートに追加しました");
       } catch (e) {
-        console.error("メモの保存に失敗:", e);
-        alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+        console.error("ラボノートの保存に失敗:", e);
+        alert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
       }
     };
     
-    // グローバル関数として鉄道メモ追加関数を登録（InfoWindow内のボタンから呼び出せるように）
+    // グローバル関数として鉄道ラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
     window.addRailwayToMemo = function(encodedType, encodedContent) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
       const MEMO_MAX_COUNT = 50;
@@ -980,23 +984,23 @@ function initMap() {
       const type = decodeURIComponent(encodedType);
       const content = decodeURIComponent(encodedContent);
       
-      // メモを取得
+      // ラボノートを取得
       let memos = [];
       try {
         const data = localStorage.getItem(MEMO_STORAGE_KEY);
         memos = data ? JSON.parse(data) : [];
       } catch (e) {
-        console.error("メモの読み込みに失敗:", e);
+        console.error("ラボノートの読み込みに失敗:", e);
         memos = [];
       }
       
       // 上限チェック
       if (memos.length >= MEMO_MAX_COUNT) {
-        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
         return;
       }
       
-      // メモの内容を作成
+      // ラボノートの内容を作成
       const icon = type === "駅" ? "🚉" : "🚃";
       const memoContent = `${icon} [${type}]\n${content}`;
       
@@ -1010,10 +1014,10 @@ function initMap() {
       // 保存
       try {
         localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
-        alert("メモに追加しました");
+        alert("ラボノートに追加しました");
       } catch (e) {
-        console.error("メモの保存に失敗:", e);
-        alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+        console.error("ラボノートの保存に失敗:", e);
+        alert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
       }
     };
   } catch (error) {
@@ -2850,7 +2854,7 @@ function showInfoWindow(place, marker) {
             <line x1="12" y1="18" x2="12" y2="12"></line>
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          メモに追加
+          ラボノートに追加
         </button>
       </div>
     </div>
@@ -3779,7 +3783,7 @@ function showRailwayInfoWindow(position, content, type) {
   const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
   const accentColor = isDarkMode ? "#34d399" : "#10b981";
   
-  // メモ用のテキスト（HTMLタグを除去）
+  // ラボノート用のテキスト（HTMLタグを除去）
   const plainContent = content.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
 
   const html = `
@@ -3829,7 +3833,7 @@ function showRailwayInfoWindow(position, content, type) {
             <line x1="12" y1="18" x2="12" y2="12"></line>
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          メモに追加
+          ラボノートに追加
         </button>
       </div>
     </div>
@@ -4099,7 +4103,7 @@ function showToiletInfoWindow(position, tags) {
     infoHtml += `<br><span style="font-size: 11px; color: #888;">🕐 ${openingHours}</span>`;
   }
 
-  // メモ用テキスト
+  // ラボノート用テキスト
   const plainContent = `${name}${wheelchair === "yes" ? " (バリアフリー対応)" : ""}${fee === "yes" ? " (有料)" : ""}`;
 
   const html = `
@@ -4171,7 +4175,7 @@ function showToiletInfoWindow(position, tags) {
             <line x1="12" y1="18" x2="12" y2="12"></line>
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          メモ
+          ラボノート
         </button>
       </div>
     </div>
@@ -4188,7 +4192,7 @@ function openToiletInGoogleMaps(lat, lng) {
   window.open(url, "_blank");
 }
 
-// お手洗いをメモに追加
+// お手洗いをラボノートに追加
 function addToiletToMemo(encodedContent) {
   const content = decodeURIComponent(encodedContent);
   const MEMO_STORAGE_KEY = "poinavi_memos";
@@ -4208,10 +4212,10 @@ function addToiletToMemo(encodedContent) {
       toiletInfoWindow.close();
     }
     
-    alert("メモに追加しました");
+    alert("ラボノートに追加しました");
   } catch (e) {
-    console.error("メモの保存に失敗:", e);
-    alert("メモの保存に失敗しました");
+    console.error("ラボノートの保存に失敗:", e);
+    alert("ラボノートの保存に失敗しました");
   }
 }
 
