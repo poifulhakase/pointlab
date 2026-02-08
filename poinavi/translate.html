@@ -2,6 +2,10 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <!-- セキュリティヘッダー -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <!-- Google Analytics 4 (自分除外対応) -->
     <script>
       // localStorage.setItem('excludeFromAnalytics', 'true') をコンソールで実行すると除外
@@ -26,7 +30,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=96" />
+    <link rel="stylesheet" href="./style.css?v=97" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -398,12 +402,12 @@
           <line x1="8" y1="2" x2="8" y2="18"/>
           <line x1="16" y1="6" x2="16" y2="22"/>
         </svg>
-        <span class="translate-footer__label">地図</span>
+        <span class="translate-footer__label">マップ</span>
       </a>
     </footer>
 
     <!-- Tesseract.js OCRライブラリ（unpkg CDNを使用） -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
-    <script src="./translate.js?v=64"></script>
+    <script src="./translate.js?v=65"></script>
   </body>
 </html>
