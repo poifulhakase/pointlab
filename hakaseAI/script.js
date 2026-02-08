@@ -66,12 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clearHistoryBtn.addEventListener('click', clearHistory);
   }
   
-  // 全リセットボタン
-  const resetAllBtn = document.getElementById('resetAllBtn');
-  if (resetAllBtn) {
-    resetAllBtn.addEventListener('click', resetAll);
-  }
-  
   // 保存されたテーマを適用
   loadSavedTheme();
   
@@ -103,17 +97,11 @@ function applyLanguageSettings() {
     const themeLabel = document.getElementById('themeLabel');
     const historyLabel = document.getElementById('historyLabel');
     const clearHistoryText = document.getElementById('clearHistoryText');
-    const resetLabel = document.getElementById('resetLabel');
-    const resetAllText = document.getElementById('resetAllText');
-    const resetHint = document.getElementById('resetHint');
     
     if (settingsTitle) settingsTitle.textContent = 'Settings';
     if (themeLabel) themeLabel.textContent = 'Theme';
     if (historyLabel) historyLabel.textContent = 'Chat History';
     if (clearHistoryText) clearHistoryText.textContent = 'Clear History';
-    if (resetLabel) resetLabel.textContent = 'Reset All';
-    if (resetAllText) resetAllText.textContent = 'Reset All Data';
-    if (resetHint) resetHint.textContent = 'Resets history and theme settings';
     
     // フッター
     const footerDisclaimer = document.getElementById('footerDisclaimer');
@@ -770,19 +758,3 @@ function clearHistory() {
   }
 }
 
-function resetAll() {
-  const userLang = detectUserLanguage();
-  const confirmMsg = userLang === 'en'
-    ? 'Reset all data (chat history and theme settings)?\n\nThis action cannot be undone.'
-    : '全てのデータ（会話履歴・テーマ設定）をリセットしますか？\n\nこの操作は取り消せません。';
-  
-  if (confirm(confirmMsg)) {
-    // ハカセAI関連のLocalStorageを全てクリア
-    localStorage.removeItem(STORAGE_KEY_HISTORY);
-    localStorage.removeItem(STORAGE_KEY_MESSAGES);
-    localStorage.removeItem('hakaseai-theme');
-    
-    // ページをリロードして初期状態に戻す
-    location.reload();
-  }
-}

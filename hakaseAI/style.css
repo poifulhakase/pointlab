@@ -706,51 +706,6 @@ body.dark-mode .settings-modal__clear-btn:hover {
   background-color: #5a3535;
 }
 
-/* 全リセットボタン */
-.settings-modal__reset-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 20px;
-  border: 1px solid #B0B0B0;
-  border-radius: 12px;
-  background-color: #F5F5F5;
-  color: #666666;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.settings-modal__reset-btn:hover {
-  background-color: #E0E0E0;
-  border-color: #999999;
-  color: #333333;
-}
-
-.settings-modal__reset-btn:active {
-  transform: scale(0.98);
-}
-
-body.dark-mode .settings-modal__reset-btn {
-  background-color: #3d3d3d;
-  border-color: #555555;
-  color: #AAAAAA;
-}
-
-body.dark-mode .settings-modal__reset-btn:hover {
-  background-color: #4d4d4d;
-  color: #CCCCCC;
-}
-
-.settings-modal__hint {
-  font-size: 11px;
-  color: #999999;
-  text-align: center;
-  margin-top: 8px;
-}
 
 /* 免責事項モーダル */
 .disclaimer-body {
