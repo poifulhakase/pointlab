@@ -218,7 +218,7 @@
             <div class="translate-modal__section-title">データソース</div>
             <div class="settings-modal__disclaimer-text" style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
               <p>・天気/気温: Open-Meteo API</p>
-              <p>・移動時間: GPS位置情報</p>
+              <p>・移動距離: GPS位置情報</p>
               <p>・歩数: Fitbit API（要連携）</p>
             </div>
           </div>
@@ -271,17 +271,17 @@
           </div>
         </div>
 
-        <!-- 移動時間カード -->
+        <!-- 移動距離カード -->
         <div class="lab-card lab-card--travel">
           <div class="lab-card__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
             </svg>
           </div>
           <div class="lab-card__content">
-            <div class="lab-card__label">移動時間</div>
-            <div class="lab-card__value" id="travelTime">計測中...</div>
+            <div class="lab-card__label">移動距離</div>
+            <div class="lab-card__value" id="travelDistance">計測中...</div>
           </div>
         </div>
 
@@ -605,35 +605,35 @@
       }
 
       // ============================================
-      // 移動時間（位置情報から計算）
+      // 移動距離（位置情報から計算）
       // ============================================
       let lastPosition = null;
-      let totalTravelTime = 0;
-      const MOVEMENT_THRESHOLD = 10;
+      let totalDistance = 0; // メートル
+      const MOVEMENT_THRESHOLD = 10; // 10m以上移動で記録
 
       function getTodayKey() {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
       }
 
-      function initTravelTracking() {
-        const savedData = localStorage.getItem("poinavi_travel_" + getTodayKey());
+      function initDistanceTracking() {
+        const savedData = localStorage.getItem("poinavi_distance_" + getTodayKey());
         if (savedData) {
-          totalTravelTime = parseInt(savedData, 10) || 0;
+          totalDistance = parseFloat(savedData) || 0;
         }
-        updateTravelDisplay();
+        updateDistanceDisplay();
         
         if (navigator.geolocation) {
           navigator.geolocation.watchPosition(
             handlePositionUpdate,
             (err) => {
               console.log("位置情報エラー:", err);
-              document.getElementById("travelTime").textContent = "非対応";
+              document.getElementById("travelDistance").textContent = "非対応";
             },
             { enableHighAccuracy: true, maximumAge: 60000, timeout: 30000 }
           );
         } else {
-          document.getElementById("travelTime").textContent = "非対応";
+          document.getElementById("travelDistance").textContent = "非対応";
         }
       }
 
@@ -648,12 +648,13 @@
             position.coords.longitude
           );
           
+          // 10m以上移動、かつ30分以内の更新のみカウント
           if (distance > MOVEMENT_THRESHOLD) {
             const timeDiff = (now - lastPosition.timestamp) / 1000 / 60;
             if (timeDiff < 30) {
-              totalTravelTime += timeDiff;
-              localStorage.setItem("poinavi_travel_" + getTodayKey(), Math.round(totalTravelTime));
-              updateTravelDisplay();
+              totalDistance += distance;
+              localStorage.setItem("poinavi_distance_" + getTodayKey(), totalDistance);
+              updateDistanceDisplay();
             }
           }
         }
@@ -663,13 +664,11 @@
           timestamp: now
         };
         
-        if (totalTravelTime === 0) {
-          updateTravelDisplay();
-        }
+        updateDistanceDisplay();
       }
 
       function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
+        const R = 6371e3; // 地球の半径（メートル）
         const φ1 = lat1 * Math.PI / 180;
         const φ2 = lat2 * Math.PI / 180;
         const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -683,15 +682,15 @@
         return R * c;
       }
 
-      function updateTravelDisplay() {
-        const travelEl = document.getElementById("travelTime");
-        const hours = Math.floor(totalTravelTime / 60);
-        const mins = Math.round(totalTravelTime % 60);
+      function updateDistanceDisplay() {
+        const distanceEl = document.getElementById("travelDistance");
         
-        if (hours > 0) {
-          travelEl.textContent = `${hours}時間${mins}分`;
+        if (totalDistance >= 1000) {
+          // 1km以上はkm表示
+          distanceEl.textContent = `${(totalDistance / 1000).toFixed(1)}km`;
         } else {
-          travelEl.textContent = `${mins}分`;
+          // 1km未満はm表示
+          distanceEl.textContent = `${Math.round(totalDistance)}m`;
         }
       }
 
@@ -833,8 +832,8 @@
         fetchWeather();
         setInterval(fetchWeather, 600000);
         
-        // 移動時間
-        initTravelTracking();
+        // 移動距離
+        initDistanceTracking();
         
         // Fitbit連携
         initFitbit();
