@@ -354,6 +354,24 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* PC版でドロップシャドウを追加 */
+@media (min-width: 501px) {
+  html {
+    background-color: #e8e8e8;
+  }
+  html.dark-mode {
+    background-color: #0d0d0d;
+  }
+  body {
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  }
+  body.dark-mode {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  }
+}
+
 /* ============================================
    1️⃣ 設定バー（画面下部・noteバナーの上）
    ============================================ */
