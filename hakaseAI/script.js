@@ -204,13 +204,6 @@ function showInitialMessage(animate = true) {
     // タイピングアニメーション
     const textElement = messageWrapper.querySelector('.typing-text');
     typeText(textElement, initialText);
-    
-    // アニメーション完了後にマガジン一覧を表示
-    const textLength = initialText.length;
-    const animationTime = textLength * 70 + 500; // タイピング時間 + 余裕
-    setTimeout(() => {
-      showMagazineList();
-    }, animationTime);
   } else {
     messageWrapper.innerHTML = `
       <div class="avatar">
@@ -224,16 +217,19 @@ function showInitialMessage(animate = true) {
       </div>
     `;
     chatContainer.appendChild(messageWrapper);
-    
-    // マガジン一覧を表示
-    showMagazineList();
   }
 }
 
 // ========================================
 // マガジン一覧表示
 // ========================================
+let magazineListShown = false; // 一度だけ表示するフラグ
+
 function showMagazineList() {
+  // 既に表示済みの場合はスキップ
+  if (magazineListShown) return;
+  magazineListShown = true;
+  
   const userLang = detectUserLanguage();
   const title = userLang === 'en' ? '📚 Magazines' : '📚 マガジン一覧';
   
@@ -400,6 +396,13 @@ async function sendMessage() {
     
     // 履歴を保存
     saveHistory();
+    
+    // タイピングアニメーション完了後にマガジン一覧を表示
+    const responseLength = response.length;
+    const animationTime = Math.min(responseLength * 70, 5000) + 500; // 最大5秒 + 余裕
+    setTimeout(() => {
+      showMagazineList();
+    }, animationTime);
     
   } catch (error) {
     console.error('API Error:', error);

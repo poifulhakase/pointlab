@@ -937,6 +937,8 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
   width: calc(33.333% - 8px);
   min-width: 70px;
   max-width: 90px;
+  pointer-events: auto !important;
+  cursor: pointer;
 }
 
 .magazine-item:hover {
@@ -954,7 +956,8 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 6px;
-  pointer-events: auto;
+  pointer-events: auto !important;
+  cursor: pointer;
 }
 
 .magazine-item__name {
