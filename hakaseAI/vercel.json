@@ -22,6 +22,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "*.jpg",
+      "use": "@vercel/static"
+    },
+    {
       "src": "*.svg",
       "use": "@vercel/static"
     },
@@ -45,6 +49,10 @@
     },
     {
       "src": "/(.*\\.png)",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*\\.jpg)",
       "dest": "/$1"
     },
     {
