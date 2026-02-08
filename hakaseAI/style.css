@@ -113,11 +113,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 50%;
-  background: transparent;
+  border-radius: 10px;
+  background: var(--header-bg);
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -140,11 +140,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 50%;
-  background: transparent;
+  border-radius: 10px;
+  background: var(--header-bg);
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -471,9 +471,22 @@ body.dark-mode .message-bubble a:hover {
 /* ========================================
    レスポンシブ
    ======================================== */
-@media (max-width: 500px) {
+@media (max-width: 480px) {
   .header {
     padding: 12px 12px;
+  }
+
+  .info-icon-button,
+  .settings-icon-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .info-icon-button svg,
+  .settings-icon-button svg {
+    width: 18px;
+    height: 18px;
   }
 
   .input-area {
