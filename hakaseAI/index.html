@@ -160,10 +160,13 @@
     <!-- 入力エリア -->
     <div class="input-area">
       <div class="input-wrapper">
+        <!-- ハニーポット（ボット検出用・非表示） -->
+        <input type="text" id="hpField" name="hp_field" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
         <textarea 
           id="userInput" 
           placeholder="相談してみる"
           rows="1"
+          maxlength="500"
         ></textarea>
         <button id="sendButton" class="send-button" disabled>
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -187,6 +190,6 @@
     </footer>
   </div>
 
-  <script src="script.js?v=2.3"></script>
+  <script src="script.js?v=2.4"></script>
 </body>
 </html>

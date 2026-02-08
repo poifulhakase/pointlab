@@ -3,6 +3,16 @@
 // ============================================
 
 // ============================================
+// セキュリティ: HTMLエスケープ関数
+// ============================================
+function escapeHtmlForDisplay(text) {
+  if (!text) return "";
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============================================
 // グローバル変数
 // ============================================
 
@@ -468,6 +478,9 @@ function updateVoiceButtonState(state) {
   }
 }
 
+// 翻訳入力の最大文字数
+const TRANSLATE_MAX_LENGTH = 5000;
+
 async function processVoiceTranslation(transcript) {
   const voiceBtn = document.getElementById("voiceTranslateBtn");
   
@@ -475,6 +488,12 @@ async function processVoiceTranslation(transcript) {
   voiceBtn?.classList.add("active");
   
   try {
+    // 文字数チェック
+    if (transcript.length > TRANSLATE_MAX_LENGTH) {
+      alert("テキストが長すぎます。" + TRANSLATE_MAX_LENGTH + "文字以内にしてください。");
+      return;
+    }
+    
     // 設定から言語を取得
     const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
     const micTargetLang = document.getElementById("micTargetLangSelect")?.value || "ja";
@@ -1423,8 +1442,9 @@ function createTranslationResultHTML(type, data) {
   const now = new Date();
   const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   
-  const originalText = (data.original || "").replace(/\n/g, '<br>');
-  const translatedText = (data.translated || "").replace(/\n/g, '<br>');
+  // XSS対策: HTMLエスケープしてから改行を<br>に変換
+  const originalText = escapeHtmlForDisplay(data.original || "").replace(/\n/g, '<br>');
+  const translatedText = escapeHtmlForDisplay(data.translated || "").replace(/\n/g, '<br>');
   
   // OCRの場合は画像プレビューを追加
   const imagePreview = data.image ? `
@@ -1697,12 +1717,63 @@ function initQRScanner() {
     const text = qrResultText.textContent;
     // URLの場合は開く
     if (text.startsWith('http://') || text.startsWith('https://')) {
-      window.open(text, '_blank');
+      // URL安全確認
+      if (isUrlSafe(text)) {
+        window.open(text, '_blank', 'noopener,noreferrer');
+      } else {
+        // 警告付きで確認
+        if (confirm('このURLを開きますか？\n\n' + text + '\n\n※不審なURLの可能性があります。信頼できるURLのみ開いてください。')) {
+          window.open(text, '_blank', 'noopener,noreferrer');
+        }
+      }
     } else {
       // URLでない場合はGoogle検索
-      window.open('https://www.google.com/search?q=' + encodeURIComponent(text), '_blank');
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
     }
   });
+}
+
+// ============================================
+// URL安全確認
+// ============================================
+function isUrlSafe(url) {
+  try {
+    const parsed = new URL(url);
+    
+    // HTTPSでない場合は警告対象
+    if (parsed.protocol !== 'https:') {
+      return false;
+    }
+    
+    // 危険なドメインパターン（フィッシングなど）
+    const suspiciousPatterns = [
+      /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/, // IPアドレス直接
+      /-login/i,
+      /signin.*\./i,
+      /account.*verify/i,
+      /secure.*update/i,
+      /\.tk$/,
+      /\.ml$/,
+      /\.ga$/,
+      /\.cf$/
+    ];
+    
+    const hostname = parsed.hostname;
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(hostname) || pattern.test(url)) {
+        return false;
+      }
+    }
+    
+    // 非常に長いURLは警告
+    if (url.length > 500) {
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 // QRコードスキャン処理

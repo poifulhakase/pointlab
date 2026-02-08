@@ -71,7 +71,117 @@ const globalLimiter = rateLimit({
 
 // ミドルウェア
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // リクエストサイズ制限
+
+// ========================================
+// セキュリティヘッダー
+// ========================================
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
+// ========================================
+// セキュリティ対策
+// ========================================
+
+// 短時間連続リクエスト制限（10秒以内に3回まで）
+const burstLimiter = rateLimit({
+  windowMs: 10 * 1000, // 10秒
+  max: 3, // 3回まで
+  message: { 
+    error: 'burst_limit',
+    comment_text: 'ちょっと待つのじゃ。少し休んでからまた話そう。'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false
+});
+
+// 入力検証ミドルウェア
+function validateInput(req, res, next) {
+  const { question_text, hp_field } = req.body;
+  
+  // ハニーポットチェック（ボットは隠しフィールドに入力する）
+  if (hp_field && hp_field.trim() !== '') {
+    console.log('Bot detected: honeypot field filled');
+    return res.status(400).json({ 
+      error: 'invalid_request',
+      comment_text: 'リクエストが無効じゃ。'
+    });
+  }
+  
+  // 質問文がない場合
+  if (!question_text) {
+    return res.status(400).json({ error: '質問文が必要じゃ' });
+  }
+  
+  // 文字数制限（500文字まで）
+  if (question_text.length > 500) {
+    return res.status(400).json({ 
+      error: 'input_too_long',
+      comment_text: '質問が長すぎるのう。500文字以内でお願いするぞ。'
+    });
+  }
+  
+  // 禁止パターンチェック（スクリプト注入など）
+  const dangerousPatterns = [
+    /<script/i,
+    /javascript:/i,
+    /on\w+=/i,
+    /data:/i,
+    /<iframe/i,
+    /<object/i,
+    /<embed/i
+  ];
+  
+  for (const pattern of dangerousPatterns) {
+    if (pattern.test(question_text)) {
+      console.log('Suspicious input detected:', question_text.substring(0, 50));
+      return res.status(400).json({ 
+        error: 'invalid_input',
+        comment_text: '不正な入力が検出されたのじゃ。'
+      });
+    }
+  }
+  
+  next();
+}
+
+// User-Agent検証ミドルウェア
+function validateUserAgent(req, res, next) {
+  const userAgent = req.headers['user-agent'] || '';
+  
+  // 明らかなボットのUser-Agentをブロック
+  const botPatterns = [
+    /curl/i,
+    /wget/i,
+    /python-requests/i,
+    /scrapy/i,
+    /httpclient/i,
+    /^$/  // 空のUser-Agent
+  ];
+  
+  // ただし、空のUser-Agentは警告のみ（一部の正規ユーザーも該当する可能性）
+  if (!userAgent) {
+    console.log('Warning: Empty User-Agent from IP:', req.ip);
+  }
+  
+  for (const pattern of botPatterns) {
+    if (pattern.test(userAgent)) {
+      console.log('Bot User-Agent blocked:', userAgent);
+      return res.status(403).json({ 
+        error: 'forbidden',
+        comment_text: 'アクセスが拒否されたのじゃ。'
+      });
+    }
+  }
+  
+  next();
+}
 
 // 静的ファイルの配信（/hakaseAI/ プレフィックス付きのリクエストに対応）
 // /hakaseAI/style.css -> __dirname/style.css として配信
@@ -79,9 +189,10 @@ app.use('/hakaseAI', express.static(path.join(__dirname)));
 // ルートパスからも配信（ローカル開発用）
 app.use(express.static(path.join(__dirname)));
 
-// /api/chat にレート制限を適用（グローバル制限 + IP制限）
-app.use('/api/chat', globalLimiter, dailyLimiter);
-app.use('/hakaseAI/api/chat', globalLimiter, dailyLimiter);
+// /api/chat にセキュリティミドルウェアを適用
+// 順序: User-Agent検証 → バースト制限 → グローバル制限 → IP制限 → 入力検証
+app.use('/api/chat', validateUserAgent, burstLimiter, globalLimiter, dailyLimiter, validateInput);
+app.use('/hakaseAI/api/chat', validateUserAgent, burstLimiter, globalLimiter, dailyLimiter, validateInput);
 
 // ルートパスでindex.htmlを返す
 app.get('/', (req, res) => {

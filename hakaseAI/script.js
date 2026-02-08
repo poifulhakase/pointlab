@@ -466,10 +466,15 @@ async function callHakaseAPI(question) {
   // ユーザーの言語を検出
   const userLanguage = detectUserLanguage();
   
+  // ハニーポットフィールドの値を取得（ボット対策）
+  const hpField = document.getElementById('hpField');
+  const hpValue = hpField ? hpField.value : '';
+  
   const requestBody = {
     question_text: question,
     context: recentContext,
     language: userLanguage,
+    hp_field: hpValue, // ハニーポット値（正常なユーザーは空）
     preferences: {
       tone: 'hakase',
       focus: '節約・ポイント活用'
