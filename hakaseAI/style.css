@@ -620,6 +620,8 @@ body.dark-mode .message-bubble a:hover {
 
 .settings-modal__body {
   padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .settings-modal__item {

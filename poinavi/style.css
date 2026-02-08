@@ -1189,10 +1189,10 @@ body.dark-mode .loading-overlay {
 
 .settings-modal__label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
 }
 
 .settings-modal__select {
