@@ -2328,7 +2328,7 @@ body.dark-mode .translate-result-item--latest {
 .translate-result-item__original p,
 .translate-result-item__translated p {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
   line-height: 1.6;
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -2871,7 +2871,7 @@ body.dark-mode .translate-result-item__divider svg {
 
   .translate-result-item__original p,
   .translate-result-item__translated p {
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 
   .translate-camera-area {
