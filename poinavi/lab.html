@@ -149,24 +149,6 @@
         border-color: #ef4444;
       }
       
-      /* 注意書きエリア */
-      .lab-notice {
-        background: var(--bg-primary);
-        border-radius: 16px;
-        padding: 16px;
-        margin-top: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      }
-      
-      body.dark-mode .lab-notice {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      }
-      
-      .lab-notice__text {
-        font-size: 0.8125rem;
-        color: var(--text-secondary);
-        line-height: 1.6;
-      }
     </style>
   </head>
   <body>
@@ -230,6 +212,15 @@
             <button id="labResetButton" class="translate-modal__reset-btn">
               設定を初期化
             </button>
+          </div>
+          <!-- データソース情報 -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">データソース</div>
+            <div class="settings-modal__disclaimer-text" style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
+              <p>・天気/気温: Open-Meteo API</p>
+              <p>・移動時間: GPS位置情報</p>
+              <p>・歩数: Fitbit API（要連携）</p>
+            </div>
           </div>
         </div>
       </div>
@@ -332,14 +323,6 @@
         </button>
       </div>
 
-      <!-- 注意書き -->
-      <div class="lab-notice">
-        <div class="lab-notice__text">
-          ※ 天気・気温はOpen-Meteo APIから取得しています。<br>
-          ※ 移動時間はGPS位置情報から計測しています。<br>
-          ※ 歩数はFitbit連携後に表示されます。
-        </div>
-      </div>
     </main>
 
     <!-- フッター -->
