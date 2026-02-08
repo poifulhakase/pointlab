@@ -728,9 +728,8 @@ window.initGoogleMaps = function() {
 };
 
 // ============================================
-// イベント機能（ぽいナビマーカー・確認モーダル）
+// イベント機能（中央固定ぽいナビマーカー・確認モーダル）
 // ============================================
-let poinaviMarker = null;
 let eventPinEnabled = false;
 const EVENT_RATE_LIMIT_KEY = 'poinavi_event_rate';
 const EVENT_MAX_REQUESTS = 3;
@@ -769,6 +768,7 @@ function initEventFeature() {
 function toggleEventPin() {
   const toggle = document.getElementById('eventPinToggle');
   const status = document.getElementById('eventPinStatus');
+  const centerMarker = document.getElementById('poinaviCenterMarker');
   
   eventPinEnabled = !eventPinEnabled;
   
@@ -781,8 +781,24 @@ function toggleEventPin() {
     status.classList.toggle('hidden', !eventPinEnabled);
   }
   
+  if (centerMarker) {
+    centerMarker.classList.toggle('active', eventPinEnabled);
+  }
+  
+  // 中央マーカーのクリックイベントを設定
   if (eventPinEnabled) {
-    // ピンを表示（地図中心に配置）
+    setupCenterMarkerClick();
+  }
+}
+
+// 中央マーカーのクリックイベント設定
+function setupCenterMarkerClick() {
+  const centerBtn = document.getElementById('poinaviCenterBtn');
+  if (!centerBtn) return;
+  
+  // 既存のイベントを削除して再設定
+  centerBtn.onclick = function() {
+    // 現在の地図中心座標を取得
     let lat, lng;
     if (map && typeof map.getCenter === 'function') {
       const center = map.getCenter();
@@ -795,57 +811,10 @@ function toggleEventPin() {
       lat = 35.6812;
       lng = 139.7671;
     }
-    showDraggablePoinaviMarker(lat, lng);
-  } else {
-    // ピンを非表示
-    hidePoinaviMarker();
-  }
-}
-
-// ドラッグ可能なぽいナビマーカーを表示
-function showDraggablePoinaviMarker(lat, lng) {
-  if (!map) return;
-  
-  // 既存のマーカーを削除
-  hidePoinaviMarker();
-  
-  // カスタムマーカーを作成
-  const markerContent = document.createElement('div');
-  markerContent.className = 'poinavi-marker poinavi-marker--draggable';
-  markerContent.innerHTML = `
-    <div class="poinavi-marker__container">
-      <div class="poinavi-marker__pulse"></div>
-      <img src="./icon-192.png" alt="ぽいナビ" class="poinavi-marker__icon" />
-    </div>
-  `;
-  
-  // 従来のMarkerを使用（ドラッグ対応）
-  poinaviMarker = new google.maps.Marker({
-    map: map,
-    position: { lat, lng },
-    icon: {
-      url: './icon-192.png',
-      scaledSize: new google.maps.Size(48, 48),
-      anchor: new google.maps.Point(24, 24)
-    },
-    draggable: true,
-    zIndex: 9999
-  });
-  
-  // マーカークリックでモーダル表示
-  poinaviMarker.addListener('click', function() {
-    const pos = poinaviMarker.getPosition();
-    showEventConfirmModalAtPosition(pos.lat(), pos.lng());
-  });
-  
-  // ドラッグ終了時にモーダル表示
-  poinaviMarker.addListener('dragend', function() {
-    const pos = poinaviMarker.getPosition();
-    showEventConfirmModalAtPosition(pos.lat(), pos.lng());
-  });
-  
-  // 地図を中心に移動
-  map.panTo({ lat, lng });
+    
+    // モーダル表示
+    showEventConfirmModalAtPosition(lat, lng);
+  };
 }
 
 // 指定位置で確認モーダルを表示
@@ -875,16 +844,13 @@ function showEventConfirmModalAtPosition(lat, lng) {
   history.pushState({ modal: 'eventConfirm' }, '');
 }
 
-// 確認モーダルを非表示（マーカーは残す）
+// 確認モーダルを非表示
 function hideEventConfirmModal() {
   const modal = document.getElementById('eventConfirmModal');
   if (modal) {
     modal.classList.add('hidden');
   }
-  // イベントピンモードがOFFの場合のみマーカーを削除
-  if (!eventPinEnabled) {
-    hidePoinaviMarker();
-  }
+  // 中央固定マーカーは表示したまま（イベントモードがONの場合）
 }
 
 // イベント確認（OKボタン）
@@ -906,18 +872,6 @@ function handleEventConfirm() {
   
   // イベントページへ遷移
   window.location.href = `./event.html?lat=${lat}&lng=${lng}`;
-}
-
-// ぽいナビマーカーを非表示
-function hidePoinaviMarker() {
-  if (poinaviMarker) {
-    if (poinaviMarker.setMap) {
-      poinaviMarker.setMap(null);
-    } else if (poinaviMarker.map) {
-      poinaviMarker.map = null;
-    }
-    poinaviMarker = null;
-  }
 }
 
 // ============================================
@@ -943,16 +897,13 @@ function handleRotateNavClick() {
   
   // アクション実行
   if (currentItem.action === 'toggleEventPin') {
-    // イベントピンを表示（トグルをONにしてモーダル表示）
+    // イベントモードをONにする
     if (!eventPinEnabled) {
       toggleEventPin();
-    } else {
-      // 既にピンが表示されている場合はモーダルを表示
-      if (poinaviMarker) {
-        const pos = poinaviMarker.getPosition();
-        showEventConfirmModalAtPosition(pos.lat(), pos.lng());
-      }
     }
+    // 次のアイテムに回転（イベントモードON後）
+    rotateToNextNav();
+    return;
   } else if (currentItem.href) {
     window.location.href = currentItem.href;
     return;

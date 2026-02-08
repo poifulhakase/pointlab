@@ -4095,43 +4095,83 @@ body.dark-mode .translate-qr-btn {
 }
 
 /* ============================================
-   ぽいナビマーカー（地図上）
+   ぽいナビマーカー（画面中央固定）
    ============================================ */
-.poinavi-marker {
+.poinavi-center-marker {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  pointer-events: none;
+  display: none;
+}
+
+.poinavi-center-marker.active {
+  display: block;
+}
+
+.poinavi-center-marker__container {
+  width: 80px;
+  height: 80px;
+  position: relative;
   cursor: pointer;
+  pointer-events: auto;
   transition: transform 0.2s ease;
 }
 
-.poinavi-marker:hover {
-  transform: scale(1.1);
+.poinavi-center-marker__container:hover {
+  transform: scale(1.05);
 }
 
-.poinavi-marker__container {
-  width: 48px;
-  height: 48px;
-  position: relative;
+.poinavi-center-marker__container:active {
+  transform: scale(0.95);
 }
 
-.poinavi-marker__icon {
-  width: 48px;
-  height: 48px;
+.poinavi-center-marker__circle {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 3px solid white;
   background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.poinavi-marker__pulse {
+.poinavi-center-marker__icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.poinavi-center-marker__pulse {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 48px;
-  height: 48px;
-  margin: -24px 0 0 -24px;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
   border-radius: 50%;
-  background: rgba(76, 175, 80, 0.4);
+  background: rgba(76, 175, 80, 0.3);
   animation: pulsate 2s ease-out infinite;
   z-index: -1;
+}
+
+.poinavi-center-marker__hint {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 4px 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 @keyframes pulsate {
@@ -4140,41 +4180,15 @@ body.dark-mode .translate-qr-btn {
     opacity: 1;
   }
   100% {
-    transform: scale(2);
+    transform: scale(1.5);
     opacity: 0;
   }
 }
 
-/* イベントトグルボタンの画像アイコン */
-.layer-toggle__icon--img {
+/* イベントトグルボタンのカレンダーアイコン */
+.layer-toggle__icon--event {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
-  object-fit: cover;
-  pointer-events: auto;
-}
-
-/* イベントトグルがアクティブな時 */
-.layer-toggle.active .layer-toggle__icon--img {
-  box-shadow: 0 0 0 2px #4CAF50;
-}
-
-/* ドラッグ可能なぽいナビマーカー */
-.poinavi-marker--draggable {
-  cursor: grab;
-}
-
-.poinavi-marker--draggable:active {
-  cursor: grabbing;
-}
-
-.poinavi-marker--draggable .poinavi-marker__icon {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.poinavi-marker--draggable:hover .poinavi-marker__icon {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================

@@ -30,7 +30,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=100" />
+    <link rel="stylesheet" href="./style.css?v=101" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -255,6 +255,17 @@
       <div class="map-container">
         <div id="map" class="map"></div>
         
+        <!-- 中央固定ぽいナビマーカー（イベントモード時） -->
+        <div id="poinaviCenterMarker" class="poinavi-center-marker">
+          <div class="poinavi-center-marker__container" id="poinaviCenterBtn">
+            <div class="poinavi-center-marker__pulse"></div>
+            <div class="poinavi-center-marker__circle">
+              <img src="./icon-192.png" alt="ぽいナビ" class="poinavi-center-marker__icon" />
+            </div>
+            <span class="poinavi-center-marker__hint">タップで決定</span>
+          </div>
+        </div>
+        
         <!-- 路線ローディングオーバーレイ -->
         <div id="railwayLoadingOverlay" class="railway-loading-overlay hidden">
           <div class="railway-loading-overlay__content">
@@ -331,14 +342,19 @@
               class="layer-toggle" 
               type="button"
               aria-pressed="false"
-              aria-label="イベントピン切替"
+              aria-label="イベントモード切替"
             >
-              <img src="./icon-192.png" alt="" class="layer-toggle__icon layer-toggle__icon--img" />
+              <svg class="layer-toggle__icon layer-toggle__icon--event" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
               <span class="layer-toggle__text">イベント</span>
             </button>
             <!-- イベントON時のステータス -->
             <div id="eventPinStatus" class="layer-status layer-status--inline hidden">
-              <span class="layer-status__text">ピンをドラッグで移動</span>
+              <span class="layer-status__text">タップで位置を決定</span>
             </div>
           </div>
         </div>
@@ -461,6 +477,6 @@
       </button>
     </footer>
 
-    <script src="./script.js?v=81"></script>
+    <script src="./script.js?v=82"></script>
   </body>
 </html>
