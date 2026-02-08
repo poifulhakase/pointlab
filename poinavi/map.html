@@ -30,7 +30,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=121" />
+    <link rel="stylesheet" href="./style.css?v=122" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -266,16 +266,6 @@
       <div class="map-container">
         <div id="map" class="map"></div>
         
-        <!-- 中央固定ぽいナビマーカー（イベントモード時） -->
-        <div id="poinaviCenterMarker" class="poinavi-center-marker">
-          <div class="poinavi-center-marker__container" id="poinaviCenterBtn">
-            <div class="poinavi-center-marker__pulse"></div>
-            <div class="poinavi-center-marker__circle">
-              <img src="./icon-192.png" alt="ぽいナビ" class="poinavi-center-marker__icon" />
-            </div>
-            <span class="poinavi-center-marker__hint">タップで指定</span>
-          </div>
-        </div>
         
         <!-- 路線ローディングオーバーレイ -->
         <div id="railwayLoadingOverlay" class="railway-loading-overlay hidden">
@@ -346,28 +336,6 @@
             </div>
           </div>
           
-          <!-- イベントピントグル -->
-          <div class="layer-control__row">
-            <button 
-              id="eventPinToggle" 
-              class="layer-toggle" 
-              type="button"
-              aria-pressed="false"
-              aria-label="イベントモード切替"
-            >
-              <svg class="layer-toggle__icon layer-toggle__icon--event" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <span class="layer-toggle__text">イベント</span>
-            </button>
-            <!-- イベントON時のステータス -->
-            <div id="eventPinStatus" class="layer-status layer-status--inline hidden">
-              <span class="layer-status__text">ぽいナビをタップで位置を指定</span>
-            </div>
-          </div>
         </div>
         
         
@@ -411,35 +379,6 @@
       </div>
     </div>
 
-    <!-- イベント確認モーダル -->
-    <div id="eventConfirmModal" class="event-confirm-modal hidden">
-      <div class="event-confirm-modal__overlay"></div>
-      <div class="event-confirm-modal__content">
-        <div class="event-confirm-modal__icon">
-          <img src="./icon-192.png" alt="ぽいナビ" class="event-confirm-modal__logo" />
-        </div>
-        <h2 class="event-confirm-modal__title">イベント情報を取得</h2>
-        <p class="event-confirm-modal__text">
-          半径8kmのイベント情報を取得します。<br>
-          この位置でよろしいですか？
-        </p>
-        <div class="event-confirm-modal__location" id="confirmLocation">
-          位置情報を取得中...
-        </div>
-        <div class="event-confirm-modal__buttons">
-          <button type="button" class="event-confirm-modal__btn event-confirm-modal__btn--cancel" id="eventConfirmCancel">
-            キャンセル
-          </button>
-          <button type="button" class="event-confirm-modal__btn event-confirm-modal__btn--confirm" id="eventConfirmOk">
-            はい
-          </button>
-        </div>
-        <p class="event-confirm-modal__note">
-          ※ 1時間に3回まで、5分間隔でご利用いただけます
-        </p>
-      </div>
-    </div>
-
     <!-- フッター -->
     <footer class="translate-footer">
       <a href="./index.html?from=nav" class="translate-footer__btn" aria-label="メモページへ">
@@ -471,17 +410,8 @@
         </svg>
         <span class="translate-footer__label">マップ</span>
       </span>
-      <a href="./event.html" class="translate-footer__btn" aria-label="イベントページへ">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        <span class="translate-footer__label">イベント</span>
-      </a>
     </footer>
 
-    <script src="./script.js?v=89"></script>
+    <script src="./script.js?v=90"></script>
   </body>
 </html>
