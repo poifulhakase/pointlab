@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>開発者用 - アナリティクス除外設定</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 0.875rem;
+      margin-bottom: 24px;
+    }
+    .status {
+      background: #0f3460;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .status-label {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .status-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .status-value.excluded {
+      color: #4ade80;
+    }
+    .status-value.tracking {
+      color: #f87171;
+    }
+    .btn {
+      width: 100%;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .btn-exclude {
+      background: #4ade80;
+      color: #000;
+    }
+    .btn-exclude:hover {
+      background: #22c55e;
+    }
+    .btn-include {
+      background: #374151;
+      color: #fff;
+    }
+    .btn-include:hover {
+      background: #4b5563;
+    }
+    .note {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4ade80;
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 開発者設定</h1>
+    <p class="subtitle">Google アナリティクス除外</p>
+    
+    <div class="status">
+      <p class="status-label">現在の状態</p>
+      <p class="status-value" id="statusValue">確認中...</p>
+    </div>
+    
+    <button class="btn btn-exclude" id="excludeBtn" onclick="setExclude(true)">
+      ✓ このブラウザを除外する
+    </button>
+    
+    <button class="btn btn-include" id="includeBtn" onclick="setExclude(false)">
+      除外を解除する
+    </button>
+    
+    <p class="note">
+      ※ この設定はこのブラウザのみに適用されます<br>
+      ※ キャッシュ削除で設定がリセットされます<br>
+      ※ PC・スマホそれぞれで設定してください
+    </p>
+  </div>
+  
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function updateStatus() {
+      const isExcluded = localStorage.getItem('excludeFromAnalytics') === 'true';
+      const statusEl = document.getElementById('statusValue');
+      
+      if (isExcluded) {
+        statusEl.textContent = '✓ 除外中';
+        statusEl.className = 'status-value excluded';
+      } else {
+        statusEl.textContent = '計測対象';
+        statusEl.className = 'status-value tracking';
+      }
+    }
+    
+    function setExclude(exclude) {
+      if (exclude) {
+        localStorage.setItem('excludeFromAnalytics', 'true');
+        showToast('除外設定を保存しました！');
+      } else {
+        localStorage.removeItem('excludeFromAnalytics');
+        showToast('除外を解除しました');
+      }
+      updateStatus();
+    }
+    
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    
+    // 初期化
+    updateStatus();
+  </script>
+</body>
+</html>
