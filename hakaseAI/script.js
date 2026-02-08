@@ -138,6 +138,42 @@ function detectUserLanguage() {
 }
 
 // ========================================
+// マガジン一覧データ
+// ========================================
+const MAGAZINES = [
+  {
+    id: 'rashimban',
+    name: 'らしんばん',
+    image: 'Compass_for_Living_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m0ae72a491f29'
+  },
+  {
+    id: 'future-gadget',
+    name: '未来ガジェット',
+    image: 'Future_Gadget_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m43ef12ef0cf0'
+  },
+  {
+    id: 'side-biz',
+    name: '副業',
+    image: 'Unusual_Side_Biz_Encyclopedia_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m28b2ad9a31eb'
+  },
+  {
+    id: 'poikatsu',
+    name: 'ポイ活3分レシピ',
+    image: 'Poikatsu_3min_Recipe_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/mf7a8dd8df498'
+  },
+  {
+    id: 'tax',
+    name: '個人事業主の節税',
+    image: 'Sole_Proprietor_Tax_Limits_Top_thumb.jpg',
+    url: 'https://note.com/pointlab/m/m3a498b36a498'
+  }
+];
+
+// ========================================
 // 初期メッセージ表示
 // ========================================
 function showInitialMessage(animate = true) {
@@ -168,6 +204,13 @@ function showInitialMessage(animate = true) {
     // タイピングアニメーション
     const textElement = messageWrapper.querySelector('.typing-text');
     typeText(textElement, initialText);
+    
+    // アニメーション完了後にマガジン一覧を表示
+    const textLength = initialText.length;
+    const animationTime = textLength * 70 + 500; // タイピング時間 + 余裕
+    setTimeout(() => {
+      showMagazineList();
+    }, animationTime);
   } else {
     messageWrapper.innerHTML = `
       <div class="avatar">
@@ -181,7 +224,37 @@ function showInitialMessage(animate = true) {
       </div>
     `;
     chatContainer.appendChild(messageWrapper);
+    
+    // マガジン一覧を表示
+    showMagazineList();
   }
+}
+
+// ========================================
+// マガジン一覧表示
+// ========================================
+function showMagazineList() {
+  const userLang = detectUserLanguage();
+  const title = userLang === 'en' ? '📚 Magazines' : '📚 マガジン一覧';
+  
+  const magazineWrapper = document.createElement('div');
+  magazineWrapper.className = 'magazine-list-wrapper';
+  magazineWrapper.innerHTML = `
+    <div class="magazine-list">
+      <p class="magazine-list__title">${title}</p>
+      <div class="magazine-list__grid">
+        ${MAGAZINES.map(mag => `
+          <a href="${mag.url}" target="_blank" rel="noopener noreferrer" class="magazine-item">
+            <img src="${mag.image}" alt="${mag.name}" class="magazine-item__image" loading="lazy">
+            <span class="magazine-item__name">${mag.name}</span>
+          </a>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  
+  chatContainer.appendChild(magazineWrapper);
+  scrollToBottom();
 }
 
 // ========================================

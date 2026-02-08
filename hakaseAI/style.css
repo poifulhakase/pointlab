@@ -895,3 +895,103 @@ body.dark-mode .note-banner__link {
 body.dark-mode .chat-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ========================================
+   マガジン一覧
+   ======================================== */
+.magazine-list-wrapper {
+  padding: 8px 16px 16px;
+}
+
+.magazine-list {
+  background-color: var(--hakase-bubble);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.magazine-list__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.magazine-list__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.magazine-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background-color: var(--chat-bg);
+  width: calc(33.333% - 8px);
+  min-width: 70px;
+  max-width: 90px;
+}
+
+.magazine-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.magazine-item:active {
+  transform: scale(0.98);
+}
+
+.magazine-item__image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  pointer-events: auto;
+}
+
+.magazine-item__name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+
+/* ダークモード */
+body.dark-mode .magazine-list {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .magazine-item {
+  background-color: #3d3d3d;
+}
+
+body.dark-mode .magazine-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* スマホ対応 */
+@media (max-width: 400px) {
+  .magazine-list__grid {
+    gap: 8px;
+  }
+  
+  .magazine-item {
+    padding: 6px;
+    min-width: 60px;
+    max-width: 80px;
+  }
+  
+  .magazine-item__name {
+    font-size: 10px;
+  }
+}
