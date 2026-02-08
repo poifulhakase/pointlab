@@ -870,6 +870,9 @@ function handleEventConfirm() {
   // レート制限を記録
   recordEventRequest();
   
+  // イベント位置を保存（次回から直接遷移できるように）
+  saveEventLocation(lat, lng);
+  
   // イベントページへ遷移
   window.location.href = `./event.html?lat=${lat}&lng=${lng}`;
 }
@@ -878,10 +881,11 @@ function handleEventConfirm() {
 // 回転式ナビボタン
 // ============================================
 const ROTATE_NAV_ITEMS = [
-  { id: 'event', label: 'イベント', action: 'toggleEventPin' },
+  { id: 'event', label: 'イベント', action: 'handleEventNav' },
   { id: 'memo', label: 'メモ', href: './index.html?from=nav' }
 ];
 let currentRotateNavIndex = 0;
+const LAST_EVENT_LOCATION_KEY = 'poinavi_last_event_location';
 
 function initRotateNav() {
   const rotateBtn = document.getElementById('rotateNavBtn');
@@ -896,13 +900,8 @@ function handleRotateNavClick() {
   const currentItem = ROTATE_NAV_ITEMS[currentRotateNavIndex];
   
   // アクション実行
-  if (currentItem.action === 'toggleEventPin') {
-    // イベントモードをONにする
-    if (!eventPinEnabled) {
-      toggleEventPin();
-    }
-    // 次のアイテムに回転（イベントモードON後）
-    rotateToNextNav();
+  if (currentItem.action === 'handleEventNav') {
+    handleEventNav();
     return;
   } else if (currentItem.href) {
     window.location.href = currentItem.href;
@@ -911,6 +910,30 @@ function handleRotateNavClick() {
   
   // 次のアイテムに回転
   rotateToNextNav();
+}
+
+// イベントナビの処理
+function handleEventNav() {
+  // 前回のイベント位置情報があるか確認
+  const lastLocation = localStorage.getItem(LAST_EVENT_LOCATION_KEY);
+  
+  if (lastLocation) {
+    // 前回の位置がある場合 → 直接イベントページへ遷移
+    const { lat, lng } = JSON.parse(lastLocation);
+    window.location.href = `./event.html?lat=${lat}&lng=${lng}`;
+  } else {
+    // 初回の場合 → イベントモードをONにする
+    if (!eventPinEnabled) {
+      toggleEventPin();
+    }
+    // 次のアイテムに回転
+    rotateToNextNav();
+  }
+}
+
+// イベント位置を保存
+function saveEventLocation(lat, lng) {
+  localStorage.setItem(LAST_EVENT_LOCATION_KEY, JSON.stringify({ lat, lng }));
 }
 
 function rotateToNextNav() {
