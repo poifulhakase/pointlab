@@ -1076,16 +1076,16 @@ function requestUserLocation() {
   fetchUserLocation(null);
 }
 
-function fetchUserLocation(safetyTimeout) {
+function fetchUserLocation(safetyTimeout, isRetry = false) {
   if (navigator.geolocation) {
-    // タイムアウト設定（10秒）
+    // PC版は位置情報取得に時間がかかる場合があるのでタイムアウトを長めに設定
     const geolocationOptions = {
-      enableHighAccuracy: false, // 高精度モードをオフにして高速化
-      timeout: 10000, // 10秒でタイムアウト
+      enableHighAccuracy: isRetry, // 再試行時は高精度モードを試す
+      timeout: isRetry ? 30000 : 15000, // 初回15秒、再試行時30秒
       maximumAge: 300000 // 5分以内のキャッシュを使用
     };
     
-    console.log("位置情報を取得中...");
+    console.log("位置情報を取得中..." + (isRetry ? "（高精度モードで再試行）" : ""));
     
     navigator.geolocation.getCurrentPosition(
       function (position) {
@@ -1111,8 +1111,6 @@ function fetchUserLocation(safetyTimeout) {
         }
       },
       function (error) {
-        if (safetyTimeout) clearTimeout(safetyTimeout);
-        
         console.warn("位置情報の取得に失敗しました:", error);
         // エラーコードに応じたメッセージ
         let errorMessage = "位置情報を取得できませんでした";
@@ -1128,13 +1126,62 @@ function fetchUserLocation(safetyTimeout) {
             break;
         }
         console.warn(errorMessage);
+        
+        // 初回失敗時は高精度モードで再試行
+        if (!isRetry && error.code !== error.PERMISSION_DENIED) {
+          console.log("高精度モードで再試行します...");
+          fetchUserLocation(safetyTimeout, true);
+          return;
+        }
+        
+        // 再試行も失敗した場合、IPベースの位置情報を試す
+        if (safetyTimeout) clearTimeout(safetyTimeout);
+        tryIpBasedLocation();
       },
       geolocationOptions
     );
   } else {
     if (safetyTimeout) clearTimeout(safetyTimeout);
     console.warn("このブラウザは位置情報をサポートしていません");
+    // IPベースの位置情報を試す
+    tryIpBasedLocation();
   }
+}
+
+// IPアドレスベースの位置情報取得（フォールバック）
+function tryIpBasedLocation() {
+  console.log("IPベースの位置情報を試行中...");
+  
+  // 無料のIP位置情報API（ip-api.com）を使用
+  fetch('https://ipapi.co/json/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.latitude && data.longitude) {
+        console.log("IPベースの位置情報取得成功");
+        const lat = data.latitude;
+        const lng = data.longitude;
+        
+        // セッションストレージにキャッシュ（IPベースは精度が低いのでフラグ付き）
+        const cacheData = {
+          lat: lat,
+          lng: lng,
+          timestamp: Date.now(),
+          isIpBased: true
+        };
+        sessionStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(cacheData));
+        
+        try {
+          applyUserLocation(lat, lng);
+        } catch (e) {
+          console.error("位置情報の適用に失敗:", e);
+        }
+      } else {
+        console.warn("IPベースの位置情報取得に失敗しました");
+      }
+    })
+    .catch(error => {
+      console.warn("IPベースの位置情報取得エラー:", error);
+    });
 }
 
 function applyUserLocation(lat, lng) {
