@@ -47,6 +47,17 @@
       /* FOUC対策: 初期背景色 */
       html.light-mode { background-color: #f5f5f7; }
       html.dark-mode { background-color: #1a1a1a; }
+      
+      /* PC版で地図ページのみ横幅全画面 */
+      @media (min-width: 501px) {
+        body {
+          max-width: 100% !important;
+          box-shadow: none !important;
+        }
+        html, html.dark-mode {
+          background-color: transparent;
+        }
+      }
     </style>
     <!-- Google Maps API -->
     <script
