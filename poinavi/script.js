@@ -4135,8 +4135,8 @@ function showToiletInfoWindow(position, tags) {
           align-items: center;
           gap: 4px;
           padding: 8px 12px;
-          background-color: ${isDarkMode ? '#374151' : '#f3f4f6'};
-          color: ${textColor};
+          background-color: ${isDarkMode ? '#4b5563' : '#f3f4f6'};
+          color: ${isDarkMode ? '#ffffff' : textColor};
           border: none;
           border-radius: 8px;
           font-size: 12px;
@@ -4156,7 +4156,7 @@ function showToiletInfoWindow(position, tags) {
           align-items: center;
           gap: 4px;
           padding: 8px 12px;
-          background-color: #4CAF50;
+          background-color: ${isDarkMode ? '#10b981' : '#4CAF50'};
           color: #ffffff;
           border: none;
           border-radius: 8px;
