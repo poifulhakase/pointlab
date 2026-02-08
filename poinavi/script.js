@@ -743,6 +743,9 @@ function initEventFeature() {
     eventPinToggle.addEventListener('click', toggleEventPin);
   }
   
+  // 回転式ナビボタン
+  initRotateNav();
+  
   // 確認モーダルのボタン
   const confirmModal = document.getElementById('eventConfirmModal');
   const confirmOk = document.getElementById('eventConfirmOk');
@@ -915,6 +918,80 @@ function hidePoinaviMarker() {
     }
     poinaviMarker = null;
   }
+}
+
+// ============================================
+// 回転式ナビボタン
+// ============================================
+const ROTATE_NAV_ITEMS = [
+  { id: 'event', label: 'イベント', action: 'toggleEventPin' },
+  { id: 'memo', label: 'メモ', href: './index.html?from=nav' }
+];
+let currentRotateNavIndex = 0;
+
+function initRotateNav() {
+  const rotateBtn = document.getElementById('rotateNavBtn');
+  if (!rotateBtn) return;
+  
+  rotateBtn.addEventListener('click', handleRotateNavClick);
+}
+
+function handleRotateNavClick() {
+  const btn = document.getElementById('rotateNavBtn');
+  const label = document.getElementById('rotateNavLabel');
+  const currentItem = ROTATE_NAV_ITEMS[currentRotateNavIndex];
+  
+  // アクション実行
+  if (currentItem.action === 'toggleEventPin') {
+    // イベントピンを表示（トグルをONにしてモーダル表示）
+    if (!eventPinEnabled) {
+      toggleEventPin();
+    } else {
+      // 既にピンが表示されている場合はモーダルを表示
+      if (poinaviMarker) {
+        const pos = poinaviMarker.getPosition();
+        showEventConfirmModalAtPosition(pos.lat(), pos.lng());
+      }
+    }
+  } else if (currentItem.href) {
+    window.location.href = currentItem.href;
+    return;
+  }
+  
+  // 次のアイテムに回転
+  rotateToNextNav();
+}
+
+function rotateToNextNav() {
+  const btn = document.getElementById('rotateNavBtn');
+  const label = document.getElementById('rotateNavLabel');
+  
+  if (!btn || !label) return;
+  
+  const currentIcon = btn.querySelector('.rotate-nav-icon.active');
+  const nextIndex = (currentRotateNavIndex + 1) % ROTATE_NAV_ITEMS.length;
+  const nextItem = ROTATE_NAV_ITEMS[nextIndex];
+  const nextIcon = btn.querySelector(`.rotate-nav-icon--${nextItem.id}`);
+  
+  if (!currentIcon || !nextIcon) return;
+  
+  // アニメーション開始
+  btn.classList.add('rotating');
+  nextIcon.classList.add('next');
+  
+  setTimeout(() => {
+    // クラス切り替え
+    currentIcon.classList.remove('active');
+    nextIcon.classList.remove('next');
+    nextIcon.classList.add('active');
+    btn.classList.remove('rotating');
+    
+    // ラベル更新
+    label.textContent = nextItem.label;
+    
+    // インデックス更新
+    currentRotateNavIndex = nextIndex;
+  }, 300);
 }
 
 // イベントレート制限チェック
