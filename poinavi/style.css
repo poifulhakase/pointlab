@@ -2440,23 +2440,23 @@ body.dark-mode .translate-result-item--latest {
 
 /* リセットボタン */
 .translate-reset-btn {
-  border-color: #dc3545;
-  color: #dc3545;
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
+  border-color: #FECAC9;
+  color: #E8A5A3;
+  box-shadow: 0 2px 8px rgba(254, 202, 201, 0.3);
 }
 
 @media (hover: hover) {
   .translate-reset-btn:hover {
-    border-color: #dc3545;
-    background-color: #dc3545;
-    color: #ffffff;
+    border-color: #FECAC9;
+    background-color: #FECAC9;
+    color: #333;
   }
 }
 
 .translate-reset-btn.active {
-  border-color: #dc3545;
-  background-color: #dc3545;
-  color: #ffffff;
+  border-color: #FECAC9;
+  background-color: #FECAC9;
+  color: #333;
 }
 
 /* 翻訳ページ モーダル */
@@ -2797,7 +2797,15 @@ body.dark-mode .translate-camera-btn {
 }
 
 body.dark-mode .translate-reset-btn {
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+  border-color: #FECAC9;
+  color: #FECAC9;
+  box-shadow: 0 2px 8px rgba(254, 202, 201, 0.3);
+}
+
+body.dark-mode .translate-reset-btn:hover,
+body.dark-mode .translate-reset-btn.active {
+  background-color: #FECAC9;
+  color: #333;
 }
 
 body.dark-mode .translate-result-item__icon svg {
