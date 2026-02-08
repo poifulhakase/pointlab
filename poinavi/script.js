@@ -3034,14 +3034,14 @@ function showInfoWindow(place, marker) {
         color: ${subTextColor};
         margin-bottom: 6px;
       ">
-        現在地からの距離 <span class="distance-value" style="font-size: 21px; color: ${isDarkMode ? '#5a9cff' : '#7A9FCC'} !important; font-weight: bold;">${distanceText}</span>
+        現在地からの距離 <span class="distance-value" style="font-size: 21px; color: #7A9FCC !important; font-weight: bold;">${distanceText}</span>
       </div>
       <div style="
         font-size: 14px;
         color: ${subTextColor};
         margin-bottom: 10px;
       ">
-        ${travelModeLabel} <span class="distance-value" style="font-size: 21px; color: ${isDarkMode ? '#5a9cff' : '#7A9FCC'} !important; font-weight: bold;">${travelTimeText}</span>
+        ${travelModeLabel} <span class="distance-value" style="font-size: 21px; color: #7A9FCC !important; font-weight: bold;">${travelTimeText}</span>
       </div>
       <div style="
         display: inline-block;

@@ -123,7 +123,7 @@ html.dark-mode body {
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --border-color: #404040;
-  --accent-color: #5a9cff;
+  --accent-color: #7A9FCC;
   --accent-hover: #7A9FCC;
 }
 
@@ -195,7 +195,7 @@ body.dark-mode .gm-style-iw .distance-value,
 body.dark-mode .gm-style-iw-d .distance-value,
 body.dark-mode .poinavi-infowindow .distance-value,
 body.dark-mode .distance-value {
-  color: #5a9cff !important;
+  color: #7A9FCC !important;
   font-weight: bold !important;
 }
 
@@ -210,7 +210,7 @@ body.dark-mode .gm-style-iw-c [class*="title"] {
 body.dark-mode .gm-style-iw a,
 body.dark-mode .gm-style-iw-d a,
 body.dark-mode [class*="gm-style-iw"] a {
-  color: #5a9cff !important;
+  color: #7A9FCC !important;
 }
 
 /* 閉じるボタン - 背景を透明に */
@@ -2834,8 +2834,8 @@ body.dark-mode .translate-header__logo {
 }
 
 body.dark-mode .translate-voice-btn {
-  background: linear-gradient(135deg, #5a9cff 0%, #4285f4 100%);
-  box-shadow: 0 4px 20px rgba(90, 156, 255, 0.4);
+  background: linear-gradient(135deg, #7A9FCC 0%, #6289B8 100%);
+  box-shadow: 0 4px 20px rgba(122, 159, 204, 0.4);
 }
 
 body.dark-mode .translate-voice-btn:hover {
@@ -2859,15 +2859,15 @@ body.dark-mode .translate-reset-btn.active {
 }
 
 body.dark-mode .translate-result-item__icon svg {
-  stroke: #5a9cff;
+  stroke: #7A9FCC;
 }
 
 body.dark-mode .translate-result-item__label {
-  color: #5a9cff;
+  color: #7A9FCC;
 }
 
 body.dark-mode .translate-result-item__divider svg {
-  stroke: #5a9cff;
+  stroke: #7A9FCC;
 }
 
 /* 翻訳ページ レスポンシブ対応 */
