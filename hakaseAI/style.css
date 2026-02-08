@@ -943,10 +943,12 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 .magazine-banner__image {
   width: 100%;
   height: auto;
+  max-height: none;
   display: block;
   border-radius: 8px;
   pointer-events: auto !important;
   cursor: pointer;
+  object-fit: contain;
 }
 
 /* ========================================
