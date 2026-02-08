@@ -243,31 +243,29 @@ function findMatchingMagazine(responseText) {
   return null;
 }
 
-// マッチしたマガジンを博士のメッセージ末尾に表示
-function showRelatedMagazine(responseText) {
+// 博士の吹き出し内にマガジンバナーを追加
+function addMagazineBannerToBubble(container, responseText) {
   const matchedMagazine = findMatchingMagazine(responseText);
   
   // マッチするマガジンがない場合は何も表示しない
-  if (!matchedMagazine) return;
+  if (!matchedMagazine) {
+    container.remove();
+    return;
+  }
   
   const userLang = detectUserLanguage();
   const title = userLang === 'en' ? '📚 Related Magazine' : '📚 関連マガジン';
   
-  const magazineWrapper = document.createElement('div');
-  magazineWrapper.className = 'magazine-list-wrapper';
-  magazineWrapper.innerHTML = `
-    <div class="magazine-list">
-      <p class="magazine-list__title">${title}</p>
-      <div class="magazine-list__grid magazine-list__grid--single">
-        <a href="${matchedMagazine.url}" target="_blank" rel="noopener noreferrer" class="magazine-item">
-          <img src="${matchedMagazine.image}" alt="${matchedMagazine.name}" class="magazine-item__image" loading="lazy">
-          <span class="magazine-item__name">${matchedMagazine.name}</span>
-        </a>
-      </div>
+  container.innerHTML = `
+    <div class="magazine-banner">
+      <p class="magazine-banner__title">${title}</p>
+      <a href="${matchedMagazine.url}" target="_blank" rel="noopener noreferrer" class="magazine-banner__link">
+        <img src="${matchedMagazine.image}" alt="${matchedMagazine.name}" class="magazine-banner__image" loading="lazy">
+        <span class="magazine-banner__name">${matchedMagazine.name}</span>
+      </a>
     </div>
   `;
   
-  chatContainer.appendChild(magazineWrapper);
   scrollToBottom();
 }
 
@@ -390,8 +388,8 @@ async function sendMessage() {
     // ローディング削除
     removeLoading(loadingId);
     
-    // 博士の回答を表示
-    addMessage(response, 'hakase');
+    // 博士の回答を表示（マガジンバナー表示フラグをtrue）
+    addMessage(response, 'hakase', false, true);
     
     // GA4イベント: 回答受信
     if (typeof gtag === 'function') {
@@ -414,13 +412,6 @@ async function sendMessage() {
     
     // 履歴を保存
     saveHistory();
-    
-    // タイピングアニメーション完了後に関連マガジンを表示
-    const responseLength = response.length;
-    const animationTime = Math.min(responseLength * 70, 5000) + 500; // 最大5秒 + 余裕
-    setTimeout(() => {
-      showRelatedMagazine(response);
-    }, animationTime);
     
   } catch (error) {
     console.error('API Error:', error);
@@ -548,7 +539,7 @@ function addDateSeparatorIfNeeded(date) {
 // ========================================
 // メッセージ表示
 // ========================================
-function addMessage(text, sender, isError = false) {
+function addMessage(text, sender, isError = false, showMagazine = false) {
   const now = new Date();
   
   // 日付区切りを追加（必要な場合のみ）
@@ -566,6 +557,7 @@ function addMessage(text, sender, isError = false) {
       <div class="message-group">
         <div class="message-bubble hakase-bubble${isError ? ' error-bubble' : ''}">
           <p class="typing-text"></p>
+          <div class="magazine-banner-container"></div>
         </div>
         <span class="message-time">${time}</span>
       </div>
@@ -575,7 +567,8 @@ function addMessage(text, sender, isError = false) {
     
     // タイピングアニメーション
     const textElement = messageWrapper.querySelector('.typing-text');
-    typeText(textElement, text);
+    const magazineContainer = messageWrapper.querySelector('.magazine-banner-container');
+    typeText(textElement, text, 70, showMagazine ? magazineContainer : null, showMagazine ? text : null);
   } else {
     messageWrapper.className = 'message-wrapper user-wrapper';
     messageWrapper.innerHTML = `
@@ -592,7 +585,7 @@ function addMessage(text, sender, isError = false) {
 }
 
 // タイピングアニメーション
-function typeText(element, text, speed = 70) {
+function typeText(element, text, speed = 70, magazineContainer = null, responseText = null) {
   const processedText = escapeHtml(text);
   let index = 0;
   
@@ -618,6 +611,11 @@ function typeText(element, text, speed = 70) {
       }
       scrollToBottom();
       setTimeout(type, speed);
+    } else {
+      // タイピング完了後にマガジンバナーを追加
+      if (magazineContainer && responseText) {
+        addMagazineBannerToBubble(magazineContainer, responseText);
+      }
     }
   }
   

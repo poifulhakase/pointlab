@@ -897,7 +897,70 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 }
 
 /* ========================================
-   マガジン一覧
+   吹き出し内マガジンバナー
+   ======================================== */
+.magazine-banner-container {
+  /* 空の場合は非表示 */
+}
+
+.magazine-banner-container:empty {
+  display: none;
+}
+
+.magazine-banner {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--header-border);
+}
+
+.magazine-banner__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.magazine-banner__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 10px;
+  background-color: var(--chat-bg);
+  transition: all 0.2s ease;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+.magazine-banner__link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.magazine-banner__link:active {
+  transform: scale(0.98);
+}
+
+.magazine-banner__image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+.magazine-banner__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* ========================================
+   マガジン一覧（旧・未使用）
    ======================================== */
 .magazine-list-wrapper {
   padding: 8px 16px 16px;
