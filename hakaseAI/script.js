@@ -165,8 +165,8 @@ const MAGAZINES = [
   },
   {
     id: 'side-biz',
-    name: '未来ガジェット 〜 ぽいふる博士の発明品',
-    image: 'Future_Gadget_Top_thumb.jpg',
+    name: '普通じゃない副業図鑑 〜 ぽいふる博士の見聞録',
+    image: 'Unusual_Side_Biz_Encyclopedia_Top_thumb.jpg',
     url: 'https://note.com/pointlab/m/m7be629812c81',
     keywords: ['副業', 'サイドビジネス', '稼ぐ', '収入', '起業', 'ビジネス', '独立', '在宅', 'リモート', '不労所得', 'お金', '金融']
   },
