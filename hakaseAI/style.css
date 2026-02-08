@@ -918,6 +918,7 @@ body.dark-mode .chat-container::-webkit-scrollbar-thumb {
 .magazine-banner {
   margin-top: 12px;
   padding-bottom: 4px;
+  width: 100%;
 }
 
 .magazine-banner__link {
