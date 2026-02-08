@@ -484,6 +484,10 @@ body.dark-mode .message-bubble a:hover {
   .input-wrapper {
     padding: 10px 8px 10px 16px;
   }
+
+  .note-banner {
+    height: 61px;
+  }
 }
 
 @media (max-width: 380px) {
@@ -795,6 +799,7 @@ body.dark-mode .settings-modal__reset-btn:hover {
   justify-content: center;
   align-items: center;
   position: relative;
+  height: 73px;
 }
 
 .note-banner__disclaimer {
