@@ -4074,14 +4074,36 @@ function showToiletInfoWindow(position, tags) {
   const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
   const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
   const accentColor = isDarkMode ? "#60A5FA" : "#3B82F6";
+  const subTextColor = isDarkMode ? "#9ca3af" : "#6b7280";
 
   // 情報を整形
   const name = tags.name || "公衆トイレ";
   const wheelchair = tags.wheelchair;
   const fee = tags.fee;
   const openingHours = tags.opening_hours;
+  
+  // 住所を構築
+  let address = "";
+  if (tags["addr:full"]) {
+    address = tags["addr:full"];
+  } else {
+    const addrParts = [];
+    if (tags["addr:province"] || tags["addr:state"]) addrParts.push(tags["addr:province"] || tags["addr:state"]);
+    if (tags["addr:city"]) addrParts.push(tags["addr:city"]);
+    if (tags["addr:district"] || tags["addr:suburb"]) addrParts.push(tags["addr:district"] || tags["addr:suburb"]);
+    if (tags["addr:quarter"] || tags["addr:neighbourhood"]) addrParts.push(tags["addr:quarter"] || tags["addr:neighbourhood"]);
+    if (tags["addr:block"]) addrParts.push(tags["addr:block"]);
+    if (tags["addr:street"]) addrParts.push(tags["addr:street"]);
+    if (tags["addr:housenumber"]) addrParts.push(tags["addr:housenumber"]);
+    address = addrParts.join("");
+  }
 
   let infoHtml = `<strong>${name}</strong>`;
+  
+  // 住所
+  if (address) {
+    infoHtml += `<br><span style="font-size: 11px; color: ${subTextColor};">📍 ${address}</span>`;
+  }
 
   // 車椅子対応
   if (wheelchair) {
@@ -4106,7 +4128,7 @@ function showToiletInfoWindow(position, tags) {
   }
 
   // ラボノート用テキスト
-  const plainContent = `${name}${wheelchair === "yes" ? " (バリアフリー対応)" : ""}${fee === "yes" ? " (有料)" : ""}`;
+  const plainContent = `${name}${address ? " " + address : ""}${wheelchair === "yes" ? " (バリアフリー対応)" : ""}${fee === "yes" ? " (有料)" : ""}`;
 
   const html = `
     <div style="
