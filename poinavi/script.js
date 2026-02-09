@@ -4064,44 +4064,88 @@ function displayToiletData(data) {
   console.log(`${toiletMarkers.length} 件のお手洗いを表示しました`);
 }
 
-// お手洗い情報ウィンドウを表示
-function showToiletInfoWindow(position, tags) {
-  if (!toiletInfoWindow) {
-    toiletInfoWindow = new google.maps.InfoWindow();
-  }
+// 住所キャッシュ（緯度経度をキーとして住所を保存）
+const toiletAddressCache = new Map();
 
+// Nominatimで逆ジオコーディング（住所取得）
+async function fetchAddressFromNominatim(lat, lng) {
+  const cacheKey = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  
+  // キャッシュがあれば返す
+  if (toiletAddressCache.has(cacheKey)) {
+    return toiletAddressCache.get(cacheKey);
+  }
+  
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=ja`,
+      {
+        headers: {
+          "User-Agent": "PoiNavi/1.0 (https://pointlab.vercel.app)"
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // 日本語住所を構築
+    let address = "";
+    if (data.address) {
+      const addr = data.address;
+      const parts = [];
+      // 都道府県
+      if (addr.province || addr.state) parts.push(addr.province || addr.state);
+      // 市区町村
+      if (addr.city || addr.town || addr.village || addr.municipality) {
+        parts.push(addr.city || addr.town || addr.village || addr.municipality);
+      }
+      // 区（東京23区など）
+      if (addr.suburb || addr.district || addr.city_district) {
+        parts.push(addr.suburb || addr.district || addr.city_district);
+      }
+      // 町名
+      if (addr.neighbourhood || addr.quarter) {
+        parts.push(addr.neighbourhood || addr.quarter);
+      }
+      // 番地
+      if (addr.house_number) parts.push(addr.house_number);
+      
+      address = parts.join("");
+    }
+    
+    // キャッシュに保存
+    toiletAddressCache.set(cacheKey, address);
+    return address;
+    
+  } catch (error) {
+    console.error("Nominatim逆ジオコーディングエラー:", error);
+    return "";
+  }
+}
+
+// お手洗い情報ウィンドウのHTMLを生成
+function generateToiletInfoWindowHtml(position, tags, address, isLoading = false) {
   const isDarkMode = document.body.classList.contains("dark-mode");
   const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
   const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
   const accentColor = isDarkMode ? "#60A5FA" : "#3B82F6";
   const subTextColor = isDarkMode ? "#9ca3af" : "#6b7280";
 
-  // 情報を整形
   const name = tags.name || "公衆トイレ";
   const wheelchair = tags.wheelchair;
   const fee = tags.fee;
   const openingHours = tags.opening_hours;
-  
-  // 住所を構築
-  let address = "";
-  if (tags["addr:full"]) {
-    address = tags["addr:full"];
-  } else {
-    const addrParts = [];
-    if (tags["addr:province"] || tags["addr:state"]) addrParts.push(tags["addr:province"] || tags["addr:state"]);
-    if (tags["addr:city"]) addrParts.push(tags["addr:city"]);
-    if (tags["addr:district"] || tags["addr:suburb"]) addrParts.push(tags["addr:district"] || tags["addr:suburb"]);
-    if (tags["addr:quarter"] || tags["addr:neighbourhood"]) addrParts.push(tags["addr:quarter"] || tags["addr:neighbourhood"]);
-    if (tags["addr:block"]) addrParts.push(tags["addr:block"]);
-    if (tags["addr:street"]) addrParts.push(tags["addr:street"]);
-    if (tags["addr:housenumber"]) addrParts.push(tags["addr:housenumber"]);
-    address = addrParts.join("");
-  }
 
   let infoHtml = `<strong>${name}</strong>`;
   
   // 住所
-  if (address) {
+  if (isLoading) {
+    infoHtml += `<br><span style="font-size: 11px; color: ${subTextColor};">📍 住所を取得中...</span>`;
+  } else if (address) {
     infoHtml += `<br><span style="font-size: 11px; color: ${subTextColor};">📍 ${address}</span>`;
   }
 
@@ -4130,7 +4174,7 @@ function showToiletInfoWindow(position, tags) {
   // ラボノート用テキスト
   const plainContent = `${name}${address ? " " + address : ""}${wheelchair === "yes" ? " (バリアフリー対応)" : ""}${fee === "yes" ? " (有料)" : ""}`;
 
-  const html = `
+  return `
     <div style="
       padding: 12px 16px;
       min-width: 160px;
@@ -4204,10 +4248,63 @@ function showToiletInfoWindow(position, tags) {
       </div>
     </div>
   `;
+}
 
-  toiletInfoWindow.setContent(html);
-  toiletInfoWindow.setPosition(position);
-  toiletInfoWindow.open(map);
+// お手洗い情報ウィンドウを表示
+async function showToiletInfoWindow(position, tags) {
+  if (!toiletInfoWindow) {
+    toiletInfoWindow = new google.maps.InfoWindow();
+  }
+
+  const lat = position.lat();
+  const lng = position.lng();
+  
+  // OSMタグから住所を取得（あれば）
+  let address = "";
+  if (tags["addr:full"]) {
+    address = tags["addr:full"];
+  } else {
+    const addrParts = [];
+    if (tags["addr:province"] || tags["addr:state"]) addrParts.push(tags["addr:province"] || tags["addr:state"]);
+    if (tags["addr:city"]) addrParts.push(tags["addr:city"]);
+    if (tags["addr:district"] || tags["addr:suburb"]) addrParts.push(tags["addr:district"] || tags["addr:suburb"]);
+    if (tags["addr:quarter"] || tags["addr:neighbourhood"]) addrParts.push(tags["addr:quarter"] || tags["addr:neighbourhood"]);
+    if (tags["addr:block"]) addrParts.push(tags["addr:block"]);
+    if (tags["addr:street"]) addrParts.push(tags["addr:street"]);
+    if (tags["addr:housenumber"]) addrParts.push(tags["addr:housenumber"]);
+    address = addrParts.join("");
+  }
+  
+  // キャッシュを確認
+  const cacheKey = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  const cachedAddress = toiletAddressCache.get(cacheKey);
+  
+  if (address) {
+    // OSMタグに住所がある場合はそのまま表示
+    const html = generateToiletInfoWindowHtml(position, tags, address, false);
+    toiletInfoWindow.setContent(html);
+    toiletInfoWindow.setPosition(position);
+    toiletInfoWindow.open(map);
+  } else if (cachedAddress !== undefined) {
+    // キャッシュがある場合（空文字含む）
+    const html = generateToiletInfoWindowHtml(position, tags, cachedAddress, false);
+    toiletInfoWindow.setContent(html);
+    toiletInfoWindow.setPosition(position);
+    toiletInfoWindow.open(map);
+  } else {
+    // ローディング表示してから住所を取得
+    const loadingHtml = generateToiletInfoWindowHtml(position, tags, "", true);
+    toiletInfoWindow.setContent(loadingHtml);
+    toiletInfoWindow.setPosition(position);
+    toiletInfoWindow.open(map);
+    
+    // Nominatimから住所を取得
+    const fetchedAddress = await fetchAddressFromNominatim(lat, lng);
+    
+    // 住所取得後にInfoWindowを更新（まだ開いている場合）
+    const updatedHtml = generateToiletInfoWindowHtml(position, tags, fetchedAddress, false);
+    toiletInfoWindow.setContent(updatedHtml);
+  }
 }
 
 // お手洗いをGoogleマップで開く（経路案内）
