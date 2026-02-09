@@ -385,6 +385,8 @@ function initSettingsToggle() {
 // ============================================
 function initThemeToggle() {
   const themeToggle = document.getElementById("themeToggle");
+  if (!themeToggle) return; // 要素が存在しない場合は早期リターン
+  
   const themeIcon = themeToggle.querySelector(".theme-icon");
   const themeText = themeToggle.querySelector(".theme-text");
 
@@ -392,11 +394,11 @@ function initThemeToggle() {
   const savedTheme = localStorage.getItem("poinavi_theme") || "light";
   if (savedTheme === "dark") {
     document.body.classList.add("dark-mode");
-    themeIcon.textContent = "🌙";
-    themeText.textContent = "ダークモード";
+    if (themeIcon) themeIcon.textContent = "🌙";
+    if (themeText) themeText.textContent = "ダークモード";
   } else {
-    themeIcon.textContent = "☀️";
-    themeText.textContent = "ライトモード";
+    if (themeIcon) themeIcon.textContent = "☀️";
+    if (themeText) themeText.textContent = "ライトモード";
   }
 
   themeToggle.addEventListener("click", function () {
@@ -4175,7 +4177,7 @@ function showToiletInfoWindow(position, tags) {
             <line x1="12" y1="18" x2="12" y2="12"></line>
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          ラボノート
+          ラボノートに追加
         </button>
       </div>
     </div>

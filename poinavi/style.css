@@ -171,8 +171,8 @@ body.dark-mode .gm-style-iw-d > div:first-child {
 }
 
 /* InfoWindow内のボタン（メモに追加ボタン以外） */
-body.dark-mode .gm-style-iw button:not([onclick*="addPlaceToMemo"]):not([onclick*="addRailwayToMemo"]),
-body.dark-mode .gm-style-iw-c button:not([onclick*="addPlaceToMemo"]):not([onclick*="addRailwayToMemo"]) {
+body.dark-mode .gm-style-iw button:not([onclick*="addPlaceToMemo"]):not([onclick*="addRailwayToMemo"]):not([onclick*="addToiletToMemo"]),
+body.dark-mode .gm-style-iw-c button:not([onclick*="addPlaceToMemo"]):not([onclick*="addRailwayToMemo"]):not([onclick*="addToiletToMemo"]) {
   background-color: #2d2d2d !important;
   background: #2d2d2d !important;
 }
