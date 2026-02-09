@@ -154,8 +154,9 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 12px;
+        gap: 8px;
         z-index: 10;
+        padding: 8px;
       }
       
       .lab-activity-overlay.hidden {
@@ -163,22 +164,22 @@
       }
       
       .lab-activity-overlay__text {
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         color: #ffffff;
         text-align: center;
-        line-height: 1.5;
+        line-height: 1.4;
       }
       
       .lab-activity-overlay__btn {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
+        gap: 6px;
+        padding: 8px 16px;
         background: #00B0B9;
         color: #ffffff;
         border: none;
-        border-radius: 10px;
-        font-size: 0.875rem;
+        border-radius: 8px;
+        font-size: 0.8125rem;
         font-weight: 600;
         cursor: pointer;
         transition: background-color 0.2s, transform 0.1s;
@@ -412,7 +413,7 @@
         </div>
         <!-- オーバーレイ（未連携時に表示） -->
         <div class="lab-activity-overlay" id="fitbitOverlay">
-          <div class="lab-activity-overlay__text">Fitbitと連携して<br>歩数を自動取得</div>
+          <div class="lab-activity-overlay__text">Fitbitと連携して歩数を自動取得</div>
           <button class="lab-activity-overlay__btn" id="fitbitConnectBtn">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.5 5.5c0 .828-.56 1.5-1.25 1.5S10 6.328 10 5.5 10.56 4 11.25 4s1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5S10 10.328 10 9.5 10.56 8 11.25 8s1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5s-1.25-.672-1.25-1.5.56-1.5 1.25-1.5 1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5s-1.25-.672-1.25-1.5.56-1.5 1.25-1.5 1.25.672 1.25 1.5zm3-10c0 .828-.56 1.5-1.25 1.5S13 8.328 13 7.5 13.56 6 14.25 6s1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5s-1.25-.672-1.25-1.5.56-1.5 1.25-1.5 1.25.672 1.25 1.5zm-6 0c0 .828-.56 1.5-1.25 1.5S7 12.328 7 11.5 7.56 10 8.25 10s1.25.672 1.25 1.5zm0-4c0 .828-.56 1.5-1.25 1.5S7 8.328 7 7.5 7.56 6 8.25 6s1.25.672 1.25 1.5z"/>
