@@ -2746,17 +2746,7 @@ body.dark-mode .translate-result-item--latest {
   background: transparent;
 }
 
-.translate-footer__btn--active::before {
-  content: '';
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: var(--accent-color);
-  border-radius: 50%;
-}
+/* アクティブ状態の青い点は削除 */
 
 .translate-footer__btn--active:hover {
   background: transparent;
