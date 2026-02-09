@@ -227,6 +227,19 @@
         color: #ef4444;
         border-color: #ef4444;
       }
+
+      /* キャラクター表示エリア */
+      .lab-character {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100px;
+      }
+      .lab-character__img {
+        width: 250px;
+        height: auto;
+      }
       
     </style>
   </head>
@@ -431,6 +444,11 @@
           </svg>
           Fitbit連携を解除
         </button>
+      </div>
+
+      <!-- キャラクター表示エリア -->
+      <div class="lab-character">
+        <img src="./hakase.png" alt="ぽいふる博士" class="lab-character__img" />
       </div>
 
     </main>
