@@ -2,101 +2,95 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>プロフィール | 個人事業主向けWebサイト制作 | ○○○</title>
-    <meta
-      name="description"
-      content="制作者のプロフィールとこれまでの経歴、仕事のスタンスをご紹介します。個人事業主に寄りそった無理のないWeb活用を大切にしています。"
-    />
-    <link rel="stylesheet" href="./style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>プロフィール｜ぽいんとらぼ</title>
+    <meta name="description" content="制作者のプロフィールとこれまでの経歴、仕事のスタンスをご紹介します。" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <p class="site-title">ぽいんとらぼ</p>
-        <p class="site-subtitle">
-          個人事業主のための「伝わるWebサイト」と情報発信の土台づくり
-        </p>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a href="./index.html" class="site-logo">ぽいんとらぼ</a>
         <nav>
           <ul class="nav-list">
-            <li><a href="./index.html">トップ</a></li>
+            <li><a href="./index.html">記事</a></li>
             <li><a href="./service.html">事業内容</a></li>
             <li><a href="./profile.html">プロフィール</a></li>
             <li><a href="./works.html">実績・活動</a></li>
             <li><a href="./contact.html">お問い合わせ</a></li>
           </ul>
         </nav>
-      </header>
+      </div>
+    </header>
 
-      <main>
-        <h1>プロフィール</h1>
+    <div class="layout-main">
+      <main class="layout-content">
+        <div class="page-content">
+          <h1>プロフィール</h1>
 
-        <section class="section section--accent">
-          <h2>自己紹介</h2>
-          <p>
-            ぽいんとらぼ（屋号）として、個人事業主やフリーランスの方向けに小さなWebサイト制作と情報発信のサポートを行っています。
-          </p>
-          <p>
-            「難しい言葉や専門用語をなるべく減らし、<br />
-            一緒に手を動かしながら、少しずつ整えていく」ことを大切にしています。
-          </p>
-        </section>
+          <section class="section section--accent">
+            <h2>自己紹介</h2>
+            <p>ぽいんとらぼ（屋号）として、個人事業主やフリーランスの方向けに小さなWebサイト制作と情報発信のサポートを行っています。</p>
+            <p>「難しい言葉や専門用語をなるべく減らし、一緒に手を動かしながら、少しずつ整えていく」ことを大切にしています。</p>
+          </section>
 
-        <section class="section">
-          <h2>簡単な経歴</h2>
-          <ul>
-            <li>200X年〜：会社員としてWebディレクション・制作に従事</li>
-            <li>20XX年〜：フリーランスとして独立、個人事業主のサイト制作を中心に活動</li>
-            <li>現在：小さな事業の「らしさ」が伝わるWebサイトづくりをお手伝い</li>
-          </ul>
-          <p class="small-text">
-            ※上記はダミーの経歴です。実際の内容に差し替えてご利用ください。
-          </p>
-        </section>
+          <section class="section">
+            <h2>簡単な経歴</h2>
+            <ul>
+              <li>200X年〜：会社員としてWebディレクション・制作に従事</li>
+              <li>20XX年〜：フリーランスとして独立、個人事業主のサイト制作を中心に活動</li>
+              <li>現在：小さな事業の「らしさ」が伝わるWebサイトづくりをお手伝い</li>
+            </ul>
+            <p class="small-text">※上記はダミーの経歴です。実際の内容に差し替えてご利用ください。</p>
+          </section>
 
-        <section class="section">
-          <h2>仕事のスタンス</h2>
-          <h3>大切にしていること</h3>
-          <ul>
-            <li>
-              <strong>等身大の情報発信：</strong>
-              必要以上に盛らず、続けられる形で整えること
-            </li>
-            <li>
-              <strong>シンプルな構成：</strong>
-              「誰が見ても大まかなことが分かる」を最優先にすること
-            </li>
-            <li>
-              <strong>無理のない運用：</strong>
-              毎日更新ではなく、「最低限ここだけ触れればOK」というラインを一緒に決めること
-            </li>
-          </ul>
-
-          <h3>合いやすい方</h3>
-          <ul>
-            <li>自分のペースを大事にしながら、少しずつ整えていきたい方</li>
-            <li>派手さよりも「誠実さ」や「伝わりやすさ」を重視される方</li>
-            <li>長期的に事業を続けていく前提で、土台を整えたい方</li>
-          </ul>
-
-          <h3>あまり向いていないかもしれない方</h3>
-          <ul>
-            <li>短期間で大きな集客や売上アップを狙いたい方</li>
-            <li>高度なデザイン表現や最新技術を全面的に取り入れたい方</li>
-            <li>すべてお任せで、自分では一切関わりたくないと感じている方</li>
-          </ul>
-
-          <p class="small-text">
-            お互いのスタンスが合っているほうが、良いサイトづくりにつながると考えています。<br />
-            上記をご覧いただき、「少し合いそうだな」と感じていただけたらうれしいです。
-          </p>
-        </section>
+          <section class="section">
+            <h2>仕事のスタンス</h2>
+            <h3>大切にしていること</h3>
+            <ul>
+              <li><strong>等身大の情報発信：</strong>背負い以上に盛らず、続けられる形で整えること</li>
+              <li><strong>シンプルな構成：</strong>「誰が見ても大まかなことが分かる」を最優先にすること</li>
+              <li><strong>無理のない運用：</strong>毎日更新ではなく、「最低限ここだけ触れればOK」というラインを一緒に決めること</li>
+            </ul>
+            <h3>合いそうな方</h3>
+            <ul>
+              <li>自分のペースを大事にしながら、少しずつ整えていきたい方</li>
+              <li>派手さよりも「誠実さ」や「伝わりやすさ」を重視される方</li>
+              <li>長期的に事業を続けていく前提で、土台を整えたい方</li>
+            </ul>
+            <h3>あまり向いていないかもしれない方</h3>
+            <ul>
+              <li>短期間で大きな露出や売上アップを狙いたい方</li>
+              <li>高度なデザイン表現や最先端技術を全面に取り入れたい方</li>
+              <li>すべてお任せで、自分自身は一切関わりたくないと感じている方</li>
+            </ul>
+            <p class="small-text">お互いのスタンスが合っているほど、よいサイトづくりにつながると考えています。上記をご覧いただき、「少し合いそうだな」と感じていただけたらうれしいです。</p>
+          </section>
+        </div>
       </main>
 
-      <footer>
-        <p>© ぽいんとらぼ</p>
-      </footer>
+      <aside class="layout-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">リンク</h3>
+          <ul class="sidebar-list">
+            <li><a href="https://note.com/pointlab" target="_blank" rel="noopener noreferrer">note</a></li>
+            <li><a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a></li>
+          </ul>
+        </div>
+      </aside>
     </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__links">
+          <a href="https://www.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
+          <a href="https://www.tiktok.com/@pointlab" target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href="https://www.youtube.com/@pointlab" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a>
+        </div>
+        <p class="site-footer__copyright">© ぽいんとらぼ</p>
+      </div>
+    </footer>
   </body>
 </html>
-

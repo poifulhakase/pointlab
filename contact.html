@@ -2,108 +2,89 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>お問い合わせ | 個人事業主向けWebサイト制作 | ○○○</title>
-    <meta
-      name="description"
-      content="Webサイト制作や情報発信のご相談はこちらのお問い合わせページから承っています。Googleフォームなどを埋め込んで運用いただけます。"
-    />
-    <link rel="stylesheet" href="./style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>お問い合わせ｜ぽいんとらぼ</title>
+    <meta name="description" content="Webサイト制作や情報発信のご相談は、お問い合わせページから承っています。" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <p class="site-title">ぽいんとらぼ</p>
-        <p class="site-subtitle">
-          個人事業主のための「伝わるWebサイト」と情報発信の土台づくり
-        </p>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a href="./index.html" class="site-logo">ぽいんとらぼ</a>
         <nav>
           <ul class="nav-list">
-            <li><a href="./index.html">トップ</a></li>
+            <li><a href="./index.html">記事</a></li>
             <li><a href="./service.html">事業内容</a></li>
             <li><a href="./profile.html">プロフィール</a></li>
             <li><a href="./works.html">実績・活動</a></li>
             <li><a href="./contact.html">お問い合わせ</a></li>
           </ul>
         </nav>
-      </header>
+      </div>
+    </header>
 
-      <main>
-        <h1>お問い合わせ</h1>
+    <div class="layout-main">
+      <main class="layout-content">
+        <div class="page-content">
+          <h1>お問い合わせ</h1>
 
-        <section class="section">
-          <h2>ご相談前に</h2>
-          <p>
-            Webサイト制作や、情報発信の整理に関するご相談を受け付けています。<br />
-            具体的なご依頼内容が決まっていない段階でも、「まずは話を聞いてみたい」という形で大丈夫です。
-          </p>
-          <p>
-            いただいた内容には、平日3営業日以内を目安にお返事いたします。
-          </p>
-        </section>
+          <section class="section">
+            <h2>ご相談について</h2>
+            <p>Webサイト制作や、情報発信の整理に関するご相談を受け付けています。具体的なご依頼内容が決まっていない段階でも、「まずは話を聞いてみたい」という形で大丈夫です。</p>
+            <p>お返事には、平日3営業日以内を目安にお返事いたします。</p>
+          </section>
 
-        <section class="section">
-          <h2>お問い合わせフォーム</h2>
+          <section class="section">
+            <h2>お問い合わせフォーム</h2>
+            <p class="form-note">下記のフォームは、Googleフォームなど外部サービスを埋め込んで利用することを想定しています。実際に運用される際は、ご自身のフォームの埋め込みコードに差し替えてください。</p>
+            <div class="form-placeholder">
+              <p class="small-text">【フォーム埋め込み例：Googleフォームなど】</p>
+              <p>現在はダミーの表示です。<br />実際の運用時には、Googleフォーム等の埋め込みコードを貼り付けてください。</p>
+            </div>
+          </section>
 
-          <p class="form-note">
-            下記のフォームは、Googleフォームなど外部サービスを埋め込んで利用することを想定しています。<br />
-            実際に運用される際は、ご自身のフォームの埋め込みコードに差し替えてください。
-          </p>
+          <section class="section">
+            <h2>お問い合わせの際にお書き添えいただけると助かること</h2>
+            <ul>
+              <li>簡単な自己紹介（業種・現在の状況など）</li>
+              <li>Webサイトを持ちたい・整えたいと思ったきっかけ</li>
+              <li>気になっていること・不安に感じていること</li>
+            </ul>
+            <p class="small-text">すべてを詳しく書いていただく必要はありません。書ける範囲で大丈夫ですので、ざっくりとしたイメージを共有いただけると、お話がスムーズになります。</p>
+          </section>
 
-          <div class="form-placeholder">
-            <p class="small-text">
-              【フォーム埋め込み例（Googleフォームなど）】
-            </p>
-            <!--
-            Googleフォーム埋め込み例：
-
-            <iframe
-              src="https://docs.google.com/forms/d/e/xxxxxxxxxxxxxxxxxxxxxxx/viewform?embedded=true"
-              width="100%"
-              height="900"
-              frameborder="0"
-              marginheight="0"
-              marginwidth="0"
-            >
-              読み込んでいます…
-            </iframe>
-            -->
-
-            <p>
-              現在はダミーの表示です。<br />
-              実際の運用時には、上記コメントアウト部分にGoogleフォーム等の埋め込みコードを貼り付けてください。
-            </p>
-          </div>
-        </section>
-
-        <section class="section">
-          <h2>お問い合わせの際にお書き添えいただけると助かること</h2>
-          <ul>
-            <li>簡単な自己紹介（業種・現在の状況など）</li>
-            <li>Webサイトを持ちたい・整えたいと思ったきっかけ</li>
-            <li>気になっていること・不安に感じていること</li>
-          </ul>
-          <p class="small-text">
-            すべてを詳しく書いていただく必要はありません。<br />
-            書ける範囲で大丈夫ですので、ざっくりとしたイメージを共有いただけると、お話がスムーズになります。
-          </p>
-        </section>
-
-        <section class="section">
-          <h2>注意事項・免責</h2>
-          <ul>
-            <li>営業・勧誘目的のご連絡には対応いたしかねます。</li>
-            <li>
-              技術的に対応が難しい場合や、スタンスが合わないと判断した場合は、お断りさせていただくことがあります。
-            </li>
-          </ul>
-        </section>
+          <section class="section">
+            <h2>注意事項・免責</h2>
+            <ul>
+              <li>営業・勧誘目的のご連絡には対応いたしかねます。</li>
+              <li>技術的に対応が難しい場合や、スタンスが合わないと判断した場合は、お断りさせていただくことがあります。</li>
+            </ul>
+          </section>
+        </div>
       </main>
 
-      <footer>
-        <p>© ぽいんとらぼ</p>
-      </footer>
+      <aside class="layout-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">リンク</h3>
+          <ul class="sidebar-list">
+            <li><a href="./index.html">記事一覧</a></li>
+            <li><a href="./service.html">事業内容</a></li>
+          </ul>
+        </div>
+      </aside>
     </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__links">
+          <a href="https://www.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
+          <a href="https://www.tiktok.com/@pointlab" target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href="https://www.youtube.com/@pointlab" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a>
+        </div>
+        <p class="site-footer__copyright">© ぽいんとらぼ</p>
+      </div>
+    </footer>
   </body>
 </html>
-

@@ -2,119 +2,92 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>個人事業主向けWeb制作・情報発信サポート | ○○○</title>
-    <meta
-      name="description"
-      content="個人事業主・フリーランス向けに、名刺代わりになるシンプルで伝わるWebサイトと情報発信の土台づくりをお手伝いします。"
-    />
-    <link rel="stylesheet" href="./style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ぽいんとらぼ｜個人事業主のWeb発信を応援</title>
+    <meta name="description" content="ぽいんとらぼは、個人事業主・フリーランスのための情報発信ハブ。記事とnote・Mediumへの誘導を統合しています。" />
+    <meta property="og:title" content="ぽいんとらぼ｜個人事業主のWeb発信を応援" />
+    <meta property="og:description" content="記事とnote・Mediumを統合した情報発信ハブ" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pointlab.vercel.app/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./css/base.css" />
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <p class="site-title">ぽいんとらぼ</p>
-        <p class="site-subtitle">
-          個人事業主のための「伝わるWebサイト」と情報発信の土台づくり
-        </p>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a href="./index.html" class="site-logo">ぽいんとらぼ</a>
         <nav>
           <ul class="nav-list">
-            <li><a href="./index.html">トップ</a></li>
+            <li><a href="./index.html">記事</a></li>
             <li><a href="./service.html">事業内容</a></li>
             <li><a href="./profile.html">プロフィール</a></li>
             <li><a href="./works.html">実績・活動</a></li>
             <li><a href="./contact.html">お問い合わせ</a></li>
           </ul>
         </nav>
-      </header>
+      </div>
+    </header>
 
-      <main>
-        <h1>個人事業主の「らしさ」が伝わる、小さなWeb発信の伴走者</h1>
+    <div class="layout-main">
+      <main class="layout-content">
+        <h1 style="font-size:1.5rem;margin:0 0 24px;">記事一覧</h1>
 
-        <section class="section section--accent">
-          <p class="lead">
-            個人事業主・フリーランスの方向けに、<br />
-            名刺代わりになるシンプルなWebサイトと、<br />
-            無理なく続けられる情報発信の土台づくりをお手伝いしています。
-          </p>
-        </section>
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/tradingview-ja.html">
+            <img class="article-card__thumb" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=340&fit=crop" alt="TradingViewチャート分析のイメージ" />
+            <p class="article-card__meta">2026年2月3日｜投資ツール</p>
+            <h2 class="article-card__title" itemprop="headline">TradingView無料版 vs 有料版、使いやすさの差とは？</h2>
+            <p class="article-card__excerpt" itemprop="description">初心者でもわかる、無料版でできることと有料版の価値を徹底解説。毎日チャートを見るようになると感じる不便さと、有料版で変わること。</p>
+          </a>
+        </article>
 
-        <section class="section">
-          <h2>はじめてのWebサイトづくりに、ちょうどいい規模感で</h2>
-          <div class="grid-2">
-            <div>
-              <p>
-                「ちゃんとしたホームページが欲しいけれど、大げさなものはいらない」
-                「更新に追われるのではなく、最低限の情報だけを整えたい」——
-                そんな個人事業主の方向けに、シンプルで運用しやすいWebサイトをご提案します。
-              </p>
-              <ul class="check-list">
-                <li>名刺代わりになる公式サイトが欲しい</li>
-                <li>事業内容とプロフィールを適切に整理したい</li>
-                <li>将来のSEO対策に向けて、まずは土台を整えたい</li>
-              </ul>
-            </div>
-            <div>
-              <div class="def-list">
-                <div class="def-list-row">
-                  <div class="def-list-label">対象</div>
-                  <div class="def-list-value">
-                    個人事業主・フリーランス・小さな法人
-                  </div>
-                </div>
-                <div class="def-list-row">
-                  <div class="def-list-label">主な内容</div>
-                  <div class="def-list-value">
-                    5ページ構成の静的サイト制作／文章・構成の整理
-                  </div>
-                </div>
-                <div class="def-list-row">
-                  <div class="def-list-label">公開先</div>
-                  <div class="def-list-value">
-                    Vercel / Netlify などの静的ホスティングサービスを想定
-                  </div>
-                </div>
-                <div class="def-list-row">
-                  <div class="def-list-label">重視すること</div>
-                  <div class="def-list-value">
-                    読みやすさ・信頼感・将来の拡張のしやすさ
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/tradingview-en.html">
+            <img class="article-card__thumb" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=340&fit=crop" alt="TradingView chart analysis" />
+            <p class="article-card__meta">2026年2月3日｜Tools</p>
+            <h2 class="article-card__title" itemprop="headline">TradingView Free vs Paid: Where the Real Usability Difference Shows Up</h2>
+            <p class="article-card__excerpt" itemprop="description">A practical guide to what free version can do, its limits, and what changes with the paid plan.</p>
+          </a>
+        </article>
 
-        <section class="section">
-          <h2>このサイトで分かること</h2>
-          <ul class="check-list">
-            <li>
-              <strong>事業内容：</strong> 具体的にどこまで対応できるのか（事業内容ページ）
-            </li>
-            <li>
-              <strong>どんな人か：</strong> 経歴や仕事のスタンス（プロフィールページ）
-            </li>
-            <li>
-              <strong>これまでの取り組み：</strong>
-              実績や発信メディアへのリンク（実績・活動ページ）
-            </li>
-            <li>
-              <strong>相談窓口：</strong>
-              気軽に問い合わせできるフォーム（お問い合わせページ）
-            </li>
-          </ul>
-          <p class="small-text">
-            ※デザインはあえて最小限にとどめ、今後のリニューアルや差し替えがしやすい構成にしています。
-          </p>
-          <p>
-            <a class="button-link" href="./service.html">事業内容を詳しく見る</a>
-          </p>
-        </section>
       </main>
 
-      <footer>
-        <p>© ぽいんとらぼ</p>
-      </footer>
+      <aside class="layout-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">人気記事</h3>
+          <ul class="sidebar-list">
+            <li><a href="./articles/tradingview-ja.html">TradingView無料版 vs 有料版</a></li>
+          </ul>
+        </div>
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">新着記事</h3>
+          <ul class="sidebar-list">
+            <li><a href="./articles/tradingview-ja.html">TradingView無料版 vs 有料版</a></li>
+            <li><a href="./articles/tradingview-en.html">TradingView Free vs Paid (EN)</a></li>
+          </ul>
+        </div>
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">カテゴリ</h3>
+          <div class="tag-list">
+            <a href="#" class="tag">投資ツール</a>
+            <a href="#" class="tag">初心者向け</a>
+            <a href="#" class="tag">テクニカル分析</a>
+          </div>
+        </div>
+      </aside>
     </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__links">
+          <a href="https://www.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
+          <a href="https://www.tiktok.com/@pointlab" target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href="https://www.youtube.com/@pointlab" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a>
+        </div>
+        <p class="site-footer__copyright">© ぽいんとらぼ</p>
+      </div>
+    </footer>
   </body>
 </html>
