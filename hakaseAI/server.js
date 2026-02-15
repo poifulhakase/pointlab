@@ -399,7 +399,7 @@ async function callGemini(question, context, language = 'ja') {
         }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 250
+          maxOutputTokens: 200
         }
       })
     });
@@ -420,8 +420,8 @@ async function callGemini(question, context, language = 'ja') {
     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
       let response = data.candidates[0].content.parts[0].text;
       
-      // 回答を短くカット（150文字 + URL保持）
-      response = truncateResponse(response, 150);
+      // 200文字程度でカット。途切れる場合は直前の「。」で区切り、マガジンURLを追加
+      response = truncateResponse(response, 200);
       
       return response;
     }
@@ -439,12 +439,12 @@ async function callGemini(question, context, language = 'ja') {
 }
 
 // ========================================
-// 回答を短くカットする関数
+// 回答を短くカットする関数（200文字程度、直前の「。」で区切り、マガジンURLは必要な場合のみ追加）
 // ========================================
 function truncateResponse(text, maxLength) {
-  // URLを抽出して保持
+  // URLを抽出して保持（note.com/pointlab のみ有効）
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = text.match(urlRegex) || [];
+  const urls = (text.match(urlRegex) || []).filter(u => u.includes('note.com/pointlab'));
   
   // URLを一時的に除去
   let textWithoutUrls = text.replace(urlRegex, '').trim();
@@ -454,24 +454,33 @@ function truncateResponse(text, maxLength) {
     return text;
   }
   
-  // maxLength文字でカット
+  // maxLength以内の最後の「。」で区切る（文章が途切れないように）
   let truncated = textWithoutUrls.substring(0, maxLength);
-  
-  // 最後の「。」「じゃ」「のう」「ぞ」で終わるように調整
   const lastPeriod = truncated.lastIndexOf('。');
-  const lastJa = truncated.lastIndexOf('じゃ');
-  const lastNou = truncated.lastIndexOf('のう');
-  const lastZo = truncated.lastIndexOf('ぞ');
   
-  const cutPoint = Math.max(lastPeriod, lastJa + 1, lastNou + 1, lastZo);
-  
-  if (cutPoint > maxLength * 0.5) {
-    truncated = truncated.substring(0, cutPoint + 1);
+  let endIndex = -1;
+  if (lastPeriod >= 0) {
+    // 「。」があればその直後で区切る
+    endIndex = lastPeriod + 1;
   } else {
-    truncated = truncated + '...';
+    // 「。」がなければ「じゃ」「のう」「ぞ」で区切る
+    const lastJa = truncated.lastIndexOf('じゃ');
+    const lastNou = truncated.lastIndexOf('のう');
+    const lastZo = truncated.lastIndexOf('ぞ');
+    endIndex = Math.max(
+      lastJa >= 0 ? lastJa + 2 : -1,
+      lastNou >= 0 ? lastNou + 2 : -1,
+      lastZo >= 0 ? lastZo + 1 : -1
+    );
   }
   
-  // URLがあれば末尾に追加
+  if (endIndex >= maxLength * 0.3) {
+    truncated = textWithoutUrls.substring(0, endIndex);
+  } else {
+    truncated = textWithoutUrls.substring(0, maxLength) + '...';
+  }
+  
+  // カットした場合、元の応答にマガジンURLが含まれていれば追加（必要な場合のみ）
   if (urls.length > 0) {
     truncated += '\n\nわしのnoteも参考にしてみてくれ→ ' + urls[0];
   }
