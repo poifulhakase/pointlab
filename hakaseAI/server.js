@@ -420,8 +420,8 @@ async function callGemini(question, context, language = 'ja') {
     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
       let response = data.candidates[0].content.parts[0].text;
       
-      // 200文字程度でカット。途切れる場合は直前の「。」で区切り、マガジンURLを追加
-      response = truncateResponse(response, 200);
+      // 200文字程度でカット。途切れる場合は直前の「。」で区切り、質問に応じてマガジンURLを追加
+      response = truncateResponse(response, 200, question);
       
       return response;
     }
@@ -439,9 +439,25 @@ async function callGemini(question, context, language = 'ja') {
 }
 
 // ========================================
-// 回答を短くカットする関数（200文字程度、直前の「。」で区切り、マガジンURLは必要な場合のみ追加）
+// 回答を短くカットする関数（200文字程度、直前の「。」で区切り、必要な場合のみマガジンURL追加）
 // ========================================
-function truncateResponse(text, maxLength) {
+const MAGAZINE_URLS = [
+  { keywords: ['ポイ活', 'ポイント', '節約', 'お得', 'クーポン', '還元', '楽天', 'PayPay', 'dポイント', 'Tポイント'], url: 'https://note.com/pointlab/m/m4188c60f3c9f' },
+  { keywords: ['株式', '投資', 'チャート', '株価', '銘柄', '証券', 'NISA', 'つみたて', '資産運用'], url: 'https://note.com/pointlab/m/mb8056cb0b8ee' },
+  { keywords: ['節税', '税金', '確定申告', '個人事業主', 'フリーランス', '経費', '控除', '青色申告', '白色申告', 'インボイス', '帳簿', '会計'], url: 'https://note.com/pointlab/m/mbb26c895445e' },
+  { keywords: ['副業', 'サイドビジネス', '稼ぐ', '収入', '起業', '独立', '在宅', 'リモート'], url: 'https://note.com/pointlab/m/m7be629812c81' },
+  { keywords: ['生き方', '人生', '生活', '暮らし', 'らしんばん', '羅針盤', 'キャリア', '働き方', '博士'], url: 'https://note.com/pointlab/m/m5d690faf7df5' }
+];
+
+function getMagazineUrlForQuestion(question) {
+  if (!question || typeof question !== 'string') return null;
+  for (const { keywords, url } of MAGAZINE_URLS) {
+    if (keywords.some(kw => question.includes(kw))) return url;
+  }
+  return null;
+}
+
+function truncateResponse(text, maxLength, question = '') {
   // URLを抽出して保持（note.com/pointlab のみ有効）
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const urls = (text.match(urlRegex) || []).filter(u => u.includes('note.com/pointlab'));
@@ -460,10 +476,8 @@ function truncateResponse(text, maxLength) {
   
   let endIndex = -1;
   if (lastPeriod >= 0) {
-    // 「。」があればその直後で区切る
     endIndex = lastPeriod + 1;
   } else {
-    // 「。」がなければ「じゃ」「のう」「ぞ」で区切る
     const lastJa = truncated.lastIndexOf('じゃ');
     const lastNou = truncated.lastIndexOf('のう');
     const lastZo = truncated.lastIndexOf('ぞ');
@@ -480,9 +494,10 @@ function truncateResponse(text, maxLength) {
     truncated = textWithoutUrls.substring(0, maxLength) + '...';
   }
   
-  // カットした場合、元の応答にマガジンURLが含まれていれば追加（必要な場合のみ）
-  if (urls.length > 0) {
-    truncated += '\n\nわしのnoteも参考にしてみてくれ→ ' + urls[0];
+  // カットした場合、マガジンURLを追加（元の応答にあればそれを、なければ質問から該当マガジンを追加）
+  const magazineUrl = urls.length > 0 ? urls[0] : getMagazineUrlForQuestion(question);
+  if (magazineUrl) {
+    truncated += '\n\nわしのnoteも参考にしてみてくれ→ ' + magazineUrl;
   }
   
   return truncated.trim();
