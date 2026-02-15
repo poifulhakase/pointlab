@@ -1,10 +1,11 @@
 /**
  * ポイ活・株式投資：スマホで2行横スクロールに変換
+ * おすすめは1行横スクロールのまま（CSSで処理）
  * grid-auto-flow の表示崩れを避け、HTML構造を2行に分割
  */
 (function () {
   var BREAKPOINT = 768;
-  var sections = ["osusume", "poi", "stock"];
+  var sections = ["poi", "stock"];
 
   function isMobile() {
     return window.innerWidth <= BREAKPOINT;

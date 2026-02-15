@@ -20,6 +20,14 @@
 .article-body {
   font-size: 1rem;
   line-height: 1.8;
+  color: var(--color-text);
+}
+
+.article-body p,
+.article-body h2,
+.article-body h3,
+.article-body li {
+  color: var(--color-text);
 }
 
 .article-body h2 {
@@ -135,4 +143,14 @@
 
 .article-tags {
   margin-top: 32px;
+}
+
+/* ダークモード：記事ノート・本文の視認性確保 */
+[data-theme="dark"] .article-note {
+  background: var(--color-border-light) !important;
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .article-body a {
+  color: var(--color-main);
 }

@@ -44,15 +44,35 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
     <script src="./js/mobile-nav.js" defer></script>
+    <script src="./js/article-scrollbar.js" defer></script>
     <script src="./js/scrollbar-on-scroll.js" defer></script>
     <script src="./js/two-row-scroll.js" defer></script>
     <script src="./js/image-fallback.js" defer></script>
+    <script src="./js/url-trailing-slash.js" defer></script>
+    <script src="./js/main-tabs.js" defer></script>
   </head>
   <body>
     <a href="#main" class="skip-link">Skip to main content</a>
     <div id="site-header-root"></div>
     <script src="./js/header-include.js"></script>
 
+    <div class="main-tabs" role="tablist" aria-label="Content type">
+      <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-lab" id="tab-lab" data-tab="lab"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg></span><span class="main-tabs__tab-label">Lab</span></button>
+      <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-articles" id="tab-articles" data-tab="articles"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span class="main-tabs__tab-label">Articles</span></button>
+      <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-videos" id="tab-videos" data-tab="videos"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg></span><span class="main-tabs__tab-label">Videos</span></button>
+      <a href="./hakaseAI/" class="main-tabs__tab main-tabs__tab--link"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span><span class="main-tabs__tab-label">Hakase AI</span></a>
+    </div>
+
+    <div class="tab-panel is-active" id="panel-lab" role="tabpanel" aria-labelledby="tab-lab">
+      <div class="videos-placeholder">
+        <div class="videos-placeholder__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg>
+        </div>
+        <h2 class="videos-placeholder__title">Lab</h2>
+        <p class="videos-placeholder__desc">Under construction. Coming soon.</p>
+      </div>
+    </div>
+    <div class="tab-panel" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles" hidden>
     <div class="layout-with-sidebar">
       <aside class="page-sidebar">
         <nav class="sidebar-nav" aria-label="Categories">
@@ -437,15 +457,24 @@
 
           </div>
         </section>
-        <p class="content-section__more">
-          <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Read more on Medium</a>
-        </p>
       </main>
+    </div>
+    </div>
+
+    <div class="tab-panel" id="panel-videos" role="tabpanel" aria-labelledby="tab-videos" hidden>
+      <div class="videos-placeholder">
+        <div class="videos-placeholder__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg>
+        </div>
+        <h2 class="videos-placeholder__title">Short Videos</h2>
+        <p class="videos-placeholder__desc">Coming soon. Short videos will be published in the future.</p>
+      </div>
     </div>
 
     <footer class="site-footer">
       <div class="site-footer__inner">
         <div class="site-footer__links">
+          <a href="https://www.instagram.com/poifulhakase/" target="_blank" rel="noopener noreferrer" class="site-footer__icon-link" aria-label="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
           <a href="./privacy.html">Privacy Policy</a>
           <a href="./disclaimer.html">Disclaimer</a>
         </div>

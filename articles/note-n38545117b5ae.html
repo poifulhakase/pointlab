@@ -21,15 +21,8 @@
     <script src="../js/mobile-nav.js" defer></script>
   </head>
   <body>
-    <header class="site-header"><div class="site-header__inner">
-      <a href="../" class="site-logo">ぽいんとらぼ</a>
-      <nav><ul class="nav-list">
-        <li><a href="../">ホーム</a></li>
-        <li><a href="../service.html">事業内容</a></li>
-        <li><a href="https://note.com/pointlab/n/n9f6f5df2d619" target="_blank" rel="noopener noreferrer">プロフィール</a></li>
-        <li><a href="../contact.html">お問い合わせ</a></li>
-      </ul></nav>
-    </div></header>
+    <div id="site-header-root"></div>
+    <script src="../js/header-include.js"></script>
     <div class="layout-main">
       <main class="layout-content">
         <article>
@@ -48,12 +41,6 @@
           </div>
         </article>
       </main>
-      <aside class="layout-sidebar">
-        <div class="sidebar-section">
-          <h3 class="sidebar-section__title">記事一覧</h3>
-          <ul class="sidebar-list"><li><a href="../">全記事を見る</a></li></ul>
-        </div>
-      </aside>
     </div>
     <footer class="site-footer"><div class="site-footer__inner">
       <div class="site-footer__links">

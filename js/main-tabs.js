@@ -22,8 +22,10 @@
   }
 
   tabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      switchTo(tab.getAttribute('data-tab'));
+    var tabName = tab.getAttribute('data-tab');
+    if (!tabName) return;
+    tab.addEventListener('click', function (e) {
+      switchTo(tabName);
     });
     tab.addEventListener('keydown', function (e) {
       var idx = Array.prototype.indexOf.call(tabs, tab);
