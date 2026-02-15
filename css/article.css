@@ -89,6 +89,15 @@
   border-radius: 8px;
 }
 
+@media (max-width: 700px) {
+  .article-body img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+}
+
 .article-body .embed-video {
   aspect-ratio: 16/9;
   margin: 24px 0;

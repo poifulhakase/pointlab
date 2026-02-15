@@ -3,88 +3,470 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://note.com" />
+    <link rel="dns-prefetch" href="https://medium.com" />
+    <script>
+      (function(){var t=localStorage.getItem('pointlab_theme');var s=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t==='dark'||t==='light'?t:s);})();
+    </script>
+    <link rel="preload" href="./css/base.css" as="style" />
+    <link rel="preload" href="./images/Pointlab_thumbnail.png" as="image" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
     <title>ぽいんとらぼ｜個人事業主のWeb発信を応援</title>
-    <meta name="description" content="ぽいんとらぼは、個人事業主・フリーランスのための情報発信ハブ。記事とnote・Mediumへの誘導を統合しています。" />
+    <meta name="description" content="ぽいんとらぼは、個人事業主・フリーランスのための情報発信ハブ。ポイ活、株式投資、副業、節税、生き方など実践的な記事をnote・Mediumで発信。" />
+    <link rel="canonical" href="https://pointlab.vercel.app/" />
+    <link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/" />
+    <link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/index-en.html" />
+    <link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/" />
     <meta property="og:title" content="ぽいんとらぼ｜個人事業主のWeb発信を応援" />
-    <meta property="og:description" content="記事とnote・Mediumを統合した情報発信ハブ" />
+    <meta property="og:description" content="ポイ活、株式投資、副業、節税、生き方。個人事業主・フリーランスのための情報発信ハブ" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://pointlab.vercel.app/" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&h=630&fit=crop" />
+    <meta property="og:site_name" content="ぽいんとらぼ" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:locale:alternate" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="stylesheet" href="./css/base.css" />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&h=630&fit=crop" />
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebSite","name":"ぽいんとらぼ","url":"https://pointlab.vercel.app/","publisher":{"@type":"Organization","name":"ぽいんとらぼ","logo":{"@type":"ImageObject","url":"https://pointlab.vercel.app/favicon.svg"}},"inLanguage":["ja","en"]}
+    </script>
+    <link rel="sitemap" type="application/xml" href="./sitemap.xml" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+    <script src="./js/mobile-nav.js" defer></script>
+    <script src="./js/scrollbar-on-scroll.js" defer></script>
+    <script src="./js/two-row-scroll.js" defer></script>
+    <script src="./js/image-fallback.js" defer></script>
+    <script src="./js/url-trailing-slash.js" defer></script>
+    <script src="./js/main-tabs.js" defer></script>
   </head>
   <body>
-    <header class="site-header">
-      <div class="site-header__inner">
-        <a href="./index.html" class="site-logo">ぽいんとらぼ</a>
-        <nav>
-          <ul class="nav-list">
-            <li><a href="./index.html">記事</a></li>
-            <li><a href="./service.html">事業内容</a></li>
-            <li><a href="./profile.html">プロフィール</a></li>
-            <li><a href="./works.html">実績・活動</a></li>
-            <li><a href="./contact.html">お問い合わせ</a></li>
+    <a href="#main" class="skip-link">メインコンテンツへ</a>
+    <div id="site-header-root"></div>
+    <script src="./js/header-include.js"></script>
+
+    <div class="main-tabs" role="tablist" aria-label="コンテンツ種別">
+      <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-articles" id="tab-articles" data-tab="articles">記事</button>
+      <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-videos" id="tab-videos" data-tab="videos">動画</button>
+    </div>
+
+    <div class="tab-panel is-active" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles">
+    <div class="layout-with-sidebar">
+      <aside class="page-sidebar">
+        <nav class="sidebar-nav" aria-label="カテゴリ">
+          <h3 class="sidebar-nav__heading">カテゴリ</h3>
+          <ul class="sidebar-nav__list">
+            <li><a href="#tax" class="sidebar-nav__link">節税</a></li>
+            <li><a href="#poi" class="sidebar-nav__link">ポイ活</a></li>
+            <li><a href="#side" class="sidebar-nav__link">副業</a></li>
+            <li><a href="#stock" class="sidebar-nav__link">株式投資</a></li>
+            <li><a href="#tools" class="sidebar-nav__link">ツール</a></li>
+            <li><a href="#life" class="sidebar-nav__link">生き方</a></li>
           </ul>
         </nav>
-      </div>
-    </header>
+      </aside>
 
-    <div class="layout-main">
-      <main class="layout-content">
-        <h1 style="font-size:1.5rem;margin:0 0 24px;">記事一覧</h1>
+      <main class="page-main" id="main">
+        <section class="content-section" id="osusume">
+          <h2 class="content-section__title">おすすめ</h2>
+          <div class="article-grid">
+            <article class="article-card" itemscope itemtype="https://schema.org/Article">
+              <a href="./articles/note-n9f6f5df2d619.html">
+                <img class="article-card__thumb" src="./images/Pointlab_thumbnail.png" alt="ぽいんとらぼ" width="320" height="240" fetchpriority="high" decoding="async" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+                <div class="article-card__content">
+                  <p class="article-card__meta">節税</p>
+                  <h2 class="article-card__title" itemprop="headline">ぽいんとらぼ</h2>
+                  <p class="article-card__excerpt" itemprop="description">収入の自動化と暮らしのバランス。研究記録の概要。</p>
+                </div>
+              </a>
+            </article>
+            <article class="article-card" itemscope itemtype="https://schema.org/Article">
+              <a href="./articles/note-nc96324c04c97.html">
+                <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png" alt="タックスロスセリングのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+                <div class="article-card__content">
+                  <p class="article-card__meta">株式投資</p>
+                  <h2 class="article-card__title" itemprop="headline">タックスロスセリング｜イベントドリブン投資</h2>
+                  <p class="article-card__excerpt" itemprop="description">タックスロスセリングで節税効果を狙う。損出しとイベントドリブン投資の概要。</p>
+                </div>
+              </a>
+            </article>
+            <article class="article-card" itemscope itemtype="https://schema.org/Article">
+              <a href="./articles/note-n61e0aac191e9.html">
+                <img class="article-card__thumb" src="./images/Future_Gadget_HakaseAI.png" alt="ハカセAI" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+                <div class="article-card__content">
+                  <p class="article-card__meta">ツール</p>
+                  <h2 class="article-card__title" itemprop="headline">【研究ログ No.001】自己思考型・金融補助装置の事故記録</h2>
+                  <p class="article-card__excerpt" itemprop="description">ハカセAI開発の経緯。ポイ活・節約の相談ができる実験的ツール。</p>
+                </div>
+              </a>
+            </article>
+          </div>
+        </section>
+        <section class="content-section" id="tax">
+          <h2 class="content-section__title">節税</h2>
+          <div class="article-grid">
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n276c20ca376a.html">
+            <img class="article-card__thumb" src="./images/Sole_Proprietor_Kaigyo_thumbnail.png" alt="開業・節税のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">節税</p>
+            <h2 class="article-card__title" itemprop="headline">開業のやり方</h2>
+            <p class="article-card__excerpt" itemprop="description">開業の基本手順。開業届・青色申告で節税メリットを活用する概要。</p>
+            </div>
+          </a>
+        </article>
 
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n9f6f5df2d619.html">
+            <img class="article-card__thumb" src="./images/Pointlab_thumbnail.png" alt="ぽいんとらぼ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">節税</p>
+            <h2 class="article-card__title" itemprop="headline">ぽいんとらぼ</h2>
+            <p class="article-card__excerpt" itemprop="description">収入の自動化と暮らしのバランス。研究記録の概要。</p>
+            </div>
+          </a>
+        </article>
+          </div>
+        </section>
+        <section class="content-section" id="poi">
+          <h2 class="content-section__title">ポイ活</h2>
+          <div class="article-grid">
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-nd0b5eba1a7d7.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_rakutenSPS.jpg" alt="ポイ活・楽天のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">ポイ活・楽天｜自動化と節約で時短するレシピ</h2>
+            <p class="article-card__excerpt" itemprop="description">楽天の自動化と節約で時短。続けやすいポイ活レシピの概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n38545117b5ae.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_Uovice.jpg" alt="ポイ活・不労所得のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">ポイ活・不労所得｜自動化でお小遣いを貯める</h2>
+            <p class="article-card__excerpt" itemprop="description">不労所得の入口としてのポイ活。自動化でお小遣いを貯める仕組みの概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n4969c3701989.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_V%20FASTch.jpg" alt="ポイ活・タイパのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">ポイ活・タイパ｜動画視聴で節約術とお得情報</h2>
+            <p class="article-card__excerpt" itemprop="description">タイパ重視の動画視聴ポイ活。節約術とお得情報のレシピ概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n0171524f2064.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_TikTok%20Lite.jpg" alt="TikTokLite・ポイ活のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">TikTokLite・ポイ活｜視聴しながらポイントを貯める</h2>
+            <p class="article-card__excerpt" itemprop="description">TikTokLiteのポイント還元を活かす。動画視聴と節約を両立する方法の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-ne6c2adc7e6c2.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_Moppy.jpg" alt="モッピー・ポイ活のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">モッピー・ポイ活｜副業と資産形成のレシピ</h2>
+            <p class="article-card__excerpt" itemprop="description">モッピーで副業と資産形成。ポイ活レシピとしての活用ポイント概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n3dff2f837c28.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_DotMobey.jpg" alt="資産形成・ポイント交換のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">資産形成・ドットマネー｜ポイント交換と節約術</h2>
+            <p class="article-card__excerpt" itemprop="description">ドットマネーでのポイント交換。資産形成につながる節約術の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-neba4d5d48fd5.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_Welcia.jpg" alt="ウエル活・Tポイントのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">ウエル活｜Tポイント・Vポイントの節約術</h2>
+            <p class="article-card__excerpt" itemprop="description">ウエル活でT・Vポイントを効率よく貯める。複数ポイントの扱い方の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-ncd72393f35e5.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_PayPayPoint.jpg" alt="PayPayポイントのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">PayPayポイント｜錬金術と節約術でお金の知識</h2>
+            <p class="article-card__excerpt" itemprop="description">PayPayポイントを円に換える錬金術。お金の知識と節約術の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n84a5476d6ecc.html">
+            <img class="article-card__thumb" src="./images/Poikatsu_3min_Recipe_RakutenPoint.jpg" alt="楽天ポイント・ポイント運用のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ポイ活</p>
+            <h2 class="article-card__title" itemprop="headline">楽天ポイント｜ポイント運用と資産形成のレシピ</h2>
+            <p class="article-card__excerpt" itemprop="description">楽天ポイントの運用で資産形成。節約術レシピの組み立て方の概要。</p>
+            </div>
+          </a>
+        </article>
+          </div>
+        </section>
+        <section class="content-section" id="side">
+          <h2 class="content-section__title">副業</h2>
+          <div class="article-grid">
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-nfa29790600eb.html">
+            <img class="article-card__thumb" src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&h=340&fit=crop" alt="覆面調査・副業のイメージ" />
+            <div class="article-card__content">
+              <p class="article-card__meta">副業</p>
+            <h2 class="article-card__title" itemprop="headline">覆面調査・ミステリーショッパー｜副業で節約しながら稼ぐ</h2>
+            <p class="article-card__excerpt" itemprop="description">覆面調査・ミステリーショッパーで副収入。節約と両立する稼ぎ方の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n73c3792b2ec5.html">
+            <img class="article-card__thumb" src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=600&h=340&fit=crop" alt="珍しい仕事・副業のイメージ" />
+            <div class="article-card__content">
+              <p class="article-card__meta">副業</p>
+            <h2 class="article-card__title" itemprop="headline">副業｜珍しい仕事の体験談と社会勉強</h2>
+            <p class="article-card__excerpt" itemprop="description">珍しい仕事の副業体験談。稼ぎながら社会勉強できる職種の概要。</p>
+            </div>
+          </a>
+        </article>
+          </div>
+        </section>
+        <section class="content-section" id="stock">
+          <h2 class="content-section__title">株式投資</h2>
+          <div class="article-grid">
         <article class="article-card" itemscope itemtype="https://schema.org/Article">
           <a href="./articles/tradingview-ja.html">
-            <img class="article-card__thumb" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=340&fit=crop" alt="TradingViewチャート分析のイメージ" />
-            <p class="article-card__meta">2026年2月3日｜投資ツール</p>
-            <h2 class="article-card__title" itemprop="headline">TradingView無料版 vs 有料版、使いやすさの差とは？</h2>
-            <p class="article-card__excerpt" itemprop="description">初心者でもわかる、無料版でできることと有料版の価値を徹底解説。毎日チャートを見るようになると感じる不便さと、有料版で変わること。</p>
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_TradingView.png" alt="TradingViewチャート分析のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+              <h2 class="article-card__title" itemprop="headline">TradingView無料版 vs 有料版、使いやすさの差とは？</h2>
+              <p class="article-card__excerpt" itemprop="description">チャート分析ツールの無料版・有料版の違いを要約。要点のみ掲載。</p>
+            </div>
           </a>
         </article>
 
         <article class="article-card" itemscope itemtype="https://schema.org/Article">
-          <a href="./articles/tradingview-en.html">
-            <img class="article-card__thumb" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=340&fit=crop" alt="TradingView chart analysis" />
-            <p class="article-card__meta">2026年2月3日｜Tools</p>
-            <h2 class="article-card__title" itemprop="headline">TradingView Free vs Paid: Where the Real Usability Difference Shows Up</h2>
-            <p class="article-card__excerpt" itemprop="description">A practical guide to what free version can do, its limits, and what changes with the paid plan.</p>
+          <a href="./articles/note-n383409929e89.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_moving_average_line_register_support.png" alt="テクニカル分析・株のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">移動平均線・支持線・抵抗線｜価格帯の本質を読む</h2>
+            <p class="article-card__excerpt" itemprop="description">株価が反応しやすい価格帯の見方。投資初心者向けデイトレ基礎の概要。</p>
+            </div>
           </a>
         </article>
 
-      </main>
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-na22865f89238.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Volume.png" alt="出来高・相場の仕組みのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">出来高｜相場の仕組みと株式トレードの基本</h2>
+            <p class="article-card__excerpt" itemprop="description">出来高で価格変動の持続性を判断。相場の仕組みを理解する入口の概要。</p>
+            </div>
+          </a>
+        </article>
 
-      <aside class="layout-sidebar">
-        <div class="sidebar-section">
-          <h3 class="sidebar-section__title">人気記事</h3>
-          <ul class="sidebar-list">
-            <li><a href="./articles/tradingview-ja.html">TradingView無料版 vs 有料版</a></li>
-          </ul>
-        </div>
-        <div class="sidebar-section">
-          <h3 class="sidebar-section__title">新着記事</h3>
-          <ul class="sidebar-list">
-            <li><a href="./articles/tradingview-ja.html">TradingView無料版 vs 有料版</a></li>
-            <li><a href="./articles/tradingview-en.html">TradingView Free vs Paid (EN)</a></li>
-          </ul>
-        </div>
-        <div class="sidebar-section">
-          <h3 class="sidebar-section__title">カテゴリ</h3>
-          <div class="tag-list">
-            <a href="#" class="tag">投資ツール</a>
-            <a href="#" class="tag">初心者向け</a>
-            <a href="#" class="tag">テクニカル分析</a>
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-nd74fce56edcc.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Timeframe.png" alt="時間軸・チャート分析のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">時間軸｜チャート分析とトレード戦略</h2>
+            <p class="article-card__excerpt" itemprop="description">時間軸の選び方でトレード戦略が変わる。チャート分析の前提知識の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n91f688571407.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_BB.png" alt="ボリンジャーバンドのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">ボリンジャーバンド｜株・FXのテクニカル分析</h2>
+            <p class="article-card__excerpt" itemprop="description">ボリンジャーバンドで価格の過伸展を捉える。株・FX共通の見方の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-ncd65c830de29.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_RSI.png" alt="RSI・テクニカル分析のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">RSI｜株のテクニカル分析と資産運用</h2>
+            <p class="article-card__excerpt" itemprop="description">RSIで市場の過伸展・反転のサインを読む。資産運用に活かす指標の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-na7f744ea8158.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Stochastic.png" alt="ストキャスティクスのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">ストキャスティクス｜短期売買とテクニカル分析</h2>
+            <p class="article-card__excerpt" itemprop="description">ストキャスティクス2本線の見方。短期売買のタイミング計測の概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n2817e9181530.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Macd.png" alt="MACD・株のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">MACD｜株・投資初心者の資産運用とテクニカル分析</h2>
+            <p class="article-card__excerpt" itemprop="description">MACDでトレンドの強弱と転換を捉える。資産運用に使うインジケーターの概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n635865776b8e.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_ParabolicSAR.png" alt="株・テクニカル分析のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">パラボリックSAR｜トレンド転換を捉える</h2>
+            <p class="article-card__excerpt" itemprop="description">パラボリックSARでトレンドの転換点を把握。デイトレと資産形成の補助に。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-nb4793929edcd.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Multiple_Index.png" alt="株式投資・分析のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">株・テクニカル分析｜投資手法と株式投資</h2>
+            <p class="article-card__excerpt" itemprop="description">テクニカル分析の投資手法の選び方。株式投資の分析フレームの概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-nc96324c04c97.html">
+            <img class="article-card__thumb" src="./images/Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png" alt="タックスロスセリングのイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">株式投資</p>
+            <h2 class="article-card__title" itemprop="headline">タックスロスセリング｜イベントドリブン投資</h2>
+            <p class="article-card__excerpt" itemprop="description">タックスロスセリングで節税効果を狙う。損出しとイベントドリブン投資の概要。</p>
+            </div>
+          </a>
+        </article>
           </div>
+        </section>
+        <section class="content-section" id="tools">
+          <h2 class="content-section__title">ツール</h2>
+          <div class="article-grid">
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n61e0aac191e9.html">
+            <img class="article-card__thumb" src="./images/Future_Gadget_HakaseAI.png" alt="ハカセAI" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">ツール</p>
+              <h2 class="article-card__title" itemprop="headline">【研究ログ No.001】自己思考型・金融補助装置の事故記録</h2>
+              <p class="article-card__excerpt" itemprop="description">ハカセAI開発の経緯。ポイ活・節約の相談ができる実験的ツール。</p>
+            </div>
+          </a>
+        </article>
+          </div>
+        </section>
+        <section class="content-section" id="life">
+          <h2 class="content-section__title">生き方</h2>
+          <div class="article-grid">
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-ne99ad822651e.html">
+            <img class="article-card__thumb" src="./images/Compass_for_Living_find_eye_catching_find.jpg" alt="HSP・生き方のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">生き方</p>
+            <h2 class="article-card__title" itemprop="headline">HSP・内向型｜競争の海で迷ったときに</h2>
+            <p class="article-card__excerpt" itemprop="description">HSP・内向型が競争の海で迷ったときの羅針盤。働き方とメンタルヘルスの概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n91ba7a1b71df.html">
+            <img class="article-card__thumb" src="./images/Compass_for_Living_inauguration_eye_catching_quiet_retirement_silently_practice.jpg" alt="静かな退職・働き方のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">生き方</p>
+            <h2 class="article-card__title" itemprop="headline">静かな退職｜働き方と個人事業主のマインドセット</h2>
+            <p class="article-card__excerpt" itemprop="description">静かな退職から静かに始める。個人事業主としてのマインドセットの概要。</p>
+            </div>
+          </a>
+        </article>
+
+        <article class="article-card" itemscope itemtype="https://schema.org/Article">
+          <a href="./articles/note-n48367219ea41.html">
+            <img class="article-card__thumb" src="./images/Compass_for_Living_career_eye_catching_parallel_carrier.jpg" alt="パラレルキャリア・生き方のイメージ" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22200%22%3E%3Crect fill=%22%23f3f4f6%22 width=%22320%22 height=%22200%22/%3E%3Ctext fill=%22%239ca3af%22 x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2214%22%3E画像%3C/text%3E%3C/svg%3E'; this.onerror=null;" />
+            <div class="article-card__content">
+              <p class="article-card__meta">生き方</p>
+            <h2 class="article-card__title" itemprop="headline">パラレルキャリア｜沈みゆく船と、静かな備え</h2>
+            <p class="article-card__excerpt" itemprop="description">沈みゆく船と静かな備え。パラレルキャリアという救助船の考え方の概要。</p>
+            </div>
+          </a>
+        </article>
+
+          </div>
+        </section>
+        <p class="content-section__more">
+          <a href="https://note.com/pointlab" target="_blank" rel="noopener noreferrer">noteでもっと読む</a>
+        </p>
+      </main>
+    </div>
+    </div>
+
+    <div class="tab-panel" id="panel-videos" role="tabpanel" aria-labelledby="tab-videos" hidden>
+      <div class="videos-placeholder">
+        <div class="videos-placeholder__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg>
         </div>
-      </aside>
+        <h2 class="videos-placeholder__title">ショート動画</h2>
+        <p class="videos-placeholder__desc">準備中です。今後ショート動画を公開予定です。</p>
+      </div>
     </div>
 
     <footer class="site-footer">
       <div class="site-footer__inner">
         <div class="site-footer__links">
-          <a href="https://www.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
-          <a href="https://www.tiktok.com/@pointlab" target="_blank" rel="noopener noreferrer">TikTok</a>
-          <a href="https://www.youtube.com/@pointlab" target="_blank" rel="noopener noreferrer">YouTube</a>
-          <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a>
+          <a href="./privacy.html">プライバシーポリシー</a>
+          <a href="./disclaimer.html">免責事項</a>
         </div>
         <p class="site-footer__copyright">© ぽいんとらぼ</p>
       </div>

@@ -1,1 +1,41 @@
-﻿{"redirects":[{"source":"/hakaseAI","destination":"/hakaseAI/","permanent":true}],"version":2,"builds":[{"src":"hakaseAI/server.js","use":"@vercel/node"},{"src":"hakaseAI/index.html","use":"@vercel/static"},{"src":"hakaseAI/style.css","use":"@vercel/static"},{"src":"hakaseAI/script.js","use":"@vercel/static"},{"src":"hakaseAI/*.png","use":"@vercel/static"},{"src":"hakaseAI/*.svg","use":"@vercel/static"},{"src":"hakaseAI/*.json","use":"@vercel/static"},{"src":"*.html","use":"@vercel/static"},{"src":"*.css","use":"@vercel/static"},{"src":"poinavi/**","use":"@vercel/static"}],"routes":[{"src":"/hakaseAI/api/(.*)","dest":"hakaseAI/server.js"},{"src":"/hakaseAI/style.css","dest":"/hakaseAI/style.css"},{"src":"/hakaseAI/script.js","dest":"/hakaseAI/script.js"},{"src":"/hakaseAI/(.*\\.png)","dest":"/hakaseAI/$1"},{"src":"/hakaseAI/(.*\\.svg)","dest":"/hakaseAI/$1"},{"src":"/hakaseAI/(.*\\.json)","dest":"/hakaseAI/$1"},{"src":"/hakaseAI$","status":308,"headers":{"Location":"/hakaseAI/"}},{"src":"/hakaseAI/$","dest":"/hakaseAI/index.html"},{"src":"/poinavi$","status":308,"headers":{"Location":"/poinavi/"}},{"src":"/poinavi/$","dest":"/poinavi/index.html"},{"src":"/poinavi/(.*)","dest":"/poinavi/$1"},{"src":"/(.*\\.html)","dest":"/$1"},{"src":"/(.*\\.css)","dest":"/$1"},{"src":"/","dest":"/index.html"}]}
+{
+  "redirects": [
+    { "source": "/hakaseAI", "destination": "/hakaseAI/", "permanent": true }
+  ],
+  "version": 2,
+  "builds": [
+    {"src":"hakaseAI/server.js","use":"@vercel/node"},
+    {"src":"hakaseAI/index.html","use":"@vercel/static"},
+    {"src":"hakaseAI/style.css","use":"@vercel/static"},
+    {"src":"hakaseAI/script.js","use":"@vercel/static"},
+    {"src":"hakaseAI/*.png","use":"@vercel/static"},
+    {"src":"hakaseAI/*.svg","use":"@vercel/static"},
+    {"src":"hakaseAI/*.json","use":"@vercel/static"},
+    {"src":"*.html","use":"@vercel/static"},
+    {"src":"*.css","use":"@vercel/static"},
+    {"src":"poinavi/**","use":"@vercel/static"}
+  ],
+  "routes": [
+    {"src":"/hakaseAI/api/(.*)","dest":"hakaseAI/server.js"},
+    {"src":"/hakaseAI/style.css","dest":"/hakaseAI/style.css"},
+    {"src":"/hakaseAI/script.js","dest":"/hakaseAI/script.js"},
+    {"src":"/hakaseAI/(.*\\.png)","dest":"/hakaseAI/$1"},
+    {"src":"/hakaseAI/(.*\\.svg)","dest":"/hakaseAI/$1"},
+    {"src":"/hakaseAI/(.*\\.json)","dest":"/hakaseAI/$1"},
+    {"src":"/hakaseAI$","status":308,"headers":{"Location":"/hakaseAI/"}},
+    {"src":"/hakaseAI/$","dest":"/hakaseAI/index.html"},
+    {"src":"/poinavi$","status":308,"headers":{"Location":"/poinavi/"}},
+    {"src":"/poinavi/$","dest":"/poinavi/index.html"},
+    {"src":"/poinavi/(.*)","dest":"/poinavi/$1"},
+    {"src":"/(.*\\.html)","dest":"/$1"},
+    {"src":"/(.*\\.css)","dest":"/$1"},
+    {"src":"/","dest":"/index.html"}
+  ],
+  "headers": [
+    {"source":"/css/(.*)","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]},
+    {"source":"/js/(.*)","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]},
+    {"source":"/images/(.*)","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]},
+    {"source":"/(.*)\\.(png|jpg|jpeg|gif|ico|svg|webp)","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]},
+    {"source":"/(.*)\\.(woff2|woff|ttf|eot)","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]}
+  ]
+}

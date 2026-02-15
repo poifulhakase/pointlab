@@ -6,8 +6,6 @@
 
 - `index.html` - トップページ
 - `service.html` - 事業内容
-- `profile.html` - プロフィール
-- `works.html` - 実績・活動
 - `contact.html` - お問い合わせ
 - `style.css` - 共通スタイルシート
 

@@ -112,3 +112,47 @@
   color: var(--color-text-muted);
   margin-bottom: 16px;
 }
+
+/* テーマ切替（ライト/ダーク） */
+.theme-switcher {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.theme-switcher__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: var(--color-border-light);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-switcher__btn:hover {
+  color: var(--color-text);
+  background: var(--color-border);
+}
+
+.theme-switcher__btn.is-active {
+  color: white;
+  background: var(--color-main);
+  border-color: var(--color-main);
+}
+
+.theme-switcher__btn.is-active:hover {
+  background: var(--color-main-hover);
+  border-color: var(--color-main-hover);
+}
+
+.theme-switcher__btn:focus-visible {
+  outline: 2px solid var(--color-main);
+  outline-offset: 2px;
+}

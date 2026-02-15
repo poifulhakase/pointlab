@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    <title>設定｜PointLab</title>
+    <meta name="description" content="變更網站的顯示設定，例如語言。" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+    <script>
+      (function(){var t=localStorage.getItem('pointlab_theme');var s=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t==='dark'||t==='light'?t:s);})();
+    </script>
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
+    <script src="./js/theme-switcher.js" defer></script>
+    <script src="./js/language-switcher.js" defer></script>
+    <script src="./js/mobile-nav.js" defer></script>
+  </head>
+  <body>
+    <a href="#main" class="skip-link">跳到主內容</a>
+    <div id="site-header-root"></div>
+    <script src="./js/header-include.js"></script>
+
+    <div class="layout-main">
+      <main class="layout-content" id="main">
+        <div class="page-content">
+          <h1>設定</h1>
+
+          <section class="section">
+            <h2>顯示模式</h2>
+            <div class="theme-switcher" role="group" aria-label="顯示模式">
+              <button type="button" class="theme-switcher__btn" data-theme="light" aria-pressed="false">淺色模式</button>
+              <button type="button" class="theme-switcher__btn" data-theme="dark" aria-pressed="false">深色模式</button>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>語言</h2>
+            <div class="lang-switcher lang-switcher--settings" data-lang="zh">
+              <a href="./settings.html" class="lang-switcher__tag" data-lang="ja">日本語</a>
+              <a href="./settings-en.html" class="lang-switcher__tag" data-lang="en">English</a>
+              <a href="./settings-zh.html" class="lang-switcher__tag" data-lang="zh" aria-current="page">繁體中文</a>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <aside class="layout-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">連結</h3>
+          <ul class="sidebar-list">
+            <li><a href="./index-zh.html">首頁</a></li>
+            <li><a href="./contact.html">聯絡我們</a></li>
+            <li><a href="./privacy.html">隱私權政策</a></li>
+            <li><a href="./disclaimer.html">免責聲明</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__links">
+          <a href="./privacy.html">隱私權政策</a>
+          <a href="./disclaimer.html">免責聲明</a>
+        </div>
+        <p class="site-footer__copyright">© PointLab</p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>記事管理｜ぽいんとらぼ</title>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <div id="gateSection" class="admin-gate">
+      <div class="admin-gate__box">
+        <h2>管理画面</h2>
+        <p class="admin-gate__note">パスワードを入力してください</p>
+        <form id="gateForm" class="admin-gate__form">
+          <input type="password" id="gatePassword" placeholder="パスワード" autocomplete="off" />
+          <button type="submit" class="btn btn-primary">ログイン</button>
+        </form>
+        <p id="gateError" class="admin-gate__error" hidden></p>
+      </div>
+    </div>
+    <div class="admin" id="adminContent" hidden>
+      <header class="admin-header">
+        <h1 class="admin-title">記事管理</h1>
+        <div class="admin-header__links">
+          <a href="../" class="admin-back" target="_blank">サイトへ戻る</a>
+          <button type="button" id="btnLogout" class="btn btn-small btn-secondary">ログアウト</button>
+        </div>
+      </header>
+
+      <section class="admin-config" id="configSection">
+        <h2>設定</h2>
+        <p class="admin-note">
+          GitHub・リポジトリ・ベースパスは初期値で設定済み。Token のみ入力して「設定を保存」を押してください（<code>repo</code> スコープ必要）。
+        </p>
+        <div class="config-form">
+          <label>
+            <span>GitHub ユーザー名 / 組織名</span>
+            <input type="text" id="configOwner" value="pointlabs-projects" placeholder="例: pointlab" />
+          </label>
+          <label>
+            <span>リポジトリ名</span>
+            <input type="text" id="configRepo" value="pointlab" placeholder="例: PointLab" />
+          </label>
+          <label>
+            <span>ブランチ</span>
+            <input type="text" id="configBranch" value="main" placeholder="main" />
+          </label>
+          <label>
+            <span>コンテンツのベースパス（任意）</span>
+            <input type="text" id="configBasePath" value="pointlab/pointlab" placeholder="空欄 = リポジトリルート" />
+          </label>
+          <label>
+            <span>Personal Access Token</span>
+            <input type="password" id="configToken" placeholder="Token を入力して「設定を保存」を押す" autocomplete="off" />
+          </label>
+          <label>
+            <span>Imgur Client ID（画像アップロード用・任意）</span>
+            <input type="text" id="configImgurClientId" placeholder="https://api.imgur.com でアプリ登録して取得" autocomplete="off" />
+          </label>
+          <div class="config-actions">
+            <button type="button" id="btnSaveConfig" class="btn btn-primary">設定を保存</button>
+            <button type="button" id="btnClearConfig" class="btn btn-secondary">設定をクリア</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-main" id="mainSection" hidden>
+        <aside class="admin-sidebar">
+          <div class="sidebar-header">
+            <h2>記事一覧</h2>
+            <button type="button" id="btnRefresh" class="btn btn-small">更新</button>
+          </div>
+          <div id="articleList" class="article-list"></div>
+          <p id="articleListStatus" class="status-text"></p>
+        </aside>
+        <main class="admin-editor">
+          <div id="editorPlaceholder" class="editor-placeholder">
+            <p>左の一覧から記事を選択してください</p>
+          </div>
+          <div id="editorPanel" class="editor-panel" hidden>
+            <div class="editor-header">
+              <h3 id="editorTitle"></h3>
+              <div class="editor-actions">
+                <button type="button" id="btnSave" class="btn btn-primary">保存</button>
+                <a id="btnPreview" href="#" class="btn btn-secondary" target="_blank">プレビュー</a>
+              </div>
+            </div>
+            <div class="editor-meta">
+              <span id="editorPath" class="editor-path"></span>
+            </div>
+            <div class="editor-upload" id="editorUpload">
+              <label class="upload-label">
+                <span>画像をアップロード（Imgur）</span>
+                <input type="file" id="uploadInput" accept="image/*" />
+                <span class="upload-btn">ファイルを選択</span>
+              </label>
+              <span id="uploadStatus" class="upload-status"></span>
+            </div>
+            <textarea id="articleContent" class="article-content" spellcheck="false"></textarea>
+            <p id="saveStatus" class="status-text"></p>
+          </div>
+        </main>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script src="admin.js"></script>
+  </body>
+</html>

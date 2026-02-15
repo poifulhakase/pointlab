@@ -3,6 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
     <title>プロフィール｜ぽいんとらぼ</title>
     <meta name="description" content="制作者のプロフィールとこれまでの経歴、仕事のスタンスをご紹介します。" />
     <link rel="stylesheet" href="./css/base.css" />
@@ -14,10 +22,9 @@
         <a href="./index.html" class="site-logo">ぽいんとらぼ</a>
         <nav>
           <ul class="nav-list">
-            <li><a href="./index.html">記事</a></li>
+            <li><a href="./index.html">ホーム</a></li>
             <li><a href="./service.html">事業内容</a></li>
-            <li><a href="./profile.html">プロフィール</a></li>
-            <li><a href="./works.html">実績・活動</a></li>
+            <li><a href="https://note.com/pointlab/n/n9f6f5df2d619" target="_blank" rel="noopener noreferrer">プロフィール</a></li>
             <li><a href="./contact.html">お問い合わせ</a></li>
           </ul>
         </nav>
@@ -84,9 +91,8 @@
     <footer class="site-footer">
       <div class="site-footer__inner">
         <div class="site-footer__links">
-          <a href="https://www.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
-          <a href="https://www.tiktok.com/@pointlab" target="_blank" rel="noopener noreferrer">TikTok</a>
-          <a href="https://www.youtube.com/@pointlab" target="_blank" rel="noopener noreferrer">YouTube</a>
+          <a href="https://note.com/pointlab" target="_blank" rel="noopener noreferrer">note</a>
+          <a href="https://jp.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
           <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a>
         </div>
         <p class="site-footer__copyright">© ぽいんとらぼ</p>

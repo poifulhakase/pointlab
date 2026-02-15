@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    <title>Settings｜PointLab</title>
+    <meta name="description" content="Change site display settings such as language." />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+    <script>
+      (function(){var t=localStorage.getItem('pointlab_theme');var s=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t==='dark'||t==='light'?t:s);})();
+    </script>
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
+    <script src="./js/theme-switcher.js" defer></script>
+    <script src="./js/language-switcher.js" defer></script>
+    <script src="./js/mobile-nav.js" defer></script>
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <div id="site-header-root"></div>
+    <script src="./js/header-include.js"></script>
+
+    <div class="layout-main">
+      <main class="layout-content" id="main">
+        <div class="page-content">
+          <h1>Settings</h1>
+
+          <section class="section">
+            <h2>Display Mode</h2>
+            <div class="theme-switcher" role="group" aria-label="Display mode">
+              <button type="button" class="theme-switcher__btn" data-theme="light" aria-pressed="false">Light</button>
+              <button type="button" class="theme-switcher__btn" data-theme="dark" aria-pressed="false">Dark</button>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>Language</h2>
+            <div class="lang-switcher lang-switcher--settings" data-lang="en">
+              <a href="./settings.html" class="lang-switcher__tag" data-lang="ja">日本語</a>
+              <a href="./settings-en.html" class="lang-switcher__tag" data-lang="en" aria-current="page">English</a>
+              <a href="./settings-zh.html" class="lang-switcher__tag" data-lang="zh">繁體中文</a>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <aside class="layout-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-section__title">Links</h3>
+          <ul class="sidebar-list">
+            <li><a href="./index-en.html">Home</a></li>
+            <li><a href="./contact.html">Contact</a></li>
+            <li><a href="./privacy.html">Privacy Policy</a></li>
+            <li><a href="./disclaimer.html">Disclaimer</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__links">
+          <a href="./privacy.html">Privacy Policy</a>
+          <a href="./disclaimer.html">Disclaimer</a>
+        </div>
+        <p class="site-footer__copyright">© PointLab</p>
+      </div>
+    </footer>
+  </body>
+</html>

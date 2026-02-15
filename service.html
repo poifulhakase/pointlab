@@ -3,26 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
     <title>事業内容｜ぽいんとらぼ</title>
     <meta name="description" content="個人事業主・フリーランス向けのWebサイト制作と情報発信の土台づくりの事業内容をご紹介します。" />
     <link rel="stylesheet" href="./css/base.css" />
     <link rel="stylesheet" href="./css/pages.css" />
+    <script src="./js/mobile-nav.js" defer></script>
   </head>
   <body>
-    <header class="site-header">
-      <div class="site-header__inner">
-        <a href="./index.html" class="site-logo">ぽいんとらぼ</a>
-        <nav>
-          <ul class="nav-list">
-            <li><a href="./index.html">記事</a></li>
-            <li><a href="./service.html">事業内容</a></li>
-            <li><a href="./profile.html">プロフィール</a></li>
-            <li><a href="./works.html">実績・活動</a></li>
-            <li><a href="./contact.html">お問い合わせ</a></li>
-          </ul>
-        </nav>
-      </div>
-    </header>
+    <div id="site-header-root"></div>
+    <script src="./js/header-include.js"></script>
 
     <div class="layout-main">
       <main class="layout-content">
@@ -117,10 +114,8 @@
     <footer class="site-footer">
       <div class="site-footer__inner">
         <div class="site-footer__links">
-          <a href="https://www.pinterest.com/pointlab/" target="_blank" rel="noopener noreferrer">Pinterest</a>
-          <a href="https://www.tiktok.com/@pointlab" target="_blank" rel="noopener noreferrer">TikTok</a>
-          <a href="https://www.youtube.com/@pointlab" target="_blank" rel="noopener noreferrer">YouTube</a>
-          <a href="https://medium.com/@pointlab" target="_blank" rel="noopener noreferrer">Medium</a>
+          <a href="./privacy.html">プライバシーポリシー</a>
+          <a href="./disclaimer.html">免責事項</a>
         </div>
         <p class="site-footer__copyright">© ぽいんとらぼ</p>
       </div>

@@ -11,30 +11,43 @@
       gtag('js', new Date());
       gtag('config', 'G-XXXXXXXXXX');
     </script>
-    <title>お問い合わせ｜ぽいんとらぼ</title>
-    <meta name="description" content="Webサイト制作や情報発信のご相談は、お問い合わせページから承っています。" />
+    <title>設定｜ぽいんとらぼ</title>
+    <meta name="description" content="言語などサイトの表示設定を変更できます。" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
     <script>
       (function(){var t=localStorage.getItem('pointlab_theme');var s=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t==='dark'||t==='light'?t:s);})();
     </script>
     <link rel="stylesheet" href="./css/base.css" />
     <link rel="stylesheet" href="./css/pages.css" />
+    <script src="./js/theme-switcher.js" defer></script>
+    <script src="./js/language-switcher.js" defer></script>
     <script src="./js/mobile-nav.js" defer></script>
   </head>
   <body>
+    <a href="#main" class="skip-link">メインコンテンツへ</a>
     <div id="site-header-root"></div>
     <script src="./js/header-include.js"></script>
 
     <div class="layout-main">
-      <main class="layout-content">
+      <main class="layout-content" id="main">
         <div class="page-content">
-          <h1>お問い合わせ</h1>
+          <h1>設定</h1>
 
           <section class="section">
-            <p>下記フォームよりお気軽にお問い合わせください。お返事は平日3営業日以内を目安としています。</p>
-            <!-- Googleフォームの埋め込みコードをここに貼り付けてください -->
-            <div class="form-placeholder">
-              <p class="small-text">【Googleフォームをここに埋め込み】</p>
-              <p>Googleフォームの「埋め込み」コードを貼り付けてください。</p>
+            <h2>表示モード</h2>
+            <div class="theme-switcher" role="group" aria-label="表示モード">
+              <button type="button" class="theme-switcher__btn" data-theme="light" aria-pressed="false">ライトモード</button>
+              <button type="button" class="theme-switcher__btn" data-theme="dark" aria-pressed="false">ダークモード</button>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>言語</h2>
+            <div class="lang-switcher lang-switcher--settings" data-lang="ja">
+              <a href="./settings.html" class="lang-switcher__tag" data-lang="ja" aria-current="page">日本語</a>
+              <a href="./settings-en.html" class="lang-switcher__tag" data-lang="en">English</a>
+              <a href="./settings-zh.html" class="lang-switcher__tag" data-lang="zh">繁體中文</a>
             </div>
           </section>
         </div>
@@ -45,6 +58,9 @@
           <h3 class="sidebar-section__title">リンク</h3>
           <ul class="sidebar-list">
             <li><a href="./">ホーム</a></li>
+            <li><a href="./contact.html">お問い合わせ</a></li>
+            <li><a href="./privacy.html">プライバシーポリシー</a></li>
+            <li><a href="./disclaimer.html">免責事項</a></li>
           </ul>
         </div>
       </aside>
