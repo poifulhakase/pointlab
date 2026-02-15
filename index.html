@@ -21,13 +21,13 @@
       gtag('js', new Date());
       gtag('config', 'G-XXXXXXXXXX');
     </script>
-    <title>ぽいんとらぼ｜個人事業主のWeb発信を応援</title>
+    <title>ぽいんとらぼ｜お金の研究所</title>
     <meta name="description" content="ぽいんとらぼは、個人事業主・フリーランスのための情報発信ハブ。ポイ活、株式投資、副業、節税、生き方など実践的な記事をnote・Mediumで発信。" />
     <link rel="canonical" href="https://pointlab.vercel.app/" />
     <link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/" />
     <link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/index-en.html" />
     <link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/" />
-    <meta property="og:title" content="ぽいんとらぼ｜個人事業主のWeb発信を応援" />
+    <meta property="og:title" content="ぽいんとらぼ｜お金の研究所" />
     <meta property="og:description" content="ポイ活、株式投資、副業、節税、生き方。個人事業主・フリーランスのための情報発信ハブ" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://pointlab.vercel.app/" />
@@ -56,10 +56,12 @@
     <script src="./js/header-include.js"></script>
 
     <div class="main-tabs" role="tablist" aria-label="コンテンツ種別">
+      <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-lab" id="tab-lab" data-tab="lab">研究所</button>
       <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-articles" id="tab-articles" data-tab="articles">記事</button>
       <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-videos" id="tab-videos" data-tab="videos">動画</button>
     </div>
 
+    <div class="tab-panel" id="panel-lab" role="tabpanel" aria-labelledby="tab-lab" hidden></div>
     <div class="tab-panel is-active" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles">
     <div class="layout-with-sidebar">
       <aside class="page-sidebar">
