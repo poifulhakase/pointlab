@@ -14,6 +14,7 @@
     { "src": "css/**", "use": "@vercel/static" },
     { "src": "js/**", "use": "@vercel/static" },
     { "src": "articles/**", "use": "@vercel/static" },
+    { "src": "images/**", "use": "@vercel/static" },
     { "src": "public/**", "use": "@vercel/static" },
     { "src": "poinavi/**", "use": "@vercel/static" }
   ],
