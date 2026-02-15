@@ -11,30 +11,28 @@
       gtag('js', new Date());
       gtag('config', 'G-XXXXXXXXXX');
     </script>
-    <title>お問い合わせ｜ぽいんとらぼ</title>
-    <meta name="description" content="Webサイト制作や情報発信のご相談は、お問い合わせページから承っています。" />
+    <title>研究室への連絡｜ぽいんとらぼ</title>
+    <meta name="description" content="Webサイト制作や情報発信のご相談は、研究室への連絡ページから承っています。" />
     <script>
       (function(){var t=localStorage.getItem('pointlab_theme');var s=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t==='dark'||t==='light'?t:s);})();
     </script>
     <link rel="stylesheet" href="./css/base.css" />
     <link rel="stylesheet" href="./css/pages.css" />
     <script src="./js/mobile-nav.js" defer></script>
+    <script src="./js/settings-modal.js" defer></script>
   </head>
-  <body>
+  <body class="page-contact">
     <div id="site-header-root"></div>
     <script src="./js/header-include.js"></script>
 
     <div class="layout-main">
       <main class="layout-content">
         <div class="page-content">
-          <h1>お問い合わせ</h1>
-
+          <h1 class="sr-only">研究室への連絡</h1>
           <section class="section">
-            <p>下記フォームよりお気軽にお問い合わせください。お返事は平日3営業日以内を目安としています。</p>
-            <!-- Googleフォームの埋め込みコードをここに貼り付けてください -->
-            <div class="form-placeholder">
-              <p class="small-text">【Googleフォームをここに埋め込み】</p>
-              <p>Googleフォームの「埋め込み」コードを貼り付けてください。</p>
+            <p class="lead">下記フォームよりお気軽に研究室への連絡ください。お返事は平日3営業日以内を目安としています。</p>
+            <div class="form-embed">
+              <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfAwqrLssbR0EKh19J3m634gvJtggSbTrl7wDYjWGc3K4-j0A/viewform?embedded=true" width="640" height="800" frameborder="0" marginheight="0" marginwidth="0">読み込んでいます…</iframe>
             </div>
           </section>
         </div>
@@ -43,13 +41,41 @@
 
     <footer class="site-footer">
       <div class="site-footer__inner">
-        <div class="site-footer__links">
-          <a href="https://www.instagram.com/poifulhakase/" target="_blank" rel="noopener noreferrer" class="site-footer__icon-link" aria-label="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-          <a href="./privacy.html">プライバシーポリシー</a>
-          <a href="./disclaimer.html">免責事項</a>
-        </div>
-        <p class="site-footer__copyright">© ぽいんとらぼ</p>
+        <p class="site-footer__copyright">© 2026 ぽいんとらぼ</p>
       </div>
     </footer>
+
+    <!-- 設定モーダル（ハカセAI風） -->
+    <div id="pointlab-settings-modal" class="pointlab-settings-modal hidden">
+      <div class="pointlab-settings-modal__overlay"></div>
+      <div class="pointlab-settings-modal__content">
+        <div class="pointlab-settings-modal__header">
+          <h2 class="pointlab-settings-modal__title">設定</h2>
+          <button class="pointlab-settings-modal__close" id="pointlabSettingsModalClose" aria-label="閉じる" type="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="pointlab-settings-modal__body">
+          <div class="pointlab-settings-modal__item">
+            <label class="pointlab-settings-modal__label">テーマ</label>
+            <button id="pointlabThemeToggle" class="pointlab-settings-modal__theme-btn" type="button">
+              <span class="pointlab-settings-modal__theme-icon">☀️</span>
+              <span class="pointlab-settings-modal__theme-text">ライトモード</span>
+            </button>
+          </div>
+          <div class="pointlab-settings-modal__item">
+            <label class="pointlab-settings-modal__label">言語</label>
+            <div class="pointlab-settings-modal__lang-links">
+              <a href="./index.html" class="pointlab-settings-modal__lang-link">日本語</a>
+              <a href="./index-en.html" class="pointlab-settings-modal__lang-link">English</a>
+              <a href="./index-zh.html" class="pointlab-settings-modal__lang-link">繁體中文</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

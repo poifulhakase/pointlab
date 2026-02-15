@@ -791,6 +791,7 @@ body.dark-mode .settings-modal__clear-btn:hover {
   border-top: 1px solid #e0e0e0;
   padding: 8px 16px;
   flex-shrink: 0;
+  margin-top: auto;
   display: flex;
   justify-content: center;
   align-items: center;

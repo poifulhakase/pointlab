@@ -43,19 +43,14 @@
     <script src="./js/image-fallback.js" defer></script>
     <script src="./js/url-trailing-slash.js" defer></script>
     <script src="./js/main-tabs.js" defer></script>
+    <script src="./js/settings-modal.js" defer></script>
   </head>
   <body>
     <a href="#main" class="skip-link">跳到主內容</a>
     <div id="site-header-root"></div>
     <script src="./js/header-include.js"></script>
 
-    <div class="main-tabs" role="tablist" aria-label="內容類型">
-      <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-lab" id="tab-lab" data-tab="lab"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg></span><span class="main-tabs__tab-label">研究室</span></button>
-      <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-articles" id="tab-articles" data-tab="articles"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span class="main-tabs__tab-label">文章</span></button>
-      <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-videos" id="tab-videos" data-tab="videos"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg></span><span class="main-tabs__tab-label">影片</span></button>
-      <a href="./hakaseAI/" class="main-tabs__tab main-tabs__tab--link"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"/><line x1="12" y1="8" x2="12" y2="4"/><circle cx="12" cy="3" r="1.5" fill="currentColor"/><rect x="7" y="11" width="3" height="2" rx="0.5" fill="currentColor"/><rect x="14" y="11" width="3" height="2" rx="0.5" fill="currentColor"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span><span class="main-tabs__tab-label">博士AI</span></a>
-    </div>
-
+    <div class="main-content-wrap">
     <div class="tab-panel is-active" id="panel-lab" role="tabpanel" aria-labelledby="tab-lab">
       <div class="videos-placeholder">
         <div class="videos-placeholder__icon" aria-hidden="true">
@@ -436,20 +431,53 @@
         <div class="videos-placeholder__icon" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg>
         </div>
-        <h2 class="videos-placeholder__title">短片</h2>
-        <p class="videos-placeholder__desc">準備中。今後將公開短片。</p>
+<h2 class="videos-placeholder__title">實驗影像</h2>
+      <p class="videos-placeholder__desc">準備中。今後將公開實驗影像。</p>
       </div>
     </div>
+    </div><!-- /.main-content-wrap -->
 
-    <footer class="site-footer">
-      <div class="site-footer__inner">
-        <div class="site-footer__links">
-          <a href="https://www.instagram.com/poifulhakase/" target="_blank" rel="noopener noreferrer" class="site-footer__icon-link" aria-label="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-          <a href="./privacy.html">隱私權政策</a>
-          <a href="./disclaimer.html">免責聲明</a>
-        </div>
-        <p class="site-footer__copyright">© PointLab</p>
-      </div>
+    <footer class="site-footer site-footer--fixed-bottom">
+      <nav class="main-tabs main-tabs--footer" role="tablist" aria-label="內容類型">
+        <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-lab" id="tab-lab" data-tab="lab"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg></span><span class="main-tabs__tab-label">研究室</span></button>
+        <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-articles" id="tab-articles" data-tab="articles"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span class="main-tabs__tab-label">研究記錄</span></button>
+        <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-videos" id="tab-videos" data-tab="videos"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg></span><span class="main-tabs__tab-label">實驗影像</span></button>
+        <a href="./hakaseAI/" class="main-tabs__tab main-tabs__tab--link"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"/><line x1="12" y1="8" x2="12" y2="4"/><circle cx="12" cy="3" r="1.5" fill="currentColor"/><rect x="7" y="11" width="3" height="2" rx="0.5" fill="currentColor"/><rect x="14" y="11" width="3" height="2" rx="0.5" fill="currentColor"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span><span class="main-tabs__tab-label">博士AI</span></a>
+      </nav>
+      <p class="site-footer__copyright site-footer__copyright--bottom">© 2026 ぽいんとらぼ</p>
     </footer>
+
+    <!-- 設定モーダル（ハカセAI風） -->
+    <div id="pointlab-settings-modal" class="pointlab-settings-modal hidden">
+      <div class="pointlab-settings-modal__overlay"></div>
+      <div class="pointlab-settings-modal__content">
+        <div class="pointlab-settings-modal__header">
+          <h2 class="pointlab-settings-modal__title">設定</h2>
+          <button class="pointlab-settings-modal__close" id="pointlabSettingsModalClose" aria-label="關閉" type="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="pointlab-settings-modal__body">
+          <div class="pointlab-settings-modal__item">
+            <label class="pointlab-settings-modal__label">主題</label>
+            <button id="pointlabThemeToggle" class="pointlab-settings-modal__theme-btn" type="button">
+              <span class="pointlab-settings-modal__theme-icon">☀️</span>
+              <span class="pointlab-settings-modal__theme-text">淺色模式</span>
+            </button>
+          </div>
+          <div class="pointlab-settings-modal__item">
+            <label class="pointlab-settings-modal__label">語言</label>
+            <div class="pointlab-settings-modal__lang-links">
+              <a href="./index.html" class="pointlab-settings-modal__lang-link">日本語</a>
+              <a href="./index-en.html" class="pointlab-settings-modal__lang-link">English</a>
+              <a href="./index-zh.html" class="pointlab-settings-modal__lang-link" aria-current="page">繁體中文</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

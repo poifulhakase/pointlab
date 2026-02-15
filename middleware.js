@@ -8,7 +8,7 @@ const POINAVI_USER = process.env.POINAVI_USER || 'poinavi';
 const POINAVI_PASSWORD = process.env.POINAVI_PASSWORD;
 
 export const config = {
-  matcher: ['/poinavi', '/poinavi/:path*'],
+  matcher: ['/poinavi', '/poinavi/', '/poinavi/(.*)'],
 };
 
 export default function middleware(request) {

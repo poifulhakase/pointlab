@@ -6,7 +6,7 @@
 
 - `index.html` - トップページ
 - `service.html` - 事業内容
-- `contact.html` - お問い合わせ
+- `contact.html` - 研究室への連絡
 - `style.css` - 共通スタイルシート
 
 ## 🚀 デプロイ

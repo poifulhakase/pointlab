@@ -1,5 +1,18 @@
 /* 通常ページ（service, profile, works, contact）用 */
 
+/* スクリーンリーダー専用（視覚的非表示、SEO・a11y用） */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .page-content h1 {
   font-size: 1.5rem;
   margin: 0 0 24px;
@@ -105,6 +118,48 @@
   background: var(--color-border-light);
   border-radius: 8px;
   text-align: center;
+}
+
+/* Googleフォーム埋め込み：スマホで幅100% */
+.form-embed {
+  margin-top: 16px;
+  max-width: 100%;
+  overflow: hidden;
+}
+.form-embed iframe {
+  max-width: 100%;
+  display: block;
+}
+
+/* お問い合わせページ：スマホで余白をコンパクトに、横幅はみ出し防止 */
+@media (max-width: 700px) {
+  body.page-contact {
+    overflow-x: hidden;
+  }
+  body.page-contact .layout-main {
+    padding: 16px 16px 24px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  body.page-contact .layout-content,
+  body.page-contact .page-content,
+  body.page-contact .section {
+    max-width: 100%;
+    min-width: 0;
+  }
+  body.page-contact .form-embed {
+    margin-top: 8px;
+    width: 100%;
+  }
+  body.page-contact .form-embed iframe {
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  body.page-contact .page-content .lead {
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
 }
 
 .form-note {

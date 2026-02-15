@@ -145,35 +145,35 @@ const MAGAZINES = [
   {
     id: 'poikatsu',
     name: 'ポイ活３分レシピ 〜 ぽいふる博士の料理本',
-    image: 'Poikatsu_3min_Recipe_Top_thumb.jpg',
+    image: '../images/Poikatsu_3min_Recipe_RakutenPoint.jpg',
     url: 'https://note.com/pointlab/m/m4188c60f3c9f',
     keywords: ['ポイ活', 'ポイント', '節約', 'お得', 'クーポン', 'キャッシュバック', '還元', 'マイル', '楽天', 'PayPay', 'dポイント', 'Tポイント', 'クレジットカード', 'ショッピング', '買い物']
   },
   {
     id: 'stock',
     name: '株式トレード研究室 〜 ぽいふる博士の研究録',
-    image: 'Stock_Trade_Lab_Top_thumb.jpg',
+    image: '../images/Stock_Trade_Lab_TradingView.png',
     url: 'https://note.com/pointlab/m/mb8056cb0b8ee',
     keywords: ['株式', '投資', 'チャート', '配当', '株価', '銘柄', '証券', 'NISA', 'つみたて', '資産運用']
   },
   {
     id: 'tax',
     name: '個人事業主の節税限界点 〜 ぽよん君の大冒険',
-    image: 'Sole_Proprietor_Tax_Limits_Top_thumb.jpg',
+    image: '../images/Sole_Proprietor_Kaigyo_thumbnail.png',
     url: 'https://note.com/pointlab/m/mbb26c895445e',
     keywords: ['節税', '税金', '確定申告', '個人事業主', 'フリーランス', '経費', '控除', '青色申告', '白色申告', '所得税', '住民税', '消費税', 'インボイス', '帳簿', '会計']
   },
   {
     id: 'side-biz',
     name: '普通じゃない副業図鑑 〜 ぽいふる博士の見聞録',
-    image: 'Unusual_Side_Biz_Encyclopedia_Top_thumb.jpg',
+    image: '../images/Compass_for_Living_career_eye_catching_parallel_carrier.jpg',
     url: 'https://note.com/pointlab/m/m7be629812c81',
     keywords: ['副業', 'サイドビジネス', '稼ぐ', '収入', '起業', 'ビジネス', '独立', '在宅', 'リモート', '不労所得', 'お金', '金融']
   },
   {
     id: 'rashimban',
     name: '生き方の羅針盤 〜 ぽいふる博士の人生録',
-    image: 'Compass_for_Living_Top_thumb.jpg',
+    image: '../images/Compass_for_Living_find_eye_catching_find.jpg',
     url: 'https://note.com/pointlab/m/m5d690faf7df5',
     keywords: ['生き方', '人生', '生活', '暮らし', 'らしんばん', '羅針盤', 'ライフ', 'life', '幸せ', '幸福', '目標', '夢', 'キャリア', '仕事', '働き方', '博士']
   }
@@ -694,9 +694,13 @@ function escapeHtml(text) {
   div.textContent = text;
   let html = div.innerHTML.replace(/\n/g, '<br>');
   
-  // URLをリンクに変換
-  const urlRegex = /(https?:\/\/[^\s<]+)/g;
-  html = html.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  // URLをリンクに変換（noteマガジンはタイトル表示、その他は「リンクを見る」）
+  const urlRegex = /(https?:\/\/[^\s)\]<>）』」]+)/g;
+  html = html.replace(urlRegex, function (url) {
+    const magazine = findMagazineByNoteUrl(url);
+    const linkText = magazine ? magazine.name : (url.includes('note.com') ? 'noteを見る' : 'リンクを見る');
+    return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + linkText + '</a>';
+  });
   
   return html;
 }

@@ -1,38 +1,43 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "framework": null,
   "builds": [
-    { "src": "hakaseAI/server.js", "use": "@vercel/node" },
-    { "src": "hakaseAI/index.html", "use": "@vercel/static" },
-    { "src": "hakaseAI/style.css", "use": "@vercel/static" },
-    { "src": "hakaseAI/script.js", "use": "@vercel/static" },
-    { "src": "hakaseAI/*.png", "use": "@vercel/static" },
-    { "src": "hakaseAI/*.svg", "use": "@vercel/static" },
-    { "src": "hakaseAI/*.json", "use": "@vercel/static" },
-    { "src": "logo.svg", "use": "@vercel/static" },
-    { "src": "favicon.svg", "use": "@vercel/static" },
-    { "src": "*.html", "use": "@vercel/static" },
-    { "src": "*.css", "use": "@vercel/static" },
-    { "src": "css/**", "use": "@vercel/static" },
-    { "src": "js/**", "use": "@vercel/static" },
-    { "src": "articles/**", "use": "@vercel/static" },
-    { "src": "images/**", "use": "@vercel/static" },
-    { "src": "public/**", "use": "@vercel/static" },
-    { "src": "poinavi/**", "use": "@vercel/static" }
+    {"src": "hakaseAI/server.js", "use": "@vercel/node"},
+    {"src": "hakaseAI/index.html", "use": "@vercel/static"},
+    {"src": "hakaseAI/style.css", "use": "@vercel/static"},
+    {"src": "hakaseAI/script.js", "use": "@vercel/static"},
+    {"src": "hakaseAI/*.png", "use": "@vercel/static"},
+    {"src": "hakaseAI/*.svg", "use": "@vercel/static"},
+    {"src": "hakaseAI/*.json", "use": "@vercel/static"},
+    {"src": "logo.svg", "use": "@vercel/static"},
+    {"src": "favicon.svg", "use": "@vercel/static"},
+    {"src": "*.html", "use": "@vercel/static"},
+    {"src": "*.css", "use": "@vercel/static"},
+    {"src": "css/**", "use": "@vercel/static"},
+    {"src": "js/**", "use": "@vercel/static"},
+    {"src": "articles/**", "use": "@vercel/static"},
+    {"src": "images/**", "use": "@vercel/static"},
+    {"src": "public/**", "use": "@vercel/static"},
+    {"src": "poinavi/**", "use": "@vercel/static"}
   ],
   "redirects": [
-    { "source": "/hakaseAI", "destination": "/hakaseAI/", "permanent": true },
-    { "source": "/poinavi", "destination": "/poinavi/", "permanent": true }
+    {"source": "/hakaseAI", "destination": "/hakaseAI/", "permanent": true},
+    {"source": "/poinavi", "destination": "/poinavi/", "permanent": true}
   ],
   "rewrites": [
-    { "source": "/hakaseAI/api/:path*", "destination": "/hakaseAI/server.js" },
-    { "source": "/", "destination": "/index.html" }
+    {"source": "/hakaseAI/api/:path*", "destination": "/hakaseAI/server.js"},
+    {"source": "/favicon.ico", "destination": "/favicon.svg"},
+    {"source": "/favicon.png", "destination": "/favicon.svg"},
+    {"source": "/favicon-16x16.png", "destination": "/favicon.svg"},
+    {"source": "/favicon-32x32.png", "destination": "/favicon.svg"},
+    {"source": "/", "destination": "/index.html"}
   ],
   "headers": [
-    { "source": "/css/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/js/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/images/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/(.*)\\.(png|jpg|jpeg|gif|ico|svg|webp)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/(.*)\\.(woff2|woff|ttf|eot)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
+    {"source": "/css/(.*)", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
+    {"source": "/js/(.*)", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
+    {"source": "/images/(.*)", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
+    {"source": "/(.*)\\.(png|jpg|jpeg|gif|ico|svg|webp)", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]},
+    {"source": "/(.*)\\.(woff2|woff|ttf|eot)", "headers": [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]}
   ]
 }

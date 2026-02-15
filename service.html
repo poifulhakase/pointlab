@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="./css/base.css" />
     <link rel="stylesheet" href="./css/pages.css" />
     <script src="./js/mobile-nav.js" defer></script>
+    <script src="./js/settings-modal.js" defer></script>
   </head>
   <body>
     <div id="site-header-root"></div>
@@ -32,7 +33,7 @@
             <p>まずは「きちんとした公式サイト」を持ちたい方向けに、5ページ構成のシンプルなWebサイトを制作します。</p>
             <h3>できること</h3>
             <ul>
-              <li>トップ／事業内容／プロフィール／実績・活動／お問い合わせの構成設計</li>
+              <li>トップ／事業内容／プロフィール／実績・活動／研究室への連絡の構成設計</li>
               <li>HTML / CSS による静的Webサイト制作</li>
               <li>Vercel / Netlify など静的ホスティングサービスへの公開サポート（手順のご案内）</li>
               <li>文章・情報の整理とヒアリングをもとに、たたき台を作成</li>
@@ -96,7 +97,7 @@
           <section class="section">
             <h2>まずは状況のヒアリングから</h2>
             <p>いきなり制作のご相談ではなく、「今の状況だと、どこから整えるのが良さそうか」を一緒に整理するところからでも大丈夫です。</p>
-            <p><a class="button-link" href="./contact.html">お問い合わせページへ</a></p>
+            <p><a class="button-link" href="./contact.html">研究室への連絡ページへ</a></p>
           </section>
         </div>
       </main>
@@ -113,13 +114,41 @@
 
     <footer class="site-footer">
       <div class="site-footer__inner">
-        <div class="site-footer__links">
-          <a href="https://www.instagram.com/poifulhakase/" target="_blank" rel="noopener noreferrer" class="site-footer__icon-link" aria-label="Instagram"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
-          <a href="./privacy.html">プライバシーポリシー</a>
-          <a href="./disclaimer.html">免責事項</a>
-        </div>
-        <p class="site-footer__copyright">© ぽいんとらぼ</p>
+        <p class="site-footer__copyright">© 2026 ぽいんとらぼ</p>
       </div>
     </footer>
+
+    <!-- 設定モーダル（ハカセAI風） -->
+    <div id="pointlab-settings-modal" class="pointlab-settings-modal hidden">
+      <div class="pointlab-settings-modal__overlay"></div>
+      <div class="pointlab-settings-modal__content">
+        <div class="pointlab-settings-modal__header">
+          <h2 class="pointlab-settings-modal__title">設定</h2>
+          <button class="pointlab-settings-modal__close" id="pointlabSettingsModalClose" aria-label="閉じる" type="button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="pointlab-settings-modal__body">
+          <div class="pointlab-settings-modal__item">
+            <label class="pointlab-settings-modal__label">テーマ</label>
+            <button id="pointlabThemeToggle" class="pointlab-settings-modal__theme-btn" type="button">
+              <span class="pointlab-settings-modal__theme-icon">☀️</span>
+              <span class="pointlab-settings-modal__theme-text">ライトモード</span>
+            </button>
+          </div>
+          <div class="pointlab-settings-modal__item">
+            <label class="pointlab-settings-modal__label">言語</label>
+            <div class="pointlab-settings-modal__lang-links">
+              <a href="./index.html" class="pointlab-settings-modal__lang-link">日本語</a>
+              <a href="./index-en.html" class="pointlab-settings-modal__lang-link">English</a>
+              <a href="./index-zh.html" class="pointlab-settings-modal__lang-link">繁體中文</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
