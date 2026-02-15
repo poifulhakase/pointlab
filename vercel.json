@@ -9,6 +9,8 @@
     { "src": "hakaseAI/*.png", "use": "@vercel/static" },
     { "src": "hakaseAI/*.svg", "use": "@vercel/static" },
     { "src": "hakaseAI/*.json", "use": "@vercel/static" },
+    { "src": "logo.svg", "use": "@vercel/static" },
+    { "src": "favicon.svg", "use": "@vercel/static" },
     { "src": "*.html", "use": "@vercel/static" },
     { "src": "*.css", "use": "@vercel/static" },
     { "src": "css/**", "use": "@vercel/static" },
