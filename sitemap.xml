@@ -71,4 +71,10 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <!-- ぽいナビ -->
+  <url><loc>https://pointlab.vercel.app/poinavi/</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://pointlab.vercel.app/poinavi/index.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://pointlab.vercel.app/poinavi/lab.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://pointlab.vercel.app/poinavi/translate.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://pointlab.vercel.app/poinavi/map.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
 </urlset>
