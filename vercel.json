@@ -2,7 +2,20 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "builds": [
-    { "src": "hakaseAI/server.js", "use": "@vercel/node" }
+    { "src": "hakaseAI/server.js", "use": "@vercel/node" },
+    { "src": "hakaseAI/index.html", "use": "@vercel/static" },
+    { "src": "hakaseAI/style.css", "use": "@vercel/static" },
+    { "src": "hakaseAI/script.js", "use": "@vercel/static" },
+    { "src": "hakaseAI/*.png", "use": "@vercel/static" },
+    { "src": "hakaseAI/*.svg", "use": "@vercel/static" },
+    { "src": "hakaseAI/*.json", "use": "@vercel/static" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" },
+    { "src": "css/**", "use": "@vercel/static" },
+    { "src": "js/**", "use": "@vercel/static" },
+    { "src": "articles/**", "use": "@vercel/static" },
+    { "src": "public/**", "use": "@vercel/static" },
+    { "src": "poinavi/**", "use": "@vercel/static" }
   ],
   "redirects": [
     { "source": "/hakaseAI", "destination": "/hakaseAI/", "permanent": true },
