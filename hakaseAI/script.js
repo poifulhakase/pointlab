@@ -145,7 +145,7 @@ const MAGAZINES = [
   {
     id: 'poikatsu',
     name: 'ポイ活３分レシピ 〜 ぽいふる博士の料理本',
-    image: '../images/Poikatsu_3min_Recipe_RakutenPoint.jpg',
+    image: '../images/Poikatsu_3min_Recipe_cooking_class.jpg',
     url: 'https://note.com/pointlab/m/m4188c60f3c9f',
     keywords: ['ポイ活', 'ポイント', '節約', 'お得', 'クーポン', 'キャッシュバック', '還元', 'マイル', '楽天', 'PayPay', 'dポイント', 'Tポイント', 'クレジットカード', 'ショッピング', '買い物']
   },
