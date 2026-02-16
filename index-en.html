@@ -58,7 +58,7 @@
     <script src="./js/header-include.js"></script>
 
     <div class="main-content-wrap">
-    <div class="tab-panel is-active" id="panel-lab" role="tabpanel" aria-labelledby="tab-lab">
+    <div class="tab-panel" id="panel-lab" role="tabpanel" aria-labelledby="tab-lab" hidden>
       <div class="videos-placeholder">
         <div class="videos-placeholder__icon" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg>
@@ -67,7 +67,7 @@
         <p class="videos-placeholder__desc">Under construction. Coming soon.</p>
       </div>
     </div>
-    <div class="tab-panel" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles" hidden>
+    <div class="tab-panel is-active" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles">
     <div class="layout-with-sidebar">
       <aside class="page-sidebar">
         <nav class="sidebar-nav" aria-label="Categories">
@@ -469,8 +469,8 @@
 
     <footer class="site-footer site-footer--fixed-bottom">
       <nav class="main-tabs main-tabs--footer" role="tablist" aria-label="Content type">
-        <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-lab" id="tab-lab" data-tab="lab"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg></span><span class="main-tabs__tab-label">Lab</span></button>
-        <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-articles" id="tab-articles" data-tab="articles"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span class="main-tabs__tab-label">Research Records</span></button>
+        <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-lab" id="tab-lab" data-tab="lab"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31a6.5 6.5 0 0 1-4.32 6.12 6.5 6.5 0 0 1 8.64 0 6.5 6.5 0 0 1-4.32-6.12V2"/><path d="M14 2v7.31a6.5 6.5 0 0 0 4.32 6.12 6.5 6.5 0 0 0-8.64 0 6.5 6.5 0 0 0 4.32-6.12V2"/><path d="M8.5 2h7"/></svg></span><span class="main-tabs__tab-label">Lab</span></button>
+        <button type="button" class="main-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-articles" id="tab-articles" data-tab="articles"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></span><span class="main-tabs__tab-label">Research Records</span></button>
         <button type="button" class="main-tabs__tab" role="tab" aria-selected="false" aria-controls="panel-videos" id="tab-videos" data-tab="videos"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3V9z"/></svg></span><span class="main-tabs__tab-label">Experiment Videos</span></button>
         <a href="./hakaseAI/" class="main-tabs__tab main-tabs__tab--link"><span class="main-tabs__tab-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2"/><line x1="12" y1="8" x2="12" y2="4"/><circle cx="12" cy="3" r="1.5" fill="currentColor"/><rect x="7" y="11" width="3" height="2" rx="0.5" fill="currentColor"/><rect x="14" y="11" width="3" height="2" rx="0.5" fill="currentColor"/><line x1="9" y1="16" x2="15" y2="16"/></svg></span><span class="main-tabs__tab-label">Hakase AI</span></a>
       </nav>
