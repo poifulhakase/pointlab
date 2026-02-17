@@ -4,7 +4,6 @@
   "framework": null,
   "builds": [
     {"src": "hakaseAI/server.js", "use": "@vercel/node"},
-    {"src": "api/admin-auth.js", "use": "@vercel/node"},
     {"src": "hakaseAI/index.html", "use": "@vercel/static"},
     {"src": "hakaseAI/style.css", "use": "@vercel/static"},
     {"src": "hakaseAI/script.js", "use": "@vercel/static"},
