@@ -281,8 +281,8 @@ function isTokenValid(token) {
 }
 
 function needsAuth() {
-  const host = window.location.hostname;
-  return host === "pointlab.vercel.app" || host.endsWith(".vercel.app");
+  // 常にパスワード認証を必須にする（セキュリティのため）
+  return true;
 }
 
 async function checkAuth() {
@@ -292,20 +292,27 @@ async function checkAuth() {
 
   if (!needsAuth()) {
     gateSection.hidden = true;
+    gateSection.style.display = "none";
     adminContent.hidden = false;
+    adminContent.style.display = "";
     initAdmin();
     return;
   }
 
   if (isTokenValid(token)) {
     gateSection.hidden = true;
+    gateSection.style.display = "none";
     adminContent.hidden = false;
+    adminContent.style.display = "";
     initAdmin();
     return;
   }
 
+  // 未ログイン: ログイン画面のみ表示
   gateSection.hidden = false;
+  gateSection.style.display = "";
   adminContent.hidden = true;
+  adminContent.style.display = "none";
 }
 
 async function doLogin(password) {
@@ -321,8 +328,12 @@ async function doLogin(password) {
 
     if (res.ok && data.ok && data.token) {
       sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      document.getElementById("gateSection").hidden = true;
-      document.getElementById("adminContent").hidden = false;
+      const gate = document.getElementById("gateSection");
+      const admin = document.getElementById("adminContent");
+      gate.hidden = true;
+      gate.style.display = "none";
+      admin.hidden = false;
+      admin.style.display = "";
       errEl.hidden = true;
       initAdmin();
       return true;
