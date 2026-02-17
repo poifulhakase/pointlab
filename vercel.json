@@ -19,11 +19,13 @@
     {"src": "articles/**", "use": "@vercel/static"},
     {"src": "images/**", "use": "@vercel/static"},
     {"src": "public/**", "use": "@vercel/static"},
-    {"src": "poinavi/**", "use": "@vercel/static"}
+    {"src": "poinavi/**", "use": "@vercel/static"},
+    {"src": "admin/**", "use": "@vercel/static"}
   ],
   "redirects": [
     {"source": "/hakaseAI", "destination": "/hakaseAI/", "permanent": true},
-    {"source": "/poinavi", "destination": "/poinavi/", "permanent": true}
+    {"source": "/poinavi", "destination": "/poinavi/", "permanent": true},
+    {"source": "/admin", "destination": "/admin/", "permanent": true}
   ],
   "rewrites": [
     {"source": "/hakaseAI/api/:path*", "destination": "/hakaseAI/server.js"},
