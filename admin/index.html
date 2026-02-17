@@ -30,36 +30,15 @@
       <section class="admin-config" id="configSection">
         <h2>設定</h2>
         <p class="admin-note">
-          GitHub・リポジトリ・ベースパスは初期値で設定済み。Token のみ入力して「設定を保存」を押してください（<code>repo</code> スコープ必要）。
+          画像アップロードを使う場合のみ、Imgur Client ID を設定してください（任意）。
         </p>
         <div class="config-form">
-          <label>
-            <span>GitHub ユーザー名 / 組織名</span>
-            <input type="text" id="configOwner" value="pointlabs-projects" placeholder="例: pointlab" />
-          </label>
-          <label>
-            <span>リポジトリ名</span>
-            <input type="text" id="configRepo" value="pointlab" placeholder="例: PointLab" />
-          </label>
-          <label>
-            <span>ブランチ</span>
-            <input type="text" id="configBranch" value="main" placeholder="main" />
-          </label>
-          <label>
-            <span>コンテンツのベースパス（任意）</span>
-            <input type="text" id="configBasePath" value="pointlab/pointlab" placeholder="空欄 = リポジトリルート" />
-          </label>
-          <label>
-            <span>Personal Access Token</span>
-            <input type="password" id="configToken" placeholder="Token を入力して「設定を保存」を押す" autocomplete="off" />
-          </label>
           <label>
             <span>Imgur Client ID（画像アップロード用・任意）</span>
             <input type="text" id="configImgurClientId" placeholder="https://api.imgur.com でアプリ登録して取得" autocomplete="off" />
           </label>
           <div class="config-actions">
             <button type="button" id="btnSaveConfig" class="btn btn-primary">設定を保存</button>
-            <button type="button" id="btnClearConfig" class="btn btn-secondary">設定をクリア</button>
           </div>
         </div>
       </section>

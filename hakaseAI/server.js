@@ -221,6 +221,104 @@ app.post('/api/admin-auth', (req, res) => {
   return res.status(401).json({ error: 'パスワードが正しくありません' });
 });
 
+// ========================================
+// 管理画面 GitHub プロキシ API（トークンはサーバーの環境変数で設定）
+// ========================================
+function isAdminSessionValid(req) {
+  const token = req.headers['x-admin-token'];
+  if (!token) return false;
+  try {
+    const payload = Buffer.from(token, 'base64').toString('utf8');
+    const [, expiry] = payload.split(':');
+    return Date.now() < parseInt(expiry, 10);
+  } catch (e) {
+    return false;
+  }
+}
+
+async function adminFetchGitHub(path, options = {}) {
+  const token = process.env.ADMIN_GITHUB_TOKEN;
+  if (!token) throw new Error('ADMIN_GITHUB_TOKEN が設定されていません。Vercel の環境変数を確認してください。');
+  const owner = process.env.ADMIN_GITHUB_OWNER || 'poifulhakase';
+  const repo = process.env.ADMIN_GITHUB_REPO || 'pointlab';
+  const branch = process.env.ADMIN_GITHUB_BRANCH || 'main';
+  const basePath = process.env.ADMIN_GITHUB_BASE_PATH || 'pointlab/pointlab';
+
+  let url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  if (!options.method || options.method === 'GET') {
+    url += `?ref=${branch}`;
+  }
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      'Authorization': token.startsWith('ghp_') ? `token ${token}` : `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+app.get('/api/admin/articles', async (req, res) => {
+  if (!isAdminSessionValid(req)) {
+    return res.status(401).json({ error: '認証が必要です' });
+  }
+  try {
+    const basePath = process.env.ADMIN_GITHUB_BASE_PATH || 'pointlab/pointlab';
+    const path = basePath ? `${basePath}/articles` : 'articles';
+    const data = await adminFetchGitHub(path);
+    if (!Array.isArray(data)) throw new Error('articles フォルダを取得できませんでした');
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/admin/article', async (req, res) => {
+  if (!isAdminSessionValid(req)) {
+    return res.status(401).json({ error: '認証が必要です' });
+  }
+  const filePath = req.query.path;
+  if (!filePath) return res.status(400).json({ error: 'path が必要です' });
+  try {
+    const data = await adminFetchGitHub(filePath);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/admin/article', express.json(), async (req, res) => {
+  if (!isAdminSessionValid(req)) {
+    return res.status(401).json({ error: '認証が必要です' });
+  }
+  const { path: filePath, content, sha, message } = req.body;
+  if (!filePath || !content || !sha) {
+    return res.status(400).json({ error: 'path, content, sha が必要です' });
+  }
+  const branch = process.env.ADMIN_GITHUB_BRANCH || 'main';
+  try {
+    const encoded = Buffer.from(content, 'utf8').toString('base64');
+    await adminFetchGitHub(filePath, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: message || `Update: ${filePath.split('/').pop()}`,
+        content: encoded,
+        sha,
+        branch,
+      }),
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // /api/chat にセキュリティミドルウェアを適用
 // 順序: User-Agent検証 → バースト制限 → グローバル制限 → IP制限 → 入力検証
 app.use('/api/chat', validateUserAgent, burstLimiter, globalLimiter, dailyLimiter, validateInput);

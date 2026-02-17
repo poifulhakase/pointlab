@@ -1,35 +1,27 @@
 # 記事管理画面
 
-GitHub API を使い、ブラウザから記事を編集してリポジトリに直接コミットする管理画面です。
+パスワードでログインし、ブラウザから記事を編集してリポジトリに直接コミットする管理画面です。
 
-## 前提条件
+## 必要な環境変数（Vercel）
 
-- サイトのソースが **GitHub リポジトリ** にプッシュされていること
-- **Personal Access Token**（`repo` スコープ付き）を用意すること
+Vercel ダッシュボード → プロジェクト → Settings → Environment Variables で設定：
 
-## パスワード保護
-
-管理画面には簡易パスワード保護がかかっています。
-
-1. **Vercel の環境変数**に `ADMIN_PASSWORD` を設定してください（例: 英数字8文字以上）
-2. Vercel ダッシュボード → プロジェクト → Settings → Environment Variables
-3. Name: `ADMIN_PASSWORD`、Value: 任意のパスワード
-
-※ローカルで `admin/index.html` を開く場合、API が存在しないためパスワード認証はスキップされます。本番（`https://pointlab.vercel.app/admin/`）では認証が有効になります。
+| 変数名 | 説明 |
+|--------|------|
+| `ADMIN_PASSWORD` | 管理画面のログインパスワード（必須） |
+| `ADMIN_GITHUB_TOKEN` | GitHub Personal Access Token（`repo` スコープ必須） |
+| `ADMIN_GITHUB_OWNER` | リポジトリのオーナー（省略時: poifulhakase） |
+| `ADMIN_GITHUB_REPO` | リポジトリ名（省略時: pointlab） |
+| `ADMIN_GITHUB_BRANCH` | ブランチ（省略時: main） |
+| `ADMIN_GITHUB_BASE_PATH` | コンテンツのベースパス（省略時: pointlab/pointlab） |
 
 ## 使い方
 
-1. `admin/index.html` を開く（ローカルでも Vercel デプロイ先の `/admin/` でも可）
-2. **設定** に以下を入力して「設定を保存」：
-   - **GitHub ユーザー名 / 組織名**：例 `pointlab`
-   - **リポジトリ名**：例 `PointLab`
-   - **ブランチ**：通常 `main`
-   - **コンテンツのベースパス**：リポジトリルートに `index.html` や `articles/` がある場合は空欄。`pointlab/pointlab/` のようにサブフォルダにある場合はそのパスを指定
-   - **Personal Access Token**：GitHub → Settings → Developer settings → Personal access tokens で作成（`repo` にチェック）
-
-3. 記事一覧が表示されたら、編集したい記事をクリック
+1. `/admin/` にアクセス
+2. **パスワード**を入力してログイン
+3. 記事一覧から編集したい記事をクリック
 4. 内容を修正し「保存」をクリック
-5. GitHub にコミットされ、Vercel が自動デプロイします
+5. GitHub にコミットされ、Vercel が自動デプロイされます
 
 ## 画像アップロード（Imgur）
 
@@ -41,16 +33,8 @@ GitHub API を使い、ブラウザから記事を編集してリポジトリに
 4. 記事編集画面で「ファイルを選択」から画像をアップロード
 5. アップロード完了後、カーソル位置に `<img>` タグが自動挿入されます
 
-## Token の発行
-
-1. GitHub → 右上アイコン → **Settings**
-2. 左メニュー最下部 **Developer settings**
-3. **Personal access tokens** → **Tokens (classic)** または **Fine-grained tokens**
-4. 新規作成し、**repo** スコープを付与
-5. トークンをコピーし、管理画面の設定に貼り付け
-
 ## セキュリティ
 
-- トークンはブラウザの localStorage に保存されます
+- トークンは Vercel の環境変数に保存され、ブラウザには渡されません
 - 公開サイトで `/admin/` を公開する場合は、URL を人に教えないようにするか、Basic 認証などを検討してください
 - トークンは定期的にローテーションすることを推奨します

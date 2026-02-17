@@ -29,6 +29,8 @@
   ],
   "rewrites": [
     {"source": "/api/admin-auth", "destination": "/hakaseAI/server.js"},
+    {"source": "/api/admin/articles", "destination": "/hakaseAI/server.js"},
+    {"source": "/api/admin/article", "destination": "/hakaseAI/server.js"},
     {"source": "/hakaseAI/api/:path*", "destination": "/hakaseAI/server.js"},
     {"source": "/favicon.ico", "destination": "/favicon.svg"},
     {"source": "/favicon.png", "destination": "/favicon.svg"},
