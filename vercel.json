@@ -29,7 +29,6 @@
     {"source": "/admin", "destination": "/admin/", "permanent": true}
   ],
   "rewrites": [
-    {"source": "/api/admin-auth", "destination": "/api/admin-auth.js"},
     {"source": "/hakaseAI/api/:path*", "destination": "/hakaseAI/server.js"},
     {"source": "/favicon.ico", "destination": "/favicon.svg"},
     {"source": "/favicon.png", "destination": "/favicon.svg"},
