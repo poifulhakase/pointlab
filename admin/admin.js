@@ -309,24 +309,28 @@ async function checkAuth() {
 }
 
 async function doLogin(password) {
-  const base = window.location.origin;
-  const res = await fetch(`${base}/api/admin-auth`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
-  });
-  const data = await res.json().catch(() => ({}));
-
-  if (res.ok && data.ok && data.token) {
-    sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
-    document.getElementById("gateSection").hidden = true;
-    document.getElementById("adminContent").hidden = false;
-    document.getElementById("gateError").hidden = true;
-    initAdmin();
-    return true;
-  }
   const errEl = document.getElementById("gateError");
-  errEl.textContent = data.error || `ログインに失敗しました (HTTP ${res.status})`;
+  try {
+    const base = window.location.origin;
+    const res = await fetch(`${base}/api/admin-auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.ok && data.token) {
+      sessionStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      document.getElementById("gateSection").hidden = true;
+      document.getElementById("adminContent").hidden = false;
+      errEl.hidden = true;
+      initAdmin();
+      return true;
+    }
+    errEl.textContent = data.error || `ログインに失敗しました (HTTP ${res.status})`;
+  } catch (err) {
+    errEl.textContent = "通信エラーです。ネットワークを確認し、しばらくしてからお試しください。";
+  }
   errEl.hidden = false;
   return false;
 }
