@@ -189,6 +189,38 @@ app.use('/hakaseAI', express.static(path.join(__dirname)));
 // ルートパスからも配信（ローカル開発用）
 app.use(express.static(path.join(__dirname)));
 
+// ========================================
+// 管理画面パスワード認証 (/api/admin-auth)
+// ========================================
+app.options('/api/admin-auth', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.status(200).end();
+});
+app.post('/api/admin-auth', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    return res.status(500).json({
+      error: 'ADMIN_PASSWORD が設定されていません。Vercel の環境変数を確認してください。',
+    });
+  }
+  try {
+    const input = req.body?.password;
+    if (input === password) {
+      const token = Buffer.from(
+        `auth:${Date.now() + 5 * 60 * 1000}`,
+        'utf8'
+      ).toString('base64');
+      return res.status(200).json({ ok: true, token });
+    }
+  } catch (e) {
+    // ignore
+  }
+  return res.status(401).json({ error: 'パスワードが正しくありません' });
+});
+
 // /api/chat にセキュリティミドルウェアを適用
 // 順序: User-Agent検証 → バースト制限 → グローバル制限 → IP制限 → 入力検証
 app.use('/api/chat', validateUserAgent, burstLimiter, globalLimiter, dailyLimiter, validateInput);
