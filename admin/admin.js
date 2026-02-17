@@ -326,7 +326,7 @@ async function doLogin(password) {
     return true;
   }
   const errEl = document.getElementById("gateError");
-  errEl.textContent = data.error || "ログインに失敗しました";
+  errEl.textContent = data.error || `ログインに失敗しました (HTTP ${res.status})`;
   errEl.hidden = false;
   return false;
 }
