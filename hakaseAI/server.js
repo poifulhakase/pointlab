@@ -242,7 +242,7 @@ async function adminFetchGitHub(path, options = {}) {
   const owner = process.env.ADMIN_GITHUB_OWNER || 'poifulhakase';
   const repo = process.env.ADMIN_GITHUB_REPO || 'pointlab';
   const branch = process.env.ADMIN_GITHUB_BRANCH || 'main';
-  const basePath = process.env.ADMIN_GITHUB_BASE_PATH || 'pointlab/pointlab';
+  const basePath = process.env.ADMIN_GITHUB_BASE_PATH || '';
 
   let url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   if (!options.method || options.method === 'GET') {
@@ -269,7 +269,7 @@ app.get('/api/admin/articles', async (req, res) => {
     return res.status(401).json({ error: '認証が必要です' });
   }
   try {
-    const basePath = process.env.ADMIN_GITHUB_BASE_PATH || 'pointlab/pointlab';
+    const basePath = process.env.ADMIN_GITHUB_BASE_PATH || '';
     const path = basePath ? `${basePath}/articles` : 'articles';
     const data = await adminFetchGitHub(path);
     if (!Array.isArray(data)) throw new Error('articles フォルダを取得できませんでした');
