@@ -1766,3 +1766,37 @@ button.nav-list__icon-link {
   color: #fff;
   text-decoration: none;
 }
+
+.pointlab-settings-modal__analytics-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pointlab-settings-modal__analytics-status {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.pointlab-settings-modal__analytics-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-border-light);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pointlab-settings-modal__analytics-btn:hover {
+  background-color: var(--color-border);
+}
+
+.pointlab-settings-modal__analytics-btn--excluded {
+  background-color: rgba(74, 222, 128, 0.2);
+  border-color: #4ade80;
+  color: #22c55e;
+}

@@ -43,6 +43,62 @@
     updateThemeButton(theme);
   }
 
+  function initAnalyticsExclude(modal) {
+    if (!modal) return;
+
+    var body = modal.querySelector('.pointlab-settings-modal__body');
+    if (!body) return;
+
+    var lang = (document.documentElement.getAttribute('lang') || 'ja').toLowerCase();
+    var isEn = lang.startsWith('en');
+    var isZh = lang.startsWith('zh');
+
+    var label = isEn ? 'Analytics' : isZh ? '分析' : 'アナリティクス';
+    var excludeLabel = isEn ? 'Exclude this browser' : isZh ? '排除此瀏覽器' : 'このブラウザを除外する';
+    var includeLabel = isEn ? 'Include in tracking' : isZh ? '納入追蹤' : '除外を解除する';
+    var excludedLabel = isEn ? 'Excluded' : isZh ? '已排除' : '除外中';
+    var trackingLabel = isEn ? 'Tracking' : isZh ? '追蹤中' : '計測対象';
+
+    var item = document.createElement('div');
+    item.className = 'pointlab-settings-modal__item';
+    item.innerHTML =
+      '<label class="pointlab-settings-modal__label">' + label + '</label>' +
+      '<div class="pointlab-settings-modal__analytics-row">' +
+      '<span class="pointlab-settings-modal__analytics-status" id="analyticsExcludeStatus"></span>' +
+      '<button type="button" id="analyticsExcludeBtn" class="pointlab-settings-modal__analytics-btn"></button>' +
+      '</div>';
+    body.appendChild(item);
+
+    var statusEl = document.getElementById('analyticsExcludeStatus');
+    var btnEl = document.getElementById('analyticsExcludeBtn');
+
+    function updateExcludeUI() {
+      var excluded = localStorage.getItem('excludeFromAnalytics') === 'true';
+      if (statusEl) statusEl.textContent = excluded ? excludedLabel : trackingLabel;
+      if (btnEl) {
+        btnEl.textContent = excluded ? includeLabel : excludeLabel;
+        btnEl.classList.toggle('pointlab-settings-modal__analytics-btn--excluded', excluded);
+      }
+    }
+
+    if (btnEl) {
+      btnEl.addEventListener('click', function () {
+        var excluded = localStorage.getItem('excludeFromAnalytics') === 'true';
+        if (excluded) {
+          localStorage.removeItem('excludeFromAnalytics');
+          btnEl.textContent = excludeLabel;
+        } else {
+          localStorage.setItem('excludeFromAnalytics', 'true');
+          btnEl.textContent = includeLabel;
+        }
+        updateExcludeUI();
+        if (statusEl) statusEl.textContent = excluded ? trackingLabel : excludedLabel;
+      });
+    }
+
+    updateExcludeUI();
+  }
+
   function updateThemeButton(theme) {
     var btn = document.getElementById('pointlabThemeToggle');
     var icon = document.querySelector('.pointlab-settings-modal__theme-icon');
@@ -82,6 +138,9 @@
         applyTheme(next);
       });
     }
+
+    // アナリティクス除外ボタン
+    initAnalyticsExclude(modal);
 
     // 言語リンク：モーダルを開いたまま遷移（?open=settings で遷移後もモーダル表示）
     modal.querySelectorAll('.pointlab-settings-modal__lang-link').forEach(function (link) {
