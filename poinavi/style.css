@@ -4357,6 +4357,19 @@ body.lab-page:not(.dark-mode) .translate-footer {
   backdrop-filter: blur(8px);
 }
 
+/* ライトモード：視認性向上（全て太字・曜日は黒） */
+body.lab-page:not(.dark-mode) .lab-hero__time,
+body.lab-page:not(.dark-mode) .lab-hero__date,
+body.lab-page:not(.dark-mode) .lab-hero__day,
+body.lab-page:not(.dark-mode) .translate-header,
+body.lab-page:not(.dark-mode) .translate-footer,
+body.lab-page:not(.dark-mode) .translate-footer .translate-footer__label {
+  font-weight: 700;
+}
+body.lab-page:not(.dark-mode) .lab-hero__day {
+  color: #000;
+}
+
 .lab-main {
   flex: 1;
   overflow-y: auto;
