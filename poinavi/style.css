@@ -3060,8 +3060,7 @@ body.dark-mode .translate-result-item--latest {
 
 /* 入力モード時（キーボード表示時）スマホでフッター・余白を非表示 */
 @media (max-width: 900px), (pointer: coarse) {
-  body.input-mode .translate-footer,
-  body.input-mode .memo-warning {
+  body.input-mode .translate-footer {
     display: none !important;
   }
   body.input-mode .settings-section--tags {
