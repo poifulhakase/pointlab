@@ -626,7 +626,7 @@ function updateSelectedTags() {
 }
 
 // ============================================
-// 検索入力と検索ボタン（ぽいナビメニュー遷移時は検索ボックスにフォーカス）
+// 検索入力と検索ボタン
 // ============================================
 function initSearchInput() {
   const searchInput = document.getElementById("searchInput");
@@ -643,11 +643,6 @@ function initSearchInput() {
   });
   searchInput.addEventListener("blur", function() {
     document.body.classList.remove("input-mode");
-  });
-
-  // ぽいナビページ表示時に検索ボックスへフォーカス
-  requestAnimationFrame(function() {
-    searchInput.focus();
   });
 
   // 検索ボタンクリックで検索

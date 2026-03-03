@@ -513,7 +513,7 @@
         return escaped.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="memo-link">$1</a>');
       }
 
-      // メモ入力の初期化（ラボノートメニュー遷移時は入力欄にフォーカス）
+      // メモ入力の初期化
       function initMemoInput() {
         const input = document.getElementById("memoInput");
         const addBtn = document.getElementById("memoAddBtn");
@@ -525,11 +525,6 @@
         function onInputBlur() { document.body.classList.remove("input-mode"); }
         input.addEventListener("focus", onInputFocus);
         input.addEventListener("blur", onInputBlur);
-
-        // ラボノートページ表示時に入力欄へフォーカス
-        requestAnimationFrame(function() {
-          input.focus();
-        });
 
         // 追加ボタンクリック
         addBtn.addEventListener("click", function() {
