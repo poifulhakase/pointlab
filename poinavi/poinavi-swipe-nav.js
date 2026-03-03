@@ -9,6 +9,8 @@
       var dir = sessionStorage.getItem("poinaviSwipeDir");
       if (dir === "slide-forwards" || dir === "slide-backwards") {
         e.viewTransition.types.add(dir);
+      } else {
+        e.viewTransition.types.add("fade");
       }
     }
   }
@@ -104,6 +106,16 @@
 
     document.addEventListener("touchstart", handleTouchStart, { passive: true });
     document.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    document.addEventListener("click", function(e) {
+      var a = e.target.closest("a[href]");
+      if (a && a.closest(".translate-footer") && !a.classList.contains("translate-footer__btn--active")) {
+        var path = (a.getAttribute("href") || "").split("?")[0];
+        if (/^(\.\/)?(lab|index|translate|map)\.html$/.test(path)) {
+          sessionStorage.setItem("poinaviSwipeDir", "fade");
+        }
+      }
+    }, true);
   }
 
   if (document.readyState === "loading") {

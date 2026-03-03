@@ -5,26 +5,91 @@
 @supports (view-transition-name: none) {
 @view-transition {
   navigation: auto;
-  types: slide-forwards, slide-backwards;
+  types: slide-forwards, slide-backwards, fade;
 }
 
-/* 次へ（左スワイプ）: 現在ページが左へ、新規が右から */
+/* 次へ（左スワイプ）: コンテンツのみスライド、ヘッダー・フッターは固定 */
 html:active-view-transition-type(slide-forwards) {
-  &::view-transition-old(root) {
+  :root {
+    view-transition-name: none;
+  }
+  .translate-header {
+    view-transition-name: poinavi-header;
+  }
+  .translate-footer {
+    view-transition-name: poinavi-footer;
+  }
+  .memo-main, .main-content, .lab-main, .translate-main {
+    view-transition-name: poinavi-main;
+  }
+  &::view-transition-old(poinavi-main) {
     animation: 0.35s ease-out both slide-out-left;
   }
-  &::view-transition-new(root) {
+  &::view-transition-new(poinavi-main) {
     animation: 0.35s ease-out both slide-in-from-right;
+  }
+  &::view-transition-old(poinavi-header),
+  &::view-transition-old(poinavi-footer) {
+    animation: 0.2s ease-out both fade-out;
+  }
+  &::view-transition-new(poinavi-header),
+  &::view-transition-new(poinavi-footer) {
+    animation: 0.2s ease-out both fade-in;
   }
 }
 
-/* 前へ（右スワイプ）: 現在ページが右へ、新規が左から */
+/* 前へ（右スワイプ）: コンテンツのみスライド、ヘッダー・フッターは固定 */
 html:active-view-transition-type(slide-backwards) {
-  &::view-transition-old(root) {
+  :root {
+    view-transition-name: none;
+  }
+  .translate-header {
+    view-transition-name: poinavi-header;
+  }
+  .translate-footer {
+    view-transition-name: poinavi-footer;
+  }
+  .memo-main, .main-content, .lab-main, .translate-main {
+    view-transition-name: poinavi-main;
+  }
+  &::view-transition-old(poinavi-main) {
     animation: 0.35s ease-out both slide-out-right;
   }
-  &::view-transition-new(root) {
+  &::view-transition-new(poinavi-main) {
     animation: 0.35s ease-out both slide-in-from-left;
+  }
+  &::view-transition-old(poinavi-header),
+  &::view-transition-old(poinavi-footer) {
+    animation: 0.2s ease-out both fade-out;
+  }
+  &::view-transition-new(poinavi-header),
+  &::view-transition-new(poinavi-footer) {
+    animation: 0.2s ease-out both fade-in;
+  }
+}
+
+/* タップ切り替え: ふわっとフェード */
+html:active-view-transition-type(fade) {
+  &::view-transition-old(root) {
+    animation: 0.25s ease-out both fade-out;
+  }
+  &::view-transition-new(root) {
+    animation: 0.25s ease-out both fade-in;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
