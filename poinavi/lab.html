@@ -58,11 +58,10 @@
       html.light-mode { background-color: #f5f5f7; }
       html.dark-mode { background-color: #1a1a1a; }
       
-      /* 横スクロール防止・波紋用・キャラ下寄せ用（ぽいろぼ見切れ防止で overflow-x: visible） */
+      /* 横スクロール防止・波紋用・キャラ下寄せ用（スクロールなし） */
       .lab-main {
         position: relative;
-        overflow-x: visible;
-        overflow-y: auto;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
       }
@@ -272,8 +271,11 @@
         display: flex;
         justify-content: center;
         align-items: flex-end;
-        gap: 12px;
-        padding: 0 8vw 0 0;
+      }
+      .lab-character__professor-wrap {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
       }
       .lab-character__img {
         height: calc(var(--vvh, 100vh) * 0.432);
@@ -283,25 +285,25 @@
         position: relative;
         z-index: 2;
       }
-      /* 博士を中央に・左右対称のため左側にスペーサー（ぽいろぼと同じサイズ） */
-      .lab-character__spacer {
-        height: calc(var(--vvh, 100vh) * 0.216);
-        width: auto;
-        flex-shrink: 0;
-        visibility: hidden;
-        pointer-events: none;
-      }
-      /* ライトモード：博士の右側にぽいろぼ（博士が前面・被ってもOK） */
+      /* ライトモード：博士は中央、ぽいろぼは右側（位置そのまま・博士が前面） */
       .lab-character__robot {
         height: calc(var(--vvh, 100vh) * 0.216);
         width: auto;
-        transform: translateY(28px);
         flex-shrink: 0;
         z-index: 1;
       }
-      /* ダークモード：博士のみ中央、ぽいろぼは博士の背面・机の上（少し右）に配置 */
-      body.dark-mode .lab-character__spacer {
-        display: none;
+      body:not(.dark-mode) .lab-character__robot {
+        position: absolute;
+        left: 100%;
+        bottom: -16px;
+        margin-left: 12px;
+      }
+      /* ダークモード：博士は絶対に左右中央、ぽいろぼは僅かに下・けっこう右側 */
+      body.dark-mode .lab-character__professor-wrap {
+        position: static;
+      }
+      body.dark-mode .lab-character__inner {
+        justify-content: center;
       }
       body.dark-mode .lab-character__img {
         position: relative;
@@ -309,8 +311,8 @@
       }
       body.dark-mode .lab-character__robot {
         position: absolute;
-        left: 58%;
-        bottom: 38%;
+        left: 75%;
+        bottom: 32%;
         transform: translateX(-50%);
         height: calc(var(--vvh, 100vh) * 0.216);
         z-index: 1;
@@ -585,9 +587,10 @@
       <!-- キャラクター表示エリア -->
       <div class="lab-character">
         <div class="lab-character__inner">
-          <img src="./poinavi-robot.png?v=130" alt="" class="lab-character__spacer" aria-hidden="true" />
-          <img src="./hakase.png?v=1772536587" alt="ぽいふる博士" class="lab-character__img" />
-          <img src="./poinavi-robot.png?v=130" alt="ぽいナビ" class="lab-character__robot" />
+          <div class="lab-character__professor-wrap">
+            <img src="./hakase.png?v=1772536587" alt="ぽいふる博士" class="lab-character__img" />
+            <img src="./poinavi-robot.png?v=130" alt="ぽいナビ" class="lab-character__robot" />
+          </div>
         </div>
       </div>
 

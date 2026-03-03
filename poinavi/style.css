@@ -4386,15 +4386,9 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   color: #000;
 }
 
-/* ライトモード：ぽいろぼ見切れ防止（横方向にはみ出しOK） */
-body.lab-page:not(.dark-mode) {
-  overflow-x: visible;
-  overflow-y: hidden;
-}
-
 .lab-main {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 0 16px 24px;
   padding-bottom: calc(24px + 68px + env(safe-area-inset-bottom, 0)) !important; /* 固定フッター分の余白を確保 */
   background-color: transparent;
