@@ -4373,7 +4373,7 @@ body.lab-page .translate-footer {
 
 /* ライトモード：視認性向上（全て太字・曜日は黒） */
 body.lab-page:not(.dark-mode) .lab-hero__time {
-  font-weight: 500;
+  font-weight: 300;
 }
 body.lab-page:not(.dark-mode) .lab-hero__date,
 body.lab-page:not(.dark-mode) .lab-hero__day,
