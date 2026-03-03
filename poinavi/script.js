@@ -626,7 +626,7 @@ function updateSelectedTags() {
 }
 
 // ============================================
-// 検索入力と検索ボタン
+// 検索入力と検索ボタン（ぽいナビメニュー遷移時は検索ボックスにフォーカス）
 // ============================================
 function initSearchInput() {
   const searchInput = document.getElementById("searchInput");
@@ -636,6 +636,11 @@ function initSearchInput() {
     console.warn("検索入力または検索ボタンが見つかりません");
     return;
   }
+
+  // ぽいナビページ表示時に検索ボックスへフォーカス
+  requestAnimationFrame(function() {
+    searchInput.focus();
+  });
 
   // 検索ボタンクリックで検索
   searchButton.addEventListener("click", function () {
