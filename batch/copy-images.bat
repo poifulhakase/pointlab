@@ -78,11 +78,7 @@ for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\asse
 echo ぽいナビ研究室・博士画像をコピー中...
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*hakase*.gif") do copy /Y "%%F" "poinavi\hakase.gif" 1>nul 2>nul
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*hakase*.png") do copy /Y "%%F" "poinavi\hakase.png" 1>nul 2>nul
-if exist "poinavi\hakase.gif" (
-  echo 博士: OK - GIF
-  echo 博士GIFの白背景を透明化・ループ調整中...
-  node scripts\make-gif-transparent.js
-) else (if exist "poinavi\hakase.png" (echo 博士: OK - PNG) else (echo 注意: 博士画像が見つかりません（Cursorに貼った画像をassetsから取得）))
+if exist "poinavi\hakase.gif" (echo 博士: OK - GIF) else (if exist "poinavi\hakase.png" (echo 博士: OK - PNG) else (echo 注意: 博士画像が見つかりません))
 echo 開業・確定申告・ぽいんとらぼ画像をコピー中...
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*3E334533*.png") do copy /Y "%%F" "images\Sole_Proprietor_Shinkoku_thumbnail.png" 1>nul 2>nul
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*file_a_tax_return*.png") do copy /Y "%%F" "images\Sole_Proprietor_Shinkoku_thumbnail.png" 1>nul 2>nul

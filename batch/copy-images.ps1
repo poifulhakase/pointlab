@@ -80,16 +80,9 @@ $hakasePngSrc = Get-ChildItem $assetsDir -Filter "*hakase*.png" -ErrorAction Sil
 if ($hakaseGifSrc) {
   Copy-Item $hakaseGifSrc.FullName $hakaseGif -Force
   Write-Host "Hakase: OK - GIF"
-  Write-Host "Making GIF transparent and slowing loop..."
-  Push-Location $root
-  node scripts\make-gif-transparent.js 2>$null
-  Pop-Location
 } elseif ($hakasePngSrc) {
   Copy-Item $hakasePngSrc.FullName $hakasePng -Force
   Write-Host "Hakase: OK - PNG"
-  Push-Location $root
-  node scripts\make-png-transparent.js 2>$null
-  Pop-Location
 } else {
   Write-Host "Note: Hakase image not found"
 }
