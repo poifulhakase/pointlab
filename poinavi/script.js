@@ -3516,7 +3516,7 @@ async function addRainViewerLayer() {
 // RainViewer レイヤーを削除
 function removeRainViewerLayer() {
   if (!rainViewerLayer) return;
-  rainViewerLayer.setMap(null);
+  google.maps.OverlayView.prototype.setMap.call(rainViewerLayer, null);
   rainViewerLayer = null;
   rainViewerLayerIndex = -1;
   console.log("RainViewer レイヤーを削除しました");
