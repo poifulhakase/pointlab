@@ -1,11 +1,7 @@
 /**
  * GIFの白背景を透明にするスクリプト
- * ImageMagick がインストールされている場合、poinavi/hakase.gif を処理します。
- *
- * 必要なツール: ImageMagick (magick または convert コマンド)
- * インストール: choco install imagemagick または https://imagemagick.org/script/download.php
+ * gifwrap を使用し、追加ツール不要で poinavi/hakase.gif を処理します。
  */
-import { spawn } from "child_process";
 import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -20,72 +16,53 @@ if (!existsSync(gifPath)) {
   process.exit(0);
 }
 
-function runMagick(args) {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("magick", args, {
-      stdio: ["ignore", "pipe", "pipe"],
-      shell: true,
-    });
-    let stderr = "";
-    proc.stderr?.on("data", (d) => (stderr += d.toString()));
-    proc.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(stderr || `exit ${code}`));
-    });
-  });
-}
+const WHITE_THRESHOLD = 250; // この値以上のRGBは白とみなす（0-255）
+const FUZZ = 5; // 許容範囲 (255 - FUZZ 以上で白)
 
-function runConvert(args) {
-  return new Promise((resolve, reject) => {
-    const proc = spawn("convert", args, {
-      stdio: ["ignore", "pipe", "pipe"],
-      shell: true,
-    });
-    let stderr = "";
-    proc.stderr?.on("data", (d) => (stderr += d.toString()));
-    proc.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(stderr || `exit ${code}`));
-    });
-  });
+function isWhiteOrNearWhite(r, g, b) {
+  return r >= WHITE_THRESHOLD && g >= WHITE_THRESHOLD && b >= WHITE_THRESHOLD;
 }
 
 async function main() {
-  const args = [
-    gifPath,
-    "-coalesce",
-    "-fuzz",
-    "10%",
-    "-transparent",
-    "white",
-    "-layers",
-    "OptimizePlus",
-    tempPath,
-  ];
+  let GifUtil;
+  try {
+    const gifwrap = await import("gifwrap");
+    GifUtil = gifwrap.GifUtil;
+  } catch (e) {
+    console.log(
+      "gifwrap がインストールされていません。npm install gifwrap を実行してください。"
+    );
+    process.exit(0);
+  }
 
   try {
-    try {
-      await runMagick(args);
-    } catch (e) {
-      await runConvert(args);
+    const inputGif = await GifUtil.read(gifPath);
+    const frames = inputGif.frames;
+
+    for (const frame of frames) {
+      const { data } = frame.bitmap;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        if (isWhiteOrNearWhite(r, g, b)) {
+          data[i + 3] = 0;
+        }
+      }
     }
+
+    await GifUtil.write(tempPath, frames, inputGif);
     const fs = await import("fs");
     fs.renameSync(tempPath, gifPath);
     console.log("博士GIF: 白背景を透明にしました。");
   } catch (err) {
     if (existsSync(tempPath)) {
       const fs = await import("fs");
-      fs.unlinkSync(tempPath);
+      try {
+        fs.unlinkSync(tempPath);
+      } catch (_) {}
     }
-    console.log(
-      "ImageMagick が見つかりません。博士GIFの白背景削除をスキップします。"
-    );
-    console.log(
-      "手動で透明化: ImageMagick をインストール (choco install imagemagick) 後、"
-    );
-    console.log(
-      "  magick poinavi\\hakase.gif -coalesce -fuzz 10%% -transparent white -layers OptimizePlus poinavi\\hakase_out.gif"
-    );
+    console.log("博士GIF処理エラー:", err.message);
     process.exit(0);
   }
 }
