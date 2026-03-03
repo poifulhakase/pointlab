@@ -264,10 +264,21 @@
         padding-bottom: clamp(2px, calc(var(--vvh, 100vh) * 0.006), 8px);
         contain: layout;
       }
+      .lab-character__inner {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 12px;
+      }
       .lab-character__img {
         height: calc(var(--vvh, 100vh) * 0.432);
         width: auto;
         transform: translateY(12px);
+      }
+      .lab-character__robot {
+        height: calc(var(--vvh, 100vh) * 0.216);
+        width: auto;
+        transform: translateY(28px);
       }
       /* 研究室メイン：固定フッター分の余白は style.css で確保（常に表示のため） */
       @media (max-height: 600px) {
@@ -538,7 +549,10 @@
 
       <!-- キャラクター表示エリア -->
       <div class="lab-character">
-        <img src="./hakase.png?v=1772536587" alt="ぽいふる博士" class="lab-character__img" />
+        <div class="lab-character__inner">
+          <img src="./hakase.png?v=1772536587" alt="ぽいふる博士" class="lab-character__img" />
+          <img src="./poinavi-robot.png?v=130" alt="ぽいナビ" class="lab-character__robot" />
+        </div>
       </div>
 
     </main>
