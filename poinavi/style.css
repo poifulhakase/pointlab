@@ -4338,7 +4338,7 @@ body.dark-mode .translate-qr-btn {
   overflow-y: auto;
   padding: 0 16px 24px;
   background-color: var(--bg-secondary);
-  background-image: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.05)), url("./lab-bg-light.webp");
+  background-image: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.05)), url("./lab-bg-light.png");
   background-size: 100% auto;
   background-position: center top;
   background-attachment: scroll;
