@@ -2649,7 +2649,7 @@ body.dark-mode .translate-result-item--latest {
 /* 音声翻訳のフォントサイズを1.2倍に */
 .translate-result-item--voice .translate-result-item__original p,
 .translate-result-item--voice .translate-result-item__translated p {
-  font-size: 1.275rem;
+  font-size: 1.35rem;
 }
 
 .translate-result-item__divider {
@@ -3252,7 +3252,7 @@ body.dark-mode .translate-result-item__divider svg {
 
   .translate-result-item--voice .translate-result-item__original p,
   .translate-result-item--voice .translate-result-item__translated p {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
   }
 
   .translate-camera-area {
@@ -4334,12 +4334,19 @@ body.dark-mode .translate-qr-btn {
    ============================================ */
 /* ライトモード：研究所イラスト背景（上下左右全画面カバー＋10%白掛け） */
 body.lab-page:not(.dark-mode) {
+  --text-primary: #0a0a0a;
+  --text-secondary: #333333;
   background-image: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url("./lab-bg-light.png");
   background-size: 70%;
   background-position: center center;
   background-attachment: fixed;
   background-repeat: no-repeat;
   min-height: 100vh;
+}
+@media (max-width: 768px) {
+  body.lab-page:not(.dark-mode) {
+    background-size: 100%;
+  }
 }
 body.lab-page:not(.dark-mode) .translate-header {
   background: rgba(255, 255, 255, 0.75);
