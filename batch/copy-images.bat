@@ -78,7 +78,11 @@ for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\asse
 echo ぽいナビ研究室・博士画像をコピー中...
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*hakase*.gif") do copy /Y "%%F" "poinavi\hakase.gif" 1>nul 2>nul
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*hakase*.png") do copy /Y "%%F" "poinavi\hakase.png" 1>nul 2>nul
-if exist "poinavi\hakase.gif" (echo 博士: OK - GIF) else (if exist "poinavi\hakase.png" (echo 博士: OK - PNG) else (echo 注意: 博士画像が見つかりません))
+if exist "poinavi\hakase.gif" (echo 博士: OK - GIF) else (
+  if exist "poinavi\hakase.png" (echo 博士: OK - PNG) else (
+    if exist "poinavi\hakase-default.png" (copy /Y "poinavi\hakase-default.png" "poinavi\hakase.png" >nul & echo 博士: OK - デフォルト使用) else (echo 注意: 博士画像が見つかりません)
+  )
+)
 echo 開業・確定申告・ぽいんとらぼ画像をコピー中...
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*3E334533*.png") do copy /Y "%%F" "images\Sole_Proprietor_Shinkoku_thumbnail.png" 1>nul 2>nul
 for %%F in ("%USERPROFILE%\.cursor\projects\c-Users-owner-OneDrive-PointLab\assets\*file_a_tax_return*.png") do copy /Y "%%F" "images\Sole_Proprietor_Shinkoku_thumbnail.png" 1>nul 2>nul
