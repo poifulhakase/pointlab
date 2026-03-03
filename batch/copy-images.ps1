@@ -90,16 +90,6 @@ if ($hakaseGifSrc) {
 } else {
   Write-Host "Note: Hakase image not found"
 }
-# Make white background transparent for hakase PNG
-$scriptDir = Join-Path $root "scripts"
-$transparentScript = Join-Path $scriptDir "make-png-transparent.js"
-if ((Test-Path $hakasePng) -and (Test-Path $transparentScript)) {
-  Push-Location $root
-  try {
-    node $transparentScript 2>$null
-  } catch {}
-  Pop-Location
-}
 
 if (-not (Test-Path (Join-Path $imagesDir "Poikatsu_3min_Recipe_cooking_class.png"))) {
   if (Test-Path (Join-Path $note1 "Poikatsu_3min_Recipe_cooking_class.png")) {
