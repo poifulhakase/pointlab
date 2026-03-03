@@ -2883,21 +2883,21 @@ function showInfoWindow(place, marker) {
   infoWindow.setContent(content);
   infoWindow.open(map, marker);
   
-  // InfoWindowが画面外に出た場合、見えるように調整
-  // Google Mapsの自動調整が完了してから実行するため、idle イベントを使用
+  // InfoWindowを必ず画面中央に表示するようパン調整
   google.maps.event.addListenerOnce(infoWindow, 'domready', function() {
-    // Google Mapsの自動パンが完了するのを待つ
     google.maps.event.addListenerOnce(map, 'idle', function() {
       const infoWindowElement = document.querySelector('.gm-style-iw-c');
       if (!infoWindowElement) return;
       
       const infoWindowRect = infoWindowElement.getBoundingClientRect();
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const iwCenterX = infoWindowRect.left + infoWindowRect.width / 2;
+      const iwCenterY = infoWindowRect.top + infoWindowRect.height / 2;
+      const panX = centerX - iwCenterX;
+      const panY = centerY - iwCenterY;
       
-      // 画面上部に隠れている場合（上端が10px未満）
-      if (infoWindowRect.top < 10) {
-        const panAmount = Math.abs(infoWindowRect.top) + 30;
-        map.panBy(0, -panAmount);
-      }
+      map.panBy(panX, panY);
     });
   });
   
