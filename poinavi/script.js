@@ -3384,13 +3384,11 @@ function latLngToTile(lat, lng, z) {
 
 /** RainViewer タイルを DOM で描画する OverlayView */
 function RainViewerOverlay(host, path) {
-  google.maps.OverlayView.call(this);
   this.host = host;
   this.path = path;
   this.tileContainer = null;
 }
-RainViewerOverlay.prototype = Object.create(google.maps.OverlayView.prototype);
-RainViewerOverlay.prototype.constructor = RainViewerOverlay;
+RainViewerOverlay.prototype = new google.maps.OverlayView();
 
 RainViewerOverlay.prototype.onAdd = function() {
   const container = document.createElement("div");
@@ -3493,7 +3491,7 @@ async function addRainViewerLayer() {
     const path = frame.path;
 
     rainViewerLayer = new RainViewerOverlay(host, path);
-    rainViewerLayer.setMap(map);
+    google.maps.OverlayView.prototype.setMap.call(rainViewerLayer, map);
 
     function redrawRain() {
       if (rainViewerLayer) rainViewerLayer.draw();
