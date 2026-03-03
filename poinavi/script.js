@@ -3388,7 +3388,8 @@ function RainViewerOverlay(host, path) {
   this.path = path;
   this.tileContainer = null;
 }
-RainViewerOverlay.prototype = new google.maps.OverlayView();
+RainViewerOverlay.prototype = Object.create(google.maps.OverlayView.prototype);
+RainViewerOverlay.prototype.constructor = RainViewerOverlay;
 
 RainViewerOverlay.prototype.onAdd = function() {
   const container = document.createElement("div");
