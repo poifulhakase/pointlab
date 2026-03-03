@@ -37,14 +37,11 @@
 
   function getCurrentIndex() {
     const path = (window.location.pathname || "").toLowerCase();
-    const ordered = ["lab.html", "index.html", "translate.html", "map.html"];
-    for (let i = 0; i < ordered.length; i++) {
-      if (path.endsWith(ordered[i]) || (ordered[i] === "index.html" && (path.endsWith("/") || path === "" || path.endsWith("poinavi")))) {
-        return i;
-      }
-    }
-    if (path.includes("index") || path.endsWith("/")) return 1;
-    return -1;
+    const href = (window.location.href || "").toLowerCase();
+    if (path.includes("lab.html") || href.includes("lab.html")) return 0;
+    if (path.includes("translate.html") || href.includes("translate.html")) return 2;
+    if (path.includes("map.html") || href.includes("map.html")) return 3;
+    return 1;
   }
 
   function initSwipeNav() {
@@ -52,8 +49,8 @@
     if (idx < 0) return;
 
     const pages = getOrderedPages();
-    const minSwipeDistance = 80;
-    const maxVerticalRatio = 0.5;
+    const minSwipeDistance = 60;
+    const maxVerticalRatio = 0.6;
 
     let touchStartX = 0;
     let touchStartY = 0;
