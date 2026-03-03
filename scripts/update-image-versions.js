@@ -50,3 +50,17 @@ for (const file of htmlFiles) {
 if (updated > 0) {
   console.log(`キャッシュバスティング適用: ?v=${version} (${updated} ファイル)`);
 }
+
+// hakase.png のキャッシュバスティング（lab.html）
+const hakasePath = path.join(ROOT, 'poinavi', 'hakase.png');
+const labHtmlPath = path.join(ROOT, 'poinavi', 'lab.html');
+if (fs.existsSync(hakasePath) && fs.existsSync(labHtmlPath)) {
+  const hakaseStat = fs.statSync(hakasePath);
+  const hakaseVer = Math.floor(hakaseStat.mtimeMs / 1000);
+  let labContent = fs.readFileSync(labHtmlPath, 'utf8');
+  const labNew = labContent.replace(/(hakase\.png)(\?v=\d+)?/g, `$1?v=${hakaseVer}`);
+  if (labNew !== labContent) {
+    fs.writeFileSync(labHtmlPath, labNew, 'utf8');
+    console.log(`hakase.png: ?v=${hakaseVer}`);
+  }
+}
