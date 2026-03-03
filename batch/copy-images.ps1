@@ -1,21 +1,23 @@
-# copy-images.ps1 - copy-images.bat の PowerShell 版（PowerShell からの実行時にエンコーディング問題を回避）
-# 使い方: pointlab または batch フォルダで .\copy-images.ps1 を実行
-
+# copy-images.ps1 - PowerShell version (avoids batch encoding issues)
 $ErrorActionPreference = "SilentlyContinue"
 $root = (Get-Item $PSScriptRoot).Parent.FullName
 $assetsDir = Join-Path $env:USERPROFILE ".cursor\projects\c-Users-owner-OneDrive-PointLab\assets"
 $imagesDir = Join-Path $root "images"
 $imagesSource = Join-Path $root "images-source"
-$note1 = Join-Path $env:USERPROFILE "Downloads\note用"
-$note2 = Join-Path $env:USERPROFILE "Downloads\note用2"
-$newFolder = Join-Path $env:USERPROFILE "Downloads\新しいフォルダー"
+$dl = Join-Path $env:USERPROFILE "Downloads"
+$d = Get-ChildItem $dl -Directory -ErrorAction SilentlyContinue
+$note1 = ($d | Where-Object { $_.Name -match "^note" } | Select-Object -First 1).FullName
+if (-not $note1) { $note1 = Join-Path $dl "note" }
+$note2 = ($d | Where-Object { $_.Name -match "note.*2|2.*note" } | Select-Object -First 1).FullName
+if (-not $note2) { $note2 = Join-Path $dl "note2" }
+$nf = $d | Where-Object { (Test-Path (Join-Path $_.FullName "Stock_Trade_Lab_TradingView.png")) -or $_.Name -eq "new" } | Select-Object -First 1
+$newFolder = if ($nf) { $nf.FullName } else { Join-Path $dl "new" }
 
 if (-not (Test-Path $imagesDir)) { New-Item -ItemType Directory -Path $imagesDir -Force | Out-Null }
 
 Write-Host "=== Copying thumbnails ===" -ForegroundColor Cyan
 Write-Host ""
 
-# ポイ活（note用）
 Write-Host "Copying Poikatsu images..."
 $poiSrc = Join-Path $note1 "Poikatsu_3min_Recipe_rakutenSPS.jpg"
 if (Test-Path $poiSrc) {
@@ -26,7 +28,6 @@ if (Test-Path $poiSrc) {
   Write-Host "Poikatsu: OK"
 }
 
-# ポイ活マガジン・マツ活（assets）
 Write-Host "Copying cooking class image..."
 if (Test-Path $assetsDir) {
   Get-ChildItem $assetsDir -Filter "*cooking_class*.png" -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object {
@@ -50,7 +51,6 @@ if (Test-Path (Join-Path $imagesDir "Poikatsu_3min_Recipe_Matsumotokiyoshi.png")
   } else { Write-Host "Note: Matsukatsu image not found" }
 }
 
-# 生き方
 Write-Host "Copying Living images..."
 $livingSrc = Join-Path $note2 "Compass_for_Living_career_eye_catching_parallel_carrier.jpg"
 if (Test-Path $livingSrc) {
@@ -60,7 +60,6 @@ if (Test-Path $livingSrc) {
   Write-Host "Living: OK"
 } else { Write-Host "Note: note2 folder not found" }
 
-# 副業（images-source）
 Write-Host "Copying Side Biz image..."
 $sideBiz = Join-Path $imagesSource "Side_Biz_Encyclopedia_Delegate.png"
 if (Test-Path $sideBiz) {
@@ -72,7 +71,6 @@ if (Test-Path $sideBiz) {
   Write-Host "Note: place Side_Biz_Encyclopedia_Delegate.png in images/"
 }
 
-# ぽいナビ・博士画像
 Write-Host "Copying Hakase image..."
 $poinaviDir = Join-Path $root "poinavi"
 $hakaseGif = Join-Path $poinaviDir "hakase.gif"
@@ -93,7 +91,6 @@ if ($hakaseGifSrc) {
   Write-Host "Note: Hakase image not found"
 }
 
-# ポイ活マガジン（note用フォールバック）
 if (-not (Test-Path (Join-Path $imagesDir "Poikatsu_3min_Recipe_cooking_class.png"))) {
   if (Test-Path (Join-Path $note1 "Poikatsu_3min_Recipe_cooking_class.png")) {
     Copy-Item (Join-Path $note1 "Poikatsu_3min_Recipe_cooking_class.png") $imagesDir -Force
@@ -101,7 +98,6 @@ if (-not (Test-Path (Join-Path $imagesDir "Poikatsu_3min_Recipe_cooking_class.pn
   }
 }
 
-# ハカセAI・確定申告・開業・ぽいんとらぼ
 Write-Host "Copying HakaseAI, Kaigyo, Shinkoku images..."
 if (Test-Path $assetsDir) {
   Get-ChildItem $assetsDir -Filter "*HakaseAI*.png" -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object {
@@ -121,7 +117,6 @@ if (Test-Path $assetsDir) {
 }
 if (Test-Path (Join-Path $imagesDir "Sole_Proprietor_Shinkoku_thumbnail.png")) { Write-Host "Shinkoku: OK" } else { Write-Host "Note: paste Shinkoku image in Cursor" }
 
-# 株式投資
 Write-Host "Copying Stock images..."
 $stockSrc = Join-Path $newFolder "Stock_Trade_Lab_TradingView.png"
 if (Test-Path $stockSrc) {
@@ -131,7 +126,6 @@ if (Test-Path $stockSrc) {
   Write-Host "Stock: OK"
 } else { Write-Host "Note: new folder not found" }
 
-# favicon
 Write-Host "Copying favicon..."
 if (Test-Path $assetsDir) {
   Get-ChildItem $assetsDir -Filter "*0d1a022b*" -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object {
