@@ -4038,9 +4038,9 @@ body.dark-mode .translate-qr-btn {
   padding: 0 16px 24px;
   background-color: var(--bg-secondary);
   background-image: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), url("./lab-bg.png");
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background-size: contain;
+  background-position: center top;
+  background-attachment: scroll;
   background-repeat: no-repeat;
 }
 
