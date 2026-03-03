@@ -87,6 +87,9 @@ if ($hakaseGifSrc) {
 } elseif ($hakasePngSrc) {
   Copy-Item $hakasePngSrc.FullName $hakasePng -Force
   Write-Host "Hakase: OK - PNG"
+  Push-Location $root
+  node scripts\make-png-transparent.js 2>$null
+  Pop-Location
 } else {
   Write-Host "Note: Hakase image not found"
 }
