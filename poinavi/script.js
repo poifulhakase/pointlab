@@ -1224,7 +1224,20 @@ function applyUserLocation(lat, lng) {
       strokeColor: "#ffffff",
       strokeWeight: 2,
     },
-    title: "現在地",
+    title: "現在地（タップで500m表示）",
+  });
+
+  // 現在地マーカーをクリックで半径500m表示にズーム
+  currentLocationMarker.addListener("click", function () {
+    if (!map || !userLocation) return;
+    const radiusM = 500;
+    const latOffset = radiusM / 111000; // 1度≈111km
+    const lngOffset = radiusM / (111000 * Math.cos(userLocation.lat * Math.PI / 180));
+    const bounds = new google.maps.LatLngBounds(
+      { lat: userLocation.lat - latOffset, lng: userLocation.lng - lngOffset },
+      { lat: userLocation.lat + latOffset, lng: userLocation.lng + lngOffset }
+    );
+    map.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 80 });
   });
 
   // ローディング画面を非表示
