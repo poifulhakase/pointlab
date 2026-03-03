@@ -271,11 +271,7 @@
         display: flex;
         justify-content: center;
         align-items: flex-end;
-      }
-      .lab-character__professor-wrap {
-        position: relative;
-        display: inline-block;
-        line-height: 0;
+        gap: 12px;
       }
       .lab-character__img {
         height: calc(var(--vvh, 100vh) * 0.432);
@@ -283,30 +279,32 @@
         transform: translateY(12px);
         display: block;
       }
+      /* 博士を中央に・左右対称のため左側にスペーサー（ぽいろぼと同じサイズ） */
+      .lab-character__spacer {
+        height: calc(var(--vvh, 100vh) * 0.216);
+        width: auto;
+        flex-shrink: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
       /* ライトモード：博士の右側にぽいろぼ */
       .lab-character__robot {
         height: calc(var(--vvh, 100vh) * 0.216);
         width: auto;
         transform: translateY(28px);
+        flex-shrink: 0;
       }
-      body:not(.dark-mode) .lab-character__robot {
-        position: absolute;
-        left: 100%;
-        bottom: 0;
-        margin-left: 12px;
-      }
-      /* ダークモード：ぽいろぼは机の上あたり */
-      body.dark-mode .lab-character__inner {
-        display: block;
-        text-align: center;
+      /* ダークモード：博士のみ中央、ぽいろぼは机の上あたりに配置 */
+      body.dark-mode .lab-character__spacer {
+        display: none;
       }
       body.dark-mode .lab-character__robot {
         position: absolute;
-        left: 50%;
-        transform: translate(-50%, 0);
-        bottom: 12%;
-        margin-left: 28%;
+        left: 58%;
+        bottom: 10%;
+        transform: translateX(-50%);
         height: calc(var(--vvh, 100vh) * 0.216);
+        margin-left: 0;
       }
       /* 研究室メイン：固定フッター分の余白は style.css で確保（常に表示のため） */
       @media (max-height: 600px) {
@@ -578,6 +576,7 @@
       <!-- キャラクター表示エリア -->
       <div class="lab-character">
         <div class="lab-character__inner">
+          <img src="./poinavi-robot.png?v=130" alt="" class="lab-character__spacer" aria-hidden="true" />
           <img src="./hakase.png?v=1772536587" alt="ぽいふる博士" class="lab-character__img" />
           <img src="./poinavi-robot.png?v=130" alt="ぽいナビ" class="lab-character__robot" />
         </div>
