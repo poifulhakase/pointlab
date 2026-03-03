@@ -648,13 +648,26 @@ function initSearchInput() {
     document.body.classList.remove("input-mode");
   });
 
-  // Android戻るボタン：フォーカスを外してメニュー表示に戻す
+  // Android戻るボタン：1回でメニュー表示に戻す（キーボード閉じ→ビューポート変更を検知）
   if (/Android/i.test(navigator.userAgent)) {
     window.addEventListener("popstate", function() {
       if (document.activeElement === searchInput) {
         searchInput.blur();
       }
     });
+    // キーボード閉じ（1回目の戻る）を検知→即メニュー表示
+    const vv = window.visualViewport;
+    if (vv) {
+      let lastHeight = vv.height;
+      vv.addEventListener("resize", function() {
+        if (document.body.classList.contains("input-mode") && document.activeElement === searchInput && vv.height > lastHeight) {
+          searchInput.blur();
+          document.body.classList.remove("input-mode");
+          history.back();
+        }
+        lastHeight = vv.height;
+      });
+    }
   }
 
   // 検索ボタンクリックで検索
