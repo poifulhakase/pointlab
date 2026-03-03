@@ -1,8 +1,22 @@
 /**
  * 横スワイプで隣のメニューへ切り替え
  * 明確に横方向にスライドした場合のみ発火
+ * View Transitions API でスライドアニメーション
  */
 (function() {
+  function setupViewTransitionTypes(e) {
+    if (e.viewTransition) {
+      var dir = sessionStorage.getItem("poinaviSwipeDir");
+      if (dir === "slide-forwards" || dir === "slide-backwards") {
+        e.viewTransition.types.add(dir);
+      }
+    }
+  }
+  if ("onpageswap" in window) {
+    window.addEventListener("pageswap", setupViewTransitionTypes);
+    window.addEventListener("pagereveal", setupViewTransitionTypes);
+  }
+
   const PAGES = [
     { path: "lab.html", url: "./lab.html" },
     { path: "index.html", url: "./index.html" },
@@ -78,9 +92,11 @@
       if (absDy > 0 && absDx > 0 && absDy / absDx > maxVerticalRatio) return;
 
       if (dx > 0) {
+        sessionStorage.setItem("poinaviSwipeDir", "slide-backwards");
         const prevIdx = (idx - 1 + pages.length) % pages.length;
         window.location.href = pages[prevIdx].url + (prevIdx === 1 ? "?from=nav" : "");
       } else {
+        sessionStorage.setItem("poinaviSwipeDir", "slide-forwards");
         const nextIdx = (idx + 1) % pages.length;
         window.location.href = pages[nextIdx].url + (nextIdx === 1 ? "?from=nav" : "");
       }

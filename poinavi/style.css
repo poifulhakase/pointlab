@@ -1,4 +1,71 @@
 /* ============================================
+   View Transitions（ページ切替スライドアニメーション）
+   Chrome 126+ 対応
+   ============================================ */
+@supports (view-transition-name: none) {
+@view-transition {
+  navigation: auto;
+  types: slide-forwards, slide-backwards;
+}
+
+/* 次へ（左スワイプ）: 現在ページが左へ、新規が右から */
+html:active-view-transition-type(slide-forwards) {
+  &::view-transition-old(root) {
+    animation: 0.35s ease-out both slide-out-left;
+  }
+  &::view-transition-new(root) {
+    animation: 0.35s ease-out both slide-in-from-right;
+  }
+}
+
+/* 前へ（右スワイプ）: 現在ページが右へ、新規が左から */
+html:active-view-transition-type(slide-backwards) {
+  &::view-transition-old(root) {
+    animation: 0.35s ease-out both slide-out-right;
+  }
+  &::view-transition-new(root) {
+    animation: 0.35s ease-out both slide-in-from-left;
+  }
+}
+
+@keyframes slide-out-left {
+  to {
+    transform: translateX(-30%);
+    opacity: 0.5;
+  }
+}
+
+@keyframes slide-out-right {
+  to {
+    transform: translateX(30%);
+    opacity: 0.5;
+  }
+}
+
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(30%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-left {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+}
+
+/* ============================================
    リセット & ベース設定
    ============================================ */
 *,
