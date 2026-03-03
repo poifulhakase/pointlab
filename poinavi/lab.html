@@ -625,7 +625,7 @@
 
       function applyTheme(theme) {
         document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
-        document.body.className = theme === "dark" ? "dark-mode" : "light-mode";
+        document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
       }
 
       function updateThemeButton(theme) {
