@@ -3382,81 +3382,84 @@ function latLngToTile(lat, lng, z) {
   return { x: ((x % n) + n) % n, y: Math.max(0, Math.min(y, n - 1)) };
 }
 
-/** RainViewer タイルを DOM で描画する OverlayView（ES6 class で正しく継承） */
-class RainViewerOverlay extends google.maps.OverlayView {
-  constructor(host, path) {
-    super();
-    this.host = host;
-    this.path = path;
-    this.tileContainer = null;
-  }
-  onAdd() {
-    const container = document.createElement("div");
-    container.id = "rainviewer-overlay";
-    container.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.9;z-index:1;";
-    this.tileContainer = container;
-    const panes = this.getPanes();
-    const pane = (panes && panes.floatPane) ? panes.floatPane : (panes && panes.overlayLayer) ? panes.overlayLayer : null;
-    if (!pane) return;
-    pane.insertBefore(container, pane.firstChild);
-  }
-  draw() {
-    if (!this.tileContainer) return;
-    const m = this.getMap();
-    if (!m) return;
-    const projection = this.getProjection();
-    if (!projection) return;
-    const bounds = m.getBounds();
-    const zoom = m.getZoom();
-    if (!bounds || zoom === undefined) return;
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
-    const z = Math.min(zoom, RV_MAX_ZOOM);
-    const t1 = latLngToTile(ne.lat(), ne.lng(), z);
-    const t2 = latLngToTile(sw.lat(), sw.lng(), z);
-    const xMin = Math.min(t1.x, t2.x);
-    const xMax = Math.max(t1.x, t2.x);
-    const yMin = Math.min(t1.y, t2.y);
-    const yMax = Math.max(t1.y, t2.y);
-    const n = 1 << z;
-    const toShow = new Set();
-    for (let x = xMin; x <= xMax; x++) {
-      const wx = ((x % n) + n) % n;
-      for (let y = yMin; y <= yMax; y++) {
-        if (y >= 0 && y < n) toShow.add(`${wx},${y}`);
+/** RainViewer タイル用 OverlayView（呼び出し時に定義して google.maps 依存を回避） */
+function createRainViewerOverlay(host, path) {
+  class RainViewerOverlay extends google.maps.OverlayView {
+    constructor(h, p) {
+      super();
+      this.host = h;
+      this.path = p;
+      this.tileContainer = null;
+    }
+    onAdd() {
+      const container = document.createElement("div");
+      container.id = "rainviewer-overlay";
+      container.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.9;z-index:1;";
+      this.tileContainer = container;
+      const panes = this.getPanes();
+      const pane = (panes && panes.floatPane) ? panes.floatPane : (panes && panes.overlayLayer) ? panes.overlayLayer : null;
+      if (!pane) return;
+      pane.insertBefore(container, pane.firstChild);
+    }
+    draw() {
+      if (!this.tileContainer) return;
+      const m = this.getMap();
+      if (!m) return;
+      const projection = this.getProjection();
+      if (!projection) return;
+      const bounds = m.getBounds();
+      const zoom = m.getZoom();
+      if (!bounds || zoom === undefined) return;
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      const z = Math.min(zoom, RV_MAX_ZOOM);
+      const t1 = latLngToTile(ne.lat(), ne.lng(), z);
+      const t2 = latLngToTile(sw.lat(), sw.lng(), z);
+      const xMin = Math.min(t1.x, t2.x);
+      const xMax = Math.max(t1.x, t2.x);
+      const yMin = Math.min(t1.y, t2.y);
+      const yMax = Math.max(t1.y, t2.y);
+      const n = 1 << z;
+      const toShow = new Set();
+      for (let x = xMin; x <= xMax; x++) {
+        const wx = ((x % n) + n) % n;
+        for (let y = yMin; y <= yMax; y++) {
+          if (y >= 0 && y < n) toShow.add(`${wx},${y}`);
+        }
       }
+      this.tileContainer.innerHTML = "";
+      let tileCount = 0;
+      if (toShow.size === 0) console.warn("RainViewer draw: no tiles in viewport", { z, xMin, xMax, yMin, yMax });
+      toShow.forEach((key) => {
+        const [x, y] = key.split(",").map(Number);
+        const nw = tileToLatLng(x, y, z);
+        const se = tileToLatLng(x + 1, y + 1, z);
+        const topLeft = projection.fromLatLngToDivPixel(nw);
+        const bottomRight = projection.fromLatLngToDivPixel(se);
+        if (!topLeft || !bottomRight) return;
+        const left = topLeft.x;
+        const top = topLeft.y;
+        const w = bottomRight.x - left;
+        const h = bottomRight.y - top;
+        if (w <= 0 || h <= 0) return;
+        const img = document.createElement("img");
+        img.referrerPolicy = "no-referrer";
+        img.src = `${this.host}${this.path}/256/${z}/${x}/${y}/${RV_COLOR}/${RV_OPTS}.png`;
+        img.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${w}px;height:${h}px;`;
+        img.onerror = () => { console.warn("RainViewer タイル読込失敗:", img.src); };
+        this.tileContainer.appendChild(img);
+        tileCount++;
+      });
+      console.log("RainViewer draw:", tileCount, "tiles, zoom", z, "bounds", { xMin, xMax, yMin, yMax });
     }
-    this.tileContainer.innerHTML = "";
-    let tileCount = 0;
-    if (toShow.size === 0) console.warn("RainViewer draw: no tiles in viewport", { z, xMin, xMax, yMin, yMax });
-    toShow.forEach((key) => {
-      const [x, y] = key.split(",").map(Number);
-      const nw = tileToLatLng(x, y, z);
-      const se = tileToLatLng(x + 1, y + 1, z);
-      const topLeft = projection.fromLatLngToDivPixel(nw);
-      const bottomRight = projection.fromLatLngToDivPixel(se);
-      if (!topLeft || !bottomRight) return;
-      const left = topLeft.x;
-      const top = topLeft.y;
-      const w = bottomRight.x - left;
-      const h = bottomRight.y - top;
-      if (w <= 0 || h <= 0) return;
-      const img = document.createElement("img");
-      img.referrerPolicy = "no-referrer";
-      img.src = `${this.host}${this.path}/256/${z}/${x}/${y}/${RV_COLOR}/${RV_OPTS}.png`;
-      img.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${w}px;height:${h}px;`;
-      img.onerror = () => { console.warn("RainViewer タイル読込失敗:", img.src); };
-      this.tileContainer.appendChild(img);
-      tileCount++;
-    });
-    console.log("RainViewer draw:", tileCount, "tiles, zoom", z, "bounds", { xMin, xMax, yMin, yMax });
-  }
-  onRemove() {
-    if (this.tileContainer && this.tileContainer.parentNode) {
-      this.tileContainer.parentNode.removeChild(this.tileContainer);
+    onRemove() {
+      if (this.tileContainer && this.tileContainer.parentNode) {
+        this.tileContainer.parentNode.removeChild(this.tileContainer);
+      }
+      this.tileContainer = null;
     }
-    this.tileContainer = null;
   }
+  return new RainViewerOverlay(host, path);
 }
 
 // RainViewer レイヤーを追加
@@ -3483,7 +3486,7 @@ async function addRainViewerLayer() {
     const host = data.host || "https://tilecache.rainviewer.com";
     const path = frame.path;
 
-    rainViewerLayer = new RainViewerOverlay(host, path);
+    rainViewerLayer = createRainViewerOverlay(host, path);
     rainViewerLayer.setMap(map);
 
     function redrawRain() {
@@ -3515,10 +3518,35 @@ function removeRainViewerLayer() {
   console.log("RainViewer レイヤーを削除しました");
 }
 
+// マップ準備完了を待つ（最大10秒）
+function waitForMap() {
+  return new Promise((resolve) => {
+    if (map) {
+      resolve();
+      return;
+    }
+    const start = Date.now();
+    const maxWait = 10000;
+    const check = () => {
+      if (map) {
+        resolve();
+        return;
+      }
+      if (Date.now() - start >= maxWait) {
+        resolve(); // タイムアウトしても resolve（addRainViewerLayer で null になる）
+        return;
+      }
+      setTimeout(check, 100);
+    };
+    check();
+  });
+}
+
 // RainViewer 表示/非表示をトグル
 async function toggleRainViewer() {
   const toggleBtn = document.getElementById("rainViewerToggle");
   const statusPanel = document.getElementById("rainViewerStatus");
+  const loadingPanel = document.getElementById("rainViewerLoading");
 
   if (rainViewerEnabled) {
     // 非表示にする
@@ -3533,36 +3561,35 @@ async function toggleRainViewer() {
     if (statusPanel) {
       statusPanel.classList.add("hidden");
     }
+    if (loadingPanel) loadingPanel.classList.add("hidden");
 
     console.log("雨雲レーダーをOFFにしました");
   } else {
     // 表示する
-    if (toggleBtn) {
-      toggleBtn.classList.add("loading");
-    }
+    if (toggleBtn) toggleBtn.classList.add("loading");
+    if (loadingPanel) loadingPanel.classList.remove("hidden");
 
-    const layer = await addRainViewerLayer();
+    try {
+      await waitForMap();
+      const layer = await addRainViewerLayer();
 
-    if (layer) {
-      rainViewerEnabled = true;
-
-      // UI を更新
-      if (toggleBtn) {
-        toggleBtn.classList.add("active");
-        toggleBtn.classList.remove("loading");
-        toggleBtn.setAttribute("aria-pressed", "true");
+      if (layer) {
+        rainViewerEnabled = true;
+        if (toggleBtn) {
+          toggleBtn.classList.add("active");
+          toggleBtn.classList.remove("loading");
+          toggleBtn.setAttribute("aria-pressed", "true");
+        }
+        if (statusPanel) statusPanel.classList.remove("hidden");
+        console.log("雨雲レーダーをONにしました");
+      } else {
+        console.warn("雨雲レーダーの表示に失敗しました");
       }
-      if (statusPanel) {
-        statusPanel.classList.remove("hidden");
-      }
-
-      console.log("雨雲レーダーをONにしました");
-    } else {
-      // エラー時
-      if (toggleBtn) {
-        toggleBtn.classList.remove("loading");
-      }
-      console.warn("雨雲レーダーの表示に失敗しました");
+    } catch (e) {
+      console.warn("雨雲レーダーの表示に失敗しました:", e);
+    } finally {
+      if (toggleBtn) toggleBtn.classList.remove("loading");
+      if (loadingPanel) loadingPanel.classList.add("hidden");
     }
   }
 }

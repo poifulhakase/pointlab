@@ -320,6 +320,13 @@
             <div id="rainViewerStatus" class="layer-status layer-status--inline hidden">
               <span class="layer-status__text">表示中</span>
             </div>
+            <!-- 雨雲ローディング中 -->
+            <div id="rainViewerLoading" class="layer-status layer-status--inline layer-status--loading hidden">
+              <svg class="layer-status__spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"></circle>
+              </svg>
+              <span class="layer-status__text">取得中...</span>
+            </div>
           </div>
           
           <!-- お手洗いトグル -->
@@ -439,6 +446,6 @@
       </span>
     </footer>
 
-    <script src="./script.js?v=1772504891"></script>
+    <script src="./script.js?v=1772505106"></script>
   </body>
 </html>
