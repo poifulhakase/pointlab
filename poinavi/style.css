@@ -4446,14 +4446,12 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   transform: scale(0.98);
 }
 
-/* ダークモード：従来の背景（body に配置してライトモードと同じ位置に） */
-body.lab-page.dark-mode {
+/* ダークモード：従来の背景（.lab-main、cover で表示） */
+body.dark-mode .lab-main {
   background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("./lab-bg.png");
-  background-size: auto 140%;
+  background-size: cover;
   background-position: center center;
-  background-attachment: fixed;
   background-repeat: no-repeat;
-  min-height: 100vh;
 }
 
 body.dark-mode .lab-card {
