@@ -4337,7 +4337,7 @@ body.lab-page:not(.dark-mode) {
   --text-primary: #0a0a0a;
   --text-secondary: #333333;
   background-image: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url("./lab-bg-light.png");
-  background-size: 70%;
+  background-size: auto 140%;
   background-position: center center;
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -4345,7 +4345,7 @@ body.lab-page:not(.dark-mode) {
 }
 @media (max-width: 768px) {
   body.lab-page:not(.dark-mode) {
-    background-size: 100%;
+    background-size: auto 140%;
   }
 }
 body.lab-page:not(.dark-mode) .translate-header {
