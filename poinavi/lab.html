@@ -294,17 +294,21 @@
         transform: translateY(28px);
         flex-shrink: 0;
       }
-      /* ダークモード：博士のみ中央、ぽいろぼは机の上あたりに配置 */
+      /* ダークモード：博士のみ中央、ぽいろぼは博士の背面・机の上（少し右）に配置 */
       body.dark-mode .lab-character__spacer {
         display: none;
       }
+      body.dark-mode .lab-character__img {
+        position: relative;
+        z-index: 2;
+      }
       body.dark-mode .lab-character__robot {
         position: absolute;
-        left: 58%;
-        bottom: 10%;
+        left: 62%;
+        bottom: 9%;
         transform: translateX(-50%);
         height: calc(var(--vvh, 100vh) * 0.216);
-        margin-left: 0;
+        z-index: 1;
       }
       /* 研究室メイン：固定フッター分の余白は style.css で確保（常に表示のため） */
       @media (max-height: 600px) {
