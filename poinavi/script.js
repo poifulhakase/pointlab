@@ -637,6 +637,14 @@ function initSearchInput() {
     return;
   }
 
+  // 入力モード時はタグ・フッターを非表示（スマホキーボード表示時）
+  searchInput.addEventListener("focus", function() {
+    document.body.classList.add("input-mode");
+  });
+  searchInput.addEventListener("blur", function() {
+    document.body.classList.remove("input-mode");
+  });
+
   // ぽいナビページ表示時に検索ボックスへフォーカス
   requestAnimationFrame(function() {
     searchInput.focus();

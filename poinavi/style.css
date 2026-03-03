@@ -2876,6 +2876,17 @@ body.dark-mode .translate-result-item--latest {
   transform: scale(1.1);
 }
 
+/* 入力モード時（キーボード表示時）スマホでフッター・余白を非表示 */
+@media (max-width: 900px), (pointer: coarse) {
+  body.input-mode .translate-footer,
+  body.input-mode .memo-warning {
+    display: none !important;
+  }
+  body.input-mode .settings-section--tags {
+    display: none !important;
+  }
+}
+
 .translate-footer__label {
   font-size: 0.625rem;
   font-weight: 600;

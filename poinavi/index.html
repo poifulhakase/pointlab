@@ -520,6 +520,12 @@
 
         if (!input || !addBtn) return;
 
+        // 入力モード時はフッター・警告を非表示（スマホキーボード表示時）
+        function onInputFocus() { document.body.classList.add("input-mode"); }
+        function onInputBlur() { document.body.classList.remove("input-mode"); }
+        input.addEventListener("focus", onInputFocus);
+        input.addEventListener("blur", onInputBlur);
+
         // ラボノートページ表示時に入力欄へフォーカス
         requestAnimationFrame(function() {
           input.focus();
