@@ -521,10 +521,24 @@
         if (!input || !addBtn) return;
 
         // 入力モード時はフッター・警告を非表示（スマホキーボード表示時）
-        function onInputFocus() { document.body.classList.add("input-mode"); }
+        function onInputFocus() {
+          document.body.classList.add("input-mode");
+          if (/Android/i.test(navigator.userAgent)) {
+            history.pushState({ inputMode: true }, "", window.location.href);
+          }
+        }
         function onInputBlur() { document.body.classList.remove("input-mode"); }
         input.addEventListener("focus", onInputFocus);
         input.addEventListener("blur", onInputBlur);
+
+        // Android戻るボタン：フォーカスを外してメニュー表示に戻す
+        if (/Android/i.test(navigator.userAgent)) {
+          window.addEventListener("popstate", function() {
+            if (document.activeElement === input) {
+              input.blur();
+            }
+          });
+        }
 
         // 追加ボタンクリック
         addBtn.addEventListener("click", function() {

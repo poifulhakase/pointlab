@@ -640,10 +640,22 @@ function initSearchInput() {
   // 入力モード時はタグ・フッターを非表示（スマホキーボード表示時）
   searchInput.addEventListener("focus", function() {
     document.body.classList.add("input-mode");
+    if (/Android/i.test(navigator.userAgent)) {
+      history.pushState({ inputMode: true }, "", window.location.href);
+    }
   });
   searchInput.addEventListener("blur", function() {
     document.body.classList.remove("input-mode");
   });
+
+  // Android戻るボタン：フォーカスを外してメニュー表示に戻す
+  if (/Android/i.test(navigator.userAgent)) {
+    window.addEventListener("popstate", function() {
+      if (document.activeElement === searchInput) {
+        searchInput.blur();
+      }
+    });
+  }
 
   // 検索ボタンクリックで検索
   searchButton.addEventListener("click", function () {
