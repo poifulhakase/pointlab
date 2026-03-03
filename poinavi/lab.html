@@ -247,7 +247,7 @@
         border-color: #ef4444;
       }
 
-      /* キャラクター表示エリア（フッターとの余白をvhで設定・半分） */
+      /* キャラクター表示エリア（フッターとの余白・デバイスに応じて調整） */
       .lab-character {
         flex: 1;
         display: flex;
@@ -255,11 +255,23 @@
         align-items: flex-end;
         min-height: 100px;
         margin-top: auto;
-        padding-bottom: 3vh;
+        padding-bottom: clamp(2px, 0.6vh, 8px);
       }
       .lab-character__img {
         height: 36vh;
         width: auto;
+      }
+      /* 研究室メイン：フッターとの余白を抑える */
+      .lab-main {
+        padding-bottom: clamp(6px, 1.2vh, 14px) !important;
+      }
+      @media (max-height: 600px) {
+        .lab-character { padding-bottom: clamp(1px, 0.4vh, 6px); }
+        .lab-main { padding-bottom: clamp(4px, 0.8vh, 10px) !important; }
+      }
+      @media (min-height: 900px) {
+        .lab-character { padding-bottom: clamp(4px, 0.8vh, 12px); }
+        .lab-main { padding-bottom: clamp(8px, 1.5vh, 18px) !important; }
       }
 
       /* 波紋エフェクト（クリック・タップ時に心地よいフィードバック） */
