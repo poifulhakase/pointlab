@@ -57,9 +57,10 @@
       html.light-mode { background-color: #f5f5f7; }
       html.dark-mode { background-color: #1a1a1a; }
       
-      /* 横スクロール防止 */
+      /* 横スクロール防止・波紋用 */
       .lab-main {
-        overflow-x: hidden;
+        position: relative;
+        overflow: hidden;
       }
       
       /* ダッシュボードカード - 2列固定（天気・気温用） */
@@ -255,6 +256,26 @@
         width: 40%;
         max-width: 200px;
         height: auto;
+      }
+
+      /* 波紋エフェクト（クリック・タップ時に心地よいフィードバック） */
+      .lab-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(96, 165, 250, 0.35);
+        transform: scale(0);
+        opacity: 1;
+        pointer-events: none;
+        animation: lab-ripple-anim 0.6s ease-out forwards;
+      }
+      body.dark-mode .lab-ripple {
+        background: rgba(96, 165, 250, 0.25);
+      }
+      @keyframes lab-ripple-anim {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
       }
       
     </style>
@@ -533,6 +554,44 @@
       const FITBIT_REDIRECT_URI = window.location.origin + "/poinavi/lab.html";
       const FITBIT_SCOPES = "activity";
       
+      // ============================================
+      // 波紋エフェクト（メインエリアのクリック・タップで心地よいフィードバック）
+      // ============================================
+      function initLabRipple() {
+        const main = document.querySelector(".lab-main");
+        if (!main) return;
+
+        var lastRipple = 0;
+        function createRipple(clientX, clientY, target) {
+          if (!target || target.closest("button, a, input, select, textarea, [role='button']")) return;
+          var now = Date.now();
+          if (now - lastRipple < 400) return;
+          lastRipple = now;
+          const rect = main.getBoundingClientRect();
+          const x = clientX - rect.left;
+          const y = clientY - rect.top;
+          const size = Math.max(rect.width, rect.height) * 0.6;
+
+          const ripple = document.createElement("span");
+          ripple.className = "lab-ripple";
+          ripple.style.cssText = `left:${x - size/2}px;top:${y - size/2}px;width:${size}px;height:${size}px;`;
+          main.appendChild(ripple);
+
+          setTimeout(function() { ripple.remove(); }, 600);
+        }
+
+        main.addEventListener("click", function(e) {
+          createRipple(e.clientX, e.clientY, e.target);
+        });
+        main.addEventListener("touchend", function(e) {
+          if (e.changedTouches && e.changedTouches[0]) {
+            var t = e.changedTouches[0];
+            var el = document.elementFromPoint(t.clientX, t.clientY);
+            createRipple(t.clientX, t.clientY, el);
+          }
+        }, { passive: true });
+      }
+
       // ============================================
       // テーマ管理
       // ============================================
@@ -975,6 +1034,7 @@
       // ============================================
       document.addEventListener("DOMContentLoaded", function() {
         initTheme();
+        initLabRipple();
         initSettingsModal();
         initThemeToggle();
         initStartPageSelect();
