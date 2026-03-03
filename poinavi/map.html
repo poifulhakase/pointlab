@@ -232,6 +232,18 @@
       </div>
     </div>
 
+    <!-- 自作アラート/確認モーダル -->
+    <div id="poinaviAlertModal" class="poinavi-alert-modal hidden">
+      <div class="poinavi-alert-modal__overlay"></div>
+      <div class="poinavi-alert-modal__content">
+        <p class="poinavi-alert-modal__message" id="poinaviAlertMessage"></p>
+        <div class="poinavi-alert-modal__buttons">
+          <button type="button" id="poinaviAlertCancel" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 1️⃣ マップ表示（上部） -->
     <main class="main-content">
       <h1 class="visually-hidden">ぽいナビ - 地図：周辺検索・駅・公共トイレ</h1>
@@ -257,6 +269,38 @@
         
         <!-- レイヤーコントロール（左上フロート） -->
         <div class="layer-control">
+          <!-- お手洗いトグル -->
+          <div class="layer-control__row">
+            <button 
+              id="toiletToggle" 
+              class="layer-toggle" 
+              type="button"
+              aria-pressed="false"
+              aria-label="お手洗い表示切替"
+            >
+              <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- 男性（左） -->
+                <circle cx="7" cy="4" r="2"></circle>
+                <path d="M7 8v6M7 14l-2 6M7 14l2 6M4 10h6"></path>
+                <!-- 女性（右） -->
+                <circle cx="17" cy="4" r="2"></circle>
+                <path d="M17 8l-2 6h4l-2-6zM15 20v-4M19 20v-4"></path>
+              </svg>
+              <span class="layer-toggle__text">トイレ</span>
+            </button>
+            <!-- お手洗いON時のステータス -->
+            <div id="toiletStatus" class="layer-status layer-status--inline hidden">
+              <span class="layer-status__text">表示中（半径2km）</span>
+            </div>
+            <!-- お手洗いローディング中のステータス -->
+            <div id="toiletLoading" class="layer-status layer-status--inline layer-status--loading hidden">
+              <svg class="layer-status__spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"></circle>
+              </svg>
+              <span class="layer-status__text">取得中...</span>
+            </div>
+          </div>
+          
           <!-- 鉄道レイヤートグル -->
           <div class="layer-control__row">
             <button 
@@ -322,38 +366,6 @@
             </div>
             <!-- 雨雲ローディング中 -->
             <div id="rainViewerLoading" class="layer-status layer-status--inline layer-status--loading hidden">
-              <svg class="layer-status__spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"></circle>
-              </svg>
-              <span class="layer-status__text">取得中...</span>
-            </div>
-          </div>
-          
-          <!-- お手洗いトグル -->
-          <div class="layer-control__row">
-            <button 
-              id="toiletToggle" 
-              class="layer-toggle" 
-              type="button"
-              aria-pressed="false"
-              aria-label="お手洗い表示切替"
-            >
-              <svg class="layer-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <!-- 男性（左） -->
-                <circle cx="7" cy="4" r="2"></circle>
-                <path d="M7 8v6M7 14l-2 6M7 14l2 6M4 10h6"></path>
-                <!-- 女性（右） -->
-                <circle cx="17" cy="4" r="2"></circle>
-                <path d="M17 8l-2 6h4l-2-6zM15 20v-4M19 20v-4"></path>
-              </svg>
-              <span class="layer-toggle__text">トイレ</span>
-            </button>
-            <!-- お手洗いON時のステータス -->
-            <div id="toiletStatus" class="layer-status layer-status--inline hidden">
-              <span class="layer-status__text">表示中（半径2km）</span>
-            </div>
-            <!-- お手洗いローディング中のステータス -->
-            <div id="toiletLoading" class="layer-status layer-status--inline layer-status--loading hidden">
               <svg class="layer-status__spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"></circle>
               </svg>
@@ -446,6 +458,7 @@
       </span>
     </footer>
 
-    <script src="./script.js?v=1772509973"></script>
+    <script src="./poinavi-alert.js"></script>
+    <script src="./script.js?v=1772510917"></script>
   </body>
 </html>

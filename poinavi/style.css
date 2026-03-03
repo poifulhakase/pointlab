@@ -1130,6 +1130,101 @@ body.dark-mode .loading-overlay {
   display: none;
 }
 
+/* 共通アラート/確認モーダル（自作） */
+.poinavi-alert-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.poinavi-alert-modal.hidden {
+  display: none;
+}
+
+.poinavi-alert-modal__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.poinavi-alert-modal__content {
+  position: relative;
+  background-color: var(--bg-primary);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 320px;
+  width: 90%;
+  padding: 24px;
+  z-index: 1;
+  animation: slideUp 0.3s ease;
+}
+
+.poinavi-alert-modal__message {
+  margin: 0 0 20px 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-line;
+}
+
+.poinavi-alert-modal__buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.poinavi-alert-modal__buttons .poinavi-alert-modal__btn:only-child {
+  margin-left: auto;
+}
+
+.poinavi-alert-modal__btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.poinavi-alert-modal__btn--cancel {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.poinavi-alert-modal__btn--cancel:hover {
+  background-color: var(--border-color);
+}
+
+.poinavi-alert-modal__btn--ok {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.poinavi-alert-modal__btn--ok:hover {
+  background-color: var(--accent-hover);
+}
+
+body.dark-mode .poinavi-alert-modal__content {
+  background-color: #2d2d2d;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .poinavi-alert-modal__overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
 .settings-modal__overlay {
   position: absolute;
   top: 0;
@@ -4051,7 +4146,7 @@ body.dark-mode .translate-qr-btn {
 }
 
 .lab-hero__time {
-  font-size: 4rem;
+  font-size: 6rem; /* 4rem × 1.5 */
   font-weight: 200;
   letter-spacing: -2px;
   color: var(--text-primary);
@@ -4299,7 +4394,7 @@ body.dark-mode .lab-history__bar {
 /* PC版レスポンシブ */
 @media (min-width: 501px) {
   .lab-hero__time {
-    font-size: 5rem;
+    font-size: 7.5rem; /* 5rem × 1.5 */
   }
   
   .lab-dashboard {

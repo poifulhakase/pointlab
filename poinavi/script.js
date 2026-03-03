@@ -25,6 +25,7 @@ let transportMode = "walk"; // 移動手段（walk, bicycle, car）
 let rainViewerLayer = null; // RainViewer レイヤー
 let rainViewerEnabled = false; // RainViewer 有効フラグ
 let rainViewerLayerIndex = -1; // overlayMapTypes での位置
+let rainViewerListeners = []; // addListener の戻り値（削除時に解除用）
 
 // 鉄道レイヤー関連
 let railwayEnabled = false; // 鉄道レイヤー有効フラグ
@@ -333,24 +334,22 @@ function handleAddTag() {
     renderMainTagList(); // メインUIを更新
     renderTagManageList(); // 設定モーダルを更新
   } else {
-    alert(result.message);
+    poinaviAlert(result.message);
   }
 }
 
 // タグ削除処理
 function handleDeleteTag(tagId, tagName) {
-  if (!confirm(`「${tagName}」を削除しますか？`)) {
-    return;
-  }
-  
-  const result = deleteTag(tagId);
-  
-  if (result.success) {
-    renderMainTagList(); // メインUIを更新
-    renderTagManageList(); // 設定モーダルを更新
-  } else {
-    alert(result.message);
-  }
+  poinaviConfirm(`「${tagName}」を削除しますか？`).then(function(ok) {
+    if (!ok) return;
+    const result = deleteTag(tagId);
+    if (result.success) {
+      renderMainTagList();
+      renderTagManageList();
+    } else {
+      poinaviAlert(result.message);
+    }
+  });
 }
 
 // ============================================
@@ -937,6 +936,9 @@ function initMap() {
       displayRoute(origin, destination);
     };
     
+    // ラボノート追加結果は自作アラートで表示
+    window.showLabNoteResultModal = poinaviAlert;
+
     // グローバル関数としてラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
     window.addPlaceToMemo = function(encodedName, encodedAddress, distance) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
@@ -957,7 +959,7 @@ function initMap() {
       
       // 上限チェック
       if (memos.length >= MEMO_MAX_COUNT) {
-        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
+        showLabNoteResultModal("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
         return;
       }
       
@@ -974,10 +976,10 @@ function initMap() {
       // 保存
       try {
         localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
-        alert("ラボノートに追加しました");
+        showLabNoteResultModal("ラボノートに追加しました");
       } catch (e) {
         console.error("ラボノートの保存に失敗:", e);
-        alert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
+        showLabNoteResultModal("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
       }
     };
     
@@ -1001,7 +1003,7 @@ function initMap() {
       
       // 上限チェック
       if (memos.length >= MEMO_MAX_COUNT) {
-        alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
+        showLabNoteResultModal("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
         return;
       }
       
@@ -1019,10 +1021,10 @@ function initMap() {
       // 保存
       try {
         localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
-        alert("ラボノートに追加しました");
+        showLabNoteResultModal("ラボノートに追加しました");
       } catch (e) {
         console.error("ラボノートの保存に失敗:", e);
-        alert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
+        showLabNoteResultModal("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
       }
     };
   } catch (error) {
@@ -1404,23 +1406,18 @@ function selectTransportMode(btn, mode) {
 
 // 設定を初期化
 function resetAllSettings() {
-  if (!confirm("すべての設定を初期化しますか？\\n（タグ、テーマ、移動手段、起動ページなどがリセットされます）")) {
-    return;
-  }
-  
-  // localStorageから設定を削除
-  localStorage.removeItem("poinavi_theme");
-  localStorage.removeItem("poinavi_transport_mode");
-  localStorage.removeItem("poinavi_start_page");
-  localStorage.removeItem("poinavi_result_count");
-  localStorage.removeItem("poinavi_custom_tags");
-  localStorage.removeItem("poinavi_search_cache");
-  
-  // sessionStorageもクリア
-  sessionStorage.removeItem("poinavi_session_started");
-  
-  alert("設定を初期化しました。ページを再読み込みします。");
-  window.location.reload();
+  poinaviConfirm("すべての設定を初期化しますか？\n（タグ、テーマ、移動手段、起動ページなどがリセットされます）").then(function(ok) {
+    if (!ok) return;
+    localStorage.removeItem("poinavi_theme");
+    localStorage.removeItem("poinavi_transport_mode");
+    localStorage.removeItem("poinavi_start_page");
+    localStorage.removeItem("poinavi_result_count");
+    localStorage.removeItem("poinavi_custom_tags");
+    localStorage.removeItem("poinavi_search_cache");
+    sessionStorage.removeItem("poinavi_session_started");
+    poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+    window.location.reload();
+  });
 }
 
 function showSettingsModal() {
@@ -2657,6 +2654,21 @@ function selectResult(index) {
   console.log("選択された店舗:", place.name, place);
 }
 
+// InfoWindowを画面中央にパンする（経路表示など他処理でビューが変わった後も再実行可能）
+function centerInfoWindowInView() {
+  if (!map || !infoWindow || !infoWindow.getMap()) return;
+  const infoWindowElement = document.querySelector('.gm-style-iw-c');
+  if (!infoWindowElement) return;
+  const rect = infoWindowElement.getBoundingClientRect();
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const iwCenterX = rect.left + rect.width / 2;
+  const iwCenterY = rect.top + rect.height / 2;
+  const panX = centerX - iwCenterX;
+  const panY = centerY - iwCenterY;
+  map.panBy(panX, panY);
+}
+
 // 情報ウィンドウを表示
 function showInfoWindow(place, marker) {
   if (!map || !place) return;
@@ -2885,20 +2897,7 @@ function showInfoWindow(place, marker) {
   
   // InfoWindowを必ず画面中央に表示するようパン調整
   google.maps.event.addListenerOnce(infoWindow, 'domready', function() {
-    google.maps.event.addListenerOnce(map, 'idle', function() {
-      const infoWindowElement = document.querySelector('.gm-style-iw-c');
-      if (!infoWindowElement) return;
-      
-      const infoWindowRect = infoWindowElement.getBoundingClientRect();
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      const iwCenterX = infoWindowRect.left + infoWindowRect.width / 2;
-      const iwCenterY = infoWindowRect.top + infoWindowRect.height / 2;
-      const panX = centerX - iwCenterX;
-      const panY = centerY - iwCenterY;
-      
-      map.panBy(panX, panY);
-    });
+    google.maps.event.addListenerOnce(map, 'idle', centerInfoWindowInView);
   });
   
   // マーカーにplace情報を保存（テーマ切り替え時に使用）
@@ -2955,9 +2954,17 @@ function displayRoute(origin, destination) {
   directionsService.route(request, function(result, status) {
     console.log("経路検索結果:", { status, result: !!result });
     if (status === google.maps.DirectionsStatus.OK) {
+      // InfoWindow表示中はビュー調整を抑止（モーダルが中央から外れるのを防ぐ）
+      const iwOpen = infoWindow && infoWindow.getMap();
+      if (iwOpen) {
+        directionsRenderer.setOptions({ preserveViewport: true });
+      }
       // 経路を地図上に表示
       directionsRenderer.setDirections(result);
       console.log("経路を地図上に表示しました");
+      if (iwOpen) {
+        directionsRenderer.setOptions({ preserveViewport: false });
+      }
       
       // 経路表示時はマップのビューを調整しない（InfoWindowが隠れないようにする）
       // InfoWindowが表示されている場合は、その位置を保持するためfitBoundsを実行しない
@@ -3505,9 +3512,11 @@ async function addRainViewerLayer() {
     function redrawRain() {
       if (rainViewerLayer) rainViewerLayer.draw();
     }
-    google.maps.event.addListener(map, "idle", redrawRain);
-    google.maps.event.addListener(map, "bounds_changed", redrawRain);
-    google.maps.event.addListener(map, "zoom_changed", redrawRain);
+    rainViewerListeners = [
+      google.maps.event.addListener(map, "idle", redrawRain),
+      google.maps.event.addListener(map, "bounds_changed", redrawRain),
+      google.maps.event.addListener(map, "zoom_changed", redrawRain)
+    ];
     setTimeout(redrawRain, 100);
     redrawRain();
 
@@ -3522,11 +3531,37 @@ async function addRainViewerLayer() {
   }
 }
 
-// RainViewer レイヤーを削除
+// RainViewer レイヤーを削除（非表示時は必ず完全に解除）
 function removeRainViewerLayer() {
-  if (!rainViewerLayer) return;
-  rainViewerLayer.setMap(null);
-  rainViewerLayer = null;
+  // イベントリスナーを解除（解除しないと bounds_changed 等で再描画される可能性あり）
+  if (rainViewerListeners && rainViewerListeners.length > 0) {
+    rainViewerListeners.forEach((lh) => {
+      if (lh && typeof google !== "undefined" && google.maps && google.maps.event) {
+        google.maps.event.removeListener(lh);
+      }
+    });
+    rainViewerListeners = [];
+  }
+
+  if (rainViewerLayer) {
+    // オーバーレイの DOM を明示的にクリア（onRemove の遅延対策）
+    if (rainViewerLayer.tileContainer) {
+      rainViewerLayer.tileContainer.innerHTML = "";
+      if (rainViewerLayer.tileContainer.parentNode) {
+        rainViewerLayer.tileContainer.parentNode.removeChild(rainViewerLayer.tileContainer);
+      }
+      rainViewerLayer.tileContainer = null;
+    }
+    rainViewerLayer.setMap(null);
+    rainViewerLayer = null;
+  }
+
+  // フォールバック: #rainviewer-overlay が残っていれば削除
+  const leftover = document.getElementById("rainviewer-overlay");
+  if (leftover && leftover.parentNode) {
+    leftover.parentNode.removeChild(leftover);
+  }
+
   rainViewerLayerIndex = -1;
   console.log("RainViewer レイヤーを削除しました");
 }
@@ -3656,7 +3691,7 @@ async function toggleRailwayLayer() {
   } else {
     // 表示する
     if (!userLocation) {
-      alert("現在地を取得してから鉄道レイヤーを表示してください");
+      poinaviAlert("現在地を取得してから鉄道レイヤーを表示してください");
       return;
     }
 
@@ -3711,7 +3746,7 @@ async function toggleRailwayLayer() {
       if (loadingOverlay) {
         loadingOverlay.classList.add("hidden");
       }
-      alert("鉄道データの取得に失敗しました。しばらく経ってから再度お試しください。");
+      poinaviAlert("鉄道データの取得に失敗しました。しばらく経ってから再度お試しください。");
     }
   }
 }
@@ -4032,7 +4067,7 @@ async function toggleToiletLayer() {
   } else {
     // 表示する
     if (!userLocation) {
-      alert("現在地を取得してからお手洗いを表示してください");
+      poinaviAlert("現在地を取得してからお手洗いを表示してください");
       return;
     }
 
@@ -4074,7 +4109,7 @@ async function toggleToiletLayer() {
       if (loadingPanel) {
         loadingPanel.classList.add("hidden");
       }
-      alert("お手洗いデータの取得に失敗しました。しばらく経ってから再度お試しください。");
+      poinaviAlert("お手洗いデータの取得に失敗しました。しばらく経ってから再度お試しください。");
     }
   }
 }
@@ -4461,10 +4496,10 @@ function addToiletToMemo(encodedContent) {
       toiletInfoWindow.close();
     }
     
-    alert("ラボノートに追加しました");
+    showLabNoteResultModal("ラボノートに追加しました");
   } catch (e) {
     console.error("ラボノートの保存に失敗:", e);
-    alert("ラボノートの保存に失敗しました");
+    showLabNoteResultModal("ラボノートの保存に失敗しました");
   }
 }
 

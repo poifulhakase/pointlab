@@ -44,6 +44,7 @@
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="./style.css?v=128" />
+    <script src="./poinavi-alert.js"></script>
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -399,6 +400,18 @@
         <span class="translate-footer__label">ぽいナビ</span>
       </a>
     </footer>
+
+    <!-- 自作アラート/確認モーダル -->
+    <div id="poinaviAlertModal" class="poinavi-alert-modal hidden">
+      <div class="poinavi-alert-modal__overlay"></div>
+      <div class="poinavi-alert-modal__content">
+        <p class="poinavi-alert-modal__message" id="poinaviAlertMessage"></p>
+        <div class="poinavi-alert-modal__buttons">
+          <button type="button" id="poinaviAlertCancel" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Tesseract.js OCRライブラリ（unpkg CDNを使用） -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>

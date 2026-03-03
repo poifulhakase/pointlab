@@ -243,21 +243,17 @@ function initSettingsModal() {
 
 // 翻訳設定を初期化
 function resetTranslateSettings() {
-  if (!confirm("すべての設定を初期化しますか？\n（言語設定、テーマ、起動ページなどがリセットされます）")) {
-    return;
-  }
-  
-  // localStorageから翻訳関連の設定を削除
-  localStorage.removeItem("poinavi_ocr_lang");
-  localStorage.removeItem("poinavi_target_lang");
-  localStorage.removeItem("poinavi_mic_input_lang");
-  localStorage.removeItem("poinavi_mic_output_lang");
-  localStorage.removeItem("poinavi_theme");
-  localStorage.removeItem("poinavi_start_page");
-  
-  // ページをリロードして初期状態に戻す
-  alert("設定を初期化しました。ページを再読み込みします。");
-  location.reload();
+  poinaviConfirm("すべての設定を初期化しますか？\n（言語設定、テーマ、起動ページなどがリセットされます）").then(ok => {
+    if (!ok) return;
+    localStorage.removeItem("poinavi_ocr_lang");
+    localStorage.removeItem("poinavi_target_lang");
+    localStorage.removeItem("poinavi_mic_input_lang");
+    localStorage.removeItem("poinavi_mic_output_lang");
+    localStorage.removeItem("poinavi_theme");
+    localStorage.removeItem("poinavi_start_page");
+    poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+    location.reload();
+  });
 }
 
 // ============================================
@@ -377,7 +373,7 @@ function initVoiceTranslation() {
   if (!SpeechRecognition) {
     console.warn("Web Speech APIがサポートされていません");
     voiceBtn.addEventListener("click", function() {
-      alert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
+      poinaviAlert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
     });
     return;
   }
@@ -411,11 +407,11 @@ function initVoiceTranslation() {
     updateVoiceButtonState("idle");
     
     if (event.error === "no-speech") {
-      alert("音声が検出されませんでした。\nもう一度お試しください。");
+      poinaviAlert("音声が検出されませんでした。\nもう一度お試しください。");
     } else if (event.error === "not-allowed") {
-      alert("マイクへのアクセスが許可されていません。\n設定からマイクへのアクセスを許可してください。");
+      poinaviAlert("マイクへのアクセスが許可されていません。\n設定からマイクへのアクセスを許可してください。");
     } else if (event.error === "network") {
-      alert("ネットワークエラーが発生しました。\nインターネット接続を確認してください。");
+      poinaviAlert("ネットワークエラーが発生しました。\nインターネット接続を確認してください。");
     }
   };
   
@@ -490,7 +486,7 @@ async function processVoiceTranslation(transcript) {
   try {
     // 文字数チェック
     if (transcript.length > TRANSLATE_MAX_LENGTH) {
-      alert("テキストが長すぎます。" + TRANSLATE_MAX_LENGTH + "文字以内にしてください。");
+      poinaviAlert("テキストが長すぎます。" + TRANSLATE_MAX_LENGTH + "文字以内にしてください。");
       return;
     }
     
@@ -509,7 +505,7 @@ async function processVoiceTranslation(transcript) {
     
   } catch (err) {
     console.error("翻訳エラー:", err);
-    alert("翻訳に失敗しました。\n" + err.message);
+    poinaviAlert("翻訳に失敗しました。\n" + err.message);
   } finally {
     voiceBtn?.classList.remove("active");
     updateVoiceButtonState("idle");
@@ -594,9 +590,9 @@ function initResetButton() {
     
     if (!hasResults) return;
     
-    if (confirm("翻訳結果をすべて削除しますか？")) {
-      resetTranslationArea();
-    }
+    poinaviConfirm("翻訳結果をすべて削除しますか？").then(ok => {
+      if (ok) resetTranslationArea();
+    });
   });
 }
 
@@ -690,7 +686,7 @@ async function startCamera() {
     video.srcObject = cameraStream;
   } catch (err) {
     console.error("カメラの起動に失敗しました:", err);
-    alert("カメラへのアクセスが許可されていません。\n設定からカメラへのアクセスを許可してください。");
+    poinaviAlert("カメラへのアクセスが許可されていません。\n設定からカメラへのアクセスを許可してください。");
     closeCameraModal();
   }
 }
@@ -1007,7 +1003,7 @@ async function startOCRProcess() {
     
     if (!ocrResult || ocrResult.trim() === "") {
       // 文字が認識されなかった場合、確認を求める
-      const retry = confirm(
+      const retry = await poinaviConfirm(
         "文字を認識できませんでした。\n\n" +
         "【確認事項】\n" +
         "・撮影した画像に文字が含まれていますか？\n" +
@@ -1056,7 +1052,7 @@ async function startOCRProcess() {
     }
     
     // エラーメッセージを表示して選択肢を提供
-    const retry = confirm(
+    const retry = await poinaviConfirm(
       "処理中にエラーが発生しました" + 
       debugInfo +
       "\n\n再撮影しますか？\n（キャンセルで閉じます）"
@@ -1505,7 +1501,7 @@ function createTranslationResultHTML(type, data) {
             <line x1="12" y1="18" x2="12" y2="12"></line>
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          <span>メモに追加</span>
+          <span>ラボノートに追加</span>
         </button>
       </div>
     </div>
@@ -1528,7 +1524,7 @@ function setupCopyButtons() {
     };
   });
   
-  // メモに追加ボタン
+  // ラボノートに追加ボタン
   resultArea.querySelectorAll(".add-to-memo-btn").forEach(btn => {
     btn.onclick = function() {
       const item = this.closest(".translate-result-item");
@@ -1561,7 +1557,7 @@ function saveMemos(memos) {
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
   } catch (e) {
     console.error("メモの保存に失敗:", e);
-    alert("メモの保存に失敗しました。ストレージ容量を確認してください。");
+    poinaviAlert("メモの保存に失敗しました。ストレージ容量を確認してください。");
   }
 }
 
@@ -1572,7 +1568,7 @@ function addToMemo(content, button) {
   
   // 上限チェック
   if (memos.length >= MEMO_MAX_COUNT) {
-    alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
+    poinaviAlert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なメモを整理して再度追加してください。");
     return;
   }
   
@@ -1583,6 +1579,8 @@ function addToMemo(content, button) {
   };
   memos.unshift(newMemo);
   saveMemos(memos);
+  
+  poinaviAlert("ラボノートに追加しました");
   
   // ボタンの表示を一時的に変更
   const originalText = button.querySelector("span").textContent;
@@ -1686,9 +1684,9 @@ function initQRScanner() {
     } catch (err) {
       console.error('QRスキャナーの起動に失敗:', err);
       if (err.name === 'NotAllowedError') {
-        alert('カメラへのアクセスが許可されていません。\n設定からカメラへのアクセスを許可してください。');
+        poinaviAlert('カメラへのアクセスが許可されていません。\n設定からカメラへのアクセスを許可してください。');
       } else {
-        alert('QRコードスキャナーを起動できませんでした。');
+        poinaviAlert('QRコードスキャナーを起動できませんでした。');
       }
     }
   });
@@ -1722,9 +1720,9 @@ function initQRScanner() {
         window.open(text, '_blank', 'noopener,noreferrer');
       } else {
         // 警告付きで確認
-        if (confirm('このURLを開きますか？\n\n' + text + '\n\n※不審なURLの可能性があります。信頼できるURLのみ開いてください。')) {
-          window.open(text, '_blank', 'noopener,noreferrer');
-        }
+        poinaviConfirm('このURLを開きますか？\n\n' + text + '\n\n※不審なURLの可能性があります。信頼できるURLのみ開いてください。').then(ok => {
+          if (ok) window.open(text, '_blank', 'noopener,noreferrer');
+        });
       }
     } else {
       // URLでない場合はGoogle検索

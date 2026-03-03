@@ -48,6 +48,7 @@
     </script>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="./style.css?v=128" />
+    <script src="./poinavi-alert.js"></script>
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -116,6 +117,18 @@
               テーマ・トップ表示などの設定変更、免責事項の確認は<br>「研究室」ページでできます。
             </p>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 自作アラート/確認モーダル -->
+    <div id="poinaviAlertModal" class="poinavi-alert-modal hidden">
+      <div class="poinavi-alert-modal__overlay"></div>
+      <div class="poinavi-alert-modal__content">
+        <p class="poinavi-alert-modal__message" id="poinaviAlertMessage"></p>
+        <div class="poinavi-alert-modal__buttons">
+          <button type="button" id="poinaviAlertCancel" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
         </div>
       </div>
     </div>
@@ -346,7 +359,7 @@
           localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
         } catch (e) {
           console.error("ラボノートの保存に失敗:", e);
-          alert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
+          poinaviAlert("ラボノートの保存に失敗しました。ストレージ容量を確認してください。");
         }
       }
 
@@ -362,14 +375,14 @@
         
         // 上限チェック
         if (memos.length >= MEMO_MAX_COUNT) {
-          alert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
+          poinaviAlert("上限（" + MEMO_MAX_COUNT + "件）に達しています。\n不要なラボノートを整理して再度追加してください。");
           return false;
         }
         
         // 文字数チェック
         const trimmedContent = content.trim();
         if (trimmedContent.length > MEMO_MAX_LENGTH) {
-          alert("ラボノートは" + MEMO_MAX_LENGTH + "文字以内で入力してください。\n現在: " + trimmedContent.length + "文字");
+          poinaviAlert("ラボノートは" + MEMO_MAX_LENGTH + "文字以内で入力してください。\n現在: " + trimmedContent.length + "文字");
           return false;
         }
 
@@ -386,6 +399,7 @@
         }
         
         saveMemos(memos);
+        poinaviAlert("ラボノートに追加しました");
         return true;
       }
       
@@ -397,7 +411,7 @@
           const usage = (used / limit) * 100;
           
           if (usage > 90) {
-            alert("ストレージ容量が残り少なくなっています。\n不要なラボノートを削除してください。");
+            poinaviAlert("ストレージ容量が残り少なくなっています。\n不要なラボノートを削除してください。");
           }
           return true;
         } catch (e) {
@@ -473,10 +487,12 @@
           btn.addEventListener("click", function() {
             const id = this.dataset.id;
             const time = this.dataset.time;
-            if (confirm(`[${time}] のラボノートを削除しますか？`)) {
-              deleteMemo(id);
-              renderMemoList();
-            }
+            poinaviConfirm(`[${time}] のラボノートを削除しますか？`).then(ok => {
+              if (ok) {
+                deleteMemo(id);
+                renderMemoList();
+              }
+            });
           });
         });
       }
@@ -532,15 +548,13 @@
         if (!resetBtn) return;
 
         resetBtn.addEventListener("click", function() {
-          if (!confirm("すべての設定を初期化しますか？\n（テーマ、起動ページなどがリセットされます。ラボノートは保持されます）")) {
-            return;
-          }
-          
-          localStorage.removeItem("poinavi_theme");
-          localStorage.removeItem("poinavi_start_page");
-          
-          alert("設定を初期化しました。ページを再読み込みします。");
-          location.reload();
+          poinaviConfirm("すべての設定を初期化しますか？\n（テーマ、起動ページなどがリセットされます。ラボノートは保持されます）").then(ok => {
+            if (!ok) return;
+            localStorage.removeItem("poinavi_theme");
+            localStorage.removeItem("poinavi_start_page");
+            poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+            location.reload();
+          });
         });
       }
 

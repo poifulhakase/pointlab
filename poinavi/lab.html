@@ -44,6 +44,7 @@
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="./style.css?v=129" />
+    <script src="./poinavi-alert.js"></script>
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -357,6 +358,18 @@
       </div>
     </div>
 
+    <!-- 自作アラート/確認モーダル -->
+    <div id="poinaviAlertModal" class="poinavi-alert-modal hidden">
+      <div class="poinavi-alert-modal__overlay"></div>
+      <div class="poinavi-alert-modal__content">
+        <p class="poinavi-alert-modal__message" id="poinaviAlertMessage"></p>
+        <div class="poinavi-alert-modal__buttons">
+          <button type="button" id="poinaviAlertCancel" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
+        </div>
+      </div>
+    </div>
+
     <!-- メインコンテンツ -->
     <main class="lab-main">
       <h1 class="visually-hidden">ぽいナビ - 研究室：天気・歩数・移動距離ダッシュボード</h1>
@@ -594,11 +607,13 @@
       function initResetButton() {
         const resetButton = document.getElementById("labResetButton");
         resetButton.addEventListener("click", function() {
-          if (!confirm("設定を初期化しますか？")) return;
-          localStorage.removeItem("poinavi_theme");
-          localStorage.removeItem("poinavi_start_page");
-          alert("設定を初期化しました。ページを再読み込みします。");
-          location.reload();
+          poinaviConfirm("設定を初期化しますか？").then(ok => {
+            if (!ok) return;
+            localStorage.removeItem("poinavi_theme");
+            localStorage.removeItem("poinavi_start_page");
+            poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+            location.reload();
+          });
         });
       }
 
@@ -895,12 +910,13 @@
       }
 
       function disconnectFitbit() {
-        if (!confirm("Fitbit連携を解除しますか？")) return;
-        
-        localStorage.removeItem("fitbit_access_token");
-        localStorage.removeItem("fitbit_expires_at");
-        document.getElementById("stepsValue").textContent = "--";
-        updateFitbitUI(false);
+        poinaviConfirm("Fitbit連携を解除しますか？").then(ok => {
+          if (!ok) return;
+          localStorage.removeItem("fitbit_access_token");
+          localStorage.removeItem("fitbit_expires_at");
+          document.getElementById("stepsValue").textContent = "--";
+          updateFitbitUI(false);
+        });
       }
 
       function updateFitbitUI(isConnected) {
