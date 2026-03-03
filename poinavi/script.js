@@ -3384,6 +3384,7 @@ function latLngToTile(lat, lng, z) {
 
 /** RainViewer タイルを DOM で描画する OverlayView */
 function RainViewerOverlay(host, path) {
+  google.maps.OverlayView.call(this);
   this.host = host;
   this.path = path;
   this.tileContainer = null;
