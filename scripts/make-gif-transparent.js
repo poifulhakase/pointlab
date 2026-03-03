@@ -17,7 +17,7 @@ if (!existsSync(gifPath)) {
 }
 
 const WHITE_THRESHOLD = 250; // この値以上のRGBは白とみなす（0-255）
-const FUZZ = 5; // 許容範囲 (255 - FUZZ 以上で白)
+const DELAY_MULTIPLIER = 1.5; // ループ速度（1.5 = 1.5倍ゆっくり）
 
 function isWhiteOrNearWhite(r, g, b) {
   return r >= WHITE_THRESHOLD && g >= WHITE_THRESHOLD && b >= WHITE_THRESHOLD;
@@ -49,12 +49,17 @@ async function main() {
           data[i + 3] = 0;
         }
       }
+      // 各フレームの表示時間を延長（ループをゆっくりに）
+      frame.delayCentisecs = Math.max(
+        1,
+        Math.round((frame.delayCentisecs || 5) * DELAY_MULTIPLIER)
+      );
     }
 
     await GifUtil.write(tempPath, frames, inputGif);
     const fs = await import("fs");
     fs.renameSync(tempPath, gifPath);
-    console.log("博士GIF: 白背景を透明にしました。");
+    console.log("博士GIF: 白背景を透明にし、ループをゆっくりにしました。");
   } catch (err) {
     if (existsSync(tempPath)) {
       const fs = await import("fs");

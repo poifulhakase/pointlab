@@ -60,7 +60,46 @@ if (Test-Path $livingSrc) {
   Write-Host "生き方: OK"
 } else { Write-Host "注意: $note2 が見つかりません" }
 
-# 副業 → deploy-now 内で embed-sidebiz-image.js が HTML に埋め込み
+# 副業（images-source）
+Write-Host "副業画像をコピー中..."
+$sideBiz = Join-Path $imagesSource "Side_Biz_Encyclopedia_Delegate.png"
+if (Test-Path $sideBiz) {
+  Copy-Item $sideBiz $imagesDir -Force
+  Write-Host "副業: OK（images-source）"
+} elseif (Test-Path (Join-Path $imagesDir "Side_Biz_Encyclopedia_Delegate.png")) {
+  Write-Host "副業: 既存を使用"
+} else {
+  Write-Host "注意: images\Side_Biz_Encyclopedia_Delegate.png を配置してください"
+}
+
+# ぽいナビ・博士画像
+Write-Host "ぽいナビ研究室・博士画像をコピー中..."
+$poinaviDir = Join-Path $root "poinavi"
+$hakaseGif = Join-Path $poinaviDir "hakase.gif"
+$hakasePng = Join-Path $poinaviDir "hakase.png"
+$hakaseGifSrc = Get-ChildItem $assetsDir -Filter "*hakase*.gif" -ErrorAction SilentlyContinue | Select-Object -First 1
+$hakasePngSrc = Get-ChildItem $assetsDir -Filter "*hakase*.png" -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($hakaseGifSrc) {
+  Copy-Item $hakaseGifSrc.FullName $hakaseGif -Force
+  Write-Host "博士: OK - GIF"
+  Write-Host "博士GIFの白背景を透明化・ループ調整中..."
+  Push-Location $root
+  node scripts\make-gif-transparent.js 2>$null
+  Pop-Location
+} elseif ($hakasePngSrc) {
+  Copy-Item $hakasePngSrc.FullName $hakasePng -Force
+  Write-Host "博士: OK - PNG"
+} else {
+  Write-Host "注意: 博士画像が見つかりません"
+}
+
+# ポイ活マガジン（note用フォールバック）
+if (-not (Test-Path (Join-Path $imagesDir "Poikatsu_3min_Recipe_cooking_class.png"))) {
+  if (Test-Path (Join-Path $note1 "Poikatsu_3min_Recipe_cooking_class.png")) {
+    Copy-Item (Join-Path $note1 "Poikatsu_3min_Recipe_cooking_class.png") $imagesDir -Force
+    Write-Host "ポイ活マガジン（note用）: OK"
+  }
+}
 
 # ハカセAI・確定申告・開業・ぽいんとらぼ
 Write-Host "ハカセAI・開業・確定申告画像をコピー中..."

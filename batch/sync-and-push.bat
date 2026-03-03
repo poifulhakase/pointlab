@@ -13,7 +13,7 @@ findstr /C:"runWhenReady" "%SOURCE%\poinavi\script.js" >nul 2>&1 && echo [OK] sc
 echo.
 
 echo Copying images...
-call "%SOURCE%\batch\copy-images.bat" --silent
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SOURCE%\batch\copy-images.ps1"
 cd /d "%SOURCE%"
 echo Favicon...
 if not exist "%SOURCE%\node_modules\sharp" (echo Installing sharp... & cd /d "%SOURCE%" && npm install --no-audit --no-fund 2>nul)
