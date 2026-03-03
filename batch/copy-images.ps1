@@ -76,19 +76,21 @@ $poinaviDir = Join-Path $root "poinavi"
 $hakaseGif = Join-Path $poinaviDir "hakase.gif"
 $hakasePng = Join-Path $poinaviDir "hakase.png"
 $hakaseDefault = Join-Path $poinaviDir "hakase-default.png"
-$hakaseGifSrc = Get-ChildItem $assetsDir -Filter "*hakase*.gif" -ErrorAction SilentlyContinue | Select-Object -First 1
-$hakasePngSrc = Get-ChildItem $assetsDir -Filter "*hakase*.png" -ErrorAction SilentlyContinue | Select-Object -First 1
-if ($hakaseGifSrc) {
-  Copy-Item $hakaseGifSrc.FullName $hakaseGif -Force
-  Write-Host "Hakase: OK - GIF (from assets)"
-} elseif ($hakasePngSrc) {
-  Copy-Item $hakasePngSrc.FullName $hakasePng -Force
-  Write-Host "Hakase: OK - PNG (from assets)"
-} elseif (Test-Path $hakaseDefault) {
+if (Test-Path $hakaseDefault) {
   Copy-Item $hakaseDefault $hakasePng -Force
-  Write-Host "Hakase: OK - using default (old doctor)"
+  Write-Host "Hakase: OK (default)"
 } else {
-  Write-Host "Note: Hakase image not found"
+  $hakaseGifSrc = Get-ChildItem $assetsDir -Filter "*hakase*.gif" -ErrorAction SilentlyContinue | Select-Object -First 1
+  $hakasePngSrc = Get-ChildItem $assetsDir -Filter "*hakase*.png" -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($hakaseGifSrc) {
+    Copy-Item $hakaseGifSrc.FullName $hakaseGif -Force
+    Write-Host "Hakase: OK - GIF (from assets)"
+  } elseif ($hakasePngSrc) {
+    Copy-Item $hakasePngSrc.FullName $hakasePng -Force
+    Write-Host "Hakase: OK - PNG (from assets)"
+  } else {
+    Write-Host "Note: Hakase image not found"
+  }
 }
 
 if (-not (Test-Path (Join-Path $imagesDir "Poikatsu_3min_Recipe_cooking_class.png"))) {

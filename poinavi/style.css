@@ -2023,6 +2023,8 @@ body.dark-mode .settings-modal__select {
 
 /* インラインステータス（ボタンの右横に表示） */
 .layer-status--inline {
+  display: flex;
+  align-items: center;
   padding: 8px 12px;
   border-radius: 10px;
   animation: fadeIn 0.3s ease;
@@ -2644,6 +2646,12 @@ body.dark-mode .translate-result-item--latest {
   white-space: pre-wrap;
 }
 
+/* 音声翻訳のフォントサイズを1.2倍に */
+.translate-result-item--voice .translate-result-item__original p,
+.translate-result-item--voice .translate-result-item__translated p {
+  font-size: 1.275rem;
+}
+
 .translate-result-item__divider {
   display: flex;
   align-items: center;
@@ -3240,6 +3248,11 @@ body.dark-mode .translate-result-item__divider svg {
   .translate-result-item__original p,
   .translate-result-item__translated p {
     font-size: 1rem;
+  }
+
+  .translate-result-item--voice .translate-result-item__original p,
+  .translate-result-item--voice .translate-result-item__translated p {
+    font-size: 1.2rem;
   }
 
   .translate-camera-area {
