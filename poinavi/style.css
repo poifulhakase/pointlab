@@ -4334,8 +4334,8 @@ body.dark-mode .translate-qr-btn {
    ============================================ */
 /* ライトモード：研究所イラスト背景（上下左右全画面カバー＋10%白掛け） */
 body.lab-page:not(.dark-mode) {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)), url("./lab-bg-light.png");
-  background-size: 95%;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url("./lab-bg-light.png");
+  background-size: 88%;
   background-position: center center;
   background-attachment: fixed;
   background-repeat: no-repeat;
