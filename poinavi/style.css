@@ -4332,15 +4332,15 @@ body.dark-mode .translate-qr-btn {
 /* ============================================
    研究室（Lab）ページ
    ============================================ */
-/* ライトモード：研究所イラスト背景 */
+/* ライトモード：研究所イラスト背景（全画面カバー＋10%白掛け） */
 .lab-main {
   flex: 1;
   overflow-y: auto;
   padding: 0 16px 24px;
   background-color: var(--bg-secondary);
-  background-image: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.05)), url("./lab-bg-light.png");
-  background-size: 100% auto;
-  background-position: center top;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), url("./lab-bg-light.png");
+  background-size: cover;
+  background-position: center center;
   background-attachment: scroll;
   background-repeat: no-repeat;
 }
