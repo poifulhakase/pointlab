@@ -280,7 +280,7 @@
       .lab-character__img {
         height: calc(var(--vvh, 100vh) * 0.432);
         width: auto;
-        transform: translateY(12px);
+        transform: translateY(calc(12px + 2vh));
         display: block;
         position: relative;
         z-index: 2;
@@ -297,7 +297,7 @@
       }
       body:not(.dark-mode) .lab-character__robot {
         position: absolute;
-        right: 2vw;
+        right: 1vw;
         bottom: -16px;
       }
       /* ダークモード：博士は絶対に左右中央、ぽいろぼは僅かに下・けっこう右側 */
