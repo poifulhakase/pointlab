@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-set "SOURCE=%~dp0.."
+for %%A in ("%~dp0..") do set "SOURCE=%%~sA"
 set "DEST=C:\PointLabSync"
 set "REPO=https://github.com/poifulhakase/pointlab.git"
 
@@ -9,27 +9,18 @@ echo === GitHub sync and push ===
 echo From: %SOURCE%
 echo To:   %DEST%
 echo.
-findstr /C:"runWhenReady" "%SOURCE%poinavi\script.js" >nul 2>&1 && echo [OK] script.js has fixes || echo [!!] script.js may be old version
+findstr /C:"runWhenReady" "%SOURCE%\poinavi\script.js" >nul 2>&1 && echo [OK] script.js has fixes || echo [!!] script.js may be old version
 echo.
 
-subst Z: "%SOURCE%" 2>nul
-if exist Z:\ (
-  echo Copying images...
-  cd /d Z:\
-  call batch\copy-images.bat --silent 2>nul
-  echo Favicon...
-  if not exist node_modules\sharp (echo Installing sharp... & npm install --no-audit --no-fund 2>nul)
-  node scripts\generate-apple-touch-icon-sharp.js 2>nul
-  if exist favicon-32x32.png (echo favicon: OK) else (echo Run generate-favicons.bat first)
-  echo Updating cache versions...
-  node scripts\update-image-versions.js 2>nul
-  cd /d "%SOURCE%"
-  subst Z: /d 2>nul
-) else (
-  echo Copying images...
-  call "%SOURCE%batch\copy-images.bat" --silent 2>nul
-  node "%SOURCE%scripts\update-image-versions.js" 2>nul
-)
+echo Copying images...
+call "%SOURCE%\batch\copy-images.bat" --silent
+cd /d "%SOURCE%"
+echo Favicon...
+if not exist "%SOURCE%\node_modules\sharp" (echo Installing sharp... & cd /d "%SOURCE%" && npm install --no-audit --no-fund 2>nul)
+cd /d "%SOURCE%" && node scripts\generate-apple-touch-icon-sharp.js 2>nul
+if exist "%SOURCE%\favicon-32x32.png" (echo favicon: OK) else (echo Run generate-favicons.bat first)
+echo Updating cache versions...
+cd /d "%SOURCE%" && node scripts\update-image-versions.js 2>nul
 
 echo.
 if not exist "%DEST%\.git" (

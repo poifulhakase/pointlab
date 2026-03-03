@@ -15,7 +15,8 @@
     "compress-images": "node scripts/compress-images.js",
     "generate-icons": "node scripts/generate-apple-touch-icon.js",
     "generate-icons:sharp": "node scripts/generate-apple-touch-icon-sharp.js",
-    "optimize-icons": "node scripts/optimize-icons.js"
+    "optimize-icons": "node scripts/optimize-icons.js",
+    "make-gif-transparent": "node scripts/make-gif-transparent.js"
   },
   "dependencies": {
     "@vercel/functions": "^3.0.0",
