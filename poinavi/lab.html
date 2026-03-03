@@ -292,12 +292,13 @@
         flex-shrink: 0;
         z-index: 1;
       }
+      body:not(.dark-mode) .lab-character__professor-wrap {
+        position: static;
+      }
       body:not(.dark-mode) .lab-character__robot {
         position: absolute;
-        left: 100%;
+        right: 2vw;
         bottom: -16px;
-        margin-left: 4px;
-        transform: translateX(-3vw);
       }
       /* ダークモード：博士は絶対に左右中央、ぽいろぼは僅かに下・けっこう右側 */
       body.dark-mode .lab-character__professor-wrap {
