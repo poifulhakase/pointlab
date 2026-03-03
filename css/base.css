@@ -13,6 +13,7 @@
   --font-serif: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
   --container-max: 1200px;
   --sidebar-width: 200px;
+  --article-content-max: calc(var(--container-max) - var(--sidebar-width) - 48px);
   --header-height: 56px;
   --tabs-height: 48px;
 }
@@ -715,6 +716,16 @@ button.nav-list__icon-link {
   flex: 1;
 }
 
+/* 研究室・実験映像：100vhで画面中央にプレースホルダーを表示 */
+#panel-lab.is-active,
+#panel-videos.is-active {
+  min-height: calc(100vh - var(--header-height) - 100px);
+  min-height: calc(100dvh - var(--header-height) - 100px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 動画タブ：準備中プレースホルダー */
 .videos-placeholder {
   display: flex;
@@ -761,28 +772,23 @@ button.nav-list__icon-link {
     height: 18px;
   }
 
-  /* 研究室タブ：スマホで1スクロールに収める */
-  #panel-lab.is-active {
-    min-height: 0;
-    max-height: calc(100vh - var(--header-height) - 100px);
-    max-height: calc(100dvh - var(--header-height) - 100px);
-  }
-  #panel-lab .videos-placeholder {
+  /* 研究室・実験映像タブ：スマホでも中央表示（パディング・フォント調整のみ） */
+  #panel-lab .videos-placeholder,
+  #panel-videos .videos-placeholder {
     min-height: 0;
     padding: 20px 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
   }
-  #panel-lab .videos-placeholder__icon svg {
+  #panel-lab .videos-placeholder__icon svg,
+  #panel-videos .videos-placeholder__icon svg {
     width: 48px;
     height: 48px;
   }
-  #panel-lab .videos-placeholder__title {
+  #panel-lab .videos-placeholder__title,
+  #panel-videos .videos-placeholder__title {
     font-size: 1.1rem;
   }
-  #panel-lab .videos-placeholder__desc {
+  #panel-lab .videos-placeholder__desc,
+  #panel-videos .videos-placeholder__desc {
     font-size: 0.85rem;
   }
 }
@@ -1246,6 +1252,11 @@ button.nav-list__icon-link {
 .layout-content {
   flex: 1;
   min-width: 0;
+}
+
+/* サイドバーなしページでも記事コンテンツ幅を統一 */
+.layout-main:not(:has(.layout-sidebar)) .layout-content {
+  max-width: var(--article-content-max);
 }
 
 .layout-sidebar {

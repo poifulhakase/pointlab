@@ -1,5 +1,10 @@
 /* 記事詳細ページ用スタイル */
 
+/* 右側メニュー（記事一覧・言語）を非表示 */
+.layout-sidebar {
+  display: none !important;
+}
+
 .article-header {
   margin-bottom: 32px;
 }

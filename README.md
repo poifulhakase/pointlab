@@ -5,11 +5,17 @@
 ## 📁 構成
 
 - `index.html` - トップページ
+- `batch/` - スクリプト・バッチ（copy-images.bat, compress-images.bat 等）
+- `docs/` - デプロイ手順・404対策等のドキュメント
 - `service.html` - 事業内容
 - `contact.html` - 研究室への連絡
 - `style.css` - 共通スタイルシート
 
 ## 🚀 デプロイ
+
+- **deploy-now.bat** をダブルクリック（画像コピー → チェック → Vercel本番デプロイ）
+- **deploy.bat** でメニューから 1（CLI）または 2（Git push）を選択
+- 詳細: `docs/DEPLOY.md`, `docs/DEPLOY-404対策.md`
 
 ### Vercel
 1. https://vercel.com にアクセス

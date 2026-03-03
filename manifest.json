@@ -1,0 +1,23 @@
+{
+  "name": "ぽいんとらぼ｜お金の研究所",
+  "short_name": "ぽいんとらぼ",
+  "description": "ポイ活、株式投資、副業、節税、生き方。個人事業主・フリーランスのための情報発信ハブ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0055FF",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

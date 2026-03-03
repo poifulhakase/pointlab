@@ -187,12 +187,8 @@ document.addEventListener("DOMContentLoaded", function () {
   initStartPageSelect(); // 起動ページ設定を初期化
   // initRainViewer と initRailwayLayer は initGoogleMaps 内で呼び出し
   
-  // Google Maps API が読み込まれるまで待つ
-  // initGoogleMaps コールバックで initMap() と requestUserLocation() が呼ばれる
-  if (typeof google !== "undefined" && typeof google.maps !== "undefined") {
-    initMap();
-    requestUserLocation();
-  }
+  // Google Maps API は loading=async で読み込まれるため、
+  // initGoogleMaps コールバックでのみ initMap を呼ぶ（DOMContentLoaded では呼ばない）
 });
 
 // ============================================
@@ -730,14 +726,21 @@ function initControls() {
 // ============================================
 // Google Maps API の初期化コールバック
 // ============================================
+// loading=async 時は Map が未準備のままコールバックが呼ばれることがあるため待機
 window.initGoogleMaps = function() {
   console.log("Google Maps API が正常に読み込まれました");
-  initMap();
-  requestUserLocation();
-  // Google Maps初期化後にレイヤー機能を有効化
-  initRainViewer();
-  initRailwayLayer();
-  initToiletLayer();
+  function runWhenReady() {
+    if (typeof google !== "undefined" && typeof google.maps !== "undefined" && typeof google.maps.Map === "function") {
+      initMap();
+      requestUserLocation();
+      initRainViewer();
+      initRailwayLayer();
+      initToiletLayer();
+      return;
+    }
+    setTimeout(runWhenReady, 50);
+  }
+  runWhenReady();
 };
 
 // ============================================
@@ -1200,6 +1203,7 @@ function tryIpBasedLocation() {
 }
 
 function applyUserLocation(lat, lng) {
+  if (!map) return; // initMap 未完了時は何もしない
   userLocation = { lat: lat, lng: lng };
   map.setCenter(userLocation);
   map.setZoom(15);
@@ -3352,8 +3356,115 @@ function displayNoResults(isNeutral = false) {
 }
 
 // ============================================
-// RainViewer 雨雲レーダー機能
+// RainViewer 雨雲レーダー機能（OverlayView 実装）
+// overlayMapTypes は StyledMapType 上で表示されないため、DOM オーバーレイで描画
 // ============================================
+
+const RV_MAX_ZOOM = 7;
+const RV_COLOR = 2;   // Universal Blue
+const RV_OPTS = "1_1"; // smooth=1, snow=1
+
+// タイル座標 (x,y,z) から北西角の LatLng を算出（標準 Web Mercator）
+function tileToLatLng(x, y, z) {
+  const n = Math.pow(2, z);
+  const lng = (x / n) * 360 - 180;
+  const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n)));
+  const lat = latRad * 180 / Math.PI;
+  return { lat, lng };
+}
+
+// LatLng からタイル座標を算出
+function latLngToTile(lat, lng, z) {
+  const n = Math.pow(2, z);
+  const x = Math.floor((lng + 180) / 360 * n);
+  const latRad = lat * Math.PI / 180;
+  const y = Math.floor(n * (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2);
+  return { x: ((x % n) + n) % n, y: Math.max(0, Math.min(y, n - 1)) };
+}
+
+/** RainViewer タイルを DOM で描画する OverlayView */
+function RainViewerOverlay(host, path) {
+  this.host = host;
+  this.path = path;
+  this.tileContainer = null;
+}
+RainViewerOverlay.prototype = new google.maps.OverlayView();
+
+RainViewerOverlay.prototype.onAdd = function() {
+  const container = document.createElement("div");
+  container.id = "rainviewer-overlay";
+  container.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.9;z-index:1;";
+  this.tileContainer = container;
+  const panes = this.getPanes();
+  // floatPane は常に最前面（マーカー・InfoWindow より下に描画するため z-index:0 相当）
+  const pane = (panes && panes.floatPane) ? panes.floatPane : (panes && panes.overlayLayer) ? panes.overlayLayer : null;
+  if (!pane) return;
+  pane.insertBefore(container, pane.firstChild);
+};
+
+RainViewerOverlay.prototype.draw = function() {
+  if (!this.tileContainer) return;
+  const m = this.getMap();
+  if (!m) return;
+  const projection = this.getProjection();
+  if (!projection) return;
+
+  const bounds = m.getBounds();
+  const zoom = m.getZoom();
+  if (!bounds || zoom === undefined) return;
+
+  const ne = bounds.getNorthEast();
+  const sw = bounds.getSouthWest();
+  const z = Math.min(zoom, RV_MAX_ZOOM);
+  const t1 = latLngToTile(ne.lat(), ne.lng(), z);
+  const t2 = latLngToTile(sw.lat(), sw.lng(), z);
+  const xMin = Math.min(t1.x, t2.x);
+  const xMax = Math.max(t1.x, t2.x);
+  const yMin = Math.min(t1.y, t2.y);
+  const yMax = Math.max(t1.y, t2.y);
+  const n = 1 << z;
+
+  const toShow = new Set();
+  for (let x = xMin; x <= xMax; x++) {
+    const wx = ((x % n) + n) % n;
+    for (let y = yMin; y <= yMax; y++) {
+      if (y >= 0 && y < n) toShow.add(`${wx},${y}`);
+    }
+  }
+
+  this.tileContainer.innerHTML = "";
+  const self = this;
+  let tileCount = 0;
+  if (toShow.size === 0) console.warn("RainViewer draw: no tiles in viewport", { z, xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax });
+  toShow.forEach(function(key) {
+    const [x, y] = key.split(",").map(Number);
+    const nw = tileToLatLng(x, y, z);
+    const se = tileToLatLng(x + 1, y + 1, z);
+    const topLeft = projection.fromLatLngToDivPixel(nw);
+    const bottomRight = projection.fromLatLngToDivPixel(se);
+    if (!topLeft || !bottomRight) return;
+    const left = topLeft.x;
+    const top = topLeft.y;
+    const w = bottomRight.x - left;
+    const h = bottomRight.y - top;
+    if (w <= 0 || h <= 0) return;
+    const img = document.createElement("img");
+    img.referrerPolicy = "no-referrer";
+    img.src = `${self.host}${self.path}/256/${z}/${x}/${y}/${RV_COLOR}/${RV_OPTS}.png`;
+    img.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${w}px;height:${h}px;`;
+    img.onerror = function() { console.warn("RainViewer タイル読込失敗:", img.src); };
+    self.tileContainer.appendChild(img);
+    tileCount++;
+  });
+  console.log("RainViewer draw:", tileCount, "tiles, zoom", z, "bounds", { xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax });
+};
+
+RainViewerOverlay.prototype.onRemove = function() {
+  if (this.tileContainer && this.tileContainer.parentNode) {
+    this.tileContainer.parentNode.removeChild(this.tileContainer);
+  }
+  this.tileContainer = null;
+};
 
 // RainViewer レイヤーを追加
 async function addRainViewerLayer() {
@@ -3363,40 +3474,38 @@ async function addRainViewerLayer() {
   }
 
   try {
-    // RainViewer API から最新のレーダーフレームを取得
-    const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
+    const base = (typeof location !== "undefined" && location.origin) ? location.origin : "";
+    const apiUrl = base ? `${base}/api/rainviewer-weather-maps` : "/api/rainviewer-weather-maps";
+    const directUrl = "https://api.rainviewer.com/public/weather-maps.json";
+    let res = await fetch(apiUrl).catch(() => null);
+    if (!res || !res.ok) res = await fetch(directUrl).catch(() => null);
+    if (!res || !res.ok) throw new Error(`HTTP error! status: ${res?.status || "Failed to fetch"}`);
     const data = await res.json();
-
-    // radar.past の最後の要素（最新の観測データ）を取得
     const frames = data.radar.past;
     if (!frames || frames.length === 0) {
       console.warn("RainViewer: レーダーフレームが見つかりません");
       return null;
     }
     const frame = frames[frames.length - 1];
+    const host = data.host || "https://tilecache.rainviewer.com";
+    const path = frame.path;
 
-    // ImageMapType を作成
-    rainViewerLayer = new google.maps.ImageMapType({
-      getTileUrl: function(coord, zoom) {
-        return `https://tilecache.rainviewer.com/v2/radar/${frame.path}/${zoom}/${coord.x}/${coord.y}/256/png`;
-      },
-      tileSize: new google.maps.Size(256, 256),
-      opacity: 0.5,
-      name: "RainViewer"
-    });
+    rainViewerLayer = new RainViewerOverlay(host, path);
+    rainViewerLayer.setMap(map);
 
-    // overlayMapTypes に追加
-    map.overlayMapTypes.push(rainViewerLayer);
-    rainViewerLayerIndex = map.overlayMapTypes.getLength() - 1;
+    function redrawRain() {
+      if (rainViewerLayer) rainViewerLayer.draw();
+    }
+    google.maps.event.addListener(map, "idle", redrawRain);
+    google.maps.event.addListener(map, "bounds_changed", redrawRain);
+    google.maps.event.addListener(map, "zoom_changed", redrawRain);
+    setTimeout(redrawRain, 100);
+    redrawRain();
 
-    console.log("RainViewer レイヤーを追加しました", {
+    console.log("RainViewer レイヤーを追加しました（v108 overlayLayer）", {
       framePath: frame.path,
       timestamp: new Date(frame.time * 1000).toLocaleString()
     });
-
     return rainViewerLayer;
   } catch (error) {
     console.error("RainViewer レイヤーの追加に失敗しました:", error);
@@ -3406,24 +3515,10 @@ async function addRainViewerLayer() {
 
 // RainViewer レイヤーを削除
 function removeRainViewerLayer() {
-  if (!map) return;
-
-  // overlayMapTypes から削除
-  if (rainViewerLayerIndex >= 0 && rainViewerLayerIndex < map.overlayMapTypes.getLength()) {
-    map.overlayMapTypes.setAt(rainViewerLayerIndex, null);
-  }
-
-  // 配列全体をクリアして null を除去
-  const length = map.overlayMapTypes.getLength();
-  for (let i = length - 1; i >= 0; i--) {
-    if (map.overlayMapTypes.getAt(i) === null) {
-      map.overlayMapTypes.removeAt(i);
-    }
-  }
-
+  if (!rainViewerLayer) return;
+  rainViewerLayer.setMap(null);
   rainViewerLayer = null;
   rainViewerLayerIndex = -1;
-
   console.log("RainViewer レイヤーを削除しました");
 }
 

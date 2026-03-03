@@ -3,6 +3,7 @@
   "version": 2,
   "framework": null,
   "builds": [
+    {"src": "api/rainviewer-weather-maps.js", "use": "@vercel/node"},
     {"src": "hakaseAI/server.js", "use": "@vercel/node"},
     {"src": "hakaseAI/index.html", "use": "@vercel/static"},
     {"src": "hakaseAI/style.css", "use": "@vercel/static"},
@@ -12,6 +13,11 @@
     {"src": "hakaseAI/*.json", "use": "@vercel/static"},
     {"src": "logo.svg", "use": "@vercel/static"},
     {"src": "favicon.svg", "use": "@vercel/static"},
+    {"src": "favicon-32x32.png", "use": "@vercel/static"},
+    {"src": "favicon-16x16.png", "use": "@vercel/static"},
+    {"src": "apple-touch-icon.png", "use": "@vercel/static"},
+    {"src": "icon-192.png", "use": "@vercel/static"},
+    {"src": "manifest.json", "use": "@vercel/static"},
     {"src": "*.html", "use": "@vercel/static"},
     {"src": "*.css", "use": "@vercel/static"},
     {"src": "css/**", "use": "@vercel/static"},
@@ -34,8 +40,6 @@
     {"source": "/hakaseAI/api/:path*", "destination": "/hakaseAI/server.js"},
     {"source": "/favicon.ico", "destination": "/favicon.svg"},
     {"source": "/favicon.png", "destination": "/favicon.svg"},
-    {"source": "/favicon-16x16.png", "destination": "/favicon.svg"},
-    {"source": "/favicon-32x32.png", "destination": "/favicon.svg"},
     {"source": "/", "destination": "/index.html"}
   ],
   "headers": [

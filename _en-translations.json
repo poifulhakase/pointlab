@@ -1,0 +1,41 @@
+{
+  "categories": {
+    "poi": "Points & Rewards",
+    "stock": "Stocks",
+    "side": "Side Business",
+    "life": "Lifestyle",
+    "tools": "Tools"
+  },
+  "articles": {
+    "nd0b5eba1a7d7": {"title": "Rakuten SPS｜Point Automation with Slides", "excerpt": "Easy point automation with Rakuten. A beginner-friendly recipe for earning points effortlessly.", "meta": "Points"},
+    "nd1ff8aee1cad": {"title": "Matsukatsu｜Shareholder Perks for Savings", "excerpt": "Multiply living costs by 1.3x with Matsukatsu. Stack shareholder perks, coupons, and points at Japan's leading drugstore chain.", "meta": "Points"},
+    "n38545117b5ae": {"title": "Point Hacks｜Passive Income Through Automation", "excerpt": "Point optimization as a gateway to passive income. How automation helps you build spare change.", "meta": "Points"},
+    "n4969c3701989": {"title": "Point Hacks｜Video Watching for Savings & Deals", "excerpt": "Video-based point earning focused on time efficiency. Tips for savings and deals.", "meta": "Points"},
+    "n0171524f2064": {"title": "TikTok Lite｜Earn Points While Watching", "excerpt": "Leverage TikTok Lite point rewards. How to combine video watching with savings.", "meta": "Points"},
+    "ne6c2adc7e6c2": {"title": "Moppy｜Side Income and Asset Building", "excerpt": "Moppy for side income and asset building. Key tips for point optimization recipes.", "meta": "Points"},
+    "n3dff2f837c28": {"title": "DOTMANEY｜Point Exchange and Savings Tips", "excerpt": "Point exchange via DOTMANEY. Savings strategies that lead to asset building.", "meta": "Points"},
+    "neba4d5d48fd5": {"title": "Waon Life｜T-Point & V-Point Savings", "excerpt": "Efficiently earn T and V points with Waon life. Managing multiple point programs.", "meta": "Points"},
+    "ncd72393f35e5": {"title": "PayPay Points｜Savings and Money Wisdom", "excerpt": "Convert PayPay points to cash. Money wisdom and savings strategies.", "meta": "Points"},
+    "n84a5476d6ecc": {"title": "Rakuten Points｜Point Management and Asset Building", "excerpt": "Asset building through Rakuten point management. How to build savings recipes.", "meta": "Points"},
+    "n383409929e89": {"title": "Moving Averages & Support/Resistance｜Reading Price Zones", "excerpt": "How to identify price zones where stocks react. Day trading basics for beginners.", "meta": "Stocks"},
+    "na22865f89238": {"title": "Volume｜How Markets Work and Stock Trading Basics", "excerpt": "Using volume to judge price momentum. An introduction to market mechanics.", "meta": "Stocks"},
+    "nd74fce56edcc": {"title": "Timeframes｜Chart Analysis and Trade Strategy", "excerpt": "How timeframe choice changes your strategy. Prerequisite knowledge for chart analysis.", "meta": "Stocks"},
+    "n91f688571407": {"title": "Bollinger Bands｜Technical Analysis for Stocks & FX", "excerpt": "Catching overextension with Bollinger Bands. Shared principles for stocks and FX.", "meta": "Stocks"},
+    "ncd65c830de29": {"title": "RSI｜Technical Analysis and Asset Management", "excerpt": "Reading overextension and reversal signals with RSI. An indicator for asset management.", "meta": "Stocks"},
+    "na7f744ea8158": {"title": "Stochastic｜Short-Term Trading and Technical Analysis", "excerpt": "How to read the two Stochastic lines. Timing measurement for short-term trading.", "meta": "Stocks"},
+    "n2817e9181530": {"title": "MACD｜Asset Management for Stock Beginners", "excerpt": "Catching trend strength and reversal with MACD. An indicator for asset management.", "meta": "Stocks"},
+    "n635865776b8e": {"title": "Parabolic SAR｜Catching Trend Reversals", "excerpt": "Identifying trend reversal points with Parabolic SAR. Aid for day trading and asset building.", "meta": "Stocks"},
+    "nb4793929edcd": {"title": "Stock Technical Analysis｜Investment Methods", "excerpt": "How to choose technical analysis methods. A framework for stock analysis.", "meta": "Stocks"},
+    "nc96324c04c97": {"title": "Tax Loss Selling｜Event-Driven Investing", "excerpt": "Tax loss selling for tax benefits. Overview of loss harvesting and event-driven investing.", "meta": "Stocks"},
+    "nfa29790600eb": {"title": "Mystery Shopper｜Earn While Saving with Side Income", "excerpt": "Side income through mystery shopping. A way to earn while saving.", "meta": "Side Business"},
+    "n73c3792b2ec5": {"title": "Side Jobs｜Experiences with Unusual Work", "excerpt": "Experiences with unusual side jobs. Work that teaches you while earning.", "meta": "Side Business"},
+    "nc5d355084e6d": {"title": "1-Share Dividend｜A Loophole in the System", "excerpt": "When specs, not stock price, generate returns. How one share can break the concept of yield.", "meta": "Side Business"},
+    "ne99ad822651e": {"title": "HSP & Introvert｜When Lost in the Sea of Competition", "excerpt": "A compass when HSP and introverts feel lost. Work style and mental health overview.", "meta": "Lifestyle"},
+    "n91ba7a1b71df": {"title": "Quiet Quitting｜Work Style and Freelancer Mindset", "excerpt": "From quiet quitting to starting quietly. Mindset for freelancers and solopreneurs.", "meta": "Lifestyle"},
+    "n48367219ea41": {"title": "Parallel Career｜A Sinking Ship and Quiet Preparation", "excerpt": "A sinking ship and quiet preparation. The lifeboat called parallel career.", "meta": "Lifestyle"},
+    "n9f6f5df2d619": {"title": "Tax Savings · Lab Intro", "excerpt": "Income automation and life balance. Overview of research records.", "meta": "Tax Savings"},
+    "n276c20ca376a": {"title": "How to Open a Business", "excerpt": "Opening a business basics. How to leverage blue form filing for tax benefits.", "meta": "Tax Savings"},
+    "n3ed7a7630b32": {"title": "Tax Return Filing｜Article Intro", "excerpt": "Tax filing when side income exceeds 200,000 yen. freee, e-Tax for online filing. Full article on note.", "meta": "Tax Savings"},
+    "n61e0aac191e9": {"title": "Research Log No.001: Incident Record of a Self-Thinking Financial Aid Device", "excerpt": "Hakase AI development background. Experimental tool for point hacks and savings.", "meta": "Tools"}
+  }
+}

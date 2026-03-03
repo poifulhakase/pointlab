@@ -55,6 +55,157 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url><loc>https://pointlab.vercel.app/service.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://pointlab.vercel.app/profile.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://pointlab.vercel.app/disclaimer.html</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://pointlab.vercel.app/privacy.html</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://pointlab.vercel.app/settings.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://pointlab.vercel.app/settings-en.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://pointlab.vercel.app/settings-zh.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n0171524f2064.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n0171524f2064.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n0171524f2064-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n0171524f2064.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n0171524f2064-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n0171524f2064.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n0171524f2064-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n0171524f2064.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n276c20ca376a.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n276c20ca376a.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n276c20ca376a-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n276c20ca376a.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n276c20ca376a-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n276c20ca376a.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n276c20ca376a-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n276c20ca376a.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n2817e9181530.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n2817e9181530.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n2817e9181530-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n2817e9181530.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n2817e9181530-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n2817e9181530.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n2817e9181530-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n2817e9181530.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n383409929e89.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n383409929e89.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n383409929e89-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n383409929e89.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n383409929e89-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n383409929e89.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n383409929e89-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n383409929e89.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n38545117b5ae.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n38545117b5ae.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n38545117b5ae-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n38545117b5ae.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n38545117b5ae-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n38545117b5ae.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n38545117b5ae-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n38545117b5ae.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n3dff2f837c28.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n3dff2f837c28.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n3dff2f837c28-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n3dff2f837c28.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n3dff2f837c28-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n3dff2f837c28.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n3dff2f837c28-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n3dff2f837c28.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n3ed7a7630b32.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n3ed7a7630b32.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n3ed7a7630b32-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n3ed7a7630b32.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n3ed7a7630b32-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n3ed7a7630b32.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n3ed7a7630b32-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n3ed7a7630b32.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n48367219ea41.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n48367219ea41.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n48367219ea41-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n48367219ea41.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n48367219ea41-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n48367219ea41.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n48367219ea41-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n48367219ea41.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n4969c3701989.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n4969c3701989.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n4969c3701989-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n4969c3701989.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n4969c3701989-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n4969c3701989.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n4969c3701989-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n4969c3701989.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
   <url>
     <loc>https://pointlab.vercel.app/articles/note-n61e0aac191e9.html</loc>
     <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n61e0aac191e9.html"/>
@@ -71,10 +222,334 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  <!-- ぽいナビ -->
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n635865776b8e.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n635865776b8e.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n635865776b8e-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n635865776b8e.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n635865776b8e-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n635865776b8e.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n635865776b8e-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n635865776b8e.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n73c3792b2ec5.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n73c3792b2ec5.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n73c3792b2ec5-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n73c3792b2ec5.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n73c3792b2ec5-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n73c3792b2ec5.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n73c3792b2ec5-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n73c3792b2ec5.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n84a5476d6ecc.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n84a5476d6ecc.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n84a5476d6ecc-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n84a5476d6ecc.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n84a5476d6ecc-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n84a5476d6ecc.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n84a5476d6ecc-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n84a5476d6ecc.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n91ba7a1b71df.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n91ba7a1b71df.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n91ba7a1b71df-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n91ba7a1b71df.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n91ba7a1b71df-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n91ba7a1b71df.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n91ba7a1b71df-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n91ba7a1b71df.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n91f688571407.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n91f688571407.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n91f688571407-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n91f688571407.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n91f688571407-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n91f688571407.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n91f688571407-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n91f688571407.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n9f6f5df2d619.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n9f6f5df2d619.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n9f6f5df2d619-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n9f6f5df2d619.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-n9f6f5df2d619-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-n9f6f5df2d619.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-n9f6f5df2d619-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-n9f6f5df2d619.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-na22865f89238.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-na22865f89238.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-na22865f89238-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-na22865f89238.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-na22865f89238-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-na22865f89238.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-na22865f89238-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-na22865f89238.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-na7f744ea8158.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-na7f744ea8158.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-na7f744ea8158-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-na7f744ea8158.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-na7f744ea8158-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-na7f744ea8158.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-na7f744ea8158-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-na7f744ea8158.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nb4793929edcd.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nb4793929edcd.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nb4793929edcd-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nb4793929edcd.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nb4793929edcd-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nb4793929edcd.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nb4793929edcd-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nb4793929edcd.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nc96324c04c97.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nc96324c04c97.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nc96324c04c97-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nc96324c04c97.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nc96324c04c97-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nc96324c04c97.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nc96324c04c97-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nc96324c04c97.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ncd65c830de29.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ncd65c830de29.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ncd65c830de29-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ncd65c830de29.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ncd65c830de29-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ncd65c830de29.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ncd65c830de29-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ncd65c830de29.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ncd72393f35e5.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ncd72393f35e5.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ncd72393f35e5-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ncd72393f35e5.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ncd72393f35e5-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ncd72393f35e5.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ncd72393f35e5-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ncd72393f35e5.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nd0b5eba1a7d7.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nd1ff8aee1cad.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nd1ff8aee1cad.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nd1ff8aee1cad-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nd1ff8aee1cad.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nd1ff8aee1cad-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nd1ff8aee1cad.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nd1ff8aee1cad-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nd1ff8aee1cad.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nd74fce56edcc.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nd74fce56edcc.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nd74fce56edcc-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nd74fce56edcc.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nd74fce56edcc-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nd74fce56edcc.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nd74fce56edcc-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nd74fce56edcc.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ne6c2adc7e6c2.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ne99ad822651e.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ne99ad822651e.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ne99ad822651e-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ne99ad822651e.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-ne99ad822651e-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-ne99ad822651e.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-ne99ad822651e-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-ne99ad822651e.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-neba4d5d48fd5.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-neba4d5d48fd5.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-neba4d5d48fd5-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-neba4d5d48fd5.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-neba4d5d48fd5-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-neba4d5d48fd5.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-neba4d5d48fd5-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-neba4d5d48fd5.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nfa29790600eb.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nfa29790600eb.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nfa29790600eb-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nfa29790600eb.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nfa29790600eb-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nfa29790600eb.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nfa29790600eb-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nfa29790600eb.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nc5d355084e6d.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nc5d355084e6d.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nc5d355084e6d-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nc5d355084e6d.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://pointlab.vercel.app/articles/note-nc5d355084e6d-en.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://pointlab.vercel.app/articles/note-nc5d355084e6d.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://pointlab.vercel.app/articles/note-nc5d355084e6d-en.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://pointlab.vercel.app/articles/note-nc5d355084e6d.html"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
   <url><loc>https://pointlab.vercel.app/poinavi/</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://pointlab.vercel.app/poinavi/index.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://pointlab.vercel.app/poinavi/lab.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://pointlab.vercel.app/poinavi/translate.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://pointlab.vercel.app/poinavi/map.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://pointlab.vercel.app/hakaseAI/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pointlab.vercel.app/hakaseAI/index.html</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://pointlab.vercel.app/poirobo/index.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://pointlab.vercel.app/poirobo/page2.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://pointlab.vercel.app/poirobo/page3.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

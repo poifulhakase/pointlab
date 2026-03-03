@@ -14,4 +14,4 @@
 
 5. ブラウザで Ctrl+Shift+R （ハードリロード）
 
-または、pointlab フォルダで copy-images.bat をダブルクリック
+または、pointlab フォルダで batch\copy-images.bat をダブルクリック

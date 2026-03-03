@@ -673,6 +673,14 @@ body {
   height: 100%;
 }
 
+/* RainViewer 雨雲オーバーレイ（地図直下に配置） */
+#rainviewer-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 100 !important;
+  pointer-events: none;
+}
+
 /* 結果リスト */
 .results-list {
   position: absolute;
@@ -1605,10 +1613,15 @@ body.dark-mode .settings-modal__select {
   position: absolute;
   top: 16px;
   left: 16px;
-  z-index: 10;
+  z-index: 9999;
+  pointer-events: auto !important;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.layer-control .layer-toggle {
+  pointer-events: auto !important;
 }
 
 /* 横並びの行（ボタン＋ステータス） */
