@@ -1083,6 +1083,16 @@ function hideLoading() {
   // ローディング画面は削除済み - 何もしない
 }
 
+// 現在地取得中ローディングの表示/非表示
+function showLocationLoading() {
+  const el = document.getElementById("locationLoadingOverlay");
+  if (el) el.classList.remove("hidden");
+}
+function hideLocationLoading() {
+  const el = document.getElementById("locationLoadingOverlay");
+  if (el) el.classList.add("hidden");
+}
+
 // ============================================
 // 現在地取得
 // ============================================
@@ -1113,6 +1123,7 @@ function requestUserLocation() {
   }
   
   // キャッシュがない場合は新たに取得
+  showLocationLoading();
   fetchUserLocation(null);
 }
 
@@ -1217,10 +1228,12 @@ function tryIpBasedLocation() {
         }
       } else {
         console.warn("IPベースの位置情報取得に失敗しました");
+        hideLocationLoading();
       }
     })
     .catch(error => {
       console.warn("IPベースの位置情報取得エラー:", error);
+      hideLocationLoading();
     });
 }
 
@@ -1262,7 +1275,8 @@ function applyUserLocation(lat, lng) {
     map.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 80 });
   });
 
-  // ローディング画面を非表示
+  // 現在地取得中ローディングを非表示
+  hideLocationLoading();
   hideLoading();
 }
 

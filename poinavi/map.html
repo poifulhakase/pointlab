@@ -42,8 +42,8 @@
     <meta name="twitter:description" content="現在地周辺の店舗・駅・公共トイレを検索。旅のナビゲーションに。" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="./style.css?v=129" />
+    <link rel="manifest" href="manifest.json?v=130" />
+    <link rel="stylesheet" href="./style.css?v=130" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -259,6 +259,13 @@
         <div id="map" class="map"></div>
         
         
+        <!-- 現在地取得中ローディングオーバーレイ -->
+        <div id="locationLoadingOverlay" class="location-loading-overlay hidden">
+          <div class="location-loading-overlay__content">
+            <div class="location-loading-overlay__spinner"></div>
+            <p class="location-loading-overlay__text">現在地取得中...</p>
+          </div>
+        </div>
         <!-- 路線ローディングオーバーレイ -->
         <div id="railwayLoadingOverlay" class="railway-loading-overlay hidden">
           <div class="railway-loading-overlay__content">
@@ -458,7 +465,7 @@
       </span>
     </footer>
 
-    <script src="./poinavi-alert.js"></script>
-    <script src="./script.js?v=1772512767"></script>
+    <script src="./poinavi-alert.js?v=130"></script>
+    <script src="./script.js?v=1772513410"></script>
   </body>
 </html>
