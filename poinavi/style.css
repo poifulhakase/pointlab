@@ -4350,10 +4350,9 @@ body.dark-mode .translate-qr-btn {
   animation: lab-particle-drift 20s ease-in-out infinite;
 }
 
-/* ライトモード：グレー・茶系（アニメーションなし） */
-body.lab-page:not(.dark-mode) .lab-particle {
-  background: rgba(60, 50, 45, 0.55);
-  animation: none;
+/* ライトモード：粒子を非表示 */
+body.lab-page:not(.dark-mode) .lab-particles {
+  display: none;
 }
 
 /* ダークモード：白（視認しやすく） */
@@ -4464,9 +4463,11 @@ body.lab-page:not(.dark-mode) .translate-footer .translate-footer__label {
 }
 body.lab-page:not(.dark-mode) .lab-hero__date {
   color: #36322D;
+  opacity: 0.8;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day {
   color: #36322D;
+  opacity: 0.8;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day-accent {
   color: #36322D;
@@ -4533,7 +4534,7 @@ body.dark-mode .lab-hero__time {
 }
 
 body.dark-mode .lab-hero__date {
-  color: rgba(224, 224, 224, 0.2);
+  color: rgba(224, 224, 224, 0.8);
 }
 
 body.dark-mode .lab-hero {
@@ -4541,10 +4542,10 @@ body.dark-mode .lab-hero {
 }
 
 body.dark-mode .lab-hero__day-rest {
-  color: rgba(224, 224, 224, 0.2);
+  color: rgba(224, 224, 224, 0.8);
 }
 body.dark-mode .lab-hero__day-accent {
-  color: rgba(224, 224, 224, 0.2);
+  color: rgba(224, 224, 224, 0.8);
 }
 
 .lab-hero__day {
