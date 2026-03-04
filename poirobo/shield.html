@@ -154,24 +154,16 @@
         { name: "◇◇工業", score: 85, factors: [] },
         { name: "☆☆食品", score: 22, factors: ["決算3日以内", "地合い悪化", "出来高急増"] }
       ];
-      function getDefenseRate(score) { return 100 - score; }
+      function getDefenseRate(score) { return score; }
       function getShieldClass(score) {
-        var def = getDefenseRate(score);
-        if (def >= 80) return "shield-safe";
-        if (def >= 50) return "shield-caution";
+        if (score >= 80) return "shield-safe";
+        if (score >= 50) return "shield-caution";
         return "shield-danger";
       }
       function getProgressClass(score) {
-        var def = getDefenseRate(score);
-        if (def >= 80) return "poirobo-progress__bar--safe";
-        if (def >= 50) return "poirobo-progress__bar--caution";
+        if (score >= 80) return "poirobo-progress__bar--safe";
+        if (score >= 50) return "poirobo-progress__bar--caution";
         return "poirobo-progress__bar--danger";
-      }
-      function getShieldLabel(score) {
-        var def = getDefenseRate(score);
-        if (def >= 80) return "安定";
-        if (def >= 50) return "注意";
-        return "危険";
       }
       var listEl = document.getElementById("shieldList");
       shieldMockData.forEach(function(item) {
