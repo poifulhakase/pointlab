@@ -4426,6 +4426,10 @@ body.lab-page .translate-header {
   position: relative;
   z-index: 10;
 }
+/* 研究室：ロゴは配色設定の影響を受けないよう元の表示に */
+body.lab-page .translate-header__logo {
+  filter: none;
+}
 body.lab-page:not(.dark-mode) .translate-header {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(8px);

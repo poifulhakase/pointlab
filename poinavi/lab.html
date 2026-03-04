@@ -353,6 +353,13 @@
     </style>
   </head>
   <body class="lab-page">
+    <!-- 他ページ遷移時・bfcache復元時もテーマを即時適用（FOUC・配色ずれ防止） -->
+    <script>
+      (function(){
+        var theme = localStorage.getItem("poinavi_theme") || "light";
+        document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
+      })();
+    </script>
     <!-- パーティクル（画面全体・控えめ） -->
     <div class="lab-particles" aria-hidden="true">
       <span class="lab-particle lab-particle--1"></span>
@@ -1183,6 +1190,16 @@
         
         // Fitbit連携
         initFitbit();
+      });
+
+      // 他ページから戻ったとき（bfcache復元等）もテーマを再適用
+      window.addEventListener("pageshow", function(e) {
+        if (e.persisted) {
+          var theme = localStorage.getItem("poinavi_theme") || "light";
+          document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+          document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
+          updateThemeButton(theme);
+        }
       });
     </script>
   </body>
