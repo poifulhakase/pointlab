@@ -4396,6 +4396,7 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
 
 /* ヒーローエリア（時計） */
 .lab-hero {
+  font-family: "Cherry Bomb One", sans-serif;
   text-align: center;
   padding: 32px 0 24px;
 }
