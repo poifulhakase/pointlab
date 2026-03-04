@@ -4333,31 +4333,31 @@ body.dark-mode .translate-qr-btn {
    研究室（Lab）ページ
    ============================================ */
 
-/* パーティクル（画面全体・控えめ） */
+/* パーティクル（画面全体・控えめ・白マスクの上に表示） */
 .lab-particles {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
   overflow: hidden;
 }
 
 .lab-particle {
   position: absolute;
-  width: 3px;
-  height: 3px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   animation: lab-particle-drift 20s ease-in-out infinite;
 }
 
-/* ライトモード：薄いグレー・茶系 */
+/* ライトモード：薄いグレー・茶系（白マスクの上で視認可能に） */
 body.lab-page:not(.dark-mode) .lab-particle {
-  background: rgba(80, 70, 60, 0.25);
+  background: rgba(80, 70, 60, 0.35);
 }
 
-/* ダークモード：薄い白 */
+/* ダークモード：薄い白（背景の上で視認可能に） */
 body.dark-mode .lab-particle {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* 各パーティクルの位置・アニメーション差異 */
