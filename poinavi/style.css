@@ -4350,9 +4350,10 @@ body.dark-mode .translate-qr-btn {
   animation: lab-particle-drift 20s ease-in-out infinite;
 }
 
-/* ライトモード：グレー・茶系（視認しやすく） */
+/* ライトモード：グレー・茶系（アニメーションなし） */
 body.lab-page:not(.dark-mode) .lab-particle {
   background: rgba(60, 50, 45, 0.55);
+  animation: none;
 }
 
 /* ダークモード：白（視認しやすく） */
@@ -4499,9 +4500,12 @@ body.lab-page:not(.dark-mode) .lab-hero__day-accent {
   font-variant-numeric: tabular-nums;
 }
 
-/* 時刻の分・十の位（例: 13:25 の 2）を #FECAC9 に（ライト/ダーク共通） */
+/* 時刻の分・十の位（例: 13:25 の 2） */
 .lab-hero__time-min-tens {
   color: #FECAC9;
+}
+body.dark-mode .lab-hero__time-min-tens {
+  color: #e0e0e0;
 }
 
 /* 曜日の「すい」（水曜日）を #FECAC9 に */
@@ -4524,8 +4528,12 @@ body.lab-page:not(.dark-mode) .lab-hero__day-accent {
   font-weight: 400;
 }
 
-body.dark-mode .lab-hero__date {
+body.dark-mode .lab-hero__time {
   color: #e0e0e0;
+}
+
+body.dark-mode .lab-hero__date {
+  color: rgba(224, 224, 224, 0.2);
 }
 
 body.dark-mode .lab-hero {
@@ -4533,10 +4541,10 @@ body.dark-mode .lab-hero {
 }
 
 body.dark-mode .lab-hero__day-rest {
-  color: #e0e0e0;
+  color: rgba(224, 224, 224, 0.2);
 }
 body.dark-mode .lab-hero__day-accent {
-  color: #e0e0e0;
+  color: rgba(224, 224, 224, 0.2);
 }
 
 .lab-hero__day {
