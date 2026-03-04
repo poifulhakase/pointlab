@@ -4421,6 +4421,10 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   font-weight: 400;
 }
 
+body.dark-mode .lab-hero__date {
+  color: #fff;
+}
+
 .lab-hero__day {
   font-size: 0.9375rem;
   color: var(--accent-color);
