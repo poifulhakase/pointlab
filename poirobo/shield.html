@@ -154,20 +154,22 @@
         { name: "◇◇工業", score: 85, factors: [] },
         { name: "☆☆食品", score: 22, factors: ["決算3日以内", "地合い悪化", "出来高急増"] }
       ];
-      function getDefenseRate(score) { return score; }
+      function getFailureRate(score) { return 100 - score; }
       function getShieldClass(score) {
-        if (score >= 80) return "shield-safe";
-        if (score >= 50) return "shield-caution";
+        var fail = getFailureRate(score);
+        if (fail <= 20) return "shield-safe";
+        if (fail <= 50) return "shield-caution";
         return "shield-danger";
       }
       function getProgressClass(score) {
-        if (score >= 80) return "poirobo-progress__bar--safe";
-        if (score >= 50) return "poirobo-progress__bar--caution";
+        var fail = getFailureRate(score);
+        if (fail <= 20) return "poirobo-progress__bar--safe";
+        if (fail <= 50) return "poirobo-progress__bar--caution";
         return "poirobo-progress__bar--danger";
       }
       var listEl = document.getElementById("shieldList");
       shieldMockData.forEach(function(item) {
-        var defRate = getDefenseRate(item.score);
+        var failRate = getFailureRate(item.score);
         var card = document.createElement("div");
         card.className = "poirobo-card";
         var factorsHtml = item.factors.map(function(f) {
@@ -176,9 +178,9 @@
         card.innerHTML =
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
           '<span style="font-weight:600;font-size:1rem;">' + item.name + '</span>' +
-          '<span class="' + getShieldClass(item.score) + '" style="font-weight:700;">防御成功率 ' + defRate + '%</span>' +
+          '<span class="' + getShieldClass(item.score) + '" style="font-weight:700;">防御失敗率 ' + failRate + '%</span>' +
           '</div>' +
-          '<div class="poirobo-progress" style="margin-bottom:8px;"><div class="poirobo-progress__bar ' + getProgressClass(item.score) + '" style="width:' + defRate + '%;"></div></div>' +
+          '<div class="poirobo-progress" style="margin-bottom:8px;"><div class="poirobo-progress__bar ' + getProgressClass(item.score) + '" style="width:' + failRate + '%;"></div></div>' +
           (factorsHtml ? '<div>' + factorsHtml + '</div>' : '<div style="font-size:0.75rem;color:var(--text-secondary);">危険要因なし</div>');
         listEl.appendChild(card);
       });
