@@ -4420,10 +4420,18 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   color: #FECAC9;
 }
 
+.lab-hero__date-day {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0 12px;
+  margin-top: 8px;
+}
+
 .lab-hero__date {
   font-size: 1.25rem;
   color: var(--text-secondary);
-  margin-top: 8px;
   font-weight: 400;
 }
 
@@ -4438,7 +4446,6 @@ body.dark-mode .lab-hero__day-rest {
 .lab-hero__day {
   font-size: 1.125rem;
   color: var(--accent-color);
-  margin-top: 4px;
   font-weight: 500;
 }
 
