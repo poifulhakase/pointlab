@@ -4355,9 +4355,9 @@ body.lab-page:not(.dark-mode) .lab-particles {
   display: none;
 }
 
-/* ダークモード：白（視認しやすく） */
+/* ダークモード：白（控えめに視認性向上） */
 body.dark-mode .lab-particle {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.42);
 }
 
 /* 各パーティクルの位置・アニメーション差異 */
@@ -4390,19 +4390,19 @@ body.dark-mode .lab-particle {
 @keyframes lab-particle-drift {
   0%, 100% {
     transform: translate(0, 0);
-    opacity: 0.4;
+    opacity: 0.5;
   }
   25% {
     transform: translate(15px, -20px);
-    opacity: 0.7;
+    opacity: 0.78;
   }
   50% {
     transform: translate(-10px, 15px);
-    opacity: 0.5;
+    opacity: 0.58;
   }
   75% {
     transform: translate(20px, 10px);
-    opacity: 0.6;
+    opacity: 0.68;
   }
 }
 
