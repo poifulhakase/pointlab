@@ -268,7 +268,6 @@
       }
       .lab-character__img {
         height: calc(var(--vvh, 100vh) * 0.432);
-        max-height: min(calc(var(--vvh, 100vh) * 0.432), 360px);
         width: auto;
         transform: translateY(calc(12px + 2vh));
         display: block;
@@ -288,13 +287,13 @@
         position: relative;
         z-index: 2;
       }
-      /* PC・大画面：枠内に収める */
+      /* PC・大画面：枠内に収める（博士サイズは維持、overflowでクリップ） */
       .lab-character {
         overflow: hidden;
       }
       @media (min-width: 500px) {
         .lab-character__img {
-          max-height: 280px;
+          max-height: 420px;
         }
       }
       /* 研究室メイン：固定フッター分の余白は style.css で確保（常に表示のため） */
@@ -303,6 +302,16 @@
       }
       @media (min-height: 900px) {
         .lab-character { padding-bottom: clamp(4px, calc(var(--vvh, 100vh) * 0.008), 12px); }
+      }
+
+      /* パーティクル：PC時に枠内に収める（max-width 500px のアプリフレームに合わせる） */
+      @media (min-width: 500px) {
+        .lab-particles {
+          left: 50%;
+          margin-left: -250px;
+          width: 500px;
+          right: auto;
+        }
       }
 
       /* 波紋エフェクト（クリック・タップ時に心地よいフィードバック） */
