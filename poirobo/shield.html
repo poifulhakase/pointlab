@@ -69,7 +69,7 @@
 
     <main class="poirobo-main">
       <h1 class="visually-hidden">シールド - 地雷検知</h1>
-      <p class="poirobo-section-title">今触るべきでない銘柄</p>
+      <p class="poirobo-section-title" id="shieldTitle">今触るべきでない銘柄→攻撃力が高い銘柄　<span id="shieldDate"></span>現在</p>
       <div id="shieldList" class="poirobo-shield-list">
         <!-- モックデータで表示（将来APIから取得） -->
       </div>
@@ -146,6 +146,14 @@
           document.body.className = theme === "dark" ? "dark-mode" : "light-mode";
         }
       });
+
+      (function() {
+        var d = new Date();
+        var m = d.getMonth() + 1, day = d.getDate();
+        var dow = ["日","月","火","水","木","金","土"][d.getDay()];
+        var el = document.getElementById("shieldDate");
+        if (el) el.textContent = m + "月" + day + "日(" + dow + ")";
+      })();
 
       // シールド一覧（モック・将来はAPIから取得）
       var shieldMockData = [

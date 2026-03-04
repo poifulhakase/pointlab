@@ -25,6 +25,16 @@
   </head>
   <body>
     <script>
+      // 起動ページリダイレクト（DOMContentLoadedより前に実行）
+      (function() {
+        if (document.referrer && document.referrer.includes("/poirobo/")) return;
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("from")) return;
+        var startPage = localStorage.getItem("poirobo_start_page") || "index.html";
+        if (startPage !== "index.html") {
+          window.location.replace("./" + startPage);
+        }
+      })();
       document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
     </script>
     <header class="translate-header">
@@ -51,6 +61,15 @@
           </button>
         </div>
         <div class="translate-modal__body">
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">トップ表示</div>
+            <select id="startPageSelect" class="translate-modal__select">
+              <option value="index.html">🤖 ぽいロボ</option>
+              <option value="lab.html">🔬 研究室</option>
+              <option value="shield.html">🛡️ シールド</option>
+              <option value="signal.html">📶 シグナル</option>
+            </select>
+          </div>
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">テーマ</div>
             <button id="themeToggle" class="translate-modal__theme-toggle">
@@ -144,6 +163,12 @@
       var btn = document.getElementById("themeToggle");
       btn.querySelector(".theme-icon").textContent = t === "dark" ? "🌙" : "☀️";
       btn.querySelector(".theme-text").textContent = t === "dark" ? "ダークモード" : "ライトモード";
+
+      var startPageSelect = document.getElementById("startPageSelect");
+      if (startPageSelect) {
+        startPageSelect.value = localStorage.getItem("poirobo_start_page") || "index.html";
+        startPageSelect.onchange = function() { localStorage.setItem("poirobo_start_page", this.value); };
+      }
       window.addEventListener("pageshow", function(e) {
         if (e.persisted) {
           var theme = localStorage.getItem("poirobo_theme") || "light";

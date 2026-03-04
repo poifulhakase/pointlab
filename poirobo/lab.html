@@ -429,6 +429,16 @@
           </button>
         </div>
         <div class="translate-modal__body">
+          <!-- トップ表示セクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">トップ表示</div>
+            <select id="labStartPageSelect" class="translate-modal__select">
+              <option value="index.html">🤖 ぽいロボ</option>
+              <option value="lab.html">🔬 研究室</option>
+              <option value="shield.html">🛡️ シールド</option>
+              <option value="signal.html">📶 シグナル</option>
+            </select>
+          </div>
           <!-- テーマセクション -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">テーマ</div>
@@ -707,6 +717,16 @@
       // ============================================
       // 設定モーダル
       // ============================================
+      function initStartPageSelect() {
+        const select = document.getElementById("labStartPageSelect");
+        if (!select) return;
+        const savedStartPage = localStorage.getItem("poirobo_start_page") || "index.html";
+        select.value = savedStartPage;
+        select.addEventListener("change", function() {
+          localStorage.setItem("poirobo_start_page", this.value);
+        });
+      }
+
       function initSettingsModal() {
         const settingsButton = document.getElementById("labSettingsButton");
         const settingsModal = document.getElementById("labSettingsModal");
@@ -1085,6 +1105,7 @@
       // ============================================
       document.addEventListener("DOMContentLoaded", function() {
         initTheme();
+        initStartPageSelect();
         initLabRipple();
         initSettingsModal();
         initThemeToggle();
