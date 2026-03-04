@@ -790,10 +790,13 @@
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
         const date = now.getDate();
-        dateEl.textContent = `${year}年${month}月${date}日`;
+        dateEl.textContent = `${year}/${month}/${date}`;
         
-        const days = ["日", "月", "火", "水", "木", "金", "土"];
-        dayEl.textContent = `${days[now.getDay()]}曜日`;
+        const daysHiragana = ["にちようび", "げつようび", "かようび", "すいようび", "もくようび", "きんようび", "どようび"];
+        const dayStr = daysHiragana[now.getDay()];
+        dayEl.innerHTML = dayStr === "すいようび"
+          ? '<span class="lab-hero__day-accent">すい</span><span class="lab-hero__day-rest">ようび</span>'
+          : dayStr;
       }
 
       // ============================================

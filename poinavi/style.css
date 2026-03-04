@@ -4415,6 +4415,11 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   color: #FECAC9;
 }
 
+/* 曜日の「すい」（水曜日）を #FECAC9 に */
+.lab-hero__day-accent {
+  color: #FECAC9;
+}
+
 .lab-hero__date {
   font-size: 1.125rem;
   color: var(--text-secondary);
@@ -4423,6 +4428,10 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
 }
 
 body.dark-mode .lab-hero__date {
+  color: #fff;
+}
+
+body.dark-mode .lab-hero__day-rest {
   color: #fff;
 }
 
