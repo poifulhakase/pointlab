@@ -4336,7 +4336,7 @@ body.dark-mode .translate-qr-btn {
 body.lab-page:not(.dark-mode) {
   --text-primary: #0a0a0a;
   --text-secondary: #333333;
-  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.5)), url("./lab-bg-light.png");
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.4)), url("./lab-bg-light.png");
   background-size: auto 140%;
   background-position: center center;
   background-attachment: fixed;
