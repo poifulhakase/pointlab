@@ -177,9 +177,11 @@
         return "poirobo-progress__bar--danger";
       }
       var listEl = document.getElementById("shieldList");
-      var sorted = shieldMockData.slice().sort(function(a, b) {
-        return getFailureRate(b.score) - getFailureRate(a.score);
-      });
+      var sorted = shieldMockData.slice()
+        .filter(function(item) { return getFailureRate(item.score) > 20; })
+        .sort(function(a, b) {
+          return getFailureRate(b.score) - getFailureRate(a.score);
+        });
       sorted.forEach(function(item) {
         var failRate = getFailureRate(item.score);
         var card = document.createElement("div");
