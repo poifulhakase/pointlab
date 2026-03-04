@@ -4334,8 +4334,8 @@ body.dark-mode .translate-qr-btn {
    ============================================ */
 /* ライトモード：研究所イラスト背景（上下左右全画面カバー＋グラデーション白掛け・上部が白め） */
 body.lab-page:not(.dark-mode) {
-  --text-primary: #7A9FCC;
-  --text-secondary: #7A9FCC;
+  --text-primary: #0a0a0a;
+  --text-secondary: #333333;
   background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.4)), url("./lab-bg-light.png");
   background-size: auto 140%;
   background-position: center center;
@@ -4374,6 +4374,7 @@ body.lab-page .translate-footer {
 /* ライトモード：視認性向上（全て太字・曜日は黒） */
 body.lab-page:not(.dark-mode) .lab-hero__time {
   font-weight: 400;
+  color: #7A9FCC;
 }
 body.lab-page:not(.dark-mode) .lab-hero__date,
 body.lab-page:not(.dark-mode) .lab-hero__day,
@@ -4382,8 +4383,11 @@ body.lab-page:not(.dark-mode) .translate-footer,
 body.lab-page:not(.dark-mode) .translate-footer .translate-footer__label {
   font-weight: 700;
 }
+body.lab-page:not(.dark-mode) .lab-hero__date {
+  color: #7A9FCC;
+}
 body.lab-page:not(.dark-mode) .lab-hero__day {
-  color: var(--text-primary);
+  color: #7A9FCC;
 }
 
 .lab-main {
@@ -4399,6 +4403,7 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   font-family: "Cherry Bomb One", sans-serif;
   text-align: center;
   padding: 32px 0 24px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
 .lab-hero__time {
@@ -4437,6 +4442,10 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
 
 body.dark-mode .lab-hero__date {
   color: #fff;
+}
+
+body.dark-mode .lab-hero {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .lab-hero__day-rest {
