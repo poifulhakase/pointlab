@@ -4409,6 +4409,11 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
   font-variant-numeric: tabular-nums;
 }
 
+/* 時刻の分・十の位（例: 13:25 の 2）を #FECAC9 に（ライト/ダーク共通） */
+.lab-hero__time-min-tens {
+  color: #FECAC9;
+}
+
 .lab-hero__date {
   font-size: 1.125rem;
   color: var(--text-secondary);

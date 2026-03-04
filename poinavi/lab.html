@@ -782,7 +782,7 @@
         
         const hours = String(now.getHours()).padStart(2, "0");
         const minutes = String(now.getMinutes()).padStart(2, "0");
-        timeEl.textContent = `${hours}:${minutes}`;
+        timeEl.innerHTML = `${hours[0]}${hours[1]}:<span class="lab-hero__time-min-tens">${minutes[0]}</span>${minutes[1]}`;
         
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
