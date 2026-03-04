@@ -69,7 +69,7 @@
 
     <main class="poirobo-main">
       <h1 class="visually-hidden">シールド - 地雷検知</h1>
-      <p class="poirobo-section-title" id="shieldTitle">今触るべきでない銘柄→攻撃力が高い銘柄　<span id="shieldDate"></span>現在</p>
+      <p class="poirobo-section-title" id="shieldTitle">攻撃力が高い銘柄　<span id="shieldDate"></span>現在</p>
       <div id="shieldList" class="poirobo-shield-list">
         <!-- モックデータで表示（将来APIから取得） -->
       </div>
@@ -177,7 +177,10 @@
         return "poirobo-progress__bar--danger";
       }
       var listEl = document.getElementById("shieldList");
-      shieldMockData.forEach(function(item) {
+      var sorted = shieldMockData.slice().sort(function(a, b) {
+        return getFailureRate(b.score) - getFailureRate(a.score);
+      });
+      sorted.forEach(function(item) {
         var failRate = getFailureRate(item.score);
         var card = document.createElement("div");
         card.className = "poirobo-card";
