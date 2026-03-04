@@ -4383,7 +4383,7 @@ body.lab-page:not(.dark-mode) .translate-footer .translate-footer__label {
   font-weight: 700;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day {
-  color: #000;
+  color: var(--text-primary);
 }
 
 .lab-main {
@@ -4430,8 +4430,8 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
 }
 
 .lab-hero__date {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
+  font-size: 1.5rem;
+  color: var(--text-primary);
   font-weight: 400;
 }
 
@@ -4444,7 +4444,7 @@ body.dark-mode .lab-hero__day-rest {
 }
 
 .lab-hero__day {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   color: var(--accent-color);
   font-weight: 500;
 }
