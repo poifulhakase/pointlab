@@ -4374,7 +4374,7 @@ body.lab-page .translate-footer {
 /* ライトモード：視認性向上（全て太字・曜日は黒） */
 body.lab-page:not(.dark-mode) .lab-hero__time {
   font-weight: 400;
-  color: #212121;
+  color: #36322D;
 }
 body.lab-page:not(.dark-mode) .lab-hero__date,
 body.lab-page:not(.dark-mode) .lab-hero__day,
@@ -4384,13 +4384,13 @@ body.lab-page:not(.dark-mode) .translate-footer .translate-footer__label {
   font-weight: 700;
 }
 body.lab-page:not(.dark-mode) .lab-hero__date {
-  color: #212121;
+  color: #36322D;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day {
-  color: #212121;
+  color: #36322D;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day-accent {
-  color: #212121;
+  color: #36322D;
 }
 
 .lab-main {
