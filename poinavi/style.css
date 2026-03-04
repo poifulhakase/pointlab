@@ -4403,10 +4403,74 @@ body.lab-page:not(.dark-mode) .lab-hero__day-accent {
 
 /* ヒーローエリア（時計） */
 .lab-hero {
+  position: relative;
   font-family: "Cherry Bomb One", sans-serif;
   text-align: center;
   padding: 32px 0 24px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+/* 光のチラチラエフェクト（時計まわり） */
+.lab-hero__sparkles {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 180px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.lab-hero__sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: lab-sparkle-twinkle 2.5s ease-in-out infinite;
+}
+
+/* ライトモード：柔らかい金色・琥珀色のキラキラ */
+body.lab-page:not(.dark-mode) .lab-hero__sparkle {
+  background: rgba(251, 191, 36, 0.9);
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.6), 0 0 12px rgba(251, 191, 36, 0.3);
+}
+
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--1  { left: 10%;  top: 15%;  animation-delay: 0s;     }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--2  { left: 85%;  top: 20%;  animation-delay: 0.3s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--3  { left: 5%;   top: 55%;  animation-delay: 0.6s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--4  { left: 90%;  top: 50%;  animation-delay: 0.9s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--5  { left: 25%;  top: 5%;   animation-delay: 0.2s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--6  { left: 70%;  top: 8%;   animation-delay: 0.5s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--7  { left: 30%;  top: 85%;  animation-delay: 0.8s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--8  { left: 75%;  top: 80%;  animation-delay: 0.1s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--9  { left: 50%;  top: 0;    animation-delay: 0.4s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--10 { left: 0;    top: 45%;  animation-delay: 0.7s;   }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--11 { left: 95%;  top: 40%;  animation-delay: 1s;    }
+body.lab-page:not(.dark-mode) .lab-hero__sparkle--12 { left: 50%;  top: 95%;  animation-delay: 0.2s;   }
+
+/* ダークモード：白・淡い青のキラキラ */
+body.dark-mode .lab-hero__sparkle {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7), 0 0 16px rgba(147, 197, 253, 0.4);
+}
+
+body.dark-mode .lab-hero__sparkle--1  { left: 10%;  top: 15%;  animation-delay: 0s;     }
+body.dark-mode .lab-hero__sparkle--2  { left: 85%;  top: 20%;  animation-delay: 0.4s;   }
+body.dark-mode .lab-hero__sparkle--3  { left: 5%;   top: 55%;  animation-delay: 0.8s;   }
+body.dark-mode .lab-hero__sparkle--4  { left: 90%;  top: 50%;  animation-delay: 0.2s;   }
+body.dark-mode .lab-hero__sparkle--5  { left: 25%;  top: 5%;   animation-delay: 0.6s;   }
+body.dark-mode .lab-hero__sparkle--6  { left: 70%;  top: 8%;   animation-delay: 0.1s;   }
+body.dark-mode .lab-hero__sparkle--7  { left: 30%;  top: 85%;  animation-delay: 0.5s;   }
+body.dark-mode .lab-hero__sparkle--8  { left: 75%;  top: 80%;  animation-delay: 0.9s;   }
+body.dark-mode .lab-hero__sparkle--9  { left: 50%;  top: 0;    animation-delay: 0.3s;   }
+body.dark-mode .lab-hero__sparkle--10 { left: 0;    top: 45%;  animation-delay: 0.7s;   }
+body.dark-mode .lab-hero__sparkle--11 { left: 95%;  top: 40%;  animation-delay: 0.2s;   }
+body.dark-mode .lab-hero__sparkle--12 { left: 50%;  top: 95%;  animation-delay: 0.5s;   }
+
+@keyframes lab-sparkle-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1.2); }
 }
 
 .lab-hero__time {
