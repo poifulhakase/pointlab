@@ -5,7 +5,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>ぽいロボ</title>
+    <title>ぽいロボ - シールド</title>
     <link rel="stylesheet" href="../poinavi/style.css?v=130" />
     <link rel="stylesheet" href="./style.css?v=1" />
     <script src="./poirobo-swipe-nav.js?v=1"></script>
@@ -37,7 +37,6 @@
       </button>
     </header>
 
-    <!-- 設定モーダル（最小限） -->
     <div id="settingsModal" class="translate-modal hidden">
       <div class="translate-modal__overlay"></div>
       <div class="translate-modal__content">
@@ -66,15 +65,11 @@
     </div>
 
     <main class="poirobo-main">
-      <h1 class="visually-hidden">ぽいロボ - エントリー判断補助</h1>
-      <p class="poirobo-section-title">チェックリスト（銘柄コード入力で判定・将来実装）</p>
-      <div id="checklist" class="poirobo-checklist"></div>
-      <div id="totalResult" class="poirobo-total poirobo-total--wait">
-        <span id="totalPoint">0</span>pt → 様子見
+      <h1 class="visually-hidden">シールド - 地雷検知</h1>
+      <p class="poirobo-section-title">今触るべきでない銘柄</p>
+      <div id="shieldList" class="poirobo-shield-list">
+        <!-- モックデータで表示（将来APIから取得） -->
       </div>
-      <p style="font-size:0.75rem;color:var(--text-secondary);text-align:center;margin-top:8px;">
-        +5以上: エントリー検討 / 0〜4: 様子見 / マイナス: 見送り
-      </p>
     </main>
 
     <footer class="translate-footer">
@@ -87,12 +82,12 @@
         </svg>
         <span class="translate-footer__label">研究室</span>
       </a>
-      <a href="./shield.html" class="translate-footer__btn" aria-label="シールドページへ">
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="シールド（現在のページ）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
         <span class="translate-footer__label">シールド</span>
-      </a>
+      </span>
       <a href="./signal.html" class="translate-footer__btn" aria-label="シグナルページへ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M2 12h4"/>
@@ -103,7 +98,7 @@
         </svg>
         <span class="translate-footer__label">シグナル</span>
       </a>
-      <span class="translate-footer__btn translate-footer__btn--active" aria-label="ぽいロボ（現在のページ）">
+      <a href="./index.html" class="translate-footer__btn" aria-label="ぽいロボページへ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="10" rx="2"/>
           <circle cx="8.5" cy="16" r="1"/>
@@ -112,7 +107,7 @@
           <path d="M7 7h10"/>
         </svg>
         <span class="translate-footer__label">ぽいロボ</span>
-      </span>
+      </a>
     </footer>
 
     <script>
@@ -149,51 +144,44 @@
         }
       });
 
-      // ぽいロボ チェックリスト（モック・将来は銘柄入力でAPIから取得）
-      var checklistItems = [
-        { label: "ボリンジャーバンド±2σ接触", point: 2 },
-        { label: "出来高増加", point: 2 },
-        { label: "MA反発", point: 1 },
-        { label: "決算5日以内", point: -3 },
-        { label: "地合い悪い", point: -2 }
+      // シールド一覧（モック・将来はAPIから取得）
+      var shieldMockData = [
+        { name: "○○商事", score: 35, factors: ["決算3日以内", "出来高5日平均3倍超"] },
+        { name: "△△電機", score: 48, factors: ["前回決算ギャップ±10%超", "ATR急上昇"] },
+        { name: "□□製薬", score: 62, factors: ["決算5日以内"] },
+        { name: "◇◇工業", score: 85, factors: [] },
+        { name: "☆☆食品", score: 22, factors: ["決算3日以内", "地合い悪化", "出来高急増"] }
       ];
-      var checklistState = [false, false, false, false, false];
-      function updateTotal() {
-        var total = 0;
-        checklistState.forEach(function(checked, i) {
-          if (checked) total += checklistItems[i].point;
-        });
-        var totalEl = document.getElementById("totalPoint");
-        var resultEl = document.getElementById("totalResult");
-        totalEl.textContent = total;
-        resultEl.className = "poirobo-total";
-        if (total >= 5) {
-          resultEl.className += " poirobo-total--entry";
-          resultEl.innerHTML = "<span id=\"totalPoint\">" + total + "</span>pt → エントリー検討";
-        } else if (total >= 0) {
-          resultEl.className += " poirobo-total--wait";
-          resultEl.innerHTML = "<span id=\"totalPoint\">" + total + "</span>pt → 様子見";
-        } else {
-          resultEl.className += " poirobo-total--skip";
-          resultEl.innerHTML = "<span id=\"totalPoint\">" + total + "</span>pt → 見送り";
-        }
+      function getShieldClass(score) {
+        if (score >= 80) return "shield-safe";
+        if (score >= 50) return "shield-caution";
+        return "shield-danger";
       }
-      var listEl = document.getElementById("checklist");
-      checklistItems.forEach(function(item, i) {
-        var div = document.createElement("div");
-        div.className = "poirobo-checklist-item";
-        var iconClass = item.point > 0 ? "poirobo-checklist-item__icon--plus" : "poirobo-checklist-item__icon--minus";
-        var sign = item.point > 0 ? "+" : "";
-        div.innerHTML =
-          '<div class="poirobo-checklist-item__icon ' + iconClass + '">' + sign + item.point + '</div>' +
-          '<span class="poirobo-checklist-item__label">' + item.label + '</span>' +
-          '<input type="checkbox" class="poirobo-checklist-item__check" data-idx="' + i + '" style="width:20px;height:20px;accent-color:var(--accent-color);">';
-        var cb = div.querySelector("input");
-        cb.onchange = function() {
-          checklistState[parseInt(this.dataset.idx)] = this.checked;
-          updateTotal();
-        };
-        listEl.appendChild(div);
+      function getProgressClass(score) {
+        if (score >= 80) return "poirobo-progress__bar--safe";
+        if (score >= 50) return "poirobo-progress__bar--caution";
+        return "poirobo-progress__bar--danger";
+      }
+      function getShieldLabel(score) {
+        if (score >= 80) return "安定";
+        if (score >= 50) return "注意";
+        return "危険";
+      }
+      var listEl = document.getElementById("shieldList");
+      shieldMockData.forEach(function(item) {
+        var card = document.createElement("div");
+        card.className = "poirobo-card";
+        var factorsHtml = item.factors.map(function(f) {
+          return '<span class="poirobo-tag poirobo-tag--danger">' + f + '</span>';
+        }).join("");
+        card.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<span style="font-weight:600;font-size:1rem;">' + item.name + '</span>' +
+          '<span class="' + getShieldClass(item.score) + '" style="font-weight:700;">' + item.score + '% ' + getShieldLabel(item.score) + '</span>' +
+          '</div>' +
+          '<div class="poirobo-progress" style="margin-bottom:8px;"><div class="poirobo-progress__bar ' + getProgressClass(item.score) + '" style="width:' + item.score + '%;"></div></div>' +
+          (factorsHtml ? '<div>' + factorsHtml + '</div>' : '<div style="font-size:0.75rem;color:var(--text-secondary);">危険要因なし</div>');
+        listEl.appendChild(card);
       });
     </script>
   </body>

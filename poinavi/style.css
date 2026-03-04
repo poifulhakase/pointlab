@@ -19,7 +19,7 @@ html:active-view-transition-type(slide-forwards) {
   .translate-footer {
     view-transition-name: poinavi-footer;
   }
-  .memo-main, .main-content, .lab-main, .translate-main {
+  .memo-main, .main-content, .lab-main, .translate-main, .poirobo-main {
     view-transition-name: poinavi-main;
   }
   &::view-transition-old(poinavi-main) {
@@ -49,7 +49,7 @@ html:active-view-transition-type(slide-backwards) {
   .translate-footer {
     view-transition-name: poinavi-footer;
   }
-  .memo-main, .main-content, .lab-main, .translate-main {
+  .memo-main, .main-content, .lab-main, .translate-main, .poirobo-main {
     view-transition-name: poinavi-main;
   }
   &::view-transition-old(poinavi-main) {

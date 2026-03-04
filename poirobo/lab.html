@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- セキュリティヘッダー -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ぽいロボ" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>ぽいロボ - 研究室｜天気・歩数・移動距離</title>
+    <meta name="description" content="天気、気温、歩数、移動距離を一元表示。Fitbit連携で歩数自動取得。旅先の体調管理に。Open-Meteo・GPS連携の無料ダッシュボード。" />
+    <meta name="keywords" content="ぽいナビ, 研究室, 天気, 歩数, Fitbit, 移動距離, 旅行, 旅ダッシュボード" />
+    <link rel="canonical" href="https://pointlab.vercel.app/poinavi/lab.html" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ぽいナビ - 研究室｜天気・歩数・移動距離" />
+    <meta property="og:description" content="天気、気温、歩数、移動距離を一元表示。Fitbit連携で歩数自動取得。旅先の体調管理に。" />
+    <meta property="og:url" content="https://pointlab.vercel.app/poinavi/lab.html" />
+    <meta property="og:image" content="https://pointlab.vercel.app/poinavi/icon-192.png" />
+    <meta property="og:site_name" content="ぽいナビ（ぽいんとらぼ）" />
+    <meta property="og:locale" content="ja_JP" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ぽいナビ - 研究室｜天気・歩数・移動距離" />
+    <meta name="twitter:description" content="天気、気温、歩数、移動距離を一元表示。Fitbit連携で歩数自動取得。" />
+    <link rel="icon" type="image/png" href="../poinavi/favicon.png" />
+    <link rel="apple-touch-icon" href="../poinavi/icon-192.png" />
+    <link rel="manifest" href="../poinavi/manifest.json?v=130" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../poinavi/style.css?v=130" />
+    <script src="../poinavi/poinavi-alert.js?v=130"></script>
+    <script src="./poirobo-swipe-nav.js?v=1"></script>
+    <!-- FOUC対策: CSSロード前にテーマを適用 -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poirobo_theme") || "light";
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+    </script>
+    <style>
+      /* FOUC対策: 初期背景色 */
+      html.light-mode { background-color: #f5f5f7; }
+      html.dark-mode { background-color: #1a1a1a; }
+      
+      /* 横スクロール防止・波紋用・キャラ下寄せ用（スクロールなし） */
+      .lab-main {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* ダッシュボードカード - 2列固定（天気・気温用） */
+      .lab-dashboard {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 12px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      .lab-card {
+        min-width: 0;
+        overflow: hidden;
+      }
+      
+      .lab-card__value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      /* 歩数・移動距離パネル（結合） */
+      .lab-activity-panel {
+        display: flex;
+        background: var(--bg-primary);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      
+      body.dark-mode .lab-activity-panel {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      .lab-activity-panel__item {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .lab-activity-panel__divider {
+        width: 1px;
+        background: var(--border-color);
+        margin: 0 16px;
+      }
+      
+      .lab-activity-panel__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+        color: #ffffff;
+        flex-shrink: 0;
+      }
+      
+      .lab-activity-panel__icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      
+      .lab-activity-panel__content {
+        min-width: 0;
+      }
+      
+      .lab-activity-panel__label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 2px;
+      }
+      
+      .lab-activity-panel__value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      /* 歩数・移動距離パネル コンテナ（オーバーレイ用） */
+      .lab-activity-container {
+        position: relative;
+        margin-bottom: 16px;
+      }
+      
+      .lab-activity-container .lab-activity-panel {
+        margin-bottom: 0;
+      }
+      
+      /* オーバーレイ（マスク + ボタン） */
+      .lab-activity-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        z-index: 10;
+        padding: 8px 16px;
+      }
+      
+      .lab-activity-overlay.hidden {
+        display: none;
+      }
+      
+      .lab-activity-overlay__text {
+        font-size: 0.8125rem;
+        color: #ffffff;
+        text-align: center;
+        line-height: 1.4;
+      }
+      
+      .lab-activity-overlay__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: #00B0B9;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      
+      .lab-activity-overlay__btn:hover {
+        background: #009199;
+      }
+      
+      .lab-activity-overlay__btn:active {
+        transform: scale(0.96);
+      }
+      
+      .lab-activity-overlay__btn svg {
+        width: 18px;
+        height: 18px;
+      }
+      
+      /* 連携済み時の解除ボタン（パネル下に表示） */
+      .lab-fitbit-disconnect {
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      
+      .lab-fitbit-disconnect.hidden {
+        display: none;
+      }
+      
+      .lab-fitbit-disconnect__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .lab-fitbit-disconnect__btn:hover {
+        background: var(--bg-secondary);
+        color: #ef4444;
+        border-color: #ef4444;
+      }
+
+      /* 一時非表示（天気・気温・Fitbitはデザイン改修後に再表示） */
+      .lab-dashboard,
+      .lab-activity-container {
+        display: none !important;
+      }
+
+      /* キャラクター表示エリア（フッターとの余白・デバイスに応じて調整） */
+      .lab-character {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        min-height: 100px;
+        margin-top: auto;
+        padding-bottom: clamp(2px, calc(var(--vvh, 100vh) * 0.006), 8px);
+        contain: layout;
+      }
+      .lab-character {
+        position: relative;
+      }
+      .lab-character__inner {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+      }
+      .lab-character__professor-wrap {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+      }
+      .lab-character__img {
+        height: calc(var(--vvh, 100vh) * 0.432);
+        max-height: min(calc(var(--vvh, 100vh) * 0.432), 360px);
+        width: auto;
+        transform: translateY(calc(12px + 2vh));
+        display: block;
+        position: relative;
+        z-index: 2;
+      }
+      body:not(.dark-mode) .lab-character__professor-wrap {
+        position: static;
+      }
+      body.dark-mode .lab-character__professor-wrap {
+        position: static;
+      }
+      body.dark-mode .lab-character__inner {
+        justify-content: center;
+      }
+      body.dark-mode .lab-character__img {
+        position: relative;
+        z-index: 2;
+      }
+      /* PC・大画面：枠内に収める */
+      .lab-character {
+        overflow: hidden;
+      }
+      @media (min-width: 500px) {
+        .lab-character__img {
+          max-height: 280px;
+        }
+      }
+      /* 研究室メイン：固定フッター分の余白は style.css で確保（常に表示のため） */
+      @media (max-height: 600px) {
+        .lab-character { padding-bottom: clamp(1px, calc(var(--vvh, 100vh) * 0.004), 6px); }
+      }
+      @media (min-height: 900px) {
+        .lab-character { padding-bottom: clamp(4px, calc(var(--vvh, 100vh) * 0.008), 12px); }
+      }
+
+      /* 波紋エフェクト（クリック・タップ時に心地よいフィードバック） */
+      .lab-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(96, 165, 250, 0.28);
+        transform: scale(0);
+        opacity: 1;
+        pointer-events: none;
+        animation: lab-ripple-anim 1s ease-out forwards;
+      }
+      body.dark-mode .lab-ripple {
+        background: rgba(96, 165, 250, 0.2);
+      }
+      @keyframes lab-ripple-anim {
+        to {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+      
+    </style>
+  </head>
+  <body class="lab-page">
+    <!-- 他ページ遷移時・bfcache復元時もテーマを即時適用（FOUC・配色ずれ防止） -->
+    <script>
+      (function(){
+        var theme = localStorage.getItem("poirobo_theme") || "light";
+        document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
+      })();
+    </script>
+    <!-- パーティクル（画面全体・控えめ） -->
+    <div class="lab-particles" aria-hidden="true">
+      <span class="lab-particle lab-particle--1"></span>
+      <span class="lab-particle lab-particle--2"></span>
+      <span class="lab-particle lab-particle--3"></span>
+      <span class="lab-particle lab-particle--4"></span>
+      <span class="lab-particle lab-particle--5"></span>
+      <span class="lab-particle lab-particle--6"></span>
+      <span class="lab-particle lab-particle--7"></span>
+      <span class="lab-particle lab-particle--8"></span>
+      <span class="lab-particle lab-particle--9"></span>
+      <span class="lab-particle lab-particle--10"></span>
+      <span class="lab-particle lab-particle--11"></span>
+      <span class="lab-particle lab-particle--12"></span>
+      <span class="lab-particle lab-particle--13"></span>
+      <span class="lab-particle lab-particle--14"></span>
+      <span class="lab-particle lab-particle--15"></span>
+      <span class="lab-particle lab-particle--16"></span>
+      <span class="lab-particle lab-particle--17"></span>
+      <span class="lab-particle lab-particle--18"></span>
+      <span class="lab-particle lab-particle--19"></span>
+      <span class="lab-particle lab-particle--20"></span>
+      <span class="lab-particle lab-particle--21"></span>
+      <span class="lab-particle lab-particle--22"></span>
+      <span class="lab-particle lab-particle--23"></span>
+      <span class="lab-particle lab-particle--24"></span>
+      <span class="lab-particle lab-particle--25"></span>
+    </div>
+    <!-- 長押しコンテキストメニュー無効化 -->
+    <script>
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    </script>
+    <!-- タップ時のハカセ画像の揺れ防止（ビューポート高さを安定化） -->
+    <script>
+      (function(){
+        function setVVH() {
+          var vv = window.visualViewport;
+          var h = (vv && vv.height) || window.innerHeight;
+          document.documentElement.style.setProperty("--vvh", Math.round(h) + "px");
+        }
+        var vvhTimer;
+        function debouncedSetVVH() {
+          clearTimeout(vvhTimer);
+          vvhTimer = setTimeout(setVVH, 50);
+        }
+        setVVH();
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener("resize", debouncedSetVVH);
+          window.visualViewport.addEventListener("scroll", debouncedSetVVH);
+        }
+        window.addEventListener("resize", debouncedSetVVH);
+      })();
+    </script>
+    <!-- ヘッダー -->
+    <header class="translate-header">
+      <!-- 左側のスペーサー -->
+      <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
+      
+      <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
+        <img src="./logo.svg" alt="ぽいロボ" class="translate-header__logo" style="height: 28px; width: auto;" />
+      </a>
+      
+      <!-- 設定ボタン（右上） -->
+      <button id="labSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 設定モーダル -->
+    <div id="labSettingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="labSettingsClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body">
+          <!-- テーマセクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">テーマ</div>
+            <button id="labThemeToggle" class="translate-modal__theme-toggle">
+              <span class="theme-icon">☀️</span>
+              <span class="theme-text">ライトモード</span>
+            </button>
+          </div>
+          <!-- 免責事項 -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">免責事項</div>
+            <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
+              本サービスは参考情報を提供するものです。重要な場面では専門家への相談を推奨いたします。利用により生じた損害について、運営者は一切の責任を負いません。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 自作アラート/確認モーダル -->
+    <div id="poinaviAlertModal" class="poinavi-alert-modal hidden">
+      <div class="poinavi-alert-modal__overlay"></div>
+      <div class="poinavi-alert-modal__content">
+        <p class="poinavi-alert-modal__message" id="poinaviAlertMessage"></p>
+        <div class="poinavi-alert-modal__buttons">
+          <button type="button" id="poinaviAlertCancel" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <main class="lab-main">
+      <h1 class="visually-hidden">ぽいナビ - 研究室：天気・歩数・移動距離ダッシュボード</h1>
+      <!-- 日付・時刻エリア（メイン） -->
+      <div class="lab-hero">
+        <div class="lab-hero__time" id="labTime">--:--</div>
+        <div class="lab-hero__date-day">
+          <span class="lab-hero__date" id="labDate">--/--</span>
+          <span class="lab-hero__day" id="labDay">--曜日</span>
+        </div>
+      </div>
+
+      <!-- ダッシュボードカード -->
+      <div class="lab-dashboard">
+        <!-- 天気カード -->
+        <div class="lab-card lab-card--weather">
+          <div class="lab-card__icon" id="weatherIcon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <div class="lab-card__content">
+            <div class="lab-card__label">天気</div>
+            <div class="lab-card__value" id="weatherText">取得中...</div>
+          </div>
+        </div>
+
+        <!-- 気温カード -->
+        <div class="lab-card lab-card--temp">
+          <div class="lab-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+            </svg>
+          </div>
+          <div class="lab-card__content">
+            <div class="lab-card__label">気温</div>
+            <div class="lab-card__value" id="tempValue">--°C</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 歩数・移動距離パネル（結合） -->
+      <div class="lab-activity-container">
+        <div class="lab-activity-panel">
+          <!-- 歩数 -->
+          <div class="lab-activity-panel__item">
+            <div class="lab-activity-panel__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.5 2 10 3.5 10 5c0 1.03-.4 2-1 3"/>
+                <path d="M10 5c1 0 2 .5 2 2 0 1.03-.4 2-1 3"/>
+                <path d="M20 16v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.5 2 14 3.5 14 5c0 1.03.4 2 1 3"/>
+                <path d="M14 5c-1 0-2 .5-2 2 0 1.03.4 2 1 3"/>
+                <path d="M4 22v-6h4l1.5-3 2.5 6 2-3h4v6"/>
+              </svg>
+            </div>
+            <div class="lab-activity-panel__content">
+              <div class="lab-activity-panel__label">歩数</div>
+              <div class="lab-activity-panel__value" id="stepsValue">--</div>
+            </div>
+          </div>
+          <!-- 区切り線 -->
+          <div class="lab-activity-panel__divider"></div>
+          <!-- 移動距離 -->
+          <div class="lab-activity-panel__item">
+            <div class="lab-activity-panel__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div class="lab-activity-panel__content">
+              <div class="lab-activity-panel__label">移動距離</div>
+              <div class="lab-activity-panel__value" id="travelDistance">計測中...</div>
+            </div>
+          </div>
+        </div>
+        <!-- オーバーレイ（未連携時に表示） -->
+        <div class="lab-activity-overlay" id="fitbitOverlay">
+          <div class="lab-activity-overlay__text">Fitbitと連携して歩数を自動取得</div>
+          <button class="lab-activity-overlay__btn" id="fitbitConnectBtn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.5 5.5c0 .828-.56 1.5-1.25 1.5S10 6.328 10 5.5 10.56 4 11.25 4s1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5S10 10.328 10 9.5 10.56 8 11.25 8s1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5s-1.25-.672-1.25-1.5.56-1.5 1.25-1.5 1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5s-1.25-.672-1.25-1.5.56-1.5 1.25-1.5 1.25.672 1.25 1.5zm3-10c0 .828-.56 1.5-1.25 1.5S13 8.328 13 7.5 13.56 6 14.25 6s1.25.672 1.25 1.5zm0 4c0 .828-.56 1.5-1.25 1.5s-1.25-.672-1.25-1.5.56-1.5 1.25-1.5 1.25.672 1.25 1.5zm-6 0c0 .828-.56 1.5-1.25 1.5S7 12.328 7 11.5 7.56 10 8.25 10s1.25.672 1.25 1.5zm0-4c0 .828-.56 1.5-1.25 1.5S7 8.328 7 7.5 7.56 6 8.25 6s1.25.672 1.25 1.5z"/>
+            </svg>
+            Fitbitと連携
+          </button>
+        </div>
+      </div>
+
+      <!-- Fitbit連携解除ボタン（連携済み時のみ表示） -->
+      <div class="lab-fitbit-disconnect hidden" id="fitbitDisconnectArea">
+        <button class="lab-fitbit-disconnect__btn" id="fitbitDisconnectBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+          Fitbit連携を解除
+        </button>
+      </div>
+
+      <!-- キャラクター表示エリア -->
+      <div class="lab-character">
+        <div class="lab-character__inner">
+          <div class="lab-character__professor-wrap">
+            <img src="../poinavi/hakase.png?v=1772536587" alt="ぽいふる博士" class="lab-character__img" />
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="translate-footer">
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="研究室（現在のページ）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6v6"/>
+          <circle cx="6" cy="12" r="1"/>
+          <circle cx="18" cy="8" r="1"/>
+          <circle cx="15" cy="16" r="1"/>
+        </svg>
+        <span class="translate-footer__label">研究室</span>
+      </span>
+      <a href="./shield.html" class="translate-footer__btn" aria-label="シールドページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span class="translate-footer__label">シールド</span>
+      </a>
+      <a href="./signal.html" class="translate-footer__btn" aria-label="シグナルページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12h4"/>
+          <path d="M6 8v8"/>
+          <path d="M10 4v16"/>
+          <path d="M14 8v8"/>
+          <path d="M18 12h4"/>
+        </svg>
+        <span class="translate-footer__label">シグナル</span>
+      </a>
+      <a href="./index.html" class="translate-footer__btn" aria-label="ぽいロボページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="10" rx="2"/>
+          <circle cx="8.5" cy="16" r="1"/>
+          <circle cx="15.5" cy="16" r="1"/>
+          <path d="M12 11V7"/>
+          <path d="M7 7h10"/>
+        </svg>
+        <span class="translate-footer__label">ぽいロボ</span>
+      </a>
+    </footer>
+
+    <script>
+      // ============================================
+      // Fitbit API設定
+      // ============================================
+      // ★ここにFitbit Developer Portalで取得したClient IDを設定してください
+      const FITBIT_CLIENT_ID = "23Q7LM"; // 要設定
+      const FITBIT_REDIRECT_URI = window.location.origin + "/poirobo/lab.html";
+      const FITBIT_SCOPES = "activity";
+      
+      // ============================================
+      // 波紋エフェクト（メインエリアのクリック・タップで心地よいフィードバック）
+      // ============================================
+      function initLabRipple() {
+        const main = document.querySelector(".lab-main");
+        if (!main) return;
+
+        var lastRipple = 0;
+        function createRipple(clientX, clientY, target) {
+          if (!target || target.closest("button, a, input, select, textarea, [role='button']")) return;
+          var now = Date.now();
+          if (now - lastRipple < 400) return;
+          lastRipple = now;
+          const rect = main.getBoundingClientRect();
+          const x = clientX - rect.left;
+          const y = clientY - rect.top;
+          const size = Math.max(rect.width, rect.height) * 0.35;
+
+          const ripple = document.createElement("span");
+          ripple.className = "lab-ripple";
+          ripple.style.cssText = `left:${x - size/2}px;top:${y - size/2}px;width:${size}px;height:${size}px;`;
+          main.appendChild(ripple);
+
+          setTimeout(function() { ripple.remove(); }, 1000);
+        }
+
+        main.addEventListener("click", function(e) {
+          createRipple(e.clientX, e.clientY, e.target);
+        });
+        main.addEventListener("touchend", function(e) {
+          if (e.changedTouches && e.changedTouches[0]) {
+            var t = e.changedTouches[0];
+            var el = document.elementFromPoint(t.clientX, t.clientY);
+            createRipple(t.clientX, t.clientY, el);
+          }
+        }, { passive: true });
+      }
+
+      // ============================================
+      // テーマ管理
+      // ============================================
+      function initTheme() {
+        const savedTheme = localStorage.getItem("poirobo_theme") || "light";
+        applyTheme(savedTheme);
+        updateThemeButton(savedTheme);
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+        document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
+      }
+
+      function updateThemeButton(theme) {
+        const themeToggle = document.getElementById("labThemeToggle");
+        if (!themeToggle) return;
+        const icon = themeToggle.querySelector(".theme-icon");
+        const text = themeToggle.querySelector(".theme-text");
+        if (theme === "dark") {
+          icon.textContent = "🌙";
+          text.textContent = "ダークモード";
+        } else {
+          icon.textContent = "☀️";
+          text.textContent = "ライトモード";
+        }
+      }
+
+      function initThemeToggle() {
+        const themeToggle = document.getElementById("labThemeToggle");
+        if (!themeToggle) return;
+        themeToggle.addEventListener("click", function() {
+          const currentTheme = localStorage.getItem("poirobo_theme") || "light";
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+          localStorage.setItem("poirobo_theme", newTheme);
+          applyTheme(newTheme);
+          updateThemeButton(newTheme);
+        });
+      }
+
+      // ============================================
+      // 設定モーダル
+      // ============================================
+      function initSettingsModal() {
+        const settingsButton = document.getElementById("labSettingsButton");
+        const settingsModal = document.getElementById("labSettingsModal");
+        const settingsClose = document.getElementById("labSettingsClose");
+        const overlay = settingsModal.querySelector(".translate-modal__overlay");
+
+        settingsButton.addEventListener("click", function() {
+          settingsModal.classList.remove("hidden");
+        });
+
+        function closeModal() {
+          settingsModal.classList.add("hidden");
+        }
+
+        settingsClose.addEventListener("click", closeModal);
+        overlay.addEventListener("click", closeModal);
+      }
+
+      // ============================================
+      // 日付・時刻表示
+      // ============================================
+      function updateDateTime() {
+        const now = new Date();
+        const timeEl = document.getElementById("labTime");
+        const dateEl = document.getElementById("labDate");
+        const dayEl = document.getElementById("labDay");
+        
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        timeEl.innerHTML = `${hours[0]}${hours[1]}:<span class="lab-hero__time-min-tens">${minutes[0]}</span>${minutes[1]}`;
+        
+        const month = now.getMonth() + 1;
+        const date = now.getDate();
+        dateEl.textContent = `${month}/${date}`;
+        
+        const daysHiragana = ["にちようび", "げつようび", "かようび", "すいようび", "もくようび", "きんようび", "どようび"];
+        const dayStr = daysHiragana[now.getDay()];
+        dayEl.innerHTML = dayStr === "すいようび"
+          ? '<span class="lab-hero__day-accent">すい</span><span class="lab-hero__day-rest">ようび</span>'
+          : dayStr;
+      }
+
+      // ============================================
+      // 天気取得（Open-Meteo API - 無料）
+      // ============================================
+      const weatherCodeMap = {
+        0: { text: "快晴", icon: "clear" },
+        1: { text: "晴れ", icon: "clear" },
+        2: { text: "やや曇り", icon: "partly_cloudy" },
+        3: { text: "曇り", icon: "cloudy" },
+        45: { text: "霧", icon: "fog" },
+        48: { text: "霧", icon: "fog" },
+        51: { text: "小雨", icon: "drizzle" },
+        53: { text: "雨", icon: "drizzle" },
+        55: { text: "雨", icon: "drizzle" },
+        61: { text: "小雨", icon: "rain" },
+        63: { text: "雨", icon: "rain" },
+        65: { text: "大雨", icon: "rain" },
+        71: { text: "小雪", icon: "snow" },
+        73: { text: "雪", icon: "snow" },
+        75: { text: "大雪", icon: "snow" },
+        80: { text: "にわか雨", icon: "rain" },
+        81: { text: "雨", icon: "rain" },
+        82: { text: "大雨", icon: "rain" },
+        95: { text: "雷雨", icon: "thunderstorm" },
+        96: { text: "雷雨", icon: "thunderstorm" },
+        99: { text: "雷雨", icon: "thunderstorm" }
+      };
+
+      function getWeatherIcon(iconType) {
+        const icons = {
+          clear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>`,
+          partly_cloudy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2v2"/>
+            <path d="M4.93 4.93l1.41 1.41"/>
+            <path d="M20 12h2"/>
+            <path d="M19.07 4.93l-1.41 1.41"/>
+            <path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/>
+            <path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/>
+          </svg>`,
+          cloudy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>`,
+          fog: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14h16"/>
+            <path d="M4 18h16"/>
+            <path d="M4 10h16"/>
+            <path d="M4 6h16"/>
+          </svg>`,
+          drizzle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M8 19v1"/>
+            <path d="M8 14v1"/>
+            <path d="M16 19v1"/>
+            <path d="M16 14v1"/>
+            <path d="M12 21v1"/>
+            <path d="M12 16v1"/>
+          </svg>`,
+          rain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M16 14v6"/>
+            <path d="M8 14v6"/>
+            <path d="M12 16v6"/>
+          </svg>`,
+          snow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="M8 15h.01"/>
+            <path d="M8 19h.01"/>
+            <path d="M12 17h.01"/>
+            <path d="M12 21h.01"/>
+            <path d="M16 15h.01"/>
+            <path d="M16 19h.01"/>
+          </svg>`,
+          thunderstorm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+            <path d="m9.2 22 3-7H8l4-7"/>
+          </svg>`
+        };
+        return icons[iconType] || icons.clear;
+      }
+
+      async function fetchWeather() {
+        const weatherIcon = document.getElementById("weatherIcon");
+        const weatherText = document.getElementById("weatherText");
+        const tempValue = document.getElementById("tempValue");
+
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 300000
+            });
+          });
+
+          const { latitude, longitude } = position.coords;
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`;
+          
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          const temp = Math.round(data.current.temperature_2m);
+          const weatherCode = data.current.weather_code;
+          const weather = weatherCodeMap[weatherCode] || { text: "不明", icon: "clear" };
+          
+          weatherIcon.innerHTML = getWeatherIcon(weather.icon);
+          weatherText.textContent = weather.text;
+          tempValue.textContent = `${temp}°C`;
+
+        } catch (error) {
+          console.error("天気取得エラー:", error);
+          weatherText.textContent = "取得失敗";
+          tempValue.textContent = "--°C";
+        }
+      }
+
+      // ============================================
+      // 移動距離（位置情報から計算）
+      // ============================================
+      let lastPosition = null;
+      let totalDistance = 0; // メートル
+      const MOVEMENT_THRESHOLD = 10; // 10m以上移動で記録
+
+      function getTodayKey() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      }
+
+      function initDistanceTracking() {
+        const savedData = localStorage.getItem("poirobo_distance_" + getTodayKey());
+        if (savedData) {
+          totalDistance = parseFloat(savedData) || 0;
+        }
+        updateDistanceDisplay();
+        
+        if (navigator.geolocation) {
+          navigator.geolocation.watchPosition(
+            handlePositionUpdate,
+            (err) => {
+              console.log("位置情報エラー:", err);
+              document.getElementById("travelDistance").textContent = "非対応";
+            },
+            { enableHighAccuracy: true, maximumAge: 60000, timeout: 30000 }
+          );
+        } else {
+          document.getElementById("travelDistance").textContent = "非対応";
+        }
+      }
+
+      function handlePositionUpdate(position) {
+        const now = Date.now();
+        
+        if (lastPosition) {
+          const distance = calculateDistance(
+            lastPosition.coords.latitude,
+            lastPosition.coords.longitude,
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          
+          // 10m以上移動、かつ30分以内の更新のみカウント
+          if (distance > MOVEMENT_THRESHOLD) {
+            const timeDiff = (now - lastPosition.timestamp) / 1000 / 60;
+            if (timeDiff < 30) {
+              totalDistance += distance;
+              localStorage.setItem("poirobo_distance_" + getTodayKey(), totalDistance);
+              updateDistanceDisplay();
+            }
+          }
+        }
+        
+        lastPosition = {
+          coords: position.coords,
+          timestamp: now
+        };
+        
+        updateDistanceDisplay();
+      }
+
+      function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // 地球の半径（メートル）
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c;
+      }
+
+      function updateDistanceDisplay() {
+        const distanceEl = document.getElementById("travelDistance");
+        
+        if (totalDistance >= 1000) {
+          // 1km以上はkm表示
+          distanceEl.textContent = `${(totalDistance / 1000).toFixed(1)}km`;
+        } else {
+          // 1km未満はm表示
+          distanceEl.textContent = `${Math.round(totalDistance)}m`;
+        }
+      }
+
+      // ============================================
+      // Fitbit連携（OAuth 2.0 Implicit Grant Flow）
+      // ============================================
+      function initFitbit() {
+        // URLハッシュからアクセストークンを取得（OAuth callback後）
+        const hash = window.location.hash;
+        if (hash && hash.includes("access_token")) {
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get("access_token");
+          const expiresIn = params.get("expires_in");
+          
+          if (accessToken) {
+            // トークンを保存
+            const expiresAt = Date.now() + (parseInt(expiresIn, 10) * 1000);
+            localStorage.setItem("fitbit_access_token", accessToken);
+            localStorage.setItem("fitbit_expires_at", expiresAt);
+            
+            // URLをクリーンアップ
+            history.replaceState(null, "", window.location.pathname);
+            
+            // 歩数を取得
+            fetchFitbitSteps(accessToken);
+            updateFitbitUI(true);
+          }
+        } else {
+          // 保存済みトークンをチェック
+          const savedToken = localStorage.getItem("fitbit_access_token");
+          const expiresAt = localStorage.getItem("fitbit_expires_at");
+          
+          if (savedToken && expiresAt && Date.now() < parseInt(expiresAt, 10)) {
+            fetchFitbitSteps(savedToken);
+            updateFitbitUI(true);
+          } else {
+            // トークン期限切れの場合は削除
+            localStorage.removeItem("fitbit_access_token");
+            localStorage.removeItem("fitbit_expires_at");
+            updateFitbitUI(false);
+          }
+        }
+        
+        // 連携ボタンのイベント
+        document.getElementById("fitbitConnectBtn").addEventListener("click", connectFitbit);
+        document.getElementById("fitbitDisconnectBtn").addEventListener("click", disconnectFitbit);
+      }
+
+      function connectFitbit() {
+        const authUrl = `https://www.fitbit.com/oauth2/authorize?` +
+          `response_type=token` +
+          `&client_id=${FITBIT_CLIENT_ID}` +
+          `&redirect_uri=${encodeURIComponent(FITBIT_REDIRECT_URI)}` +
+          `&scope=${encodeURIComponent(FITBIT_SCOPES)}` +
+          `&expires_in=604800`; // 7日間
+        
+        window.location.href = authUrl;
+      }
+
+      function disconnectFitbit() {
+        poinaviConfirm("Fitbit連携を解除しますか？").then(ok => {
+          if (!ok) return;
+          localStorage.removeItem("fitbit_access_token");
+          localStorage.removeItem("fitbit_expires_at");
+          document.getElementById("stepsValue").textContent = "--";
+          updateFitbitUI(false);
+        });
+      }
+
+      function updateFitbitUI(isConnected) {
+        const overlay = document.getElementById("fitbitOverlay");
+        const disconnectArea = document.getElementById("fitbitDisconnectArea");
+        
+        if (isConnected) {
+          // オーバーレイを非表示、解除ボタンを表示
+          overlay.classList.add("hidden");
+          disconnectArea.classList.remove("hidden");
+        } else {
+          // オーバーレイを表示、解除ボタンを非表示
+          overlay.classList.remove("hidden");
+          disconnectArea.classList.add("hidden");
+        }
+      }
+
+      async function fetchFitbitSteps(accessToken) {
+        const stepsEl = document.getElementById("stepsValue");
+        
+        try {
+          const today = getTodayKey();
+          const response = await fetch(
+            `https://api.fitbit.com/1/user/-/activities/date/${today}.json`,
+            {
+              headers: {
+                "Authorization": `Bearer ${accessToken}`
+              }
+            }
+          );
+          
+          if (!response.ok) {
+            if (response.status === 401) {
+              // トークン無効
+              localStorage.removeItem("fitbit_access_token");
+              localStorage.removeItem("fitbit_expires_at");
+              updateFitbitUI(false);
+              stepsEl.textContent = "再連携必要";
+              return;
+            }
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const data = await response.json();
+          const steps = data.summary?.steps || 0;
+          stepsEl.textContent = `${steps.toLocaleString()}歩`;
+          
+        } catch (error) {
+          console.error("Fitbit歩数取得エラー:", error);
+          stepsEl.textContent = "取得失敗";
+        }
+      }
+
+      // ============================================
+      // 初期化
+      // ============================================
+      document.addEventListener("DOMContentLoaded", function() {
+        initTheme();
+        initLabRipple();
+        initSettingsModal();
+        initThemeToggle();
+        
+        // 時刻更新
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        // 天気取得
+        fetchWeather();
+        setInterval(fetchWeather, 600000);
+        
+        // 移動距離
+        initDistanceTracking();
+        
+        // Fitbit連携
+        initFitbit();
+      });
+
+      // 他ページから戻ったとき（bfcache復元等）もテーマを再適用
+      window.addEventListener("pageshow", function(e) {
+        if (e.persisted) {
+          var theme = localStorage.getItem("poirobo_theme") || "light";
+          document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+          document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
+          updateThemeButton(theme);
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -26,11 +26,13 @@
     {"src": "images/**", "use": "@vercel/static"},
     {"src": "public/**", "use": "@vercel/static"},
     {"src": "poinavi/**", "use": "@vercel/static"},
+    {"src": "poirobo/**", "use": "@vercel/static"},
     {"src": "admin/**", "use": "@vercel/static"}
   ],
   "redirects": [
     {"source": "/hakaseAI", "destination": "/hakaseAI/", "permanent": true},
     {"source": "/poinavi", "destination": "/poinavi/", "permanent": true},
+    {"source": "/poirobo", "destination": "/poirobo/", "permanent": true},
     {"source": "/admin", "destination": "/admin/", "permanent": true}
   ],
   "rewrites": [
