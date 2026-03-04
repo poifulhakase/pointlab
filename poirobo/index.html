@@ -210,10 +210,7 @@
       checklistItems.forEach(function(item, i) {
         var div = document.createElement("div");
         div.className = "poirobo-checklist-item";
-        var iconClass = item.point > 0 ? "poirobo-checklist-item__icon--plus" : "poirobo-checklist-item__icon--minus";
-        var sign = item.point > 0 ? "+" : "";
         div.innerHTML =
-          '<div class="poirobo-checklist-item__icon ' + iconClass + '">' + sign + item.point + '</div>' +
           '<span class="poirobo-checklist-item__label">' + item.label + '</span>' +
           '<input type="checkbox" class="poirobo-checklist-item__check" data-idx="' + i + '" style="width:20px;height:20px;accent-color:var(--accent-color);">';
         var cb = div.querySelector("input");
