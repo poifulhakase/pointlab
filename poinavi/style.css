@@ -4421,7 +4421,7 @@ body.lab-page:not(.dark-mode) .lab-hero__day {
 }
 
 .lab-hero__date {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   color: var(--text-secondary);
   margin-top: 8px;
   font-weight: 400;
@@ -4436,7 +4436,7 @@ body.dark-mode .lab-hero__day-rest {
 }
 
 .lab-hero__day {
-  font-size: 0.9375rem;
+  font-size: 1.125rem;
   color: var(--accent-color);
   margin-top: 4px;
   font-weight: 500;
