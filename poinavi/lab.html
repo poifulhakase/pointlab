@@ -787,10 +787,9 @@
         const minutes = String(now.getMinutes()).padStart(2, "0");
         timeEl.innerHTML = `${hours[0]}${hours[1]}:<span class="lab-hero__time-min-tens">${minutes[0]}</span>${minutes[1]}`;
         
-        const year = now.getFullYear();
         const month = now.getMonth() + 1;
         const date = now.getDate();
-        dateEl.textContent = `${year}/${month}/${date}`;
+        dateEl.textContent = `${month}/${date}`;
         
         const daysHiragana = ["にちようび", "げつようび", "かようび", "すいようび", "もくようび", "きんようび", "どようび"];
         const dayStr = daysHiragana[now.getDay()];
