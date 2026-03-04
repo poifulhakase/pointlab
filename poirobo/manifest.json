@@ -1,0 +1,17 @@
+{
+  "name": "ぽいロボ",
+  "short_name": "ぽいロボ",
+  "description": "株式トレード判断補助ツール。地雷回避重視で退場させない。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
