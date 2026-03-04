@@ -4384,13 +4384,13 @@ body.lab-page:not(.dark-mode) .translate-footer .translate-footer__label {
   font-weight: 700;
 }
 body.lab-page:not(.dark-mode) .lab-hero__date {
-  color: #36322D;
+  color: #e0e0e0;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day {
-  color: #36322D;
+  color: #e0e0e0;
 }
 body.lab-page:not(.dark-mode) .lab-hero__day-accent {
-  color: #36322D;
+  color: #e0e0e0;
 }
 
 .lab-main {
