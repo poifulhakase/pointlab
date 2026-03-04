@@ -4389,6 +4389,9 @@ body.lab-page:not(.dark-mode) .lab-hero__date {
 body.lab-page:not(.dark-mode) .lab-hero__day {
   color: #7A9FCC;
 }
+body.lab-page:not(.dark-mode) .lab-hero__day-accent {
+  color: #7A9FCC;
+}
 
 .lab-main {
   flex: 1;
