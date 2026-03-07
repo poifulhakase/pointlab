@@ -2393,7 +2393,7 @@ body.dark-mode .rain-viewer-disclaimer {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 46px;
   padding: 8px 0 20px 0;
 }
 
@@ -3348,6 +3348,7 @@ body.dark-mode .translate-result-item__divider svg {
 
   .translate-voice-area {
     padding: 6px 0 16px 0;
+    gap: 35px;
   }
 
   .translate-voice-btn {
