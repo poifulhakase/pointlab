@@ -192,7 +192,8 @@ function initCurrencyModal() {
   const closeBtn = document.getElementById("currencyModalClose");
   const overlay = modal?.querySelector(".translate-modal__overlay");
   const amountInput = document.getElementById("currencyAmount");
-  const pairSelect = document.getElementById("currencyPair");
+  const fromSelect = document.getElementById("currencyFrom");
+  const toSelect = document.getElementById("currencyTo");
   const resultEl = document.getElementById("currencyResult");
   const swapBtn = document.getElementById("currencySwapBtn");
   const pairDisplay = document.getElementById("currencyPairDisplay");
@@ -204,9 +205,9 @@ function initCurrencyModal() {
   let exchangeRate = null;
 
   function getFromTo() {
-    const val = pairSelect?.value || "JPY-USD";
-    const [from, to] = val.split("-");
-    return { from: from || "JPY", to: to || "USD" };
+    const from = fromSelect?.value || "JPY";
+    const to = toSelect?.value || "USD";
+    return { from, to };
   }
 
   function updateCurrencyPairDisplay() {
@@ -275,25 +276,25 @@ function initCurrencyModal() {
     if (amount > 0) showCurrencyConversionResult(amount, from, result, to);
   }
 
-  if (pairSelect) {
-    pairSelect.addEventListener("change", function() {
+  if (fromSelect) {
+    fromSelect.addEventListener("change", function() {
+      updateCurrencyPairDisplay();
+      fetchExchangeRate();
+    });
+  }
+  if (toSelect) {
+    toSelect.addEventListener("change", function() {
       updateCurrencyPairDisplay();
       fetchExchangeRate();
     });
   }
 
-  if (swapBtn && pairSelect) {
+  if (swapBtn && fromSelect && toSelect) {
     swapBtn.addEventListener("click", function() {
-      const val = pairSelect.value || "JPY-USD";
-      const [from, to] = val.split("-");
-      const reverseVal = (to || "USD") + "-" + (from || "JPY");
-      const opts = pairSelect.options;
-      for (let i = 0; i < opts.length; i++) {
-        if (opts[i].value === reverseVal) {
-          pairSelect.selectedIndex = i;
-          break;
-        }
-      }
+      const fromVal = fromSelect.value;
+      const toVal = toSelect.value;
+      fromSelect.value = toVal;
+      toSelect.value = fromVal;
       updateCurrencyPairDisplay();
       fetchExchangeRate();
     });

@@ -3021,7 +3021,7 @@ body.dark-mode .translate-result-item--latest {
 }
 
 .currency-modal__result {
-  font-size: 1.25rem;
+  font-size: 2.5rem;
   font-weight: 600;
   text-align: right;
   color: var(--accent-color);
@@ -3061,7 +3061,7 @@ body.dark-mode .translate-result-item--latest {
 
 .currency-modal__result {
   padding: 12px 16px;
-  font-size: 1.25rem;
+  font-size: 2.5rem;
   font-weight: 600;
   text-align: right;
   color: var(--accent-color);
@@ -3108,6 +3108,11 @@ body.dark-mode .translate-result-item--latest {
 
 body.dark-mode .currency-modal__key--action {
   background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Cボタンを2列幅に */
+.currency-modal__key--clear {
+  grid-column: span 2;
 }
 
 /* 0ボタンを2列幅に（電卓と同じ） */
