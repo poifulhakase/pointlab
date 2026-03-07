@@ -429,17 +429,8 @@
         </div>
       </div>
 
-      <!-- 音声翻訳ボタン（中央大きめの丸ボタン）と通貨換算ボタン -->
+      <!-- 通貨換算ボタン（左）と音声翻訳ボタン（中央大きめの丸ボタン） -->
       <div class="translate-voice-area">
-        <button class="translate-voice-btn" id="voiceTranslateBtn" type="button" aria-label="音声翻訳">
-          <svg class="translate-voice-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="8" y1="23" x2="16" y2="23"></line>
-          </svg>
-          <span class="translate-voice-btn__label">音声翻訳</span>
-        </button>
         <div class="translate-voice-area__btn-wrapper">
           <button class="translate-camera-btn translate-currency-btn" id="currencyConvertBtn" type="button" aria-label="通貨換算">
             <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -449,6 +440,15 @@
           </button>
           <p class="translate-camera-label">通貨換算</p>
         </div>
+        <button class="translate-voice-btn" id="voiceTranslateBtn" type="button" aria-label="音声翻訳">
+          <svg class="translate-voice-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <span class="translate-voice-btn__label">音声翻訳</span>
+        </button>
       </div>
     </main>
 
@@ -508,6 +508,6 @@
 
     <!-- Tesseract.js OCRライブラリ（unpkg CDNを使用） -->
     <script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
-    <script src="./translate.js?v=65"></script>
+    <script src="./translate.js?v=132"></script>
   </body>
 </html>

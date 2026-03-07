@@ -161,6 +161,7 @@ document.addEventListener("DOMContentLoaded", function() {
   initLanguageSelect();
   initCameraModal();
   initStartPageSelect();
+  initCurrencyModal();
 });
 
 // ============================================
@@ -177,6 +178,128 @@ function initStartPageSelect() {
   // 変更時に保存
   select.addEventListener("change", function() {
     localStorage.setItem("poinavi_start_page", this.value);
+  });
+}
+
+// ============================================
+// 通貨換算モーダル
+// ============================================
+const CURRENCY_API_URL = "https://api.frankfurter.app/latest";
+
+function initCurrencyModal() {
+  const modal = document.getElementById("currencyModal");
+  const openBtn = document.getElementById("currencyConvertBtn");
+  const closeBtn = document.getElementById("currencyModalClose");
+  const overlay = modal?.querySelector(".translate-modal__overlay");
+  const amountInput = document.getElementById("currencyAmount");
+  const fromSelect = document.getElementById("currencyFrom");
+  const toSelect = document.getElementById("currencyTo");
+  const resultEl = document.getElementById("currencyResult");
+  const swapBtn = document.getElementById("currencySwapBtn");
+
+  if (!modal) return;
+
+  let exchangeRate = null;
+
+  function openCurrencyModal() {
+    modal.classList.remove("hidden");
+    history.pushState({ modal: "currency" }, "");
+    fetchExchangeRate();
+  }
+
+  function handleCurrencyBtnOpen(e) {
+    if (e.target.closest("#currencyConvertBtn")) {
+      e.preventDefault();
+      openCurrencyModal();
+    }
+  }
+  document.body.addEventListener("click", handleCurrencyBtnOpen);
+  document.body.addEventListener("touchend", handleCurrencyBtnOpen, { passive: false });
+
+  if (closeBtn) closeBtn.addEventListener("click", closeCurrencyModal);
+
+  if (overlay) overlay.addEventListener("click", closeCurrencyModal);
+
+  function closeCurrencyModal() {
+    modal.classList.add("hidden");
+  }
+
+  function fetchExchangeRate() {
+    const from = fromSelect?.value || "JPY";
+    const to = toSelect?.value || "USD";
+    if (from === to) {
+      exchangeRate = 1;
+      updateResult();
+      return;
+    }
+    fetch(`${CURRENCY_API_URL}?from=${from}&to=${to}`)
+      .then(res => res.json())
+      .then(data => {
+        exchangeRate = data.rates?.[to] ?? null;
+        updateResult();
+      })
+      .catch(() => {
+        exchangeRate = null;
+        if (resultEl) resultEl.textContent = "レート取得失敗";
+      });
+  }
+
+  function updateResult() {
+    const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
+    const from = fromSelect?.value || "JPY";
+    const to = toSelect?.value || "USD";
+    if (!resultEl) return;
+    if (exchangeRate === null) {
+      resultEl.textContent = amount > 0 ? "—" : "—";
+      if (amount > 0) showCurrencyConversionResult(amount, from, null, to);
+      return;
+    }
+    const result = amount * exchangeRate;
+    const resultStr = result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    resultEl.textContent = resultStr;
+    if (amount > 0) showCurrencyConversionResult(amount, from, result, to);
+  }
+
+  if (fromSelect) fromSelect.addEventListener("change", fetchExchangeRate);
+  if (toSelect) toSelect.addEventListener("change", fetchExchangeRate);
+
+  if (swapBtn && fromSelect && toSelect) {
+    swapBtn.addEventListener("click", function() {
+      const fromVal = fromSelect.value;
+      const fromIdx = fromSelect.selectedIndex;
+      const toVal = toSelect.value;
+      const toIdx = toSelect.selectedIndex;
+      fromSelect.selectedIndex = toIdx;
+      toSelect.selectedIndex = fromIdx;
+      fetchExchangeRate();
+    });
+  }
+
+  if (amountInput) {
+    modal.querySelectorAll(".currency-modal__key").forEach(btn => {
+      btn.addEventListener("click", function() {
+        const key = this.getAttribute("data-key");
+        let val = amountInput.value || "0";
+        if (key === "backspace") {
+          val = val.slice(0, -1) || "0";
+        } else if (key === "clear") {
+          val = "0";
+        } else if (key === ".") {
+          if (!val.includes(".")) val = val === "0" ? "0." : val + ".";
+        } else {
+          val = val === "0" && key !== "." ? key : val + key;
+        }
+        amountInput.value = val;
+        updateResult();
+      });
+    });
+  }
+
+  window.addEventListener("popstate", function() {
+    const currencyModal = document.getElementById("currencyModal");
+    if (currencyModal && !currencyModal.classList.contains("hidden")) {
+      currencyModal.classList.add("hidden");
+    }
   });
 }
 
@@ -549,6 +672,89 @@ function showVoiceTranslationResult(originalText, translatedText, sourceLang, ta
   
   // コピーボタンのイベントを設定
   setupCopyButtons();
+}
+
+// ============================================
+// 通貨換算結果を翻訳結果エリアに表示
+// ============================================
+function showCurrencyConversionResult(amount, fromCurrency, result, toCurrency) {
+  const resultArea = document.getElementById("translateResultArea");
+  if (!resultArea) return;
+
+  const amountStr = Number(amount).toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+  const resultStr = result != null
+    ? Number(result).toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 })
+    : "—";
+  const copyText = result != null ? `${amountStr} ${fromCurrency} = ${resultStr} ${toCurrency}` : `${amountStr} ${fromCurrency}`;
+
+  const typeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="12" y1="1" x2="12" y2="23"></line>
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+  </svg>`;
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+  const existingCurrency = resultArea.querySelector(".translate-result-item--currency");
+  const resultHTML = `
+    <div class="translate-result-item translate-result-item--currency" data-type="currency" data-copy="${encodeURIComponent(copyText)}">
+      <div class="translate-result-item__header">
+        <span class="translate-result-item__icon">${typeIcon}</span>
+        <span class="translate-result-item__label">通貨換算</span>
+        <span class="translate-result-item__lang">${fromCurrency} → ${toCurrency}</span>
+        <span class="translate-result-item__time">${timeStr}</span>
+      </div>
+      <div class="translate-result-item__content">
+        <div class="translate-result-item__original">
+          <span class="translate-result-item__tag">変換元</span>
+          <p>${escapeHtmlForDisplay(amountStr)} ${fromCurrency}</p>
+        </div>
+        <div class="translate-result-item__divider">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="5 12 12 19 19 12"></polyline>
+          </svg>
+        </div>
+        <div class="translate-result-item__translated">
+          <span class="translate-result-item__tag">換算結果</span>
+          <p>${escapeHtmlForDisplay(resultStr)} ${toCurrency}</p>
+        </div>
+      </div>
+      <div class="translate-result-item__actions">
+        <button class="translate-result-item__action-btn copy-currency-result-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>結果をコピー</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  const placeholder = resultArea.querySelector(".translate-result-placeholder");
+  if (placeholder) placeholder.remove();
+
+  resultArea.querySelectorAll(".translate-result-item--latest").forEach(function(item) {
+    item.classList.remove("translate-result-item--latest");
+  });
+
+  if (existingCurrency) {
+    existingCurrency.outerHTML = resultHTML;
+  } else {
+    resultArea.insertAdjacentHTML("afterbegin", resultHTML);
+  }
+
+  const latestItem = resultArea.querySelector(".translate-result-item--currency");
+  if (latestItem) latestItem.classList.add("translate-result-item--latest");
+
+  resultArea.scrollTop = 0;
+
+  latestItem?.querySelector(".copy-currency-result-btn")?.addEventListener("click", function() {
+    const text = decodeURIComponent(latestItem.dataset.copy || "");
+    if (text && typeof copyToClipboard === "function") {
+      copyToClipboard(text, this);
+    }
+  });
 }
 
 // 翻訳結果を読み上げる
