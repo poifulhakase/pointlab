@@ -196,14 +196,22 @@ function initCurrencyModal() {
   const toSelect = document.getElementById("currencyTo");
   const resultEl = document.getElementById("currencyResult");
   const swapBtn = document.getElementById("currencySwapBtn");
+  const pairDisplay = document.getElementById("currencyPairDisplay");
 
   if (!modal) return;
 
   let exchangeRate = null;
 
+  function updateCurrencyPairDisplay() {
+    const from = fromSelect?.value || "JPY";
+    const to = toSelect?.value || "USD";
+    if (pairDisplay) pairDisplay.textContent = from + " → " + to;
+  }
+
   function openCurrencyModal() {
     modal.classList.remove("hidden");
     history.pushState({ modal: "currency" }, "");
+    updateCurrencyPairDisplay();
     fetchExchangeRate();
   }
 
@@ -225,6 +233,7 @@ function initCurrencyModal() {
   }
 
   function fetchExchangeRate() {
+    updateCurrencyPairDisplay();
     const from = fromSelect?.value || "JPY";
     const to = toSelect?.value || "USD";
     if (from === to) {
@@ -260,17 +269,26 @@ function initCurrencyModal() {
     if (amount > 0) showCurrencyConversionResult(amount, from, result, to);
   }
 
-  if (fromSelect) fromSelect.addEventListener("change", fetchExchangeRate);
-  if (toSelect) toSelect.addEventListener("change", fetchExchangeRate);
+  if (fromSelect) {
+    fromSelect.addEventListener("change", function() {
+      updateCurrencyPairDisplay();
+      fetchExchangeRate();
+    });
+  }
+  if (toSelect) {
+    toSelect.addEventListener("change", function() {
+      updateCurrencyPairDisplay();
+      fetchExchangeRate();
+    });
+  }
 
   if (swapBtn && fromSelect && toSelect) {
     swapBtn.addEventListener("click", function() {
-      const fromVal = fromSelect.value;
       const fromIdx = fromSelect.selectedIndex;
-      const toVal = toSelect.value;
       const toIdx = toSelect.selectedIndex;
       fromSelect.selectedIndex = toIdx;
       toSelect.selectedIndex = fromIdx;
+      updateCurrencyPairDisplay();
       fetchExchangeRate();
     });
   }

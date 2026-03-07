@@ -3002,26 +3002,27 @@ body.dark-mode .translate-result-item--latest {
   min-height: 24px;
 }
 
+/* 通貨換算テンキー（電卓風） */
 .currency-modal__keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
 .currency-modal__key {
-  height: 48px;
+  height: 52px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 6px;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -3030,11 +3031,22 @@ body.dark-mode .translate-result-item--latest {
 }
 
 .currency-modal__key:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
+/* 電卓風：上段の機能ボタン（C, ×, ⌫） */
 .currency-modal__key--action {
-  background-color: var(--border-color);
+  background-color: rgba(128, 128, 128, 0.15);
+  font-size: 1rem;
+}
+
+body.dark-mode .currency-modal__key--action {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 0ボタンを2列幅に（電卓と同じ） */
+.currency-modal__key--zero {
+  grid-column: span 2;
 }
 
 .currency-modal__disclaimer {
