@@ -602,7 +602,7 @@ function resetTranslationArea() {
   
   resultArea.innerHTML = `
     <div class="translate-result-placeholder">
-      <p>翻訳結果がここに表示されます</p>
+      <p>翻訳がここに表示されます</p>
     </div>
   `;
   

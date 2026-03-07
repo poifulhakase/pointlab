@@ -292,13 +292,96 @@
       </div>
     </div>
 
+    <!-- 通貨換算モーダル -->
+    <div id="currencyModal" class="translate-modal currency-modal hidden">
+      <div class="translate-modal__overlay currency-modal__overlay"></div>
+      <div class="translate-modal__content currency-modal__content">
+        <div class="translate-modal__header currency-modal__header">
+          <h2 class="translate-modal__title currency-modal__title">通貨換算</h2>
+          <button class="translate-modal__close currency-modal__close" id="currencyModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body currency-modal__body">
+          <div class="currency-modal__currencies">
+            <div class="currency-modal__currency-row">
+              <select id="currencyFrom" class="currency-modal__select">
+                <option value="JPY">JPY 日本円</option>
+                <option value="USD">USD 米ドル</option>
+                <option value="EUR">EUR ユーロ</option>
+                <option value="GBP">GBP 英ポンド</option>
+                <option value="CNY">CNY 人民元</option>
+                <option value="KRW">KRW 韓国ウォン</option>
+                <option value="THB">THB タイバーツ</option>
+                <option value="TWD">TWD 台湾ドル</option>
+                <option value="AUD">AUD 豪ドル</option>
+                <option value="CHF">CHF スイスフラン</option>
+              </select>
+              <input type="text" id="currencyAmount" class="currency-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
+            </div>
+            <div class="currency-modal__swap-row">
+              <button type="button" class="currency-modal__swap-btn" id="currencySwapBtn" aria-label="通貨を入れ替え">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="17 1 21 5 17 9"></polyline>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                  <polyline points="7 23 3 19 7 15"></polyline>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="currency-modal__currency-row">
+              <select id="currencyTo" class="currency-modal__select">
+                <option value="USD">USD 米ドル</option>
+                <option value="JPY" selected>JPY 日本円</option>
+                <option value="EUR">EUR ユーロ</option>
+                <option value="GBP">GBP 英ポンド</option>
+                <option value="CNY">CNY 人民元</option>
+                <option value="KRW">KRW 韓国ウォン</option>
+                <option value="THB">THB タイバーツ</option>
+                <option value="TWD">TWD 台湾ドル</option>
+                <option value="AUD">AUD 豪ドル</option>
+                <option value="CHF">CHF スイスフラン</option>
+              </select>
+              <div id="currencyResult" class="currency-modal__result">—</div>
+            </div>
+          </div>
+          <div class="currency-modal__keypad">
+            <button type="button" class="currency-modal__key" data-key="7">7</button>
+            <button type="button" class="currency-modal__key" data-key="8">8</button>
+            <button type="button" class="currency-modal__key" data-key="9">9</button>
+            <button type="button" class="currency-modal__key" data-key="4">4</button>
+            <button type="button" class="currency-modal__key" data-key="5">5</button>
+            <button type="button" class="currency-modal__key" data-key="6">6</button>
+            <button type="button" class="currency-modal__key" data-key="1">1</button>
+            <button type="button" class="currency-modal__key" data-key="2">2</button>
+            <button type="button" class="currency-modal__key" data-key="3">3</button>
+            <button type="button" class="currency-modal__key" data-key="0">0</button>
+            <button type="button" class="currency-modal__key" data-key=".">.</button>
+            <button type="button" class="currency-modal__key currency-modal__key--action" data-key="backspace" aria-label="1桁削除">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                <line x1="18" y1="9" x2="12" y2="15"></line>
+                <line x1="12" y1="9" x2="18" y2="15"></line>
+              </svg>
+            </button>
+            <button type="button" class="currency-modal__key currency-modal__key--action currency-modal__key--clear" data-key="clear">C</button>
+          </div>
+          <p class="currency-modal__disclaimer">為替レートは参考値です（Frankfurter API）</p>
+        </div>
+      </div>
+    </div>
+
+
     <!-- メインコンテンツ -->
     <main class="translate-main">
       <h1 class="visually-hidden">ぽいナビ - 翻訳：多言語翻訳・OCR・音声認識</h1>
       <!-- テキスト表示エリア -->
       <div class="translate-result-area" id="translateResultArea">
         <div class="translate-result-placeholder">
-          <p>翻訳結果がここに表示されます</p>
+          <p>翻訳がここに表示されます</p>
         </div>
       </div>
 
@@ -346,7 +429,7 @@
         </div>
       </div>
 
-      <!-- 音声翻訳ボタン（中央大きめの丸ボタン） -->
+      <!-- 音声翻訳ボタン（中央大きめの丸ボタン）と通貨換算ボタン -->
       <div class="translate-voice-area">
         <button class="translate-voice-btn" id="voiceTranslateBtn" type="button" aria-label="音声翻訳">
           <svg class="translate-voice-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -357,6 +440,15 @@
           </svg>
           <span class="translate-voice-btn__label">音声翻訳</span>
         </button>
+        <div class="translate-voice-area__btn-wrapper">
+          <button class="translate-camera-btn translate-currency-btn" id="currencyConvertBtn" type="button" aria-label="通貨換算">
+            <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </button>
+          <p class="translate-camera-label">通貨換算</p>
+        </div>
       </div>
     </main>
 
