@@ -3037,10 +3037,6 @@ body.dark-mode .translate-result-item--latest {
   background-color: var(--border-color);
 }
 
-.currency-modal__key--clear {
-  grid-column: span 2;
-}
-
 .currency-modal__disclaimer {
   font-size: 0.75rem;
   color: var(--text-secondary);
