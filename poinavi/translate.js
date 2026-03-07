@@ -192,20 +192,28 @@ function initCurrencyModal() {
   const closeBtn = document.getElementById("currencyModalClose");
   const overlay = modal?.querySelector(".translate-modal__overlay");
   const amountInput = document.getElementById("currencyAmount");
-  const fromSelect = document.getElementById("currencyFrom");
-  const toSelect = document.getElementById("currencyTo");
+  const pairSelect = document.getElementById("currencyPair");
   const resultEl = document.getElementById("currencyResult");
   const swapBtn = document.getElementById("currencySwapBtn");
   const pairDisplay = document.getElementById("currencyPairDisplay");
+  const fromUnitEl = document.getElementById("currencyFromUnit");
+  const toUnitEl = document.getElementById("currencyToUnit");
 
   if (!modal) return;
 
   let exchangeRate = null;
 
+  function getFromTo() {
+    const val = pairSelect?.value || "JPY-USD";
+    const [from, to] = val.split("-");
+    return { from: from || "JPY", to: to || "USD" };
+  }
+
   function updateCurrencyPairDisplay() {
-    const from = fromSelect?.value || "JPY";
-    const to = toSelect?.value || "USD";
+    const { from, to } = getFromTo();
     if (pairDisplay) pairDisplay.textContent = from + " → " + to;
+    if (fromUnitEl) fromUnitEl.textContent = from;
+    if (toUnitEl) toUnitEl.textContent = to;
   }
 
   function openCurrencyModal() {
@@ -234,8 +242,7 @@ function initCurrencyModal() {
 
   function fetchExchangeRate() {
     updateCurrencyPairDisplay();
-    const from = fromSelect?.value || "JPY";
-    const to = toSelect?.value || "USD";
+    const { from, to } = getFromTo();
     if (from === to) {
       exchangeRate = 1;
       updateResult();
@@ -255,8 +262,7 @@ function initCurrencyModal() {
 
   function updateResult() {
     const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
-    const from = fromSelect?.value || "JPY";
-    const to = toSelect?.value || "USD";
+    const { from, to } = getFromTo();
     if (!resultEl) return;
     if (exchangeRate === null) {
       resultEl.textContent = amount > 0 ? "—" : "—";
@@ -269,25 +275,25 @@ function initCurrencyModal() {
     if (amount > 0) showCurrencyConversionResult(amount, from, result, to);
   }
 
-  if (fromSelect) {
-    fromSelect.addEventListener("change", function() {
-      updateCurrencyPairDisplay();
-      fetchExchangeRate();
-    });
-  }
-  if (toSelect) {
-    toSelect.addEventListener("change", function() {
+  if (pairSelect) {
+    pairSelect.addEventListener("change", function() {
       updateCurrencyPairDisplay();
       fetchExchangeRate();
     });
   }
 
-  if (swapBtn && fromSelect && toSelect) {
+  if (swapBtn && pairSelect) {
     swapBtn.addEventListener("click", function() {
-      const fromIdx = fromSelect.selectedIndex;
-      const toIdx = toSelect.selectedIndex;
-      fromSelect.selectedIndex = toIdx;
-      toSelect.selectedIndex = fromIdx;
+      const val = pairSelect.value || "JPY-USD";
+      const [from, to] = val.split("-");
+      const reverseVal = (to || "USD") + "-" + (from || "JPY");
+      const opts = pairSelect.options;
+      for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value === reverseVal) {
+          pairSelect.selectedIndex = i;
+          break;
+        }
+      }
       updateCurrencyPairDisplay();
       fetchExchangeRate();
     });

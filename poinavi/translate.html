@@ -179,68 +179,26 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">通貨換算</div>
             <div class="translate-modal__item">
-              <label class="translate-modal__label">変換元</label>
-              <select id="currencyFrom" class="translate-modal__select">
-                <option value="JPY">JPY 日本円</option>
-                <option value="USD">USD 米ドル</option>
-                <option value="EUR">EUR ユーロ</option>
-                <option value="GBP">GBP 英ポンド</option>
-                <option value="CNY">CNY 人民元</option>
-                <option value="KRW">KRW 韓国ウォン</option>
-                <option value="THB">THB タイバーツ</option>
-                <option value="TWD">TWD 台湾ドル</option>
-                <option value="AUD">AUD 豪ドル</option>
-                <option value="CHF">CHF スイスフラン</option>
-              </select>
-            </div>
-            <div class="translate-modal__item">
-              <label class="translate-modal__label">変換先</label>
-              <select id="currencyTo" class="translate-modal__select">
-                <option value="USD">USD 米ドル</option>
-                <option value="JPY" selected>JPY 日本円</option>
-                <option value="EUR">EUR ユーロ</option>
-                <option value="GBP">GBP 英ポンド</option>
-                <option value="CNY">CNY 人民元</option>
-                <option value="KRW">KRW 韓国ウォン</option>
-                <option value="THB">THB タイバーツ</option>
-                <option value="TWD">TWD 台湾ドル</option>
-                <option value="AUD">AUD 豪ドル</option>
-                <option value="CHF">CHF スイスフラン</option>
-              </select>
-            </div>
-          </div>
-          
-          <!-- 通貨換算セクション -->
-          <div class="translate-modal__section">
-            <div class="translate-modal__section-title">通貨換算</div>
-            <div class="translate-modal__item">
-              <label class="translate-modal__label">変換元</label>
-              <select id="currencyFrom" class="translate-modal__select">
-                <option value="JPY">JPY 日本円</option>
-                <option value="USD">USD 米ドル</option>
-                <option value="EUR">EUR ユーロ</option>
-                <option value="GBP">GBP 英ポンド</option>
-                <option value="CNY">CNY 人民元</option>
-                <option value="KRW">KRW 韓国ウォン</option>
-                <option value="THB">THB タイバーツ</option>
-                <option value="TWD">TWD 台湾ドル</option>
-                <option value="AUD">AUD 豪ドル</option>
-                <option value="CHF">CHF スイスフラン</option>
-              </select>
-            </div>
-            <div class="translate-modal__item">
-              <label class="translate-modal__label">変換先</label>
-              <select id="currencyTo" class="translate-modal__select">
-                <option value="USD">USD 米ドル</option>
-                <option value="JPY" selected>JPY 日本円</option>
-                <option value="EUR">EUR ユーロ</option>
-                <option value="GBP">GBP 英ポンド</option>
-                <option value="CNY">CNY 人民元</option>
-                <option value="KRW">KRW 韓国ウォン</option>
-                <option value="THB">THB タイバーツ</option>
-                <option value="TWD">TWD 台湾ドル</option>
-                <option value="AUD">AUD 豪ドル</option>
-                <option value="CHF">CHF スイスフラン</option>
+              <label class="translate-modal__label">通貨ペア</label>
+              <select id="currencyPair" class="translate-modal__select">
+                <option value="JPY-USD">日本円 → 米ドル</option>
+                <option value="USD-JPY">米ドル → 日本円</option>
+                <option value="JPY-EUR">日本円 → ユーロ</option>
+                <option value="EUR-JPY">ユーロ → 日本円</option>
+                <option value="JPY-KRW">日本円 → 韓国ウォン</option>
+                <option value="KRW-JPY">韓国ウォン → 日本円</option>
+                <option value="JPY-CNY">日本円 → 人民元</option>
+                <option value="CNY-JPY">人民元 → 日本円</option>
+                <option value="JPY-THB">日本円 → タイバーツ</option>
+                <option value="THB-JPY">タイバーツ → 日本円</option>
+                <option value="JPY-TWD">日本円 → 台湾ドル</option>
+                <option value="TWD-JPY">台湾ドル → 日本円</option>
+                <option value="JPY-GBP">日本円 → 英ポンド</option>
+                <option value="GBP-JPY">英ポンド → 日本円</option>
+                <option value="JPY-AUD">日本円 → 豪ドル</option>
+                <option value="AUD-JPY">豪ドル → 日本円</option>
+                <option value="JPY-CHF">日本円 → スイスフラン</option>
+                <option value="CHF-JPY">スイスフラン → 日本円</option>
               </select>
             </div>
           </div>
@@ -377,12 +335,9 @@
         </div>
         <div class="translate-modal__body currency-modal__body">
           <div class="currency-modal__currencies">
-            <div class="currency-modal__currency-row">
-              <div class="currency-modal__pair" id="currencyPairDisplay">JPY → USD</div>
-              <input type="text" id="currencyAmount" class="currency-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
-            </div>
-            <div class="currency-modal__swap-row">
-              <button type="button" class="currency-modal__swap-btn" id="currencySwapBtn" aria-label="通貨を入れ替え">
+            <div class="currency-modal__pair-row">
+              <span class="currency-modal__pair" id="currencyPairDisplay">JPY → USD</span>
+              <button type="button" class="currency-modal__swap-btn currency-modal__swap-btn--inline" id="currencySwapBtn" aria-label="通貨を入れ替え">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="17 1 21 5 17 9"></polyline>
                   <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
@@ -392,7 +347,16 @@
               </button>
             </div>
             <div class="currency-modal__currency-row">
-              <div id="currencyResult" class="currency-modal__result">—</div>
+              <div class="currency-modal__input-wrap">
+                <input type="text" id="currencyAmount" class="currency-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
+                <span class="currency-modal__unit" id="currencyFromUnit">JPY</span>
+              </div>
+            </div>
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__result-wrap">
+                <span id="currencyResult" class="currency-modal__result">—</span>
+                <span class="currency-modal__unit" id="currencyToUnit">USD</span>
+              </div>
             </div>
           </div>
           <div class="currency-modal__keypad">
