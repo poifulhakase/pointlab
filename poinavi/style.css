@@ -4099,6 +4099,36 @@ body.dark-mode .memo-item {
   color: var(--text-secondary);
 }
 
+.memo-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.memo-item__copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.memo-item__copy:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: var(--accent-color, #007bff);
+}
+
+.memo-item__copy svg {
+  width: 16px;
+  height: 16px;
+}
+
 .memo-item__delete {
   display: flex;
   align-items: center;
