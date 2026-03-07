@@ -2387,7 +2387,7 @@ body.dark-mode .rain-viewer-disclaimer {
   background-color: var(--bg-primary);
 }
 
-/* 音声翻訳エリア（通貨換算ボタンと音声翻訳を横並び） */
+/* 音声翻訳エリア（通貨換算ボタン左・音声翻訳中央・右スペーサーでバランス） */
 .translate-voice-area {
   display: flex;
   flex-direction: row;
@@ -2402,7 +2402,16 @@ body.dark-mode .rain-viewer-disclaimer {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  flex: 0 0 60px;
   min-width: 60px;
+}
+
+/* 音声翻訳を中央に保つための右側スペーサー（通貨ボタンと同幅） */
+.translate-voice-area__btn-wrapper--spacer {
+  flex: 0 0 60px;
+  min-width: 60px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .translate-voice-btn {
