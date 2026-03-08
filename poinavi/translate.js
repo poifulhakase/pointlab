@@ -184,7 +184,7 @@ function initStartPageSelect() {
 }
 
 // ============================================
-// 通貨換算モーダル
+// 通貨モーダル
 // ============================================
 const CURRENCY_API_URL = "https://api.frankfurter.app/latest";
 
@@ -343,7 +343,7 @@ function initCurrencyModal() {
 }
 
 // ============================================
-// 単位換算モーダル（変換元・変換先で個別選択）
+// 単位モーダル（変換元・変換先で個別選択）
 // ============================================
 // カテゴリごとの単位一覧と換算係数（基準単位への変換: 1単位 = toBase 基準単位）
 const UNIT_CATEGORIES = {
@@ -571,7 +571,7 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
     <div class="translate-result-item translate-result-item--unit" data-type="unit" data-copy="${encodeURIComponent(copyText)}">
       <div class="translate-result-item__header">
         <span class="translate-result-item__icon">${typeIcon}</span>
-        <span class="translate-result-item__label">単位換算</span>
+        <span class="translate-result-item__label">単位</span>
         <span class="translate-result-item__lang">${fromUnit} → ${toUnit}</span>
         <span class="translate-result-item__time">${timeStr}</span>
       </div>
@@ -817,7 +817,7 @@ function initLanguageSelect() {
     localStorage.setItem("poinavi_target_lang", targetLang);
   });
 
-  // 単位換算の初期化（変換元・変換先で個別選択）
+  // 単位の初期化（変換元・変換先で個別選択）
   const OLD_UNIT_MIGRATION = {
     length_cm_inch: { category: "length", from: "cm", to: "inch" },
     length_cm_ft: { category: "length", from: "cm", to: "ft" },
@@ -1151,7 +1151,7 @@ function showVoiceTranslationResult(originalText, translatedText, sourceLang, ta
 }
 
 // ============================================
-// 通貨換算結果を翻訳結果エリアに表示
+// 通貨結果を翻訳結果エリアに表示
 // ============================================
 function showCurrencyConversionResult(amount, fromCurrency, result, toCurrency) {
   const resultArea = document.getElementById("translateResultArea");
@@ -1175,7 +1175,7 @@ function showCurrencyConversionResult(amount, fromCurrency, result, toCurrency) 
     <div class="translate-result-item translate-result-item--currency" data-type="currency" data-copy="${encodeURIComponent(copyText)}">
       <div class="translate-result-item__header">
         <span class="translate-result-item__icon">${typeIcon}</span>
-        <span class="translate-result-item__label">通貨換算</span>
+        <span class="translate-result-item__label">通貨</span>
         <span class="translate-result-item__lang">${fromCurrency} → ${toCurrency}</span>
         <span class="translate-result-item__time">${timeStr}</span>
       </div>
@@ -1260,7 +1260,7 @@ function speakText(text, lang) {
 }
 
 // ============================================
-// カメラ翻訳の初期化
+// カメラの初期化
 // ============================================
 function initCameraTranslation() {
   const cameraBtn = document.getElementById("cameraTranslateBtn");
@@ -1273,7 +1273,7 @@ function initCameraTranslation() {
 }
 
 // ============================================
-// 画像翻訳の初期化
+// 画像の初期化
 // ============================================
 function initImageTranslation() {
   const imageBtn = document.getElementById("imageTranslateBtn");
@@ -1334,7 +1334,7 @@ function initImageTranslation() {
           showImageTranslationResult(ocrResult, translatedText, imageData);
         }, 300);
       } catch (err) {
-        console.error("画像翻訳エラー:", err);
+        console.error("画像エラー:", err);
         closeImageTranslateOverlay();
         poinaviAlert("処理中にエラーが発生しました。\n\n" + (err.message || "不明なエラー"));
       }
@@ -2152,7 +2152,7 @@ async function translateWithMyMemory(text, sourceLang, targetLang) {
   return data.responseData.translatedText;
 }
 
-// カメラ翻訳用（既存の関数を維持）
+// カメラ用（既存の関数を維持）
 async function translateText(text, sourceLang, targetLang) {
   return translateTextLibre(text, sourceLang, targetLang);
 }
@@ -2227,7 +2227,7 @@ function showOCRTranslationResult(originalText, translatedText, imageData) {
 // 翻訳結果HTMLを生成
 // ============================================
 function createTranslationResultHTML(type, data) {
-  const typeLabels = { voice: "会話モード", ocr: "カメラ翻訳", image: "画像翻訳" };
+  const typeLabels = { voice: "会話モード", ocr: "カメラ", image: "画像" };
   const typeLabel = typeLabels[type] || "翻訳";
   const typeIcons = {
     voice: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2264,7 +2264,7 @@ function createTranslationResultHTML(type, data) {
   const plainOriginal = data.original || "";
   const plainTranslated = data.translated || "";
   
-  // 言語ラベルを取得（音声翻訳の場合はdataから、カメラ翻訳の場合はグローバル設定から）
+  // 言語ラベルを取得（音声翻訳の場合はdataから、カメラの場合はグローバル設定から）
   let languageLabel;
   if (data.sourceLang && data.targetLang) {
     languageLabel = `${getLangName(data.sourceLang)} → ${getLangName(data.targetLang)}`;

@@ -2395,8 +2395,14 @@ body.dark-mode .rain-viewer-disclaimer {
   background-color: var(--bg-primary);
 }
 
-/* 音声翻訳エリア（グリッドでQR読み取り・会話モードを中央揃え） */
+/* 音声翻訳エリア（通貨ボタン左・音声翻訳中央・右スペーサーでバランス） */
 .translate-voice-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 46px;
+  padding: 8px 0 20px 0;
   flex-shrink: 0;
 }
 
@@ -2798,7 +2804,7 @@ body.dark-mode .translate-voice-btn.listening::after {
 
 .translate-result-placeholder p {
   color: var(--text-secondary);
-  font-size: 0.9375rem;
+  font-size: 1.3125rem; /* 0.9375rem × 1.4 */
   text-align: center;
 }
 
@@ -2933,49 +2939,21 @@ body.dark-mode .translate-result-item--latest {
   opacity: 0.6;
 }
 
-/* カメラ翻訳エリア */
-/* QR読み取り・会話モードを左右中央で揃えるグリッド */
-.translate-buttons-area {
-  flex-shrink: 0;
-}
-
-.translate-buttons-grid {
-  display: grid;
-  grid-template-columns: 60px 130px 60px;
-  gap: 0 46px;
-  justify-content: center;
-  align-items: center;
-}
-
-.translate-buttons-grid__cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.translate-buttons-grid__cell--left {
-  justify-content: center;
-}
-
-.translate-buttons-grid__cell--center {
-  justify-content: center;
-}
-
-.translate-buttons-grid__cell--right {
-  justify-content: center;
-}
-
+/* カメラエリア */
 .translate-camera-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 0 8px 0;
+  gap: 8px;
+  padding: 30px 0 12px 0;
   flex-shrink: 0;
 }
 
-.translate-voice-area {
-  padding: 8px 0 20px 0;
+.translate-camera-area__buttons {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 46px;
 }
 
 .translate-camera-area__btn-wrapper {
@@ -3219,7 +3197,7 @@ body.dark-mode .translate-result-item--latest {
   box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.15);
 }
 
-/* 通貨換算モーダル */
+/* 通貨モーダル */
 .currency-modal__currencies {
   display: flex;
   flex-direction: column;
@@ -3371,7 +3349,7 @@ body.dark-mode .translate-result-item--latest {
   min-height: 24px;
 }
 
-/* 通貨換算テンキー（電卓風） */
+/* 通貨テンキー（電卓風） */
 .currency-modal__keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3431,7 +3409,7 @@ body.dark-mode .currency-modal__key--action {
 }
 
 /* ============================================
-   単位換算モーダル（モダンデザイン）
+   単位モーダル（モダンデザイン）
    ============================================ */
 
 .unit-modal__header {
@@ -4034,9 +4012,8 @@ body.dark-mode .translate-result-item__divider svg {
     padding: 24px 0 8px 0;
   }
 
-  .translate-buttons-grid {
-    grid-template-columns: 52px 110px 52px;
-    gap: 0 35px;
+  .translate-camera-area__buttons {
+    gap: 35px;
   }
 
   .translate-camera-area__btn-wrapper {
@@ -4175,7 +4152,7 @@ body.dark-mode .translate-result-item__divider svg {
 }
 
 /* ============================================
-   カメラ翻訳モーダル
+   カメラモーダル
    ============================================ */
 .camera-modal {
   position: fixed;
@@ -4526,7 +4503,7 @@ body.dark-mode .translate-result-item__divider svg {
   transition: width 0.3s ease;
 }
 
-/* 画像翻訳 処理中オーバーレイ */
+/* 画像 処理中オーバーレイ */
 .image-translate-overlay {
   position: fixed;
   inset: 0;
@@ -4725,12 +4702,13 @@ body.dark-mode .memo-warning {
   color: var(--text-secondary);
 }
 
-.memo-empty p {
+.memo-empty p:not(.memo-empty__hint) {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1.3125rem; /* 0.9375rem × 1.4 */
 }
 
 .memo-empty__hint {
+  margin: 0;
   margin-top: 8px !important;
   font-size: 0.8125rem !important;
   opacity: 0.7;
