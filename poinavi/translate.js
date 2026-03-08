@@ -301,6 +301,14 @@ function initCurrencyModal() {
     });
   }
 
+  const currencySettingsBtn = document.getElementById("currencySettingsBtn");
+  if (currencySettingsBtn) {
+    currencySettingsBtn.addEventListener("click", function() {
+      closeCurrencyModal();
+      openSettingsModalToSection("settingsCurrencySection");
+    });
+  }
+
   if (amountInput) {
     modal.querySelectorAll(".currency-modal__key").forEach(btn => {
       btn.addEventListener("click", function() {
@@ -417,6 +425,14 @@ function initUnitConversionModal() {
 
   function closeUnitModal() {
     modal.classList.add("hidden");
+  }
+
+  const unitSettingsBtn = document.getElementById("unitSettingsBtn");
+  if (unitSettingsBtn) {
+    unitSettingsBtn.addEventListener("click", function() {
+      closeUnitModal();
+      openSettingsModalToSection("settingsUnitSection");
+    });
   }
 
   if (categorySelect) {
@@ -566,6 +582,22 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
 // ============================================
 // 設定モーダル
 // ============================================
+function openSettingsModalToSection(sectionId) {
+  const modal = document.getElementById("translateSettingsModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  history.pushState({ modal: "translateSettings" }, "");
+  if (sectionId) {
+    requestAnimationFrame(function() {
+      const section = document.getElementById(sectionId);
+      const body = modal.querySelector(".translate-modal__body");
+      if (section && body && body.contains(section)) {
+        body.scrollTop = Math.max(0, section.offsetTop - 16);
+      }
+    });
+  }
+}
+
 function initSettingsModal() {
   const modal = document.getElementById("translateSettingsModal");
   const openBtn = document.getElementById("translateSettingsButton");
@@ -575,9 +607,7 @@ function initSettingsModal() {
   if (!modal || !openBtn || !closeBtn) return;
 
   openBtn.addEventListener("click", function() {
-    modal.classList.remove("hidden");
-    // 履歴に状態を追加（Android戻るボタン対応）
-    history.pushState({ modal: "translateSettings" }, "");
+    openSettingsModalToSection();
   });
 
   closeBtn.addEventListener("click", function() {

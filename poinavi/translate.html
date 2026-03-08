@@ -176,7 +176,7 @@
           </div>
           
           <!-- 通貨換算セクション -->
-          <div class="translate-modal__section">
+          <div id="settingsCurrencySection" class="translate-modal__section">
             <div class="translate-modal__section-title">通貨換算</div>
             <div class="translate-modal__item">
               <label class="translate-modal__label">変換元</label>
@@ -211,7 +211,7 @@
           </div>
           
           <!-- 単位換算セクション -->
-          <div class="translate-modal__section">
+          <div id="settingsUnitSection" class="translate-modal__section">
             <div class="translate-modal__section-title">単位換算</div>
             <div class="translate-modal__item">
               <label class="translate-modal__label">換算ペア</label>
@@ -382,6 +382,12 @@
                   <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
                 </svg>
               </button>
+              <button type="button" class="currency-modal__settings-btn" id="currencySettingsBtn" aria-label="通貨設定を開く">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
             </div>
           </div>
           <div class="currency-modal__keypad">
@@ -446,6 +452,12 @@
                   <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
                   <polyline points="7 23 3 19 7 15"></polyline>
                   <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+              </button>
+              <button type="button" class="currency-modal__settings-btn" id="unitSettingsBtn" aria-label="単位設定を開く">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
               </button>
             </div>
@@ -544,14 +556,8 @@
       <div class="translate-voice-area">
         <div class="translate-voice-area__btn-wrapper">
           <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位換算">
-            <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 14h20"></path>
-              <path d="M2 14v4"></path>
-              <path d="M6 14v2"></path>
-              <path d="M10 14v4"></path>
-              <path d="M14 14v2"></path>
-              <path d="M18 14v4"></path>
-              <path d="M22 14v4"></path>
+            <svg class="translate-camera-btn__icon translate-camera-btn__icon--unit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <text x="12" y="17" text-anchor="middle" font-size="11" font-weight="700" stroke="none" fill="currentColor">cm</text>
             </svg>
           </button>
           <p class="translate-camera-label">単位換算</p>

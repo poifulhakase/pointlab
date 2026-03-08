@@ -2807,6 +2807,10 @@ body.dark-mode .translate-result-item--latest {
   height: 28px;
 }
 
+.translate-camera-btn__icon--unit text {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
 .translate-camera-label {
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -3016,6 +3020,27 @@ body.dark-mode .translate-result-item--latest {
   flex-shrink: 0;
 }
 
+.currency-modal__settings-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.currency-modal__settings-btn:hover {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
 .currency-modal__currency-row {
   display: flex;
   flex-direction: column;
@@ -3183,12 +3208,6 @@ body.dark-mode .currency-modal__key--action {
 /* ============================================
    単位換算モーダル（モダンデザイン）
    ============================================ */
-.unit-modal .translate-modal__content {
-  max-width: 360px;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
-}
 
 .unit-modal__header {
   padding: 20px 20px 16px;
