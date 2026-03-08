@@ -214,17 +214,23 @@
           <div id="settingsUnitSection" class="translate-modal__section">
             <div class="translate-modal__section-title">単位換算</div>
             <div class="translate-modal__item">
-              <label class="translate-modal__label">換算ペア</label>
+              <label class="translate-modal__label">カテゴリ</label>
               <select id="unitCategory" class="translate-modal__select">
-                <option value="length_cm_inch">長さ：cm ⇄ inch</option>
-                <option value="length_cm_ft">長さ：cm ⇄ ft</option>
-                <option value="weight">重さ：kg ⇄ lb</option>
-                <option value="temp">温度：℃ ⇄ ℉</option>
-                <option value="distance">距離：km ⇄ mile</option>
-                <option value="speed">速度：km/h ⇄ mph</option>
-                <option value="volume_ml">容量：ml ⇄ fl oz</option>
-                <option value="volume_L">容量：L ⇄ gallon</option>
+                <option value="length">長さ</option>
+                <option value="weight">重さ</option>
+                <option value="temp">温度</option>
+                <option value="distance">距離</option>
+                <option value="speed">速度</option>
+                <option value="volume">容量</option>
               </select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">変換元</label>
+              <select id="unitFrom" class="translate-modal__select"></select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">変換先</label>
+              <select id="unitTo" class="translate-modal__select"></select>
             </div>
           </div>
           
@@ -557,7 +563,7 @@
         <div class="translate-voice-area__btn-wrapper">
           <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位換算">
             <svg class="translate-camera-btn__icon translate-camera-btn__icon--unit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <text x="12" y="17" text-anchor="middle" font-size="11" font-weight="700" stroke="none" fill="currentColor">cm</text>
+              <text x="12" y="17" text-anchor="middle" font-size="14" font-weight="700" stroke="none" fill="currentColor">cm</text>
             </svg>
           </button>
           <p class="translate-camera-label">単位換算</p>

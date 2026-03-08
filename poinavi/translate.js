@@ -342,25 +342,87 @@ function initCurrencyModal() {
 }
 
 // ============================================
-// 単位換算モーダル
+// 単位換算モーダル（変換元・変換先で個別選択）
 // ============================================
-const UNIT_CONVERSIONS = {
-  length_cm_inch: { from: "cm", to: "inch", convert: (v) => v * 0.393701, convertBack: (v) => v / 0.393701 },
-  length_cm_ft: { from: "cm", to: "ft", convert: (v) => v * 0.0328084, convertBack: (v) => v / 0.0328084 },
-  weight: { from: "kg", to: "lb", convert: (v) => v * 2.20462, convertBack: (v) => v / 2.20462 },
-  temp: { from: "℃", to: "℉", convert: (v) => v * 9 / 5 + 32, convertBack: (v) => (v - 32) * 5 / 9 },
-  distance: { from: "km", to: "mile", convert: (v) => v * 0.621371, convertBack: (v) => v / 0.621371 },
-  speed: { from: "km/h", to: "mph", convert: (v) => v * 0.621371, convertBack: (v) => v / 0.621371 },
-  volume_ml: { from: "ml", to: "fl oz", convert: (v) => v * 0.033814, convertBack: (v) => v / 0.033814 },
-  volume_L: { from: "L", to: "gallon", convert: (v) => v * 0.264172, convertBack: (v) => v / 0.264172 }
+// カテゴリごとの単位一覧と換算係数（基準単位への変換: 1単位 = toBase 基準単位）
+const UNIT_CATEGORIES = {
+  length: {
+    label: "長さ",
+    units: [
+      { id: "cm", label: "cm" },
+      { id: "inch", label: "inch" },
+      { id: "ft", label: "ft" }
+    ],
+    toBase: { cm: 1, inch: 2.54, ft: 30.48 },
+    fromBase: { cm: 1, inch: 1 / 2.54, ft: 1 / 30.48 }
+  },
+  weight: {
+    label: "重さ",
+    units: [
+      { id: "kg", label: "kg" },
+      { id: "lb", label: "lb" }
+    ],
+    toBase: { kg: 1, lb: 0.453592 },
+    fromBase: { kg: 1, lb: 1 / 0.453592 }
+  },
+  temp: {
+    label: "温度",
+    units: [
+      { id: "℃", label: "℃" },
+      { id: "℉", label: "℉" }
+    ],
+    toBase: null,
+    fromBase: null
+  },
+  distance: {
+    label: "距離",
+    units: [
+      { id: "km", label: "km" },
+      { id: "mile", label: "mile" }
+    ],
+    toBase: { km: 1, mile: 1.60934 },
+    fromBase: { km: 1, mile: 1 / 1.60934 }
+  },
+  speed: {
+    label: "速度",
+    units: [
+      { id: "km/h", label: "km/h" },
+      { id: "mph", label: "mph" }
+    ],
+    toBase: { "km/h": 1, mph: 1.60934 },
+    fromBase: { "km/h": 1, mph: 1 / 1.60934 }
+  },
+  volume: {
+    label: "容量",
+    units: [
+      { id: "ml", label: "ml" },
+      { id: "fl oz", label: "fl oz" },
+      { id: "L", label: "L" },
+      { id: "gallon", label: "gallon" }
+    ],
+    toBase: { ml: 1, "fl oz": 29.5735, L: 1000, gallon: 3785.41 },
+    fromBase: { ml: 1, "fl oz": 1 / 29.5735, L: 1 / 1000, gallon: 1 / 3785.41 }
+  }
 };
+
+function convertUnit(categoryId, fromUnit, toUnit, value) {
+  const cat = UNIT_CATEGORIES[categoryId];
+  if (!cat) return null;
+  if (fromUnit === toUnit) return value;
+  if (cat.toBase === null) {
+    if (fromUnit === "℃" && toUnit === "℉") return value * 9 / 5 + 32;
+    if (fromUnit === "℉" && toUnit === "℃") return (value - 32) * 5 / 9;
+    return null;
+  }
+  const inBase = value * (cat.toBase[fromUnit] || 1);
+  return inBase * (cat.fromBase[toUnit] || 1);
+}
 
 function initUnitConversionModal() {
   const modal = document.getElementById("unitModal");
   const openBtn = document.getElementById("unitConvertBtn");
   const closeBtn = document.getElementById("unitModalClose");
   const overlay = modal?.querySelector(".translate-modal__overlay");
-  const categorySelect = document.getElementById("unitCategory");
   const amountInput = document.getElementById("unitAmount");
   const resultEl = document.getElementById("unitResult");
   const fromUnitEl = document.getElementById("unitFromUnit");
@@ -370,39 +432,44 @@ function initUnitConversionModal() {
 
   if (!modal) return;
 
-  let currentFrom = "cm";
-  let currentTo = "inch";
+  function getCurrentUnits() {
+    const cat = localStorage.getItem("poinavi_unit_category") || "length";
+    const from = localStorage.getItem("poinavi_unit_from") || "cm";
+    const to = localStorage.getItem("poinavi_unit_to") || "inch";
+    const catData = UNIT_CATEGORIES[cat];
+    const validFrom = catData?.units.some(u => u.id === from) ? from : (catData?.units[0]?.id || "cm");
+    const validTo = catData?.units.some(u => u.id === to) ? to : (catData?.units[1]?.id || catData?.units[0]?.id || "inch");
+    return { category: cat, from: validFrom, to: validTo };
+  }
 
-  function getConversion() {
-    const cat = categorySelect?.value || localStorage.getItem("poinavi_unit_category") || "length_cm_inch";
-    return UNIT_CONVERSIONS[cat] || UNIT_CONVERSIONS.length_cm_inch;
+  function saveCurrentUnits(from, to) {
+    if (from) localStorage.setItem("poinavi_unit_from", from);
+    if (to) localStorage.setItem("poinavi_unit_to", to);
   }
 
   function updateUnitDisplay() {
-    const conv = getConversion();
-    currentFrom = conv.from;
-    currentTo = conv.to;
-    if (fromUnitEl) fromUnitEl.textContent = currentFrom;
-    if (toUnitEl) toUnitEl.textContent = currentTo;
-    if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
+    const { from, to } = getCurrentUnits();
+    if (fromUnitEl) fromUnitEl.textContent = from;
+    if (toUnitEl) toUnitEl.textContent = to;
+    if (pairDisplay) pairDisplay.textContent = from + " → " + to;
     updateUnitResult();
   }
 
   function updateUnitResult() {
     const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
-    const conv = getConversion();
+    const { category, from, to } = getCurrentUnits();
     if (!resultEl) return;
     if (amount === 0 && amountInput?.value !== "0") {
       resultEl.textContent = "—";
       return;
     }
-    const fromUnit = conv.from;
-    const toUnit = conv.to;
-    const result = (currentFrom === fromUnit) ? conv.convert(amount) : conv.convertBack(amount);
-    const resultStr = (conv.from === "℃" || conv.from === "℉")
-      ? result.toFixed(1) : result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    const result = convertUnit(category, from, to, amount);
+    const isTemp = from === "℃" || from === "℉" || to === "℃" || to === "℉";
+    const resultStr = result != null
+      ? (isTemp ? result.toFixed(1) : result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 }))
+      : "—";
     resultEl.textContent = resultStr;
-    if (amount > 0 || amount < 0) showUnitConversionResult(amount, currentFrom, result, currentTo);
+    if (amount !== 0 && result != null) showUnitConversionResult(amount, from, result, to);
   }
 
   function openUnitModal() {
@@ -435,19 +502,11 @@ function initUnitConversionModal() {
     });
   }
 
-  if (categorySelect) {
-    categorySelect.addEventListener("change", updateUnitDisplay);
-  }
-
   if (swapBtn) {
     swapBtn.addEventListener("click", function() {
-      const tmp = currentFrom;
-      currentFrom = currentTo;
-      currentTo = tmp;
-      if (fromUnitEl) fromUnitEl.textContent = currentFrom;
-      if (toUnitEl) toUnitEl.textContent = currentTo;
-      if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
-      updateUnitResult();
+      const { from, to } = getCurrentUnits();
+      saveCurrentUnits(to, from);
+      updateUnitDisplay();
     });
   }
 
@@ -587,6 +646,14 @@ function openSettingsModalToSection(sectionId) {
   if (!modal) return;
   modal.classList.remove("hidden");
   history.pushState({ modal: "translateSettings" }, "");
+  if (sectionId === "settingsUnitSection") {
+    const unitFromEl = document.getElementById("unitFrom");
+    const unitToEl = document.getElementById("unitTo");
+    const from = localStorage.getItem("poinavi_unit_from");
+    const to = localStorage.getItem("poinavi_unit_to");
+    if (unitFromEl && from) unitFromEl.value = from;
+    if (unitToEl && to) unitToEl.value = to;
+  }
   if (sectionId) {
     requestAnimationFrame(function() {
       const section = document.getElementById(sectionId);
@@ -665,6 +732,8 @@ function resetTranslateSettings() {
     localStorage.removeItem("poinavi_theme");
     localStorage.removeItem("poinavi_start_page");
     localStorage.removeItem("poinavi_unit_category");
+    localStorage.removeItem("poinavi_unit_from");
+    localStorage.removeItem("poinavi_unit_to");
     poinaviAlert("設定を初期化しました。ページを再読み込みします。");
     location.reload();
   });
@@ -747,13 +816,82 @@ function initLanguageSelect() {
     localStorage.setItem("poinavi_target_lang", targetLang);
   });
 
-  // 単位換算の初期化
+  // 単位換算の初期化（変換元・変換先で個別選択）
+  const OLD_UNIT_MIGRATION = {
+    length_cm_inch: { category: "length", from: "cm", to: "inch" },
+    length_cm_ft: { category: "length", from: "cm", to: "ft" },
+    weight: { category: "weight", from: "kg", to: "lb" },
+    temp: { category: "temp", from: "℃", to: "℉" },
+    distance: { category: "distance", from: "km", to: "mile" },
+    speed: { category: "speed", from: "km/h", to: "mph" },
+    volume_ml: { category: "volume", from: "ml", to: "fl oz" },
+    volume_L: { category: "volume", from: "L", to: "gallon" }
+  };
   const unitCategorySelect = document.getElementById("unitCategory");
-  if (unitCategorySelect) {
-    const savedUnit = localStorage.getItem("poinavi_unit_category") || "length_cm_inch";
-    unitCategorySelect.value = savedUnit;
+  const unitFromSelect = document.getElementById("unitFrom");
+  const unitToSelect = document.getElementById("unitTo");
+
+  function populateUnitSelects(categoryId) {
+    const cat = UNIT_CATEGORIES[categoryId];
+    if (!cat || !unitFromSelect || !unitToSelect) return;
+    unitFromSelect.innerHTML = "";
+    unitToSelect.innerHTML = "";
+    cat.units.forEach(function(u) {
+      const optFrom = document.createElement("option");
+      optFrom.value = u.id;
+      optFrom.textContent = u.label;
+      unitFromSelect.appendChild(optFrom);
+      const optTo = document.createElement("option");
+      optTo.value = u.id;
+      optTo.textContent = u.label;
+      unitToSelect.appendChild(optTo);
+    });
+  }
+
+  function initUnitSelectsFromStorage() {
+    let cat = localStorage.getItem("poinavi_unit_category");
+    let from = localStorage.getItem("poinavi_unit_from");
+    let to = localStorage.getItem("poinavi_unit_to");
+    if (OLD_UNIT_MIGRATION[cat]) {
+      const m = OLD_UNIT_MIGRATION[cat];
+      cat = m.category;
+      from = m.from;
+      to = m.to;
+      localStorage.setItem("poinavi_unit_category", cat);
+      localStorage.setItem("poinavi_unit_from", from);
+      localStorage.setItem("poinavi_unit_to", to);
+    }
+    if (!cat || !UNIT_CATEGORIES[cat]) cat = "length";
+    if (!from || !to) {
+      const c = UNIT_CATEGORIES[cat];
+      from = from || c?.units[0]?.id || "cm";
+      to = to || c?.units[1]?.id || c?.units[0]?.id || "inch";
+    }
+    if (unitCategorySelect) unitCategorySelect.value = cat;
+    populateUnitSelects(cat);
+    if (unitFromSelect) unitFromSelect.value = from;
+    if (unitToSelect) unitToSelect.value = to;
+  }
+
+  if (unitCategorySelect && unitFromSelect && unitToSelect) {
+    initUnitSelectsFromStorage();
     unitCategorySelect.addEventListener("change", function() {
-      localStorage.setItem("poinavi_unit_category", this.value);
+      const cat = this.value;
+      localStorage.setItem("poinavi_unit_category", cat);
+      populateUnitSelects(cat);
+      const c = UNIT_CATEGORIES[cat];
+      const first = c?.units[0]?.id;
+      const second = c?.units[1]?.id || first;
+      unitFromSelect.value = first;
+      unitToSelect.value = second;
+      localStorage.setItem("poinavi_unit_from", first);
+      localStorage.setItem("poinavi_unit_to", second);
+    });
+    unitFromSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_unit_from", this.value);
+    });
+    unitToSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_unit_to", this.value);
     });
   }
 
