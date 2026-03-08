@@ -926,20 +926,23 @@ function getLanguageLabel() {
 // 会話モードの初期化（Web Speech API版）
 // ============================================
 function initVoiceTranslation() {
+  const startBtn = document.getElementById("convStartBtn");
   const splitEl = document.getElementById("conversationSplit");
   const handoverBtn = document.getElementById("convHandoverBtn");
   const opponentBtn = document.getElementById("convOpponentBtn");
   const myBtn = document.getElementById("convMyBtn");
   const stopBtn = document.getElementById("conversationStopBtn");
 
-  if (!splitEl || !handoverBtn || !opponentBtn || !myBtn) return;
+  if (!startBtn || !splitEl || !handoverBtn || !opponentBtn || !myBtn) return;
 
   // Web Speech API のサポート確認
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
     console.warn("Web Speech APIがサポートされていません");
-    poinaviAlert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
+    startBtn.addEventListener("click", function() {
+      poinaviAlert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
+    });
     return;
   }
 
@@ -958,6 +961,7 @@ function initVoiceTranslation() {
   }
 
   function switchToSplit() {
+    startBtn.classList.add("hidden");
     splitEl.classList.remove("hidden");
     handoverBtn.classList.add("hidden");
     opponentBtn.classList.remove("listening");
@@ -1016,6 +1020,11 @@ function initVoiceTranslation() {
       await processConversationTranslation(transcript, sourceLang, targetLang);
     }
   };
+
+  startBtn.addEventListener("click", function() {
+    startBtn.classList.add("hidden");
+    splitEl.classList.remove("hidden");
+  });
 
   opponentBtn.addEventListener("click", function() {
     if (isListening) return;
