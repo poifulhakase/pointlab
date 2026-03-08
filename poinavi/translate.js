@@ -926,6 +926,7 @@ function getLanguageLabel() {
 // 会話モードの初期化（Web Speech API版）
 // ============================================
 function initVoiceTranslation() {
+  const conversationMode = document.getElementById("conversationMode");
   const startBtn = document.getElementById("convStartBtn");
   const splitEl = document.getElementById("conversationSplit");
   const handoverBtn = document.getElementById("convHandoverBtn");
@@ -954,10 +955,21 @@ function initVoiceTranslation() {
 
   let currentSpeaker = null;
 
+  function switchToStart() {
+    startBtn.classList.remove("hidden");
+    splitEl.classList.add("hidden");
+    handoverBtn.classList.add("hidden");
+    opponentBtn.classList.remove("listening");
+    myBtn.classList.remove("listening");
+    currentSpeaker = null;
+    if (conversationMode) conversationMode.classList.remove("conversation-active");
+    if (stopBtn) stopBtn.classList.add("hidden");
+  }
+
   function switchToHandover() {
     splitEl.classList.add("hidden");
     handoverBtn.classList.remove("hidden");
-    if (stopBtn) stopBtn.classList.add("hidden");
+    if (stopBtn) stopBtn.classList.remove("hidden");
   }
 
   function switchToSplit() {
@@ -967,12 +979,12 @@ function initVoiceTranslation() {
     opponentBtn.classList.remove("listening");
     myBtn.classList.remove("listening");
     currentSpeaker = null;
-    if (stopBtn) stopBtn.classList.add("hidden");
+    if (conversationMode) conversationMode.classList.add("conversation-active");
+    if (stopBtn) stopBtn.classList.remove("hidden");
   }
 
   speechRecognition.onstart = function() {
     isListening = true;
-    if (stopBtn) stopBtn.classList.remove("hidden");
     if (currentSpeaker === "opponent") opponentBtn.classList.add("listening");
     else if (currentSpeaker === "my") myBtn.classList.add("listening");
   };
@@ -981,7 +993,6 @@ function initVoiceTranslation() {
     isListening = false;
     opponentBtn.classList.remove("listening");
     myBtn.classList.remove("listening");
-    if (stopBtn) stopBtn.classList.add("hidden");
     if (currentSpeaker) switchToHandover();
     currentSpeaker = null;
   };
@@ -991,7 +1002,6 @@ function initVoiceTranslation() {
     isListening = false;
     opponentBtn.classList.remove("listening");
     myBtn.classList.remove("listening");
-    if (stopBtn) stopBtn.classList.add("hidden");
     currentSpeaker = null;
     switchToSplit();
 
@@ -1048,6 +1058,7 @@ function initVoiceTranslation() {
       if (isListening && speechRecognition) {
         speechRecognition.stop();
       }
+      switchToStart();
     });
   }
 }
