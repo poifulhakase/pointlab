@@ -2415,6 +2415,11 @@ body.dark-mode .rain-viewer-disclaimer {
   min-width: 60px;
 }
 
+.translate-voice-area__btn-wrapper--conversation {
+  flex: 0 0 auto;
+  min-width: auto;
+}
+
 /* 音声翻訳を中央に保つための右側スペーサー（通貨ボタンと同幅） */
 .translate-voice-area__btn-wrapper--spacer {
   flex: 0 0 60px;
@@ -2484,6 +2489,11 @@ body.dark-mode .rain-viewer-disclaimer {
 .conversation-mode__start-icon {
   width: 32px;
   height: 32px;
+}
+
+.conversation-mode__start-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
 }
 
 .conversation-mode__split {
@@ -3903,6 +3913,10 @@ body.dark-mode .translate-result-item__divider svg {
   .conversation-mode__start-icon {
     width: 28px;
     height: 28px;
+  }
+
+  .conversation-mode__start-label {
+    font-size: 0.625rem;
   }
 
   .conversation-mode__handover {

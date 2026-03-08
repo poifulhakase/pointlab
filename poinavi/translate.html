@@ -586,30 +586,32 @@
           <p class="translate-camera-label">単位換算</p>
         </div>
         <!-- 会話モード：初期＝単一ボタン／押下後＝上下分割 or 交代 -->
-        <div class="conversation-mode" id="conversationMode">
-          <button class="conversation-mode__start" id="convStartBtn" type="button" aria-label="会話モードを開始">
-            <svg class="conversation-mode__start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
-            </svg>
-          </button>
-          <div class="conversation-mode__split hidden" id="conversationSplit">
-            <button class="conversation-mode__half conversation-mode__half--top" id="convOpponentBtn" type="button" aria-label="相手が話す番">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="18 15 12 9 6 15"></polyline>
+        <div class="translate-voice-area__btn-wrapper translate-voice-area__btn-wrapper--conversation">
+          <div class="conversation-mode" id="conversationMode">
+            <button class="conversation-mode__start" id="convStartBtn" type="button" aria-label="会話モードを開始">
+              <svg class="conversation-mode__start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
               </svg>
+              <span class="conversation-mode__start-label">会話モード</span>
             </button>
-            <button class="conversation-mode__half conversation-mode__half--bottom" id="convMyBtn" type="button" aria-label="私が話す番">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
+            <div class="conversation-mode__split hidden" id="conversationSplit">
+              <button class="conversation-mode__half conversation-mode__half--top" id="convOpponentBtn" type="button" aria-label="相手が話す番">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </button>
+              <button class="conversation-mode__half conversation-mode__half--bottom" id="convMyBtn" type="button" aria-label="私が話す番">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            </div>
+            <button class="conversation-mode__handover hidden" id="convHandoverBtn" type="button" aria-label="交代">交代</button>
           </div>
-          <button class="conversation-mode__handover hidden" id="convHandoverBtn" type="button" aria-label="交代">交代</button>
         </div>
-        <p class="translate-camera-label">会話モード</p>
         <div class="translate-voice-area__btn-wrapper">
           <input type="file" id="imageTranslateInput" accept="image/*" class="visually-hidden" aria-hidden="true" />
           <button class="translate-camera-btn translate-image-btn" id="imageTranslateBtn" type="button" aria-label="画像翻訳">
