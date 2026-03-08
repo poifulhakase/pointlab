@@ -2844,16 +2844,19 @@ function selectResult(index) {
   console.log("選択された店舗:", place.name, place);
 }
 
-// InfoWindowを画面中央にパンする（経路表示など他処理でビューが変わった後も再実行可能）
+// InfoWindowを地図エリアの中央にパンする（経路表示など他処理でビューが変わった後も再実行可能）
 function centerInfoWindowInView() {
   if (!map || !infoWindow || !infoWindow.getMap()) return;
   const infoWindowElement = document.querySelector('.gm-style-iw-c');
   if (!infoWindowElement) return;
-  const rect = infoWindowElement.getBoundingClientRect();
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
-  const iwCenterX = rect.left + rect.width / 2;
-  const iwCenterY = rect.top + rect.height / 2;
+  const iwRect = infoWindowElement.getBoundingClientRect();
+  // 地図コンテナの中央を基準にする（ヘッダー・フッター・結果リストでオフセットされるため）
+  const mapEl = document.getElementById('map');
+  const targetRect = mapEl ? mapEl.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+  const centerX = targetRect.left + targetRect.width / 2;
+  const centerY = targetRect.top + targetRect.height / 2;
+  const iwCenterX = iwRect.left + iwRect.width / 2;
+  const iwCenterY = iwRect.top + iwRect.height / 2;
   const panX = centerX - iwCenterX;
   const panY = centerY - iwCenterY;
   map.panBy(panX, panY);
@@ -3210,6 +3213,10 @@ function displayRoute(origin, destination) {
       console.log("経路を地図上に表示しました");
       if (iwOpen) {
         directionsRenderer.setOptions({ preserveViewport: false });
+        // 経路描画完了後にモーダルを地図中央に再配置
+        google.maps.event.addListenerOnce(map, 'idle', function() {
+          setTimeout(centerInfoWindowInView, 80);
+        });
       }
       
       // 経路表示時はマップのビューを調整しない（InfoWindowが隠れないようにする）
