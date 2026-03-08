@@ -2529,13 +2529,15 @@ body.dark-mode .rain-viewer-disclaimer {
 
 .conversation-mode__half--top {
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  justify-content: flex-start;
-  padding: 4px 12px 36px;
+  justify-content: center;
+  padding: 6px 12px;
+  gap: 6px;
 }
 
 .conversation-mode__half--bottom {
-  justify-content: flex-start;
-  padding: 4px 12px 36px;
+  justify-content: center;
+  padding: 6px 12px;
+  gap: 6px;
   transform: rotate(180deg);
 }
 
@@ -2550,14 +2552,17 @@ body.dark-mode .rain-viewer-disclaimer {
 }
 
 .conversation-mode__half svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .conversation-mode__lang-label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   opacity: 0.95;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .conversation-mode__half.listening {

@@ -907,11 +907,13 @@ function initMap() {
   const urlLat = params.get("lat");
   const urlLng = params.get("lng");
   let initialCenter = { lat: 35.6812, lng: 139.7671 };
+  let fromMemoLink = false;
   if (urlLat && urlLng) {
     const lat = parseFloat(urlLat);
     const lng = parseFloat(urlLng);
     if (!isNaN(lat) && !isNaN(lng)) {
       initialCenter = { lat, lng };
+      fromMemoLink = true;
     }
   }
 
@@ -923,6 +925,40 @@ function initMap() {
       streetViewControl: false,
       fullscreenControl: false,
     });
+
+    // ラボノートから戻った場合：赤ぽっちマーカーを表示＆地図の白画面対策
+    if (fromMemoLink) {
+      const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
+      const markerColor = isDarkMode ? "#ff0080" : "#ff1744";
+      memoLocationMarker = new google.maps.Marker({
+        position: initialCenter,
+        map: map,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 14,
+          fillColor: markerColor,
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2,
+        },
+        title: "ラボノートに保存した地点",
+        zIndex: 1000,
+      });
+      // 地図が真っ白で固まる対策：resize をトリガーして再描画（複数回で確実に）
+      function ensureMapVisible() {
+        if (!map) return;
+        google.maps.event.trigger(map, "resize");
+        map.setCenter(initialCenter);
+        map.setZoom(15);
+      }
+      setTimeout(ensureMapVisible, 100);
+      setTimeout(ensureMapVisible, 400);
+      // タイル読み込み後にも念のため実行
+      const tilesListener = map.addListener("tilesloaded", function() {
+        google.maps.event.removeListener(tilesListener);
+        setTimeout(ensureMapVisible, 50);
+      });
+    }
 
     // ダークモード用のスタイルを追加
     const darkMapType = new google.maps.StyledMapType(darkMapStyle, {
