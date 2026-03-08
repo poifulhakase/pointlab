@@ -318,6 +318,17 @@
       </div>
     </div>
 
+    <!-- 画像翻訳 処理中オーバーレイ -->
+    <div id="imageTranslateOverlay" class="image-translate-overlay hidden">
+      <div class="image-translate-overlay__content">
+        <div class="camera-modal__spinner"></div>
+        <p class="camera-modal__processing-text" id="imageProcessingText">画像を読み込み中...</p>
+        <div class="camera-modal__progress-bar">
+          <div class="camera-modal__progress-fill" id="imageProgressFill"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- QRコードスキャンモーダル -->
     <div id="qrModal" class="qr-modal hidden">
       <div class="qr-modal__container">
@@ -527,17 +538,7 @@
             </button>
             <p class="translate-camera-label">通貨換算</p>
           </div>
-          <!-- カメラ翻訳ボタン（中央） -->
-          <div class="translate-camera-area__btn-wrapper">
-            <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
-              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-            </button>
-            <p class="translate-camera-label">カメラ翻訳</p>
-          </div>
-          <!-- QRコードボタン（右側） -->
+          <!-- QRコードボタン（中央） -->
           <div class="translate-camera-area__btn-wrapper">
             <button class="translate-camera-btn translate-qr-btn" id="qrScanBtn" type="button" aria-label="QRコード">
               <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -555,10 +556,20 @@
             </button>
             <p class="translate-camera-label">QR読取り</p>
           </div>
+          <!-- カメラ翻訳ボタン（右側） -->
+          <div class="translate-camera-area__btn-wrapper">
+            <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+            <p class="translate-camera-label">カメラ翻訳</p>
+          </div>
         </div>
       </div>
 
-      <!-- 単位換算ボタン（左）と音声翻訳ボタン（中央） -->
+      <!-- 単位換算（左）・音声翻訳（中央）・画像翻訳（右） -->
       <div class="translate-voice-area">
         <div class="translate-voice-area__btn-wrapper">
           <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位換算">
@@ -577,7 +588,17 @@
           </svg>
           <span class="translate-voice-btn__label">音声翻訳</span>
         </button>
-        <div class="translate-voice-area__btn-wrapper translate-voice-area__btn-wrapper--spacer" aria-hidden="true"></div>
+        <div class="translate-voice-area__btn-wrapper">
+          <input type="file" id="imageTranslateInput" accept="image/*" class="visually-hidden" aria-hidden="true" />
+          <button class="translate-camera-btn translate-image-btn" id="imageTranslateBtn" type="button" aria-label="画像翻訳">
+            <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </button>
+          <p class="translate-camera-label">画像翻訳</p>
+        </div>
       </div>
     </main>
 

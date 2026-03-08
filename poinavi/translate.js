@@ -155,6 +155,7 @@ document.addEventListener("DOMContentLoaded", function() {
   initTheme();
   initVoiceTranslation();
   initCameraTranslation();
+  initImageTranslation();
   initResetButton();
   initSettingsModal();
   initThemeToggle();
@@ -1236,6 +1237,113 @@ function initCameraTranslation() {
 }
 
 // ============================================
+// 画像翻訳の初期化
+// ============================================
+function initImageTranslation() {
+  const imageBtn = document.getElementById("imageTranslateBtn");
+  const fileInput = document.getElementById("imageTranslateInput");
+  const overlay = document.getElementById("imageTranslateOverlay");
+  const processingText = document.getElementById("imageProcessingText");
+  const progressFill = document.getElementById("imageProgressFill");
+
+  if (!imageBtn || !fileInput) return;
+
+  imageBtn.addEventListener("click", function() {
+    fileInput.value = "";
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", async function() {
+    const file = this.files && this.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    if (!overlay) return;
+    overlay.classList.remove("hidden");
+    if (processingText) processingText.textContent = "画像を読み込み中...";
+    if (progressFill) progressFill.style.width = "0%";
+
+    const reader = new FileReader();
+    reader.onload = async function() {
+      const imageData = reader.result;
+      if (!imageData || typeof imageData !== "string") {
+        closeImageTranslateOverlay();
+        poinaviAlert("画像の読み込みに失敗しました。");
+        return;
+      }
+
+      try {
+        if (processingText) processingText.textContent = "文字を認識中...";
+        if (progressFill) progressFill.style.width = "20%";
+
+        const ocrResult = await performOCR(imageData, function(progress) {
+          if (progressFill) progressFill.style.width = (20 + progress * 40) + "%";
+        });
+
+        if (!ocrResult || ocrResult.trim() === "") {
+          closeImageTranslateOverlay();
+          poinaviAlert("文字を認識できませんでした。\n\n画像に文字が含まれていますか？\n言語設定を確認してください。（現在: " + getLangNameFromOcr(ocrLang) + "）");
+          return;
+        }
+
+        if (processingText) processingText.textContent = "翻訳中...";
+        if (progressFill) progressFill.style.width = "70%";
+
+        const sourceLangCode = OCR_TO_TRANSLATE_LANG[ocrLang] || "ja";
+        const translatedText = await translateText(ocrResult, sourceLangCode, targetLang);
+
+        if (progressFill) progressFill.style.width = "100%";
+
+        setTimeout(function() {
+          closeImageTranslateOverlay();
+          showImageTranslationResult(ocrResult, translatedText, imageData);
+        }, 300);
+      } catch (err) {
+        console.error("画像翻訳エラー:", err);
+        closeImageTranslateOverlay();
+        poinaviAlert("処理中にエラーが発生しました。\n\n" + (err.message || "不明なエラー"));
+      }
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function closeImageTranslateOverlay() {
+  const overlay = document.getElementById("imageTranslateOverlay");
+  if (overlay) overlay.classList.add("hidden");
+}
+
+function showImageTranslationResult(originalText, translatedText, imageData) {
+  const resultArea = document.getElementById("translateResultArea");
+  if (!resultArea) return;
+
+  ocrTranslationCount++;
+
+  const data = {
+    original: originalText,
+    translated: translatedText,
+    image: imageData
+  };
+
+  const resultHTML = createTranslationResultHTML("image", data);
+
+  const placeholder = resultArea.querySelector(".translate-result-placeholder");
+  if (placeholder) placeholder.remove();
+
+  resultArea.querySelectorAll(".translate-result-item--latest").forEach(function(item) {
+    item.classList.remove("translate-result-item--latest");
+  });
+
+  resultArea.insertAdjacentHTML("afterbegin", resultHTML);
+
+  const latestItem = resultArea.querySelector(".translate-result-item");
+  if (latestItem) latestItem.classList.add("translate-result-item--latest");
+
+  resultArea.scrollTop = 0;
+  setupCopyButtons();
+}
+
+// ============================================
 // リセットボタンの初期化
 // ============================================
 function initResetButton() {
@@ -2083,16 +2191,24 @@ function showOCRTranslationResult(originalText, translatedText, imageData) {
 // 翻訳結果HTMLを生成
 // ============================================
 function createTranslationResultHTML(type, data) {
-  const typeLabel = type === "voice" ? "音声翻訳" : "カメラ翻訳";
-  const typeIcon = type === "voice" 
-    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  const typeLabels = { voice: "音声翻訳", ocr: "カメラ翻訳", image: "画像翻訳" };
+  const typeLabel = typeLabels[type] || "翻訳";
+  const typeIcons = {
+    voice: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-      </svg>`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      </svg>`,
+    ocr: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
         <circle cx="12" cy="13" r="4"></circle>
-      </svg>`;
+      </svg>`,
+    image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </svg>`
+  };
+  const typeIcon = typeIcons[type] || typeIcons.ocr;
   
   const now = new Date();
   const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;

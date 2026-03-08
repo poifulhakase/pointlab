@@ -4264,6 +4264,29 @@ body.dark-mode .translate-result-item__divider svg {
   transition: width 0.3s ease;
 }
 
+/* 画像翻訳 処理中オーバーレイ */
+.image-translate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+.image-translate-overlay.hidden {
+  display: none;
+}
+
+.image-translate-overlay__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px;
+}
+
 /* 設定モーダルのヒントテキスト */
 .translate-modal__hint-text {
   margin-top: 6px;
