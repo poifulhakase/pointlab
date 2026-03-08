@@ -3084,23 +3084,8 @@ function showMemoLocationInfoWindow(position, marker) {
       <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 6px;">
         現在地からの距離 <span style="font-size: 18px; color: #7A9FCC; font-weight: bold;">${distanceText}</span>
       </div>
-      <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 12px;">
+      <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 0;">
         徒歩 <span style="font-size: 18px; color: #7A9FCC; font-weight: bold;">${travelTimeText}</span>
-      </div>
-      <div style="display: flex; gap: 8px; justify-content: flex-end;">
-        <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest.lat},${dest.lng}&travelmode=walking', '_blank')" style="
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 8px 14px; background-color: #4CAF50; color: #ffffff;
-          border: none; border-radius: 8px; font-size: 13px; font-weight: 500;
-          cursor: pointer; font-family: inherit;
-        ">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-            <line x1="8" y1="2" x2="8" y2="18"/>
-            <line x1="16" y1="6" x2="16" y2="22"/>
-          </svg>
-          Google Mapsで案内
-        </button>
       </div>
     </div>
   `;
