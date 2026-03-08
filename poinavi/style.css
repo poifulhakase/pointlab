@@ -159,7 +159,8 @@ body {
 body {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* ============================================
@@ -2402,6 +2403,7 @@ body.dark-mode .rain-viewer-disclaimer {
   justify-content: center;
   gap: 46px;
   padding: 8px 0 20px 0;
+  flex-shrink: 0;
 }
 
 .translate-voice-area__btn-wrapper {
@@ -2536,9 +2538,13 @@ body.dark-mode .translate-voice-btn.listening::after {
 /* 翻訳結果エリア */
 .translate-result-area-wrap {
   position: relative;
+  flex: 1;
+  min-height: 120px;
   max-width: 500px;
   width: 100%;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .translate-result-area {
@@ -2546,8 +2552,8 @@ body.dark-mode .translate-voice-btn.listening::after {
   border-radius: 16px;
   padding: 16px;
   overflow-y: auto;
-  height: 480px;
-  height: 55vh;
+  flex: 1;
+  min-height: 100px;
   width: 100%;
 }
 
@@ -2737,6 +2743,7 @@ body.dark-mode .translate-result-item--latest {
   align-items: center;
   gap: 8px;
   padding: 30px 0 12px 0;
+  flex-shrink: 0;
 }
 
 .translate-camera-area__buttons {
