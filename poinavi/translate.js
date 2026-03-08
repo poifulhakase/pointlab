@@ -315,8 +315,9 @@ function initCurrencyModal() {
       const fromVal = fromSelect.value;
       const toVal = toSelect.value;
       var newAmount = "";
-      if (exchangeRate != null && amountInput && lastResult != null && lastResult > 0) {
+      if (exchangeRate != null && exchangeRate > 0 && amountInput && lastResult != null && lastResult > 0) {
         newAmount = String(lastResult);
+        exchangeRate = 1 / exchangeRate;
       }
       fromSelect.value = toVal;
       toSelect.value = fromVal;
@@ -324,7 +325,11 @@ function initCurrencyModal() {
         amountInput.value = newAmount;
       }
       updateCurrencyPairDisplay();
-      fetchExchangeRate();
+      if (newAmount === "") {
+        fetchExchangeRate();
+      } else {
+        updateResult();
+      }
     });
   }
 
@@ -461,6 +466,8 @@ function initUnitConversionModal() {
 
   if (!modal) return;
 
+  let lastUnitResult = null;
+
   function getCurrentUnits() {
     const cat = localStorage.getItem("poinavi_unit_category") || "length";
     const from = localStorage.getItem("poinavi_unit_from") || "cm";
@@ -489,10 +496,12 @@ function initUnitConversionModal() {
     const { category, from, to } = getCurrentUnits();
     if (!resultEl) return;
     if (amount === 0 && amountInput?.value !== "0") {
+      lastUnitResult = null;
       resultEl.textContent = "—";
       return;
     }
     const result = convertUnit(category, from, to, amount);
+    lastUnitResult = amount !== 0 && result != null ? result : null;
     const isTemp = from === "℃" || from === "℉" || to === "℃" || to === "℉";
     const resultStr = result != null
       ? (isTemp ? result.toFixed(1) : result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 }))
@@ -535,11 +544,17 @@ function initUnitConversionModal() {
 
   if (swapBtn) {
     swapBtn.addEventListener("click", function() {
-      const amount = amountInput?.value ?? "";
+      const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
       const { from, to } = getCurrentUnits();
       saveCurrentUnits(to, from);
+      var newAmount = "";
+      if (lastUnitResult != null && amount > 0) {
+        newAmount = String(lastUnitResult);
+      }
+      if (amountInput && newAmount !== "") {
+        amountInput.value = newAmount;
+      }
       updateUnitDisplay();
-      if (amountInput && amount !== "") amountInput.value = amount;
     });
   }
 
