@@ -927,14 +927,14 @@ function getLangName(code) {
   return LANG_NAMES[code] || code;
 }
 
-// 会話モードの言語ラベルを更新（上：英語表示、下：日本語表示）
+// 会話モードの言語ラベルを更新（上：自分→日本語表示、下：相手→英語表示）
 function updateConversationModeLangLabels() {
   const myLabel = document.getElementById("convMyLangLabel");
   const opponentLabel = document.getElementById("convOpponentLangLabel");
   const micTarget = document.getElementById("micTargetLangSelect")?.value || "ja";
   const micInput = document.getElementById("micInputLangSelect")?.value || "en";
-  if (myLabel) myLabel.textContent = LANG_NAMES_EN[micTarget] || micTarget;
-  if (opponentLabel) opponentLabel.textContent = LANG_NAMES[micInput] || micInput;
+  if (myLabel) myLabel.textContent = LANG_NAMES[micTarget] || micTarget;
+  if (opponentLabel) opponentLabel.textContent = LANG_NAMES_EN[micInput] || micInput;
 }
 
 // 現在の言語設定から表示テキストを取得
