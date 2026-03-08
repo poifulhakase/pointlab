@@ -764,30 +764,84 @@ window.initGoogleMaps = function() {
   console.log("Google Maps API が正常に読み込まれました");
   const params = new URLSearchParams(window.location.search);
   const fromMemoLink = params.has("lat") && params.has("lng");
+
+  // bfcache 復元時：マップをリサイズして白画面を解消
+  window.addEventListener("pageshow", function(ev) {
+    if (ev.persisted && map && typeof google !== "undefined") {
+      setTimeout(function() {
+        google.maps.event.trigger(map, "resize");
+        if (params.has("lat") && params.has("lng")) {
+          var lat = parseFloat(params.get("lat"));
+          var lng = parseFloat(params.get("lng"));
+          if (!isNaN(lat) && !isNaN(lng)) {
+            map.setCenter({ lat: lat, lng: lng });
+          }
+        }
+      }, 150);
+    }
+  });
+
   function runWhenReady() {
     if (typeof google !== "undefined" && typeof google.maps !== "undefined" && typeof google.maps.Map === "function") {
       if (fromMemoLink) {
         // ラボノートから遷移時：レイアウト・View Transition 完了を待って初期化（白画面対策）
-        function doInit() {
-          initMap();
-          requestUserLocation();
-          initRainViewer();
-          initRailwayLayer();
-          initToiletLayer();
-        }
-        setTimeout(doInit, 350);
-        document.addEventListener("viewtransitionend", function onVT() {
+        function resizeAndCenter() {
           if (map) {
-            setTimeout(function() {
-              google.maps.event.trigger(map, "resize");
-              var lat = parseFloat(params.get("lat"));
-              var lng = parseFloat(params.get("lng"));
-              if (!isNaN(lat) && !isNaN(lng)) {
-                map.setCenter({ lat: lat, lng: lng });
-              }
-            }, 100);
+            google.maps.event.trigger(map, "resize");
+            var lat = parseFloat(params.get("lat"));
+            var lng = parseFloat(params.get("lng"));
+            if (!isNaN(lat) && !isNaN(lng)) {
+              map.setCenter({ lat: lat, lng: lng });
+            }
           }
-        }, { once: true });
+        }
+        function doInit() {
+          // マップコンテナに寸法が入るまで待つ（最大1秒）
+          var mapEl = document.getElementById("map");
+          var deadline = Date.now() + 1000;
+          function waitThenInit() {
+            if (!mapEl) {
+              initMap();
+              requestUserLocation();
+              initRainViewer();
+              initRailwayLayer();
+              initToiletLayer();
+              scheduleResize();
+              return;
+            }
+            var rect = mapEl.getBoundingClientRect();
+            if (rect.height > 0 && rect.width > 0) {
+              initMap();
+              requestUserLocation();
+              initRainViewer();
+              initRailwayLayer();
+              initToiletLayer();
+              scheduleResize();
+              return;
+            }
+            if (Date.now() < deadline) {
+              requestAnimationFrame(waitThenInit);
+            } else {
+              initMap();
+              requestUserLocation();
+              initRainViewer();
+              initRailwayLayer();
+              initToiletLayer();
+              scheduleResize();
+            }
+          }
+          function scheduleResize() {
+            document.addEventListener("viewtransitionend", function onVT() {
+              setTimeout(resizeAndCenter, 100);
+            }, { once: true });
+            // View Transitions 非対応・未発火時のフォールバック（1.2秒後）
+            setTimeout(function() {
+              resizeAndCenter();
+            }, 1200);
+          }
+          requestAnimationFrame(waitThenInit);
+        }
+        setTimeout(doInit, 400);
       } else {
         initMap();
         requestUserLocation();
