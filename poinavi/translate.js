@@ -309,12 +309,14 @@ function initCurrencyModal() {
 
   if (swapBtn && fromSelect && toSelect) {
     swapBtn.addEventListener("click", function() {
+      const amount = amountInput?.value ?? "";
       const fromVal = fromSelect.value;
       const toVal = toSelect.value;
       fromSelect.value = toVal;
       toSelect.value = fromVal;
       updateCurrencyPairDisplay();
       fetchExchangeRate();
+      if (amountInput && amount !== "") amountInput.value = amount;
     });
   }
 
@@ -322,9 +324,11 @@ function initCurrencyModal() {
   if (currencySettingsBtn) {
     currencySettingsBtn.addEventListener("click", function() {
       closeCurrencyModal();
-      openSettingsModalToSection("settingsCurrencySection");
+      openSettingsModalToSection("settingsCurrencySection", "currency");
     });
   }
+
+  window.poinaviOpenCurrencyModal = openCurrencyModal;
 
   if (amountInput) {
     modal.querySelectorAll(".currency-modal__key").forEach(btn => {
@@ -515,15 +519,19 @@ function initUnitConversionModal() {
   if (unitSettingsBtn) {
     unitSettingsBtn.addEventListener("click", function() {
       closeUnitModal();
-      openSettingsModalToSection("settingsUnitSection");
+      openSettingsModalToSection("settingsUnitSection", "unit");
     });
   }
 
+  window.poinaviOpenUnitModal = openUnitModal;
+
   if (swapBtn) {
     swapBtn.addEventListener("click", function() {
+      const amount = amountInput?.value ?? "";
       const { from, to } = getCurrentUnits();
       saveCurrentUnits(to, from);
       updateUnitDisplay();
+      if (amountInput && amount !== "") amountInput.value = amount;
     });
   }
 
@@ -658,23 +666,60 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
 // ============================================
 // 設定モーダル
 // ============================================
-function openSettingsModalToSection(sectionId) {
+function openSettingsModalToSection(sectionId, source) {
   const modal = document.getElementById("translateSettingsModal");
   if (!modal) return;
   modal.classList.remove("hidden");
-  history.pushState({ modal: "translateSettings" }, "");
+  history.pushState({ modal: "translateSettings", source: source }, "");
+
+  var backBtn = document.getElementById("translateSettingsBack");
+  var backLabel = document.getElementById("translateSettingsBackLabel");
+  var voiceSection = document.getElementById("settingsVoiceSection");
+  var cameraSection = document.getElementById("settingsCameraSection");
+  var currencySection = document.getElementById("settingsCurrencySection");
+  var unitSection = document.getElementById("settingsUnitSection");
+  var guideSection = document.getElementById("settingsGuideSection");
+
+  function showSection(el) { if (el) el.style.display = ""; }
+  function hideSection(el) { if (el) el.style.display = "none"; }
+
+  if (source === "unit") {
+    if (backBtn) { backBtn.classList.remove("hidden"); backBtn.dataset.returnTo = "unit"; }
+    if (backLabel) backLabel.textContent = "単位に戻る";
+    hideSection(voiceSection);
+    hideSection(cameraSection);
+    hideSection(currencySection);
+    showSection(unitSection);
+    hideSection(guideSection);
+  } else if (source === "currency") {
+    if (backBtn) { backBtn.classList.remove("hidden"); backBtn.dataset.returnTo = "currency"; }
+    if (backLabel) backLabel.textContent = "通貨に戻る";
+    hideSection(voiceSection);
+    hideSection(cameraSection);
+    showSection(currencySection);
+    hideSection(unitSection);
+    hideSection(guideSection);
+  } else {
+    if (backBtn) { backBtn.classList.add("hidden"); backBtn.dataset.returnTo = ""; }
+    showSection(voiceSection);
+    showSection(cameraSection);
+    showSection(currencySection);
+    showSection(unitSection);
+    showSection(guideSection);
+  }
+
   if (sectionId === "settingsUnitSection") {
-    const unitFromEl = document.getElementById("unitFrom");
-    const unitToEl = document.getElementById("unitTo");
-    const from = localStorage.getItem("poinavi_unit_from");
-    const to = localStorage.getItem("poinavi_unit_to");
+    var unitFromEl = document.getElementById("unitFrom");
+    var unitToEl = document.getElementById("unitTo");
+    var from = localStorage.getItem("poinavi_unit_from");
+    var to = localStorage.getItem("poinavi_unit_to");
     if (unitFromEl && from) unitFromEl.value = from;
     if (unitToEl && to) unitToEl.value = to;
   }
   if (sectionId) {
     requestAnimationFrame(function() {
-      const section = document.getElementById(sectionId);
-      const body = modal.querySelector(".translate-modal__body");
+      var section = document.getElementById(sectionId);
+      var body = modal.querySelector(".translate-modal__body");
       if (section && body && body.contains(section)) {
         body.scrollTop = Math.max(0, section.offsetTop - 16);
       }
@@ -697,6 +742,19 @@ function initSettingsModal() {
   closeBtn.addEventListener("click", function() {
     modal.classList.add("hidden");
   });
+
+  var backBtn = document.getElementById("translateSettingsBack");
+  if (backBtn) {
+    backBtn.addEventListener("click", function() {
+      var returnTo = this.dataset.returnTo;
+      modal.classList.add("hidden");
+      if (returnTo === "unit" && typeof window.poinaviOpenUnitModal === "function") {
+        window.poinaviOpenUnitModal();
+      } else if (returnTo === "currency" && typeof window.poinaviOpenCurrencyModal === "function") {
+        window.poinaviOpenCurrencyModal();
+      }
+    });
+  }
 
   if (overlay) {
     overlay.addEventListener("click", function() {
@@ -730,9 +788,16 @@ function initSettingsModal() {
       return;
     }
     
-    // 設定モーダルが開いている場合は閉じる
+    // 設定モーダルが開いている場合は閉じ、単位/通貨から来ていたら戻る
     if (settingsModal && !settingsModal.classList.contains("hidden")) {
+      var backBtn = document.getElementById("translateSettingsBack");
+      var returnTo = backBtn && backBtn.dataset.returnTo;
       settingsModal.classList.add("hidden");
+      if (returnTo === "unit" && typeof window.poinaviOpenUnitModal === "function") {
+        window.poinaviOpenUnitModal();
+      } else if (returnTo === "currency" && typeof window.poinaviOpenCurrencyModal === "function") {
+        window.poinaviOpenCurrencyModal();
+      }
       return;
     }
   });

@@ -3120,9 +3120,32 @@ body.dark-mode .translate-result-item--latest {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.translate-modal__back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-color);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.translate-modal__back:hover {
+  text-decoration: underline;
+}
+
+.translate-modal__back.hidden {
+  display: none;
 }
 
 .translate-modal__title {
+  flex: 1;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
