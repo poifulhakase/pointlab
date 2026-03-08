@@ -16,6 +16,7 @@ let infoWindow = null; // 情報ウィンドウ
 let directionsService = null; // 経路検索サービス
 let directionsRenderer = null; // 経路表示レンダラー
 let currentLocationMarker = null; // 現在地マーカー
+let memoLocationMarker = null; // ラボノートから地図へ戻ったときの赤ぽっち
 let geocoder = null; // ジオコーダー
 let selectedMarkerIndex = null; // 選択中のマーカーのインデックス
 let markerPulseInterval = null; // マーカー点滅用インターバル
