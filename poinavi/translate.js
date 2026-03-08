@@ -1032,8 +1032,7 @@ function initVoiceTranslation() {
   };
 
   startBtn.addEventListener("click", function() {
-    startBtn.classList.add("hidden");
-    splitEl.classList.remove("hidden");
+    switchToSplit();
   });
 
   opponentBtn.addEventListener("click", function() {
