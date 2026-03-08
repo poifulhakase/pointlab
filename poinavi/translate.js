@@ -309,14 +309,23 @@ function initCurrencyModal() {
 
   if (swapBtn && fromSelect && toSelect) {
     swapBtn.addEventListener("click", function() {
-      const amount = amountInput?.value ?? "";
       const fromVal = fromSelect.value;
       const toVal = toSelect.value;
+      var newAmount = "";
+      if (exchangeRate != null && resultEl && amountInput) {
+        var currentAmount = parseFloat(String(amountInput.value || "").replace(/,/g, "")) || 0;
+        var currentResult = parseFloat(String(resultEl.textContent || "").replace(/,/g, "").replace(/—/g, "")) || 0;
+        if (currentAmount > 0 && currentResult > 0) {
+          newAmount = String(currentResult);
+        }
+      }
       fromSelect.value = toVal;
       toSelect.value = fromVal;
+      if (amountInput && newAmount !== "") {
+        amountInput.value = newAmount;
+      }
       updateCurrencyPairDisplay();
       fetchExchangeRate();
-      if (amountInput && amount !== "") amountInput.value = amount;
     });
   }
 
