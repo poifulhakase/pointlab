@@ -3112,6 +3112,36 @@ body.dark-mode .translate-result-item--latest {
 .translate-modal__body {
   overflow-y: auto;
   flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+.translate-modal__body:hover,
+.translate-modal__body:focus-within {
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.translate-modal__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.translate-modal__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.translate-modal__body::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.translate-modal__body:hover::-webkit-scrollbar-thumb,
+.translate-modal__body:focus-within::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+.translate-modal__body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 .translate-modal__header {
