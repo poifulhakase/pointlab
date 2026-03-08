@@ -2515,8 +2515,10 @@ body.dark-mode .rain-viewer-disclaimer {
 .conversation-mode__half {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   border: none;
   background: transparent;
   color: #fff;
@@ -2542,6 +2544,12 @@ body.dark-mode .rain-viewer-disclaimer {
 .conversation-mode__half svg {
   width: 28px;
   height: 28px;
+}
+
+.conversation-mode__lang-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.95;
 }
 
 .conversation-mode__half.listening {

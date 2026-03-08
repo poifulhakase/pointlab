@@ -98,24 +98,7 @@
         <div class="translate-modal__body">
           <!-- 音声セクション -->
           <div class="translate-modal__section">
-            <div class="translate-modal__section-title">音声</div>
-            <div class="translate-modal__item">
-              <label class="translate-modal__label">相手</label>
-              <select id="micInputLangSelect" class="translate-modal__select">
-                <option value="ja">日本語</option>
-                <option value="en" selected>英語</option>
-                <option value="zh">中国語</option>
-                <option value="ko">韓国語</option>
-                <option value="fr">フランス語</option>
-                <option value="de">ドイツ語</option>
-                <option value="es">スペイン語</option>
-                <option value="it">イタリア語</option>
-                <option value="pt">ポルトガル語</option>
-                <option value="ru">ロシア語</option>
-                <option value="th">タイ語</option>
-                <option value="vi">ベトナム語</option>
-              </select>
-            </div>
+            <div class="translate-modal__section-title">会話モード</div>
             <div class="translate-modal__item">
               <label class="translate-modal__label">自分</label>
               <select id="micTargetLangSelect" class="translate-modal__select">
@@ -133,11 +116,28 @@
                 <option value="vi">ベトナム語</option>
               </select>
             </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">相手</label>
+              <select id="micInputLangSelect" class="translate-modal__select">
+                <option value="ja">日本語</option>
+                <option value="en" selected>英語</option>
+                <option value="zh">中国語</option>
+                <option value="ko">韓国語</option>
+                <option value="fr">フランス語</option>
+                <option value="de">ドイツ語</option>
+                <option value="es">スペイン語</option>
+                <option value="it">イタリア語</option>
+                <option value="pt">ポルトガル語</option>
+                <option value="ru">ロシア語</option>
+                <option value="th">タイ語</option>
+                <option value="vi">ベトナム語</option>
+              </select>
+            </div>
           </div>
           
           <!-- カメラセクション -->
           <div class="translate-modal__section">
-            <div class="translate-modal__section-title">カメラ・画像</div>
+            <div class="translate-modal__section-title">カメラ・画像翻訳</div>
             <div class="translate-modal__item">
               <label class="translate-modal__label">原文</label>
               <select id="ocrLanguageSelect" class="translate-modal__select">
@@ -591,15 +591,17 @@
               <span class="conversation-mode__start-label">会話モード</span>
             </button>
             <div class="conversation-mode__split hidden" id="conversationSplit">
-              <button class="conversation-mode__half conversation-mode__half--top" id="convOpponentBtn" type="button" aria-label="相手が話す番">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="18 15 12 9 6 15"></polyline>
-                </svg>
-              </button>
-              <button class="conversation-mode__half conversation-mode__half--bottom" id="convMyBtn" type="button" aria-label="私が話す番">
+              <button class="conversation-mode__half conversation-mode__half--top" id="convMyBtn" type="button" aria-label="私が話す番">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
+                <span class="conversation-mode__lang-label" id="convMyLangLabel"></span>
+              </button>
+              <button class="conversation-mode__half conversation-mode__half--bottom" id="convOpponentBtn" type="button" aria-label="相手が話す番">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+                <span class="conversation-mode__lang-label" id="convOpponentLangLabel"></span>
               </button>
             </div>
             <button class="conversation-mode__handover hidden" id="convHandoverBtn" type="button" aria-label="交代">交代</button>

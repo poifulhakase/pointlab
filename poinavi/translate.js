@@ -73,7 +73,7 @@ const OCR_TO_TRANSLATE_LANG = {
   "vie": "vi"
 };
 
-// 言語コードから表示名
+// 言語コードから表示名（日本語）
 const LANG_NAMES = {
   "ja": "日本語",
   "en": "英語",
@@ -87,6 +87,22 @@ const LANG_NAMES = {
   "ru": "ロシア語",
   "th": "タイ語",
   "vi": "ベトナム語"
+};
+
+// 言語コードから表示名（英語）会話モード上部用
+const LANG_NAMES_EN = {
+  "ja": "Japanese",
+  "en": "English",
+  "zh": "Chinese",
+  "ko": "Korean",
+  "fr": "French",
+  "de": "German",
+  "es": "Spanish",
+  "it": "Italian",
+  "pt": "Portuguese",
+  "ru": "Russian",
+  "th": "Thai",
+  "vi": "Vietnamese"
 };
 
 // OCR言語コードから表示名
@@ -799,10 +815,18 @@ function initLanguageSelect() {
   if (micInputSelect) {
     const savedMicInput = localStorage.getItem("poinavi_mic_input_lang") || "en";
     micInputSelect.value = savedMicInput;
+    micInputSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_mic_input_lang", this.value);
+      updateConversationModeLangLabels();
+    });
   }
   if (micTargetSelect) {
     const savedMicTarget = localStorage.getItem("poinavi_mic_output_lang") || "ja";
     micTargetSelect.value = savedMicTarget;
+    micTargetSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_mic_output_lang", this.value);
+      updateConversationModeLangLabels();
+    });
   }
 
   // OCR言語の変更
@@ -896,24 +920,21 @@ function initLanguageSelect() {
     });
   }
 
-  // 音声入力言語の変更
-  if (micInputSelect) {
-    micInputSelect.addEventListener("change", function() {
-      localStorage.setItem("poinavi_mic_input_lang", this.value);
-    });
-  }
-
-  // 音声出力言語の変更
-  if (micTargetSelect) {
-    micTargetSelect.addEventListener("change", function() {
-      localStorage.setItem("poinavi_mic_output_lang", this.value);
-    });
-  }
 }
 
 // 言語コードから表示名を取得
 function getLangName(code) {
   return LANG_NAMES[code] || code;
+}
+
+// 会話モードの言語ラベルを更新（上：英語表示、下：日本語表示）
+function updateConversationModeLangLabels() {
+  const myLabel = document.getElementById("convMyLangLabel");
+  const opponentLabel = document.getElementById("convOpponentLangLabel");
+  const micTarget = document.getElementById("micTargetLangSelect")?.value || "ja";
+  const micInput = document.getElementById("micInputLangSelect")?.value || "en";
+  if (myLabel) myLabel.textContent = LANG_NAMES_EN[micTarget] || micTarget;
+  if (opponentLabel) opponentLabel.textContent = LANG_NAMES[micInput] || micInput;
 }
 
 // 現在の言語設定から表示テキストを取得
@@ -981,6 +1002,7 @@ function initVoiceTranslation() {
     currentSpeaker = null;
     if (conversationMode) conversationMode.classList.add("conversation-active");
     if (stopBtn) stopBtn.classList.remove("hidden");
+    updateConversationModeLangLabels();
   }
 
   speechRecognition.onstart = function() {
