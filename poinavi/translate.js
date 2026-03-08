@@ -221,6 +221,7 @@ function initCurrencyModal() {
   if (!modal) return;
 
   let exchangeRate = null;
+  let lastResult = null;
 
   function getFromTo() {
     const from = fromSelect?.value || "JPY";
@@ -284,11 +285,13 @@ function initCurrencyModal() {
     const { from, to } = getFromTo();
     if (!resultEl) return;
     if (exchangeRate === null) {
+      lastResult = null;
       resultEl.textContent = amount > 0 ? "—" : "—";
       if (amount > 0) showCurrencyConversionResult(amount, from, null, to);
       return;
     }
     const result = amount * exchangeRate;
+    lastResult = amount > 0 ? result : null;
     const resultStr = result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
     resultEl.textContent = resultStr;
     if (amount > 0) showCurrencyConversionResult(amount, from, result, to);
@@ -312,12 +315,8 @@ function initCurrencyModal() {
       const fromVal = fromSelect.value;
       const toVal = toSelect.value;
       var newAmount = "";
-      if (exchangeRate != null && resultEl && amountInput) {
-        var currentAmount = parseFloat(String(amountInput.value || "").replace(/,/g, "")) || 0;
-        var currentResult = parseFloat(String(resultEl.textContent || "").replace(/,/g, "").replace(/—/g, "")) || 0;
-        if (currentAmount > 0 && currentResult > 0) {
-          newAmount = String(currentResult);
-        }
+      if (exchangeRate != null && amountInput && lastResult != null && lastResult > 0) {
+        newAmount = String(lastResult);
       }
       fromSelect.value = toVal;
       toSelect.value = fromVal;
