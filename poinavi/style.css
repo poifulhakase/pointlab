@@ -3750,6 +3750,14 @@ body.dark-mode .unit-modal__conversion-card {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.dark-mode .translate-footer__btn--active {
+  background: rgba(122, 159, 204, 0.25);
+}
+
+.dark-mode .translate-footer__btn--active:hover {
+  background: rgba(122, 159, 204, 0.3);
+}
+
 .translate-footer__btn:active {
   transform: scale(0.95);
   background: var(--bg-tertiary, rgba(0, 0, 0, 0.08));
@@ -3759,13 +3767,12 @@ body.dark-mode .unit-modal__conversion-card {
 /* 現在のページ（アクティブ状態） */
 .translate-footer__btn--active {
   color: var(--accent-color);
-  background: transparent;
+  background: rgba(122, 159, 204, 0.2);
+  border-radius: 12px;
 }
 
-/* アクティブ状態の青い点は削除 */
-
 .translate-footer__btn--active:hover {
-  background: transparent;
+  background: rgba(122, 159, 204, 0.25);
   color: var(--accent-color);
   transform: none;
 }
