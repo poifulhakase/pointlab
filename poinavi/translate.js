@@ -331,6 +331,8 @@ function initCurrencyModal() {
       }
       fromSelect.value = toVal;
       toSelect.value = fromVal;
+      localStorage.setItem("poinavi_currency_from", toVal);
+      localStorage.setItem("poinavi_currency_to", fromVal);
       if (amountInput && newAmount !== "") {
         amountInput.value = newAmount;
       }
