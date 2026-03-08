@@ -222,6 +222,7 @@ function initCurrencyModal() {
 
   let exchangeRate = null;
   let lastResult = null;
+  let lastAmount = null;
 
   function getFromTo() {
     const from = fromSelect?.value || "JPY";
@@ -286,13 +287,20 @@ function initCurrencyModal() {
     if (!resultEl) return;
     if (exchangeRate === null) {
       lastResult = null;
+      lastAmount = null;
       resultEl.textContent = amount > 0 ? "—" : "—";
       if (amount > 0) showCurrencyConversionResult(amount, from, null, to);
       return;
     }
     const result = amount * exchangeRate;
     lastResult = amount > 0 ? result : null;
-    const resultStr = result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    lastAmount = amount > 0 ? amount : null;
+    var resultStr;
+    if (result != null && result > 0 && Math.abs(result - Math.round(result)) < 0.005) {
+      resultStr = Math.round(result).toLocaleString("ja-JP");
+    } else {
+      resultStr = result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    }
     resultEl.textContent = resultStr;
     if (amount > 0) showCurrencyConversionResult(amount, from, result, to);
   }
@@ -315,9 +323,11 @@ function initCurrencyModal() {
       const fromVal = fromSelect.value;
       const toVal = toSelect.value;
       var newAmount = "";
-      if (exchangeRate != null && exchangeRate > 0 && amountInput && lastResult != null && lastResult > 0) {
-        newAmount = String(lastResult);
+      var useStoredResult = false;
+      if (exchangeRate != null && exchangeRate > 0 && amountInput && lastResult != null && lastResult > 0 && lastAmount != null) {
         exchangeRate = 1 / exchangeRate;
+        newAmount = parseFloat(lastResult.toFixed(8)).toString();
+        useStoredResult = true;
       }
       fromSelect.value = toVal;
       toSelect.value = fromVal;
@@ -329,6 +339,12 @@ function initCurrencyModal() {
         fetchExchangeRate();
       } else {
         updateResult();
+        if (useStoredResult && resultEl && lastAmount != null) {
+          var roundDisplay = Math.abs(lastAmount - Math.round(lastAmount)) < 0.005;
+          resultEl.textContent = roundDisplay
+            ? Math.round(lastAmount).toLocaleString("ja-JP")
+            : lastAmount.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+        }
       }
     });
   }
@@ -467,6 +483,7 @@ function initUnitConversionModal() {
   if (!modal) return;
 
   let lastUnitResult = null;
+  let lastUnitAmount = null;
 
   function getCurrentUnits() {
     const cat = localStorage.getItem("poinavi_unit_category") || "length";
@@ -497,11 +514,13 @@ function initUnitConversionModal() {
     if (!resultEl) return;
     if (amount === 0 && amountInput?.value !== "0") {
       lastUnitResult = null;
+      lastUnitAmount = null;
       resultEl.textContent = "—";
       return;
     }
     const result = convertUnit(category, from, to, amount);
     lastUnitResult = amount !== 0 && result != null ? result : null;
+    lastUnitAmount = amount !== 0 ? amount : null;
     const isTemp = from === "℃" || from === "℉" || to === "℃" || to === "℉";
     const resultStr = result != null
       ? (isTemp ? result.toFixed(1) : result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 }))
@@ -547,14 +566,15 @@ function initUnitConversionModal() {
       const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
       const { from, to } = getCurrentUnits();
       saveCurrentUnits(to, from);
-      var newAmount = "";
-      if (lastUnitResult != null && amount > 0) {
-        newAmount = String(lastUnitResult);
-      }
-      if (amountInput && newAmount !== "") {
-        amountInput.value = newAmount;
+      if (amountInput && lastUnitResult != null && amount > 0) {
+        amountInput.value = parseFloat(Number(lastUnitResult).toFixed(8)).toString();
       }
       updateUnitDisplay();
+      if (resultEl && lastUnitAmount != null && amount > 0) {
+        var r = lastUnitAmount;
+        var isTemp = from === "℃" || from === "℉" || to === "℃" || to === "℉";
+        resultEl.textContent = isTemp ? r.toFixed(1) : r.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+      }
     });
   }
 
@@ -839,6 +859,8 @@ function resetTranslateSettings() {
     localStorage.removeItem("poinavi_unit_category");
     localStorage.removeItem("poinavi_unit_from");
     localStorage.removeItem("poinavi_unit_to");
+    localStorage.removeItem("poinavi_currency_from");
+    localStorage.removeItem("poinavi_currency_to");
     poinaviAlert("設定を初期化しました。ページを再読み込みします。");
     location.reload();
   });
@@ -1005,6 +1027,22 @@ function initLanguageSelect() {
     });
     unitToSelect.addEventListener("change", function() {
       localStorage.setItem("poinavi_unit_to", this.value);
+    });
+  }
+
+  // 通貨ペアの保存・復元
+  const currencyFromSelect = document.getElementById("currencyFrom");
+  const currencyToSelect = document.getElementById("currencyTo");
+  if (currencyFromSelect && currencyToSelect) {
+    const savedCurrencyFrom = localStorage.getItem("poinavi_currency_from") || "JPY";
+    const savedCurrencyTo = localStorage.getItem("poinavi_currency_to") || "USD";
+    if (savedCurrencyFrom) currencyFromSelect.value = savedCurrencyFrom;
+    if (savedCurrencyTo) currencyToSelect.value = savedCurrencyTo;
+    currencyFromSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_currency_from", this.value);
+    });
+    currencyToSelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_currency_to", this.value);
     });
   }
 
