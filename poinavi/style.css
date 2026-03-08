@@ -3766,7 +3766,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-footer {
-    height: 61px;
+    height: calc(61px + env(safe-area-inset-bottom, 0));
   }
 
   .translate-footer__btn {

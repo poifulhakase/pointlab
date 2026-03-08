@@ -357,6 +357,7 @@ function initUnitConversionModal() {
   const resultEl = document.getElementById("unitResult");
   const fromUnitEl = document.getElementById("unitFromUnit");
   const toUnitEl = document.getElementById("unitToUnit");
+  const pairDisplay = document.getElementById("unitPairDisplay");
   const swapBtn = document.getElementById("unitSwapBtn");
 
   if (!modal) return;
@@ -365,7 +366,7 @@ function initUnitConversionModal() {
   let currentTo = "inch";
 
   function getConversion() {
-    const cat = categorySelect?.value || "length_cm_inch";
+    const cat = categorySelect?.value || localStorage.getItem("poinavi_unit_category") || "length_cm_inch";
     return UNIT_CONVERSIONS[cat] || UNIT_CONVERSIONS.length_cm_inch;
   }
 
@@ -375,6 +376,7 @@ function initUnitConversionModal() {
     currentTo = conv.to;
     if (fromUnitEl) fromUnitEl.textContent = currentFrom;
     if (toUnitEl) toUnitEl.textContent = currentTo;
+    if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
     updateUnitResult();
   }
 
@@ -423,18 +425,18 @@ function initUnitConversionModal() {
 
   if (swapBtn) {
     swapBtn.addEventListener("click", function() {
-      const conv = getConversion();
       const tmp = currentFrom;
       currentFrom = currentTo;
       currentTo = tmp;
       if (fromUnitEl) fromUnitEl.textContent = currentFrom;
       if (toUnitEl) toUnitEl.textContent = currentTo;
+      if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
       updateUnitResult();
     });
   }
 
   if (amountInput) {
-    const keys = modal.querySelectorAll(".unit-modal__key");
+    const keys = modal.querySelectorAll(".currency-modal__key, .unit-modal__key");
     keys.forEach(function(btn) {
       btn.addEventListener("click", function() {
         const key = this.getAttribute("data-key");
@@ -632,6 +634,7 @@ function resetTranslateSettings() {
     localStorage.removeItem("poinavi_mic_output_lang");
     localStorage.removeItem("poinavi_theme");
     localStorage.removeItem("poinavi_start_page");
+    localStorage.removeItem("poinavi_unit_category");
     poinaviAlert("設定を初期化しました。ページを再読み込みします。");
     location.reload();
   });
@@ -713,6 +716,16 @@ function initLanguageSelect() {
     targetLang = this.value;
     localStorage.setItem("poinavi_target_lang", targetLang);
   });
+
+  // 単位換算の初期化
+  const unitCategorySelect = document.getElementById("unitCategory");
+  if (unitCategorySelect) {
+    const savedUnit = localStorage.getItem("poinavi_unit_category") || "length_cm_inch";
+    unitCategorySelect.value = savedUnit;
+    unitCategorySelect.addEventListener("change", function() {
+      localStorage.setItem("poinavi_unit_category", this.value);
+    });
+  }
 
   // 音声入力言語の変更
   if (micInputSelect) {

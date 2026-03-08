@@ -210,6 +210,24 @@
             </div>
           </div>
           
+          <!-- 単位換算セクション -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">単位換算</div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">換算ペア</label>
+              <select id="unitCategory" class="translate-modal__select">
+                <option value="length_cm_inch">長さ：cm ⇄ inch</option>
+                <option value="length_cm_ft">長さ：cm ⇄ ft</option>
+                <option value="weight">重さ：kg ⇄ lb</option>
+                <option value="temp">温度：℃ ⇄ ℉</option>
+                <option value="distance">距離：km ⇄ mile</option>
+                <option value="speed">速度：km/h ⇄ mph</option>
+                <option value="volume_ml">容量：ml ⇄ fl oz</option>
+                <option value="volume_L">容量：L ⇄ gallon</option>
+              </select>
+            </div>
+          </div>
+          
           <!-- 案内 -->
           <div class="translate-modal__section">
             <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0; line-height: 1.6;">
@@ -393,44 +411,37 @@
       </div>
     </div>
 
-    <!-- 単位換算モーダル -->
-    <div id="unitModal" class="translate-modal unit-modal hidden">
-      <div class="translate-modal__overlay"></div>
-      <div class="translate-modal__content unit-modal__content">
-        <div class="translate-modal__header unit-modal__header">
-          <h2 class="translate-modal__title unit-modal__title">単位換算</h2>
-          <button class="translate-modal__close unit-modal__close" id="unitModalClose" aria-label="閉じる">
+    <!-- 単位換算モーダル（通貨換算と同様のUI） -->
+    <div id="unitModal" class="translate-modal currency-modal unit-modal hidden">
+      <div class="translate-modal__overlay currency-modal__overlay"></div>
+      <div class="translate-modal__content currency-modal__content">
+        <div class="translate-modal__header currency-modal__header">
+          <h2 class="translate-modal__title currency-modal__title">単位換算</h2>
+          <button class="translate-modal__close currency-modal__close" id="unitModalClose" aria-label="閉じる">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
-        <div class="translate-modal__body unit-modal__body">
-          <div class="unit-modal__section unit-modal__section--category">
-            <select id="unitCategory" class="unit-modal__select" aria-label="換算カテゴリ">
-              <option value="length_cm_inch">長さ：cm ⇄ inch</option>
-              <option value="length_cm_ft">長さ：cm ⇄ ft</option>
-              <option value="weight">重さ：kg ⇄ lb</option>
-              <option value="temp">温度：℃ ⇄ ℉</option>
-              <option value="distance">距離：km ⇄ mile</option>
-              <option value="speed">速度：km/h ⇄ mph</option>
-              <option value="volume_ml">容量：ml ⇄ fl oz</option>
-              <option value="volume_L">容量：L ⇄ gallon</option>
-            </select>
-          </div>
-
-          <div class="unit-modal__conversion-card">
-            <div class="unit-modal__field unit-modal__field--input">
-              <span class="unit-modal__field-label">入力</span>
-              <div class="unit-modal__value-row">
-                <input type="text" id="unitAmount" class="unit-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
-                <span class="unit-modal__unit" id="unitFromUnit">cm</span>
+        <div class="translate-modal__body currency-modal__body">
+          <div class="currency-modal__currencies">
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__result-wrap">
+                <span id="unitResult" class="currency-modal__result">—</span>
+                <span class="currency-modal__unit" id="unitToUnit">inch</span>
               </div>
             </div>
-            <div class="unit-modal__arrow-row">
-              <button type="button" class="unit-modal__swap-btn" id="unitSwapBtn" aria-label="単位を入れ替え">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__input-wrap">
+                <input type="text" id="unitAmount" class="currency-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
+                <span class="currency-modal__unit" id="unitFromUnit">cm</span>
+              </div>
+            </div>
+            <div class="currency-modal__pair-row">
+              <span class="currency-modal__pair" id="unitPairDisplay">cm → inch</span>
+              <button type="button" class="currency-modal__swap-btn currency-modal__swap-btn--inline" id="unitSwapBtn" aria-label="単位を入れ替え">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="17 1 21 5 17 9"></polyline>
                   <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
                   <polyline points="7 23 3 19 7 15"></polyline>
@@ -438,37 +449,28 @@
                 </svg>
               </button>
             </div>
-            <div class="unit-modal__field unit-modal__field--result">
-              <span class="unit-modal__field-label">結果</span>
-              <div class="unit-modal__value-row unit-modal__value-row--result">
-                <span id="unitResult" class="unit-modal__result">—</span>
-                <span class="unit-modal__unit" id="unitToUnit">inch</span>
-              </div>
-            </div>
           </div>
-
-          <div class="unit-modal__keypad">
-            <button type="button" class="unit-modal__key unit-modal__key--action" data-key="clear">C</button>
-            <button type="button" class="unit-modal__key unit-modal__key--action" data-key="backspace" aria-label="1桁削除">
+          <div class="currency-modal__keypad">
+            <button type="button" class="currency-modal__key currency-modal__key--action currency-modal__key--clear" data-key="clear">C</button>
+            <button type="button" class="currency-modal__key currency-modal__key--action" data-key="backspace" aria-label="1桁削除">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
                 <line x1="18" y1="9" x2="12" y2="15"></line>
                 <line x1="12" y1="9" x2="18" y2="15"></line>
               </svg>
             </button>
-            <span class="unit-modal__keypad-spacer"></span>
-            <button type="button" class="unit-modal__key" data-key="7">7</button>
-            <button type="button" class="unit-modal__key" data-key="8">8</button>
-            <button type="button" class="unit-modal__key" data-key="9">9</button>
-            <button type="button" class="unit-modal__key" data-key="4">4</button>
-            <button type="button" class="unit-modal__key" data-key="5">5</button>
-            <button type="button" class="unit-modal__key" data-key="6">6</button>
-            <button type="button" class="unit-modal__key" data-key="1">1</button>
-            <button type="button" class="unit-modal__key" data-key="2">2</button>
-            <button type="button" class="unit-modal__key" data-key="3">3</button>
-            <button type="button" class="unit-modal__key unit-modal__key--wide" data-key="0">0</button>
-            <button type="button" class="unit-modal__key" data-key=".">.</button>
-            <button type="button" class="unit-modal__key" data-key="neg" aria-label="プラスマイナス">±</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="7">7</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="8">8</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="9">9</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="4">4</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="5">5</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="6">6</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="1">1</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="2">2</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="3">3</button>
+            <button type="button" class="currency-modal__key currency-modal__key--zero unit-modal__key" data-key="0">0</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key=".">.</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="neg" aria-label="プラスマイナス">±</button>
           </div>
         </div>
       </div>
