@@ -357,7 +357,6 @@ function initUnitConversionModal() {
   const resultEl = document.getElementById("unitResult");
   const fromUnitEl = document.getElementById("unitFromUnit");
   const toUnitEl = document.getElementById("unitToUnit");
-  const pairDisplay = document.getElementById("unitPairDisplay");
   const swapBtn = document.getElementById("unitSwapBtn");
 
   if (!modal) return;
@@ -376,7 +375,6 @@ function initUnitConversionModal() {
     currentTo = conv.to;
     if (fromUnitEl) fromUnitEl.textContent = currentFrom;
     if (toUnitEl) toUnitEl.textContent = currentTo;
-    if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
     updateUnitResult();
   }
 
@@ -431,13 +429,12 @@ function initUnitConversionModal() {
       currentTo = tmp;
       if (fromUnitEl) fromUnitEl.textContent = currentFrom;
       if (toUnitEl) toUnitEl.textContent = currentTo;
-      if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
       updateUnitResult();
     });
   }
 
   if (amountInput) {
-    const keys = modal.querySelectorAll(".currency-modal__key, .unit-modal__key");
+    const keys = modal.querySelectorAll(".unit-modal__key");
     keys.forEach(function(btn) {
       btn.addEventListener("click", function() {
         const key = this.getAttribute("data-key");

@@ -394,45 +394,43 @@
     </div>
 
     <!-- 単位換算モーダル -->
-    <div id="unitModal" class="translate-modal currency-modal unit-modal hidden">
-      <div class="translate-modal__overlay currency-modal__overlay"></div>
-      <div class="translate-modal__content currency-modal__content">
-        <div class="translate-modal__header currency-modal__header">
-          <h2 class="translate-modal__title currency-modal__title">単位換算</h2>
-          <button class="translate-modal__close currency-modal__close" id="unitModalClose" aria-label="閉じる">
+    <div id="unitModal" class="translate-modal unit-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content unit-modal__content">
+        <div class="translate-modal__header unit-modal__header">
+          <h2 class="translate-modal__title unit-modal__title">単位換算</h2>
+          <button class="translate-modal__close unit-modal__close" id="unitModalClose" aria-label="閉じる">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
-        <div class="translate-modal__body currency-modal__body">
-          <div class="unit-modal__category-row">
-            <label class="unit-modal__label">カテゴリ</label>
-            <select id="unitCategory" class="unit-modal__select">
-              <option value="length_cm_inch">長さ（cm ⇄ inch）</option>
-              <option value="length_cm_ft">長さ（cm ⇄ ft）</option>
-              <option value="weight">重さ（kg ⇄ lb）</option>
-              <option value="temp">温度（℃ ⇄ ℉）</option>
-              <option value="distance">距離（km ⇄ mile）</option>
-              <option value="speed">速度（km/h ⇄ mph）</option>
-              <option value="volume_ml">容量（ml ⇄ fl oz）</option>
-              <option value="volume_L">容量（L ⇄ gallon）</option>
+        <div class="translate-modal__body unit-modal__body">
+          <div class="unit-modal__section unit-modal__section--category">
+            <select id="unitCategory" class="unit-modal__select" aria-label="換算カテゴリ">
+              <option value="length_cm_inch">長さ：cm ⇄ inch</option>
+              <option value="length_cm_ft">長さ：cm ⇄ ft</option>
+              <option value="weight">重さ：kg ⇄ lb</option>
+              <option value="temp">温度：℃ ⇄ ℉</option>
+              <option value="distance">距離：km ⇄ mile</option>
+              <option value="speed">速度：km/h ⇄ mph</option>
+              <option value="volume_ml">容量：ml ⇄ fl oz</option>
+              <option value="volume_L">容量：L ⇄ gallon</option>
             </select>
           </div>
-          <div class="unit-modal__conversion-row">
-            <div class="unit-modal__result-wrap">
-              <span id="unitResult" class="currency-modal__result">—</span>
-              <span class="currency-modal__unit" id="unitToUnit">inch</span>
+
+          <div class="unit-modal__conversion-card">
+            <div class="unit-modal__field unit-modal__field--input">
+              <span class="unit-modal__field-label">入力</span>
+              <div class="unit-modal__value-row">
+                <input type="text" id="unitAmount" class="unit-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
+                <span class="unit-modal__unit" id="unitFromUnit">cm</span>
+              </div>
             </div>
-            <div class="unit-modal__input-row">
-              <input type="text" id="unitAmount" class="currency-modal__input unit-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
-              <span class="currency-modal__unit" id="unitFromUnit">cm</span>
-            </div>
-            <div class="unit-modal__pair-row">
-              <span class="unit-modal__pair" id="unitPairDisplay">cm → inch</span>
-              <button type="button" class="currency-modal__swap-btn currency-modal__swap-btn--inline" id="unitSwapBtn" aria-label="単位を入れ替え">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="unit-modal__arrow-row">
+              <button type="button" class="unit-modal__swap-btn" id="unitSwapBtn" aria-label="単位を入れ替え">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="17 1 21 5 17 9"></polyline>
                   <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
                   <polyline points="7 23 3 19 7 15"></polyline>
@@ -440,28 +438,37 @@
                 </svg>
               </button>
             </div>
+            <div class="unit-modal__field unit-modal__field--result">
+              <span class="unit-modal__field-label">結果</span>
+              <div class="unit-modal__value-row unit-modal__value-row--result">
+                <span id="unitResult" class="unit-modal__result">—</span>
+                <span class="unit-modal__unit" id="unitToUnit">inch</span>
+              </div>
+            </div>
           </div>
-          <div class="currency-modal__keypad unit-modal__keypad">
-            <button type="button" class="currency-modal__key currency-modal__key--action currency-modal__key--clear" data-key="clear">C</button>
-            <button type="button" class="currency-modal__key currency-modal__key--action" data-key="backspace" aria-label="1桁削除">
+
+          <div class="unit-modal__keypad">
+            <button type="button" class="unit-modal__key unit-modal__key--action" data-key="clear">C</button>
+            <button type="button" class="unit-modal__key unit-modal__key--action" data-key="backspace" aria-label="1桁削除">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
                 <line x1="18" y1="9" x2="12" y2="15"></line>
                 <line x1="12" y1="9" x2="18" y2="15"></line>
               </svg>
             </button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="7">7</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="8">8</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="9">9</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="4">4</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="5">5</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="6">6</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="1">1</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="2">2</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key="3">3</button>
-            <button type="button" class="currency-modal__key unit-modal__key unit-modal__key--zero" data-key="0">0</button>
-            <button type="button" class="currency-modal__key unit-modal__key" data-key=".">.</button>
-            <button type="button" class="currency-modal__key unit-modal__key unit-modal__key--neg" data-key="neg" aria-label="プラスマイナス">±</button>
+            <span class="unit-modal__keypad-spacer"></span>
+            <button type="button" class="unit-modal__key" data-key="7">7</button>
+            <button type="button" class="unit-modal__key" data-key="8">8</button>
+            <button type="button" class="unit-modal__key" data-key="9">9</button>
+            <button type="button" class="unit-modal__key" data-key="4">4</button>
+            <button type="button" class="unit-modal__key" data-key="5">5</button>
+            <button type="button" class="unit-modal__key" data-key="6">6</button>
+            <button type="button" class="unit-modal__key" data-key="1">1</button>
+            <button type="button" class="unit-modal__key" data-key="2">2</button>
+            <button type="button" class="unit-modal__key" data-key="3">3</button>
+            <button type="button" class="unit-modal__key unit-modal__key--wide" data-key="0">0</button>
+            <button type="button" class="unit-modal__key" data-key=".">.</button>
+            <button type="button" class="unit-modal__key" data-key="neg" aria-label="プラスマイナス">±</button>
           </div>
         </div>
       </div>
@@ -472,10 +479,19 @@
     <main class="translate-main">
       <h1 class="visually-hidden">ぽいナビ - 翻訳：多言語翻訳・OCR・音声認識</h1>
       <!-- テキスト表示エリア -->
-      <div class="translate-result-area" id="translateResultArea">
-        <div class="translate-result-placeholder">
-          <p>翻訳がここに表示されます</p>
+      <div class="translate-result-area-wrap">
+        <div class="translate-result-area" id="translateResultArea">
+          <div class="translate-result-placeholder">
+            <p>翻訳がここに表示されます</p>
+          </div>
         </div>
+        <button class="translate-result-area__reset-btn" id="resetTranslateBtn" type="button" aria-label="翻訳結果をリセット">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>リセット</span>
+        </button>
       </div>
 
       <!-- カメラ翻訳エリア -->
@@ -527,8 +543,13 @@
         <div class="translate-voice-area__btn-wrapper">
           <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位換算">
             <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 17H8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2z"></path>
-              <path d="M3 7h13a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2z"></path>
+              <path d="M2 14h20"></path>
+              <path d="M2 14v4"></path>
+              <path d="M6 14v2"></path>
+              <path d="M10 14v4"></path>
+              <path d="M14 14v2"></path>
+              <path d="M18 14v4"></path>
+              <path d="M22 14v4"></path>
             </svg>
           </button>
           <p class="translate-camera-label">単位換算</p>
