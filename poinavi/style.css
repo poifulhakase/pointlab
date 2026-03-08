@@ -2395,14 +2395,8 @@ body.dark-mode .rain-viewer-disclaimer {
   background-color: var(--bg-primary);
 }
 
-/* 音声翻訳エリア（通貨換算ボタン左・音声翻訳中央・右スペーサーでバランス） */
+/* 音声翻訳エリア（グリッドでQR読み取り・会話モードを中央揃え） */
 .translate-voice-area {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 46px;
-  padding: 8px 0 20px 0;
   flex-shrink: 0;
 }
 
@@ -2940,20 +2934,48 @@ body.dark-mode .translate-result-item--latest {
 }
 
 /* カメラ翻訳エリア */
+/* QR読み取り・会話モードを左右中央で揃えるグリッド */
+.translate-buttons-area {
+  flex-shrink: 0;
+}
+
+.translate-buttons-grid {
+  display: grid;
+  grid-template-columns: 60px 130px 60px;
+  gap: 0 46px;
+  justify-content: center;
+  align-items: center;
+}
+
+.translate-buttons-grid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.translate-buttons-grid__cell--left {
+  justify-content: center;
+}
+
+.translate-buttons-grid__cell--center {
+  justify-content: center;
+}
+
+.translate-buttons-grid__cell--right {
+  justify-content: center;
+}
+
 .translate-camera-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 30px 0 12px 0;
+  padding: 30px 0 8px 0;
   flex-shrink: 0;
 }
 
-.translate-camera-area__buttons {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 46px;
+.translate-voice-area {
+  padding: 8px 0 20px 0;
 }
 
 .translate-camera-area__btn-wrapper {
@@ -4012,8 +4034,9 @@ body.dark-mode .translate-result-item__divider svg {
     padding: 24px 0 8px 0;
   }
 
-  .translate-camera-area__buttons {
-    gap: 35px;
+  .translate-buttons-grid {
+    grid-template-columns: 52px 110px 52px;
+    gap: 0 35px;
   }
 
   .translate-camera-area__btn-wrapper {

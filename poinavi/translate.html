@@ -528,97 +528,108 @@
         </button>
       </div>
 
-      <!-- カメラ翻訳エリア -->
-      <div class="translate-camera-area">
-        <div class="translate-camera-area__buttons">
-          <!-- 通貨換算ボタン（左側） -->
-          <div class="translate-camera-area__btn-wrapper">
-            <button class="translate-camera-btn translate-currency-btn" id="currencyConvertBtn" type="button" aria-label="通貨換算">
-              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="1" x2="12" y2="23"></line>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-              </svg>
-            </button>
-            <p class="translate-camera-label">通貨換算</p>
-          </div>
-          <!-- QRコードボタン（中央） -->
-          <div class="translate-camera-area__btn-wrapper">
-            <button class="translate-camera-btn translate-qr-btn" id="qrScanBtn" type="button" aria-label="QRコード">
-              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-                <rect x="14" y="14" width="3" height="3"></rect>
-                <line x1="21" y1="14" x2="21" y2="14.01"></line>
-                <line x1="21" y1="21" x2="21" y2="21.01"></line>
-                <line x1="14" y1="21" x2="14" y2="21.01"></line>
-                <line x1="17" y1="17" x2="17" y2="17.01"></line>
-                <line x1="21" y1="17" x2="21" y2="17.01"></line>
-                <line x1="17" y1="21" x2="17" y2="21.01"></line>
-              </svg>
-            </button>
-            <p class="translate-camera-label">QR読取り</p>
-          </div>
-          <!-- カメラ翻訳ボタン（右側） -->
-          <div class="translate-camera-area__btn-wrapper">
-            <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
-              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
-              </svg>
-            </button>
-            <p class="translate-camera-label">カメラ翻訳</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 単位換算（左）・音声翻訳（中央）・画像翻訳（右） -->
-      <div class="translate-voice-area">
-        <div class="translate-voice-area__btn-wrapper">
-          <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位換算">
-            <svg class="translate-camera-btn__icon translate-camera-btn__icon--unit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <text x="12" y="17" text-anchor="middle" font-size="18" font-weight="700" stroke="none" fill="currentColor">cm</text>
-            </svg>
-          </button>
-          <p class="translate-camera-label">単位換算</p>
-        </div>
-        <!-- 会話モード：初期＝単一ボタン／押下後＝上下分割 or 交代 -->
-        <div class="translate-voice-area__btn-wrapper translate-voice-area__btn-wrapper--conversation">
-          <div class="conversation-mode" id="conversationMode">
-            <button class="conversation-mode__start" id="convStartBtn" type="button" aria-label="会話モードを開始">
-              <svg class="conversation-mode__start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" y1="19" x2="12" y2="23"></line>
-                <line x1="8" y1="23" x2="16" y2="23"></line>
-              </svg>
-              <span class="conversation-mode__start-label">会話モード</span>
-            </button>
-            <div class="conversation-mode__split hidden" id="conversationSplit">
-              <button class="conversation-mode__half conversation-mode__half--top" id="convOpponentBtn" type="button" aria-label="相手が話す番">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="18 15 12 9 6 15"></polyline>
-                </svg>
-              </button>
-              <button class="conversation-mode__half conversation-mode__half--bottom" id="convMyBtn" type="button" aria-label="私が話す番">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
+      <!-- ボタンエリア（QR読み取り・会話モードを中央に揃える） -->
+      <div class="translate-buttons-area">
+        <div class="translate-camera-area">
+          <div class="translate-buttons-grid">
+            <div class="translate-buttons-grid__cell translate-buttons-grid__cell--left">
+              <div class="translate-camera-area__btn-wrapper">
+                <button class="translate-camera-btn translate-currency-btn" id="currencyConvertBtn" type="button" aria-label="通貨換算">
+                  <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                </button>
+                <p class="translate-camera-label">通貨換算</p>
+              </div>
             </div>
-            <button class="conversation-mode__handover hidden" id="convHandoverBtn" type="button" aria-label="交代">交代</button>
+            <div class="translate-buttons-grid__cell translate-buttons-grid__cell--center">
+              <div class="translate-camera-area__btn-wrapper">
+                <button class="translate-camera-btn translate-qr-btn" id="qrScanBtn" type="button" aria-label="QRコード">
+                  <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="3" height="3"></rect>
+                    <line x1="21" y1="14" x2="21" y2="14.01"></line>
+                    <line x1="21" y1="21" x2="21" y2="21.01"></line>
+                    <line x1="14" y1="21" x2="14" y2="21.01"></line>
+                    <line x1="17" y1="17" x2="17" y2="17.01"></line>
+                    <line x1="21" y1="17" x2="21" y2="17.01"></line>
+                    <line x1="17" y1="21" x2="17" y2="21.01"></line>
+                  </svg>
+                </button>
+                <p class="translate-camera-label">QR読取り</p>
+              </div>
+            </div>
+            <div class="translate-buttons-grid__cell translate-buttons-grid__cell--right">
+              <div class="translate-camera-area__btn-wrapper">
+                <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
+                  <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </button>
+                <p class="translate-camera-label">カメラ翻訳</p>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="translate-voice-area__btn-wrapper">
-          <input type="file" id="imageTranslateInput" accept="image/*" class="visually-hidden" aria-hidden="true" />
-          <button class="translate-camera-btn translate-image-btn" id="imageTranslateBtn" type="button" aria-label="画像翻訳">
-            <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-          </button>
-          <p class="translate-camera-label">画像翻訳</p>
+        <div class="translate-voice-area">
+          <div class="translate-buttons-grid">
+            <div class="translate-buttons-grid__cell translate-buttons-grid__cell--left">
+              <div class="translate-voice-area__btn-wrapper">
+                <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位換算">
+                  <svg class="translate-camera-btn__icon translate-camera-btn__icon--unit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <text x="12" y="17" text-anchor="middle" font-size="18" font-weight="700" stroke="none" fill="currentColor">cm</text>
+                  </svg>
+                </button>
+                <p class="translate-camera-label">単位換算</p>
+              </div>
+            </div>
+            <div class="translate-buttons-grid__cell translate-buttons-grid__cell--center">
+              <!-- 会話モード：初期＝単一ボタン／押下後＝上下分割 or 交代 -->
+              <div class="translate-voice-area__btn-wrapper translate-voice-area__btn-wrapper--conversation">
+                <div class="conversation-mode" id="conversationMode">
+                  <button class="conversation-mode__start" id="convStartBtn" type="button" aria-label="会話モードを開始">
+                    <svg class="conversation-mode__start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span class="conversation-mode__start-label">会話モード</span>
+                  </button>
+                  <div class="conversation-mode__split hidden" id="conversationSplit">
+                    <button class="conversation-mode__half conversation-mode__half--top" id="convOpponentBtn" type="button" aria-label="相手が話す番">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="18 15 12 9 6 15"></polyline>
+                      </svg>
+                    </button>
+                    <button class="conversation-mode__half conversation-mode__half--bottom" id="convMyBtn" type="button" aria-label="私が話す番">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                  <button class="conversation-mode__handover hidden" id="convHandoverBtn" type="button" aria-label="交代">交代</button>
+                </div>
+              </div>
+            </div>
+            <div class="translate-buttons-grid__cell translate-buttons-grid__cell--right">
+              <div class="translate-voice-area__btn-wrapper">
+                <input type="file" id="imageTranslateInput" accept="image/*" class="visually-hidden" aria-hidden="true" />
+                <button class="translate-camera-btn translate-image-btn" id="imageTranslateBtn" type="button" aria-label="画像翻訳">
+                  <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </button>
+                <p class="translate-camera-label">画像翻訳</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
