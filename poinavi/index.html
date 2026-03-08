@@ -504,10 +504,13 @@
           memoItem.dataset.id = memo.id;
 
           const formattedTime = formatDateTime(memo.createdAt);
+          const hasLocation = memo.latitude != null && memo.longitude != null && !isNaN(memo.latitude) && !isNaN(memo.longitude);
+          const mapUrl = hasLocation ? `./map.html?lat=${memo.latitude}&lng=${memo.longitude}` : '';
           memoItem.innerHTML = `
             <div class="memo-item__header">
               <span class="memo-item__time">${formattedTime}</span>
               <div class="memo-item__actions">
+                ${hasLocation ? `<a href="${mapUrl}" class="memo-item__map-link" aria-label="地図で見る">地図</a>` : ''}
                 <button class="memo-item__copy" type="button" aria-label="クリップボードにコピー">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

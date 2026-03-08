@@ -950,12 +950,11 @@ function initVoiceTranslation() {
   const conversationMode = document.getElementById("conversationMode");
   const startBtn = document.getElementById("convStartBtn");
   const splitEl = document.getElementById("conversationSplit");
-  const handoverBtn = document.getElementById("convHandoverBtn");
   const opponentBtn = document.getElementById("convOpponentBtn");
   const myBtn = document.getElementById("convMyBtn");
   const stopBtn = document.getElementById("conversationStopBtn");
 
-  if (!startBtn || !splitEl || !handoverBtn || !opponentBtn || !myBtn) return;
+  if (!startBtn || !splitEl || !opponentBtn || !myBtn) return;
 
   // Web Speech API のサポート確認
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -979,7 +978,6 @@ function initVoiceTranslation() {
   function switchToStart() {
     startBtn.classList.remove("hidden");
     splitEl.classList.add("hidden");
-    handoverBtn.classList.add("hidden");
     opponentBtn.classList.remove("listening");
     myBtn.classList.remove("listening");
     currentSpeaker = null;
@@ -987,16 +985,9 @@ function initVoiceTranslation() {
     if (stopBtn) stopBtn.classList.add("hidden");
   }
 
-  function switchToHandover() {
-    splitEl.classList.add("hidden");
-    handoverBtn.classList.remove("hidden");
-    if (stopBtn) stopBtn.classList.remove("hidden");
-  }
-
   function switchToSplit() {
     startBtn.classList.add("hidden");
     splitEl.classList.remove("hidden");
-    handoverBtn.classList.add("hidden");
     opponentBtn.classList.remove("listening");
     myBtn.classList.remove("listening");
     currentSpeaker = null;
@@ -1015,7 +1006,7 @@ function initVoiceTranslation() {
     isListening = false;
     opponentBtn.classList.remove("listening");
     myBtn.classList.remove("listening");
-    if (currentSpeaker) switchToHandover();
+    if (currentSpeaker) switchToSplit();
     currentSpeaker = null;
   };
 
@@ -1067,10 +1058,6 @@ function initVoiceTranslation() {
     if (isListening) return;
     currentSpeaker = "my";
     startConversationRecognition("my");
-  });
-
-  handoverBtn.addEventListener("click", function() {
-    switchToSplit();
   });
 
   if (stopBtn) {

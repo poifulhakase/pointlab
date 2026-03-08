@@ -901,12 +901,22 @@ function initMap() {
     return;
   }
 
-  // デフォルト位置（東京駅）
-  const defaultLocation = { lat: 35.6812, lng: 139.7671 };
+  // デフォルト位置（東京駅）、URL の lat/lng で上書き可能（ラボノートから地図へ戻る用）
+  const params = new URLSearchParams(window.location.search);
+  const urlLat = params.get("lat");
+  const urlLng = params.get("lng");
+  let initialCenter = { lat: 35.6812, lng: 139.7671 };
+  if (urlLat && urlLng) {
+    const lat = parseFloat(urlLat);
+    const lng = parseFloat(urlLng);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      initialCenter = { lat, lng };
+    }
+  }
 
   try {
     map = new google.maps.Map(document.getElementById("map"), {
-      center: defaultLocation,
+      center: initialCenter,
       zoom: 15,
       mapTypeControl: false,
       streetViewControl: false,
@@ -973,7 +983,7 @@ function initMap() {
     window.showLabNoteResultModal = poinaviAlert;
 
     // グローバル関数としてラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
-    window.addPlaceToMemo = function(encodedName, encodedAddress, distance) {
+    window.addPlaceToMemo = function(encodedName, encodedAddress, distance, lat, lng) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
       const MEMO_MAX_COUNT = 50;
       
@@ -1002,7 +1012,9 @@ function initMap() {
       const newMemo = {
         id: Date.now().toString(),
         content: memoContent,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        latitude: lat != null && lng != null ? parseFloat(lat) : undefined,
+        longitude: lat != null && lng != null ? parseFloat(lng) : undefined
       };
       memos.unshift(newMemo);
       
@@ -1017,7 +1029,7 @@ function initMap() {
     };
     
     // グローバル関数として鉄道ラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
-    window.addRailwayToMemo = function(encodedType, encodedContent) {
+    window.addRailwayToMemo = function(encodedType, encodedContent, lat, lng) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
       const MEMO_MAX_COUNT = 50;
       
@@ -1047,7 +1059,9 @@ function initMap() {
       const newMemo = {
         id: Date.now().toString(),
         content: memoContent,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        latitude: lat != null && lng != null ? parseFloat(lat) : undefined,
+        longitude: lat != null && lng != null ? parseFloat(lng) : undefined
       };
       memos.unshift(newMemo);
       
@@ -1253,8 +1267,12 @@ function tryIpBasedLocation() {
 function applyUserLocation(lat, lng) {
   if (!map) return; // initMap 未完了時は何もしない
   userLocation = { lat: lat, lng: lng };
-  map.setCenter(userLocation);
-  map.setZoom(15);
+  // ラボノートから地図へ戻った場合（URL に lat/lng がある）は中心を移動しない
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("lat") || !params.has("lng")) {
+    map.setCenter(userLocation);
+    map.setZoom(15);
+  }
 
   // 現在地マーカー
   // ダークモードかどうかを判定
@@ -2912,7 +2930,7 @@ function showInfoWindow(place, marker) {
         justify-content: flex-end;
         margin-top: 8px;
       ">
-        <button onclick="addPlaceToMemo('${encodeURIComponent(place.name)}', '${encodeURIComponent(address)}', '${distanceText}')" style="
+        <button onclick="addPlaceToMemo('${encodeURIComponent(place.name)}', '${encodeURIComponent(address)}', '${distanceText}', ${place.geometry && place.geometry.location ? place.geometry.location.lat() : 'null'}, ${place.geometry && place.geometry.location ? place.geometry.location.lng() : 'null'})" style="
           display: inline-flex;
           align-items: center;
           gap: 6px;
@@ -4025,7 +4043,7 @@ function showRailwayInfoWindow(position, content, type) {
         display: flex;
         justify-content: flex-end;
       ">
-        <button onclick="addRailwayToMemo('${encodeURIComponent(type)}', '${encodeURIComponent(plainContent)}')" style="
+        <button onclick="addRailwayToMemo('${encodeURIComponent(type)}', '${encodeURIComponent(plainContent)}', ${position.lat()}, ${position.lng()})" style="
           display: inline-flex;
           align-items: center;
           gap: 6px;
@@ -4433,7 +4451,7 @@ function generateToiletInfoWindowHtml(position, tags, address, isLoading = false
           </svg>
           経路
         </button>
-        <button onclick="addToiletToMemo('${encodeURIComponent(plainContent)}')" style="
+        <button onclick="addToiletToMemo('${encodeURIComponent(plainContent)}', ${position.lat()}, ${position.lng()})" style="
           display: inline-flex;
           align-items: center;
           gap: 4px;
@@ -4524,7 +4542,7 @@ function openToiletInGoogleMaps(lat, lng) {
 }
 
 // お手洗いをラボノートに追加
-function addToiletToMemo(encodedContent) {
+function addToiletToMemo(encodedContent, lat, lng) {
   const content = decodeURIComponent(encodedContent);
   const MEMO_STORAGE_KEY = "poinavi_memos";
   
@@ -4533,7 +4551,9 @@ function addToiletToMemo(encodedContent) {
     const newMemo = {
       id: Date.now().toString(),
       content: `🚻 ${content}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      latitude: lat != null && lng != null ? parseFloat(lat) : undefined,
+      longitude: lat != null && lng != null ? parseFloat(lng) : undefined
     };
     memos.unshift(newMemo);
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));

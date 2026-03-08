@@ -2529,6 +2529,14 @@ body.dark-mode .rain-viewer-disclaimer {
 
 .conversation-mode__half--top {
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  justify-content: flex-start;
+  padding: 4px 12px 36px;
+}
+
+.conversation-mode__half--bottom {
+  justify-content: flex-start;
+  padding: 4px 12px 36px;
+  transform: rotate(180deg);
 }
 
 .conversation-mode__half--top:hover,
@@ -3833,19 +3841,7 @@ body.dark-mode .unit-modal__conversion-card {
 }
 
 /* ダークモード対応 - 翻訳ページ */
-body.dark-mode .translate-header__logo {
-  filter: brightness(1.2);
-}
-
-body.dark-mode .translate-voice-btn {
-  background: linear-gradient(135deg, #7A9FCC 0%, #6289B8 100%);
-  box-shadow: 0 4px 20px rgba(122, 159, 204, 0.4);
-}
-
-body.dark-mode .translate-voice-btn:hover {
-  box-shadow: 0 6px 24px rgba(90, 156, 255, 0.5);
-}
-
+/* ロゴ・翻訳マシン（会話モード）は色を変えずライトと同じ表示 */
 body.dark-mode .translate-camera-btn {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -4758,6 +4754,25 @@ body.dark-mode .memo-item {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.memo-item__map-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-color, #7A9FCC);
+  background-color: rgba(122, 159, 204, 0.1);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.memo-item__map-link:hover {
+  background-color: rgba(122, 159, 204, 0.2);
+  color: var(--accent-hover, #6289B8);
 }
 
 .memo-item__copy {
