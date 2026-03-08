@@ -162,6 +162,7 @@ document.addEventListener("DOMContentLoaded", function() {
   initCameraModal();
   initStartPageSelect();
   initCurrencyModal();
+  initUnitConversionModal();
 });
 
 // ============================================
@@ -330,6 +331,237 @@ function initCurrencyModal() {
       currencyModal.classList.add("hidden");
     }
   });
+}
+
+// ============================================
+// 単位換算モーダル
+// ============================================
+const UNIT_CONVERSIONS = {
+  length_cm_inch: { from: "cm", to: "inch", convert: (v) => v * 0.393701, convertBack: (v) => v / 0.393701 },
+  length_cm_ft: { from: "cm", to: "ft", convert: (v) => v * 0.0328084, convertBack: (v) => v / 0.0328084 },
+  weight: { from: "kg", to: "lb", convert: (v) => v * 2.20462, convertBack: (v) => v / 2.20462 },
+  temp: { from: "℃", to: "℉", convert: (v) => v * 9 / 5 + 32, convertBack: (v) => (v - 32) * 5 / 9 },
+  distance: { from: "km", to: "mile", convert: (v) => v * 0.621371, convertBack: (v) => v / 0.621371 },
+  speed: { from: "km/h", to: "mph", convert: (v) => v * 0.621371, convertBack: (v) => v / 0.621371 },
+  volume_ml: { from: "ml", to: "fl oz", convert: (v) => v * 0.033814, convertBack: (v) => v / 0.033814 },
+  volume_L: { from: "L", to: "gallon", convert: (v) => v * 0.264172, convertBack: (v) => v / 0.264172 }
+};
+
+function initUnitConversionModal() {
+  const modal = document.getElementById("unitModal");
+  const openBtn = document.getElementById("unitConvertBtn");
+  const closeBtn = document.getElementById("unitModalClose");
+  const overlay = modal?.querySelector(".translate-modal__overlay");
+  const categorySelect = document.getElementById("unitCategory");
+  const amountInput = document.getElementById("unitAmount");
+  const resultEl = document.getElementById("unitResult");
+  const fromUnitEl = document.getElementById("unitFromUnit");
+  const toUnitEl = document.getElementById("unitToUnit");
+  const pairDisplay = document.getElementById("unitPairDisplay");
+  const swapBtn = document.getElementById("unitSwapBtn");
+
+  if (!modal) return;
+
+  let currentFrom = "cm";
+  let currentTo = "inch";
+
+  function getConversion() {
+    const cat = categorySelect?.value || "length_cm_inch";
+    return UNIT_CONVERSIONS[cat] || UNIT_CONVERSIONS.length_cm_inch;
+  }
+
+  function updateUnitDisplay() {
+    const conv = getConversion();
+    currentFrom = conv.from;
+    currentTo = conv.to;
+    if (fromUnitEl) fromUnitEl.textContent = currentFrom;
+    if (toUnitEl) toUnitEl.textContent = currentTo;
+    if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
+    updateUnitResult();
+  }
+
+  function updateUnitResult() {
+    const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
+    const conv = getConversion();
+    if (!resultEl) return;
+    if (amount === 0 && amountInput?.value !== "0") {
+      resultEl.textContent = "—";
+      return;
+    }
+    const fromUnit = conv.from;
+    const toUnit = conv.to;
+    const result = (currentFrom === fromUnit) ? conv.convert(amount) : conv.convertBack(amount);
+    const resultStr = (conv.from === "℃" || conv.from === "℉")
+      ? result.toFixed(1) : result.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    resultEl.textContent = resultStr;
+    if (amount > 0 || amount < 0) showUnitConversionResult(amount, currentFrom, result, currentTo);
+  }
+
+  function openUnitModal() {
+    modal.classList.remove("hidden");
+    history.pushState({ modal: "unit" }, "");
+    updateUnitDisplay();
+  }
+
+  function handleUnitBtnOpen(e) {
+    if (e.target.closest("#unitConvertBtn")) {
+      e.preventDefault();
+      openUnitModal();
+    }
+  }
+  document.body.addEventListener("click", handleUnitBtnOpen);
+  document.body.addEventListener("touchend", handleUnitBtnOpen, { passive: false });
+
+  if (closeBtn) closeBtn.addEventListener("click", closeUnitModal);
+  if (overlay) overlay.addEventListener("click", closeUnitModal);
+
+  function closeUnitModal() {
+    modal.classList.add("hidden");
+  }
+
+  if (categorySelect) {
+    categorySelect.addEventListener("change", updateUnitDisplay);
+  }
+
+  if (swapBtn) {
+    swapBtn.addEventListener("click", function() {
+      const conv = getConversion();
+      const tmp = currentFrom;
+      currentFrom = currentTo;
+      currentTo = tmp;
+      if (fromUnitEl) fromUnitEl.textContent = currentFrom;
+      if (toUnitEl) toUnitEl.textContent = currentTo;
+      if (pairDisplay) pairDisplay.textContent = currentFrom + " → " + currentTo;
+      updateUnitResult();
+    });
+  }
+
+  if (amountInput) {
+    const keys = modal.querySelectorAll(".currency-modal__key, .unit-modal__key");
+    keys.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        const key = this.getAttribute("data-key");
+        if (key === "neg") {
+          const val = amountInput.value || "0";
+          amountInput.value = val.startsWith("-") ? val.slice(1) : "-" + val;
+        } else if (key === "close") {
+          modal.classList.add("hidden");
+          return;
+        } else {
+          let val = amountInput.value || "0";
+          if (key === "backspace") {
+            val = val.slice(0, -1) || "0";
+          } else if (key === "clear") {
+            val = "0";
+          } else if (key === ".") {
+            if (!val.includes(".")) val = val === "0" ? "0." : val + ".";
+          } else if (/^[0-9]$/.test(key)) {
+            val = val === "0" && key !== "." ? key : val + key;
+          }
+          if (key !== "neg") amountInput.value = val;
+        }
+        updateUnitResult();
+      });
+    });
+  }
+
+  window.addEventListener("popstate", function() {
+    const unitModalEl = document.getElementById("unitModal");
+    if (unitModalEl && !unitModalEl.classList.contains("hidden")) {
+      unitModalEl.classList.add("hidden");
+    }
+  });
+}
+
+function showUnitConversionResult(amount, fromUnit, result, toUnit) {
+  const resultArea = document.getElementById("translateResultArea");
+  if (!resultArea) return;
+
+  const amountStr = Number(amount).toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+  const isTemp = fromUnit === "℃" || fromUnit === "℉" || toUnit === "℃" || toUnit === "℉";
+  const resultStr = result != null
+    ? (isTemp ? result.toFixed(1) : Number(result).toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 }))
+    : "—";
+  const copyText = result != null ? `${amountStr} ${fromUnit} = ${resultStr} ${toUnit}` : `${amountStr} ${fromUnit}`;
+
+  const typeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M21 17H8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2z"></path>
+    <path d="M3 7h13a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2z"></path>
+  </svg>`;
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+  const existingUnit = resultArea.querySelector(".translate-result-item--unit");
+  const resultHTML = `
+    <div class="translate-result-item translate-result-item--unit" data-type="unit" data-copy="${encodeURIComponent(copyText)}">
+      <div class="translate-result-item__header">
+        <span class="translate-result-item__icon">${typeIcon}</span>
+        <span class="translate-result-item__label">単位換算</span>
+        <span class="translate-result-item__lang">${fromUnit} → ${toUnit}</span>
+        <span class="translate-result-item__time">${timeStr}</span>
+      </div>
+      <div class="translate-result-item__content">
+        <div class="translate-result-item__original">
+          <span class="translate-result-item__tag">変換元</span>
+          <p>${escapeHtmlForDisplay(amountStr)} ${fromUnit}</p>
+        </div>
+        <div class="translate-result-item__divider">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="5 12 12 19 19 12"></polyline>
+          </svg>
+        </div>
+        <div class="translate-result-item__translated">
+          <span class="translate-result-item__tag">換算結果</span>
+          <p>${escapeHtmlForDisplay(resultStr)} ${toUnit}</p>
+        </div>
+      </div>
+      <div class="translate-result-item__actions">
+        <button class="translate-result-item__action-btn copy-unit-result-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>結果をコピー</span>
+        </button>
+        <button class="translate-result-item__action-btn add-unit-to-memo-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span>ラボノートに追加</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  const placeholder = resultArea.querySelector(".translate-result-placeholder");
+  if (placeholder) placeholder.remove();
+
+  resultArea.querySelectorAll(".translate-result-item--latest").forEach(function(item) {
+    item.classList.remove("translate-result-item--latest");
+  });
+
+  if (existingUnit) {
+    existingUnit.outerHTML = resultHTML;
+  } else {
+    resultArea.insertAdjacentHTML("afterbegin", resultHTML);
+  }
+
+  const latestItem = resultArea.querySelector(".translate-result-item--unit");
+  latestItem?.classList.add("translate-result-item--latest");
+  latestItem?.querySelector(".copy-unit-result-btn")?.addEventListener("click", function() {
+    const text = decodeURIComponent(latestItem.dataset.copy || "");
+    if (text && typeof copyToClipboard === "function") copyToClipboard(text, this);
+  });
+  latestItem?.querySelector(".add-unit-to-memo-btn")?.addEventListener("click", function() {
+    const memoText = decodeURIComponent(latestItem.dataset.copy || "");
+    if (memoText) addToMemo(memoText, this);
+  });
+  resultArea.scrollTop = 0;
+  setupCopyButtons();
 }
 
 // ============================================

@@ -4245,22 +4245,23 @@ body.dark-mode .memo-item {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 500px;
+  max-width: 100%;
   width: 100%;
   margin: 0 auto;
 }
 
 .memo-input-wrapper {
   flex: 1;
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
+  position: relative;
 }
 
 .memo-input {
-  flex: 1;
+  width: 100%;
   min-height: 100px;
   padding: 12px 16px;
+  padding-right: 56px;
+  padding-bottom: 12px;
+  box-sizing: border-box;
   border: 1px solid var(--border-color);
   border-radius: 16px;
   background-color: var(--bg-secondary);
@@ -4284,11 +4285,14 @@ body.dark-mode .memo-item {
 }
 
 .memo-add-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
   border: none;
   border-radius: 50%;
@@ -4296,8 +4300,6 @@ body.dark-mode .memo-item {
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
   transition: transform 0.2s, box-shadow 0.2s;
-  flex-shrink: 0;
-  align-self: flex-end;
 }
 
 .memo-add-btn:hover {
@@ -4346,11 +4348,14 @@ body.dark-mode .memo-item {
 
   .memo-input {
     padding: 10px 14px;
+    padding-right: 50px;
   }
 
   .memo-add-btn {
-    width: 44px;
-    height: 44px;
+    bottom: 8px;
+    right: 8px;
+    width: 40px;
+    height: 40px;
   }
 
   .memo-add-btn svg {
