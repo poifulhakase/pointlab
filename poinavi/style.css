@@ -2538,7 +2538,6 @@ body.dark-mode .translate-voice-btn.listening::after {
   background-color: var(--bg-secondary);
   border-radius: 16px;
   padding: 16px;
-  padding-bottom: 52px;
   overflow-y: auto;
   height: 480px;
   height: 55vh;
@@ -3707,7 +3706,6 @@ body.dark-mode .translate-result-item__divider svg {
 
   .translate-result-area {
     padding: 12px;
-    padding-bottom: 48px;
     border-radius: 12px;
   }
 
