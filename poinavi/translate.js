@@ -923,52 +923,74 @@ function getLanguageLabel() {
 }
 
 // ============================================
-// 音声翻訳の初期化（Web Speech API版）
+// 会話モードの初期化（Web Speech API版）
 // ============================================
 function initVoiceTranslation() {
-  const voiceBtn = document.getElementById("voiceTranslateBtn");
-  
-  if (!voiceBtn) return;
-  
+  const splitEl = document.getElementById("conversationSplit");
+  const handoverBtn = document.getElementById("convHandoverBtn");
+  const opponentBtn = document.getElementById("convOpponentBtn");
+  const myBtn = document.getElementById("convMyBtn");
+  const stopBtn = document.getElementById("conversationStopBtn");
+
+  if (!splitEl || !handoverBtn || !opponentBtn || !myBtn) return;
+
   // Web Speech API のサポート確認
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  
+
   if (!SpeechRecognition) {
     console.warn("Web Speech APIがサポートされていません");
-    voiceBtn.addEventListener("click", function() {
-      poinaviAlert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
-    });
+    poinaviAlert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
     return;
   }
-  
+
   // 音声認識の初期化
   speechRecognition = new SpeechRecognition();
   speechRecognition.continuous = false;
   speechRecognition.interimResults = true;
   speechRecognition.maxAlternatives = 1;
-  
-  // イベントハンドラ
+
+  let currentSpeaker = null;
+
+  function switchToHandover() {
+    splitEl.classList.add("hidden");
+    handoverBtn.classList.remove("hidden");
+    if (stopBtn) stopBtn.classList.add("hidden");
+  }
+
+  function switchToSplit() {
+    splitEl.classList.remove("hidden");
+    handoverBtn.classList.add("hidden");
+    opponentBtn.classList.remove("listening");
+    myBtn.classList.remove("listening");
+    currentSpeaker = null;
+    if (stopBtn) stopBtn.classList.add("hidden");
+  }
+
   speechRecognition.onstart = function() {
     isListening = true;
-    voiceBtn.classList.add("active");
-    voiceBtn.classList.add("listening");
-    updateVoiceButtonState("listening");
+    if (stopBtn) stopBtn.classList.remove("hidden");
+    if (currentSpeaker === "opponent") opponentBtn.classList.add("listening");
+    else if (currentSpeaker === "my") myBtn.classList.add("listening");
   };
-  
+
   speechRecognition.onend = function() {
     isListening = false;
-    voiceBtn.classList.remove("active");
-    voiceBtn.classList.remove("listening");
-    updateVoiceButtonState("idle");
+    opponentBtn.classList.remove("listening");
+    myBtn.classList.remove("listening");
+    if (stopBtn) stopBtn.classList.add("hidden");
+    if (currentSpeaker) switchToHandover();
+    currentSpeaker = null;
   };
-  
+
   speechRecognition.onerror = function(event) {
     console.error("音声認識エラー:", event.error);
     isListening = false;
-    voiceBtn.classList.remove("active");
-    voiceBtn.classList.remove("listening");
-    updateVoiceButtonState("idle");
-    
+    opponentBtn.classList.remove("listening");
+    myBtn.classList.remove("listening");
+    if (stopBtn) stopBtn.classList.add("hidden");
+    currentSpeaker = null;
+    switchToSplit();
+
     if (event.error === "no-speech") {
       poinaviAlert("音声が検出されませんでした。\nもう一度お試しください。");
     } else if (event.error === "not-allowed") {
@@ -977,40 +999,61 @@ function initVoiceTranslation() {
       poinaviAlert("ネットワークエラーが発生しました。\nインターネット接続を確認してください。");
     }
   };
-  
+
   speechRecognition.onresult = async function(event) {
     const result = event.results[event.results.length - 1];
-    
+
     if (result.isFinal) {
       const transcript = result[0].transcript;
       console.log("認識結果:", transcript);
-      
-      // 翻訳処理
-      await processVoiceTranslation(transcript);
+
+      const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
+      const micTargetLang = document.getElementById("micTargetLangSelect")?.value || "ja";
+
+      const sourceLang = currentSpeaker === "opponent" ? micInputLang : micTargetLang;
+      const targetLang = currentSpeaker === "opponent" ? micTargetLang : micInputLang;
+
+      await processConversationTranslation(transcript, sourceLang, targetLang);
     }
   };
-  
-  // ボタンクリックイベント
-  voiceBtn.addEventListener("click", function() {
-    if (isListening) {
-      // 停止
-      speechRecognition.stop();
-    } else {
-      // 開始
-      startVoiceRecognition();
-    }
+
+  opponentBtn.addEventListener("click", function() {
+    if (isListening) return;
+    currentSpeaker = "opponent";
+    startConversationRecognition("opponent");
   });
+
+  myBtn.addEventListener("click", function() {
+    if (isListening) return;
+    currentSpeaker = "my";
+    startConversationRecognition("my");
+  });
+
+  handoverBtn.addEventListener("click", function() {
+    switchToSplit();
+  });
+
+  if (stopBtn) {
+    stopBtn.classList.add("hidden");
+    stopBtn.addEventListener("click", function() {
+      if (isListening && speechRecognition) {
+        speechRecognition.stop();
+      }
+    });
+  }
 }
 
-function startVoiceRecognition() {
+function startConversationRecognition(speaker) {
   if (!speechRecognition) return;
-  
-  // 設定から入力言語を取得
+
   const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
-  const langCode = SPEECH_LANG_CODES[micInputLang] || "en-US";
-  
+  const micTargetLang = document.getElementById("micTargetLangSelect")?.value || "ja";
+
+  const lang = speaker === "opponent" ? micInputLang : micTargetLang;
+  const langCode = SPEECH_LANG_CODES[lang] || (lang === "ja" ? "ja-JP" : "en-US");
+
   speechRecognition.lang = langCode;
-  
+
   try {
     speechRecognition.start();
   } catch (err) {
@@ -1021,58 +1064,32 @@ function startVoiceRecognition() {
   }
 }
 
-function updateVoiceButtonState(state) {
-  const voiceLabel = document.querySelector(".translate-voice-label");
-  if (!voiceLabel) return;
-  
-  switch (state) {
-    case "listening":
-      voiceLabel.textContent = "聞き取り中...";
-      break;
-    case "translating":
-      voiceLabel.textContent = "翻訳中...";
-      break;
-    default:
-      voiceLabel.textContent = "音声翻訳";
-  }
-}
-
 // 翻訳入力の最大文字数
 const TRANSLATE_MAX_LENGTH = 5000;
 
-async function processVoiceTranslation(transcript) {
-  const voiceBtn = document.getElementById("voiceTranslateBtn");
-  
-  updateVoiceButtonState("translating");
-  voiceBtn?.classList.add("active");
-  
+async function processConversationTranslation(transcript, sourceLang, targetLang) {
   try {
-    // 文字数チェック
     if (transcript.length > TRANSLATE_MAX_LENGTH) {
       poinaviAlert("テキストが長すぎます。" + TRANSLATE_MAX_LENGTH + "文字以内にしてください。");
       return;
     }
-    
-    // 設定から言語を取得
-    const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
-    const micTargetLang = document.getElementById("micTargetLangSelect")?.value || "ja";
-    
-    // 翻訳実行
-    const translatedText = await translateTextLibre(transcript, micInputLang, micTargetLang);
-    
-    // 結果を表示
-    showVoiceTranslationResult(transcript, translatedText, micInputLang, micTargetLang);
-    
-    // 翻訳結果を読み上げ（オプション）
-    speakText(translatedText, micTargetLang);
-    
+
+    const translatedText = await translateTextLibre(transcript, sourceLang, targetLang);
+
+    showVoiceTranslationResult(transcript, translatedText, sourceLang, targetLang);
+
+    speakText(translatedText, targetLang);
+
   } catch (err) {
     console.error("翻訳エラー:", err);
     poinaviAlert("翻訳に失敗しました。\n" + err.message);
-  } finally {
-    voiceBtn?.classList.remove("active");
-    updateVoiceButtonState("idle");
   }
+}
+
+async function processVoiceTranslation(transcript) {
+  const micInputLang = document.getElementById("micInputLangSelect")?.value || "en";
+  const micTargetLang = document.getElementById("micTargetLangSelect")?.value || "ja";
+  await processConversationTranslation(transcript, micInputLang, micTargetLang);
 }
 
 function showVoiceTranslationResult(originalText, translatedText, sourceLang, targetLang) {
@@ -2191,7 +2208,7 @@ function showOCRTranslationResult(originalText, translatedText, imageData) {
 // 翻訳結果HTMLを生成
 // ============================================
 function createTranslationResultHTML(type, data) {
-  const typeLabels = { voice: "音声翻訳", ocr: "カメラ翻訳", image: "画像翻訳" };
+  const typeLabels = { voice: "会話モード", ocr: "カメラ翻訳", image: "画像翻訳" };
   const typeLabel = typeLabels[type] || "翻訳";
   const typeIcons = {
     voice: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
