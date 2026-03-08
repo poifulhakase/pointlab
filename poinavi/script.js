@@ -762,13 +762,39 @@ function initControls() {
 // loading=async 時は Map が未準備のままコールバックが呼ばれることがあるため待機
 window.initGoogleMaps = function() {
   console.log("Google Maps API が正常に読み込まれました");
+  const params = new URLSearchParams(window.location.search);
+  const fromMemoLink = params.has("lat") && params.has("lng");
   function runWhenReady() {
     if (typeof google !== "undefined" && typeof google.maps !== "undefined" && typeof google.maps.Map === "function") {
-      initMap();
-      requestUserLocation();
-      initRainViewer();
-      initRailwayLayer();
-      initToiletLayer();
+      if (fromMemoLink) {
+        // ラボノートから遷移時：レイアウト・View Transition 完了を待って初期化（白画面対策）
+        function doInit() {
+          initMap();
+          requestUserLocation();
+          initRainViewer();
+          initRailwayLayer();
+          initToiletLayer();
+        }
+        setTimeout(doInit, 350);
+        document.addEventListener("viewtransitionend", function onVT() {
+          if (map) {
+            setTimeout(function() {
+              google.maps.event.trigger(map, "resize");
+              var lat = parseFloat(params.get("lat"));
+              var lng = parseFloat(params.get("lng"));
+              if (!isNaN(lat) && !isNaN(lng)) {
+                map.setCenter({ lat: lat, lng: lng });
+              }
+            }, 100);
+          }
+        }, { once: true });
+      } else {
+        initMap();
+        requestUserLocation();
+        initRainViewer();
+        initRailwayLayer();
+        initToiletLayer();
+      }
       return;
     }
     setTimeout(runWhenReady, 50);
@@ -943,6 +969,14 @@ function initMap() {
         },
         title: "ラボノートに保存した地点",
         zIndex: 1000,
+      });
+      memoLocationMarker.addListener("click", function() {
+        showMemoLocationInfoWindow(initialCenter, memoLocationMarker);
+        if (userLocation) {
+          setTimeout(function() {
+            displayRoute(userLocation, initialCenter);
+          }, 200);
+        }
       });
       // 地図が真っ白で固まる対策：resize をトリガーして再描画（複数回で確実に）
       function ensureMapVisible() {
@@ -3006,6 +3040,77 @@ function showInfoWindow(place, marker) {
   if (marker) {
     marker.infoPlace = place;
   }
+}
+
+// ラボノートから戻ったときの赤ぽっち用InfoWindow（経路・モーダル表示）
+function showMemoLocationInfoWindow(position, marker) {
+  if (!map || !position) return;
+
+  clearMarkerSelection();
+  const resultItems = document.querySelectorAll(".result-item");
+  resultItems.forEach(function(item) { item.classList.remove("active"); });
+
+  if (!infoWindow) {
+    infoWindow = new google.maps.InfoWindow();
+    infoWindow.addListener("closeclick", function() {
+      clearMarkerSelection();
+      resultItems.forEach(function(item) { item.classList.remove("active"); });
+    });
+  }
+
+  const location = userLocation || { lat: 35.6812, lng: 139.7671 };
+  const dest = typeof position.lat === "function" ? { lat: position.lat(), lng: position.lng() } : position;
+  const distance = calculateDistance(location.lat, location.lng, dest.lat, dest.lng);
+  const distanceText = distance < 1000 ? `${Math.round(distance)}m` : `${(distance / 1000).toFixed(1)}km`;
+  const travelTimeText = `約${Math.max(1, Math.round(distance / 80))}分`;
+
+  const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
+  const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
+  const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
+  const subTextColor = isDarkMode ? "#b0b0b0" : "#666666";
+
+  const content = `
+    <div style="
+      padding: 12px 16px;
+      min-width: 180px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+      background-color: ${bgColor};
+      color: ${textColor};
+      border-radius: 12px;
+    ">
+      <div style="font-size: 17px; font-weight: 600; margin-bottom: 8px; color: ${textColor};">
+        📍 ラボノートに保存した地点
+      </div>
+      <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 6px;">
+        現在地からの距離 <span style="font-size: 18px; color: #7A9FCC; font-weight: bold;">${distanceText}</span>
+      </div>
+      <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 12px;">
+        徒歩 <span style="font-size: 18px; color: #7A9FCC; font-weight: bold;">${travelTimeText}</span>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${dest.lat},${dest.lng}&travelmode=walking', '_blank')" style="
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 8px 14px; background-color: #4CAF50; color: #ffffff;
+          border: none; border-radius: 8px; font-size: 13px; font-weight: 500;
+          cursor: pointer; font-family: inherit;
+        ">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+          Google Mapsで案内
+        </button>
+      </div>
+    </div>
+  `;
+
+  infoWindow.setContent(content);
+  infoWindow.open(map, marker);
+
+  google.maps.event.addListenerOnce(infoWindow, "domready", function() {
+    google.maps.event.addListenerOnce(map, "idle", centerInfoWindowInView);
+  });
 }
 
 // ============================================
