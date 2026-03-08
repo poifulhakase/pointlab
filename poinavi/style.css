@@ -2760,7 +2760,7 @@ body.dark-mode .translate-voice-btn.listening::after {
 
 .translate-result-area__stop-btn {
   position: absolute;
-  bottom: 52px;
+  bottom: 64px;
   right: 12px;
   display: flex;
   align-items: center;
@@ -3120,15 +3120,18 @@ body.dark-mode .translate-result-item--latest {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
-  gap: 12px;
 }
 
 .translate-modal__back {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 0;
-  border: none;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
   background: transparent;
   color: var(--accent-color);
   font-size: 0.9375rem;
@@ -3137,7 +3140,7 @@ body.dark-mode .translate-result-item--latest {
 }
 
 .translate-modal__back:hover {
-  text-decoration: underline;
+  background: var(--bg-secondary);
 }
 
 .translate-modal__back.hidden {
@@ -3145,7 +3148,6 @@ body.dark-mode .translate-result-item--latest {
 }
 
 .translate-modal__title {
-  flex: 1;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -4000,7 +4002,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-result-area__stop-btn {
-    bottom: 46px;
+    bottom: 58px;
     right: 8px;
     padding: 6px 12px;
     font-size: 0.75rem;
