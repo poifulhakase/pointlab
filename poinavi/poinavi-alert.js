@@ -29,8 +29,8 @@
     }
   }
 
-  // alert 代替
-  window.poinaviAlert = function(message) {
+  // alert 代替（第2引数 onClose: OKクリック時に呼ぶコールバック）
+  window.poinaviAlert = function(message, onClose) {
     const modal = getModal();
     const messageEl = getMessageEl();
     const okBtn = getOkBtn();
@@ -42,6 +42,7 @@
     okBtn.textContent = "OK";
     okBtn.onclick = function() {
       hideModal();
+      if (typeof onClose === "function") onClose();
     };
     modal.classList.remove("hidden");
     modal.style.display = "flex";

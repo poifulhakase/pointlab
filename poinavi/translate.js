@@ -3,9 +3,12 @@
 // ============================================
 
 // ============================================
-// セキュリティ: HTMLエスケープ関数
+// セキュリティ: HTMLエスケープ（共通モジュールがあれば使用）
 // ============================================
 function escapeHtmlForDisplay(text) {
+  if (window.PoinaviShared && window.PoinaviShared.escapeHtml) {
+    return window.PoinaviShared.escapeHtml(text);
+  }
   if (!text) return "";
   const div = document.createElement("div");
   div.textContent = text;
@@ -51,6 +54,21 @@ let canvasScale = 1;
 
 // Tesseract ワーカー
 let tesseractWorker = null;
+
+// Tesseract.js 遅延読み込み（初回OCR時のみロード、表示速度向上）
+let tesseractLoadPromise = null;
+function loadTesseract() {
+  if (typeof Tesseract !== "undefined") return Promise.resolve();
+  if (tesseractLoadPromise) return tesseractLoadPromise;
+  tesseractLoadPromise = new Promise(function (resolve, reject) {
+    var s = document.createElement("script");
+    s.src = "https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js";
+    s.onload = resolve;
+    s.onerror = function () { reject(new Error("Tesseract読み込み失敗")); };
+    document.head.appendChild(s);
+  });
+  return tesseractLoadPromise;
+}
 
 // ============================================
 // 定数
@@ -180,7 +198,27 @@ document.addEventListener("DOMContentLoaded", function() {
   initStartPageSelect();
   initCurrencyModal();
   initUnitConversionModal();
+  initBeginnerTour();
 });
+
+// 初心者ツアー（翻訳ページ）
+function initBeginnerTour() {
+  var btn = document.getElementById("translateBeginnerBtn");
+  if (!btn || typeof PoinaviBeginner === "undefined") return;
+  if (!PoinaviBeginner.shouldShowIcon()) {
+    btn.style.visibility = "hidden";
+    btn.style.pointerEvents = "none";
+  }
+  var steps = [
+    { selector: "#translateResultArea", text: "翻訳結果がここに表示されます。テキスト入力や音声・カメラ翻訳の結果が表示されます。" },
+    { selector: ".translate-camera-area", text: "通貨・QRコード・カメラ翻訳ボタンです。通貨換算や画像内の文字を翻訳できます。" },
+    { selector: ".translate-voice-area", text: "単位換算・会話モード・画像翻訳です。会話モードでは音声でリアルタイム翻訳ができます。" },
+    { selector: ".translate-footer", text: "フッター：ラボノート・翻訳マシン・ぽいナビ・研究室のページを切り替えられます。" }
+  ];
+  btn.addEventListener("click", function() {
+    PoinaviBeginner.startTour(steps);
+  });
+}
 
 // ============================================
 // 起動ページ設定
@@ -247,7 +285,7 @@ function initCurrencyModal() {
   function handleCurrencyBtnOpen(e) {
     if (e.target.closest("#currencyConvertBtn")) {
       e.preventDefault();
-      openCurrencyModal();
+      openSettingsModalToSection("settingsCurrencySection", "currency", { entryPoint: "button" });
     }
   }
   document.body.addEventListener("click", handleCurrencyBtnOpen);
@@ -355,7 +393,7 @@ function initCurrencyModal() {
   if (currencySettingsBtn) {
     currencySettingsBtn.addEventListener("click", function() {
       closeCurrencyModal();
-      openSettingsModalToSection("settingsCurrencySection", "currency");
+      openSettingsModalToSection("settingsCurrencySection", "currency", { entryPoint: "modal" });
     });
   }
 
@@ -540,7 +578,7 @@ function initUnitConversionModal() {
   function handleUnitBtnOpen(e) {
     if (e.target.closest("#unitConvertBtn")) {
       e.preventDefault();
-      openUnitModal();
+      openSettingsModalToSection("settingsUnitSection", "unit", { entryPoint: "button" });
     }
   }
   document.body.addEventListener("click", handleUnitBtnOpen);
@@ -557,7 +595,7 @@ function initUnitConversionModal() {
   if (unitSettingsBtn) {
     unitSettingsBtn.addEventListener("click", function() {
       closeUnitModal();
-      openSettingsModalToSection("settingsUnitSection", "unit");
+      openSettingsModalToSection("settingsUnitSection", "unit", { entryPoint: "modal" });
     });
   }
 
@@ -641,13 +679,13 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
       <div class="translate-result-item__header">
         <span class="translate-result-item__icon">${typeIcon}</span>
         <span class="translate-result-item__label">単位</span>
-        <span class="translate-result-item__lang">${fromUnit} → ${toUnit}</span>
+        <span class="translate-result-item__lang">${escapeHtmlForDisplay(fromUnit)} → ${escapeHtmlForDisplay(toUnit)}</span>
         <span class="translate-result-item__time">${timeStr}</span>
       </div>
       <div class="translate-result-item__content">
         <div class="translate-result-item__original">
           <span class="translate-result-item__tag">変換元</span>
-          <p>${escapeHtmlForDisplay(amountStr)} ${fromUnit}</p>
+          <p>${escapeHtmlForDisplay(amountStr)} ${escapeHtmlForDisplay(fromUnit)}</p>
         </div>
         <div class="translate-result-item__divider">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -657,7 +695,7 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
         </div>
         <div class="translate-result-item__translated">
           <span class="translate-result-item__tag">換算結果</span>
-          <p>${escapeHtmlForDisplay(resultStr)} ${toUnit}</p>
+          <p>${escapeHtmlForDisplay(resultStr)} ${escapeHtmlForDisplay(toUnit)}</p>
         </div>
       </div>
       <div class="translate-result-item__actions">
@@ -711,11 +749,13 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
 // ============================================
 // 設定モーダル
 // ============================================
-function openSettingsModalToSection(sectionId, source) {
+function openSettingsModalToSection(sectionId, source, options) {
   const modal = document.getElementById("translateSettingsModal");
   if (!modal) return;
   modal.classList.remove("hidden");
-  history.pushState({ modal: "translateSettings", source: source }, "");
+  var entryPoint = (options && options.entryPoint) || "modal";
+  modal.dataset.settingsEntryPoint = entryPoint;
+  history.pushState({ modal: "translateSettings", source: source, entryPoint: entryPoint }, "");
 
   var backBtn = document.getElementById("translateSettingsBack");
   var backLabel = document.getElementById("translateSettingsBackLabel");
@@ -729,16 +769,20 @@ function openSettingsModalToSection(sectionId, source) {
   function hideSection(el) { if (el) el.style.display = "none"; }
 
   if (source === "unit") {
-    if (backBtn) { backBtn.classList.remove("hidden"); backBtn.dataset.returnTo = "unit"; }
-    if (backLabel) backLabel.textContent = "単位に戻る";
+    if (backBtn) {
+      backBtn.classList.add("hidden");
+      backBtn.dataset.returnTo = "";
+    }
     hideSection(voiceSection);
     hideSection(cameraSection);
     hideSection(currencySection);
     showSection(unitSection);
     hideSection(guideSection);
   } else if (source === "currency") {
-    if (backBtn) { backBtn.classList.remove("hidden"); backBtn.dataset.returnTo = "currency"; }
-    if (backLabel) backLabel.textContent = "通貨に戻る";
+    if (backBtn) {
+      backBtn.classList.add("hidden");
+      backBtn.dataset.returnTo = "";
+    }
     hideSection(voiceSection);
     hideSection(cameraSection);
     showSection(currencySection);
@@ -751,6 +795,12 @@ function openSettingsModalToSection(sectionId, source) {
     showSection(currencySection);
     showSection(unitSection);
     showSection(guideSection);
+  }
+
+  var body = modal.querySelector(".translate-modal__body");
+  if (body) {
+    var hideSectionBorder = source === "currency" || source === "unit";
+    body.classList.toggle("translate-modal__body--no-footer-border", hideSectionBorder);
   }
 
   if (sectionId === "settingsUnitSection") {
@@ -812,6 +862,28 @@ function initSettingsModal() {
   if (resetBtn) {
     resetBtn.addEventListener("click", function() {
       resetTranslateSettings();
+    });
+  }
+
+  // 通貨ペア選択後「数値を入力」→ 通貨モーダルを開く
+  const currencyInputBtn = document.getElementById("currencyProceedToInputBtn");
+  if (currencyInputBtn) {
+    currencyInputBtn.addEventListener("click", function() {
+      modal.classList.add("hidden");
+      if (typeof window.poinaviOpenCurrencyModal === "function") {
+        window.poinaviOpenCurrencyModal();
+      }
+    });
+  }
+
+  // 単位選択後「数値を入力」→ 単位モーダルを開く
+  const unitInputBtn = document.getElementById("unitProceedToInputBtn");
+  if (unitInputBtn) {
+    unitInputBtn.addEventListener("click", function() {
+      modal.classList.add("hidden");
+      if (typeof window.poinaviOpenUnitModal === "function") {
+        window.poinaviOpenUnitModal();
+      }
     });
   }
   
@@ -1313,13 +1385,13 @@ function showCurrencyConversionResult(amount, fromCurrency, result, toCurrency) 
       <div class="translate-result-item__header">
         <span class="translate-result-item__icon">${typeIcon}</span>
         <span class="translate-result-item__label">通貨</span>
-        <span class="translate-result-item__lang">${fromCurrency} → ${toCurrency}</span>
+        <span class="translate-result-item__lang">${escapeHtmlForDisplay(fromCurrency)} → ${escapeHtmlForDisplay(toCurrency)}</span>
         <span class="translate-result-item__time">${timeStr}</span>
       </div>
       <div class="translate-result-item__content">
         <div class="translate-result-item__original">
           <span class="translate-result-item__tag">変換元</span>
-          <p>${escapeHtmlForDisplay(amountStr)} ${fromCurrency}</p>
+          <p>${escapeHtmlForDisplay(amountStr)} ${escapeHtmlForDisplay(fromCurrency)}</p>
         </div>
         <div class="translate-result-item__divider">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1329,7 +1401,7 @@ function showCurrencyConversionResult(amount, fromCurrency, result, toCurrency) 
         </div>
         <div class="translate-result-item__translated">
           <span class="translate-result-item__tag">換算結果</span>
-          <p>${escapeHtmlForDisplay(resultStr)} ${toCurrency}</p>
+          <p>${escapeHtmlForDisplay(resultStr)} ${escapeHtmlForDisplay(toCurrency)}</p>
         </div>
       </div>
       <div class="translate-result-item__actions">
@@ -2119,10 +2191,13 @@ async function performOCR(imageData, onProgress) {
   ocrLastStatus = "開始";
   
   try {
+    if (processingText) processingText.textContent = "OCRライブラリを読み込み中...";
+    await loadTesseract();
+    if (processingText) processingText.textContent = "OCRエンジンを準備中...";
+    
     console.log("OCR開始, 言語:", ocrLang);
     console.log("Tesseract available:", typeof Tesseract !== 'undefined');
     
-    // Tesseractライブラリの存在確認
     if (typeof Tesseract === 'undefined') {
       ocrLastStatus = "ライブラリなし";
       throw new Error("OCRライブラリが読み込まれていません");
@@ -2364,7 +2439,7 @@ function showOCRTranslationResult(originalText, translatedText, imageData) {
 // 翻訳結果HTMLを生成
 // ============================================
 function createTranslationResultHTML(type, data) {
-  const typeLabels = { voice: "会話モード", ocr: "カメラ", image: "画像" };
+  const typeLabels = { voice: "会話モード", ocr: "カメラ翻訳", image: "画像翻訳" };
   const typeLabel = typeLabels[type] || "翻訳";
   const typeIcons = {
     voice: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2390,10 +2465,11 @@ function createTranslationResultHTML(type, data) {
   const originalText = escapeHtmlForDisplay(data.original || "").replace(/\n/g, '<br>');
   const translatedText = escapeHtmlForDisplay(data.translated || "").replace(/\n/g, '<br>');
   
-  // OCRの場合は画像プレビューを追加
-  const imagePreview = data.image ? `
+  // OCRの場合は画像プレビューを追加（data:image/ または blob: のみ許可）
+  const safeImageUrl = (data.image && /^(data:image\/|blob:)/i.test(data.image)) ? data.image : null;
+  const imagePreview = safeImageUrl ? `
     <div class="translate-result-item__ocr-preview">
-      <img src="${data.image}" alt="認識した画像" class="translate-result-item__ocr-image" />
+      <img src="${safeImageUrl.replace(/"/g, '&quot;')}" alt="認識した画像" class="translate-result-item__ocr-image" />
     </div>
   ` : "";
   

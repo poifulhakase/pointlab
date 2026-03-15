@@ -2,6 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <base href="/poinavi/" />
     <!-- セキュリティヘッダー -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -48,8 +49,6 @@
     </script>
     <link rel="manifest" href="manifest.json?v=130" />
     <link rel="stylesheet" href="./style.css?v=130" />
-    <script src="./poinavi-alert.js?v=130"></script>
-    <script src="./poinavi-swipe-nav.js?v=130"></script>
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -87,16 +86,25 @@
       <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
       
       <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
-        <img src="./poinabi.svg" alt="ぽいんとらぼ" class="translate-header__logo" style="height: 28px; width: auto;" />
+        <img src="./poinabi.svg" alt="ぽいんとらぼ" class="translate-header__logo" />
       </a>
       
-      <!-- 設定ボタン（右上） -->
-      <button id="memoSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      </button>
+      <!-- 初心者・設定ボタン（右上） -->
+      <div class="translate-header__icons" id="memoHeaderIcons">
+        <button id="memoBeginnerBtn" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="使い方を見る" title="使い方を見る">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+          </svg>
+        </button>
+        <button id="memoSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
     </header>
 
     <!-- 設定モーダル -->
@@ -142,7 +150,7 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">免責事項</div>
             <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
-              <p style="margin: 0 0 8px 0;">本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
+              <p style="margin: 0 0 var(--s8) 0;">本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
               <ul style="margin: 0; padding-left: 1.2em;">
                 <li>検索結果・翻訳結果・位置情報は参考情報であり、正確性・完全性を保証するものではありません</li>
                 <li>重要な場面では、専門家への相談を推奨いたします</li>
@@ -175,8 +183,8 @@
       <div class="memo-list" id="memoList">
         <!-- ラボノートがない場合のプレースホルダー -->
         <div class="memo-empty" id="memoEmpty">
-          <p>記録がありません</p>
-          <p class="memo-empty__hint">下の入力欄からラボノートに記録してください</p>
+          <p>ここに記録されます</p>
+          <p class="memo-empty__hint">メモを入力し、必要に応じて写メ（駐車場所・看板など）を添付できます</p>
         </div>
         <!-- ラボノートアイテムはJSで動的に追加 -->
       </div>
@@ -191,8 +199,7 @@
           </svg>
         </div>
         <div class="memo-warning__text">
-          <p>ラボノートはお使いの端末（ブラウザ）に保存されます。</p>
-          <p>機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。</p>
+          <p>ラボノートはお使いの端末（ブラウザ）に保存されます。機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。写メは駐車場所・看板などの記録用に。アルバムや永久保存には利用しないでください。</p>
         </div>
       </div>
 
@@ -202,15 +209,23 @@
           <textarea 
             id="memoInput" 
             class="memo-input" 
-            placeholder="ラボノートに記録..."
+            placeholder="メモを入力…（例：駐車場所、〇〇の看板）"
             rows="3"
             maxlength="2000"
-            style="font-size: 17px !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif !important;"
+            style="font-size: var(--fs-16) !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif !important;"
           ></textarea>
-          <button id="memoAddBtn" class="memo-add-btn" type="button" aria-label="ラボノートを追加">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
+          <input type="file" id="memoImageInput" class="memo-image-input" accept="image/*" capture="environment" aria-hidden="true" tabindex="-1" />
+          <div class="memo-attach-actions">
+            <button id="memoAttachBtn" class="memo-attach-btn" type="button" title="駐車場所・看板などを写メで記録" aria-label="写メで記録">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+            <button id="memoAddBtn" class="memo-add-btn" type="button" aria-label="送信">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
             </svg>
           </button>
         </div>
@@ -259,6 +274,10 @@
       </a>
     </footer>
 
+    <script src="./poinavi-shared.js?v=130" defer></script>
+    <script src="./poinavi-alert.js?v=130" defer></script>
+    <script src="./poinavi-swipe-nav.js?v=130" defer></script>
+    <script src="./poinavi-beginner-tour.js?v=130" defer></script>
     <script>
       // 起動ページリダイレクト（DOMContentLoadedより前に実行）
       (function() {
@@ -347,6 +366,28 @@
         });
       }
 
+      // 初心者ツアー
+      function initBeginnerTour() {
+        var btn = document.getElementById("memoBeginnerBtn");
+        var icons = document.getElementById("memoHeaderIcons");
+        if (!btn || typeof PoinaviBeginner === "undefined") return;
+        if (!PoinaviBeginner.shouldShowIcon()) {
+          btn.style.visibility = "hidden";
+          btn.style.pointerEvents = "none";
+        }
+        var steps = [
+          { selector: "#memoList", text: "ここにメモ一覧が表示されます。保存したメモはスワイプで編集・削除できます。" },
+          { selector: ".memo-warning", text: "注意：ラボノートは端末に保存されます。機密情報や写メのアルバム用途はお控えください。" },
+          { selector: "#memoInput", text: "メモを入力します。駐車場所や看板など、旅の記録にご利用ください。" },
+          { selector: "#memoAttachBtn", text: "写メボタン：駐車場所・看板などをカメラで撮影して記録できます（1メモあたり2枚まで）。" },
+          { selector: "#memoAddBtn", text: "送信ボタン：メモと写メをラボノートに保存します。" },
+          { selector: ".translate-footer", text: "フッター：ラボノート・翻訳マシン・ぽいナビ・研究室のページを切り替えられます。" }
+        ];
+        btn.addEventListener("click", function() {
+          PoinaviBeginner.startTour(steps);
+        });
+      }
+
       // 設定初期化ボタン
       function initResetButton() {
         const resetButton = document.getElementById("memoResetButton");
@@ -406,10 +447,57 @@
       // メモの上限
       const MEMO_MAX_COUNT = 50;
       const MEMO_MAX_LENGTH = 2000; // 1メモあたりの最大文字数
+      const MEMO_MAX_IMAGES = 2;    // 1メモあたりの最大画像数（写メ記録用：駐車場所・看板など）
+      const IMAGE_MAX_SIZE = 800;   // リサイズ時の最大辺（px）
+      const IMAGE_QUALITY = 0.75;   // JPEG圧縮品質
 
-      // メモを追加
-      function addMemo(content) {
-        if (!content || !content.trim()) return false;
+      // 画像を圧縮してBase64に変換（機器内のオリジナルは変更しない・コピーのみ）
+      function compressImageToBase64(file) {
+        return new Promise(function(resolve, reject) {
+          var img = new Image();
+          var url = URL.createObjectURL(file);
+          img.onload = function() {
+            URL.revokeObjectURL(url);
+            var w = img.width, h = img.height;
+            if (w > IMAGE_MAX_SIZE || h > IMAGE_MAX_SIZE) {
+              if (w > h) {
+                h = Math.round(h * IMAGE_MAX_SIZE / w);
+                w = IMAGE_MAX_SIZE;
+              } else {
+                w = Math.round(w * IMAGE_MAX_SIZE / h);
+                h = IMAGE_MAX_SIZE;
+              }
+            }
+            var canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            try {
+              var dataUrl = canvas.toDataURL("image/jpeg", IMAGE_QUALITY);
+              resolve(dataUrl);
+            } catch (e) {
+              reject(e);
+            }
+          };
+          img.onerror = function() {
+            URL.revokeObjectURL(url);
+            reject(new Error("画像の読み込みに失敗しました"));
+          };
+          img.src = url;
+        });
+      }
+
+      // メモを追加（content: テキスト, images: Base64配列。※写メ記録はメモ文が必須）
+      function addMemo(content, images) {
+        var trimmedContent = (content || "").trim();
+        var imageList = Array.isArray(images) ? images : [];
+        if (!trimmedContent && imageList.length === 0) return false;
+        // 写メ記録時もメモ文必須（アルバム代わり利用を防ぐ）
+        if (imageList.length > 0 && !trimmedContent) {
+          poinaviAlert("メモを入力してください。\n（例：駐車場所、〇〇の看板 など）");
+          return false;
+        }
 
         const memos = getMemos();
         
@@ -420,15 +508,20 @@
         }
         
         // 文字数チェック
-        const trimmedContent = content.trim();
         if (trimmedContent.length > MEMO_MAX_LENGTH) {
           poinaviAlert("ラボノートは" + MEMO_MAX_LENGTH + "文字以内で入力してください。\n現在: " + trimmedContent.length + "文字");
+          return false;
+        }
+
+        if (imageList.length > MEMO_MAX_IMAGES) {
+          poinaviAlert("写メは" + MEMO_MAX_IMAGES + "枚までです。\n駐車場所・看板などの記録用にご利用ください。");
           return false;
         }
 
         const newMemo = {
           id: Date.now().toString(),
           content: trimmedContent,
+          images: imageList,
           createdAt: new Date().toISOString()
         };
         memos.unshift(newMemo); // 新しいメモを先頭に追加
@@ -506,6 +599,8 @@
           const formattedTime = formatDateTime(memo.createdAt);
           const hasLocation = memo.latitude != null && memo.longitude != null && !isNaN(memo.latitude) && !isNaN(memo.longitude);
           const mapUrl = hasLocation ? `./map.html?lat=${memo.latitude}&lng=${memo.longitude}` : '';
+          const images = Array.isArray(memo.images) ? memo.images : [];
+          const imagesHtml = images.length > 0 ? '<div class="memo-item__images">' + images.map(function(src) { return '<img src="' + (window.PoinaviShared ? window.PoinaviShared.escapeHtml(src) : src.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')) + '" alt="添付画像" class="memo-item__img" loading="lazy" />'; }).join('') + '</div>' : '';
           memoItem.innerHTML = `
             <div class="memo-item__header">
               <span class="memo-item__time">${formattedTime}</span>
@@ -527,10 +622,13 @@
                 </button>
               </div>
             </div>
-            <div class="memo-item__content">${linkifyUrls(memo.content)}</div>
+            <div class="memo-item__body">
+              ${memo.content ? '<div class="memo-item__content">' + linkifyUrls(memo.content) + '</div>' : ''}
+              ${imagesHtml}
+            </div>
           `;
 
-          memoItem.dataset.content = memo.content;
+          memoItem.dataset.content = memo.content || "";
           memoList.appendChild(memoItem);
         });
 
@@ -553,7 +651,12 @@
           btn.addEventListener("click", function() {
             const id = this.dataset.id;
             const time = this.dataset.time;
-            poinaviConfirm(`[${time}] のラボノートを削除しますか？`).then(ok => {
+            const memo = memos.find(m => m.id === id);
+            const hasImages = memo && Array.isArray(memo.images) && memo.images.length > 0;
+            const msg = hasImages
+              ? `[${time}] のラボノートを削除しますか？\n\nメモと添付写真が削除されます。復元できません。`
+              : `[${time}] のラボノートを削除しますか？`;
+            poinaviConfirm(msg).then(ok => {
               if (ok) {
                 deleteMemo(id);
                 renderMemoList();
@@ -579,12 +682,55 @@
         return escaped.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="memo-link">$1</a>');
       }
 
+      // 画像添付用の一時保持（機器内のオリジナルには触れず、コピーのみアプリ内に保存）
+      var pendingImages = [];
+
       // メモ入力の初期化
       function initMemoInput() {
         const input = document.getElementById("memoInput");
         const addBtn = document.getElementById("memoAddBtn");
+        const attachBtn = document.getElementById("memoAttachBtn");
+        const imageInput = document.getElementById("memoImageInput");
 
         if (!input || !addBtn) return;
+
+        // 写メ添付：1つのボタンでカメラ起動（captureでカメラ優先。OSによっては「写真から選ぶ」も選択可能）
+        function handleImageSelect(inputEl) {
+          var files = inputEl.files;
+          if (!files || files.length === 0) return;
+          var remain = MEMO_MAX_IMAGES - pendingImages.length;
+          if (remain <= 0) {
+            poinaviAlert("写メは" + MEMO_MAX_IMAGES + "枚までです。\n駐車場所・看板などの記録用にご利用ください。");
+            inputEl.value = "";
+            return;
+          }
+          var processed = 0;
+          [].forEach.call(files, function(file) {
+            if (processed >= remain) return;
+            if (!file.type || !file.type.startsWith("image/")) return;
+            compressImageToBase64(file).then(function(base64) {
+              pendingImages.push(base64);
+              processed++;
+              // 初回のみ：利用シーンのヒント
+              if (pendingImages.length === 1) {
+                var shownHint = localStorage.getItem("poinavi_memo_image_hint_shown");
+                if (!shownHint) {
+                  localStorage.setItem("poinavi_memo_image_hint_shown", "1");
+                  poinaviAlert("写メを選択しました。\n\n駐車場所・看板など、記録用にご利用ください。\n思い出の写真は本体のカメラアプリで保存してください。");
+                } else {
+                  poinaviAlert("写メを選択しました。メモを入力して送信ボタンで記録に添付できます。");
+                }
+              }
+            }).catch(function(err) {
+              poinaviAlert(err.message || "画像の読み込みに失敗しました");
+            });
+          });
+          inputEl.value = "";
+        }
+        if (attachBtn && imageInput) {
+          attachBtn.addEventListener("click", function() { imageInput.click(); });
+          imageInput.addEventListener("change", function() { handleImageSelect(this); });
+        }
 
         // 入力モード時はフッター・警告を非表示（スマホキーボード表示時）
         function onInputFocus() {
@@ -594,12 +740,13 @@
           }
         }
         function onInputBlur(e) {
-          // ＋ボタンにフォーカスが移った場合、blurの時点でメモを追加（1回タップで反映。touchstart/clickが届かない端末対策）
+          // 送信ボタンにフォーカスが移った場合、blurの時点でメモを追加（1回タップで反映。touchstart/clickが届かない端末対策）
           function tryAddFromBlur() {
             var target = e.relatedTarget || document.activeElement;
             if (target && (target === addBtn || addBtn.contains(target))) {
-              if (addMemo(input.value)) {
+              if (addMemo(input.value, pendingImages)) {
                 input.value = "";
+                pendingImages = [];
                 renderMemoList();
               }
             }
@@ -607,7 +754,6 @@
           if (e.relatedTarget && (e.relatedTarget === addBtn || addBtn.contains(e.relatedTarget))) {
             tryAddFromBlur();
           } else {
-            // relatedTargetがnullの端末向け：フォーカス移動の確定を待ってから判定
             setTimeout(tryAddFromBlur, 0);
           }
           document.body.classList.remove("input-mode");
@@ -622,7 +768,6 @@
               input.blur();
             }
           });
-          // キーボード閉じ（1回目の戻る）を検知→即メニュー表示
           const vv = window.visualViewport;
           if (vv) {
             let lastHeight = vv.height;
@@ -637,10 +782,11 @@
           }
         }
 
-        // 追加ボタン：touchstart/pointerdownで処理（入力モード中に＋を押しても1回で反映。clickだとblurが先に発火して反映されない問題を回避）
+        // 送信ボタン：touchstart/pointerdownで処理（入力モード中に送信を押しても1回で反映）
         function handleAddMemo() {
-          if (addMemo(input.value)) {
+          if (addMemo(input.value, pendingImages)) {
             input.value = "";
+            pendingImages = [];
             input.blur();
             renderMemoList();
           }
@@ -664,8 +810,9 @@
         input.addEventListener("keydown", function(e) {
           if ((e.ctrlKey || e.metaKey) && (e.key === "Enter" || e.keyCode === 13)) {
             e.preventDefault();
-            if (addMemo(input.value)) {
+            if (addMemo(input.value, pendingImages)) {
               input.value = "";
+              pendingImages = [];
               input.blur();
               renderMemoList();
             }
@@ -680,6 +827,7 @@
         initThemeToggle();
         initStartPageSelect();
         initResetButton();
+        initBeginnerTour();
         initMemoInput();
         renderMemoList();
       });

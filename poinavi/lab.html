@@ -2,6 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <base href="/poinavi/" />
     <!-- セキュリティヘッダー -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -47,8 +48,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./style.css?v=130" />
-    <script src="./poinavi-alert.js?v=130"></script>
-    <script src="./poinavi-swipe-nav.js?v=130"></script>
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
     <script>
       (function() {
@@ -73,8 +72,8 @@
       .lab-dashboard {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 12px;
+        gap: var(--s16);
+        margin-bottom: var(--s16);
         width: 100%;
         box-sizing: border-box;
       }
@@ -94,33 +93,33 @@
       .lab-activity-panel {
         display: flex;
         background: var(--bg-primary);
-        border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border-radius: var(--s16);
+        padding: var(--s16);
+        margin-bottom: var(--s16);
+        box-shadow: 0 8px 8px rgba(0, 0, 0, 0.04);
       }
       
       body.dark-mode .lab-activity-panel {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
       }
       
       .lab-activity-panel__item {
         flex: 1;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--s16);
       }
       
       .lab-activity-panel__divider {
         width: 1px;
         background: var(--border-color);
-        margin: 0 16px;
+        margin: 0 var(--s16);
       }
       
       .lab-activity-panel__icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: var(--s40);
+        height: var(--s40);
+        border-radius: var(--s8);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -130,8 +129,8 @@
       }
       
       .lab-activity-panel__icon svg {
-        width: 22px;
-        height: 22px;
+        width: var(--s24);
+        height: var(--s24);
       }
       
       .lab-activity-panel__content {
@@ -139,13 +138,13 @@
       }
       
       .lab-activity-panel__label {
-        font-size: 0.75rem;
+        font-size: var(--fs-12);
         color: var(--text-secondary);
-        margin-bottom: 2px;
+        margin-bottom: var(--s8);
       }
       
       .lab-activity-panel__value {
-        font-size: 1.125rem;
+        font-size: var(--fs-18);
         font-weight: 600;
         color: var(--text-primary);
         white-space: nowrap;
@@ -156,7 +155,7 @@
       /* 歩数・移動距離パネル コンテナ（オーバーレイ用） */
       .lab-activity-container {
         position: relative;
-        margin-bottom: 16px;
+        margin-bottom: var(--s16);
       }
       
       .lab-activity-container .lab-activity-panel {
@@ -171,14 +170,14 @@
         right: 0;
         bottom: 0;
         background: rgba(0, 0, 0, 0.6);
-        border-radius: 16px;
+        border-radius: var(--s16);
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 12px;
+        gap: var(--s16);
         z-index: 10;
-        padding: 8px 16px;
+        padding: var(--s8) var(--s16);
       }
       
       .lab-activity-overlay.hidden {
@@ -186,7 +185,7 @@
       }
       
       .lab-activity-overlay__text {
-        font-size: 0.8125rem;
+        font-size: var(--fs-13);
         color: #ffffff;
         text-align: center;
         line-height: 1.4;
@@ -195,13 +194,13 @@
       .lab-activity-overlay__btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
+        gap: var(--s8);
+        padding: var(--s8) var(--s16);
         background: #00B0B9;
         color: #ffffff;
         border: none;
-        border-radius: 8px;
-        font-size: 0.8125rem;
+        border-radius: var(--s8);
+        font-size: var(--fs-13);
         font-weight: 600;
         cursor: pointer;
         transition: background-color 0.2s, transform 0.1s;
@@ -216,14 +215,14 @@
       }
       
       .lab-activity-overlay__btn svg {
-        width: 18px;
-        height: 18px;
+        width: var(--s16);
+        height: var(--s16);
       }
       
       /* 連携済み時の解除ボタン（パネル下に表示） */
       .lab-fitbit-disconnect {
         text-align: center;
-        margin-bottom: 16px;
+        margin-bottom: var(--s16);
       }
       
       .lab-fitbit-disconnect.hidden {
@@ -233,13 +232,13 @@
       .lab-fitbit-disconnect__btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
+        gap: var(--s8);
+        padding: var(--s8) var(--s16);
         background: transparent;
         color: var(--text-secondary);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        font-size: 0.8125rem;
+        border-radius: var(--s8);
+        font-size: var(--fs-13);
         cursor: pointer;
         transition: all 0.2s;
       }
@@ -262,9 +261,9 @@
         display: flex;
         justify-content: center;
         align-items: flex-end;
-        min-height: 100px;
+        min-height: var(--sh96);
         margin-top: auto;
-        padding-bottom: clamp(2px, calc(var(--vvh, 100vh) * 0.006), 8px);
+        padding-bottom: clamp(var(--s4), calc(var(--vvh, 100vh) * 0.006), var(--s8));
         contain: layout;
       }
       .lab-character {
@@ -283,7 +282,7 @@
       .lab-character__img {
         height: calc(var(--vvh, 100vh) * 0.432);
         width: auto;
-        transform: translateY(calc(12px + 2vh));
+        transform: translateY(calc(16px + 2vh));
         display: block;
         position: relative;
         z-index: 2;
@@ -324,10 +323,10 @@
       }
       /* 研究室メイン：固定フッター分の余白は style.css で確保（常に表示のため） */
       @media (max-height: 600px) {
-        .lab-character { padding-bottom: clamp(1px, calc(var(--vvh, 100vh) * 0.004), 6px); }
+        .lab-character { padding-bottom: clamp(var(--s1), calc(var(--vvh, 100vh) * 0.004), var(--s6)); }
       }
       @media (min-height: 900px) {
-        .lab-character { padding-bottom: clamp(4px, calc(var(--vvh, 100vh) * 0.008), 12px); }
+        .lab-character { padding-bottom: clamp(var(--s4), calc(var(--vvh, 100vh) * 0.008), var(--s12)); }
       }
 
       /* 波紋エフェクト（クリック・タップ時に心地よいフィードバック） */
@@ -360,34 +359,7 @@
         document.body.className = "lab-page " + (theme === "dark" ? "dark-mode" : "light-mode");
       })();
     </script>
-    <!-- パーティクル（画面全体・控えめ） -->
-    <div class="lab-particles" aria-hidden="true">
-      <span class="lab-particle lab-particle--1"></span>
-      <span class="lab-particle lab-particle--2"></span>
-      <span class="lab-particle lab-particle--3"></span>
-      <span class="lab-particle lab-particle--4"></span>
-      <span class="lab-particle lab-particle--5"></span>
-      <span class="lab-particle lab-particle--6"></span>
-      <span class="lab-particle lab-particle--7"></span>
-      <span class="lab-particle lab-particle--8"></span>
-      <span class="lab-particle lab-particle--9"></span>
-      <span class="lab-particle lab-particle--10"></span>
-      <span class="lab-particle lab-particle--11"></span>
-      <span class="lab-particle lab-particle--12"></span>
-      <span class="lab-particle lab-particle--13"></span>
-      <span class="lab-particle lab-particle--14"></span>
-      <span class="lab-particle lab-particle--15"></span>
-      <span class="lab-particle lab-particle--16"></span>
-      <span class="lab-particle lab-particle--17"></span>
-      <span class="lab-particle lab-particle--18"></span>
-      <span class="lab-particle lab-particle--19"></span>
-      <span class="lab-particle lab-particle--20"></span>
-      <span class="lab-particle lab-particle--21"></span>
-      <span class="lab-particle lab-particle--22"></span>
-      <span class="lab-particle lab-particle--23"></span>
-      <span class="lab-particle lab-particle--24"></span>
-      <span class="lab-particle lab-particle--25"></span>
-    </div>
+    <!-- パーティクルは画面外オーバーフローのため削除 -->
     <!-- 長押しコンテキストメニュー無効化 -->
     <script>
       document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
@@ -419,16 +391,25 @@
       <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
       
       <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
-        <img src="./poinabi.svg" alt="ぽいんとらぼ" class="translate-header__logo" style="height: 28px; width: auto;" />
+        <img src="./poinabi.svg" alt="ぽいんとらぼ" class="translate-header__logo" />
       </a>
       
-      <!-- 設定ボタン（右上） -->
-      <button id="labSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+      <!-- 初心者・設定ボタン（右上） -->
+      <div class="translate-header__icons" id="labHeaderIcons">
+        <button id="labBeginnerBtn" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="使い方を見る" title="使い方を見る">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+          </svg>
+        </button>
+        <button id="labSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
       </button>
+      </div>
     </header>
 
     <!-- 設定モーダル -->
@@ -463,6 +444,17 @@
               <span class="theme-text">ライトモード</span>
             </button>
           </div>
+          <!-- 初心者ガイド -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">初心者ガイド</div>
+            <div class="translate-modal__toggle-row">
+              <span class="translate-modal__toggle-label">各画面の使い方アイコンを表示</span>
+              <button id="labBeginnerIconToggle" class="translate-modal__toggle-switch" type="button" role="switch" aria-checked="true" title="ON/OFF">
+                <span class="translate-modal__toggle-slider"></span>
+              </button>
+            </div>
+            <p style="font-size: var(--fs-12); color: var(--text-secondary); margin: var(--s8) 0 0 0; line-height: 1.4;">オフにすると、各画面の初心者アイコンが非表示になります。</p>
+          </div>
           <!-- リセットセクション -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">データ管理</div>
@@ -473,8 +465,8 @@
           <!-- 免責事項 -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">免責事項</div>
-            <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
-              <p style="margin: 0 0 8px 0;">本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
+            <div style="font-size: var(--fs-13); color: var(--text-secondary); line-height: 1.6;">
+              <p style="margin: 0 0 var(--s8) 0;">本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
               <ul style="margin: 0; padding-left: 1.2em;">
                 <li>検索結果・翻訳結果・位置情報は参考情報であり、正確性・完全性を保証するものではありません</li>
                 <li>重要な場面では、専門家への相談を推奨いたします</li>
@@ -522,6 +514,11 @@
           <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
         </div>
       </div>
+    </div>
+
+    <!-- 白い浮遊パーティクル（body直下・枠内に収める・ダークモード時のみ表示） -->
+    <div class="lab-particles" aria-hidden="true">
+      <span class="lab-particle lab-particle--1"></span><span class="lab-particle lab-particle--2"></span><span class="lab-particle lab-particle--3"></span><span class="lab-particle lab-particle--4"></span><span class="lab-particle lab-particle--5"></span><span class="lab-particle lab-particle--6"></span><span class="lab-particle lab-particle--7"></span><span class="lab-particle lab-particle--8"></span><span class="lab-particle lab-particle--9"></span><span class="lab-particle lab-particle--10"></span><span class="lab-particle lab-particle--11"></span><span class="lab-particle lab-particle--12"></span><span class="lab-particle lab-particle--13"></span><span class="lab-particle lab-particle--14"></span><span class="lab-particle lab-particle--15"></span><span class="lab-particle lab-particle--16"></span><span class="lab-particle lab-particle--17"></span><span class="lab-particle lab-particle--18"></span><span class="lab-particle lab-particle--19"></span><span class="lab-particle lab-particle--20"></span><span class="lab-particle lab-particle--21"></span><span class="lab-particle lab-particle--22"></span><span class="lab-particle lab-particle--23"></span><span class="lab-particle lab-particle--24"></span><span class="lab-particle lab-particle--25"></span>
     </div>
 
     <!-- メインコンテンツ -->
@@ -685,6 +682,10 @@
       </a>
     </footer>
 
+    <script src="./poinavi-shared.js?v=130" defer></script>
+    <script src="./poinavi-alert.js?v=130" defer></script>
+    <script src="./poinavi-swipe-nav.js?v=130" defer></script>
+    <script src="./poinavi-beginner-tour.js?v=130" defer></script>
     <script>
       // ============================================
       // Fitbit API設定
@@ -803,6 +804,36 @@
         });
       }
 
+      function initBeginnerIconToggle() {
+        var toggle = document.getElementById("labBeginnerIconToggle");
+        if (!toggle || typeof PoinaviBeginner === "undefined") return;
+        function updateUI() {
+          var show = PoinaviBeginner.shouldShowIcon();
+          toggle.classList.toggle("is-on", show);
+          toggle.setAttribute("aria-checked", show ? "true" : "false");
+        }
+        updateUI();
+        toggle.addEventListener("click", function() {
+          var next = !PoinaviBeginner.shouldShowIcon();
+          PoinaviBeginner.setShowIcon(next);
+          updateUI();
+          var btn = document.getElementById("labBeginnerBtn");
+          if (btn) { btn.style.visibility = next ? "visible" : "hidden"; btn.style.pointerEvents = next ? "auto" : "none"; }
+        });
+      }
+
+      function initLabBeginnerTour() {
+        var btn = document.getElementById("labBeginnerBtn");
+        if (!btn || typeof PoinaviBeginner === "undefined") return;
+        if (!PoinaviBeginner.shouldShowIcon()) { btn.style.visibility = "hidden"; btn.style.pointerEvents = "none"; }
+        var steps = [
+          { selector: ".lab-hero", text: "日付と時刻が表示されます。" },
+          { selector: ".lab-dashboard", text: "天気・気温・歩数・移動距離のカードを表示します。" },
+          { selector: ".translate-footer", text: "フッター：ラボノート・翻訳マシン・ぽいナビのページへ移動できます。" }
+        ];
+        btn.addEventListener("click", function() { PoinaviBeginner.startTour(steps); });
+      }
+
       function initResetButton() {
         const resetButton = document.getElementById("labResetButton");
         resetButton.addEventListener("click", function() {
@@ -810,6 +841,7 @@
             if (!ok) return;
             localStorage.removeItem("poinavi_theme");
             localStorage.removeItem("poinavi_start_page");
+            localStorage.removeItem("poinavi_show_beginner_icon");
             poinaviAlert("設定を初期化しました。ページを再読み込みします。");
             location.reload();
           });
@@ -1179,6 +1211,8 @@
         initLabRipple();
         initSettingsModal();
         initThemeToggle();
+        initBeginnerIconToggle();
+        initLabBeginnerTour();
         initStartPageSelect();
         initResetButton();
         

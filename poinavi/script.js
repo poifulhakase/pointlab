@@ -2,6 +2,15 @@
 // ぽいナビ MVP - メインスクリプト
 // ============================================
 
+// XSS対策: HTMLエスケープ（PoinaviSharedがあれば使用）
+function escHtml(s) {
+  if (window.PoinaviShared && window.PoinaviShared.escapeHtml) return window.PoinaviShared.escapeHtml(String(s));
+  if (s == null || s === "") return "";
+  var div = document.createElement("div");
+  div.textContent = s;
+  return div.innerHTML;
+}
+
 // グローバル変数
 let map;
 let userLocation = null;
@@ -16,7 +25,6 @@ let infoWindow = null; // 情報ウィンドウ
 let directionsService = null; // 経路検索サービス
 let directionsRenderer = null; // 経路表示レンダラー
 let currentLocationMarker = null; // 現在地マーカー
-let memoLocationMarker = null; // ラボノートから地図へ戻ったときの赤ぽっち
 let geocoder = null; // ジオコーダー
 let selectedMarkerIndex = null; // 選択中のマーカーのインデックス
 let markerPulseInterval = null; // マーカー点滅用インターバル
@@ -108,17 +116,17 @@ function getAllTags() {
 function addTag(name) {
   const trimmedName = name.trim();
   if (!trimmedName) {
-    return { success: false, message: "タグ名を入力してください" };
+    return { success: false, message: "タグ名を入力してから追加してください。", focusInput: true };
   }
   if (trimmedName.length > 20) {
-    return { success: false, message: "タグ名は20文字以内にしてください" };
+    return { success: false, message: "タグ名は20文字以内にしてください", focusInput: true };
   }
   
   // 重複チェック
   const allTags = getAllTags();
   const exists = allTags.some(tag => tag.name === trimmedName);
   if (exists) {
-    return { success: false, message: "同じ名前のタグが既に存在します" };
+    return { success: false, message: "同じ名前のタグが既に存在します", focusInput: true };
   }
   
   // カスタムタグとして追加（typeはテキスト検索で使用）
@@ -187,11 +195,35 @@ document.addEventListener("DOMContentLoaded", function () {
   initSettingsModal();
   initTagManagement(); // タグ管理機能を初期化
   initStartPageSelect(); // 起動ページ設定を初期化
+  initMapBeginnerTour(); // 初心者ツアー
   // initRainViewer と initRailwayLayer は initGoogleMaps 内で呼び出し
   
   // Google Maps API は loading=async で読み込まれるため、
   // initGoogleMaps コールバックでのみ initMap を呼ぶ（DOMContentLoaded では呼ばない）
 });
+
+// ============================================
+// 初心者ツアー（地図ページ）
+// ============================================
+function initMapBeginnerTour() {
+  var btn = document.getElementById("mapBeginnerBtn");
+  if (!btn || typeof PoinaviBeginner === "undefined") return;
+  if (!PoinaviBeginner.shouldShowIcon()) {
+    btn.style.visibility = "hidden";
+    btn.style.pointerEvents = "none";
+  }
+  var steps = [
+    { selector: "#map", text: "地図エリア。現在地周辺の施設を表示します。ピンチでズーム、ドラッグで移動できます。" },
+    { selector: ".layer-control", text: "レイヤー：トイレ・鉄道・雨雲の表示をオン/オフできます。" },
+    { selector: "#searchInput", text: "検索窓：キーワードやタグで周辺を検索できます。" },
+    { selector: "#tagList", text: "タグボタン：コンビニ・駅・トイレなど、種類別に絞り込みます。" },
+    { selector: "#mapSettingsButton", text: "設定：タグ管理・移動手段・表示件数を変更できます。" },
+    { selector: ".translate-footer", text: "フッター：ラボノート・翻訳マシン・ぽいナビ・研究室のページを切り替えられます。" }
+  ];
+  btn.addEventListener("click", function () {
+    PoinaviBeginner.startTour(steps);
+  });
+}
 
 // ============================================
 // 起動ページ設定
@@ -294,16 +326,8 @@ function initTagManagement() {
     handleAddTag();
   });
   
-  // Enterキーで追加（keydownとkeypressの両方で対応）
+  // Enterキーで追加（keydownのみ・keypressとの重複を避ける）
   newTagInput.addEventListener("keydown", function(e) {
-    if (e.key === "Enter" || e.keyCode === 13) {
-      e.preventDefault();
-      newTagInput.blur(); // キーボードを閉じる
-      handleAddTag();
-    }
-  });
-  
-  newTagInput.addEventListener("keypress", function(e) {
     if (e.key === "Enter" || e.keyCode === 13) {
       e.preventDefault();
       newTagInput.blur(); // キーボードを閉じる
@@ -315,16 +339,18 @@ function initTagManagement() {
   renderTagManageList();
 }
 
-// タグ追加処理
+// タグ追加処理（二重実行防止）
+var addTagInProgress = false;
 function handleAddTag() {
+  if (addTagInProgress) return;
   const input = document.getElementById("newTagInput");
   if (!input) return;
   
+  addTagInProgress = true;
   const result = addTag(input.value);
   
   if (result.success) {
     input.value = "";
-    // キーボードを閉じる（Android対応）
     input.blur();
     // 少し遅延してから再度blur（Androidで確実に閉じるため）
     setTimeout(function() {
@@ -334,8 +360,12 @@ function handleAddTag() {
     }, 100);
     renderMainTagList(); // メインUIを更新
     renderTagManageList(); // 設定モーダルを更新
+    // 二重実行防止のロックを解除（遅延して重複イベントを無視）
+    setTimeout(function() { addTagInProgress = false; }, 300);
   } else {
-    poinaviAlert(result.message);
+    addTagInProgress = false;
+    const onClose = result.focusInput ? function() { input.focus(); } : undefined;
+    poinaviAlert(result.message, onClose);
   }
 }
 
@@ -762,93 +792,13 @@ function initControls() {
 // loading=async 時は Map が未準備のままコールバックが呼ばれることがあるため待機
 window.initGoogleMaps = function() {
   console.log("Google Maps API が正常に読み込まれました");
-  const params = new URLSearchParams(window.location.search);
-  const fromMemoLink = params.has("lat") && params.has("lng");
-
-  // bfcache 復元時：マップをリサイズして白画面を解消
-  window.addEventListener("pageshow", function(ev) {
-    if (ev.persisted && map && typeof google !== "undefined") {
-      setTimeout(function() {
-        google.maps.event.trigger(map, "resize");
-        if (params.has("lat") && params.has("lng")) {
-          var lat = parseFloat(params.get("lat"));
-          var lng = parseFloat(params.get("lng"));
-          if (!isNaN(lat) && !isNaN(lng)) {
-            map.setCenter({ lat: lat, lng: lng });
-          }
-        }
-      }, 150);
-    }
-  });
-
   function runWhenReady() {
     if (typeof google !== "undefined" && typeof google.maps !== "undefined" && typeof google.maps.Map === "function") {
-      if (fromMemoLink) {
-        // ラボノートから遷移時：レイアウト・View Transition 完了を待って初期化（白画面対策）
-        function resizeAndCenter() {
-          if (map) {
-            google.maps.event.trigger(map, "resize");
-            var lat = parseFloat(params.get("lat"));
-            var lng = parseFloat(params.get("lng"));
-            if (!isNaN(lat) && !isNaN(lng)) {
-              map.setCenter({ lat: lat, lng: lng });
-            }
-          }
-        }
-        function doInit() {
-          // マップコンテナに寸法が入るまで待つ（最大1秒）
-          var mapEl = document.getElementById("map");
-          var deadline = Date.now() + 1000;
-          function waitThenInit() {
-            if (!mapEl) {
-              initMap();
-              requestUserLocation();
-              initRainViewer();
-              initRailwayLayer();
-              initToiletLayer();
-              scheduleResize();
-              return;
-            }
-            var rect = mapEl.getBoundingClientRect();
-            if (rect.height > 0 && rect.width > 0) {
-              initMap();
-              requestUserLocation();
-              initRainViewer();
-              initRailwayLayer();
-              initToiletLayer();
-              scheduleResize();
-              return;
-            }
-            if (Date.now() < deadline) {
-              requestAnimationFrame(waitThenInit);
-            } else {
-              initMap();
-              requestUserLocation();
-              initRainViewer();
-              initRailwayLayer();
-              initToiletLayer();
-              scheduleResize();
-            }
-          }
-          function scheduleResize() {
-            document.addEventListener("viewtransitionend", function onVT() {
-              setTimeout(resizeAndCenter, 100);
-            }, { once: true });
-            // View Transitions 非対応・未発火時のフォールバック（1.2秒後）
-            setTimeout(function() {
-              resizeAndCenter();
-            }, 1200);
-          }
-          requestAnimationFrame(waitThenInit);
-        }
-        setTimeout(doInit, 400);
-      } else {
-        initMap();
-        requestUserLocation();
-        initRainViewer();
-        initRailwayLayer();
-        initToiletLayer();
-      }
+      initMap();
+      requestUserLocation();
+      initRainViewer();
+      initRailwayLayer();
+      initToiletLayer();
       return;
     }
     setTimeout(runWhenReady, 50);
@@ -982,71 +932,17 @@ function initMap() {
     return;
   }
 
-  // デフォルト位置（東京駅）、URL の lat/lng で上書き可能（ラボノートから地図へ戻る用）
-  const params = new URLSearchParams(window.location.search);
-  const urlLat = params.get("lat");
-  const urlLng = params.get("lng");
-  let initialCenter = { lat: 35.6812, lng: 139.7671 };
-  let fromMemoLink = false;
-  if (urlLat && urlLng) {
-    const lat = parseFloat(urlLat);
-    const lng = parseFloat(urlLng);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      initialCenter = { lat, lng };
-      fromMemoLink = true;
-    }
-  }
+  // デフォルト位置（東京駅）
+  const defaultLocation = { lat: 35.6812, lng: 139.7671 };
 
   try {
     map = new google.maps.Map(document.getElementById("map"), {
-      center: initialCenter,
+      center: defaultLocation,
       zoom: 15,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
     });
-
-    // ラボノートから戻った場合：赤ぽっちマーカーを表示＆地図の白画面対策
-    if (fromMemoLink) {
-      const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
-      const markerColor = isDarkMode ? "#ff0080" : "#ff1744";
-      memoLocationMarker = new google.maps.Marker({
-        position: initialCenter,
-        map: map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 14,
-          fillColor: markerColor,
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        },
-        title: "ラボノートに保存した地点",
-        zIndex: 1000,
-      });
-      memoLocationMarker.addListener("click", function() {
-        showMemoLocationInfoWindow(initialCenter, memoLocationMarker);
-        if (userLocation) {
-          setTimeout(function() {
-            displayRoute(userLocation, initialCenter);
-          }, 200);
-        }
-      });
-      // 地図が真っ白で固まる対策：resize をトリガーして再描画（複数回で確実に）
-      function ensureMapVisible() {
-        if (!map) return;
-        google.maps.event.trigger(map, "resize");
-        map.setCenter(initialCenter);
-        map.setZoom(15);
-      }
-      setTimeout(ensureMapVisible, 100);
-      setTimeout(ensureMapVisible, 400);
-      // タイル読み込み後にも念のため実行
-      const tilesListener = map.addListener("tilesloaded", function() {
-        google.maps.event.removeListener(tilesListener);
-        setTimeout(ensureMapVisible, 50);
-      });
-    }
 
     // ダークモード用のスタイルを追加
     const darkMapType = new google.maps.StyledMapType(darkMapStyle, {
@@ -1108,7 +1004,7 @@ function initMap() {
     window.showLabNoteResultModal = poinaviAlert;
 
     // グローバル関数としてラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
-    window.addPlaceToMemo = function(encodedName, encodedAddress, distance, lat, lng) {
+    window.addPlaceToMemo = function(encodedName, encodedAddress, distance) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
       const MEMO_MAX_COUNT = 50;
       
@@ -1137,9 +1033,7 @@ function initMap() {
       const newMemo = {
         id: Date.now().toString(),
         content: memoContent,
-        createdAt: new Date().toISOString(),
-        latitude: lat != null && lng != null ? parseFloat(lat) : undefined,
-        longitude: lat != null && lng != null ? parseFloat(lng) : undefined
+        createdAt: new Date().toISOString()
       };
       memos.unshift(newMemo);
       
@@ -1154,7 +1048,7 @@ function initMap() {
     };
     
     // グローバル関数として鉄道ラボノート追加関数を登録（InfoWindow内のボタンから呼び出せるように）
-    window.addRailwayToMemo = function(encodedType, encodedContent, lat, lng) {
+    window.addRailwayToMemo = function(encodedType, encodedContent) {
       const MEMO_STORAGE_KEY = "poinavi_memos";
       const MEMO_MAX_COUNT = 50;
       
@@ -1184,9 +1078,7 @@ function initMap() {
       const newMemo = {
         id: Date.now().toString(),
         content: memoContent,
-        createdAt: new Date().toISOString(),
-        latitude: lat != null && lng != null ? parseFloat(lat) : undefined,
-        longitude: lat != null && lng != null ? parseFloat(lng) : undefined
+        createdAt: new Date().toISOString()
       };
       memos.unshift(newMemo);
       
@@ -1209,14 +1101,14 @@ function initMap() {
           align-items: center;
           justify-content: center;
           height: 100%;
-          padding: 20px;
+          padding: var(--s24);
           text-align: center;
           background-color: #f5f5f5;
           color: #d32f2f;
         ">
           <div>
-            <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">マップの初期化に失敗しました</div>
-            <div style="font-size: 14px;">${error.message}</div>
+            <div style="font-size: var(--fs-18); font-weight: 600; margin-bottom: var(--s8);">マップの初期化に失敗しました</div>
+            <div style="font-size: var(--fs-16);">${error.message}</div>
           </div>
         </div>
       `;
@@ -1392,12 +1284,8 @@ function tryIpBasedLocation() {
 function applyUserLocation(lat, lng) {
   if (!map) return; // initMap 未完了時は何もしない
   userLocation = { lat: lat, lng: lng };
-  // ラボノートから地図へ戻った場合（URL に lat/lng がある）は中心を移動しない
-  const params = new URLSearchParams(window.location.search);
-  if (!params.has("lat") || !params.has("lng")) {
-    map.setCenter(userLocation);
-    map.setZoom(15);
-  }
+  map.setCenter(userLocation);
+  map.setZoom(15);
 
   // 現在地マーカー
   // ダークモードかどうかを判定
@@ -2676,9 +2564,9 @@ function displayResultsList(results) {
     const routeInfo = estimateRoute(place.distance);
 
     item.innerHTML = `
-      <div class="result-item__name">${place.name}</div>
+      <div class="result-item__name">${escHtml(place.name)}</div>
       <div class="result-item__distance">${distance}</div>
-      <span class="result-item__status ${statusClass}">${statusText}</span>
+      <span class="result-item__status ${statusClass}">${escHtml(statusText)}</span>
       <div class="result-item__route">${routeInfo}</div>
     `;
 
@@ -2844,19 +2732,16 @@ function selectResult(index) {
   console.log("選択された店舗:", place.name, place);
 }
 
-// InfoWindowを地図エリアの中央にパンする（経路表示など他処理でビューが変わった後も再実行可能）
+// InfoWindowを画面中央にパンする（経路表示など他処理でビューが変わった後も再実行可能）
 function centerInfoWindowInView() {
   if (!map || !infoWindow || !infoWindow.getMap()) return;
   const infoWindowElement = document.querySelector('.gm-style-iw-c');
   if (!infoWindowElement) return;
-  const iwRect = infoWindowElement.getBoundingClientRect();
-  // 地図コンテナの中央を基準にする（ヘッダー・フッター・結果リストでオフセットされるため）
-  const mapEl = document.getElementById('map');
-  const targetRect = mapEl ? mapEl.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
-  const centerX = targetRect.left + targetRect.width / 2;
-  const centerY = targetRect.top + targetRect.height / 2;
-  const iwCenterX = iwRect.left + iwRect.width / 2;
-  const iwCenterY = iwRect.top + iwRect.height / 2;
+  const rect = infoWindowElement.getBoundingClientRect();
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const iwCenterX = rect.left + rect.width / 2;
+  const iwCenterY = rect.top + rect.height / 2;
   const panX = centerX - iwCenterX;
   const panY = centerY - iwCenterY;
   map.panBy(panX, panY);
@@ -2999,75 +2884,75 @@ function showInfoWindow(place, marker) {
   // InfoWindowのコンテンツを作成（poinavi-infowindow クラスで識別）
   const content = `
     <div class="poinavi-infowindow" style="
-      padding: 16px 16px 20px 16px;
-      min-width: 240px;
-      max-width: 280px;
+      padding: var(--s16) var(--s16) var(--s20) var(--s16);
+      min-width: var(--s240);
+      max-width: var(--s280);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
       background-color: ${bgColor};
       color: ${textColor};
-      border-radius: 12px;
+      border-radius: var(--s12);
     ">
       <div style="
-        font-size: 17px;
+        font-size: var(--fs-16);
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: var(--s8);
         color: ${textColor};
         line-height: 1.4;
         word-break: break-word;
-        padding-right: 24px;
+        padding-right: var(--s24);
       ">
-        ${place.name}
+        ${escHtml(place.name)}
       </div>
       <div style="
-        font-size: 14px;
+        font-size: var(--fs-16);
         color: ${subTextColor};
-        margin-bottom: 6px;
+        margin-bottom: var(--s6);
         line-height: 1.5;
         word-break: break-word;
       ">
-        ${address}
+        ${escHtml(address)}
       </div>
       <div style="
-        font-size: 14px;
+        font-size: var(--fs-16);
         color: ${subTextColor};
-        margin-bottom: 6px;
+        margin-bottom: var(--s6);
       ">
-        現在地からの距離 <span class="distance-value" style="font-size: 21px; color: #7A9FCC !important; font-weight: bold;">${distanceText}</span>
+        現在地からの距離 <span class="distance-value" style="font-size: var(--fs-21); color: #7A9FCC !important; font-weight: bold;">${distanceText}</span>
       </div>
       <div style="
-        font-size: 14px;
+        font-size: var(--fs-16);
         color: ${subTextColor};
-        margin-bottom: 10px;
+        margin-bottom: var(--s10);
       ">
-        ${travelModeLabel} <span class="distance-value" style="font-size: 21px; color: #7A9FCC !important; font-weight: bold;">${travelTimeText}</span>
+        ${travelModeLabel} <span class="distance-value" style="font-size: var(--fs-21); color: #7A9FCC !important; font-weight: bold;">${travelTimeText}</span>
       </div>
       <div style="
         display: inline-block;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 13px;
+        padding: var(--s4) var(--s10);
+        border-radius: var(--s4);
+        font-size: var(--fs-13);
         font-weight: 500;
         background-color: ${statusBgColor};
         color: ${statusTextColor};
-        margin-bottom: 12px;
+        margin-bottom: var(--s16);
       ">
-        ${statusText}
+        ${escHtml(statusText)}
       </div>
       <div style="
         display: flex;
         justify-content: flex-end;
-        margin-top: 8px;
+        margin-top: var(--s8);
       ">
-        <button onclick="addPlaceToMemo('${encodeURIComponent(place.name)}', '${encodeURIComponent(address)}', '${distanceText}', ${place.geometry && place.geometry.location ? place.geometry.location.lat() : 'null'}, ${place.geometry && place.geometry.location ? place.geometry.location.lng() : 'null'})" style="
+        <button onclick="addPlaceToMemo('${encodeURIComponent(place.name)}', '${encodeURIComponent(address)}', '${distanceText}')" style="
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
+          gap: var(--s6);
+          padding: var(--s8) var(--s14);
           background-color: #4CAF50;
           color: #ffffff;
           border: none;
-          border-radius: 8px;
-          font-size: 13px;
+          border-radius: var(--s8);
+          font-size: var(--fs-13);
           font-weight: 500;
           cursor: pointer;
           font-family: inherit;
@@ -3097,62 +2982,6 @@ function showInfoWindow(place, marker) {
   if (marker) {
     marker.infoPlace = place;
   }
-}
-
-// ラボノートから戻ったときの赤ぽっち用InfoWindow（経路・モーダル表示）
-function showMemoLocationInfoWindow(position, marker) {
-  if (!map || !position) return;
-
-  clearMarkerSelection();
-  const resultItems = document.querySelectorAll(".result-item");
-  resultItems.forEach(function(item) { item.classList.remove("active"); });
-
-  if (!infoWindow) {
-    infoWindow = new google.maps.InfoWindow();
-    infoWindow.addListener("closeclick", function() {
-      clearMarkerSelection();
-      resultItems.forEach(function(item) { item.classList.remove("active"); });
-    });
-  }
-
-  const location = userLocation || { lat: 35.6812, lng: 139.7671 };
-  const dest = typeof position.lat === "function" ? { lat: position.lat(), lng: position.lng() } : position;
-  const distance = calculateDistance(location.lat, location.lng, dest.lat, dest.lng);
-  const distanceText = distance < 1000 ? `${Math.round(distance)}m` : `${(distance / 1000).toFixed(1)}km`;
-  const travelTimeText = `約${Math.max(1, Math.round(distance / 80))}分`;
-
-  const isDarkMode = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark-mode");
-  const bgColor = isDarkMode ? "#2d2d2d" : "#ffffff";
-  const textColor = isDarkMode ? "#e0e0e0" : "#1a1a1a";
-  const subTextColor = isDarkMode ? "#b0b0b0" : "#666666";
-
-  const content = `
-    <div style="
-      padding: 12px 16px;
-      min-width: 180px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
-      background-color: ${bgColor};
-      color: ${textColor};
-      border-radius: 12px;
-    ">
-      <div style="font-size: 17px; font-weight: 600; margin-bottom: 8px; color: ${textColor};">
-        📍 ラボノートに保存した地点
-      </div>
-      <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 6px;">
-        現在地からの距離 <span style="font-size: 18px; color: #7A9FCC; font-weight: bold;">${distanceText}</span>
-      </div>
-      <div style="font-size: 14px; color: ${subTextColor}; margin-bottom: 0;">
-        徒歩 <span style="font-size: 18px; color: #7A9FCC; font-weight: bold;">${travelTimeText}</span>
-      </div>
-    </div>
-  `;
-
-  infoWindow.setContent(content);
-  infoWindow.open(map, marker);
-
-  google.maps.event.addListenerOnce(infoWindow, "domready", function() {
-    google.maps.event.addListenerOnce(map, "idle", centerInfoWindowInView);
-  });
 }
 
 // ============================================
@@ -3213,10 +3042,6 @@ function displayRoute(origin, destination) {
       console.log("経路を地図上に表示しました");
       if (iwOpen) {
         directionsRenderer.setOptions({ preserveViewport: false });
-        // 経路描画完了後にモーダルを地図中央に再配置
-        google.maps.event.addListenerOnce(map, 'idle', function() {
-          setTimeout(centerInfoWindowInView, 80);
-        });
       }
       
       // 経路表示時はマップのビューを調整しない（InfoWindowが隠れないようにする）
@@ -4206,41 +4031,41 @@ function showRailwayInfoWindow(position, content, type) {
 
   const html = `
     <div style="
-      padding: 12px 16px;
-      min-width: 150px;
+      padding: var(--s12) var(--s16);
+      min-width: var(--s150);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
       background-color: ${bgColor};
       color: ${textColor};
-      border-radius: 8px;
+      border-radius: var(--s8);
     ">
       <div style="
-        font-size: 11px;
+        font-size: var(--fs-11);
         font-weight: 600;
         color: ${accentColor};
-        margin-bottom: 6px;
+        margin-bottom: var(--s6);
         text-transform: uppercase;
         letter-spacing: 0.5px;
       ">${type}</div>
       <div style="
-        font-size: 14px;
+        font-size: var(--fs-16);
         font-weight: 500;
         line-height: 1.5;
-        margin-bottom: 12px;
+        margin-bottom: var(--s16);
       ">${content}</div>
       <div style="
         display: flex;
         justify-content: flex-end;
       ">
-        <button onclick="addRailwayToMemo('${encodeURIComponent(type)}', '${encodeURIComponent(plainContent)}', ${position.lat()}, ${position.lng()})" style="
+        <button onclick="addRailwayToMemo('${encodeURIComponent(type)}', '${encodeURIComponent(plainContent)}')" style="
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
+          gap: var(--s6);
+          padding: var(--s8) var(--s14);
           background-color: #4CAF50;
           color: #ffffff;
           border: none;
-          border-radius: 8px;
-          font-size: 13px;
+          border-radius: var(--s8);
+          font-size: var(--fs-13);
           font-weight: 500;
           cursor: pointer;
           font-family: inherit;
@@ -4556,13 +4381,13 @@ function generateToiletInfoWindowHtml(position, tags, address, isLoading = false
   const fee = tags.fee;
   const openingHours = tags.opening_hours;
 
-  let infoHtml = `<strong>${name}</strong>`;
+  let infoHtml = `<strong>${escHtml(name)}</strong>`;
   
   // 住所
   if (isLoading) {
-    infoHtml += `<br><span style="font-size: 11px; color: ${subTextColor};">📍 住所を取得中...</span>`;
+    infoHtml += `<br><span style="font-size: var(--fs-11); color: ${subTextColor};">📍 住所を取得中...</span>`;
   } else if (address) {
-    infoHtml += `<br><span style="font-size: 11px; color: ${subTextColor};">📍 ${address}</span>`;
+    infoHtml += `<br><span style="font-size: var(--fs-11); color: ${subTextColor};">📍 ${escHtml(address)}</span>`;
   }
 
   // 車椅子対応
@@ -4570,7 +4395,7 @@ function generateToiletInfoWindowHtml(position, tags, address, isLoading = false
     const wheelchairText = wheelchair === "yes" ? "♿ バリアフリー対応" : 
                           wheelchair === "limited" ? "♿ 一部対応" : "";
     if (wheelchairText) {
-      infoHtml += `<br><span style="color: #10b981; font-size: 12px;">${wheelchairText}</span>`;
+      infoHtml += `<br><span style="color: #10b981; font-size: var(--fs-12);">${wheelchairText}</span>`;
     }
   }
 
@@ -4578,13 +4403,13 @@ function generateToiletInfoWindowHtml(position, tags, address, isLoading = false
   if (fee) {
     const feeText = fee === "yes" ? "💰 有料" : fee === "no" ? "無料" : "";
     if (feeText) {
-      infoHtml += `<br><span style="font-size: 12px;">${feeText}</span>`;
+      infoHtml += `<br><span style="font-size: var(--fs-12);">${feeText}</span>`;
     }
   }
 
   // 営業時間
   if (openingHours) {
-    infoHtml += `<br><span style="font-size: 11px; color: #888;">🕐 ${openingHours}</span>`;
+    infoHtml += `<br><span style="font-size: var(--fs-11); color: #888;">🕐 ${escHtml(openingHours)}</span>`;
   }
 
   // ラボノート用テキスト
@@ -4592,42 +4417,42 @@ function generateToiletInfoWindowHtml(position, tags, address, isLoading = false
 
   return `
     <div style="
-      padding: 12px 16px;
-      min-width: 160px;
+      padding: var(--s12) var(--s16);
+      min-width: var(--s160);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
       background-color: ${bgColor};
       color: ${textColor};
-      border-radius: 8px;
+      border-radius: var(--s8);
     ">
       <div style="
-        font-size: 11px;
+        font-size: var(--fs-11);
         font-weight: 600;
         color: ${accentColor};
-        margin-bottom: 6px;
+        margin-bottom: var(--s6);
         text-transform: uppercase;
         letter-spacing: 0.5px;
       ">🚻 お手洗い</div>
       <div style="
-        font-size: 14px;
+        font-size: var(--fs-16);
         font-weight: 500;
         line-height: 1.6;
-        margin-bottom: 12px;
+        margin-bottom: var(--s16);
       ">${infoHtml}</div>
       <div style="
         display: flex;
-        gap: 8px;
+        gap: var(--s8);
         justify-content: flex-end;
       ">
         <button onclick="openToiletInGoogleMaps(${position.lat()}, ${position.lng()})" style="
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          padding: 8px 12px;
+          gap: var(--s4);
+          padding: var(--s8) var(--s12);
           background-color: ${isDarkMode ? '#4b5563' : '#f3f4f6'};
           color: ${isDarkMode ? '#ffffff' : textColor};
           border: none;
-          border-radius: 8px;
-          font-size: 12px;
+          border-radius: var(--s8);
+          font-size: var(--fs-12);
           font-weight: 500;
           cursor: pointer;
           font-family: inherit;
@@ -4639,16 +4464,16 @@ function generateToiletInfoWindowHtml(position, tags, address, isLoading = false
           </svg>
           経路
         </button>
-        <button onclick="addToiletToMemo('${encodeURIComponent(plainContent)}', ${position.lat()}, ${position.lng()})" style="
+        <button onclick="addToiletToMemo('${encodeURIComponent(plainContent)}')" style="
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          padding: 8px 12px;
+          gap: var(--s4);
+          padding: var(--s8) var(--s12);
           background-color: ${isDarkMode ? '#10b981' : '#4CAF50'};
           color: #ffffff;
           border: none;
-          border-radius: 8px;
-          font-size: 12px;
+          border-radius: var(--s8);
+          font-size: var(--fs-12);
           font-weight: 500;
           cursor: pointer;
           font-family: inherit;
@@ -4730,7 +4555,7 @@ function openToiletInGoogleMaps(lat, lng) {
 }
 
 // お手洗いをラボノートに追加
-function addToiletToMemo(encodedContent, lat, lng) {
+function addToiletToMemo(encodedContent) {
   const content = decodeURIComponent(encodedContent);
   const MEMO_STORAGE_KEY = "poinavi_memos";
   
@@ -4739,9 +4564,7 @@ function addToiletToMemo(encodedContent, lat, lng) {
     const newMemo = {
       id: Date.now().toString(),
       content: `🚻 ${content}`,
-      createdAt: new Date().toISOString(),
-      latitude: lat != null && lng != null ? parseFloat(lat) : undefined,
-      longitude: lat != null && lng != null ? parseFloat(lng) : undefined
+      createdAt: new Date().toISOString()
     };
     memos.unshift(newMemo);
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
