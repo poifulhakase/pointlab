@@ -2820,7 +2820,7 @@ body.dark-mode .rain-viewer-disclaimer {
 }
 
 .translate-header__logo {
-  height: var(--s28);
+  height: calc(var(--s28) * 1.15);
   width: auto;
 }
 
@@ -2889,8 +2889,7 @@ body.dark-mode .rain-viewer-disclaimer {
   padding: var(--spacing-l);
   padding-bottom: calc(var(--spacing-l) + var(--footer-height) + env(safe-area-inset-bottom, 0));
   gap: var(--spacing-xl); /* 翻訳結果エリアと各種ボタンの間の余白を十分に */
-  overflow-y: auto; /* PC等で高さ不足時に6アイコン・会話モードが隠れないようスクロール可能に */
-  overflow-x: hidden;
+  overflow: hidden; /* ページスクロール防止・結果エリア内でスクロール */
   /* コンテンツエリア＝黒っぽい色（翻訳結果エリアは--bg-secondaryのまま） */
   background-color: var(--bg-primary);
 }
@@ -3159,9 +3158,10 @@ body.dark-mode .conversation-mode.conversation-active::after {
 }
 
 /* 会話モード中：他ボタン・ラベルを visibility で非表示（レイアウト・サイズ維持） */
-.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper,
-.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper .translate-camera-btn,
-.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper .translate-camera-label,
+/* 通貨・カメララッパーは非表示。QRラッパーは維持し、QRボタンとラベルのみ非表示（停止ボタンはQR位置に表示） */
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper:not(.translate-camera-area__btn-wrapper--qr),
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper--qr .translate-qr-btn,
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper--qr .translate-camera-label,
 .translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-voice-area__btn-wrapper:not(.translate-voice-area__btn-wrapper--conversation),
 .translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-voice-area__btn-wrapper:not(.translate-voice-area__btn-wrapper--conversation) .translate-camera-btn,
 .translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-voice-area__btn-wrapper:not(.translate-voice-area__btn-wrapper--conversation) .translate-camera-label {
@@ -3315,7 +3315,7 @@ body.dark-mode .translate-voice-btn.listening::after {
 
 .translate-result-area__reset-btn {
   position: absolute;
-  bottom: calc(var(--footer-height) - 3rem); /* 会話モード終了ボタンとの間に余白を確保 */
+  bottom: var(--spacing-m);
   right: var(--spacing-m);
   display: flex;
   align-items: center;
@@ -4434,6 +4434,22 @@ body.dark-mode .unit-modal__conversion-card {
   }
 }
 
+/* スマホ：翻訳結果エリアをラボノート（memo-list）と同じ高さに統一 */
+@media (max-width: 768px) {
+  .translate-main .translate-result-area-wrap {
+    height: var(--display-area-height);
+    min-height: var(--display-area-min-height);
+    flex: 0 0 auto;
+    /* memo-list と完全同一の高さ指定 */
+  }
+  .translate-main .translate-result-area {
+    overflow-y: auto;
+  }
+  .translate-main .translate-buttons-trapezoid {
+    flex-shrink: 0;
+  }
+}
+
 /* スマホ：ヘッダー・フッターの左右余白をなしに（設定アイコン右側は最低限確保） */
 @media (max-width: 768px) {
   .translate-header {
@@ -4444,6 +4460,14 @@ body.dark-mode .unit-modal__conversion-card {
 
   /* スマホ：フッターを画面幅いっぱいに（左右余白なし・背景で埋める） */
   .translate-footer {
+    padding-left: 0;
+    padding-right: 0;
+    max-width: 100%;
+    left: 0;
+    right: 0;
+    transform: none;
+  }
+  body.lab-page .translate-footer {
     padding-left: 0;
     padding-right: 0;
     max-width: 100%;
@@ -4465,26 +4489,17 @@ body.dark-mode .unit-modal__conversion-card {
     transform: none;
   }
 
-  /* スマホ：結果エリア内でスクロール・ボタンエリアは縮小しない */
+  /* スマホ：結果エリアをラボノート（memo-list）と同じ高さに統一 */
   .translate-main .translate-result-area-wrap {
-    flex: 1;
-    min-height: 0;
-    height: auto;
+    height: var(--display-area-height);
+    min-height: var(--display-area-min-height);
+    flex: 0 0 auto;
   }
   .translate-main .translate-result-area {
     overflow-y: auto;
   }
   .translate-main .translate-buttons-trapezoid {
     flex-shrink: 0;
-  }
-
-  /* 研究室：フッターはアプリ幅に揃えて中央寄せを維持 */
-  body.lab-page .translate-footer {
-    padding-left: 0;
-    padding-right: 0;
-    max-width: var(--s500);
-    left: 50%;
-    transform: translateX(-50%);
   }
 }
 
@@ -4620,7 +4635,7 @@ body.dark-mode .unit-modal__conversion-card {
 }
 
 .translate-footer__logo {
-  height: var(--s28);
+  height: calc(var(--s28) * 1.15);
   width: auto;
   object-fit: contain;
 }
@@ -4760,22 +4775,22 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-main {
-    padding: var(--spacing-m);
-    gap: var(--spacing-xl); /* 翻訳結果エリアと各種ボタンの間の余白を十分に */
-    padding-bottom: calc(var(--footer-height) + var(--spacing-xl) + env(safe-area-inset-bottom, 0));
+    padding: var(--spacing-s);
+    gap: var(--spacing-m); /* スマホは余白を抑えて画面に収める */
+    padding-bottom: calc(var(--footer-height) + var(--spacing-m) + env(safe-area-inset-bottom, 0));
   }
 
-  /* 単位・画像翻訳を会話モードに重ねて（縦並びで中央に配置） */
+  /* スマホ：単位・会話モード・画像翻訳を横並び・会話モードの左右に適度な間隔でまとめて配置 */
   .translate-voice-area {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: var(--s16);
-    padding: var(--s16) var(--spacing-s) var(--spacing-m) var(--spacing-s);
+    justify-content: center; /* space-betweenだと左右端に寄りすぎるため中央揃えでまとめる */
+    gap: var(--s24); /* 会話モードと左右ボタンの間隔を少し広く */
+    padding: var(--s16) var(--spacing-m) var(--spacing-m) var(--spacing-m);
   }
 
   .translate-voice-area__btn-wrapper {
-    flex: none;
+    flex: 0 0 auto;
     min-width: auto;
   }
 
@@ -4784,25 +4799,17 @@ body.dark-mode .translate-result-item__divider svg {
     left: auto;
     top: auto;
     transform: none;
-    order: 0; /* 会話モードを中央に（単位・画像の間に） */
-  }
-
-  .translate-voice-area__btn-wrapper:first-child {
-    order: -1; /* 単位を上に */
-  }
-
-  .translate-voice-area__btn-wrapper:last-child {
-    order: 1; /* 画像翻訳を下に */
+    flex-shrink: 0;
   }
 
   .conversation-mode {
-    width: 140px;
+    width: 140px; /* 1.4倍（100×1.4） */
     height: 140px;
   }
 
   .conversation-mode__start-icon {
-    width: 34px;
-    height: 34px;
+    width: 48px; /* 1.4倍（34×1.4） */
+    height: 48px;
   }
 
   .conversation-mode__start-label {
@@ -4841,7 +4848,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-result-area__reset-btn {
-    bottom: calc(var(--footer-height) - 3.4rem); /* 会話モード終了ボタンとの間に余白を確保 */
+    bottom: var(--spacing-s);
     right: var(--spacing-s);
     padding: var(--s8) var(--s16);
     font-size: var(--fs-12);
@@ -4937,8 +4944,8 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .conversation-mode {
-    width: 125px;
-    height: 125px;
+    width: 175px; /* 1.4倍（125×1.4） */
+    height: 175px;
   }
 
   .translate-buttons-trapezoid .translate-camera-area__buttons,
@@ -4961,8 +4968,8 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .conversation-mode__start-icon {
-    width: 34px;
-    height: 34px;
+    width: 48px; /* 1.4倍（34×1.4） */
+    height: 48px;
   }
 }
 
@@ -5562,6 +5569,7 @@ body.dark-mode .translate-result-item__ocr-preview {
 /* 注意書き */
 .memo-warning {
   display: flex;
+  align-items: center;
   gap: var(--s16);
   padding: var(--s16) var(--s16);
   background-color: rgba(245, 158, 11, 0.1);
@@ -5966,8 +5974,8 @@ body.dark-mode .memo-item {
 }
 
 .memo-attach-btn svg {
-  width: var(--s28);
-  height: var(--s24);
+  width: var(--s22);
+  height: var(--s20);
 }
 
 /* メモ内画像表示 */
@@ -6020,8 +6028,8 @@ body.dark-mode .memo-item {
 }
 
 .memo-add-btn svg {
-  width: var(--s28);
-  height: var(--s24);
+  width: var(--s22);
+  height: var(--s20);
 }
 
 /* レスポンシブ */
@@ -6060,25 +6068,25 @@ body.dark-mode .memo-item {
     padding-right: var(--s16);
   }
 
-  /* 送信・カメラボタン：スマホ時1.2倍（38*1.2≈46px） */
+  /* 送信・カメラボタン：スマホ時ボタン52px・アイコンは小さく */
   .memo-attach-btn {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
   }
 
   .memo-attach-btn svg {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
   }
 
   .memo-add-btn {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
   }
 
   .memo-add-btn svg {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
   }
 }
 
@@ -6281,24 +6289,24 @@ body.dark-mode .memo-item {
   border-color: var(--camera-btn-bg);
 }
 
-/* 会話モード停止ボタン（QRコード位置・リセットボタンと同じ配色） */
-.translate-camera-area__buttons {
+/* 会話モード停止ボタン（QRコードラッパー内で同一位置・リセットボタンと同じ配色） */
+.translate-camera-area__btn-wrapper--qr {
   position: relative;
 }
 .translate-camera-area__stop-btn {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  /* QRラッパー内でフロー配置し、QRボタンと同一位置に表示（会話モード時はQR非表示で停止ボタンが代わりに表示） */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s8);
-  padding: var(--s8) var(--s16);
-  font-size: var(--fs-13);
+  justify-content: center;
+  gap: var(--s4);
+  padding: 0;
+  width: var(--s60);
+  height: var(--s60);
+  font-size: var(--fs-11);
   font-weight: 500;
   border: 1px solid #FECAC9;
-  border-radius: var(--s28);
+  border-radius: 50%;
   background: rgba(254, 202, 201, 0.3);
   color: #E8A5A3;
   cursor: pointer;
@@ -6396,18 +6404,6 @@ body:has(.translate-main) .translate-footer {
     padding-left: 0;
     padding-right: 0;
   }
-}
-body.lab-page {
-  height: 100dvh;
-  min-height: 100dvh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: min(var(--s500), 100vw);
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
 }
 
 /* パーティクル（背景画像がある中央領域のみに表示・.lab-main と同じ幅・位置） */
@@ -6630,7 +6626,7 @@ body.lab-page:not(.dark-mode) .lab-hero__day-accent {
 .lab-hero__time {
   font-size: calc(var(--fs-96) * 0.85);
   font-weight: 200;
-  letter-spacing: -4px; /* 文字間を少し広げ（-8pxよりゆとりあり） */
+  letter-spacing: 0.04em; /* 研究所：時間の文字間を少し開ける */
   color: var(--text-primary);
   line-height: 1;
   font-variant-numeric: tabular-nums;
