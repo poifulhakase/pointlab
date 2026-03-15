@@ -145,6 +145,8 @@ html {
   height: 100%;
   height: 100dvh;
   scrollbar-gutter: stable; /* スクロールバー幅を常に確保し、会話モード等の中央配置のずれを防ぐ */
+  overscroll-behavior: none; /* Androidプルリフレッシュ・オーバースクロールで縦スクロールしてしまうのを防止 */
+  overscroll-behavior-y: none; /* Android Chrome で明示的に縦方向を抑制 */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Hiragino Sans", "Noto Sans JP", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -164,6 +166,7 @@ body {
   max-width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: none; /* Android プルリフレッシュで縦スクロールしてしまうのを防止 */
 }
 
 /* ============================================
@@ -619,7 +622,7 @@ body::before {
 /* PC版でドロップシャドウを追加 */
 @media (min-width: 501px) {
   html {
-    background-color: #e8e8e8;
+    background-color: #ffffff;
   }
   html.dark-mode {
     background-color: #0d0d0d;
@@ -633,6 +636,11 @@ body::before {
   }
   body.dark-mode {
     box-shadow: 0 0 28px rgba(0, 0, 0, 0.4);
+  }
+  /* 翻訳ページ：最大コンテンツ幅を500pxに制限しない（ビューポート幅いっぱい使用） */
+  body:has(.translate-main) {
+    max-width: 100%;
+    box-shadow: none;
   }
 }
 
@@ -906,6 +914,19 @@ body::before {
 /* ============================================
    2️⃣ マップ表示（中央）
    ============================================ */
+
+/* 地図ページ：固定レイアウト・Androidプルリフレッシュで縦スクロールしてしまうのを防止（lab/translate と同様） */
+html:has(body.map-page) {
+  overflow-x: clip;
+  overscroll-behavior: none;
+}
+body.map-page {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 .main-content {
   flex: 1;
   min-height: 0;
@@ -938,16 +959,16 @@ body.map-page:not(.dark-mode) .settings-bar {
   border-top-color: rgba(0, 0, 0, 0.06);
 }
 
-/* 地図ページ：スマホ時に検索エリアの左右マージンを削除 */
+/* 地図ページ：スマホ時に検索エリアの左右内側余白を確保 */
 @media (max-width: 500px) {
   body.map-page .settings-bar {
     max-width: 100%;
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: var(--s16);
+    padding-right: var(--s16);
   }
   body.map-page .settings-bar__inner {
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: var(--s16);
+    padding-right: var(--s16);
   }
 }
 body.map-page .translate-footer {
@@ -2805,6 +2826,7 @@ body.dark-mode .rain-viewer-disclaimer {
 
 /* 6アイコンエリア（台形レイアウト：上段狭・下段広・上下中央寄せ・左右ボタンが overflow で切れないよう親幅内に収める） */
 .translate-buttons-trapezoid {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2817,6 +2839,16 @@ body.dark-mode .rain-viewer-disclaimer {
   box-sizing: border-box;
   /* コンテンツエリア＝黒っぽい色（翻訳結果エリアは--bg-secondaryのまま） */
   background-color: var(--bg-primary);
+}
+
+/* 会話モード終了ボタン：QRコード位置（上段中央）に絶対配置 */
+.translate-buttons-trapezoid .translate-stop-btn--above-conversation {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: auto;
+  right: auto;
 }
 
 /* 上段（通貨・QR・カメラ）：台形の短辺・やや狭く・スクロール時も常に表示・黒い背景はつけない */
@@ -2833,6 +2865,7 @@ body.dark-mode .rain-viewer-disclaimer {
 }
 
 .translate-buttons-trapezoid .translate-camera-area__buttons {
+  position: relative;
   justify-content: center;
   gap: var(--s20);
 }
@@ -2842,8 +2875,8 @@ body.dark-mode .rain-viewer-disclaimer {
   width: 100%;
   min-width: 100%; /* align-items:center でも確実に親幅いっぱいに */
   align-self: stretch;
-  padding: 0 var(--spacing-s) var(--spacing-l);
-  gap: 6vw; /* 会話モードと他ボタンの間隔を控えめに */
+  padding: 0 var(--spacing-m) var(--spacing-l);
+  gap: 8vw; /* 会話モードと単位・画像翻訳の間隔を少し広く */
 }
 
 /* メインコンテンツ */
@@ -2868,8 +2901,8 @@ body.dark-mode .rain-viewer-disclaimer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-m);
-  padding: var(--spacing-s) var(--spacing-s) var(--spacing-l) var(--spacing-s);
+  gap: var(--spacing-l);
+  padding: var(--spacing-s) var(--spacing-m) var(--spacing-l) var(--spacing-m);
   flex-shrink: 0;
   width: 100%;
 }
@@ -3003,15 +3036,17 @@ body.dark-mode .rain-viewer-disclaimer {
 
 .conversation-mode__half--top {
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  justify-content: center;
-  padding: var(--s8) var(--s16);
-  gap: var(--s8);
+  justify-content: space-evenly;
+  /* 矢印が円の上辺に寄らないよう、上側にやや多めの余白 */
+  padding: var(--s18) var(--s16) var(--s12) var(--s16);
+  gap: var(--s6);
 }
 
 .conversation-mode__half--bottom {
-  justify-content: center;
-  padding: var(--s8) var(--s16);
-  gap: var(--s8);
+  justify-content: space-evenly;
+  /* 矢印が円の下辺に寄らないよう、下側にやや多めの余白 */
+  padding: var(--s12) var(--s16) var(--s18) var(--s16);
+  gap: var(--s6);
 }
 
 .conversation-mode__half--bottom .conversation-mode__lang-label {
@@ -3032,6 +3067,14 @@ body.dark-mode .rain-viewer-disclaimer {
   width: var(--s28);
   height: var(--s24);
   flex-shrink: 0;
+}
+
+/* 矢印と円の縁との余白を均等化 */
+.conversation-mode__half--top svg {
+  margin-top: var(--s4);
+}
+.conversation-mode__half--bottom svg {
+  margin-bottom: var(--s4);
 }
 
 .conversation-mode__lang-label {
@@ -3113,6 +3156,17 @@ body.dark-mode .conversation-mode.conversation-active::before {
 
 body.dark-mode .conversation-mode.conversation-active::after {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* 会話モード中：他ボタン・ラベルを visibility で非表示（レイアウト・サイズ維持） */
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper,
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper .translate-camera-btn,
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-camera-area__btn-wrapper .translate-camera-label,
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-voice-area__btn-wrapper:not(.translate-voice-area__btn-wrapper--conversation),
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-voice-area__btn-wrapper:not(.translate-voice-area__btn-wrapper--conversation) .translate-camera-btn,
+.translate-buttons-trapezoid:has(.conversation-mode.conversation-active) .translate-voice-area__btn-wrapper:not(.translate-voice-area__btn-wrapper--conversation) .translate-camera-label {
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .translate-voice-btn:focus,
@@ -3261,7 +3315,7 @@ body.dark-mode .translate-voice-btn.listening::after {
 
 .translate-result-area__reset-btn {
   position: absolute;
-  bottom: var(--spacing-m);
+  bottom: calc(var(--footer-height) - 3rem); /* 会話モード終了ボタンとの間に余白を確保 */
   right: var(--spacing-m);
   display: flex;
   align-items: center;
@@ -3449,6 +3503,7 @@ body.dark-mode .translate-result-item--latest {
 }
 
 .translate-camera-area__buttons {
+  position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -3472,13 +3527,13 @@ body.dark-mode .translate-result-item--latest {
   height: var(--s60);
   border-radius: 50%;
   border: var(--s8) solid var(--camera-btn-bg);
+  box-shadow: 0 0 0 1px var(--border-color); /* 1pxのうすい枠線（外側） */
   outline: none;
   -webkit-tap-highlight-color: transparent;
   background-color: var(--camera-btn-bg);
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
-  box-shadow: none;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
@@ -4387,10 +4442,40 @@ body.dark-mode .unit-modal__conversion-card {
     max-width: 100%;
   }
 
+  /* スマホ：フッターを画面幅いっぱいに（左右余白なし・背景で埋める） */
   .translate-footer {
     padding-left: 0;
     padding-right: 0;
     max-width: 100%;
+    left: 0;
+    right: 0;
+    transform: none;
+  }
+
+  /* スマホ：単位・会話モード・画像翻訳を中央にまとめる（481px～768pxでも適用） */
+  .translate-voice-area {
+    flex-direction: row;
+    justify-content: center;
+    gap: var(--s16);
+  }
+  .translate-voice-area__btn-wrapper--conversation {
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
+  }
+
+  /* スマホ：結果エリア内でスクロール・ボタンエリアは縮小しない */
+  .translate-main .translate-result-area-wrap {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+  .translate-main .translate-result-area {
+    overflow-y: auto;
+  }
+  .translate-main .translate-buttons-trapezoid {
+    flex-shrink: 0;
   }
 
   /* 研究室：フッターはアプリ幅に揃えて中央寄せを維持 */
@@ -4560,7 +4645,7 @@ body.dark-mode .unit-modal__conversion-card {
 /* ダークモード対応 - 翻訳ページ */
 /* ロゴ・翻訳マシン（会話モード）は色を変えずライトと同じ表示 */
 body.dark-mode .translate-camera-btn {
-  box-shadow: none;
+  box-shadow: 0 0 0 1px var(--border-color); /* 1px枠線（外側） */
 }
 
 body.dark-mode .translate-reset-btn {
@@ -4756,7 +4841,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-result-area__reset-btn {
-    bottom: var(--spacing-s);
+    bottom: calc(var(--footer-height) - 3.4rem); /* 会話モード終了ボタンとの間に余白を確保 */
     right: var(--spacing-s);
     padding: var(--s8) var(--s16);
     font-size: var(--fs-12);
@@ -4786,8 +4871,9 @@ body.dark-mode .translate-result-item__divider svg {
     gap: var(--s12);
   }
 
+  .translate-buttons-trapezoid .translate-camera-area__buttons,
   .translate-camera-area__buttons {
-    gap: var(--s20);
+    gap: calc(var(--s20) * 1.2); /* 通貨・QR・カメラ翻訳の間の余白を1.2倍 */
   }
 
   .translate-camera-area__btn-wrapper {
@@ -4855,8 +4941,9 @@ body.dark-mode .translate-result-item__divider svg {
     height: 125px;
   }
 
+  .translate-buttons-trapezoid .translate-camera-area__buttons,
   .translate-camera-area__buttons {
-    gap: var(--s16);
+    gap: calc(var(--s16) * 1.2); /* 通貨・QR・カメラ翻訳の間の余白を1.2倍 */
   }
 
   .translate-camera-area__btn-wrapper {
@@ -6194,6 +6281,62 @@ body.dark-mode .memo-item {
   border-color: var(--camera-btn-bg);
 }
 
+/* 会話モード停止ボタン（QRコード位置・リセットボタンと同じ配色） */
+.translate-camera-area__buttons {
+  position: relative;
+}
+.translate-camera-area__stop-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s8);
+  padding: var(--s8) var(--s16);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  border: 1px solid #FECAC9;
+  border-radius: var(--s28);
+  background: rgba(254, 202, 201, 0.3);
+  color: #E8A5A3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: none;
+  z-index: 6;
+}
+
+.translate-camera-area__stop-btn:hover {
+  background: #FECAC9;
+  color: #333;
+  box-shadow: none;
+}
+
+.translate-camera-area__stop-btn:active {
+  transform: scale(0.97);
+}
+
+.translate-camera-area__stop-btn.hidden {
+  display: none;
+}
+
+.translate-camera-area__stop-btn svg {
+  flex-shrink: 0;
+}
+
+body.dark-mode .translate-camera-area__stop-btn {
+  border-color: #FECAC9;
+  color: #FECAC9;
+  background: rgba(254, 202, 201, 0.15);
+}
+
+body.dark-mode .translate-camera-area__stop-btn:hover {
+  background: #FECAC9;
+  color: #333;
+}
+
 /* ============================================
    研究室（Lab）ページ
    ============================================ */
@@ -6201,6 +6344,58 @@ body.dark-mode .memo-item {
 /* 研究室ページ：画面外オーバーフロー防止・flexでフッターを下部に固定配置（ずれ防止） */
 html:has(body.lab-page) {
   overflow-x: clip;
+  overscroll-behavior: none;
+}
+body.lab-page {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none; /* Androidプルリフレッシュで縦スクロールしてしまうのを防止 */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: min(var(--s500), 100vw);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* 翻訳ページ：スクロール防止・フッター下部固定（研究室と同じレイアウト） */
+html:has(.translate-main) {
+  overflow-x: clip;
+  overscroll-behavior: none;
+}
+body:has(.translate-main) {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none; /* Androidプルリフレッシュで縦スクロールしてしまうのを防止 */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body:has(.translate-main) .translate-main {
+  overflow: hidden; /* ページ全体のスクロールを防止し、結果エリア内でスクロール */
+}
+
+/* 翻訳ページ：フッター背景を横幅100%に（研究室と同様） */
+body:has(.translate-main) .translate-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw; /* ビューポート幅で確実にフル幅表示 */
+  max-width: 100%;
+  z-index: 100;
+  box-sizing: border-box;
+}
+@media (max-width: 768px) {
+  body:has(.translate-main) .translate-footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 body.lab-page {
   height: 100dvh;
@@ -6307,11 +6502,11 @@ body.dark-mode .lab-particle {
   100%      { opacity: 0.7; }
 }
 
-/* ライトモード：研究所イラスト背景（上下左右全画面カバー＋グラデーション白掛け・上部が白め） */
+/* ライトモード：研究所イラスト背景（上下左右全画面カバー＋グラデーション白掛け・下部も白で左右余白を埋める） */
 body.lab-page:not(.dark-mode) {
   --text-primary: #0a0a0a;
   --text-secondary: #333333;
-  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.3)), url("./lab-bg-light.png");
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0.95) 100%), url("./lab-bg-light.png");
   background-size: auto 140%;
   background-position: center center;
   background-attachment: fixed;
@@ -6373,6 +6568,17 @@ body.lab-page .translate-footer {
   display: flex !important; /* input-mode でも常に表示 */
   box-sizing: border-box;
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* 研究室：スマホ時はフッター背景を横幅100%に（画面幅いっぱい） */
+@media (max-width: 768px) {
+  body.lab-page .translate-footer {
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100vw;
+    max-width: 100vw;
+  }
 }
 
 /* ライトモード：視認性向上（全て太字・曜日は黒） */
@@ -6757,4 +6963,60 @@ body.dark-mode .lab-history__bar {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ============================================
+   翻訳ページ：強制修正（最大幅・ボタン配置・フッター）
+   ============================================ */
+/* 最大コンテンツ幅：500px制限を解除しビューポート幅いっぱいに */
+body:has(.translate-main) {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* 単位・会話モード・画像：全画面幅で中央にまとめる（769px以上も含む） */
+body:has(.translate-main) .translate-voice-area {
+  justify-content: center !important;
+  flex-direction: row !important;
+}
+body:has(.translate-main) .translate-voice-area__btn-wrapper--conversation {
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+/* フッター：他のページ（研究室・ラボノート）と同様に最大幅500px・中央配置 */
+body:has(.translate-main) .translate-footer {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 100% !important;
+  max-width: min(var(--s500), 100vw) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+/* スマホ（768px以下）：フッターを画面幅いっぱいに（他ページと同様） */
+@media (max-width: 768px) {
+  body:has(.translate-main) .translate-footer {
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    max-width: 100% !important;
+  }
+}
+
+/* 会話モードと単位・画像翻訳ボタンの間隔 */
+body:has(.translate-main) .translate-voice-area {
+  gap: var(--s24) !important; /* 単位・画像を会話モードから少し離して配置 */
+}
+
+/* スマホ（横幅500px付近）：会話モード・単位・画像翻訳のマージンを1.2倍に */
+@media (max-width: 500px) {
+  body:has(.translate-main) .translate-voice-area {
+    gap: calc(var(--s24) * 1.2) !important;
+  }
 }

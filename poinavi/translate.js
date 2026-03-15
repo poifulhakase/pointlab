@@ -123,6 +123,22 @@ const LANG_NAMES_EN = {
   "vi": "Vietnamese"
 };
 
+// 言語コードからネイティブ表示名（各言語をその言語で表示：日本語→日本語、英語→English、タイ語→ภาษาไทย）
+const LANG_NAMES_NATIVE = {
+  "ja": "日本語",
+  "en": "English",
+  "zh": "中文",
+  "ko": "한국어",
+  "fr": "Français",
+  "de": "Deutsch",
+  "es": "Español",
+  "it": "Italiano",
+  "pt": "Português",
+  "ru": "Русский",
+  "th": "ภาษาไทย",
+  "vi": "Tiếng Việt"
+};
+
 // OCR言語コードから表示名
 const OCR_LANG_NAMES = {
   "jpn": "日本語",
@@ -787,6 +803,16 @@ function openSettingsModalToSection(sectionId, source, options) {
     showSection(currencySection);
     hideSection(unitSection);
     hideSection(guideSection);
+  } else if (source === "conversation") {
+    if (backBtn) {
+      backBtn.classList.add("hidden");
+      backBtn.dataset.returnTo = "";
+    }
+    showSection(voiceSection);
+    hideSection(cameraSection);
+    hideSection(currencySection);
+    hideSection(unitSection);
+    hideSection(guideSection);
   } else {
     if (backBtn) { backBtn.classList.add("hidden"); backBtn.dataset.returnTo = ""; }
     showSection(voiceSection);
@@ -798,7 +824,7 @@ function openSettingsModalToSection(sectionId, source, options) {
 
   var body = modal.querySelector(".translate-modal__body");
   if (body) {
-    var hideSectionBorder = source === "currency" || source === "unit";
+    var hideSectionBorder = source === "currency" || source === "unit" || source === "conversation";
     body.classList.toggle("translate-modal__body--no-footer-border", hideSectionBorder);
   }
 
@@ -882,6 +908,17 @@ function initSettingsModal() {
       modal.classList.add("hidden");
       if (typeof window.poinaviOpenUnitModal === "function") {
         window.poinaviOpenUnitModal();
+      }
+    });
+  }
+
+  // 会話モード設定後「会話モードを開始」→ 会話モードを開始
+  const conversationProceedBtn = document.getElementById("conversationProceedBtn");
+  if (conversationProceedBtn) {
+    conversationProceedBtn.addEventListener("click", function() {
+      modal.classList.add("hidden");
+      if (typeof window.poinaviStartConversationMode === "function") {
+        window.poinaviStartConversationMode();
       }
     });
   }
@@ -1126,14 +1163,14 @@ function getLangName(code) {
   return LANG_NAMES[code] || code;
 }
 
-// 会話モードの言語ラベルを更新（上：自分→日本語表示、下：相手→英語表示）
+// 会話モードの言語ラベルを更新（各言語をその言語で表示：日本語→日本語、英語→English、タイ語→ภาษาไทย）
 function updateConversationModeLangLabels() {
   const myLabel = document.getElementById("convMyLangLabel");
   const opponentLabel = document.getElementById("convOpponentLangLabel");
   const micTarget = document.getElementById("micTargetLangSelect")?.value || "ja";
   const micInput = document.getElementById("micInputLangSelect")?.value || "en";
-  if (myLabel) myLabel.textContent = LANG_NAMES[micTarget] || micTarget;
-  if (opponentLabel) opponentLabel.textContent = LANG_NAMES_EN[micInput] || micInput;
+  if (myLabel) myLabel.textContent = LANG_NAMES_NATIVE[micTarget] || micTarget;
+  if (opponentLabel) opponentLabel.textContent = LANG_NAMES_NATIVE[micInput] || micInput;
 }
 
 // 現在の言語設定から表示テキストを取得
@@ -1160,8 +1197,11 @@ function initVoiceTranslation() {
 
   if (!SpeechRecognition) {
     console.warn("Web Speech APIがサポートされていません");
-    startBtn.addEventListener("click", function() {
+    window.poinaviStartConversationMode = function() {
       poinaviAlert("お使いのブラウザは音声認識に対応していません。\nChrome、Edge、Safariをお試しください。");
+    };
+    startBtn.addEventListener("click", function() {
+      openSettingsModalToSection("settingsVoiceSection", "conversation", { entryPoint: "button" });
     });
     return;
   }
@@ -1243,8 +1283,12 @@ function initVoiceTranslation() {
     }
   };
 
-  startBtn.addEventListener("click", function() {
+  window.poinaviStartConversationMode = function() {
     switchToSplit();
+  };
+
+  startBtn.addEventListener("click", function() {
+    openSettingsModalToSection("settingsVoiceSection", "conversation", { entryPoint: "button" });
   });
 
   opponentBtn.addEventListener("click", function() {
