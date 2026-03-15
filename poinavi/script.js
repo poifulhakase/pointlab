@@ -1482,9 +1482,9 @@ function selectTransportMode(btn, mode) {
   }
 }
 
-// 設定を初期化
+// データを初期化
 function resetAllSettings() {
-  poinaviConfirm("すべての設定を初期化しますか？\n（タグ、テーマ、移動手段、起動ページなどがリセットされます）").then(function(ok) {
+  poinaviConfirm("すべてのデータを初期化しますか？\n（タグ、テーマ、移動手段、起動ページなどが削除されます。復元できません）").then(function(ok) {
     if (!ok) return;
     localStorage.removeItem("poinavi_theme");
     localStorage.removeItem("poinavi_transport_mode");
@@ -1493,7 +1493,7 @@ function resetAllSettings() {
     localStorage.removeItem("poinavi_custom_tags");
     localStorage.removeItem("poinavi_search_cache");
     sessionStorage.removeItem("poinavi_session_started");
-    poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+    poinaviAlert("データを初期化しました。ページを再読み込みします。");
     window.location.reload();
   });
 }

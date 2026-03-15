@@ -307,13 +307,18 @@ function initCurrencyModal() {
       updateResult();
       return;
     }
+    var requestedPair = { from: from, to: to };
     fetch(`${CURRENCY_API_URL}?from=${from}&to=${to}`)
       .then(res => res.json())
       .then(data => {
+        var current = getFromTo();
+        if (current.from !== requestedPair.from || current.to !== requestedPair.to) return;
         exchangeRate = data.rates?.[to] ?? null;
         updateResult();
       })
       .catch(() => {
+        var current = getFromTo();
+        if (current.from !== requestedPair.from || current.to !== requestedPair.to) return;
         exchangeRate = null;
         if (resultEl) resultEl.textContent = "レート取得失敗";
       });
@@ -361,11 +366,9 @@ function initCurrencyModal() {
       const fromVal = fromSelect.value;
       const toVal = toSelect.value;
       var newAmount = "";
-      var useStoredResult = false;
       if (exchangeRate != null && exchangeRate > 0 && amountInput && lastResult != null && lastResult > 0 && lastAmount != null) {
         exchangeRate = 1 / exchangeRate;
-        newAmount = parseFloat(lastResult.toFixed(8)).toString();
-        useStoredResult = true;
+        newAmount = Number(lastResult).toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
       }
       fromSelect.value = toVal;
       toSelect.value = fromVal;
@@ -379,12 +382,6 @@ function initCurrencyModal() {
         fetchExchangeRate();
       } else {
         updateResult();
-        if (useStoredResult && resultEl && lastAmount != null) {
-          var roundDisplay = Math.abs(lastAmount - Math.round(lastAmount)) < 0.005;
-          resultEl.textContent = roundDisplay
-            ? Math.round(lastAmount).toLocaleString("ja-JP")
-            : lastAmount.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
-        }
       }
     });
   }
@@ -605,15 +602,17 @@ function initUnitConversionModal() {
     swapBtn.addEventListener("click", function() {
       const amount = parseFloat(String(amountInput?.value || "").replace(/,/g, "")) || 0;
       const { from, to } = getCurrentUnits();
+      var prevInput = lastUnitAmount;
+      var prevResult = lastUnitResult;
       saveCurrentUnits(to, from);
-      if (amountInput && lastUnitResult != null && amount > 0) {
-        amountInput.value = parseFloat(Number(lastUnitResult).toFixed(8)).toString();
+      if (amountInput && prevResult != null && amount > 0) {
+        var isTempUnit = from === "℃" || from === "℉" || to === "℃" || to === "℉";
+        amountInput.value = isTempUnit ? Number(prevResult).toFixed(1) : Number(prevResult).toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
       }
       updateUnitDisplay();
-      if (resultEl && lastUnitAmount != null && amount > 0) {
-        var r = lastUnitAmount;
+      if (resultEl && prevInput != null && amount > 0) {
         var isTemp = from === "℃" || from === "℉" || to === "℃" || to === "℉";
-        resultEl.textContent = isTemp ? r.toFixed(1) : r.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+        resultEl.textContent = isTemp ? prevInput.toFixed(1) : prevInput.toLocaleString("ja-JP", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
       }
     });
   }
@@ -704,7 +703,7 @@ function showUnitConversionResult(amount, fromUnit, result, toUnit) {
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
-          <span>結果をコピー</span>
+          <span>コピー</span>
         </button>
         <button class="translate-result-item__action-btn add-unit-to-memo-btn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -920,9 +919,9 @@ function initSettingsModal() {
   });
 }
 
-// 翻訳設定を初期化
+// 翻訳データを初期化
 function resetTranslateSettings() {
-  poinaviConfirm("すべての設定を初期化しますか？\n（言語設定、テーマ、起動ページなどがリセットされます）").then(ok => {
+  poinaviConfirm("すべてのデータを初期化しますか？\n（言語設定、テーマ、起動ページなどが削除されます。復元できません）").then(ok => {
     if (!ok) return;
     localStorage.removeItem("poinavi_ocr_lang");
     localStorage.removeItem("poinavi_target_lang");
@@ -935,7 +934,7 @@ function resetTranslateSettings() {
     localStorage.removeItem("poinavi_unit_to");
     localStorage.removeItem("poinavi_currency_from");
     localStorage.removeItem("poinavi_currency_to");
-    poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+    poinaviAlert("データを初期化しました。ページを再読み込みします。");
     location.reload();
   });
 }
@@ -1109,7 +1108,7 @@ function initLanguageSelect() {
   const currencyToSelect = document.getElementById("currencyTo");
   if (currencyFromSelect && currencyToSelect) {
     const savedCurrencyFrom = localStorage.getItem("poinavi_currency_from") || "JPY";
-    const savedCurrencyTo = localStorage.getItem("poinavi_currency_to") || "USD";
+    const savedCurrencyTo = localStorage.getItem("poinavi_currency_to") || "JPY";
     if (savedCurrencyFrom) currencyFromSelect.value = savedCurrencyFrom;
     if (savedCurrencyTo) currencyToSelect.value = savedCurrencyTo;
     currencyFromSelect.addEventListener("change", function() {
@@ -1410,7 +1409,7 @@ function showCurrencyConversionResult(amount, fromCurrency, result, toCurrency) 
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
-          <span>結果をコピー</span>
+          <span>コピー</span>
         </button>
         <button class="translate-result-item__action-btn add-currency-to-memo-btn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -121,6 +121,17 @@
           </button>
         </div>
         <div class="translate-modal__body">
+          <!-- 初心者ガイド -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">初心者ガイド</div>
+            <div class="translate-modal__toggle-row">
+              <span class="translate-modal__toggle-label">各画面の使い方アイコンを表示</span>
+              <button id="memoBeginnerIconToggle" class="translate-modal__toggle-switch" type="button" role="switch" aria-checked="true" title="ON/OFF">
+                <span class="translate-modal__toggle-slider"></span>
+              </button>
+            </div>
+            <p class="settings-modal__toggle-hint">オフにすると、各画面の初心者アイコンが非表示になります。</p>
+          </div>
           <!-- 起動ページセクション -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">トップ表示</div>
@@ -143,15 +154,15 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">データ管理</div>
             <button id="memoResetButton" class="settings-modal__reset-btn">
-              設定を初期化
+              データの初期化
             </button>
           </div>
           <!-- 免責事項 -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">免責事項</div>
-            <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
-              <p style="margin: 0 0 var(--s8) 0;">本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
-              <ul style="margin: 0; padding-left: 1.2em;">
+            <div class="settings-disclaimer-content">
+              <p>本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
+              <ul>
                 <li>検索結果・翻訳結果・位置情報は参考情報であり、正確性・完全性を保証するものではありません</li>
                 <li>重要な場面では、専門家への相談を推奨いたします</li>
                 <li>ラボノート内容はデバイスに保存されます。バックアップはご自身で行ってください</li>
@@ -184,7 +195,7 @@
         <!-- ラボノートがない場合のプレースホルダー -->
         <div class="memo-empty" id="memoEmpty">
           <p>ここに記録されます</p>
-          <p class="memo-empty__hint">メモを入力し、必要に応じて写メ（駐車場所・看板など）を添付できます</p>
+          <p class="memo-empty__hint">メモと撮影画像を記録できます。</p>
         </div>
         <!-- ラボノートアイテムはJSで動的に追加 -->
       </div>
@@ -199,7 +210,7 @@
           </svg>
         </div>
         <div class="memo-warning__text">
-          <p>ラボノートはお使いの端末（ブラウザ）に保存されます。機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。写メは駐車場所・看板などの記録用に。アルバムや永久保存には利用しないでください。</p>
+          <p>ラボノートはお使いの端末（ブラウザ）に保存されます。機密情報（パスワード、個人情報、金融情報等）の入力・保存はお控えください。撮影画像は駐車場所・看板などの記録用に。アルバムや永久保存には利用しないでください。</p>
         </div>
       </div>
 
@@ -215,8 +226,9 @@
             style="font-size: var(--fs-16) !important; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif !important;"
           ></textarea>
           <input type="file" id="memoImageInput" class="memo-image-input" accept="image/*" capture="environment" aria-hidden="true" tabindex="-1" />
+          <div class="memo-pending-images hidden" id="memoPendingImages" aria-live="polite"></div>
           <div class="memo-attach-actions">
-            <button id="memoAttachBtn" class="memo-attach-btn" type="button" title="駐車場所・看板などを写メで記録" aria-label="写メで記録">
+            <button id="memoAttachBtn" class="memo-attach-btn" type="button" title="駐車場所・看板などを撮影画像で記録" aria-label="撮影画像で記録">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                 <circle cx="12" cy="13" r="4"></circle>
@@ -366,10 +378,28 @@
         });
       }
 
+      // 初心者ガイド（設定モーダル内トグル）
+      function initBeginnerIconToggle() {
+        var toggle = document.getElementById("memoBeginnerIconToggle");
+        if (!toggle || typeof PoinaviBeginner === "undefined") return;
+        function updateUI() {
+          var show = PoinaviBeginner.shouldShowIcon();
+          toggle.classList.toggle("is-on", show);
+          toggle.setAttribute("aria-checked", show ? "true" : "false");
+        }
+        updateUI();
+        toggle.addEventListener("click", function() {
+          var next = !PoinaviBeginner.shouldShowIcon();
+          PoinaviBeginner.setShowIcon(next);
+          updateUI();
+          var btn = document.getElementById("memoBeginnerBtn");
+          if (btn) { btn.style.visibility = next ? "visible" : "hidden"; btn.style.pointerEvents = next ? "auto" : "none"; }
+        });
+      }
+
       // 初心者ツアー
       function initBeginnerTour() {
         var btn = document.getElementById("memoBeginnerBtn");
-        var icons = document.getElementById("memoHeaderIcons");
         if (!btn || typeof PoinaviBeginner === "undefined") return;
         if (!PoinaviBeginner.shouldShowIcon()) {
           btn.style.visibility = "hidden";
@@ -377,10 +407,10 @@
         }
         var steps = [
           { selector: "#memoList", text: "ここにメモ一覧が表示されます。保存したメモはスワイプで編集・削除できます。" },
-          { selector: ".memo-warning", text: "注意：ラボノートは端末に保存されます。機密情報や写メのアルバム用途はお控えください。" },
+          { selector: ".memo-warning", text: "注意：ラボノートは端末に保存されます。機密情報や撮影画像のアルバム用途はお控えください。" },
           { selector: "#memoInput", text: "メモを入力します。駐車場所や看板など、旅の記録にご利用ください。" },
-          { selector: "#memoAttachBtn", text: "写メボタン：駐車場所・看板などをカメラで撮影して記録できます（1メモあたり2枚まで）。" },
-          { selector: "#memoAddBtn", text: "送信ボタン：メモと写メをラボノートに保存します。" },
+          { selector: "#memoAttachBtn", text: "撮影画像ボタン：駐車場所・看板などをカメラで撮影して記録できます（1メモあたり2枚まで）。" },
+          { selector: "#memoAddBtn", text: "送信ボタン：メモと撮影画像をラボノートに保存します。" },
           { selector: ".translate-footer", text: "フッター：ラボノート・翻訳マシン・ぽいナビ・研究室のページを切り替えられます。" }
         ];
         btn.addEventListener("click", function() {
@@ -393,11 +423,13 @@
         const resetButton = document.getElementById("memoResetButton");
         if (!resetButton) return;
         resetButton.addEventListener("click", function() {
-          poinaviConfirm("設定を初期化しますか？").then(ok => {
+          poinaviConfirm("すべてのデータを初期化しますか？\n（メモ・設定が削除されます。復元できません）").then(ok => {
             if (!ok) return;
             localStorage.removeItem("poinavi_theme");
             localStorage.removeItem("poinavi_start_page");
-            poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+            localStorage.removeItem("poinavi_show_beginner_icon");
+            localStorage.removeItem("poinavi_memos");
+            poinaviAlert("データを初期化しました。ページを再読み込みします。");
             location.reload();
           });
         });
@@ -447,7 +479,7 @@
       // メモの上限
       const MEMO_MAX_COUNT = 50;
       const MEMO_MAX_LENGTH = 2000; // 1メモあたりの最大文字数
-      const MEMO_MAX_IMAGES = 2;    // 1メモあたりの最大画像数（写メ記録用：駐車場所・看板など）
+      const MEMO_MAX_IMAGES = 2;    // 1メモあたりの最大画像数（撮影画像記録用：駐車場所・看板など）
       const IMAGE_MAX_SIZE = 800;   // リサイズ時の最大辺（px）
       const IMAGE_QUALITY = 0.75;   // JPEG圧縮品質
 
@@ -488,12 +520,12 @@
         });
       }
 
-      // メモを追加（content: テキスト, images: Base64配列。※写メ記録はメモ文が必須）
+      // メモを追加（content: テキスト, images: Base64配列。※撮影画像記録はメモ文が必須）
       function addMemo(content, images) {
         var trimmedContent = (content || "").trim();
         var imageList = Array.isArray(images) ? images : [];
         if (!trimmedContent && imageList.length === 0) return false;
-        // 写メ記録時もメモ文必須（アルバム代わり利用を防ぐ）
+        // 撮影画像記録時もメモ文必須（アルバム代わり利用を防ぐ）
         if (imageList.length > 0 && !trimmedContent) {
           poinaviAlert("メモを入力してください。\n（例：駐車場所、〇〇の看板 など）");
           return false;
@@ -514,7 +546,7 @@
         }
 
         if (imageList.length > MEMO_MAX_IMAGES) {
-          poinaviAlert("写メは" + MEMO_MAX_IMAGES + "枚までです。\n駐車場所・看板などの記録用にご利用ください。");
+          poinaviAlert("撮影画像は" + MEMO_MAX_IMAGES + "枚までです。\n駐車場所・看板などの記録用にご利用ください。");
           return false;
         }
 
@@ -684,6 +716,38 @@
 
       // 画像添付用の一時保持（機器内のオリジナルには触れず、コピーのみアプリ内に保存）
       var pendingImages = [];
+      var processingCount = 0; // 画像圧縮処理中の枚数
+
+      // 添付画像プレビューの更新（画像添付中であることがわかるように表示）
+      function updatePendingImagesPreview() {
+        var container = document.getElementById("memoPendingImages");
+        if (!container) return;
+        if (pendingImages.length === 0 && processingCount <= 0) {
+          container.classList.add("hidden");
+          container.innerHTML = "";
+          return;
+        }
+        container.classList.remove("hidden");
+        var html = "";
+        if (processingCount > 0) {
+          html += '<span class="memo-pending-images__processing"><span class="memo-pending-images__clip"></span>画像を処理中…</span>';
+        }
+        pendingImages.forEach(function(src, i) {
+          html += '<div class="memo-pending-images__badge" data-index="' + i + '">';
+          html += '<span class="memo-pending-images__clip" aria-hidden="true"></span>';
+          html += '<span class="memo-pending-images__count">' + (i + 1) + '</span>';
+          html += '<button type="button" class="memo-pending-images__remove" aria-label="この画像を削除" data-index="' + i + '">×</button>';
+          html += '</div>';
+        });
+        container.innerHTML = html;
+        container.querySelectorAll(".memo-pending-images__remove").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            var idx = parseInt(this.dataset.index, 10);
+            pendingImages.splice(idx, 1);
+            updatePendingImagesPreview();
+          });
+        });
+      }
 
       // メモ入力の初期化
       function initMemoInput() {
@@ -694,16 +758,24 @@
 
         if (!input || !addBtn) return;
 
-        // 写メ添付：1つのボタンでカメラ起動（captureでカメラ優先。OSによっては「写真から選ぶ」も選択可能）
+        // 撮影画像添付：1つのボタンでカメラ起動（captureでカメラ優先。OSによっては「写真から選ぶ」も選択可能）
         function handleImageSelect(inputEl) {
           var files = inputEl.files;
           if (!files || files.length === 0) return;
           var remain = MEMO_MAX_IMAGES - pendingImages.length;
           if (remain <= 0) {
-            poinaviAlert("写メは" + MEMO_MAX_IMAGES + "枚までです。\n駐車場所・看板などの記録用にご利用ください。");
+            poinaviAlert("撮影画像は" + MEMO_MAX_IMAGES + "枚までです。\n駐車場所・看板などの記録用にご利用ください。");
             inputEl.value = "";
             return;
           }
+          var toProcess = 0;
+          [].forEach.call(files, function(file) {
+            if (!file.type || !file.type.startsWith("image/")) return;
+            if (toProcess >= remain) return;
+            toProcess++;
+          });
+          processingCount += toProcess;
+          updatePendingImagesPreview();
           var processed = 0;
           [].forEach.call(files, function(file) {
             if (processed >= remain) return;
@@ -711,17 +783,11 @@
             compressImageToBase64(file).then(function(base64) {
               pendingImages.push(base64);
               processed++;
-              // 初回のみ：利用シーンのヒント
-              if (pendingImages.length === 1) {
-                var shownHint = localStorage.getItem("poinavi_memo_image_hint_shown");
-                if (!shownHint) {
-                  localStorage.setItem("poinavi_memo_image_hint_shown", "1");
-                  poinaviAlert("写メを選択しました。\n\n駐車場所・看板など、記録用にご利用ください。\n思い出の写真は本体のカメラアプリで保存してください。");
-                } else {
-                  poinaviAlert("写メを選択しました。メモを入力して送信ボタンで記録に添付できます。");
-                }
-              }
+              processingCount--;
+              updatePendingImagesPreview();
             }).catch(function(err) {
+              processingCount--;
+              updatePendingImagesPreview();
               poinaviAlert(err.message || "画像の読み込みに失敗しました");
             });
           });
@@ -747,6 +813,7 @@
               if (addMemo(input.value, pendingImages)) {
                 input.value = "";
                 pendingImages = [];
+                updatePendingImagesPreview();
                 renderMemoList();
               }
             }
@@ -787,6 +854,7 @@
           if (addMemo(input.value, pendingImages)) {
             input.value = "";
             pendingImages = [];
+            updatePendingImagesPreview();
             input.blur();
             renderMemoList();
           }
@@ -813,11 +881,14 @@
             if (addMemo(input.value, pendingImages)) {
               input.value = "";
               pendingImages = [];
+              updatePendingImagesPreview();
               input.blur();
               renderMemoList();
             }
           }
         });
+
+        updatePendingImagesPreview(); // 初期状態で非表示
       }
 
       // 初期化
@@ -826,6 +897,7 @@
         initSettingsModal();
         initThemeToggle();
         initStartPageSelect();
+        initBeginnerIconToggle();
         initResetButton();
         initBeginnerTour();
         initMemoInput();

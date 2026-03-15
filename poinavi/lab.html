@@ -20,7 +20,7 @@
         gtag('config', 'G-ERDSPE9CZM');
       }
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
@@ -46,6 +46,7 @@
     <link rel="manifest" href="manifest.json?v=130" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://api.open-meteo.com" />
     <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./style.css?v=130" />
     <!-- FOUC対策: CSSロード前にテーマを適用 -->
@@ -426,6 +427,17 @@
           </button>
         </div>
         <div class="translate-modal__body">
+          <!-- 初心者ガイド -->
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">初心者ガイド</div>
+            <div class="translate-modal__toggle-row">
+              <span class="translate-modal__toggle-label">各画面の使い方アイコンを表示</span>
+              <button id="labBeginnerIconToggle" class="translate-modal__toggle-switch" type="button" role="switch" aria-checked="true" title="ON/OFF">
+                <span class="translate-modal__toggle-slider"></span>
+              </button>
+            </div>
+            <p style="font-size: var(--fs-12); color: var(--text-secondary); margin: var(--s8) 0 0 0; line-height: 1.4;">オフにすると、各画面の初心者アイコンが非表示になります。</p>
+          </div>
           <!-- 起動ページセクション -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">トップ表示</div>
@@ -444,30 +456,19 @@
               <span class="theme-text">ライトモード</span>
             </button>
           </div>
-          <!-- 初心者ガイド -->
-          <div class="translate-modal__section">
-            <div class="translate-modal__section-title">初心者ガイド</div>
-            <div class="translate-modal__toggle-row">
-              <span class="translate-modal__toggle-label">各画面の使い方アイコンを表示</span>
-              <button id="labBeginnerIconToggle" class="translate-modal__toggle-switch" type="button" role="switch" aria-checked="true" title="ON/OFF">
-                <span class="translate-modal__toggle-slider"></span>
-              </button>
-            </div>
-            <p style="font-size: var(--fs-12); color: var(--text-secondary); margin: var(--s8) 0 0 0; line-height: 1.4;">オフにすると、各画面の初心者アイコンが非表示になります。</p>
-          </div>
           <!-- リセットセクション -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">データ管理</div>
             <button id="labResetButton" class="settings-modal__reset-btn">
-              設定を初期化
+              データの初期化
             </button>
           </div>
           <!-- 免責事項 -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">免責事項</div>
-            <div style="font-size: var(--fs-13); color: var(--text-secondary); line-height: 1.6;">
-              <p style="margin: 0 0 var(--s8) 0;">本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
-              <ul style="margin: 0; padding-left: 1.2em;">
+            <div class="settings-disclaimer-content">
+              <p>本サービス「ぽいナビ」は、参考情報を提供するものです。</p>
+              <ul>
                 <li>検索結果・翻訳結果・位置情報は参考情報であり、正確性・完全性を保証するものではありません</li>
                 <li>重要な場面では、専門家への相談を推奨いたします</li>
                 <li>ラボノート内容はデバイスに保存されます。バックアップはご自身で行ってください</li>
@@ -479,22 +480,23 @@
           <!-- データソース -->
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">データソース</div>
-            <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.8;">
-              <strong style="color: var(--text-primary);">🗺️ ぽいナビ</strong><br>
+            <div class="settings-datasource-content">
+              <strong>🗺️ ぽいナビ（地図）</strong><br>
               ・Google Maps / Places API<br>
               ・Overpass API（鉄道・お手洗い）<br>
               ・Nominatim（逆ジオコーディング）<br>
               ・RainViewer API（降雨レイヤー）<br>
               ・ipapi.co（位置情報）<br>
-              ・国土交通省 駅データ / 公共トイレAPI<br><br>
-              <strong style="color: var(--text-primary);">🌐 翻訳マシン</strong><br>
+              ・国土交通省 駅データ / 公共トイレオープンデータ<br><br>
+              <strong>🌐 翻訳マシン</strong><br>
               ・LibreTranslate（翻訳）<br>
               ・MyMemory API（フォールバック）<br>
               ・Tesseract.js（OCR）<br>
               ・Web Speech API（音声認識）<br>
               ・Frankfurter API（通貨）<br>
+              ・単位換算（長さ・重さ・距離・速度・容量・温度）<br>
               ・jsQR（QRコード読み取り）<br><br>
-              <strong style="color: var(--text-primary);">🔬 研究室</strong><br>
+              <strong>🔬 研究室</strong><br>
               ・Open-Meteo API（天気/気温）<br>
               ・GPS位置情報（移動距離）<br>
               ・Fitbit API（歩数・要連携）
@@ -518,7 +520,7 @@
 
     <!-- 白い浮遊パーティクル（body直下・枠内に収める・ダークモード時のみ表示） -->
     <div class="lab-particles" aria-hidden="true">
-      <span class="lab-particle lab-particle--1"></span><span class="lab-particle lab-particle--2"></span><span class="lab-particle lab-particle--3"></span><span class="lab-particle lab-particle--4"></span><span class="lab-particle lab-particle--5"></span><span class="lab-particle lab-particle--6"></span><span class="lab-particle lab-particle--7"></span><span class="lab-particle lab-particle--8"></span><span class="lab-particle lab-particle--9"></span><span class="lab-particle lab-particle--10"></span><span class="lab-particle lab-particle--11"></span><span class="lab-particle lab-particle--12"></span><span class="lab-particle lab-particle--13"></span><span class="lab-particle lab-particle--14"></span><span class="lab-particle lab-particle--15"></span><span class="lab-particle lab-particle--16"></span><span class="lab-particle lab-particle--17"></span><span class="lab-particle lab-particle--18"></span><span class="lab-particle lab-particle--19"></span><span class="lab-particle lab-particle--20"></span><span class="lab-particle lab-particle--21"></span><span class="lab-particle lab-particle--22"></span><span class="lab-particle lab-particle--23"></span><span class="lab-particle lab-particle--24"></span><span class="lab-particle lab-particle--25"></span>
+      <span class="lab-particle lab-particle--1"></span><span class="lab-particle lab-particle--2"></span><span class="lab-particle lab-particle--3"></span><span class="lab-particle lab-particle--4"></span><span class="lab-particle lab-particle--5"></span><span class="lab-particle lab-particle--6"></span><span class="lab-particle lab-particle--7"></span><span class="lab-particle lab-particle--8"></span><span class="lab-particle lab-particle--9"></span><span class="lab-particle lab-particle--10"></span><span class="lab-particle lab-particle--11"></span><span class="lab-particle lab-particle--12"></span><span class="lab-particle lab-particle--13"></span><span class="lab-particle lab-particle--14"></span><span class="lab-particle lab-particle--15"></span><span class="lab-particle lab-particle--16"></span><span class="lab-particle lab-particle--17"></span><span class="lab-particle lab-particle--18"></span><span class="lab-particle lab-particle--19"></span><span class="lab-particle lab-particle--20"></span><span class="lab-particle lab-particle--21"></span><span class="lab-particle lab-particle--22"></span><span class="lab-particle lab-particle--23"></span><span class="lab-particle lab-particle--24"></span><span class="lab-particle lab-particle--25"></span><span class="lab-particle lab-particle--26"></span><span class="lab-particle lab-particle--27"></span><span class="lab-particle lab-particle--28"></span><span class="lab-particle lab-particle--29"></span><span class="lab-particle lab-particle--30"></span><span class="lab-particle lab-particle--31"></span><span class="lab-particle lab-particle--32"></span><span class="lab-particle lab-particle--33"></span><span class="lab-particle lab-particle--34"></span><span class="lab-particle lab-particle--35"></span>
     </div>
 
     <!-- メインコンテンツ -->
@@ -837,12 +839,12 @@
       function initResetButton() {
         const resetButton = document.getElementById("labResetButton");
         resetButton.addEventListener("click", function() {
-          poinaviConfirm("設定を初期化しますか？").then(ok => {
+          poinaviConfirm("すべてのデータを初期化しますか？\n（設定が削除されます。復元できません）").then(ok => {
             if (!ok) return;
             localStorage.removeItem("poinavi_theme");
             localStorage.removeItem("poinavi_start_page");
             localStorage.removeItem("poinavi_show_beginner_icon");
-            poinaviAlert("設定を初期化しました。ページを再読み込みします。");
+            poinaviAlert("データを初期化しました。ページを再読み込みします。");
             location.reload();
           });
         });
