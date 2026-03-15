@@ -4711,13 +4711,13 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .conversation-mode {
-    width: 165px;
-    height: 165px;
+    width: 140px;
+    height: 140px;
   }
 
   .conversation-mode__start-icon {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
   }
 
   .conversation-mode__start-label {
@@ -4791,18 +4791,18 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-camera-area__btn-wrapper {
-    min-width: 87px;
+    min-width: 70px;
   }
 
-  /* 通貨・QR・カメラ・単位・画像ボタン：1.5倍（58*1.5≈87px） */
+  /* 通貨・QR・カメラ・単位・画像ボタン：1.2倍（58*1.2≈70px） */
   .translate-camera-btn {
-    width: 87px;
-    height: 87px;
+    width: 70px;
+    height: 70px;
   }
 
   .translate-camera-btn__icon {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
   }
 
   .translate-camera-label {
@@ -4838,7 +4838,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 }
 
-/* 360px以下：さらに狭い画面でボタンを収める（1.5倍維持） */
+/* 360px以下：さらに狭い画面でボタンを収める（1.2倍） */
 @media (max-width: 360px) {
   .translate-voice-area {
     gap: var(--s12);
@@ -4851,8 +4851,8 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .conversation-mode {
-    width: 120px;
-    height: 120px;
+    width: 125px;
+    height: 125px;
   }
 
   .translate-camera-area__buttons {
@@ -4860,22 +4860,22 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-camera-area__btn-wrapper {
-    min-width: 78px;
+    min-width: 62px;
   }
 
   .translate-camera-btn {
-    width: 78px;
-    height: 78px;
+    width: 62px;
+    height: 62px;
   }
 
   .translate-camera-btn__icon {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
   }
 
   .conversation-mode__start-icon {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
   }
 }
 
@@ -5973,24 +5973,25 @@ body.dark-mode .memo-item {
     padding-right: var(--s16);
   }
 
+  /* 送信・カメラボタン：スマホ時1.2倍（38*1.2≈46px） */
   .memo-attach-btn {
-    width: 57px;
-    height: 57px;
+    width: 46px;
+    height: 46px;
   }
 
   .memo-attach-btn svg {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
   }
 
   .memo-add-btn {
-    width: 57px;
-    height: 57px;
+    width: 46px;
+    height: 46px;
   }
 
   .memo-add-btn svg {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
   }
 }
 
