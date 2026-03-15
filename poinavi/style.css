@@ -937,6 +937,19 @@ body.map-page:not(.dark-mode) .settings-bar {
   background-color: rgba(255, 255, 255, 0.88);
   border-top-color: rgba(0, 0, 0, 0.06);
 }
+
+/* 地図ページ：スマホ時に検索エリアの左右マージンを削除 */
+@media (max-width: 500px) {
+  body.map-page .settings-bar {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.map-page .settings-bar__inner {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
 body.map-page .translate-footer {
   position: fixed;
   bottom: 0;
@@ -4630,14 +4643,14 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-header__icon-btn {
-    width: var(--s38);
-    height: var(--s38);
+    width: 44px;
+    height: 44px;
     border-radius: var(--s8);
   }
 
   .translate-header__icon-btn svg {
-    width: var(--s16);
-    height: var(--s16);
+    width: var(--s24);
+    height: var(--s24);
   }
 
   .translate-header__title {
@@ -4667,23 +4680,48 @@ body.dark-mode .translate-result-item__divider svg {
     padding-bottom: calc(var(--footer-height) + var(--spacing-xl) + env(safe-area-inset-bottom, 0));
   }
 
+  /* 単位・画像翻訳を会話モードに重ねて（縦並びで中央に配置） */
   .translate-voice-area {
-    padding: var(--spacing-s) var(--spacing-s) var(--spacing-m) var(--spacing-s);
-    gap: calc(2 * var(--spacing-m)); /* 会話モードと単位・画像翻訳のマージンを2倍に */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s16);
+    padding: var(--s16) var(--spacing-s) var(--spacing-m) var(--spacing-s);
+  }
+
+  .translate-voice-area__btn-wrapper {
+    flex: none;
+    min-width: auto;
+  }
+
+  .translate-voice-area__btn-wrapper--conversation {
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
+    order: 0; /* 会話モードを中央に（単位・画像の間に） */
+  }
+
+  .translate-voice-area__btn-wrapper:first-child {
+    order: -1; /* 単位を上に */
+  }
+
+  .translate-voice-area__btn-wrapper:last-child {
+    order: 1; /* 画像翻訳を下に */
   }
 
   .conversation-mode {
-    width: calc(2 * var(--s58));
-    height: calc(2 * var(--s58));
+    width: 165px;
+    height: 165px;
   }
 
   .conversation-mode__start-icon {
-    width: var(--s28);
-    height: var(--s24);
+    width: 42px;
+    height: 42px;
   }
 
   .conversation-mode__start-label {
-    font-size: var(--fs-12);
+    font-size: var(--fs-13);
   }
 
   .conversation-mode__handover {
@@ -4744,25 +4782,31 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-camera-area {
-    padding: var(--s28) 0 var(--s8) 0;
+    padding: var(--s20) 0 var(--s12) 0;
+    gap: var(--s12);
   }
 
   .translate-camera-area__buttons {
-    gap: var(--s24);
+    gap: var(--s20);
   }
 
   .translate-camera-area__btn-wrapper {
-    min-width: var(--s58);
+    min-width: 87px;
   }
 
+  /* 通貨・QR・カメラ・単位・画像ボタン：1.5倍（58*1.5≈87px） */
   .translate-camera-btn {
-    width: var(--s58);
-    height: var(--s58);
+    width: 87px;
+    height: 87px;
   }
 
   .translate-camera-btn__icon {
-    width: var(--s28);
-    height: var(--s24);
+    width: 42px;
+    height: 42px;
+  }
+
+  .translate-camera-label {
+    font-size: var(--fs-12);
   }
 
   .translate-footer__btn {
@@ -4771,7 +4815,7 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-footer__btn--active {
-    padding: var(--s4) var(--s4);
+    padding: var(--s8) var(--s4); /* スマホ時：選択中の上下余白を少し拡大 */
   }
 
   .translate-footer__btn svg {
@@ -4794,21 +4838,21 @@ body.dark-mode .translate-result-item__divider svg {
   }
 }
 
-/* 360px以下：さらに狭い画面でボタンを収める */
+/* 360px以下：さらに狭い画面でボタンを収める（1.5倍維持） */
 @media (max-width: 360px) {
   .translate-voice-area {
-    gap: var(--s24); /* 会話モードと単位・画像翻訳のマージンを2倍に */
+    gap: var(--s12);
     padding: var(--s8) var(--s4) var(--s16) var(--s4);
   }
 
   .translate-voice-area__btn-wrapper {
-    flex: 0 0 var(--s52);
-    min-width: var(--s52);
+    flex: none;
+    min-width: auto;
   }
 
   .conversation-mode {
-    width: var(--sh100);
-    height: var(--sh100);
+    width: 120px;
+    height: 120px;
   }
 
   .translate-camera-area__buttons {
@@ -4816,12 +4860,22 @@ body.dark-mode .translate-result-item__divider svg {
   }
 
   .translate-camera-area__btn-wrapper {
-    min-width: var(--s52);
+    min-width: 78px;
   }
 
   .translate-camera-btn {
-    width: var(--s52);
-    height: var(--s52);
+    width: 78px;
+    height: 78px;
+  }
+
+  .translate-camera-btn__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .conversation-mode__start-icon {
+    width: 38px;
+    height: 38px;
   }
 }
 
@@ -4872,14 +4926,14 @@ body.dark-mode .translate-result-item__divider svg {
   .map-settings-button {
     top: var(--s8);
     right: var(--s8);
-    width: var(--s38);
-    height: var(--s38);
+    width: 44px;
+    height: 44px;
     border-radius: var(--s8);
   }
 
   .map-settings-button svg {
-    width: var(--s16);
-    height: var(--s16);
+    width: var(--s24);
+    height: var(--s24);
   }
 
   .layer-toggle {
@@ -5919,14 +5973,24 @@ body.dark-mode .memo-item {
     padding-right: var(--s16);
   }
 
+  .memo-attach-btn {
+    width: 57px;
+    height: 57px;
+  }
+
+  .memo-attach-btn svg {
+    width: 42px;
+    height: 42px;
+  }
+
   .memo-add-btn {
-    width: var(--s38);
-    height: var(--s38);
+    width: 57px;
+    height: 57px;
   }
 
   .memo-add-btn svg {
-    width: var(--s28);
-    height: var(--s24);
+    width: 42px;
+    height: 42px;
   }
 }
 
@@ -6258,6 +6322,27 @@ body.lab-page:not(.dark-mode) {
     background-size: auto 140%;
   }
 }
+
+/* 研究室：スマホ時に左右マージンを削除（フル幅表示） */
+@media (max-width: 500px) {
+  body.lab-page {
+    max-width: 100%;
+  }
+  body.lab-page .translate-header {
+    max-width: 100%;
+  }
+  body.lab-page .translate-footer {
+    max-width: 100%;
+  }
+  body.lab-page .lab-main {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.lab-page .lab-particles {
+    max-width: 100%;
+  }
+}
+
 body.lab-page .translate-header {
   position: relative;
   z-index: 10;
