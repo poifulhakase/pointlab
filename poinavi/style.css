@@ -640,7 +640,10 @@ body::before {
   /* 翻訳ページ：最大コンテンツ幅を500pxに制限しない（ビューポート幅いっぱい使用） */
   body:has(.translate-main) {
     max-width: 100%;
-    box-shadow: none;
+    box-shadow: 0 0 28px rgba(0, 0, 0, 0.15); /* ページ全体の影（ラボノートと同一） */
+  }
+  body.dark-mode:has(.translate-main) {
+    box-shadow: 0 0 28px rgba(0, 0, 0, 0.4);
   }
 }
 

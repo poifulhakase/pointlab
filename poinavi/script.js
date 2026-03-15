@@ -2733,18 +2733,28 @@ function selectResult(index) {
 }
 
 // InfoWindowを画面中央にパンする（経路表示など他処理でビューが変わった後も再実行可能）
-function centerInfoWindowInView() {
+// 必ずモーダル中心が画面中央になるよう、複数パスで調整（スマホ・PC両対応）
+function centerInfoWindowInView(attempt) {
+  attempt = attempt || 0;
+  const MAX_ATTEMPTS = 4;
   if (!map || !infoWindow || !infoWindow.getMap()) return;
-  const infoWindowElement = document.querySelector('.gm-style-iw-c');
+  const infoWindowElement = document.querySelector('.gm-style-iw-c:has(.poinavi-infowindow)');
   if (!infoWindowElement) return;
   const rect = infoWindowElement.getBoundingClientRect();
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  const vp = window.visualViewport;
+  const centerX = vp ? (vp.offsetLeft + vp.width / 2) : (window.innerWidth / 2);
+  const centerY = vp ? (vp.offsetTop + vp.height / 2) : (window.innerHeight / 2);
   const iwCenterX = rect.left + rect.width / 2;
   const iwCenterY = rect.top + rect.height / 2;
   const panX = centerX - iwCenterX;
   const panY = centerY - iwCenterY;
+  const tolerance = 3;
+  if (Math.abs(panX) < tolerance && Math.abs(panY) < tolerance) return;
+  if (attempt >= MAX_ATTEMPTS - 1) return;
   map.panBy(panX, panY);
+  google.maps.event.addListenerOnce(map, 'idle', function() {
+    centerInfoWindowInView(attempt + 1);
+  });
 }
 
 // 情報ウィンドウを表示
@@ -2973,9 +2983,15 @@ function showInfoWindow(place, marker) {
   infoWindow.setContent(content);
   infoWindow.open(map, marker);
   
-  // InfoWindowを必ず画面中央に表示するようパン調整
+  // InfoWindowを必ず画面中央に表示するようパン調整（レイアウト確定後に実行）
   google.maps.event.addListenerOnce(infoWindow, 'domready', function() {
-    google.maps.event.addListenerOnce(map, 'idle', centerInfoWindowInView);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        google.maps.event.addListenerOnce(map, 'idle', function() {
+          centerInfoWindowInView(0);
+        });
+      });
+    });
   });
   
   // マーカーにplace情報を保存（テーマ切り替え時に使用）
