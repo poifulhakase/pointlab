@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ビルド後に元のぽいんとらぼウェブサイトの静的ファイルを dist/ にコピーする
 
-import { cpSync, existsSync, mkdirSync } from 'fs'
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -35,6 +35,8 @@ const files = [
   'index-en.html', 'apple-touch-icon.png', 'DEVELOPMENT.md',
   '_en-translations.json', '_note-articles.json', '_note-articles-content.json',
   'apply-updates.js', 'hakase_full_check.png',
+  // ロゴ・favicon・マニフェスト（元サイトのヘッダーが参照）
+  'logo.svg', 'favicon.svg', 'favicon-16x16.png', 'favicon-32x32.png', 'manifest.json',
 ]
 for (const file of files) {
   const src = join(ROOT, file)
@@ -43,5 +45,20 @@ for (const file of files) {
     console.log(`✓ ${file} コピー完了`)
   }
 }
+
+// 旧サービスワーカー（スコープ /）の kill switch
+// 以前 stock-calendar が / に配置されていた際に登録された SW を無効化する
+writeFileSync(join(DIST, 'sw.js'), [
+  '// Kill switch: unregister old root-scope service worker',
+  'self.addEventListener("install", () => self.skipWaiting());',
+  'self.addEventListener("activate", event => {',
+  '  event.waitUntil(',
+  '    self.registration.unregister().then(() =>',
+  '      self.clients.matchAll({ type: "window", includeUncontrolled: true })',
+  '    ).then(clients => clients.forEach(c => c.navigate(c.url)))',
+  '  );',
+  '});',
+].join('\n'))
+console.log('✓ sw.js (kill switch) 生成完了')
 
 console.log('\n✓ 静的ファイルのコピー完了')
