@@ -33,6 +33,8 @@
   ],
   "rewrites": [
     { "source": "/hakaseAI/api/chat", "destination": "/api/chat" },
+    { "source": "/hakaseAI", "destination": "/hakaseAI/index.html" },
+    { "source": "/hakaseAI/", "destination": "/hakaseAI/index.html" },
     { "source": "/stock-calendar/(.*)", "destination": "/index.html" },
     { "source": "/stock-calendar", "destination": "/index.html" }
   ]
