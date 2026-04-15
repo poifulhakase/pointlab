@@ -1,0 +1,17 @@
+{
+  "name": "ぽいナビ",
+  "short_name": "ぽいナビ",
+  "description": "地図・翻訳・ラボノート。旅先で「今すぐ使いたい」機能をひとつに。周辺検索、多言語翻訳、メモ機能を統合した無料Webアプリ。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

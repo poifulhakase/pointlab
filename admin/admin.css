@@ -1,0 +1,478 @@
+/* Admin Panel - PointLab */
+
+/* Gate (password) */
+.admin-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-bg);
+}
+
+.admin-gate__box {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 2rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.admin-gate__box h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+
+.admin-gate__note {
+  color: var(--admin-muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem 0;
+}
+
+.admin-gate__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-gate__form input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-size: 1rem;
+}
+
+.admin-gate__form input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+}
+
+.admin-gate__error {
+  margin: 1rem 0 0 0;
+  font-size: 0.9rem;
+  color: var(--admin-error);
+}
+
+/* Upload */
+.editor-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.upload-label input[type="file"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.upload-btn {
+  padding: 0.35rem 0.75rem;
+  background: var(--admin-border);
+  border-radius: 6px;
+  color: var(--admin-text);
+}
+
+.upload-label:hover .upload-btn {
+  background: #3a3a5a;
+}
+
+.upload-status {
+  font-size: 0.85rem;
+  color: var(--admin-muted);
+}
+
+.upload-status.success {
+  color: var(--admin-success);
+}
+
+.upload-status.error {
+  color: var(--admin-error);
+}
+
+:root {
+  --admin-bg: #1a1a2e;
+  --admin-surface: #16213e;
+  --admin-border: #2a2a4a;
+  --admin-text: #e8e8e8;
+  --admin-muted: #9a9aab;
+  --admin-accent: #4361ee;
+  --admin-accent-hover: #5a75f5;
+  --admin-success: #06d6a0;
+  --admin-error: #ef476f;
+  --admin-radius: 8px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+.admin {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-header__links {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.admin-back {
+  color: var(--admin-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.admin-back:hover {
+  text-decoration: underline;
+}
+
+.admin-note {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+  margin: 0 0 1rem 0;
+}
+.admin-note code {
+  background: var(--admin-surface);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.admin-config {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-config h2,
+.sidebar-header h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+}
+
+.config-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.config-form label span {
+  font-size: 0.85rem;
+  color: var(--admin-muted);
+}
+
+.config-form input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-size: 0.95rem;
+}
+
+.config-form input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+}
+
+.config-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Main layout */
+.admin-main {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  min-height: 60vh;
+}
+
+@media (max-width: 768px) {
+  .admin-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-sidebar {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 1rem;
+  height: fit-content;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.article-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.article-item {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: var(--admin-text);
+  text-decoration: none;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+}
+
+.article-item:hover {
+  background: var(--admin-border);
+}
+
+.article-item.active {
+  background: var(--admin-accent);
+  color: white;
+}
+
+.article-item small {
+  display: block;
+  color: var(--admin-muted);
+  font-size: 0.75rem;
+  white-space: normal;
+  margin-top: 0.2rem;
+}
+
+.article-item.active small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Editor */
+.admin-editor {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.editor-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-muted);
+  font-size: 1rem;
+}
+
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.editor-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.editor-meta {
+  margin-bottom: 0.5rem;
+}
+
+.editor-path {
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+}
+
+.article-content {
+  flex: 1;
+  min-height: 300px;
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.article-content:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: var(--admin-accent);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--admin-accent-hover);
+}
+
+.btn-secondary {
+  background: var(--admin-border);
+  color: var(--admin-text);
+}
+.btn-secondary:hover {
+  background: #3a3a5a;
+}
+
+.btn-small {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status */
+.status-text {
+  font-size: 0.85rem;
+  color: var(--admin-muted);
+  margin: 0.5rem 0 0;
+}
+.status-text.success {
+  color: var(--admin-success);
+}
+.status-text.error {
+  color: var(--admin-error);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--admin-radius);
+  font-size: 0.9rem;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.success {
+  background: var(--admin-success);
+  color: #0d1f1a;
+}
+
+.toast.error {
+  background: var(--admin-error);
+  color: white;
+}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <link rel="manifest" href="./manifest.json?v=1" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>ぽいロボ</title>
+    <link rel="stylesheet" href="../poinavi/style.css?v=130" />
+    <link rel="stylesheet" href="./style.css?v=1" />
+    <script src="./poirobo-swipe-nav.js?v=1"></script>
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poirobo_theme") || "light";
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+    </script>
+    <style>
+      html.light-mode { background-color: #f5f5f7; }
+      html.dark-mode { background-color: #1a1a1a; }
+    </style>
+  </head>
+  <body>
+    <script>
+      // 起動ページリダイレクト（DOMContentLoadedより前に実行）
+      (function() {
+        if (document.referrer && document.referrer.includes("/poirobo/")) return;
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("from")) return;
+        var startPage = localStorage.getItem("poirobo_start_page") || "index.html";
+        if (startPage !== "index.html") {
+          window.location.replace("./" + startPage);
+        }
+      })();
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    </script>
+    <header class="translate-header">
+      <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
+      <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
+        <img src="./logo.svg" alt="ぽいロボ" class="translate-header__logo" style="height: 28px; width: auto;" />
+      </a>
+      <button id="settingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- 設定モーダル（最小限） -->
+    <div id="settingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="settingsClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="translate-modal__body">
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">トップ表示</div>
+            <select id="startPageSelect" class="translate-modal__select">
+              <option value="index.html">🤖 ぽいロボ</option>
+              <option value="lab.html">🔬 研究室</option>
+              <option value="shield.html">🛡️ シールド</option>
+              <option value="signal.html">📶 シグナル</option>
+            </select>
+          </div>
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">テーマ</div>
+            <button id="themeToggle" class="translate-modal__theme-toggle">
+              <span class="theme-icon">☀️</span>
+              <span class="theme-text">ライトモード</span>
+            </button>
+          </div>
+          <div class="translate-modal__section">
+            <div class="translate-modal__section-title">免責事項</div>
+            <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6;">
+              本サービスは参考情報を提供するものです。重要な場面では専門家への相談を推奨いたします。利用により生じた損害について、運営者は一切の責任を負いません。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="poirobo-main">
+      <h1 class="visually-hidden">ぽいロボ - エントリー判断補助</h1>
+      <p class="poirobo-section-title">チェックリスト（銘柄コード入力で判定・将来実装）</p>
+      <div id="checklist" class="poirobo-checklist"></div>
+      <div id="totalResult" class="poirobo-total poirobo-total--wait">
+        <span id="totalPoint">0</span>pt → 様子見
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-secondary);text-align:center;margin-top:8px;">
+        +5以上: エントリー検討 / 0〜4: 様子見 / マイナス: 見送り
+      </p>
+    </main>
+
+    <footer class="translate-footer">
+      <a href="./lab.html" class="translate-footer__btn" aria-label="研究室ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6v6"/>
+          <circle cx="6" cy="12" r="1"/>
+          <circle cx="18" cy="8" r="1"/>
+          <circle cx="15" cy="16" r="1"/>
+        </svg>
+        <span class="translate-footer__label">研究室</span>
+      </a>
+      <a href="./shield.html" class="translate-footer__btn" aria-label="シールドページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span class="translate-footer__label">シールド</span>
+      </a>
+      <a href="./signal.html" class="translate-footer__btn" aria-label="シグナルページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12h4"/>
+          <path d="M6 8v8"/>
+          <path d="M10 4v16"/>
+          <path d="M14 8v8"/>
+          <path d="M18 12h4"/>
+        </svg>
+        <span class="translate-footer__label">シグナル</span>
+      </a>
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="ぽいロボ（現在のページ）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="10" rx="2"/>
+          <circle cx="8.5" cy="16" r="1"/>
+          <circle cx="15.5" cy="16" r="1"/>
+          <path d="M12 11V7"/>
+          <path d="M7 7h10"/>
+        </svg>
+        <span class="translate-footer__label">ぽいロボ</span>
+      </span>
+    </footer>
+
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poirobo_theme") || "light";
+        document.body.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+      document.getElementById("settingsButton").onclick = function() {
+        document.getElementById("settingsModal").classList.remove("hidden");
+      };
+      function closeModal() {
+        document.getElementById("settingsModal").classList.add("hidden");
+      }
+      document.getElementById("settingsClose").onclick = closeModal;
+      document.querySelector("#settingsModal .translate-modal__overlay").onclick = closeModal;
+      document.getElementById("themeToggle").onclick = function() {
+        var t = localStorage.getItem("poirobo_theme") || "light";
+        t = t === "dark" ? "light" : "dark";
+        localStorage.setItem("poirobo_theme", t);
+        document.documentElement.className = t === "dark" ? "dark-mode" : "light-mode";
+        document.body.className = t === "dark" ? "dark-mode" : "light-mode";
+        this.querySelector(".theme-icon").textContent = t === "dark" ? "🌙" : "☀️";
+        this.querySelector(".theme-text").textContent = t === "dark" ? "ダークモード" : "ライトモード";
+      };
+      var t = localStorage.getItem("poirobo_theme") || "light";
+      var btn = document.getElementById("themeToggle");
+      btn.querySelector(".theme-icon").textContent = t === "dark" ? "🌙" : "☀️";
+      btn.querySelector(".theme-text").textContent = t === "dark" ? "ダークモード" : "ライトモード";
+
+      var startPageSelect = document.getElementById("startPageSelect");
+      if (startPageSelect) {
+        startPageSelect.value = localStorage.getItem("poirobo_start_page") || "index.html";
+        startPageSelect.onchange = function() { localStorage.setItem("poirobo_start_page", this.value); };
+      }
+      window.addEventListener("pageshow", function(e) {
+        if (e.persisted) {
+          var theme = localStorage.getItem("poirobo_theme") || "light";
+          document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+          document.body.className = theme === "dark" ? "dark-mode" : "light-mode";
+        }
+      });
+
+      // ぽいロボ チェックリスト（モック・将来は銘柄入力でAPIから取得）
+      var checklistItems = [
+        { label: "ボリンジャーバンド±2σ接触", point: 2 },
+        { label: "出来高増加", point: 2 },
+        { label: "MA反発", point: 1 },
+        { label: "決算5日以内", point: -3 },
+        { label: "地合い悪い", point: -2 }
+      ];
+      var checklistState = [false, false, false, false, false];
+      function updateTotal() {
+        var total = 0;
+        checklistState.forEach(function(checked, i) {
+          if (checked) total += checklistItems[i].point;
+        });
+        var totalEl = document.getElementById("totalPoint");
+        var resultEl = document.getElementById("totalResult");
+        totalEl.textContent = total;
+        resultEl.className = "poirobo-total";
+        if (total >= 5) {
+          resultEl.className += " poirobo-total--entry";
+          resultEl.innerHTML = "<span id=\"totalPoint\">" + total + "</span>pt → エントリー検討";
+        } else if (total >= 0) {
+          resultEl.className += " poirobo-total--wait";
+          resultEl.innerHTML = "<span id=\"totalPoint\">" + total + "</span>pt → 様子見";
+        } else {
+          resultEl.className += " poirobo-total--skip";
+          resultEl.innerHTML = "<span id=\"totalPoint\">" + total + "</span>pt → 見送り";
+        }
+      }
+      var listEl = document.getElementById("checklist");
+      checklistItems.forEach(function(item, i) {
+        var div = document.createElement("div");
+        div.className = "poirobo-checklist-item";
+        div.innerHTML =
+          '<span class="poirobo-checklist-item__label">' + item.label + '</span>' +
+          '<input type="checkbox" class="poirobo-checklist-item__check" data-idx="' + i + '" style="width:20px;height:20px;accent-color:var(--accent-color);">';
+        var cb = div.querySelector("input");
+        cb.onchange = function() {
+          checklistState[parseInt(this.dataset.idx)] = this.checked;
+          updateTotal();
+        };
+        listEl.appendChild(div);
+      });
+    </script>
+  </body>
+</html>

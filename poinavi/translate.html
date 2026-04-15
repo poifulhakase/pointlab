@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/poinavi/" />
+    <!-- セキュリティヘッダー -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <!-- Google Analytics 4 (自分除外対応) -->
+    <script>
+      // localStorage.setItem('excludeFromAnalytics', 'true') をコンソールで実行すると除外
+      if (localStorage.getItem('excludeFromAnalytics') !== 'true') {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-ERDSPE9CZM';
+        document.head.appendChild(script);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-ERDSPE9CZM');
+      }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ぽいナビ" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>ぽいナビ - 翻訳｜多言語翻訳・OCR・音声認識</title>
+    <meta name="description" content="テキスト翻訳、カメラOCR、音声入力で旅先の言語の壁を解消。100言語以上対応。LibreTranslate・MyMemory API連携の無料翻訳ツール。" />
+    <meta name="keywords" content="ぽいナビ, 翻訳, 多言語, OCR翻訳, 音声翻訳, 旅行翻訳, オフライン翻訳" />
+    <link rel="canonical" href="https://pointlab.vercel.app/poinavi/translate.html" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ぽいナビ - 翻訳｜多言語翻訳・OCR・音声認識" />
+    <meta property="og:description" content="テキスト翻訳、カメラOCR、音声入力で旅先の言語の壁を解消。100言語以上対応。" />
+    <meta property="og:url" content="https://pointlab.vercel.app/poinavi/translate.html" />
+    <meta property="og:image" content="https://pointlab.vercel.app/poinavi/icon-192.png" />
+    <meta property="og:site_name" content="ぽいナビ（ぽいんとらぼ）" />
+    <meta property="og:locale" content="ja_JP" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ぽいナビ - 翻訳｜多言語翻訳・OCR・音声認識" />
+    <meta name="twitter:description" content="テキスト翻訳、カメラOCR、音声入力で旅先の言語の壁を解消。" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.json?v=130" />
+    <link rel="stylesheet" href="./style.css?v=130" />
+    <!-- FOUC対策: CSSロード前にテーマを適用 -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem("poinavi_theme") || "light";
+        document.documentElement.className = theme === "dark" ? "dark-mode" : "light-mode";
+      })();
+    </script>
+    <style>
+      /* FOUC対策: 初期背景色 */
+      html.light-mode { background-color: #f5f5f7; }
+      html.dark-mode { background-color: #1a1a1a; }
+    </style>
+  </head>
+  <body>
+    <!-- 長押しコンテキストメニュー無効化 -->
+    <script>
+      document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    </script>
+    <!-- ヘッダー -->
+    <header class="translate-header">
+      <!-- 左側のスペーサー -->
+      <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
+      
+      <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
+        <img src="./poinabi.svg" alt="ぽいんとらぼ" class="translate-header__logo" />
+      </a>
+      
+      <!-- 初心者・設定ボタン（右上） -->
+      <div class="translate-header__icons" id="translateHeaderIcons">
+        <button id="translateBeginnerBtn" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="使い方を見る" title="使い方を見る">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+          </svg>
+        </button>
+        <button id="translateSettingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+      </div>
+    </header>
+
+    <!-- 設定モーダル -->
+    <div id="translateSettingsModal" class="translate-modal hidden">
+      <div class="translate-modal__overlay"></div>
+      <div class="translate-modal__content">
+        <div class="translate-modal__header">
+          <h2 class="translate-modal__title">設定</h2>
+          <button class="translate-modal__close" id="translateSettingsClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body">
+          <!-- 音声セクション -->
+          <div id="settingsVoiceSection" class="translate-modal__section">
+            <div class="translate-modal__section-title">会話モード</div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">自分</label>
+              <select id="micTargetLangSelect" class="translate-modal__select">
+                <option value="en">英語</option>
+                <option value="ja" selected>日本語</option>
+                <option value="zh">中国語</option>
+                <option value="ko">韓国語</option>
+                <option value="fr">フランス語</option>
+                <option value="de">ドイツ語</option>
+                <option value="es">スペイン語</option>
+                <option value="it">イタリア語</option>
+                <option value="pt">ポルトガル語</option>
+                <option value="ru">ロシア語</option>
+                <option value="th">タイ語</option>
+                <option value="vi">ベトナム語</option>
+              </select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">相手</label>
+              <select id="micInputLangSelect" class="translate-modal__select">
+                <option value="ja">日本語</option>
+                <option value="en" selected>英語</option>
+                <option value="zh">中国語</option>
+                <option value="ko">韓国語</option>
+                <option value="fr">フランス語</option>
+                <option value="de">ドイツ語</option>
+                <option value="es">スペイン語</option>
+                <option value="it">イタリア語</option>
+                <option value="pt">ポルトガル語</option>
+                <option value="ru">ロシア語</option>
+                <option value="th">タイ語</option>
+                <option value="vi">ベトナム語</option>
+              </select>
+            </div>
+            <button type="button" id="conversationProceedBtn" class="translate-modal__primary-btn">会話モードを開始 →</button>
+          </div>
+          
+          <!-- カメラセクション -->
+          <div id="settingsCameraSection" class="translate-modal__section">
+            <div class="translate-modal__section-title">カメラ・画像翻訳</div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">原文</label>
+              <select id="ocrLanguageSelect" class="translate-modal__select">
+                <option value="jpn">日本語</option>
+                <option value="eng" selected>英語</option>
+                <option value="chi_sim">中国語（簡体）</option>
+                <option value="chi_tra">中国語（繁体）</option>
+                <option value="kor">韓国語</option>
+                <option value="fra">フランス語</option>
+                <option value="deu">ドイツ語</option>
+                <option value="spa">スペイン語</option>
+                <option value="ita">イタリア語</option>
+                <option value="por">ポルトガル語</option>
+                <option value="rus">ロシア語</option>
+                <option value="tha">タイ語</option>
+                <option value="vie">ベトナム語</option>
+              </select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">翻訳</label>
+              <select id="translateTargetLang" class="translate-modal__select">
+                <option value="en">英語</option>
+                <option value="ja" selected>日本語</option>
+                <option value="zh">中国語</option>
+                <option value="ko">韓国語</option>
+                <option value="fr">フランス語</option>
+                <option value="de">ドイツ語</option>
+                <option value="es">スペイン語</option>
+                <option value="it">イタリア語</option>
+                <option value="pt">ポルトガル語</option>
+                <option value="ru">ロシア語</option>
+                <option value="th">タイ語</option>
+                <option value="vi">ベトナム語</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- 通貨セクション -->
+          <div id="settingsCurrencySection" class="translate-modal__section">
+            <div class="translate-modal__section-title">通貨</div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">変換元</label>
+              <select id="currencyFrom" class="translate-modal__select">
+                <option value="JPY">JPY 日本円</option>
+                <option value="USD">USD 米ドル</option>
+                <option value="EUR">EUR ユーロ</option>
+                <option value="GBP">GBP 英ポンド</option>
+                <option value="CNY">CNY 人民元</option>
+                <option value="KRW">KRW 韓国ウォン</option>
+                <option value="THB">THB タイバーツ</option>
+                <option value="TWD">TWD 台湾ドル</option>
+                <option value="AUD">AUD 豪ドル</option>
+                <option value="CHF">CHF スイスフラン</option>
+              </select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">変換先</label>
+              <select id="currencyTo" class="translate-modal__select">
+                <option value="USD">USD 米ドル</option>
+                <option value="JPY" selected>JPY 日本円</option>
+                <option value="EUR">EUR ユーロ</option>
+                <option value="GBP">GBP 英ポンド</option>
+                <option value="CNY">CNY 人民元</option>
+                <option value="KRW">KRW 韓国ウォン</option>
+                <option value="THB">THB タイバーツ</option>
+                <option value="TWD">TWD 台湾ドル</option>
+                <option value="AUD">AUD 豪ドル</option>
+                <option value="CHF">CHF スイスフラン</option>
+              </select>
+            </div>
+            <button type="button" id="currencyProceedToInputBtn" class="translate-modal__primary-btn">通貨換算する →</button>
+          </div>
+          
+          <!-- 単位セクション -->
+          <div id="settingsUnitSection" class="translate-modal__section">
+            <div class="translate-modal__section-title">単位</div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">カテゴリ</label>
+              <select id="unitCategory" class="translate-modal__select">
+                <option value="length">長さ</option>
+                <option value="weight">重さ</option>
+                <option value="temp">温度</option>
+                <option value="distance">距離</option>
+                <option value="speed">速度</option>
+                <option value="volume">容量</option>
+              </select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">変換元</label>
+              <select id="unitFrom" class="translate-modal__select"></select>
+            </div>
+            <div class="translate-modal__item">
+              <label class="translate-modal__label">変換先</label>
+              <select id="unitTo" class="translate-modal__select"></select>
+            </div>
+            <button type="button" id="unitProceedToInputBtn" class="translate-modal__primary-btn">単位換算する →</button>
+          </div>
+          
+          <!-- 案内 -->
+          <div id="settingsGuideSection" class="translate-modal__section">
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+              テーマ・トップ表示などの設定変更、免責事項の確認は<br>「研究室」ページでできます。
+            </p>
+          </div>
+          <button type="button" id="translateSettingsBack" class="translate-modal__back hidden" aria-label="前に戻る">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span id="translateSettingsBackLabel"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- カメラ撮影モーダル -->
+    <div id="cameraModal" class="camera-modal hidden">
+      <div class="camera-modal__container">
+        <!-- カメラプレビュー画面 -->
+        <div id="cameraPreviewScreen" class="camera-modal__screen">
+          <div class="camera-modal__header">
+            <button class="camera-modal__close-btn" id="cameraCloseBtn" aria-label="閉じる">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <span class="camera-modal__title">カメラ翻訳</span>
+            <div class="camera-modal__spacer"></div>
+          </div>
+          <div class="camera-modal__video-wrapper">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <div class="camera-modal__guide">
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--tl"></div>
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--tr"></div>
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--bl"></div>
+              <div class="camera-modal__guide-corner camera-modal__guide-corner--br"></div>
+            </div>
+          </div>
+          <div class="camera-modal__controls">
+            <button class="camera-modal__capture-btn" id="cameraCaptureBtn" aria-label="撮影">
+              <span class="camera-modal__capture-inner"></span>
+            </button>
+          </div>
+          <p class="camera-modal__hint">翻訳したい文字を枠内に収めて撮影</p>
+        </div>
+
+        <!-- 範囲選択画面 -->
+        <div id="cropScreen" class="camera-modal__screen hidden">
+          <div class="camera-modal__header">
+            <button class="camera-modal__back-btn" id="cropBackBtn" aria-label="戻る">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <span class="camera-modal__title">範囲を選択</span>
+            <button class="camera-modal__done-btn" id="cropDoneBtn">完了</button>
+          </div>
+          <div class="camera-modal__crop-wrapper" id="cropWrapper">
+            <canvas id="capturedCanvas"></canvas>
+            <div class="camera-modal__crop-overlay" id="cropOverlay">
+              <div class="camera-modal__crop-box" id="cropBox">
+                <div class="crop-handle crop-handle--nw" data-handle="nw"></div>
+                <div class="crop-handle crop-handle--ne" data-handle="ne"></div>
+                <div class="crop-handle crop-handle--sw" data-handle="sw"></div>
+                <div class="crop-handle crop-handle--se" data-handle="se"></div>
+                <div class="crop-handle crop-handle--n" data-handle="n"></div>
+                <div class="crop-handle crop-handle--s" data-handle="s"></div>
+                <div class="crop-handle crop-handle--w" data-handle="w"></div>
+                <div class="crop-handle crop-handle--e" data-handle="e"></div>
+              </div>
+            </div>
+          </div>
+          <p class="camera-modal__hint">ドラッグして翻訳したい範囲を調整</p>
+        </div>
+
+        <!-- OCR処理中画面 -->
+        <div id="ocrProcessingScreen" class="camera-modal__screen hidden">
+          <div class="camera-modal__processing">
+            <div class="camera-modal__spinner"></div>
+            <p class="camera-modal__processing-text" id="processingText">文字を認識中...</p>
+            <div class="camera-modal__progress-bar">
+              <div class="camera-modal__progress-fill" id="ocrProgressFill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 画像 処理中オーバーレイ -->
+    <div id="imageTranslateOverlay" class="image-translate-overlay hidden">
+      <div class="image-translate-overlay__content">
+        <div class="camera-modal__spinner"></div>
+        <p class="camera-modal__processing-text" id="imageProcessingText">画像を読み込み中...</p>
+        <div class="camera-modal__progress-bar">
+          <div class="camera-modal__progress-fill" id="imageProgressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QRコードスキャンモーダル -->
+    <div id="qrModal" class="qr-modal hidden">
+      <div class="qr-modal__container">
+        <div class="qr-modal__header">
+          <button class="qr-modal__close-btn" id="qrCloseBtn" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <h2 class="qr-modal__title">QRコードをスキャン</h2>
+        </div>
+        <div class="qr-modal__preview">
+          <video id="qrVideo" autoplay playsinline></video>
+          <div class="qr-modal__scan-area">
+            <div class="qr-modal__corner qr-modal__corner--tl"></div>
+            <div class="qr-modal__corner qr-modal__corner--tr"></div>
+            <div class="qr-modal__corner qr-modal__corner--bl"></div>
+            <div class="qr-modal__corner qr-modal__corner--br"></div>
+          </div>
+        </div>
+        <p class="qr-modal__hint">QRコードを枠内に合わせてください</p>
+        <div id="qrResult" class="qr-modal__result hidden">
+          <p class="qr-modal__result-label">読み取り結果:</p>
+          <p class="qr-modal__result-text" id="qrResultText"></p>
+          <div class="qr-modal__result-actions">
+            <button class="qr-modal__action-btn" id="qrCopyBtn">コピー</button>
+            <button class="qr-modal__action-btn qr-modal__action-btn--primary" id="qrOpenBtn">開く</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通貨モーダル -->
+    <div id="currencyModal" class="translate-modal currency-modal hidden">
+      <div class="translate-modal__overlay currency-modal__overlay"></div>
+      <div class="translate-modal__content currency-modal__content">
+        <div class="translate-modal__header currency-modal__header">
+          <h2 class="translate-modal__title currency-modal__title">通貨</h2>
+          <button class="translate-modal__close currency-modal__close" id="currencyModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body currency-modal__body">
+          <div class="currency-modal__currencies">
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__result-wrap">
+                <span id="currencyResult" class="currency-modal__result">—</span>
+                <span class="currency-modal__unit" id="currencyToUnit">USD</span>
+              </div>
+            </div>
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__input-wrap">
+                <input type="text" id="currencyAmount" class="currency-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
+                <span class="currency-modal__unit" id="currencyFromUnit">JPY</span>
+              </div>
+            </div>
+            <div class="currency-modal__pair-row">
+              <span class="currency-modal__pair" id="currencyPairDisplay">JPY → USD</span>
+              <button type="button" class="currency-modal__swap-btn currency-modal__swap-btn--inline" id="currencySwapBtn" aria-label="通貨を入れ替え">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="17 1 21 5 17 9"></polyline>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                  <polyline points="7 23 3 19 7 15"></polyline>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="currency-modal__keypad">
+            <!-- 電卓風：上段に C（2列）, ⌫ -->
+            <button type="button" class="currency-modal__key currency-modal__key--action currency-modal__key--clear" data-key="clear">C</button>
+            <button type="button" class="currency-modal__key currency-modal__key--action" data-key="backspace" aria-label="1桁削除">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                <line x1="18" y1="9" x2="12" y2="15"></line>
+                <line x1="12" y1="9" x2="18" y2="15"></line>
+              </svg>
+            </button>
+            <button type="button" class="currency-modal__key" data-key="7">7</button>
+            <button type="button" class="currency-modal__key" data-key="8">8</button>
+            <button type="button" class="currency-modal__key" data-key="9">9</button>
+            <button type="button" class="currency-modal__key" data-key="4">4</button>
+            <button type="button" class="currency-modal__key" data-key="5">5</button>
+            <button type="button" class="currency-modal__key" data-key="6">6</button>
+            <button type="button" class="currency-modal__key" data-key="1">1</button>
+            <button type="button" class="currency-modal__key" data-key="2">2</button>
+            <button type="button" class="currency-modal__key" data-key="3">3</button>
+            <button type="button" class="currency-modal__key currency-modal__key--zero" data-key="0">0</button>
+            <button type="button" class="currency-modal__key" data-key=".">.</button>
+          </div>
+          <button type="button" class="translate-modal__back" id="currencySettingsBtn" aria-label="通貨ペアを選ぶ">通貨ペアを選ぶ</button>
+          <p class="currency-modal__disclaimer">為替レートは参考値です（Frankfurter API）</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 単位モーダル（通貨と同様のUI） -->
+    <div id="unitModal" class="translate-modal currency-modal unit-modal hidden">
+      <div class="translate-modal__overlay currency-modal__overlay"></div>
+      <div class="translate-modal__content currency-modal__content">
+        <div class="translate-modal__header currency-modal__header">
+          <h2 class="translate-modal__title currency-modal__title">単位</h2>
+          <button class="translate-modal__close currency-modal__close" id="unitModalClose" aria-label="閉じる">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="translate-modal__body currency-modal__body">
+          <div class="currency-modal__currencies">
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__result-wrap">
+                <span id="unitResult" class="currency-modal__result">—</span>
+                <span class="currency-modal__unit" id="unitToUnit">inch</span>
+              </div>
+            </div>
+            <div class="currency-modal__currency-row">
+              <div class="currency-modal__input-wrap">
+                <input type="text" id="unitAmount" class="currency-modal__input" placeholder="0" inputmode="decimal" autocomplete="off" readonly />
+                <span class="currency-modal__unit" id="unitFromUnit">cm</span>
+              </div>
+            </div>
+            <div class="currency-modal__pair-row">
+              <span class="currency-modal__pair" id="unitPairDisplay">cm → inch</span>
+              <button type="button" class="currency-modal__swap-btn currency-modal__swap-btn--inline" id="unitSwapBtn" aria-label="単位を入れ替え">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="17 1 21 5 17 9"></polyline>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                  <polyline points="7 23 3 19 7 15"></polyline>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="currency-modal__keypad">
+            <button type="button" class="currency-modal__key currency-modal__key--action currency-modal__key--clear" data-key="clear">C</button>
+            <button type="button" class="currency-modal__key currency-modal__key--action" data-key="backspace" aria-label="1桁削除">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                <line x1="18" y1="9" x2="12" y2="15"></line>
+                <line x1="12" y1="9" x2="18" y2="15"></line>
+              </svg>
+            </button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="7">7</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="8">8</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="9">9</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="4">4</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="5">5</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="6">6</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="1">1</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="2">2</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key="3">3</button>
+            <button type="button" class="currency-modal__key currency-modal__key--zero unit-modal__key" data-key="0">0</button>
+            <button type="button" class="currency-modal__key unit-modal__key" data-key=".">.</button>
+          </div>
+          <button type="button" class="translate-modal__back" id="unitSettingsBtn" aria-label="単位を選ぶ">単位を選ぶ</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- メインコンテンツ -->
+    <main class="translate-main">
+      <h1 class="visually-hidden">ぽいナビ - 翻訳：多言語翻訳・OCR・音声認識</h1>
+      <!-- テキスト表示エリア -->
+      <div class="translate-result-area-wrap">
+        <div class="translate-result-area" id="translateResultArea">
+          <div class="translate-result-placeholder">
+            <p>ここに表示されます</p>
+          </div>
+        </div>
+        <button class="translate-result-area__reset-btn" id="resetTranslateBtn" type="button" aria-label="翻訳結果をリセット">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>リセット</span>
+        </button>
+      </div>
+
+      <!-- 6アイコンエリア（台形レイアウト：上段狭・下段広、会話モード中央で大きめ） -->
+      <div class="translate-buttons-trapezoid">
+      <div class="translate-camera-area">
+        <div class="translate-camera-area__buttons">
+          <div class="translate-camera-area__btn-wrapper">
+            <button class="translate-camera-btn translate-currency-btn" id="currencyConvertBtn" type="button" aria-label="通貨">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </button>
+            <p class="translate-camera-label">通貨</p>
+          </div>
+          <div class="translate-camera-area__btn-wrapper translate-camera-area__btn-wrapper--qr">
+            <button class="translate-camera-area__stop-btn hidden" id="conversationStopBtn" type="button" aria-label="会話モードを停止">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="6" width="12" height="12"></rect>
+              </svg>
+              <span>停止</span>
+            </button>
+            <button class="translate-camera-btn translate-qr-btn" id="qrScanBtn" type="button" aria-label="QRコード">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="3" height="3"></rect>
+                <line x1="21" y1="14" x2="21" y2="14.01"></line>
+                <line x1="21" y1="21" x2="21" y2="21.01"></line>
+                <line x1="14" y1="21" x2="14" y2="21.01"></line>
+                <line x1="17" y1="17" x2="17" y2="17.01"></line>
+                <line x1="21" y1="17" x2="21" y2="17.01"></line>
+                <line x1="17" y1="21" x2="17" y2="21.01"></line>
+              </svg>
+            </button>
+            <button class="translate-camera-area__stop-btn hidden" id="conversationStopBtn" type="button" aria-label="会話モードを停止">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="6" width="12" height="12"></rect>
+              </svg>
+              <span>停止</span>
+            </button>
+            <p class="translate-camera-label">QRコード</p>
+          </div>
+          <div class="translate-camera-area__btn-wrapper">
+            <button class="translate-camera-btn" id="cameraTranslateBtn" type="button" aria-label="カメラ翻訳">
+              <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+            <p class="translate-camera-label">カメラ翻訳</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 単位（左）・会話モード（中央）・画像（右） -->
+      <div class="translate-voice-area">
+        <div class="translate-voice-area__btn-wrapper">
+          <button class="translate-camera-btn translate-unit-btn" id="unitConvertBtn" type="button" aria-label="単位">
+            <svg class="translate-camera-btn__icon translate-camera-btn__icon--unit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <text x="12" y="17" text-anchor="middle" font-size="18" font-weight="700" stroke="none" fill="currentColor">cm</text>
+            </svg>
+          </button>
+          <p class="translate-camera-label">単位</p>
+        </div>
+        <div class="translate-voice-area__btn-wrapper translate-voice-area__btn-wrapper--conversation">
+          <div class="conversation-mode" id="conversationMode">
+            <button class="conversation-mode__start" id="convStartBtn" type="button" aria-label="会話モードを開始">
+              <svg class="conversation-mode__start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span class="conversation-mode__start-label">会話モード</span>
+            </button>
+            <div class="conversation-mode__split hidden" id="conversationSplit">
+              <button class="conversation-mode__half conversation-mode__half--top" id="convMyBtn" type="button" aria-label="私が話す番">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+                <span class="conversation-mode__lang-label" id="convMyLangLabel"></span>
+              </button>
+              <button class="conversation-mode__half conversation-mode__half--bottom" id="convOpponentBtn" type="button" aria-label="相手が話す番">
+                <span class="conversation-mode__lang-label" id="convOpponentLangLabel"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="translate-voice-area__btn-wrapper">
+          <input type="file" id="imageTranslateInput" accept="image/*" class="visually-hidden" aria-hidden="true" />
+          <button class="translate-camera-btn translate-image-btn" id="imageTranslateBtn" type="button" aria-label="画像翻訳">
+            <svg class="translate-camera-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </button>
+          <p class="translate-camera-label">画像翻訳</p>
+        </div>
+      </div>
+      </div><!-- /translate-buttons-trapezoid -->
+    </main>
+
+    <!-- フッター -->
+    <footer class="translate-footer">
+      <a href="./lab.html" class="translate-footer__btn" aria-label="研究室ページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0-6v6"/>
+          <circle cx="6" cy="12" r="1"/>
+          <circle cx="18" cy="8" r="1"/>
+          <circle cx="15" cy="16" r="1"/>
+        </svg>
+        <span class="translate-footer__label">研究室</span>
+      </a>
+      <a href="./index.html?from=nav" class="translate-footer__btn" aria-label="ラボノートページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <span class="translate-footer__label">ラボノート</span>
+      </a>
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="翻訳マシンページ（現在のページ）">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"/>
+          <path d="M4 14h6"/>
+          <path d="M2 5h12"/>
+          <path d="M7 2v3"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
+        </svg>
+        <span class="translate-footer__label">翻訳マシン</span>
+      </span>
+      <a href="./map.html" class="translate-footer__btn" aria-label="ぽいナビページへ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span class="translate-footer__label">ぽいナビ</span>
+      </a>
+    </footer>
+
+    <!-- 自作アラート/確認モーダル -->
+    <div id="poinaviAlertModal" class="poinavi-alert-modal hidden">
+      <div class="poinavi-alert-modal__overlay"></div>
+      <div class="poinavi-alert-modal__content">
+        <p class="poinavi-alert-modal__message" id="poinaviAlertMessage"></p>
+        <div class="poinavi-alert-modal__buttons">
+          <button type="button" id="poinaviAlertCancel" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--cancel" style="display:none;">キャンセル</button>
+          <button type="button" id="poinaviAlertOk" class="poinavi-alert-modal__btn poinavi-alert-modal__btn--ok">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 共通・翻訳スクリプト（deferで表示高速化） -->
+    <script src="./poinavi-shared.js?v=130" defer></script>
+    <script src="./poinavi-alert.js?v=130" defer></script>
+    <script src="./poinavi-swipe-nav.js?v=130" defer></script>
+    <script src="./poinavi-beginner-tour.js?v=130" defer></script>
+    <script src="./translate.js?v=132" defer></script>
+  </body>
+</html>
