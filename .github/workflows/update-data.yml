@@ -45,12 +45,4 @@ jobs:
           git commit -m "chore: update market data [skip ci]"
           git push
 
-      - name: Deploy to Vercel
-        if: steps.diff.outputs.changed == 'true'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          npm install -g vercel
-          vercel --prod --token=$VERCEL_TOKEN
+      # Vercel は GitHub 連携により、push をトリガーに自動デプロイ
