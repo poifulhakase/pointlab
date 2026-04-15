@@ -1,0 +1,133 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+
+/* カスタム数値入力のスピナーを非表示 */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.no-spinner { -moz-appearance: textfield; }
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-strong: rgba(255, 255, 255, 0.16);
+  --glass-bg-hover: rgba(255, 255, 255, 0.20);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
+  --glass-blur: blur(24px);
+  --accent: #60a5fa;
+  --accent-glass: rgba(96, 165, 250, 0.75);
+  --text: rgba(255, 255, 255, 0.95);
+  --text-sub: rgba(255, 255, 255, 0.55);
+  --text-dim: rgba(255, 255, 255, 0.28);
+  --color-sun: rgba(255, 130, 130, 0.90);
+  --color-sat: rgba(130, 185, 255, 0.90);
+  --grid-line: rgba(255, 255, 255, 0.07);
+  --closed-cell-bg: rgba(255, 255, 255, 0.04);
+  --sidebar-width: 256px;
+  --header-height: 64px;
+  /* structural tokens */
+  --modal-bg: rgba(11, 14, 46, 0.97);
+  --sidebar-fixed-bg: rgba(15, 18, 60, 0.92);
+  --border-dim: rgba(255, 255, 255, 0.07);
+  --bg-subtle: rgba(255, 255, 255, 0.05);
+  --bg-item: rgba(255, 255, 255, 0.04);
+  --bg-medium: rgba(255, 255, 255, 0.08);
+  --latest-row-bg: rgba(96, 165, 250, 0.10);
+  --toggle-track: rgba(255, 255, 255, 0.15);
+  --view-btn-active-bg: rgba(255, 255, 255, 0.70);
+  --view-btn-active-color: rgba(15, 20, 50, 0.90);
+  --event-bg: rgba(96, 165, 250, 0.15);
+  --event-border: rgba(96, 165, 250, 0.40);
+  --body-bg:
+    radial-gradient(ellipse at 20% 10%, rgba(99, 102, 241, 0.35) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(16, 185, 129, 0.20) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 20%, rgba(59, 130, 246, 0.25) 0%, transparent 40%),
+    linear-gradient(160deg, #0b0e2e 0%, #0f1a3a 40%, #081428 100%);
+}
+
+[data-theme="light"] {
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-bg-strong: rgba(255, 255, 255, 0.80);
+  --glass-bg-hover: rgba(255, 255, 255, 0.90);
+  --glass-border: rgba(0, 0, 0, 0.09);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --accent: #2563eb;
+  --accent-glass: rgba(37, 99, 235, 0.75);
+  --text: rgba(15, 20, 50, 0.95);
+  --text-sub: rgba(15, 20, 50, 0.52);
+  --text-dim: rgba(15, 20, 50, 0.32);
+  --color-sun: rgba(185, 28, 28, 0.90);
+  --color-sat: rgba(29, 78, 216, 0.90);
+  --grid-line: rgba(0, 0, 0, 0.07);
+  --closed-cell-bg: rgba(0, 0, 0, 0.025);
+  --modal-bg: rgba(248, 250, 255, 0.98);
+  --sidebar-fixed-bg: rgba(235, 240, 255, 0.97);
+  --border-dim: rgba(0, 0, 0, 0.07);
+  --bg-subtle: rgba(0, 0, 0, 0.03);
+  --bg-item: rgba(0, 0, 0, 0.025);
+  --bg-medium: rgba(0, 0, 0, 0.06);
+  --latest-row-bg: rgba(37, 99, 235, 0.07);
+  --toggle-track: rgba(0, 0, 0, 0.12);
+  --view-btn-active-bg: rgba(0, 0, 0, 0.08);
+  --view-btn-active-color: var(--text);
+  --event-bg: rgba(37, 99, 235, 0.08);
+  --event-border: rgba(37, 99, 235, 0.28);
+  --body-bg:
+    radial-gradient(ellipse at 20% 10%, rgba(99, 102, 241, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(16, 185, 129, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 20%, rgba(59, 130, 246, 0.10) 0%, transparent 40%),
+    linear-gradient(160deg, #eef2ff 0%, #e8f0ff 40%, #f0f7ff 100%);
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--body-bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.30s ease, color 0.20s ease;
+}
+
+/* Liquid Glass base */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+[data-theme="light"] .glass {
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.85);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); }
