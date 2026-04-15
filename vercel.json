@@ -1,5 +1,6 @@
 {
   "outputDirectory": "dist",
+  "buildCommand": "npm run build",
   "headers": [
     {
       "source": "/(.*)",
@@ -36,7 +37,8 @@
     { "source": "/hakaseAI/(.*)", "destination": "https://hakase-ai.vercel.app/$1", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/stock-calendar/(.*)", "destination": "/index.html" },
-    { "source": "/stock-calendar", "destination": "/index.html" }
+    { "source": "/calendar/:path*", "destination": "/calendar/index.html" },
+    { "source": "/stock-calendar/(.*)", "destination": "/calendar/index.html" },
+    { "source": "/stock-calendar", "destination": "/calendar/index.html" }
   ]
 }

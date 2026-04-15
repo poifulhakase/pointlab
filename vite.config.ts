@@ -4,6 +4,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/calendar/',
+  build: {
+    outDir: 'dist/calendar',
+  },
   plugins: [
     react(),
     VitePWA({
@@ -16,8 +20,8 @@ export default defineConfig({
         theme_color: '#141623',
         background_color: '#141623',
         display: 'standalone',
-        start_url: '/stock-calendar',
-        scope: '/',
+        start_url: '/calendar/',
+        scope: '/calendar/',
         lang: 'ja',
         icons: [
           {

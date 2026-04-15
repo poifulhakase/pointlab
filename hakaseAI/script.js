@@ -25,7 +25,7 @@ let conversationHistory = [];
 let savedMessages = [];
 
 // APIエンドポイント
-const API_ENDPOINT = '/hakaseAI/api/chat';
+const API_ENDPOINT = '/api/chat';
 
 // LocalStorageのキー
 const STORAGE_KEY_HISTORY = 'hakaseai-conversation-history';

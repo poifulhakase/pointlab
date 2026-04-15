@@ -14,7 +14,7 @@ interface CachedResponse {
 }
 
 export async function fetchVixData(): Promise<VixWeekData[]> {
-  const res = await fetch('/data/vix.json', {
+  const res = await fetch(`${import.meta.env.BASE_URL}data/vix.json`, {
     signal: AbortSignal.timeout(10000),
   })
   if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)

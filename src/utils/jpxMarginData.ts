@@ -16,7 +16,7 @@ interface CachedResponse {
 }
 
 export async function fetchMarginData(): Promise<MarginWeekData[]> {
-  const res = await fetch('/data/margin.json', {
+  const res = await fetch(`${import.meta.env.BASE_URL}data/margin.json`, {
     signal: AbortSignal.timeout(10000),
   })
   if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)

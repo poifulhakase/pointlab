@@ -16,7 +16,7 @@ interface CachedResponse {
 }
 
 export async function fetchInvestorData(): Promise<InvestorWeekData[]> {
-  const res = await fetch('/data/investor.json', {
+  const res = await fetch(`${import.meta.env.BASE_URL}data/investor.json`, {
     signal: AbortSignal.timeout(10000),
   })
   if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
