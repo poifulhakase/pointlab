@@ -320,13 +320,15 @@ export function ChartView({ theme, isMobile }: Props) {
           {snapStatus === 'copied' && <span style={styles.snapMsg}>✓ コピーしました</span>}
           {snapStatus === 'error'  && <span style={{ ...styles.snapMsg, color: 'rgba(255,100,80,0.9)' }}>キャンセルされました</span>}
 
-          {/* スナップショットボタン */}
-          <button style={styles.settingsBtn} onClick={handleScreenshot} aria-label="スナップショット">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
+          {/* スナップショットボタン（スマホでは非表示） */}
+          {!isMobile && (
+            <button style={styles.settingsBtn} onClick={handleScreenshot} aria-label="スナップショット">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+          )}
 
           {/* 設定ボタン */}
           <button style={styles.settingsBtn} onClick={() => setSettingsOpen(true)} aria-label="チャート設定">
