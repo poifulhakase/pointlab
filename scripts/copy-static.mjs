@@ -2,7 +2,6 @@
 // ビルド後に元のぽいんとらぼウェブサイトの静的ファイルを dist/ にコピーする
 
 import { cpSync, existsSync, mkdirSync } from 'fs'
-import { execSync } from 'child_process'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -12,13 +11,13 @@ const DIST = join(ROOT, 'dist')
 
 mkdirSync(DIST, { recursive: true })
 
-// git 履歴から元の index.html を取得（最初のマージコミット前の状態）
-try {
-  const html = execSync('git show c84bf4e:index.html', { cwd: ROOT }).toString()
-  import('fs').then(fs => fs.writeFileSync(join(DIST, 'index.html'), html))
+// 元のぽいんとらぼ index.html を static-root-index.html からコピー
+const staticRootIndex = join(ROOT, 'static-root-index.html')
+if (existsSync(staticRootIndex)) {
+  cpSync(staticRootIndex, join(DIST, 'index.html'))
   console.log('✓ index.html (original) restored')
-} catch (e) {
-  console.warn('⚠ index.html の復元に失敗:', e.message)
+} else {
+  console.warn('⚠ static-root-index.html が見つかりません')
 }
 
 // コピーする静的ディレクトリ一覧
