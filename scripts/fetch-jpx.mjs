@@ -423,7 +423,9 @@ async function main() {
   }
 
   console.log('\n=== 完了 ===')
-  if (!investorOk || !marginOk || !vixOk) process.exit(1)
+  // VIXはYahoo Finance のIP制限で失敗することがあるため警告のみ
+  if (!investorOk || !marginOk) process.exit(1)
+  if (!vixOk) console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
