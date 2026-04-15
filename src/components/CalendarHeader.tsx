@@ -38,7 +38,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
         {/* ロゴ（デスクトップのみ） */}
         {!isMobile && (
           <span style={styles.logo}>
-            <img src="/logo.svg" alt="ぽいロボ" style={{ height: 28, objectFit: 'contain' }} />
+            <img src="/logo.svg" alt="ぽいラボ" style={{ height: 28, objectFit: 'contain' }} />
           </span>
         )}
 

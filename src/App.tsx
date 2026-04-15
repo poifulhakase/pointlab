@@ -131,7 +131,6 @@ export default function App() {
             isTablet={isTablet}
             macroFilter={macroFilter}
             onMacroFilterChange={setMacroFilter}
-            onCreateNote={() => { cal.goToDate(cal.today); openNote(cal.today) }}
           />
         )}
 
@@ -179,38 +178,59 @@ export default function App() {
             </div>
           )}
 
-          {/* スマホ月ビュー専用：ナビバー（決算シーズン帯の直上） */}
-          {isMobile && cal.view === 'month' && (
-            <div style={styles.mobileMonthNav}>
-              <button style={styles.subTodayBtn} className="glass" onClick={cal.goToday}>今日</button>
-              <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ">
-                <ChevronLeft />
-              </button>
-              <h1 style={{ ...styles.subLabel, fontSize: 15 }}>{cal.label()}</h1>
-              <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ">
-                <ChevronRight />
-              </button>
-            </div>
-          )}
-
           {cal.view === 'month' && (
-            <MonthView
-              days={cal.getMonthGrid()}
-              today={cal.today}
-              current={cal.current}
-              isToday={cal.isToday}
-              isCurrentMonth={cal.isCurrentMonth}
-              onClickDay={(d) => { cal.goToDate(d); if (isMobile) cal.setView('day') }}
-              onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
-              getMarkers={getMarkers}
-              getSqMarkers={getSqMarkers}
-              getMacroEvents={getMacroEvents}
-              isMarketClosed={isMarketClosed}
-              getClosedReason={getClosedReason}
-              hasNote={hasNote}
-              getNoteTitle={getNoteTitle}
-              isMobile={isMobile}
-            />
+            isMobile ? (
+              /* スマホ月ビュー：上部余白にナビ中央寄せ、カレンダーは下寄せ90% */
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <div style={styles.mobileMonthNav}>
+                  <button style={styles.subTodayBtn} className="glass" onClick={cal.goToday}>今日</button>
+                  <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ">
+                    <ChevronLeft />
+                  </button>
+                  <h1 style={{ ...styles.subLabel, fontSize: 15 }}>{cal.label()}</h1>
+                  <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ">
+                    <ChevronRight />
+                  </button>
+                </div>
+                <div style={{ flex: 9, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <MonthView
+                    days={cal.getMonthGrid()}
+                    today={cal.today}
+                    current={cal.current}
+                    isToday={cal.isToday}
+                    isCurrentMonth={cal.isCurrentMonth}
+                    onClickDay={(d) => { cal.goToDate(d); cal.setView('day') }}
+                    onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
+                    getMarkers={getMarkers}
+                    getSqMarkers={getSqMarkers}
+                    getMacroEvents={getMacroEvents}
+                    isMarketClosed={isMarketClosed}
+                    getClosedReason={getClosedReason}
+                    hasNote={hasNote}
+                    getNoteTitle={getNoteTitle}
+                    isMobile={isMobile}
+                  />
+                </div>
+              </div>
+            ) : (
+              <MonthView
+                days={cal.getMonthGrid()}
+                today={cal.today}
+                current={cal.current}
+                isToday={cal.isToday}
+                isCurrentMonth={cal.isCurrentMonth}
+                onClickDay={(d) => { cal.goToDate(d) }}
+                onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
+                getMarkers={getMarkers}
+                getSqMarkers={getSqMarkers}
+                getMacroEvents={getMacroEvents}
+                isMarketClosed={isMarketClosed}
+                getClosedReason={getClosedReason}
+                hasNote={hasNote}
+                getNoteTitle={getNoteTitle}
+                isMobile={isMobile}
+              />
+            )
           )}
           {cal.view === 'week' && (
             <WeekView
@@ -324,8 +344,9 @@ const styles: Record<string, React.CSSProperties> = {
   calTabGroup: { display: 'flex', borderRadius: 10, overflow: 'hidden', padding: 3, gap: 2 },
   calSubCenter: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 },
   mobileMonthNav: {
+    flex: 1,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: 4, padding: '6px 12px 4px', flexShrink: 0,
+    gap: 4,
   },
   subTodayBtn: { padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, color: 'var(--text)', flexShrink: 0 },
   subNavBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 7, color: 'var(--text-sub)', flexShrink: 0 },

@@ -11,7 +11,6 @@ type Props = {
   isTablet: boolean
   macroFilter: MacroFilter
   onMacroFilterChange: (f: MacroFilter) => void
-  onCreateNote: () => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color: string }[] = [
@@ -19,7 +18,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color:
   { key: 'jp', label: '日本',  sub: '日銀決定会合・短観',             color: '#f87171' },
 ]
 
-export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, onCreateNote }: Props) {
+export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange }: Props) {
   const isFixed = isMobile
 
   const sidebarStyle: React.CSSProperties = isFixed
@@ -70,17 +69,8 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
     <aside style={sidebarStyle} className={isFixed ? '' : 'glass'}>
       <div style={contentStyle}>
 
-        {/* 作成ボタン */}
-        <button style={styles.createBtn} className="glass" onClick={onCreateNote}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          本日のスケジュール追加
-        </button>
-
-        {/* ミニカレンダー（月タイトルをMonthViewのカード先頭に合わせる） */}
-        <div style={{ marginTop: 46 }}>
+        {/* ミニカレンダー */}
+        <div style={{ marginTop: 12 }}>
           <MiniCalendar
             current={current}
             today={today}
