@@ -31,6 +31,10 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/hakaseAI", "destination": "https://hakase-ai.vercel.app", "permanent": false },
+    { "source": "/hakaseAI/(.*)", "destination": "https://hakase-ai.vercel.app/$1", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/stock-calendar/(.*)", "destination": "/index.html" },
     { "source": "/stock-calendar", "destination": "/index.html" }
