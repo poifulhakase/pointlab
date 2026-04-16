@@ -430,8 +430,7 @@ function QuantSettingsModal({
           <div style={ms.section}>
             <div style={ms.sectionTitle}>ポジション管理用プロンプト</div>
             <p style={ms.desc}>
-              SDS-7.7 専用のリスク管理＆ディシプリン・エンジン。
-              松井証券のスクリーンショットと一緒に Gemini に貼り付けて使用します。
+              Claudeにプロンプト＋証券口座のスクショを貼り付けて使用します。
             </p>
             <div style={ms.promptPreview}>
               <span style={{ color: 'var(--text-sub)' }}>🛡️ SDS-7.7 専用：リスク管理＆ディシプリン・エンジン</span>
