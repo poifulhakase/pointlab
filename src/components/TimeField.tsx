@@ -169,7 +169,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'inline-flex', alignItems: 'center',
   },
   input: {
-    width: 68,
+    width: 88,
     padding: '5px 28px 5px 10px',
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.12)',
