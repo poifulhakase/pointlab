@@ -407,10 +407,9 @@ function QuantSettingsModal({
 
           {/* AI 分析プロンプト */}
           <div style={ms.section}>
-            <div style={ms.sectionTitle}>AI 分析用プロンプト</div>
+            <div style={ms.sectionTitle}>クオンツ分析用プロンプト</div>
             <p style={ms.desc}>
-              スイングトレード向けの分析プロンプト＋データをまとめてコピーします。
-              Google Gemini にそのまま貼り付けて使用できます。
+              Google Gemini[思考モード]にそのまま貼り付けて使用できます。
             </p>
             <div style={ms.promptPreview}>
               <span style={{ color: 'var(--text-sub)' }}>あなたはプロのクオンツアナリストです。</span>
