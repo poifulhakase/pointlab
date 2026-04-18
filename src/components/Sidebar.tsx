@@ -1,4 +1,5 @@
 import { MiniCalendar } from './MiniCalendar'
+import { ClockWidget } from './ClockWidget'
 import { type MacroFilter } from '../utils/macroCalendar'
 
 type Props = {
@@ -69,18 +70,14 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
     <aside style={sidebarStyle} className={isFixed ? '' : 'glass'}>
       <div style={contentStyle}>
 
-        {/* ミニカレンダー */}
-        <div style={{ marginTop: 12 }}>
-          <MiniCalendar
-            current={current}
-            today={today}
-            onSelect={onSelect}
-            onNavigate={onNavigate}
-          />
-        </div>
+        {/* 時計・市場ステータス・カウントダウン */}
+        <ClockWidget isMobile={isMobile} />
 
-        {/* ──── マーケット情報フィルター（左下） ──── */}
-        <div style={styles.filterWrap}>
+        {/* ミニカレンダー＋マーケットイベント（下部固定） */}
+        <div style={{ marginTop: 'auto' }}>
+
+        {/* ──── マーケット情報フィルター ──── */}
+        <div style={{ ...styles.filterWrap, marginTop: 0, borderTop: 'none', borderBottom: '1px solid var(--border-dim)' }}>
           <div style={styles.filterHeading}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/>
@@ -116,6 +113,16 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
               </span>
             </label>
           ))}
+        </div>
+
+          <div style={{ padding: '0 0 12px' }}>
+            <MiniCalendar
+              current={current}
+              today={today}
+              onSelect={onSelect}
+              onNavigate={onNavigate}
+            />
+          </div>
         </div>
 
       </div>

@@ -20,9 +20,10 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function YoutubeView({ theme, isMobile }: {
+export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
   theme: 'dark' | 'light'
   isMobile: boolean
+  onChannelsSaved?: (channels: Channel[]) => void
 }) {
   const [channels, setChannels]         = useState<Channel[]>(loadChannels)
   const [activeIdx, setActiveIdx]       = useState(0)
@@ -100,6 +101,7 @@ export function YoutubeView({ theme, isMobile }: {
       const updated = [...channels, { id, name }]
       setChannels(updated)
       saveChannels(updated)
+      onChannelsSaved?.(updated)
       setActiveIdx(updated.length - 1)
       setNewId('')
     } catch {
@@ -133,6 +135,7 @@ export function YoutubeView({ theme, isMobile }: {
     const updated = [...channels, { id, name }]
     setChannels(updated)
     saveChannels(updated)
+    onChannelsSaved?.(updated)
     setActiveIdx(updated.length - 1)
     setManualMode(false)
     setManualChannelId('')
@@ -146,6 +149,7 @@ export function YoutubeView({ theme, isMobile }: {
       const updated = channels.map((c, i) => i === idx ? { ...c, name } : c)
       setChannels(updated)
       saveChannels(updated)
+      onChannelsSaved?.(updated)
     } catch { /* 失敗時は何もしない */ }
   }
 
@@ -159,6 +163,7 @@ export function YoutubeView({ theme, isMobile }: {
     const updated = channels.filter((_, i) => i !== idx)
     setChannels(updated)
     saveChannels(updated)
+    onChannelsSaved?.(updated)
     setActiveIdx(prev => Math.min(prev, Math.max(0, updated.length - 1)))
   }
 

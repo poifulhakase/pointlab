@@ -68,7 +68,8 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 ...styles.cell,
                 padding: isMobile ? '3px' : '6px',
                 opacity: dim ? 0.35 : 1,
-                background: closed && !dim ? 'var(--closed-cell-bg)' : undefined,
+                background: td && !dim ? 'rgba(96,165,250,0.18)' : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
+                borderTop: td && !dim ? '3px solid rgba(96,165,250,0.85)' : undefined,
                 cursor: 'pointer',
               }}
               className="glass"
@@ -80,9 +81,10 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                     ...styles.dateNum,
                     width: isMobile ? 22 : 26, height: isMobile ? 22 : 26,
                     fontSize: isMobile ? 11 : 13,
-                    color: td ? 'rgba(255,255,255,0.95)' : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
-                    background: td ? 'var(--accent-glass)' : 'transparent',
-                    boxShadow: td ? '0 2px 10px rgba(96,165,250,0.4)' : 'none',
+                    color: td ? 'rgba(96,165,250,0.95)' : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
+                    background: 'transparent',
+                    boxShadow: 'none',
+                    fontWeight: td ? 700 : undefined,
                   }}
                   onClick={e => { e.stopPropagation(); onClickDay(d) }}
                 >

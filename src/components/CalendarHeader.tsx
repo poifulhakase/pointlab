@@ -35,11 +35,15 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
           </button>
         )}
 
-        {/* ロゴ（デスクトップのみ） */}
+        {/* ロゴ（デスクトップのみ）→ クリックで仕様書ビューへ */}
         {!isMobile && (
-          <span style={styles.logo}>
-            <img src="/logo.svg" alt="ぽいラボ" style={{ height: 28, objectFit: 'contain' }} />
-          </span>
+          <button
+            style={{ ...styles.logo, cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+            onClick={() => setView('spec')}
+            title="説明書を開く"
+          >
+            <img src="/logo.svg" alt="ぽいらぼ" style={{ height: 28, objectFit: 'contain', opacity: view === 'spec' ? 1 : 0.85, transition: 'opacity 0.15s' }} />
+          </button>
         )}
 
         {/* 今日ボタン・ナビ・ラベルはcalSubBarに移動したため非表示 */}

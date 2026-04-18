@@ -62,11 +62,22 @@ function parseYahooVix(json: unknown): Point[] {
 // 各プロキシは { url, parse } 形式で定義
 type ProxyDef = { url: (u: string) => string; parse: (res: Response) => Promise<unknown> }
 
-const parseRaw = async (res: Response) => JSON.parse(await res.text())
+const parseRaw = async (res: Response) => {
+  const text = await res.text()
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`プロキシ応答エラー: ${text.slice(0, 80)}`)
+  }
+}
 const parseAlloriginsGet = async (res: Response) => {
   const w = await res.json() as { contents?: string }
   if (!w.contents) throw new Error('empty contents')
-  return JSON.parse(w.contents)
+  try {
+    return JSON.parse(w.contents)
+  } catch {
+    throw new Error(`プロキシ応答エラー: ${w.contents.slice(0, 80)}`)
+  }
 }
 
 const PROXY_DEFS: ProxyDef[] = [
@@ -109,13 +120,12 @@ async function fetchVix(force = false): Promise<Point[]> {
   return data
 }
 
-// ── VIX 水準カラー ────────────────────────────────
-function vixColor(val: number): string {
-  if (val >= 40) return 'rgba(255,80,60,1)'
-  if (val >= 30) return 'rgba(255,120,80,0.95)'
-  if (val >= 25) return 'rgba(255,185,60,0.95)'
-  if (val >= 20) return 'rgba(255,210,100,0.90)'
-  return 'rgba(96,200,140,0.9)'
+// ── VIX 水準カラー（温度計カラー） ───────────────
+function vixColor(val: number, isDark: boolean): string {
+  if (val >= 40) return isDark ? 'rgba(255,60,60,0.95)'   : 'rgba(200,30,30,0.95)'
+  if (val >= 30) return isDark ? 'rgba(255,130,50,0.95)'  : 'rgba(190,80,0,0.95)'
+  if (val >= 20) return isDark ? 'rgba(255,230,130,0.95)' : 'rgba(140,110,0,0.95)'
+  return isDark ? 'rgba(96,165,250,0.95)' : 'rgba(37,99,235,0.95)'
 }
 function vixLabel(val: number): string {
   if (val >= 40) return '極度恐怖'
@@ -171,14 +181,15 @@ export function VixPanel({ theme }: Props) {
     const isDark    = theme === 'dark'
     const textColor = isDark ? 'rgba(180,185,210,0.85)' : 'rgba(40,45,70,0.85)'
     const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-    const lineColor = isDark ? 'rgba(96,165,250,0.9)'   : 'rgba(37,99,235,0.9)'
+    const lineColor = isDark ? 'rgba(255,255,255,0.88)' : 'rgba(40,40,60,0.88)'
 
     const chart = createChart(el, {
       layout: {
         background: {
+          // 上=赤（高恐怖・過熱）/ 下=青（低恐怖・冷静） — NS倍率と共通の温度計配色
           type: ColorType.VerticalGradient,
-          topColor:    isDark ? 'rgba(255,80,60,0.13)'   : 'rgba(255,80,60,0.08)',
-          bottomColor: isDark ? 'rgba(96,200,140,0.13)'  : 'rgba(96,200,140,0.08)',
+          topColor:    isDark ? 'rgba(255,60,60,0.18)'  : 'rgba(255,60,60,0.11)',
+          bottomColor: isDark ? 'rgba(37,99,235,0.18)'  : 'rgba(37,99,235,0.11)',
         },
         textColor,
         fontSize: 11,
@@ -199,7 +210,7 @@ export function VixPanel({ theme }: Props) {
       crosshairMarkerVisible: true,
       crosshairMarkerRadius: 4,
       priceLineVisible: true,
-      priceLineColor: isDark ? 'rgba(96,165,250,0.4)' : 'rgba(37,99,235,0.4)',
+      priceLineColor: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(40,40,60,0.35)',
       priceLineStyle: 2, // dashed
     })
 
@@ -233,6 +244,7 @@ export function VixPanel({ theme }: Props) {
     ? Math.round((latest - prev) * 100) / 100
     : null
   const marketOpen = isUsMarketOpen()
+  const isDark = theme === 'dark'
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -246,17 +258,17 @@ export function VixPanel({ theme }: Props) {
         ) : latest != null ? (
           <>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: vixColor(latest) }}>
+              <span style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: vixColor(latest, isDark) }}>
                 {latest.toFixed(2)}
               </span>
               {change != null && (
                 <span style={{ fontSize: 12, fontWeight: 600,
-                  color: change > 0 ? 'rgba(255,120,80,0.95)' : 'rgba(96,200,140,0.9)' }}>
+                  color: change > 0 ? 'rgba(255,120,80,0.95)' : 'rgba(96,165,250,0.9)' }}>
                   {change > 0 ? '+' : ''}{change.toFixed(2)}
                 </span>
               )}
               <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 4,
-                color: vixColor(latest), opacity: 0.85 }}>
+                color: vixColor(latest, isDark), opacity: 0.85 }}>
                 {vixLabel(latest)}
               </span>
               <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 'auto',

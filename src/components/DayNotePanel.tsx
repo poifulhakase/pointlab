@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { type CheckItem, getNote, saveNote } from '../utils/noteStorage'
+import { type CheckItem, type DayNote, getNote, saveNote } from '../utils/noteStorage'
 import { TimeField } from './TimeField'
 import { CustomSelect } from './CustomSelect'
 
@@ -8,10 +8,11 @@ type Props = {
   prefillTime?: string
   onClose: () => void
   onSave: () => void
+  onAfterSave?: (date: Date, note: DayNote) => void
   isMobile?: boolean
 }
 
-export function DayNotePanel({ date, prefillTime, onClose, onSave, isMobile }: Props) {
+export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, isMobile }: Props) {
   const [title, setTitle]         = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime]     = useState('')
@@ -55,8 +56,10 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, isMobile }: P
 
   const persist = (t: string, st: string, et: string, m: string, cl: CheckItem[], sc: boolean, am: number) => {
     if (!date) return
-    saveNote(date, { title: t, startTime: st, endTime: et, memo: m, checklist: cl, scheduled: sc, alertMinutes: am })
+    const note: DayNote = { title: t, startTime: st, endTime: et, memo: m, checklist: cl, scheduled: sc, alertMinutes: am }
+    saveNote(date, note)
     onSave()
+    onAfterSave?.(date, note)
   }
 
   const handleTitle      = (v: string) => { setTitle(v);      persist(v, startTime, endTime, memo, checklist, scheduled, alertMinutes) }
@@ -113,6 +116,21 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, isMobile }: P
     }
   }, [isOpen])
 
+  // visualViewport でキーボード表示を検出（スマホのみ）
+  const [vvHeight, setVvHeight] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  )
+  useEffect(() => {
+    if (!isMobile) return
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => setVvHeight(vv.height)
+    vv.addEventListener('resize', onResize)
+    onResize()
+    return () => vv.removeEventListener('resize', onResize)
+  }, [isMobile])
+  const keyboardOpen = isMobile && vvHeight < window.innerHeight * 0.80
+
   const dateLabel = date
     ? date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
     : ''
@@ -138,18 +156,30 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, isMobile }: P
       <div
         style={{
           position: 'fixed',
-          top: '50%', left: '50%',
-          transform: isOpen
-            ? 'translate(-50%, -50%) scale(1)'
-            : 'translate(-50%, -50%) scale(0.96)',
+          // キーボード表示時: 上端固定 / 通常: 中央
+          ...(keyboardOpen
+            ? {
+                top: 8,
+                left: '50%',
+                transform: isOpen ? 'translateX(-50%) scale(1)' : 'translateX(-50%) scale(0.96)',
+                maxHeight: vvHeight - 16,
+              }
+            : {
+                top: '50%',
+                left: '50%',
+                transform: isOpen
+                  ? 'translate(-50%, -50%) scale(1)'
+                  : 'translate(-50%, -50%) scale(0.96)',
+                ...(isMobile
+                  ? { maxHeight: 'calc(100vh - 80px)' }
+                  : { height: 'calc(100vh - 80px)' }),
+              }
+          ),
           width: 'min(750px, calc(100vw - 32px))',
-          ...(isMobile
-            ? { maxHeight: 'calc(100vh - 80px)' }
-            : { height: 'calc(100vh - 80px)' }),
           zIndex: 300,
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
-          transition: 'opacity 0.15s, transform 0.15s cubic-bezier(0.4,0,0.2,1)',
+          transition: 'opacity 0.15s, transform 0.15s cubic-bezier(0.4,0,0.2,1), top 0.2s cubic-bezier(0.4,0,0.2,1), max-height 0.2s',
           willChange: 'transform, opacity',
           display: 'flex', flexDirection: 'column',
           background: 'var(--modal-bg)',
