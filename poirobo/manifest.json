@@ -1,6 +1,6 @@
 {
-  "name": "ぽいロボ",
-  "short_name": "ぽいロボ",
+  "name": "ぽいらぼ",
+  "short_name": "ぽいらぼ",
   "description": "株式トレード判断補助ツール。地雷回避重視で退場させない。",
   "start_url": "./index.html",
   "display": "standalone",

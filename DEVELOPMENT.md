@@ -12,7 +12,7 @@ PointLab/                    # ワークスペースルート
     ├── package.json         # ビルド用スクリプト
     ├── index.html           # サイトトップ
     ├── poinavi/             # ぽいナビ（地図・翻訳・ラボノート）
-    ├── poirobo/             # ぽいロボ
+    ├── poirobo/             # ぽいらぼ
     ├── hakaseAI/            # 博士AI
     └── admin/               # 管理画面
 ```

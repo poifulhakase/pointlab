@@ -1,4 +1,4 @@
-/* ぽいロボ - 共通スタイル（poinavi style.css の後に読み込み） */
+/* ぽいらぼ - 共通スタイル（poinavi style.css の後に読み込み） */
 .poirobo-blank-main {
   flex: 1;
   display: flex;
@@ -10,7 +10,7 @@ body.dark-mode .poirobo-blank-main {
   background: #1a1a1a;
 }
 
-/* シールド・シグナル・ぽいロボ用 メインコンテナ */
+/* シールド・シグナル・ぽいらぼ用 メインコンテナ */
 .poirobo-main {
   flex: 1;
   display: flex;

@@ -130,7 +130,7 @@ if (fs.existsSync(path.join(HAKASEAI_DIR, 'index.html'))) {
   xml += simpleUrl(`${BASE}/hakaseAI/index.html`, 'weekly', 0.8);
 }
 
-// ぽいロボ
+// ぽいらぼ
 if (fs.existsSync(POIROBO_DIR)) {
   for (const f of fs.readdirSync(POIROBO_DIR)) {
     if (f.endsWith('.html')) {
