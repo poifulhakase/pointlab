@@ -42,7 +42,7 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
       ? notes.map(n => n.id === editingNote.id ? { ...n, content, updatedAt: new Date().toISOString() } : n)
       : [...notes, { ...editingNote, content, updatedAt: new Date().toISOString() }]
     onStickyNotesSaved(updated)
-    setEditingNote(null)
+    // モーダルは閉じない（保存後も編集継続できるようにする）
   }
 
   const handleDeleteNote = (id: string) => {
