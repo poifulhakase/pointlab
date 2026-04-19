@@ -95,6 +95,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   }
   const handleDelete = () => {
     if (!date) return
+    if (!window.confirm('このスケジュールを削除してよろしいですか？')) return
     saveNote(date, { title: '', startTime: '', endTime: '', memo: '', checklist: [] })
     onSave()
     onClose()

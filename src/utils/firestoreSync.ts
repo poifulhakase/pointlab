@@ -4,6 +4,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type { DayNote } from './noteStorage'
+import { loadStickyNotes, saveStickyNotes, type StickyNote } from './stickyNotes'
 
 type Channel = { id: string; name: string }
 
@@ -235,4 +236,59 @@ export async function syncChannelsOnLogin(uid: string): Promise<void> {
 /** チャンネルリストを Firestore に保存 */
 export async function saveChannelsToFirestore(uid: string, channels: Channel[]): Promise<void> {
   await setDoc(channelsDoc(uid), { channels, updatedAt: new Date().toISOString() })
+}
+
+// ── スティッキーメモ同期 ──────────────────────────────────
+
+function stickyNotesDoc(uid: string) {
+  return doc(db, 'users', uid, 'data', 'stickyNotes')
+}
+
+/**
+ * ログイン時のスティッキーメモ初期同期。
+ * Firestore優先でマージ。ローカルのみのメモを Firestore にアップロード。
+ * 同期後のメモ配列を返す。
+ */
+export async function syncStickyNotesOnLogin(uid: string): Promise<StickyNote[]> {
+  const snap = await getDoc(stickyNotesDoc(uid))
+  const local = loadStickyNotes()
+
+  if (!snap.exists()) {
+    if (local.length > 0) {
+      await setDoc(stickyNotesDoc(uid), { notes: local, updatedAt: new Date().toISOString() })
+    }
+    return local
+  }
+
+  const remote: StickyNote[] = snap.data().notes ?? []
+  const remoteIds = new Set(remote.map(n => n.id))
+  const localOnly = local.filter(n => !remoteIds.has(n.id))
+  const merged = [...remote, ...localOnly].slice(0, 2) // 最大2件
+
+  saveStickyNotes(merged)
+
+  if (localOnly.length > 0) {
+    await setDoc(stickyNotesDoc(uid), { notes: merged, updatedAt: new Date().toISOString() })
+  }
+
+  return merged
+}
+
+/** スティッキーメモを Firestore に保存 */
+export async function saveStickyNotesToFirestore(uid: string, notes: StickyNote[]): Promise<void> {
+  await setDoc(stickyNotesDoc(uid), { notes, updatedAt: new Date().toISOString() })
+}
+
+/** 他デバイスからのスティッキーメモ変更を購読 */
+export function subscribeToStickyNotes(uid: string, onChange: (notes: StickyNote[]) => void): () => void {
+  return onSnapshot(
+    stickyNotesDoc(uid),
+    (snap) => {
+      if (!snap.exists() || snap.metadata.hasPendingWrites) return
+      const notes: StickyNote[] = snap.data().notes ?? []
+      saveStickyNotes(notes)
+      onChange(notes)
+    },
+    (err) => console.error('[Firestore] sticky notes error:', err)
+  )
 }

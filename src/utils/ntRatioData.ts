@@ -9,14 +9,24 @@ export interface NtRatioPoint {
 }
 
 const NT_CACHE_KEY = 'poical-ns-ratio-data'
-const NT_CACHE_TTL = 30 * 60 * 1000 // 30分
+const NT_CACHE_TTL_OPEN   = 30 * 60 * 1000       // 30分（市場オープン中）
+const NT_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000   // 2時間（市場クローズ中）
+
+function isUsMarketOpen(): boolean {
+  const now = new Date()
+  const day = now.getUTCDay()
+  if (day === 0 || day === 6) return false
+  const mins = now.getUTCHours() * 60 + now.getUTCMinutes()
+  return mins >= 13 * 60 + 30 && mins <= 21 * 60 + 15
+}
 
 function readNtCache(): { data: NtRatioPoint[]; fetchedAt: number } | null {
   try {
     const raw = localStorage.getItem(NT_CACHE_KEY)
     if (!raw) return null
     const cache = JSON.parse(raw) as { data: NtRatioPoint[]; fetchedAt: number }
-    if (Date.now() - cache.fetchedAt > NT_CACHE_TTL) return null
+    const ttl = isUsMarketOpen() ? NT_CACHE_TTL_OPEN : NT_CACHE_TTL_CLOSED
+    if (Date.now() - cache.fetchedAt > ttl) return null
     return cache
   } catch { return null }
 }
@@ -76,7 +86,9 @@ const PROXY_DEFS: ProxyDef[] = [
 
 async function tryFetch(target: string): Promise<Map<string, number>> {
   let lastErr = ''
-  for (const def of PROXY_DEFS) {
+  for (let i = 0; i < PROXY_DEFS.length; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 500 * i))
+    const def = PROXY_DEFS[i]
     try {
       const res = await fetch(def.url(target), { signal: timeoutSignal(12000) })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -106,7 +118,7 @@ export async function fetchNtRatioData(force = false): Promise<NtRatioPoint[]> {
 
   // 日経225 と S&P500 を直列取得（同一プロキシへの同時リクエストによるレート制限を回避）
   const nikkeiMap = await fetchSymbol('^N225')
-  await new Promise(r => setTimeout(r, 800))
+  await new Promise(r => setTimeout(r, 1500))
   const sp500Map  = await fetchSymbol('^GSPC')
 
   // 共通日付のみ抽出・計算

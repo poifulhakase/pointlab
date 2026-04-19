@@ -1,0 +1,317 @@
+{
+  "updatedAt": "2026-04-19T11:13:35.822Z",
+  "data": [
+    {
+      "date": "2025/04/18",
+      "label": "4月第3週",
+      "longBal": 1468067,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/04/25",
+      "label": "4月第4週",
+      "longBal": 1543295,
+      "shortBal": 75228
+    },
+    {
+      "date": "2025/05/02",
+      "label": "5月第1週",
+      "longBal": 1594434,
+      "shortBal": 51139
+    },
+    {
+      "date": "2025/05/09",
+      "label": "5月第2週",
+      "longBal": 1610637,
+      "shortBal": 16203
+    },
+    {
+      "date": "2025/05/16",
+      "label": "5月第3週",
+      "longBal": 1384035,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/05/23",
+      "label": "5月第4週",
+      "longBal": 1746597,
+      "shortBal": 362562
+    },
+    {
+      "date": "2025/05/30",
+      "label": "5月第5週",
+      "longBal": 1747576,
+      "shortBal": 979
+    },
+    {
+      "date": "2025/06/06",
+      "label": "6月第1週",
+      "longBal": 1618627,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/06/13",
+      "label": "6月第2週",
+      "longBal": 1714667,
+      "shortBal": 96040
+    },
+    {
+      "date": "2025/06/20",
+      "label": "6月第3週",
+      "longBal": 1638170,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/06/27",
+      "label": "6月第4週",
+      "longBal": 1490994,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/07/04",
+      "label": "7月第1週",
+      "longBal": 1390454,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/07/11",
+      "label": "7月第2週",
+      "longBal": 1249384,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/07/18",
+      "label": "7月第3週",
+      "longBal": 1246647,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/07/25",
+      "label": "7月第4週",
+      "longBal": 1551568,
+      "shortBal": 304921
+    },
+    {
+      "date": "2025/08/01",
+      "label": "8月第1週",
+      "longBal": 1414933,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/08/08",
+      "label": "8月第2週",
+      "longBal": 1765828,
+      "shortBal": 350895
+    },
+    {
+      "date": "2025/08/15",
+      "label": "8月第3週",
+      "longBal": 2127726,
+      "shortBal": 361898
+    },
+    {
+      "date": "2025/08/22",
+      "label": "8月第4週",
+      "longBal": 2127523,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/08/29",
+      "label": "8月第5週",
+      "longBal": 2151391,
+      "shortBal": 23868
+    },
+    {
+      "date": "2025/09/05",
+      "label": "9月第1週",
+      "longBal": 2141760,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/09/12",
+      "label": "9月第2週",
+      "longBal": 2117821,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/09/19",
+      "label": "9月第3週",
+      "longBal": 2394417,
+      "shortBal": 276596
+    },
+    {
+      "date": "2025/09/26",
+      "label": "9月第4週",
+      "longBal": 2588037,
+      "shortBal": 193620
+    },
+    {
+      "date": "2025/10/03",
+      "label": "10月第1週",
+      "longBal": 2281282,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/10/10",
+      "label": "10月第2週",
+      "longBal": 2588893,
+      "shortBal": 307611
+    },
+    {
+      "date": "2025/10/17",
+      "label": "10月第3週",
+      "longBal": 2161715,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/10/24",
+      "label": "10月第4週",
+      "longBal": 2454997,
+      "shortBal": 293282
+    },
+    {
+      "date": "2025/10/31",
+      "label": "10月第5週",
+      "longBal": 2148377,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/11/07",
+      "label": "11月第1週",
+      "longBal": 1866481,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/11/14",
+      "label": "11月第2週",
+      "longBal": 2031181,
+      "shortBal": 164700
+    },
+    {
+      "date": "2025/11/21",
+      "label": "11月第3週",
+      "longBal": 2307435,
+      "shortBal": 276254
+    },
+    {
+      "date": "2025/11/28",
+      "label": "11月第4週",
+      "longBal": 2404293,
+      "shortBal": 96858
+    },
+    {
+      "date": "2025/12/05",
+      "label": "12月第1週",
+      "longBal": 2354130,
+      "shortBal": 0
+    },
+    {
+      "date": "2025/12/12",
+      "label": "12月第2週",
+      "longBal": 2498313,
+      "shortBal": 144183
+    },
+    {
+      "date": "2025/12/19",
+      "label": "12月第3週",
+      "longBal": 2511026,
+      "shortBal": 12713
+    },
+    {
+      "date": "2025/12/26",
+      "label": "12月第4週",
+      "longBal": 2655212,
+      "shortBal": 144186
+    },
+    {
+      "date": "2025/12/30",
+      "label": "12月第5週",
+      "longBal": 2705613,
+      "shortBal": 50401
+    },
+    {
+      "date": "2026/01/09",
+      "label": "1月第2週",
+      "longBal": 2623511,
+      "shortBal": 0
+    },
+    {
+      "date": "2026/01/16",
+      "label": "1月第3週",
+      "longBal": 2868009,
+      "shortBal": 244498
+    },
+    {
+      "date": "2026/01/23",
+      "label": "1月第4週",
+      "longBal": 2847304,
+      "shortBal": 0
+    },
+    {
+      "date": "2026/01/30",
+      "label": "1月第5週",
+      "longBal": 2362473,
+      "shortBal": 0
+    },
+    {
+      "date": "2026/02/06",
+      "label": "2月第1週",
+      "longBal": 2915521,
+      "shortBal": 553048
+    },
+    {
+      "date": "2026/02/13",
+      "label": "2月第2週",
+      "longBal": 3339712,
+      "shortBal": 424191
+    },
+    {
+      "date": "2026/02/20",
+      "label": "2月第3週",
+      "longBal": 3470025,
+      "shortBal": 130313
+    },
+    {
+      "date": "2026/02/27",
+      "label": "2月第4週",
+      "longBal": 3868352,
+      "shortBal": 398327
+    },
+    {
+      "date": "2026/03/06",
+      "label": "3月第1週",
+      "longBal": 3184214,
+      "shortBal": 0
+    },
+    {
+      "date": "2026/03/13",
+      "label": "3月第2週",
+      "longBal": 2791062,
+      "shortBal": 0
+    },
+    {
+      "date": "2026/03/19",
+      "label": "3月第3週",
+      "longBal": 2839893,
+      "shortBal": 48831
+    },
+    {
+      "date": "2026/03/27",
+      "label": "3月第4週",
+      "longBal": 3512558,
+      "shortBal": 672665
+    },
+    {
+      "date": "2026/04/03",
+      "label": "4月第1週",
+      "longBal": 3363553,
+      "shortBal": 0
+    },
+    {
+      "date": "2026/04/10",
+      "label": "4月第2週",
+      "longBal": 3719272,
+      "shortBal": 355719
+    }
+  ]
+}

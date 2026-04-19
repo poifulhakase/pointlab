@@ -5,17 +5,24 @@ import {
 } from 'firebase/auth'
 import type { User } from 'firebase/auth'
 import { auth } from '../utils/firebase'
-import { initialSync, saveNoteToFirestore, subscribeToNotes, syncChannelsOnLogin, saveChannelsToFirestore } from '../utils/firestoreSync'
+import {
+  initialSync, saveNoteToFirestore, subscribeToNotes,
+  syncChannelsOnLogin, saveChannelsToFirestore,
+  syncStickyNotesOnLogin, saveStickyNotesToFirestore, subscribeToStickyNotes,
+} from '../utils/firestoreSync'
 import { dateKey } from '../utils/noteStorage'
 import type { DayNote } from '../utils/noteStorage'
+import { loadStickyNotes, saveStickyNotes, type StickyNote } from '../utils/stickyNotes'
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error'
 
 export function useFirebaseSync(refreshNoteMap: () => void) {
-  const [user, setUser]             = useState<User | null>(null)
+  const [user, setUser]               = useState<User | null>(null)
   const [syncStatus, setSyncStatus]   = useState<SyncStatus>('idle')
   const [authLoading, setAuthLoading] = useState(true)
-  const unsubNotesRef = useRef<(() => void) | null>(null)
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(() => loadStickyNotes())
+  const unsubNotesRef  = useRef<(() => void) | null>(null)
+  const unsubStickyRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     let unsubAuth: (() => void) | null = null
@@ -25,6 +32,8 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
         setAuthLoading(false)
         unsubNotesRef.current?.()
         unsubNotesRef.current = null
+        unsubStickyRef.current?.()
+        unsubStickyRef.current = null
 
         setUser(u)
 
@@ -35,12 +44,21 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
 
         setSyncStatus('syncing')
         try {
-          await Promise.all([initialSync(u.uid), syncChannelsOnLogin(u.uid)])
+          const [, , syncedSticky] = await Promise.all([
+            initialSync(u.uid),
+            syncChannelsOnLogin(u.uid),
+            syncStickyNotesOnLogin(u.uid),
+          ])
           refreshNoteMap()
+          setStickyNotes(syncedSticky)
           setSyncStatus('synced')
 
           unsubNotesRef.current = subscribeToNotes(u.uid, () => {
             refreshNoteMap()
+          })
+
+          unsubStickyRef.current = subscribeToStickyNotes(u.uid, (notes) => {
+            setStickyNotes(notes)
           })
         } catch (err) {
           console.error('[Firebase] sync error:', err)
@@ -54,6 +72,7 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     return () => {
       unsubAuth?.()
       unsubNotesRef.current?.()
+      unsubStickyRef.current?.()
     }
   }, []) // refreshNoteMap は useCallback([]) で安定
 
@@ -82,5 +101,19 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     )
   }
 
-  return { user, signIn, signOut, syncStatus, handleAfterSave, handleChannelsSaved, authLoading }
+  /** スティッキーメモ保存（localStorage + Firestore） */
+  const handleStickyNotesSaved = (notes: StickyNote[]) => {
+    saveStickyNotes(notes)
+    setStickyNotes(notes)
+    if (!user) return
+    saveStickyNotesToFirestore(user.uid, notes).catch(err =>
+      console.error('[Firebase] sticky notes save error:', err)
+    )
+  }
+
+  return {
+    user, signIn, signOut, syncStatus, authLoading,
+    handleAfterSave, handleChannelsSaved,
+    stickyNotes, handleStickyNotesSaved,
+  }
 }

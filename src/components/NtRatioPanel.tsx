@@ -179,7 +179,18 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
       </div>
 
       {/* ── チャートエリア ── */}
-      <div ref={chartContainerRef} style={{ flex: 1, minHeight: 0 }} />
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        <div ref={chartContainerRef} style={{ position: 'absolute', inset: 0 }} />
+        {loading && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)',
+          }}>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>読み込み中…</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

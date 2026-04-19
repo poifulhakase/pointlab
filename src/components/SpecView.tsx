@@ -80,6 +80,7 @@ const SPEC_SECTIONS = [
           'タイトル・開始時刻・終了時刻・本文（メモ）を入力',
           '「スケジュールに追加」で週ビューのタイムラインに表示',
           '30分刻みドロップダウン + テキスト入力のハイブリッド時刻入力',
+          'スケジュール削除時は確認ダイアログを表示',
           'データは localStorage `stock-cal-notes` ＋ Firestore（ログイン時）に保存',
         ],
       },
@@ -92,7 +93,7 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: 'カレンダー左側のサイドバーには、リアルタイム時計・市場ステータス・カウントダウン・マーケットイベントフィルター・ミニカレンダーが配置されています。',
+        text: 'カレンダー左側のサイドバーには、リアルタイム時計・スティッキーメモ・マーケットイベントフィルター・ミニカレンダーが上から順に配置されています。',
       },
       {
         type: 'list' as const,
@@ -102,6 +103,17 @@ const SPEC_SECTIONS = [
           '東証マーケットステータス：開場前 / 前場 / 昼休み / 後場 / 取引終了 / 休場',
           '24時間以内に迫ったイベントのカウントダウンを最大3件表示',
           'カウントダウン対象：前場・後場の開始／終了、FOMC・雇用統計・CPI等のマクロイベント、SQ日',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'スティッキーメモ',
+        items: [
+          '最大2件まで自由なメモを保存可能',
+          'メモカードをクリックすると全画面モーダルエディタが開く',
+          'Ctrl+S（⌘+S）で保存 / Esc で閉じる',
+          '「＋」ボタンで新規追加、「✕」ボタンで削除（削除時は確認ダイアログあり）',
+          'データは localStorage `poical-sticky-notes` に永続保存',
         ],
       },
       {
@@ -160,14 +172,14 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: '需給分析に特化したビューです。3カラム構成（左：VIX or NS倍率 / 中：信用倍率 / 右：投資主体別売買動向）で市場の過熱感・資金動向を把握します。スマートフォンでは縦1列に並びます。',
+        text: '需給分析に特化したビューです。3カラム構成（左：VIX＋NS倍率 / 中：信用倍率＋[空売り比率・騰落レシオ横並び] / 右：投資主体別売買動向＋裁定買い残）で市場の過熱感・資金動向を把握します。スマートフォンでは縦1列に並びます。',
       },
       {
         type: 'list' as const,
-        heading: '左パネル（タブ切替）',
+        heading: '左カラム（チャート2段）',
         items: [
-          'VIX（デフォルト）: Yahoo Finance から ^VIX 日足データを取得。市場時間中は5分ごと自動更新',
-          'NS倍率: 日経225 ÷ S&P500 の比率チャート（^N225 / ^GSPC から計算）',
+          'VIXチャート（上）: Yahoo Finance から ^VIX 日足データを取得。市場時間中は5分ごと自動更新',
+          'NS倍率チャート（下）: 日経225 ÷ S&P500 の比率チャート（^N225 / ^GSPC から計算）',
           '温度計カラー配色: 上=赤（過熱）/ 下=青（冷静）のグラデーション背景',
         ],
       },
@@ -185,13 +197,15 @@ const SPEC_SECTIONS = [
         type: 'table' as const,
         headers: ['データ', '基準日', 'JPX公表日', 'アプリ反映'],
         rows: [
-          ['信用倍率', '毎週金曜日', '翌週火曜日', '毎週土曜7:00 自動取得（取得済みなら火曜以降に反映）'],
-          ['投資主体別売買動向', '毎週金曜日', '翌週木曜日', '毎週土曜7:00 自動取得（取得済みなら木曜以降に反映）'],
+          ['信用倍率', '毎週金曜日', '翌週火曜日', '毎週金曜19:00 JST 自動取得'],
+          ['投資主体別売買動向', '毎週金曜日', '翌週木曜日', '毎週金曜19:00 JST 自動取得'],
+          ['騰落レシオ・空売り比率', '毎日', '当日', '毎週金曜19:00 JST 自動取得（52週分）'],
+          ['裁定買い残', '毎週金曜日', '翌週金曜日', '毎週金曜19:00 JST 自動取得（52週分）'],
         ],
       },
       {
         type: 'list' as const,
-        heading: '中パネル（信用倍率）',
+        heading: '中カラム上段（信用倍率）',
         items: [
           'データソース: JPX 信用取引残高 Excel + nikkei225jp.com（評価損益率）',
           '表示列: 日付・買い残・売り残・信用倍率・評価損益率',
@@ -201,11 +215,35 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: '右パネル（投資主体別売買動向）',
+        heading: '中カラム下段（空売り比率＋騰落レシオ 横並び）',
+        items: [
+          '空売り比率データソース: nikkei225jp.com daily2year.json（col[11]）',
+          '空売り比率の着色: ≥50%=赤（売り圧力大）/ ≤38%=緑（売り圧力小）',
+          'キャッシュ: localStorage 24時間（`poical-short-sell-data`）',
+          '騰落レシオデータソース: nikkei225jp.com daily2year.json（col[7]・25日移動平均）',
+          '騰落レシオの着色: ≥120=赤（過熱）/ ≤70=緑（売られすぎ）',
+          'キャッシュ: localStorage 24時間（`poical-ad-ratio-data`）',
+          'PCでは2列横並び表示、スマートフォンでは縦積み',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: '右カラム上段（投資主体別売買動向）',
         items: [
           'データソース: JPX 投資部門別売買状況 Excel',
           '表示列: 外国人・個人・信託銀行・証券自己（差引金額・百万円単位）',
           'キャッシュ: localStorage 24時間（`poical-investor-data`）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: '右カラム下段（裁定買い残）',
+        items: [
+          'データソース: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json（col[8]）',
+          '単位: 百万円（先物裁定・週次）',
+          '着色: 四分位数（Q1/Q3）基準。多い=赤（将来の売り圧力）/ 少ない=緑（需給良好）',
+          'キャッシュ: localStorage 24時間（`poical-arbitrage-data`）',
+          'データファイル: public/data/arbitrage.json（週次・52件）',
         ],
       },
       {
@@ -216,6 +254,7 @@ const SPEC_SECTIONS = [
           '含まれるフィールド: VIX・NS倍率（日経/S&P込み）・投資主体別フロー・信用倍率',
           '今後28日のSQ・FOMC等のイベント一覧も含む',
           '毎週データ更新後の初回アクセス時に「クオンツ分析レポート」タイトルで今日のカレンダーメモへ自動追記',
+          '設定モーダルからGemini（gemini.google.com/app）またはClaude（claude.ai/projects）をワンクリックで開くショートカットパネルあり',
         ],
       },
     ],
@@ -259,6 +298,10 @@ const SPEC_SECTIONS = [
           ['poical-investor-data', '24時間', '投資主体別JSONキャッシュ'],
           ['poical-nhk-news', '30分', 'NHKニュースRSS'],
           ['poical-yt-videos-{id}', '3週間', 'YouTube動画リスト'],
+          ['poical-sticky-notes', '永続', 'サイドバースティッキーメモ（最大2件）'],
+          ['poical-short-sell-data', '24時間', '空売り比率JSONキャッシュ'],
+          ['poical-ad-ratio-data', '24時間', '騰落レシオJSONキャッシュ'],
+          ['poical-arbitrage-data', '24時間', '裁定買い残JSONキャッシュ'],
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
           ['poical-yt-channels', '永続', 'YouTube登録チャンネルリスト'],
@@ -270,8 +313,10 @@ const SPEC_SECTIONS = [
         items: [
           'スクリプト: `scripts/fetch-jpx.mjs`',
           '実行: `npm run fetch-data`',
-          'タスクスケジューラ: `scripts/auto-fetch.ps1`（毎週土曜7:00自動実行）',
-          '出力先: `public/data/margin.json` / `public/data/investor.json`',
+          'GitHub Actions: `.github/workflows/update-data.yml`（毎週金曜19:00 JST + 土曜09:00 JST 自動実行）',
+          '出力先: `public/data/margin.json` / `public/data/investor.json` / `public/data/vix.json` / `public/data/advance_decline.json` / `public/data/short_sell.json` / `public/data/arbitrage.json`',
+          '騰落レシオ・空売り比率: nikkei225jp.com daily2year.json（col[7]/col[11]）を週次変換（52週）',
+          '裁定買い残: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json（col[8]、Refererヘッダー必要）を週次52件',
         ],
       },
     ],
@@ -290,7 +335,7 @@ const SPEC_SECTIONS = [
         heading: '仕様',
         items: [
           'ログイン方法: Googleサインイン（ポップアップ）',
-          '同期対象: カレンダーメモ（stock-cal-notes）・YouTubeチャンネルリスト',
+          '同期対象: カレンダーメモ（stock-cal-notes）・YouTubeチャンネルリスト・スティッキーメモ',
           '未ログイン時: localStorageにフォールバック（データ消失なし）',
           'Firestoreデータ保持期間: 2年（自動削除ルール適用）',
           'authDomain: pointlab.vercel.app（Vercel でFirebaseへプロキシ）',
@@ -307,7 +352,6 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: '予定',
         items: [
-          '週次データ取得（npm run fetch-data）のGitHub Actions自動化（毎週金曜）',
           'Firestoreメモの年次エクスポート機能（2年自動削除前のバックアップ）',
         ],
       },
@@ -423,7 +467,7 @@ export function SpecView({ theme, isMobile }: Props) {
               説明書
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいらぼ — 最終更新: 2026-04-18
+              ぽいらぼ — 最終更新: 2026-04-19
             </p>
           </div>
         </div>

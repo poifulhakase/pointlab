@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { MiniCalendar } from './MiniCalendar'
 import { ClockWidget } from './ClockWidget'
+import { StickyNoteModal } from './StickyNoteModal'
+import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter } from '../utils/macroCalendar'
 
 type Props = {
@@ -12,6 +15,8 @@ type Props = {
   isTablet: boolean
   macroFilter: MacroFilter
   onMacroFilterChange: (f: MacroFilter) => void
+  stickyNotes: StickyNote[]
+  onStickyNotesSaved: (notes: StickyNote[]) => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color: string }[] = [
@@ -19,8 +24,31 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color:
   { key: 'jp', label: '日本',  sub: '日銀決定会合・短観',             color: '#f87171' },
 ]
 
-export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange }: Props) {
+export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved }: Props) {
   const isFixed = isMobile
+
+  // ── スティッキーメモ ──────────────────────────────
+  const [editingNote, setEditingNote] = useState<StickyNote | null>(null)
+
+  const handleAddNote = () => {
+    if (notes.length >= 2) return
+    setEditingNote(newStickyNote())
+  }
+
+  const handleSaveNote = (content: string) => {
+    if (!editingNote) return
+    const exists = notes.some(n => n.id === editingNote.id)
+    const updated = exists
+      ? notes.map(n => n.id === editingNote.id ? { ...n, content, updatedAt: new Date().toISOString() } : n)
+      : [...notes, { ...editingNote, content, updatedAt: new Date().toISOString() }]
+    onStickyNotesSaved(updated)
+    setEditingNote(null)
+  }
+
+  const handleDeleteNote = (id: string) => {
+    if (!window.confirm('このメモを削除してよろしいですか？')) return
+    onStickyNotesSaved(notes.filter(n => n.id !== id))
+  }
 
   const sidebarStyle: React.CSSProperties = isFixed
     ? {
@@ -67,6 +95,7 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
   }
 
   return (
+    <>
     <aside style={sidebarStyle} className={isFixed ? '' : 'glass'}>
       <div style={contentStyle}>
 
@@ -75,6 +104,57 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
 
         {/* ミニカレンダー＋マーケットイベント（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
+
+        {/* ──── スティッキーメモ ──── */}
+        <div style={styles.memoWrap}>
+          <div style={styles.memoHeader}>
+            <span style={styles.memoHeading}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+              メモ
+            </span>
+            {notes.length < 2 && (
+              <button
+                onClick={handleAddNote}
+                style={styles.memoAddBtn}
+                aria-label="メモを追加"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {notes.length === 0 && (
+            <button onClick={handleAddNote} style={styles.memoEmptyBtn}>
+              ＋ タップして追加
+            </button>
+          )}
+
+          {notes.map(note => (
+            <div key={note.id} style={styles.memoCard}>
+              <button
+                onClick={() => setEditingNote(note)}
+                style={styles.memoCardText}
+                title={note.content || '（空のメモ）'}
+              >
+                {note.content ? note.content.split('\n')[0] : '（空のメモ）'}
+              </button>
+              <button
+                onClick={() => handleDeleteNote(note.id)}
+                style={styles.memoDeleteBtn}
+                aria-label="削除"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
 
         {/* ──── マーケット情報フィルター ──── */}
         <div style={{ ...styles.filterWrap, marginTop: 0, borderTop: 'none', borderBottom: '1px solid var(--border-dim)' }}>
@@ -127,10 +207,64 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
 
       </div>
     </aside>
+
+    {/* メモモーダル（createPortal で body 直下にレンダリング） */}
+    {editingNote && (
+      <StickyNoteModal
+        note={editingNote}
+        onSave={handleSaveNote}
+        onClose={() => setEditingNote(null)}
+      />
+    )}
+  </>
   )
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  memoWrap: {
+    padding: '10px 14px 12px',
+    borderBottom: '1px solid var(--border-dim)',
+  },
+  memoHeader: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  memoHeading: {
+    display: 'flex', alignItems: 'center', gap: 5,
+    fontSize: 10, fontWeight: 700, letterSpacing: '0.07em',
+    textTransform: 'uppercase' as const,
+    color: 'var(--text-dim)',
+  },
+  memoAddBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 20, height: 20, borderRadius: 5,
+    color: 'var(--text-dim)', cursor: 'pointer',
+    transition: 'color 0.15s',
+  },
+  memoEmptyBtn: {
+    width: '100%', padding: '6px 8px', borderRadius: 6,
+    fontSize: 11, color: 'var(--text-dim)', textAlign: 'left' as const,
+    cursor: 'pointer',
+    border: '1px dashed var(--border-dim)',
+    background: 'transparent',
+  },
+  memoCard: {
+    display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4,
+  },
+  memoCardText: {
+    flex: 1, padding: '5px 8px', borderRadius: 6,
+    fontSize: 11, color: 'var(--text-sub)', textAlign: 'left' as const,
+    cursor: 'pointer',
+    background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)',
+    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+    transition: 'background 0.15s',
+  },
+  memoDeleteBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+    color: 'var(--text-dim)', cursor: 'pointer',
+    transition: 'color 0.15s',
+  },
   createBtn: {
     display: 'flex', alignItems: 'center', gap: 8,
     margin: '8px 16px 0',

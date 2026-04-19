@@ -1,0 +1,369 @@
+{
+  "updatedAt": "2026-04-19T11:13:35.768Z",
+  "data": [
+    {
+      "date": "2026/04/17",
+      "label": "4月第3週",
+      "ratio25": 108.54,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/04/10",
+      "label": "4月第2週",
+      "ratio25": 103.84,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/04/03",
+      "label": "4月第1週",
+      "ratio25": 94.49,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/03/27",
+      "label": "3月第4週",
+      "ratio25": 99.1,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/03/19",
+      "label": "3月第3週",
+      "ratio25": 92.73,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/03/13",
+      "label": "3月第2週",
+      "ratio25": 107.51,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/03/06",
+      "label": "3月第1週",
+      "ratio25": 128.19,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/02/27",
+      "label": "2月第4週",
+      "ratio25": 136.16,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/02/20",
+      "label": "2月第3週",
+      "ratio25": 110.44,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/02/13",
+      "label": "2月第2週",
+      "ratio25": 123.01,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/02/06",
+      "label": "2月第1週",
+      "ratio25": 119.21,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/01/30",
+      "label": "1月第5週",
+      "ratio25": 116.74,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/01/23",
+      "label": "1月第4週",
+      "ratio25": 128.69,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/01/16",
+      "label": "1月第3週",
+      "ratio25": 140.09,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2026/01/09",
+      "label": "1月第2週",
+      "ratio25": 125.34,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/12/30",
+      "label": "12月第5週",
+      "ratio25": 116.84,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/12/26",
+      "label": "12月第4週",
+      "ratio25": 125.85,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/12/19",
+      "label": "12月第3週",
+      "ratio25": 110.9,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/12/12",
+      "label": "12月第2週",
+      "ratio25": 119.22,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/12/05",
+      "label": "12月第1週",
+      "ratio25": 118.37,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/11/28",
+      "label": "11月第4週",
+      "ratio25": 124.66,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/11/21",
+      "label": "11月第3週",
+      "ratio25": 119.24,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/11/14",
+      "label": "11月第2週",
+      "ratio25": 113.87,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/11/07",
+      "label": "11月第1週",
+      "ratio25": 111.89,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/10/31",
+      "label": "10月第5週",
+      "ratio25": 99.27,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/10/24",
+      "label": "10月第4週",
+      "ratio25": 104.53,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/10/17",
+      "label": "10月第3週",
+      "ratio25": 90.51,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/10/10",
+      "label": "10月第2週",
+      "ratio25": 101.78,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/10/03",
+      "label": "10月第1週",
+      "ratio25": 103.48,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/09/26",
+      "label": "9月第4週",
+      "ratio25": 115.49,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/09/19",
+      "label": "9月第3週",
+      "ratio25": 113.66,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/09/12",
+      "label": "9月第2週",
+      "ratio25": 119.57,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/09/05",
+      "label": "9月第1週",
+      "ratio25": 132.59,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/08/29",
+      "label": "8月第5週",
+      "ratio25": 127.96,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/08/22",
+      "label": "8月第4週",
+      "ratio25": 151.7,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/08/15",
+      "label": "8月第3週",
+      "ratio25": 139.28,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/08/08",
+      "label": "8月第2週",
+      "ratio25": 146.85,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/08/01",
+      "label": "8月第1週",
+      "ratio25": 135.47,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/07/25",
+      "label": "7月第4週",
+      "ratio25": 124.09,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/07/18",
+      "label": "7月第3週",
+      "ratio25": 120.6,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/07/11",
+      "label": "7月第2週",
+      "ratio25": 116.45,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/07/04",
+      "label": "7月第1週",
+      "ratio25": 104.76,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/06/27",
+      "label": "6月第4週",
+      "ratio25": 118.78,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/06/20",
+      "label": "6月第3週",
+      "ratio25": 104.05,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/06/13",
+      "label": "6月第2週",
+      "ratio25": 97.97,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/06/06",
+      "label": "6月第1週",
+      "ratio25": 109.27,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/05/30",
+      "label": "5月第5週",
+      "ratio25": 126.34,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/05/23",
+      "label": "5月第4週",
+      "ratio25": 125.65,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/05/16",
+      "label": "5月第3週",
+      "ratio25": 135.98,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/05/09",
+      "label": "5月第2週",
+      "ratio25": 116.17,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/05/02",
+      "label": "5月第1週",
+      "ratio25": 91.88,
+      "advances": null,
+      "declines": null
+    },
+    {
+      "date": "2025/04/25",
+      "label": "4月第4週",
+      "ratio25": 94.92,
+      "advances": null,
+      "declines": null
+    }
+  ]
+}

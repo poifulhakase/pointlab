@@ -212,16 +212,43 @@ function parseInvestorSheet(rows) {
   return result
 }
 
-// ── 信用評価損益率（nikkei225jp.com） ────────────────
+// ── nikkei225jp.com 複合データ取得 ───────────────────
+// dailyweek2.json の列構成（確認済み）:
+//   col[0]: タイムスタンプ(ms)
+//   col[2]: 値上がり銘柄数
+//   col[3]: 値下がり銘柄数
+//   col[4]: 騰落レシオ(25日) ← 範囲30〜300で自動検出
+//   col[6]: 空売り比率(%)    ← 範囲20〜65で自動検出
+//   col[7]: 信用評価損益率(%) ← 確定列
 
 function tsToJSTDateStr(ts) {
-  // UNIXタイムスタンプ(ms) → JST日付文字列 YYYY/MM/DD
   const d = new Date(ts + 9 * 60 * 60 * 1000)
   return `${d.getUTCFullYear()}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${String(d.getUTCDate()).padStart(2,'0')}`
 }
 
-async function fetchEvalRatioMap() {
-  console.log('[evalRatio] nikkei225jp.com から信用評価損益率取得...')
+// 列インデックスを値の範囲から自動検出する
+function detectColumn(rows, minVal, maxVal, startCol = 1, endCol = 12) {
+  const sampleRows = rows.filter(r => typeof r[7] === 'number').slice(0, 20)
+  if (sampleRows.length < 5) return -1
+  for (let col = startCol; col <= endCol; col++) {
+    const vals = sampleRows.map(r => r[col]).filter(v => typeof v === 'number')
+    if (vals.length < 5) continue
+    const allInRange = vals.every(v => v >= minVal && v <= maxVal)
+    if (allInRange) return col
+  }
+  return -1
+}
+
+// モジュール内でメトリクスをキャッシュして重複リクエスト防止
+let _metricsCache = null
+
+/**
+ * nikkei225jp.com dailyweek2.json から信用評価損益率を取得（1回のみリクエスト）
+ * Returns: { evalRatioMap }
+ */
+async function fetchNikkeiJpMetrics() {
+  if (_metricsCache) return _metricsCache
+  console.log('[nikkei225jp] dailyweek2.json 取得...')
   const res = await fetch('https://nikkei225jp.com/_data/_nfsWEB/DAY/dailyweek2.json', {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
@@ -236,13 +263,158 @@ async function fetchEvalRatioMap() {
   if (!m) throw new Error('DAILYデータが見つかりません')
 
   const rows = JSON.parse(m[1])
-  const map  = new Map()
+  console.log(`  → ${rows.length}行取得`)
+
+  const evalRatioMap = new Map()
   for (const row of rows) {
-    if (typeof row[7] !== 'number') continue
-    map.set(tsToJSTDateStr(row[0]), Math.round(row[7] * 100) / 100)
+    if (typeof row[0] !== 'number') continue
+    const dateStr = tsToJSTDateStr(row[0])
+    if (typeof row[7] === 'number')
+      evalRatioMap.set(dateStr, Math.round(row[7] * 100) / 100)
   }
-  console.log(`  → ${map.size}件`)
-  return map
+
+  console.log(`  信用評価損益率: ${evalRatioMap.size}件`)
+  _metricsCache = { evalRatioMap }
+  return _metricsCache
+}
+
+async function fetchEvalRatioMap() {
+  const { evalRatioMap } = await fetchNikkeiJpMetrics()
+  return evalRatioMap
+}
+
+// daily2year.json キャッシュ
+let _daily2yearCache = null
+
+/**
+ * nikkei225jp.com daily2year.json から騰落レシオ・空売り比率を一括取得
+ * 確認済み列構成:
+ *   col[0]:  タイムスタンプ(ms)
+ *   col[7]:  騰落レシオ(25日) - 範囲 76〜155
+ *   col[11]: 空売り比率(%)    - 範囲 16〜71
+ * Returns: { touhiMap, shortSellMap }
+ */
+async function fetchDaily2YearMetrics() {
+  if (_daily2yearCache) return _daily2yearCache
+  console.log('[nikkei225jp] daily2year.json 取得...')
+  const res = await fetch('https://nikkei225jp.com/_data/_nfsWEB/DAY/daily2year.json', {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
+      'Referer':    'https://nikkei225jp.com/data/karauri.php',
+    },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const text = await res.text()
+
+  const m = text.match(/var DAILY\s*=\s*(\[[\s\S]*?\])\s*;/)
+  if (!m) throw new Error('DAILYデータが見つかりません')
+
+  const rows = JSON.parse(m[1])
+  console.log(`  → ${rows.length}行取得`)
+
+  if (rows.length > 0) {
+    const first = rows[rows.length - 1]
+    console.log('  [列確認] 最新行:', first.slice(0, 14).map((v, i) => `[${i}]=${v}`).join(', '))
+  }
+
+  const touhiMap    = new Map()  // col[7]: 騰落レシオ(25日)
+  const shortSellMap = new Map() // col[11]: 空売り比率(%)
+
+  for (const row of rows) {
+    if (typeof row[0] !== 'number') continue
+    const dateStr = tsToJSTDateStr(row[0])
+    if (typeof row[7] === 'number')
+      touhiMap.set(dateStr, Math.round(row[7] * 100) / 100)
+    if (typeof row[11] === 'number')
+      shortSellMap.set(dateStr, Math.round(row[11] * 100) / 100)
+  }
+
+  console.log(`  騰落レシオ: ${touhiMap.size}件, 空売り比率: ${shortSellMap.size}件`)
+  _daily2yearCache = { touhiMap, shortSellMap }
+  return _daily2yearCache
+}
+
+// 日次データマップ → 週次配列（各週の末営業日データを採用）
+function dailyToWeekly(dateValMap, maxWeeks = 52) {
+  const weekMap = new Map() // "YYYY-MM-DD"(月曜日) → { date, val }
+  for (const [dateStr, val] of dateValMap) {
+    const d = new Date(dateStr.replace(/\//g, '-'))
+    if (isNaN(d.getTime())) continue
+    const dow = d.getDay()
+    const monday = new Date(d)
+    monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))
+    const weekKey = monday.toISOString().slice(0, 10)
+    const existing = weekMap.get(weekKey)
+    if (!existing || dateStr > existing.date) {
+      weekMap.set(weekKey, { date: dateStr, val })
+    }
+  }
+  return Array.from(weekMap.values())
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, maxWeeks)
+    .map(({ date, val }) => ({ date, label: dateToLabel(date), val }))
+}
+
+/**
+ * nikkei225jp.com の特定ページ（touphi.php / karauri.php）から DAILY 配列を取得
+ * 各ページは `var DAILY = [[timestamp, val1, val2, ...], ...]` 形式で埋め込まれている
+ */
+async function fetchNikkeiJpPageData(pageUrl, referer) {
+  const res = await fetch(pageUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
+      'Referer':    referer,
+    },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${pageUrl}`)
+  const text = await res.text()
+
+  // DAILY 配列を抽出（複数パターン）
+  const patterns = [
+    /var DAILY\s*=\s*(\[[\s\S]*?\])\s*;/,
+    /DAILY\s*=\s*(\[[\s\S]*?\])\s*[;,]/,
+  ]
+  for (const pat of patterns) {
+    const m = text.match(pat)
+    if (m) {
+      try {
+        return JSON.parse(m[1])
+      } catch { /* continue */ }
+    }
+  }
+  throw new Error(`DAILY データが見つかりません: ${pageUrl}`)
+}
+
+// ── 騰落レシオ ────────────────────────────────────
+// daily2year.json col[7]: 騰落レシオ(25日) 確認済み
+
+async function buildAdvanceDeclineData() {
+  console.log('\n[advanceDecline] 騰落レシオ取得中...')
+  const { touhiMap } = await fetchDaily2YearMetrics()
+  if (touhiMap.size === 0) throw new Error('騰落レシオデータが空です')
+
+  const weekly = dailyToWeekly(touhiMap)
+  return weekly.map(({ date, label, val }) => ({
+    date,
+    label,
+    ratio25:  val,
+    advances: null,
+    declines: null,
+  }))
+}
+
+// ── 空売り比率 ─────────────────────────────────────
+// daily2year.json col[11]: 空売り比率(%) 確認済み
+
+async function buildShortSellData() {
+  console.log('\n[shortSell] 空売り比率取得中...')
+  const { shortSellMap } = await fetchDaily2YearMetrics()
+  if (shortSellMap.size === 0) throw new Error('空売り比率データが空です')
+
+  const weekly = dailyToWeekly(shortSellMap)
+  return weekly.map(({ date, label, val }) => ({ date, label, ratio: val }))
 }
 
 // ── 信用倍率 ──────────────────────────────────
@@ -382,15 +554,72 @@ async function fetchVixData() {
   })
 }
 
+// ── 裁定買い残 ────────────────────────────────────
+// データソース: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json
+// 確認済み列構成（2026-04-19 確認）:
+//   col[0]:  タイムスタンプ(ms)
+//   col[7]:  裁定買い残 株数（千株）
+//   col[8]:  裁定買い残 金額（百万円） ← メインで使用
+//   col[9]:  裁定売り残 株数（千株）
+//   col[10]: 裁定売り残 金額（百万円）
+
+async function buildArbitrageData() {
+  console.log('\n[arbitrage] 裁定買い残取得中...')
+
+  const res = await fetch('https://nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json', {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Referer':    'https://nikkei225jp.com/data/saitei.php',
+    },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const text = await res.text()
+
+  const m = text.match(/var DAILY\s*=\s*(\[[\s\S]*\])\s*;?\s*$/)
+  if (!m) throw new Error('DAILY データが見つかりません')
+  const rows = JSON.parse(m[1])
+  console.log(`  → ${rows.length}行取得`)
+
+  const longBalMap  = new Map()
+  const shortBalMap = new Map()
+
+  for (const row of rows) {
+    if (typeof row[0] !== 'number') continue
+    const dateStr = tsToJSTDateStr(row[0])
+    if (typeof row[8] === 'number' && row[8] > 0)
+      longBalMap.set(dateStr, row[8])
+    if (typeof row[10] === 'number' && row[10] > 0)
+      shortBalMap.set(dateStr, row[10])
+  }
+
+  if (longBalMap.size === 0) throw new Error('裁定買い残データが空です')
+  console.log(`  裁定買い残: ${longBalMap.size}件`)
+
+  // この数列はすでに週次（JPX毎週金曜公表）なのでそのまま最新52件を取る
+  const sortedDates = [...longBalMap.keys()].sort()
+  const last52 = sortedDates.slice(-52)
+
+  return last52.map(date => ({
+    date,
+    label:    dateToLabel(date),
+    longBal:  longBalMap.get(date),
+    shortBal: shortBalMap.get(date) ?? 0,
+  }))
+}
+
 // ── メイン ─────────────────────────────────────
 
 async function main() {
   console.log('=== JPXデータ取得開始 ===')
   mkdirSync(OUT_DIR, { recursive: true })
 
-  let investorOk = false
-  let marginOk   = false
-  let vixOk      = false
+  let investorOk      = false
+  let marginOk        = false
+  let vixOk           = false
+  let advanceDeclineOk = false
+  let shortSellOk     = false
+  let arbitrageOk     = false
 
   try {
     const data = await fetchInvestorData()
@@ -422,10 +651,42 @@ async function main() {
     console.error('\n✗ vix:', e.message)
   }
 
+  try {
+    const data = await buildAdvanceDeclineData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'advance_decline.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ advance_decline.json 保存 (${data.length}件)`)
+    advanceDeclineOk = true
+  } catch (e) {
+    console.error('\n✗ advance_decline:', e.message)
+  }
+
+  try {
+    const data = await buildShortSellData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'short_sell.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ short_sell.json 保存 (${data.length}件)`)
+    shortSellOk = true
+  } catch (e) {
+    console.error('\n✗ short_sell:', e.message)
+  }
+
+  try {
+    const data = await buildArbitrageData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'arbitrage.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ arbitrage.json 保存 (${data.length}件)`)
+    arbitrageOk = true
+  } catch (e) {
+    console.error('\n✗ arbitrage:', e.message)
+  }
+
   console.log('\n=== 完了 ===')
-  // VIXはYahoo Finance のIP制限で失敗することがあるため警告のみ
   if (!investorOk || !marginOk) process.exit(1)
-  if (!vixOk) console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
+  if (!vixOk)           console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
+  if (!advanceDeclineOk) console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')
+  if (!shortSellOk)     console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
+  if (!arbitrageOk)     console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

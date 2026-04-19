@@ -18,14 +18,16 @@ const TARGET_Q1 = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?inte
 const TARGET_Q2 = 'https://query2.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1y'
 
 const VIX_CACHE_KEY = 'poical-vix-data'
-const VIX_CACHE_TTL = 30 * 60 * 1000 // 30分
+const VIX_CACHE_TTL_OPEN   = 30 * 60 * 1000      // 30分（市場オープン中）
+const VIX_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000  // 2時間（市場クローズ中）
 
 function readVixCache(): { data: Point[]; fetchedAt: number } | null {
   try {
     const raw = localStorage.getItem(VIX_CACHE_KEY)
     if (!raw) return null
     const cache = JSON.parse(raw) as { data: Point[]; fetchedAt: number }
-    if (Date.now() - cache.fetchedAt > VIX_CACHE_TTL) return null
+    const ttl = isUsMarketOpen() ? VIX_CACHE_TTL_OPEN : VIX_CACHE_TTL_CLOSED
+    if (Date.now() - cache.fetchedAt > ttl) return null
     return cache
   } catch { return null }
 }
@@ -91,7 +93,9 @@ const PROXY_DEFS: ProxyDef[] = [
 
 async function tryFetchVix(target: string): Promise<Point[]> {
   let lastErr = ''
-  for (const def of PROXY_DEFS) {
+  for (let i = 0; i < PROXY_DEFS.length; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 500 * i))
+    const def = PROXY_DEFS[i]
     try {
       const res = await fetch(def.url(target), { signal: timeoutSignal(12000) })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -290,7 +294,18 @@ export function VixPanel({ theme }: Props) {
       </div>
 
       {/* ── チャートエリア ── */}
-      <div ref={chartContainerRef} style={{ flex: 1, minHeight: 0 }} />
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        <div ref={chartContainerRef} style={{ position: 'absolute', inset: 0 }} />
+        {loading && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)',
+          }}>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>読み込み中…</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

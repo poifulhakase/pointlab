@@ -1,7 +1,7 @@
 import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
-import { getEarningsSeason } from '../utils/earningsSeason'
+import { getMonthBand } from '../utils/earningsSeason'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
 import { MacroEventBadge } from './MacroEventBadge'
@@ -27,7 +27,7 @@ type Props = {
 }
 
 export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile }: Props) {
-  const season = getEarningsSeason(current.getMonth() + 1)
+  const band = getMonthBand(current.getMonth() + 1)
 
   return (
     <div style={styles.wrap}>
@@ -90,48 +90,57 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 >
                   {d.getDate()}
                 </span>
-                {showBadge && reason && !isMobile && (
+                {showBadge && reason && (
                   <span style={styles.closedBadge}>{reason}</span>
                 )}
               </div>
 
-              {/* ノート帯（デスクトップ） */}
-              {noted && !isMobile && (
+              {/* ノート帯 */}
+              {noted && (
                 <div style={styles.noteBand}>
                   {noteTitle || '　'}
                 </div>
               )}
 
-              {isMobile
-                ? <div style={styles.dotRow}>
-                    {markers.length > 0    && <span style={styles.dotDiv} />}
-                    {sqMarkers.length > 0  && <span style={styles.dotSq} />}
-                    {macroEvts.length > 0  && <span style={styles.dotMacro} />}
-                    {noted                 && <span style={styles.dotNote} />}
-                  </div>
-                : <>
-                    <DividendMarker markers={markers} size="sm" />
-                    <SqMarkerBadge markers={sqMarkers} size="sm" />
-                    <MacroEventBadge events={macroEvts} size="sm" />
-                  </>
-              }
+              <DividendMarker markers={markers} size="sm" />
+              <SqMarkerBadge markers={sqMarkers} size="sm" />
+              <MacroEventBadge events={macroEvts} size="sm" />
             </div>
           )
         })}
       </div>
 
-      {/* 決算シーズンバナー（カレンダー下部） */}
+      {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}
       <div style={{
         ...styles.seasonBanner,
         fontSize: isMobile ? 10 : 12,
-        padding: isMobile ? '4px 8px' : '6px 12px',
-        borderColor: season ? season.color : 'transparent',
-        background: season ? season.bg : 'transparent',
-        visibility: season ? 'visible' : 'hidden',
+        padding: isMobile ? '4px 8px' : '5px 12px',
+        borderColor: band ? band.color : 'transparent',
+        background: band ? band.bg : 'transparent',
+        visibility: band ? 'visible' : 'hidden',
       }}>
-        <span style={{ ...styles.seasonDot, background: season?.color ?? 'transparent' }} />
-        <span style={{ color: season?.color, fontWeight: 700 }}>決算シーズン</span>
-        <span style={styles.seasonQuarter}>— {season?.quarter}（3月決算メイン）</span>
+        <span style={{ ...styles.seasonDot, background: band?.color ?? 'transparent', flexShrink: 0 }} />
+        <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0 6px', minWidth: 0 }}>
+          {band && band.items.map((item, i) => (
+            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: isMobile ? 9 : 10 }}>／</span>}
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: band.color, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <span style={{ color: band.color, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.label}</span>
+              )}
+            </span>
+          ))}
+          {!band && <span>&nbsp;</span>}
+        </span>
       </div>
     </div>
   )
@@ -144,8 +153,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '6px 12px', borderRadius: 8, border: '1px solid',
     fontSize: 12, backdropFilter: 'blur(8px)',
   },
-  seasonDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
-  seasonQuarter: { fontSize: 11, color: 'var(--text-sub)' },
+  seasonDot: { width: 8, height: 8, borderRadius: '50%' },
   dowRow: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginTop: 6, marginBottom: 4 },
   dowCell: { textAlign: 'center', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', padding: '6px 0' },
   grid: {
@@ -173,11 +181,6 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(255,180,50,0.25)',
     borderRadius: 3, padding: '1px 4px', whiteSpace: 'nowrap',
   },
-  dotRow: { display: 'flex', gap: 3, marginTop: 2, justifyContent: 'center' },
-  dotDiv:   { width: 5, height: 5, borderRadius: '50%', background: 'rgba(251,146,60,0.8)',  flexShrink: 0 },
-  dotSq:    { width: 5, height: 5, borderRadius: '50%', background: 'rgba(167,139,250,0.8)', flexShrink: 0 },
-  dotMacro: { width: 5, height: 5, borderRadius: '50%', background: 'rgba(245,158,11,0.8)',  flexShrink: 0 },
-  dotNote:  { width: 5, height: 5, borderRadius: '50%', background: 'rgba(96,165,250,0.90)', flexShrink: 0 },
   noteBand: {
     width: '100%',
     background: 'rgba(96,165,250,0.18)',

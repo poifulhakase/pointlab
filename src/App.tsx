@@ -82,7 +82,7 @@ export default function App() {
   const [noteMap, setNoteMap] = useState<Map<string, NoteMapEntry>>(() => getAllNoteData())
   const refreshNoteMap  = useCallback(() => setNoteMap(getAllNoteData()), [])
 
-  const { user, signIn, signOut, syncStatus, handleAfterSave, handleChannelsSaved, authLoading } = useFirebaseSync(refreshNoteMap)
+  const { user, signIn, signOut, syncStatus, handleAfterSave, handleChannelsSaved, authLoading, stickyNotes, handleStickyNotesSaved } = useFirebaseSync(refreshNoteMap)
 
   // ゲスト or Google ログイン済みかどうか
   const [isUnlocked, setIsUnlocked] = useState(() => isGuestAuthed())
@@ -154,6 +154,8 @@ export default function App() {
             isTablet={isTablet}
             macroFilter={macroFilter}
             onMacroFilterChange={setMacroFilter}
+            stickyNotes={stickyNotes}
+            onStickyNotesSaved={handleStickyNotesSaved}
           />
         )}
 

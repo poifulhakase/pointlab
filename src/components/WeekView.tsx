@@ -6,7 +6,7 @@ import { MacroEventBadge } from './MacroEventBadge'
 import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
-import { getEarningsSeason } from '../utils/earningsSeason'
+import { getMonthBand } from '../utils/earningsSeason'
 import { type NoteMapEntry } from '../utils/noteStorage'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -63,7 +63,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
       })()
     : days
 
-  const season = getEarningsSeason(visibleDays[0].getMonth() + 1)
+  const band = getMonthBand(visibleDays[0].getMonth() + 1)
 
   return (
     <div style={styles.wrap}>
@@ -175,11 +175,22 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
         </div>
       </div>
 
-      {/* 決算シーズンバナー（カレンダー下部） */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${season ? season.color : 'transparent'}`, background: season ? season.bg : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: season ? 'visible' : 'hidden' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: season?.color ?? 'transparent', flexShrink: 0 }} />
-        <span style={{ color: season?.color, fontWeight: 700 }}>決算シーズン</span>
-        <span style={{ fontSize: 11, color: 'var(--text-sub)' }}>— {season?.quarter}（3月決算メイン）</span>
+      {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? band.color : 'transparent'}`, background: band ? band.bg : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: band?.color ?? 'transparent', flexShrink: 0 }} />
+        {band ? band.items.map((item, i) => (
+          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>／</span>}
+            {item.url ? (
+              <a href={item.url} target="_blank" rel="noopener noreferrer"
+                style={{ color: band.color, fontWeight: 700, textDecoration: 'none' }}>
+                {item.label}
+              </a>
+            ) : (
+              <span style={{ color: band.color, fontWeight: 700 }}>{item.label}</span>
+            )}
+          </span>
+        )) : <span>&nbsp;</span>}
       </div>
     </div>
   )

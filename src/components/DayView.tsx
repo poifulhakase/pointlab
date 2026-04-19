@@ -6,7 +6,7 @@ import { MacroEventBadge } from './MacroEventBadge'
 import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
-import { getEarningsSeason } from '../utils/earningsSeason'
+import { getMonthBand } from '../utils/earningsSeason'
 import { type NoteMapEntry } from '../utils/noteStorage'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -52,7 +52,7 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
   const markers   = getMarkers(date)
   const sqMarkers = getSqMarkers(date)
   const macroEvts = getMacroEvents(date)
-  const season    = getEarningsSeason(date.getMonth() + 1)
+  const band      = getMonthBand(date.getMonth() + 1)
   const noted     = hasNote(date)
   const noteTitle = noted ? getNoteTitle(date) : ''
   const evt       = getScheduledEvent(date)
@@ -84,11 +84,21 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {date.getDate()}
           </span>
           {closed && reason && <span style={styles.closedBadge}>🏦 休場（{reason}）</span>}
-          {season && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: season.color, background: season.bg, border: `1px solid ${season.color}40`, borderRadius: 5, padding: '2px 8px' }}>
-              決算シーズン（{season.quarter}）
-            </span>
-          )}
+          {/* 月次イベントバッジ — イベントがない月も同一高さを確保 */}
+          <span style={{ visibility: band ? 'visible' : 'hidden', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
+            {band ? band.items.map((item, i) => (
+              item.url ? (
+                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                  style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px', textDecoration: 'none' }}>
+                  {item.label}
+                </a>
+              ) : (
+                <span key={i} style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px' }}>
+                  {item.label}
+                </span>
+              )
+            )) : <span style={{ fontSize: 11, padding: '2px 8px' }}>&nbsp;</span>}
+          </span>
           <DividendMarker markers={markers} size="md" />
           <SqMarkerBadge markers={sqMarkers} size="md" />
           <MacroEventBadge events={macroEvts} size="md" />
