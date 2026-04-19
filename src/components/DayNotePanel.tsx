@@ -89,8 +89,18 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   }
   const handleSchedule = () => {
     const next = !scheduled
+
+    // タイトルが空の場合、メモまたはチェックリスト先頭行を補完
+    let effectiveTitle = title
+    if (!title.trim() && next) {
+      const fromMemo = memo.trim().split('\n').find(l => l.trim())?.trim()
+      const fromChecklist = checklist[0]?.text.trim()
+      effectiveTitle = fromMemo || fromChecklist || ''
+      if (effectiveTitle) setTitle(effectiveTitle)
+    }
+
     setScheduled(next)
-    persist(title, startTime, endTime, memo, checklist, next, alertMinutes)
+    persist(effectiveTitle, startTime, endTime, memo, checklist, next, alertMinutes)
     if (next) onClose()
   }
   const handleDelete = () => {
