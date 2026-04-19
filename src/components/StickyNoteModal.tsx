@@ -10,7 +10,6 @@ type Props = {
 
 export function StickyNoteModal({ note, onSave, onClose }: Props) {
   const [content, setContent] = useState(note.content)
-  const [saved, setSaved] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -19,11 +18,7 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
     return () => clearTimeout(t)
   }, [note.id, note.content])
 
-  const handleSave = useCallback(() => {
-    onSave(content)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }, [content, onSave])
+  const handleSave = useCallback(() => { onSave(content) }, [content, onSave])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -44,9 +39,6 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
         <div style={styles.toolbar}>
           <span style={styles.hint}>Ctrl+S で保存 · Esc で閉じる</span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {saved && (
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(96,200,140,0.9)' }}>保存しました</span>
-            )}
             <button style={styles.saveBtn} onClick={handleSave}>保存</button>
             <button style={styles.closeBtn} onClick={onClose} aria-label="閉じる">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
