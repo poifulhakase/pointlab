@@ -5,13 +5,22 @@ import { BadgePopup } from './BadgePopup'
 type Props = {
   markers: SqMarker[]
   size?: 'sm' | 'md'
+  theme?: 'dark' | 'light'
 }
 
 type PopupState = { key: SqMarker; x: number; y: number }
 
-export function SqMarkerBadge({ markers, size = 'md' }: Props) {
+function darkenHex(hex: string): string {
+  const r = Math.round(parseInt(hex.slice(1, 3), 16) * 0.45)
+  const g = Math.round(parseInt(hex.slice(3, 5), 16) * 0.45)
+  const b = Math.round(parseInt(hex.slice(5, 7), 16) * 0.45)
+  return `rgb(${r},${g},${b})`
+}
+
+export function SqMarkerBadge({ markers, size = 'md', theme = 'dark' }: Props) {
   const [popup, setPopup] = useState<PopupState | null>(null)
   const isSm = size === 'sm'
+  const isLight = theme === 'light'
 
   if (markers.length === 0) return null
 
@@ -26,11 +35,11 @@ export function SqMarkerBadge({ markers, size = 'md' }: Props) {
               style={{
                 display: 'inline-block',
                 fontSize: isSm ? 11 : 12,
-                fontWeight: 500,
+                fontWeight: 600,
                 letterSpacing: '0.03em',
-                color: 'rgba(255,255,255,0.95)',
-                background: meta.bg,
-                border: `1px solid ${meta.color}99`,
+                color: isLight ? darkenHex(meta.color) : 'rgba(255,255,255,0.95)',
+                background: isLight ? meta.bg.replace(/[\d.]+\)$/, '0.15)') : meta.bg,
+                border: `1px solid ${meta.color}${isLight ? 'cc' : '99'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,

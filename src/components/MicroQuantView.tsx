@@ -92,13 +92,13 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '日付' },
   { label: 'ゴールドマン・サックス' },
   { label: 'JPモルガン' },
-  { label: 'Trend', sub: '合計', isTotal: true },
+  { label: '海外大口', sub: '合計', isTotal: true },
   { label: 'ABNアムロ' },
   { label: '野村証券' },
-  { label: 'Noise', sub: '合計', isTotal: true },
+  { label: '個人逆張り', sub: '合計', isTotal: true },
   { label: 'ソシエテ・ジェネラル' },
   { label: 'バークレイズ' },
-  { label: 'Gravity', sub: '合計', isTotal: true },
+  { label: '裁定売り', sub: '合計', isTotal: true },
 ]
 
 // ── メインコンポーネント ──────────────────────────

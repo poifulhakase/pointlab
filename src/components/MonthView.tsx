@@ -24,9 +24,11 @@ type Props = {
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
   isMobile: boolean
+  theme?: 'dark' | 'light'
 }
 
-export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile }: Props) {
+export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark' }: Props) {
+  const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
 
   return (
@@ -91,20 +93,29 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                   {d.getDate()}
                 </span>
                 {showBadge && reason && (
-                  <span style={styles.closedBadge}>{reason}</span>
+                  <span style={{
+                    ...styles.closedBadge,
+                    color: isLight ? '#92400e' : 'rgba(255,220,130,0.95)',
+                    background: isLight ? 'rgba(255,180,50,0.18)' : 'rgba(255,180,50,0.22)',
+                    border: isLight ? '1px solid rgba(180,100,0,0.45)' : '1px solid rgba(255,180,50,0.50)',
+                  }}>{reason}</span>
                 )}
               </div>
 
               {/* ノート帯 */}
               {noted && (
-                <div style={styles.noteBand}>
+                <div style={{
+                  ...styles.noteBand,
+                  background: isLight ? 'rgba(26,115,232,0.12)' : 'rgba(96,165,250,0.30)',
+                  color: isLight ? '#1a56db' : 'rgba(255,255,255,0.95)',
+                }}>
                   {noteTitle || '　'}
                 </div>
               )}
 
               <DividendMarker markers={markers} size="sm" />
-              <SqMarkerBadge markers={sqMarkers} size="sm" />
-              <MacroEventBadge events={macroEvts} size="sm" />
+              <SqMarkerBadge markers={sqMarkers} size="sm" theme={theme} />
+              <MacroEventBadge events={macroEvts} size="sm" theme={theme} />
             </div>
           )
         })}
@@ -178,8 +189,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   closedBadge: {
     fontSize: 10, fontWeight: 500,
-    color: 'rgba(255,220,130,0.95)', background: 'rgba(255,180,50,0.22)',
-    border: '1px solid rgba(255,180,50,0.50)',
     borderRadius: 3, padding: '1px 4px', whiteSpace: 'nowrap',
     letterSpacing: '0.02em',
   },

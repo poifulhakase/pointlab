@@ -372,7 +372,7 @@ export default function App() {
               onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
               getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
               isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-              hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile}
+              hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
             />
           )}
           {cal.view === 'week' && (
@@ -381,7 +381,7 @@ export default function App() {
               getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
               isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
               onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-              getScheduledEvents={getScheduledEvents} isMobile={isMobile}
+              getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
             />
           )}
           {cal.view === 'day' && (
@@ -390,7 +390,7 @@ export default function App() {
               getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
               isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
               onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-              getScheduledEvents={getScheduledEvents}
+              getScheduledEvents={getScheduledEvents} theme={theme}
             />
           )}
 

@@ -45,9 +45,10 @@ type Props = {
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
   getScheduledEvents: (d: Date) => ScheduleEntry[]
+  theme?: 'dark' | 'light'
 }
 
-export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents }: Props) {
+export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, theme = 'dark' }: Props) {
   const now = new Date()
   const td = isToday(date)
 
@@ -118,8 +119,8 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             )) : <span style={{ fontSize: 11, padding: '2px 8px' }}>&nbsp;</span>}
           </span>
           <DividendMarker markers={markers} size="md" />
-          <SqMarkerBadge markers={sqMarkers} size="md" />
-          <MacroEventBadge events={macroEvts} size="md" />
+          <SqMarkerBadge markers={sqMarkers} size="md" theme={theme} />
+          <MacroEventBadge events={macroEvts} size="md" theme={theme} />
 
           {/* ノート開くボタン */}
           <button

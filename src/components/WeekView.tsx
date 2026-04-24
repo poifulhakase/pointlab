@@ -41,6 +41,7 @@ type Props = {
   getNoteTitle: (d: Date) => string
   getScheduledEvents: (d: Date) => ScheduleEntry[]
   isMobile: boolean
+  theme?: 'dark' | 'light'
 }
 
 const TOTAL_MINUTES = 24 * 60
@@ -50,7 +51,7 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
-export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile }: Props) {
+export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark' }: Props) {
   const now = new Date()
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -122,15 +123,24 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               }}>
                 {d.getDate()}
               </span>
-              {showBadge && reason && <span style={styles.closedBadge}>{reason}</span>}
+              {showBadge && reason && <span style={{
+                ...styles.closedBadge,
+                color: theme === 'light' ? '#92400e' : 'rgba(255,200,100,0.8)',
+                background: theme === 'light' ? 'rgba(255,180,50,0.18)' : 'rgba(255,180,50,0.12)',
+                border: theme === 'light' ? '1px solid rgba(180,100,0,0.45)' : '1px solid rgba(255,180,50,0.25)',
+              }}>{reason}</span>}
               {noted && (
-                <div style={styles.noteBand}>
+                <div style={{
+                  ...styles.noteBand,
+                  background: theme === 'light' ? 'rgba(26,115,232,0.12)' : 'var(--accent-glass)',
+                  color: theme === 'light' ? '#1a56db' : 'rgba(255,255,255,0.95)',
+                }}>
                   {noteTitle || '　'}
                 </div>
               )}
               <DividendMarker markers={markers} size="md" />
-              <SqMarkerBadge markers={sqMarkers} size="md" />
-              <MacroEventBadge events={macroEvts} size="md" />
+              <SqMarkerBadge markers={sqMarkers} size="md" theme={theme} />
+              <MacroEventBadge events={macroEvts} size="md" theme={theme} />
             </div>
           )
         })}
