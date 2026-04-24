@@ -38,15 +38,12 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
         {/* ツールバー */}
         <div style={styles.toolbar}>
           <span style={styles.hint}>Ctrl+S で保存 · Esc で閉じる</span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button style={styles.saveBtn} onClick={handleSave}>保存</button>
-            <button style={styles.closeBtn} onClick={onClose} aria-label="閉じる">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
+          <button style={styles.closeBtn} onClick={onClose} aria-label="閉じる">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         {/* テキストエリア */}
@@ -57,6 +54,16 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
           placeholder="メモを入力..."
           style={styles.textarea}
         />
+
+        {/* フッター */}
+        <div style={styles.footer}>
+          <div />
+          <button
+            disabled={content === note.content}
+            style={{ ...styles.saveBtn, ...(content === note.content ? styles.saveBtnDisabled : {}) }}
+            onClick={handleSave}
+          >保存</button>
+        </div>
       </div>
     </div>,
     document.body,
@@ -86,9 +93,20 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   hint: { fontSize: 11, color: 'var(--text-dim)' },
+  footer: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '12px 20px',
+    borderTop: '1px solid var(--border-dim)',
+    flexShrink: 0,
+  },
   saveBtn: {
-    padding: '5px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-    background: 'var(--accent)', color: '#fff', cursor: 'pointer',
+    padding: '7px 24px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+    background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.45)',
+    color: 'rgba(96,165,250,1)', cursor: 'pointer', transition: 'opacity 0.15s',
+  },
+  saveBtnDisabled: {
+    background: 'transparent', border: '1px solid var(--glass-border)',
+    color: 'var(--text-dim)', cursor: 'not-allowed', opacity: 0.45,
   },
   closeBtn: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',

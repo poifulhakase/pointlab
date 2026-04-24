@@ -63,8 +63,8 @@ function fmtCd(sec: number): string {
   const m = Math.floor((sec % 3600) / 60)
   const s = sec % 60
   return h > 0
-    ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    : `${m}:${String(s).padStart(2, '0')}`
 }
 
 interface CdItem { label: string; sec: number }
@@ -120,7 +120,7 @@ export function ClockWidget({ isMobile = false }: { isMobile?: boolean }) {
   const phase = getPhase(jst.h, jst.mi, jst.wd)
   const meta  = PHASE_META[phase]
   const countdowns = getCountdowns(now)
-  const timeStr = `${String(jst.h).padStart(2, '0')}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
+  const timeStr = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
 
   const sz = isMobile
     ? { time: 28, status: 11, cdLabel: 10, cdVal: 11, pad: '14px 16px 12px', gap: 4, ptop: 8 }

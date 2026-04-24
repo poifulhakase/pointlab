@@ -12,9 +12,10 @@ type Props = {
   syncStatus: SyncStatus
   onSignIn: () => Promise<void>
   onSignOut: () => Promise<void>
+  onRetry?: () => void
 }
 
-export function AuthModal({ isOpen, isRequired, onClose, onUnlock, user, syncStatus, onSignIn, onSignOut }: Props) {
+export function AuthModal({ isOpen, isRequired, onClose, onUnlock, user, syncStatus, onSignIn, onSignOut, onRetry }: Props) {
   if (!isOpen) return null
 
   const handleClose = () => { if (!isRequired) onClose() }
@@ -37,7 +38,7 @@ export function AuthModal({ isOpen, isRequired, onClose, onUnlock, user, syncSta
         {/* アカウント管理（歯車から）: Google ログイン/ログアウト */}
         {!isRequired && (
           user
-            ? <LoggedInView user={user} syncStatus={syncStatus} onSignOut={async () => { await onSignOut(); onClose() }} />
+            ? <LoggedInView user={user} syncStatus={syncStatus} onSignOut={async () => { await onSignOut(); onClose() }} onRetry={onRetry} />
             : <SyncView onSignIn={onSignIn} onClose={onClose} />
         )}
       </div>
@@ -176,10 +177,11 @@ function SyncView({ onSignIn, onClose }: { onSignIn: () => Promise<void>; onClos
 }
 
 /** Google ログイン済み: アカウント情報 */
-function LoggedInView({ user, syncStatus, onSignOut }: {
+function LoggedInView({ user, syncStatus, onSignOut, onRetry }: {
   user: User
   syncStatus: SyncStatus
   onSignOut: () => void
+  onRetry?: () => void
 }) {
   const syncLabel: Record<string, string> = {
     idle: 'クラウド同期有効', syncing: '同期中...', synced: '同期済み', error: '同期エラー',
@@ -204,6 +206,14 @@ function LoggedInView({ user, syncStatus, onSignOut }: {
         <span style={{ color: syncColor[syncStatus], fontSize: 13, fontWeight: 500 }}>
           {syncLabel[syncStatus]}
         </span>
+        {syncStatus === 'error' && onRetry && (
+          <button style={styles.retryBtn} onClick={onRetry}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+            </svg>
+            再試行
+          </button>
+        )}
       </div>
       <div style={styles.featureList}>
         {['📱 スマホ・PC でメモを自動同期中', '☁️ 直近2年分をバックアップ'].map(t => (
@@ -298,7 +308,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   featureItem: { display: 'flex', alignItems: 'center' },
   featureText: { fontSize: 13, color: 'var(--text-sub)' },
-  syncRow: { display: 'flex', alignItems: 'center', gap: 8 },
+  syncRow: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' as const },
+  retryBtn: {
+    display: 'flex', alignItems: 'center', gap: 4,
+    padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+    color: 'rgba(255,120,100,0.9)', cursor: 'pointer',
+    background: 'rgba(255,100,80,0.10)', border: '1px solid rgba(255,100,80,0.25)',
+  },
   syncDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
   checkLabel: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

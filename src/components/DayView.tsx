@@ -7,7 +7,7 @@ import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
-import { type NoteMapEntry } from '../utils/noteStorage'
+import { type ScheduleEntry } from '../utils/noteStorage'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const HOUR_HEIGHT = 56
@@ -16,6 +16,21 @@ const TOTAL_MINUTES = 24 * 60
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number)
   return h * 60 + m
+}
+
+function formatTimeRangeJa(start: string, end?: string): string {
+  const fmt = (t: string) => {
+    const [h, m] = t.split(':').map(Number)
+    const ampm = h < 12 ? '午前' : '午後'
+    const hour = h === 0 || h === 12 ? 12 : h % 12
+    const min = m > 0 ? `${m}分` : ''
+    return { ampm, label: `${ampm}${hour}時${min}`, hour, min }
+  }
+  const s = fmt(start)
+  if (!end) return s.label
+  const e = fmt(end)
+  if (s.ampm === e.ampm) return `${s.label}〜${e.hour}時${e.min}`
+  return `${s.label}〜${e.label}`
 }
 
 type Props = {
@@ -29,10 +44,10 @@ type Props = {
   onOpenNote: (d: Date, time?: string) => void
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
-  getScheduledEvent: (d: Date) => NoteMapEntry | null
+  getScheduledEvents: (d: Date) => ScheduleEntry[]
 }
 
-export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvent }: Props) {
+export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents }: Props) {
   const now = new Date()
   const td = isToday(date)
 
@@ -55,14 +70,16 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
   const band      = getMonthBand(date.getMonth() + 1)
   const noted     = hasNote(date)
   const noteTitle = noted ? getNoteTitle(date) : ''
-  const evt       = getScheduledEvent(date)
-  const evtBlock  = evt?.startTime ? (() => {
-    const startMin = timeToMinutes(evt.startTime)
-    const endMin   = evt.endTime ? timeToMinutes(evt.endTime) : startMin + 60
-    const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
-    const heightPx = Math.max((endMin - startMin) / TOTAL_MINUTES * HOUR_HEIGHT * 24, 24)
-    return { topPx, heightPx, title: evt.title }
-  })() : null
+  const evtBlocks = getScheduledEvents(date)
+    .filter(evt => evt.startTime)
+    .map(evt => {
+      const startMin = timeToMinutes(evt.startTime)
+      const endMin   = evt.endTime ? timeToMinutes(evt.endTime) : startMin + 60
+      const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
+      const heightPx = Math.max((endMin - startMin) / TOTAL_MINUTES * HOUR_HEIGHT * 24, 24)
+      const timeLabel = formatTimeRangeJa(evt.startTime, evt.endTime || undefined)
+      return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
+    })
 
   return (
     <div style={styles.wrap}>
@@ -89,8 +106,9 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {band ? band.items.map((item, i) => (
               item.url ? (
                 <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px', textDecoration: 'none' }}>
+                  style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   {item.label}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
                 <span key={i} style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px' }}>
@@ -136,20 +154,22 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                 onClick={() => onOpenNote(date, `${String(h).padStart(2, '0')}:00`)}
               />
             ))}
-            {evtBlock && (
+            {evtBlocks.map(evtBlock => (
               <div
+                key={evtBlock.id}
                 style={{ ...styles.eventBlock, top: evtBlock.topPx, height: evtBlock.heightPx }}
                 onClick={() => onOpenNote(date)}
                 title={evtBlock.title}
               >
-                <div style={styles.eventTitle}>{evtBlock.title || '（無題）'}</div>
-                {evt?.startTime && (
-                  <div style={styles.eventTime}>
-                    {evt.startTime}{evt.endTime ? ` — ${evt.endTime}` : ''}
-                  </div>
-                )}
+                {evtBlock.heightPx < 36
+                  ? <div style={styles.eventTitleInline}>{evtBlock.title || '（無題）'}<span style={styles.eventTimeInline}>{evtBlock.timeLabel}</span></div>
+                  : <>
+                      <div style={styles.eventTitle}>{evtBlock.title || '（無題）'}</div>
+                      <div style={styles.eventTime}>{evtBlock.timeLabel}</div>
+                    </>
+                }
               </div>
-            )}
+            ))}
             {td && (
               <div style={{ ...styles.nowLine, top: `${(nowMinutes / (24 * 60)) * 100}%` }}>
                 <div style={styles.nowDot} />
@@ -195,14 +215,26 @@ const styles: Record<string, React.CSSProperties> = {
   },
   eventTitle: {
     fontSize: 12, fontWeight: 700,
-    color: 'rgba(255,255,255,0.95)',
+    color: 'rgba(255,255,255,0.97)',
     overflow: 'hidden', whiteSpace: 'nowrap' as const, textOverflow: 'ellipsis',
-    lineHeight: '16px',
+    lineHeight: '17px',
   },
   eventTime: {
-    fontSize: 10, fontWeight: 500,
+    fontSize: 11, fontWeight: 500,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: '14px',
+  },
+  eventTitleInline: {
+    fontSize: 11, fontWeight: 700,
+    color: 'rgba(255,255,255,0.97)',
+    overflow: 'hidden', whiteSpace: 'nowrap' as const, textOverflow: 'ellipsis',
+    lineHeight: '20px',
+    display: 'flex', alignItems: 'center', gap: 4,
+  },
+  eventTimeInline: {
+    fontSize: 10, fontWeight: 400,
     color: 'rgba(255,255,255,0.80)',
-    lineHeight: '13px',
+    flexShrink: 0,
   },
   nowLine: { position: 'absolute', left: 0, right: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', zIndex: 5 },
   nowDot: { width: 8, height: 8, borderRadius: '50%', background: '#60a5fa', flexShrink: 0, boxShadow: '0 0 6px rgba(96,165,250,0.8)' },

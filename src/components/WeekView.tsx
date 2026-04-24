@@ -7,10 +7,25 @@ import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
-import { type NoteMapEntry } from '../utils/noteStorage'
+import { type ScheduleEntry } from '../utils/noteStorage'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const HOUR_HEIGHT = 56
+
+function formatTimeRangeJa(start: string, end?: string): string {
+  const fmt = (t: string) => {
+    const [h, m] = t.split(':').map(Number)
+    const ampm = h < 12 ? '午前' : '午後'
+    const hour = h === 0 || h === 12 ? 12 : h % 12
+    const min = m > 0 ? `${m}分` : ''
+    return { ampm, label: `${ampm}${hour}時${min}`, hour, min }
+  }
+  const s = fmt(start)
+  if (!end) return s.label
+  const e = fmt(end)
+  if (s.ampm === e.ampm) return `${s.label}〜${e.hour}時${e.min}`
+  return `${s.label}〜${e.label}`
+}
 
 type Props = {
   days: Date[]
@@ -24,7 +39,7 @@ type Props = {
   onOpenNote: (d: Date, time?: string) => void
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
-  getScheduledEvent: (d: Date) => NoteMapEntry | null
+  getScheduledEvents: (d: Date) => ScheduleEntry[]
   isMobile: boolean
 }
 
@@ -35,7 +50,7 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
-export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvent, isMobile }: Props) {
+export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile }: Props) {
   const now = new Date()
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -136,14 +151,16 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
             const td     = isToday(d)
             const closed = isMarketClosed(d)
             const nowMinutes = td ? now.getHours() * 60 + now.getMinutes() : -1
-            const evt    = getScheduledEvent(d)
-            const evtBlock = evt?.startTime ? (() => {
-              const startMin = timeToMinutes(evt.startTime)
-              const endMin   = evt.endTime ? timeToMinutes(evt.endTime) : startMin + 60
-              const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
-              const heightPx = Math.max((endMin - startMin) / TOTAL_MINUTES * HOUR_HEIGHT * 24, 22)
-              return { topPx, heightPx, title: evt.title }
-            })() : null
+            const evtBlocks = getScheduledEvents(d)
+              .filter(evt => evt.startTime)
+              .map(evt => {
+                const startMin = timeToMinutes(evt.startTime)
+                const endMin   = evt.endTime ? timeToMinutes(evt.endTime) : startMin + 60
+                const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
+                const heightPx = Math.max((endMin - startMin) / TOTAL_MINUTES * HOUR_HEIGHT * 24, 22)
+                const timeLabel = formatTimeRangeJa(evt.startTime, evt.endTime || undefined)
+                return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
+              })
             return (
               <div key={di} style={{ ...styles.dayCol, position: 'relative', background: closed ? 'var(--closed-cell-bg)' : undefined }}>
                 {!closed && <SessionBands />}
@@ -154,15 +171,19 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                     onClick={() => onOpenNote(d, `${String(h).padStart(2, '0')}:00`)}
                   />
                 ))}
-                {evtBlock && (
+                {evtBlocks.map(evtBlock => (
                   <div
+                    key={evtBlock.id}
                     style={{ ...styles.eventBlock, top: evtBlock.topPx, height: evtBlock.heightPx }}
                     onClick={() => onOpenNote(d)}
                     title={evtBlock.title}
                   >
-                    {evtBlock.title || '（無題）'}
+                    <div style={styles.eventTitle}>{evtBlock.title || '（無題）'}</div>
+                    {evtBlock.heightPx >= 34 && (
+                      <div style={styles.eventTime}>{evtBlock.timeLabel}</div>
+                    )}
                   </div>
-                )}
+                ))}
                 {td && (
                   <div style={{ ...styles.nowLine, top: `${(nowMinutes / (24 * 60)) * 100}%` }}>
                     <div style={styles.nowDot} />
@@ -183,8 +204,9 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
             {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>／</span>}
             {item.url ? (
               <a href={item.url} target="_blank" rel="noopener noreferrer"
-                style={{ color: band.color, fontWeight: 700, textDecoration: 'none' }}>
+                style={{ color: band.color, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 {item.label}
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
             ) : (
               <span style={{ color: band.color, fontWeight: 700 }}>{item.label}</span>
@@ -200,19 +222,18 @@ const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 8px 8px' },
   header: { display: 'flex', borderBottom: '1px solid var(--grid-line)', flexShrink: 0 },
   timeGutter: { width: 52, flexShrink: 0 },
-  dayHeader: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0 8px', gap: 3, borderRadius: 6, transition: 'background 0.12s' },
+  dayHeader: { flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0 8px', gap: 3, borderRadius: 6, transition: 'background 0.12s' },
   dowLabel: { fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' },
   dateNum: { width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontSize: 16, fontWeight: 500 },
   closedBadge: { fontSize: 9, fontWeight: 700, color: 'rgba(255,200,100,0.8)', background: 'rgba(255,180,50,0.12)', border: '1px solid rgba(255,180,50,0.25)', borderRadius: 3, padding: '1px 5px' },
   noteBand: {
     alignSelf: 'stretch',
     background: 'var(--accent-glass)',
-    borderLeft: '3px solid var(--accent)',
-    borderRadius: '0 3px 3px 0',
-    padding: '2px 6px',
+    borderRadius: 3,
+    padding: '2px 5px',
     fontSize: 10, fontWeight: 600,
     color: 'rgba(255,255,255,0.95)',
-    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+    overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' as const,
     minHeight: 16, lineHeight: '12px',
   },
   scrollArea: { flex: 1, overflowY: 'auto' },
@@ -226,12 +247,22 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     borderLeft: '3px solid var(--accent)',
     borderRadius: 4,
-    padding: '2px 5px',
-    fontSize: 10, fontWeight: 600,
-    color: 'rgba(255,255,255,0.95)',
-    overflow: 'hidden', whiteSpace: 'nowrap' as const, textOverflow: 'ellipsis',
+    padding: '3px 5px',
+    overflow: 'hidden',
     zIndex: 4, cursor: 'pointer',
+    display: 'flex', flexDirection: 'column', gap: 0,
+  },
+  eventTitle: {
+    fontSize: 10, fontWeight: 700,
+    color: 'rgba(255,255,255,0.97)',
+    overflow: 'hidden', whiteSpace: 'nowrap' as const, textOverflow: 'ellipsis',
     lineHeight: '14px',
+  },
+  eventTime: {
+    fontSize: 9, fontWeight: 500,
+    color: 'rgba(255,255,255,0.80)',
+    overflow: 'hidden', whiteSpace: 'nowrap' as const, textOverflow: 'ellipsis',
+    lineHeight: '13px',
   },
   nowLine: { position: 'absolute', left: 0, right: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', zIndex: 5 },
   nowDot: { width: 8, height: 8, borderRadius: '50%', background: '#60a5fa', flexShrink: 0, boxShadow: '0 0 6px rgba(96,165,250,0.8)' },

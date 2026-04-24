@@ -145,6 +145,45 @@ function arbTextColor(val: number, q1: number, q3: number, theme: 'dark' | 'ligh
   return balTextColor(val, q1, q3, true, theme)
 }
 
+// ── 3指標統合テーブル ─────────────────────────────
+type CombinedRow = {
+  date: string
+  label: string
+  shortSell: number | null
+  adRatio: number | null
+  arbLongBal: number | null
+  arbShortBal: number | null
+}
+
+function buildCombinedRows(
+  ssData: ShortSellWeekData[],
+  adData: AdvanceDeclineWeekData[],
+  arbData: ArbitrageWeekData[],
+): CombinedRow[] {
+  const ssMap  = new Map(ssData.map(d => [d.date, d]))
+  const adMap  = new Map(adData.map(d => [d.date, d]))
+  const arbMap = new Map(arbData.map(d => [d.date, d]))
+  const allDates = new Set([...ssMap.keys(), ...adMap.keys(), ...arbMap.keys()])
+  return Array.from(allDates)
+    .sort((a, b) => b.localeCompare(a))
+    .map(date => {
+      const ss  = ssMap.get(date)
+      const ad  = adMap.get(date)
+      const arb = arbMap.get(date)
+      return {
+        date,
+        label: (ss ?? ad ?? arb)?.label ?? '',
+        shortSell:   ss  ? ss.ratio    : null,
+        adRatio:     ad  ? ad.ratio25  : null,
+        arbLongBal:  arb ? arb.longBal  : null,
+        arbShortBal: arb ? (arb.shortBal > 0 ? arb.shortBal : null) : null,
+      }
+    })
+}
+
+// ── クオンツメモ ──────────────────────────────────
+const QUANT_MEMO_KEY = 'poical-quant-memo'
+
 // ── エクスポート用データ構築 ──────────────────────
 function toDate(s: string) { return s.replace(/\//g, '-') }
 const r2 = (n: number) => Math.round(n * 100) / 100
@@ -240,10 +279,12 @@ function buildExportJson(
           institution: r2((inv?.trustBank ?? 0) + (inv?.securities ?? 0)),
           retail:      r2(inv?.individual ?? 0),
         },
-        credit_ratio:          mar?.ratio ?? 0,
-        advance_decline_ratio: ad?.ratio25 ?? null,
-        short_sell_ratio:      ss?.ratio ?? null,
-        arbitrage_long_bal_trillion: arb ? r2(arb.longBal / 1000000) : null,
+        credit_ratio:               mar?.ratio ?? 0,
+        credit_eval_ratio:          mar?.evalRatio ?? null,
+        advance_decline_ratio:      ad?.ratio25 ?? null,
+        short_sell_ratio:           ss?.ratio ?? null,
+        arbitrage_long_bal_trillion:  arb ? r2(arb.longBal / 1000000) : null,
+        arbitrage_short_bal_trillion: arb && arb.shortBal > 0 ? r2(arb.shortBal / 1000000) : null,
       }
     })
     .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0)
@@ -569,6 +610,18 @@ export function QuantView({ theme, isMobile }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
 
+  const [quantMemo,      setQuantMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
+  const [savedMemo,      setSavedMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
+  const [memoSaveFlash,  setMemoSaveFlash]  = useState(false)
+  const memoIsDirty = quantMemo !== savedMemo
+
+  const handleMemoSave = useCallback(() => {
+    localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
+    setSavedMemo(quantMemo)
+    setMemoSaveFlash(true)
+    setTimeout(() => setMemoSaveFlash(false), 2000)
+  }, [quantMemo])
+
   const loadInvestor = useCallback(async (force = false) => {
     setInvLoading(true); setInvError('')
     try { setInvData(await fetchInvestorData(force)); setInvLoaded(true) }
@@ -776,102 +829,82 @@ export function QuantView({ theme, isMobile }: Props) {
 
           <div style={s.dividerH} />
 
-          {/* 空売り比率 ＋ 騰落レシオ（横並び） */}
+          {/* 空売り比率 ＋ 騰落レシオ ＋ 裁定買い残（統合テーブル） */}
           <div style={halfPanel}>
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0, flexDirection: isMobile ? 'column' : 'row' }}>
-
-              {/* 空売り比率 */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-                <PanelHeader
-                  icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>}
-                  title="空売り比率"
-                  sub="東証プライム（週次）"
-                  dateRange={undefined}
-                  loading={ssLoading}
-                  onReload={() => loadShortSell(true)}
-                />
-                <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
-                  {(ssLoading && ssData.length === 0) || ssError
-                    ? <PanelCenter loading={ssLoading && ssData.length === 0} error={ssError} onRetry={() => loadShortSell(true)} />
-                    : ssData.length === 0
-                      ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12, textAlign: 'center' }}>データなし</span></div>
-                      : (
-                        <table style={s.table}>
-                          <thead>
-                            <tr>
-                              <th style={{ ...s.th, ...s.thDate }}>週</th>
-                              <th style={s.th}><div style={s.thLabel}>空売り比率</div><div style={s.thSub}>%</div></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {ssData.map((row, i) => (
-                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                <td style={{ ...s.td, ...s.tdDate }}>
-                                  <div style={s.dateMain}>{row.label}</div>
-                                  <div style={s.dateSub}>{row.date}</div>
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum, background: shortSellBg(row.ratio, theme) }}>
-                                  <span style={{ color: shortSellTextColor(row.ratio, theme), fontWeight: 700, fontSize: 14 }}>
-                                    {row.ratio.toFixed(1)}
-                                  </span>
-                                  <span style={s.unit}>%</span>
-                                </td>
+            {(() => {
+              const combinedRows = buildCombinedRows(ssData, adData, arbData)
+              const [arbQ1, arbQ3]      = quartiles(arbData.map(r => r.longBal))
+              const [arbShortQ1, arbShortQ3] = quartiles(arbData.map(r => r.shortBal))
+              const combinedLoading = (ssLoading || adLoading || arbLoading) && combinedRows.length === 0
+              const combinedError = ssError || adError || arbError
+              const latestDate = combinedRows[0]?.date
+              return (
+                <>
+                  <PanelHeader
+                    icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
+                    title="需給指標"
+                    sub="空売り比率・騰落レシオ・裁定残高（週次）"
+                    dateRange={latestDate ? `最新: ${latestDate}` : undefined}
+                    loading={ssLoading || adLoading || arbLoading}
+                    onReload={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }}
+                  />
+                  <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
+                    {combinedLoading || combinedError
+                      ? <PanelCenter loading={combinedLoading} error={combinedError} onRetry={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }} />
+                      : combinedRows.length === 0
+                        ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12, textAlign: 'center' }}>データなし</span></div>
+                        : (
+                          <table style={s.table}>
+                            <thead>
+                              <tr>
+                                <th style={{ ...s.th, ...s.thDate }}>週</th>
+                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>空売り比率</div><div style={s.thSub}>%</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定買い残</div><div style={s.thSub}>百万円</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )
-                  }
-                </div>
-              </div>
-
-              <div style={isMobile ? s.dividerH : s.divider} />
-
-              {/* 騰落レシオ */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-                <PanelHeader
-                  icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>}
-                  title="騰落レシオ"
-                  sub="日経平均・25日（週次）"
-                  dateRange={undefined}
-                  loading={adLoading}
-                  onReload={() => loadAdvanceDecline(true)}
-                />
-                <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
-                  {(adLoading && adData.length === 0) || adError
-                    ? <PanelCenter loading={adLoading && adData.length === 0} error={adError} onRetry={() => loadAdvanceDecline(true)} />
-                    : adData.length === 0
-                      ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12, textAlign: 'center' }}>データなし</span></div>
-                      : (
-                        <table style={s.table}>
-                          <thead>
-                            <tr>
-                              <th style={{ ...s.th, ...s.thDate }}>週</th>
-                              <th style={s.th}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {adData.map((row, i) => (
-                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                <td style={{ ...s.td, ...s.tdDate }}>
-                                  <div style={s.dateMain}>{row.label}</div>
-                                  <div style={s.dateSub}>{row.date}</div>
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum, background: adRatioBg(row.ratio25, theme) }}>
-                                  <span style={{ color: adRatioTextColor(row.ratio25, theme), fontWeight: 700, fontSize: 14 }}>
-                                    {row.ratio25.toFixed(1)}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )
-                  }
-                </div>
-              </div>
-
-            </div>
+                            </thead>
+                            <tbody>
+                              {combinedRows.map((row, i) => (
+                                <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                                  <td style={{ ...s.td, ...s.tdDate }}>
+                                    <div style={s.dateMain}>{row.label}</div>
+                                    <div style={s.dateSub}>{row.date}</div>
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
+                                    {row.shortSell != null
+                                      ? <><span style={{ color: shortSellTextColor(row.shortSell, theme), fontWeight: 700, fontSize: 13 }}>{row.shortSell.toFixed(1)}</span><span style={s.unit}>%</span></>
+                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                    }
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.adRatio != null ? adRatioBg(row.adRatio, theme) : 'transparent' }}>
+                                    {row.adRatio != null
+                                      ? <span style={{ color: adRatioTextColor(row.adRatio, theme), fontWeight: 700, fontSize: 13 }}>{row.adRatio.toFixed(1)}</span>
+                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                    }
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
+                                    {row.arbLongBal != null
+                                      ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 700, fontSize: 13 }}>{fmtHyakuman(row.arbLongBal)}</span>
+                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                    }
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
+                                    {row.arbShortBal != null
+                                      ? <span style={{ color: balTextColor(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme), fontWeight: 700, fontSize: 13 }}>{fmtHyakuman(row.arbShortBal)}</span>
+                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                    }
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )
+                    }
+                  </div>
+                </>
+              )
+            })()}
           </div>
 
         </div>
@@ -935,50 +968,46 @@ export function QuantView({ theme, isMobile }: Props) {
 
           <div style={s.dividerH} />
 
-          {/* 裁定買い残 */}
+          {/* メモ */}
           <div style={halfPanel}>
-            <PanelHeader
-              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>}
-              title="裁定買い残"
-              sub="先物裁定・金額（週次）"
-              dateRange={arbData.length > 0 ? `${arbData[0]?.date} 〜 ${arbData[arbData.length - 1]?.date}` : undefined}
-              loading={arbLoading}
-              onReload={() => loadArbitrage(true)}
-            />
-            <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
-              {(arbLoading && arbData.length === 0) || arbError
-                ? <PanelCenter loading={arbLoading && arbData.length === 0} error={arbError} onRetry={() => loadArbitrage(true)} />
-                : arbData.length === 0
-                  ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12, textAlign: 'center' }}>データなし<br/>npm run fetch-data を実行してください</span></div>
-                  : (() => {
-                      const [arbQ1, arbQ3] = quartiles(arbData.map(r => r.longBal))
-                      return (
-                        <table style={s.table}>
-                          <thead>
-                            <tr>
-                              <th style={{ ...s.th, ...s.thDate }}>週</th>
-                              <th style={s.th}><div style={s.thLabel}>裁定買い残</div><div style={s.thSub}>百万円</div></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[...arbData].reverse().map((row, i) => (
-                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                <td style={{ ...s.td, ...s.tdDate }}>
-                                  <div style={s.dateMain}>{row.label}</div>
-                                  <div style={s.dateSub}>{row.date}</div>
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum, background: arbBg(row.longBal, arbQ1, arbQ3, theme) }}>
-                                  <span style={{ color: arbTextColor(row.longBal, arbQ1, arbQ3, theme), fontWeight: 700, fontSize: 14 }}>
-                                    {fmtHyakuman(row.longBal)}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )
-                    })()
-              }
+            <div style={s.panelHead}>
+              <div style={s.panelTitle}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                クオンツ分析レポート
+              </div>
+              <div style={s.panelRight}>
+                {memoSaveFlash && <span style={{ fontSize: 11, color: '#34d399' }}>保存しました</span>}
+                <button
+                  style={{ ...s.reloadBtn, opacity: memoIsDirty ? 1 : 0.45, cursor: memoIsDirty ? 'pointer' : 'default' }}
+                  onClick={handleMemoSave}
+                  disabled={!memoIsDirty}
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: isMobile ? 180 : 0 }}>
+              <textarea
+                value={quantMemo}
+                onChange={e => setQuantMemo(e.target.value)}
+                placeholder="メモを入力…"
+                style={{
+                  flex: 1,
+                  resize: 'none',
+                  background: 'transparent',
+                  color: 'var(--text)',
+                  border: 'none',
+                  outline: 'none',
+                  padding: '12px 14px',
+                  fontSize: 13,
+                  lineHeight: 1.8,
+                  fontFamily: 'inherit',
+                  overflowY: 'auto',
+                  minHeight: isMobile ? 180 : 0,
+                }}
+              />
             </div>
           </div>
 

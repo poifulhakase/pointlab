@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   onAuthStateChanged, GoogleAuthProvider,
   signInWithPopup, signOut as firebaseSignOut,
 } from 'firebase/auth'
 import type { User } from 'firebase/auth'
-import { auth } from '../utils/firebase'
+import { auth, db } from '../utils/firebase'
+import { enableNetwork } from 'firebase/firestore'
 import {
   initialSync, saveNoteToFirestore, subscribeToNotes,
   syncChannelsOnLogin, saveChannelsToFirestore,
@@ -23,6 +24,57 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(() => loadStickyNotes())
   const unsubNotesRef  = useRef<(() => void) | null>(null)
   const unsubStickyRef = useRef<(() => void) | null>(null)
+  const currentUserRef = useRef<User | null>(null)
+  const retryTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // doSync の最新版を保持するref（自己参照 setTimeout から呼ぶため）
+  const doSyncRef = useRef<(u: User, isAutoRetry?: boolean) => Promise<void>>(async () => {})
+  const newLoginRef = useRef(false)
+  const [loginToast, setLoginToast] = useState(false)
+
+  const doSync = useCallback(async (u: User, isAutoRetry = false) => {
+    // 保留中の自動リトライをキャンセル
+    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null }
+
+    // 既存のリアルタイムリスナーを解除してから再設定
+    unsubNotesRef.current?.(); unsubNotesRef.current = null
+    unsubStickyRef.current?.(); unsubStickyRef.current = null
+
+    setSyncStatus('syncing')
+    try {
+      // Firestore SDK が offline 状態になっている場合に強制再接続
+      await enableNetwork(db).catch(() => {})
+      const [, , syncedSticky] = await Promise.all([
+        initialSync(u.uid),
+        syncChannelsOnLogin(u.uid),
+        syncStickyNotesOnLogin(u.uid),
+      ])
+      refreshNoteMap()
+      setStickyNotes(syncedSticky)
+      setSyncStatus('synced')
+      if (newLoginRef.current) { newLoginRef.current = false; setLoginToast(true) }
+
+      unsubNotesRef.current = subscribeToNotes(u.uid, () => { refreshNoteMap() })
+      unsubStickyRef.current = subscribeToStickyNotes(u.uid, (notes) => { setStickyNotes(notes) })
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? ''
+      const isOffline = code === 'unavailable' || (err instanceof Error && err.message.includes('offline'))
+
+      console.error(`[Firebase] sync error code=${code} retry=${isAutoRetry}`, err)
+      if (isOffline && !isAutoRetry) {
+        // オフライン系エラーは8秒後に1回だけ自動リトライ
+        console.warn('[Firebase] offline, auto-retry in 8s')
+        retryTimerRef.current = setTimeout(() => {
+          const cur = currentUserRef.current
+          if (cur) doSyncRef.current(cur, true)
+        }, 8000)
+      }
+      setSyncStatus('error')
+    }
+  }, [refreshNoteMap])
+
+  // doSync が更新されたら ref も更新（自己参照 setTimeout 用）
+  useEffect(() => { doSyncRef.current = doSync }, [doSync])
 
   useEffect(() => {
     let unsubAuth: (() => void) | null = null
@@ -30,10 +82,12 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     const run = async () => {
       unsubAuth = onAuthStateChanged(auth, async (u) => {
         setAuthLoading(false)
-        unsubNotesRef.current?.()
-        unsubNotesRef.current = null
-        unsubStickyRef.current?.()
-        unsubStickyRef.current = null
+        currentUserRef.current = u
+
+        // 認証状態が変わったら保留リトライ・リスナーをクリア
+        if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null }
+        unsubNotesRef.current?.(); unsubNotesRef.current = null
+        unsubStickyRef.current?.(); unsubStickyRef.current = null
 
         setUser(u)
 
@@ -42,28 +96,7 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
           return
         }
 
-        setSyncStatus('syncing')
-        try {
-          const [, , syncedSticky] = await Promise.all([
-            initialSync(u.uid),
-            syncChannelsOnLogin(u.uid),
-            syncStickyNotesOnLogin(u.uid),
-          ])
-          refreshNoteMap()
-          setStickyNotes(syncedSticky)
-          setSyncStatus('synced')
-
-          unsubNotesRef.current = subscribeToNotes(u.uid, () => {
-            refreshNoteMap()
-          })
-
-          unsubStickyRef.current = subscribeToStickyNotes(u.uid, (notes) => {
-            setStickyNotes(notes)
-          })
-        } catch (err) {
-          console.error('[Firebase] sync error:', err)
-          setSyncStatus('error')
-        }
+        await doSync(u)
       })
     }
 
@@ -73,10 +106,18 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
       unsubAuth?.()
       unsubNotesRef.current?.()
       unsubStickyRef.current?.()
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
     }
-  }, []) // refreshNoteMap は useCallback([]) で安定
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** エラー時に手動で再試行 */
+  const retrySync = useCallback(() => {
+    const u = currentUserRef.current
+    if (u) doSync(u)
+  }, [doSync])
 
   const signIn = async () => {
+    newLoginRef.current = true
     const provider = new GoogleAuthProvider()
     await signInWithPopup(auth, provider)
   }
@@ -85,7 +126,6 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     await firebaseSignOut(auth)
   }
 
-  /** ノート保存後に Firestore へ非同期書き込み（ログイン時のみ） */
   const handleAfterSave = (date: Date, note: DayNote) => {
     if (!user) return
     saveNoteToFirestore(user.uid, dateKey(date), note).catch(err =>
@@ -93,7 +133,6 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     )
   }
 
-  /** チャンネルリスト変更後に Firestore へ非同期書き込み（ログイン時のみ） */
   const handleChannelsSaved = (channels: { id: string; name: string }[]) => {
     if (!user) return
     saveChannelsToFirestore(user.uid, channels).catch(err =>
@@ -101,7 +140,6 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     )
   }
 
-  /** スティッキーメモ保存（localStorage + Firestore） */
   const handleStickyNotesSaved = (notes: StickyNote[]) => {
     saveStickyNotes(notes)
     setStickyNotes(notes)
@@ -112,8 +150,9 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
   }
 
   return {
-    user, signIn, signOut, syncStatus, authLoading,
+    user, signIn, signOut, syncStatus, retrySync, authLoading,
     handleAfterSave, handleChannelsSaved,
     stickyNotes, handleStickyNotesSaved,
+    loginToast, clearLoginToast: () => setLoginToast(false),
   }
 }

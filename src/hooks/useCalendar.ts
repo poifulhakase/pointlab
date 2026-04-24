@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
 
-export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'youtube' | 'spec'
+export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'youtube' | 'note' | 'spec' | 'legal'
 
 const VIEW_STORAGE_KEY = 'poical-view'
-const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'youtube', 'spec']
+const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'youtube', 'note', 'spec', 'legal']
 
 function loadView(): ViewMode {
   const v = localStorage.getItem(VIEW_STORAGE_KEY)
@@ -79,7 +79,9 @@ export function useCalendar() {
     if (view === 'chart')   return 'チャート'
     if (view === 'quant')   return '需給'
     if (view === 'youtube') return '動画'
+    if (view === 'note')    return 'ノート'
     if (view === 'spec')    return '説明書'
+    if (view === 'legal')   return 'プライバシー・免責事項'
     if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
       const week = getWeekDays()

@@ -72,7 +72,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 borderTop: td && !dim ? '3px solid rgba(96,165,250,0.85)' : undefined,
                 cursor: 'pointer',
               }}
-              className="glass"
+              className={`glass${td && !dim ? ' today-pulse' : ''}`}
             >
               <div style={styles.dateNumWrap}>
                 {/* 日付数字：クリックでナビゲート */}
@@ -129,10 +129,11 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: band.color, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                  style={{ color: band.color, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
                   onClick={e => e.stopPropagation()}
                 >
                   {item.label}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
                 <span style={{ color: band.color, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.label}</span>
@@ -184,13 +185,17 @@ const styles: Record<string, React.CSSProperties> = {
   noteBand: {
     width: '100%',
     background: 'rgba(96,165,250,0.18)',
-    borderLeft: '3px solid rgba(96,165,250,0.70)',
-    borderRadius: '0 3px 3px 0',
-    padding: '2px 5px',
+    borderRadius: 3,
+    padding: '2px 4px',
     marginTop: 3,
     fontSize: 11, fontWeight: 600,
     color: 'rgba(96,165,250,0.92)',
-    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-    minHeight: 17, lineHeight: '13px',
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical' as const,
+    WebkitLineClamp: 2,
+    whiteSpace: 'normal' as const,
+    lineHeight: '14px',
+    minHeight: 17,
   },
 }

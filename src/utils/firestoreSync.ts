@@ -1,9 +1,11 @@
 import {
-  collection, doc, getDocs, setDoc, deleteDoc,
-  onSnapshot, query, where, getDoc,
+  collection, doc,
+  onSnapshot, query, where,
 } from 'firebase/firestore'
 import { db } from './firebase'
+import { restGetDoc, restListDocs, restSetDoc, restDeleteDoc } from './firestoreRest'
 import type { DayNote } from './noteStorage'
+import { isPendingDelete, removePendingDelete } from './noteStorage'
 import { loadStickyNotes, saveStickyNotes, type StickyNote } from './stickyNotes'
 
 type Channel = { id: string; name: string }
@@ -28,8 +30,8 @@ function notesCol(uid: string) {
   return collection(db, 'users', uid, 'notes')
 }
 
-function monthDocRef(uid: string, monthKey: string) {
-  return doc(db, 'users', uid, 'notes', monthKey)
+function stickyNotesDocRef(uid: string) {
+  return doc(db, 'users', uid, 'data', 'stickyNotes')
 }
 
 /** dateKey (YYYY-MM-DD) から月キー (YYYY-MM) を取得 */
@@ -70,26 +72,22 @@ function groupByMonth(notes: RawNotes): Record<string, RawNotes> {
 export async function initialSync(uid: string): Promise<void> {
   const validMonths = getValidMonthKeys()
 
-  // Firestore の全ドキュメントを取得（月ドキュメント一覧）
-  const snapshot = await getDocs(notesCol(uid))
+  const snapshot = await restListDocs(`users/${uid}/notes`)
 
   // 2年超の古いドキュメントを削除
-  const deletions: Promise<void>[] = []
-  snapshot.forEach(d => {
-    if (!validMonths.has(d.id)) {
-      deletions.push(deleteDoc(monthDocRef(uid, d.id)))
-    }
-  })
+  const deletions = snapshot
+    .filter(d => !validMonths.has(d.id))
+    .map(d => restDeleteDoc(`users/${uid}/notes/${d.id}`))
   await Promise.all(deletions)
 
-  if (snapshot.empty) {
+  if (snapshot.length === 0) {
     // 初回ログイン: ローカルデータを Firestore にアップロード
     const local = loadLocal()
     const groups = groupByMonth(local)
     const uploads = Object.entries(groups)
       .filter(([month]) => validMonths.has(month))
       .map(([month, notes]) =>
-        setDoc(monthDocRef(uid, month), { ...notes, _updatedAt: new Date().toISOString() })
+        restSetDoc(`users/${uid}/notes/${month}`, { ...notes, _updatedAt: new Date().toISOString() })
       )
     await Promise.all(uploads)
     return
@@ -97,11 +95,13 @@ export async function initialSync(uid: string): Promise<void> {
 
   // 既存ユーザー: Firestore 優先でマージ
   const firestoreNotes: RawNotes = {}
-  snapshot.forEach(d => {
-    if (!validMonths.has(d.id)) return
-    const { _updatedAt, ...notes } = d.data()
+  const firestoreByMonth: Record<string, RawNotes> = {}
+  for (const d of snapshot) {
+    if (!validMonths.has(d.id)) continue
+    const { _updatedAt: _at, ...notes } = d.data() as Record<string, unknown>
     Object.assign(firestoreNotes, notes)
-  })
+    firestoreByMonth[d.id] = notes as RawNotes
+  }
 
   const local = loadLocal()
 
@@ -111,45 +111,68 @@ export async function initialSync(uid: string): Promise<void> {
     if (validMonths.has(toMonthKey(key))) validLocal[key] = note
   }
 
-  const merged: RawNotes = { ...validLocal, ...firestoreNotes } // Firestore 優先
+  // ローカルで削除済み（pendingDelete）のキーは Firestore から復元しない
+  const filteredFirestoreNotes: RawNotes = {}
+  for (const [key, note] of Object.entries(firestoreNotes)) {
+    if (!isPendingDelete(key)) filteredFirestoreNotes[key] = note
+  }
+
+  const merged: RawNotes = { ...validLocal, ...filteredFirestoreNotes } // Firestore 優先
   saveLocal(merged)
 
-  // ローカルのみのノートを Firestore にアップロード
+  // ローカルのみのノートを月ドキュメント単位でマージアップロード
   const localOnlyByMonth = groupByMonth(
     Object.fromEntries(
       Object.entries(validLocal).filter(([key]) => !(key in firestoreNotes))
     )
   )
-  const uploads = Object.entries(localOnlyByMonth).map(([month, notes]) =>
-    setDoc(monthDocRef(uid, month), { ...notes, _updatedAt: new Date().toISOString() }, { merge: true })
-  )
+  const uploads = Object.entries(localOnlyByMonth).map(([month, localNotes]) => {
+    const existingMonthNotes = firestoreByMonth[month] ?? {}
+    return restSetDoc(`users/${uid}/notes/${month}`, {
+      ...existingMonthNotes,
+      ...localNotes,
+      _updatedAt: new Date().toISOString(),
+    })
+  })
   await Promise.all(uploads)
 }
 
 /**
- * ノートを Firestore に保存（その月のドキュメントをマージ更新）。
+ * ノートを Firestore に保存（その月のローカルデータで上書き）。
  * localStorage への書き込みは noteStorage.saveNote が行う。
  */
 export async function saveNoteToFirestore(uid: string, key: string, note: DayNote): Promise<void> {
   const month = toMonthKey(key)
-  const isEmpty = !note.title.trim() && !note.memo.trim() &&
-    note.checklist.length === 0 && !note.scheduled
-
-  if (isEmpty) {
-    // フィールド削除: FieldValue.delete() の代わりにローカルの全データで上書き
-    const local = loadLocal()
-    const monthNotes: RawNotes = {}
-    for (const [k, v] of Object.entries(local)) {
-      if (toMonthKey(k) === month) monthNotes[k] = v
-    }
-    await setDoc(monthDocRef(uid, month), { ...monthNotes, _updatedAt: new Date().toISOString() })
-  } else {
-    await setDoc(
-      monthDocRef(uid, month),
-      { [key]: note, _updatedAt: new Date().toISOString() },
-      { merge: true }
-    )
+  const local = loadLocal()
+  const monthNotes: RawNotes = {}
+  for (const [k, v] of Object.entries(local)) {
+    if (toMonthKey(k) === month) monthNotes[k] = v
   }
+
+  const isEmpty = !note.title.trim() && !note.memo.trim() &&
+    note.checklist.length === 0 && (note.schedules?.length ?? 0) === 0
+
+  if (!isEmpty) {
+    monthNotes[key] = note
+  }
+
+  // フィールドマスクを使って送信フィールドを明示する。
+  // マスクにあってボディにないフィールド（削除されたノートのキー）は
+  // Firestore から削除される。マスクなし PATCH は「マージ」になるため
+  // 削除したキーが Firestore に残り、リスナーが復活させてしまう。
+  const fieldMask = [...Object.keys(monthNotes), '_updatedAt']
+  if (isEmpty && !(key in monthNotes)) {
+    fieldMask.push(key) // 削除対象キーをマスクに含めてFirestoreからも消す
+  }
+
+  await restSetDoc(
+    `users/${uid}/notes/${month}`,
+    { ...monthNotes, _updatedAt: new Date().toISOString() },
+    fieldMask,
+  )
+
+  // Firestore への削除が確定したのでマーカーを解除
+  if (isEmpty) removePendingDelete(key)
 }
 
 /**
@@ -196,10 +219,6 @@ export function subscribeToNotes(uid: string, onRemoteChange: () => void): () =>
 
 const CHANNELS_KEY = 'poical-yt-channels'
 
-function channelsDoc(uid: string) {
-  return doc(db, 'users', uid, 'data', 'channels')
-}
-
 function loadLocalChannels(): Channel[] {
   try { return JSON.parse(localStorage.getItem(CHANNELS_KEY) ?? '[]') } catch { return [] }
 }
@@ -209,17 +228,17 @@ function loadLocalChannels(): Channel[] {
  * Firestoreにデータがあれば Firestore 優先でマージ、なければローカルをアップロード。
  */
 export async function syncChannelsOnLogin(uid: string): Promise<void> {
-  const snap = await getDoc(channelsDoc(uid))
+  const snap = await restGetDoc(`users/${uid}/data/channels`)
   const local = loadLocalChannels()
 
   if (!snap.exists()) {
     if (local.length > 0) {
-      await setDoc(channelsDoc(uid), { channels: local, updatedAt: new Date().toISOString() })
+      await restSetDoc(`users/${uid}/data/channels`, { channels: local, updatedAt: new Date().toISOString() })
     }
     return
   }
 
-  const firestoreChannels: Channel[] = snap.data().channels ?? []
+  const firestoreChannels: Channel[] = (snap.data().channels as Channel[] | undefined) ?? []
 
   // Firestore 優先。ローカルのみのチャンネルを末尾に追加
   const firestoreIds = new Set(firestoreChannels.map(c => c.id))
@@ -229,20 +248,16 @@ export async function syncChannelsOnLogin(uid: string): Promise<void> {
   localStorage.setItem(CHANNELS_KEY, JSON.stringify(merged))
 
   if (localOnly.length > 0) {
-    await setDoc(channelsDoc(uid), { channels: merged, updatedAt: new Date().toISOString() })
+    await restSetDoc(`users/${uid}/data/channels`, { channels: merged, updatedAt: new Date().toISOString() })
   }
 }
 
 /** チャンネルリストを Firestore に保存 */
 export async function saveChannelsToFirestore(uid: string, channels: Channel[]): Promise<void> {
-  await setDoc(channelsDoc(uid), { channels, updatedAt: new Date().toISOString() })
+  await restSetDoc(`users/${uid}/data/channels`, { channels, updatedAt: new Date().toISOString() })
 }
 
 // ── スティッキーメモ同期 ──────────────────────────────────
-
-function stickyNotesDoc(uid: string) {
-  return doc(db, 'users', uid, 'data', 'stickyNotes')
-}
 
 /**
  * ログイン時のスティッキーメモ初期同期。
@@ -250,25 +265,26 @@ function stickyNotesDoc(uid: string) {
  * 同期後のメモ配列を返す。
  */
 export async function syncStickyNotesOnLogin(uid: string): Promise<StickyNote[]> {
-  const snap = await getDoc(stickyNotesDoc(uid))
+  const snap = await restGetDoc(`users/${uid}/data/stickyNotes`)
   const local = loadStickyNotes()
 
   if (!snap.exists()) {
     if (local.length > 0) {
-      await setDoc(stickyNotesDoc(uid), { notes: local, updatedAt: new Date().toISOString() })
+      await restSetDoc(`users/${uid}/data/stickyNotes`, { notes: local, updatedAt: new Date().toISOString() })
     }
     return local
   }
 
-  const remote: StickyNote[] = snap.data().notes ?? []
+  const remote: StickyNote[] = (snap.data().notes as StickyNote[] | undefined) ?? []
   const remoteIds = new Set(remote.map(n => n.id))
   const localOnly = local.filter(n => !remoteIds.has(n.id))
-  const merged = [...remote, ...localOnly].slice(0, 2) // 最大2件
+  const merged = [...remote, ...localOnly].slice(0, 1) // 最大1件
 
   saveStickyNotes(merged)
 
-  if (localOnly.length > 0) {
-    await setDoc(stickyNotesDoc(uid), { notes: merged, updatedAt: new Date().toISOString() })
+  const needsWrite = localOnly.length > 0 || remote.length > 1
+  if (needsWrite) {
+    await restSetDoc(`users/${uid}/data/stickyNotes`, { notes: merged, updatedAt: new Date().toISOString() })
   }
 
   return merged
@@ -276,16 +292,16 @@ export async function syncStickyNotesOnLogin(uid: string): Promise<StickyNote[]>
 
 /** スティッキーメモを Firestore に保存 */
 export async function saveStickyNotesToFirestore(uid: string, notes: StickyNote[]): Promise<void> {
-  await setDoc(stickyNotesDoc(uid), { notes, updatedAt: new Date().toISOString() })
+  await restSetDoc(`users/${uid}/data/stickyNotes`, { notes, updatedAt: new Date().toISOString() })
 }
 
 /** 他デバイスからのスティッキーメモ変更を購読 */
 export function subscribeToStickyNotes(uid: string, onChange: (notes: StickyNote[]) => void): () => void {
   return onSnapshot(
-    stickyNotesDoc(uid),
+    stickyNotesDocRef(uid),
     (snap) => {
       if (!snap.exists() || snap.metadata.hasPendingWrites) return
-      const notes: StickyNote[] = snap.data().notes ?? []
+      const notes: StickyNote[] = (snap.data().notes ?? []).slice(0, 1)
       saveStickyNotes(notes)
       onChange(notes)
     },

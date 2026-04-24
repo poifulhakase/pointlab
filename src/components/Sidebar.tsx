@@ -1,16 +1,13 @@
 import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { MiniCalendar } from './MiniCalendar'
 import { ClockWidget } from './ClockWidget'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter } from '../utils/macroCalendar'
 
 type Props = {
-  current: Date
-  today: Date
-  onSelect: (date: Date) => void
-  onNavigate: (delta: number) => void
+  current?: Date
+  today?: Date
   isOpen: boolean
   isMobile: boolean
   isTablet: boolean
@@ -25,7 +22,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color:
   { key: 'jp', label: '日本',  sub: '日銀決定会合・短観',             color: '#f87171' },
 ]
 
-export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -40,7 +37,7 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
   }
 
   const handleAddNote = () => {
-    if (notes.length >= 2) return
+    if (notes.length >= 1) return
     setEditingNote(newStickyNote())
   }
 
@@ -112,7 +109,7 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
         {/* 時計・市場ステータス・カウントダウン */}
         <ClockWidget isMobile={isMobile} />
 
-        {/* ミニカレンダー＋マーケットイベント（下部固定） */}
+        {/* マーケットイベント・スティッキーメモ（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
 
         {/* ──── スティッキーメモ ──── */}
@@ -125,7 +122,7 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
               </svg>
               メモ
             </span>
-            {notes.length < 2 && (
+            {notes.length < 1 && (
               <button
                 onClick={handleAddNote}
                 style={styles.memoAddBtn}
@@ -151,7 +148,7 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
                 style={styles.memoCardText}
                 title={note.content || '（空のメモ）'}
               >
-                {note.content ? note.content.split('\n')[0] : '（空のメモ）'}
+                {note.content ? (note.content.split('\n').find(l => l.trim()) ?? '（空のメモ）') : '（空のメモ）'}
               </button>
               <button
                 onClick={() => handleDeleteNote(note.id)}
@@ -205,14 +202,6 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
           ))}
         </div>
 
-          <div style={{ padding: '0 0 12px' }}>
-            <MiniCalendar
-              current={current}
-              today={today}
-              onSelect={onSelect}
-              onNavigate={onNavigate}
-            />
-          </div>
         </div>
 
       </div>
@@ -232,21 +221,21 @@ export function Sidebar({ current, today, onSelect, onNavigate, isOpen, isMobile
       <div style={{
         position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 16px', borderRadius: 10,
-        background: 'var(--modal-bg)',
-        border: '1px solid rgba(96,200,140,0.35)',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        fontSize: 13, fontWeight: 600,
-        color: 'rgba(96,200,140,0.95)',
+        padding: '10px 16px', borderRadius: 12,
+        background: 'var(--glass-bg-strong)',
+        backdropFilter: 'var(--glass-blur)',
+        WebkitBackdropFilter: 'var(--glass-blur)',
+        border: '1px solid var(--glass-border)',
+        boxShadow: 'var(--glass-shadow)',
+        fontSize: 13, fontWeight: 500, color: 'var(--text)',
         pointerEvents: 'none',
         opacity: toast ? 1 : 0,
         transform: toast ? 'translateY(0)' : 'translateY(8px)',
         transition: 'opacity 0.2s, transform 0.2s',
       }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="8" cy="8" r="7.5" stroke="rgba(96,165,250,0.8)" />
+          <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         保存しました
       </div>,

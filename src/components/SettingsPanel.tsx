@@ -9,7 +9,6 @@ type Props = {
 export function SettingsPanel({ isOpen, onClose }: Props) {
   const [s, setS] = useState<AppSettings>(getSettings)
   const [notifStatus, setNotifStatus] = useState<NotificationPermission>('default')
-  const [testResult, setTestResult]   = useState<'idle' | 'ok' | 'err'>('idle')
 
   useEffect(() => {
     if ('Notification' in window) setNotifStatus(Notification.permission)
@@ -31,24 +30,6 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
     const result = await Notification.requestPermission()
     setNotifStatus(result)
     if (result === 'granted') update({ browserNotifEnabled: true })
-  }
-
-  const sendTestEmail = async () => {
-    if (!s.emailjsServiceId || !s.emailjsTemplateId || !s.emailjsPublicKey || !s.email) {
-      setTestResult('err'); return
-    }
-    try {
-      const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-          template_params: { to_email: s.email, event_title: 'テスト通知', event_date: '本日', event_time: '--:--' },
-        }),
-      })
-      setTestResult(res.ok ? 'ok' : 'err')
-    } catch { setTestResult('err') }
-    setTimeout(() => setTestResult('idle'), 3000)
   }
 
   const testBrowserNotif = () => {
@@ -104,8 +85,6 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
 
         {/* ボディ */}
         <div style={st.body}>
-
-          {/* ── ブラウザ通知 ── */}
           <section style={st.section}>
             <div style={st.sectionTitle}>ブラウザ通知</div>
             <div style={st.row}>
@@ -128,39 +107,6 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
               <button style={{ ...st.actionBtn, marginTop: 4 }} onClick={testBrowserNotif}>
                 テスト通知を送る
               </button>
-            )}
-          </section>
-
-          {/* ── メール通知 ── */}
-          <section style={st.section}>
-            <div style={st.sectionTitle}>メール通知（EmailJS）</div>
-            <div style={st.row}>
-              <Toggle
-                checked={s.emailEnabled}
-                onChange={v => update({ emailEnabled: v })}
-                label="メール通知を有効にする"
-              />
-            </div>
-
-            {s.emailEnabled && (
-              <>
-                <Field label="送信先メールアドレス" value={s.email}        onChange={v => update({ email: v })}               placeholder="you@example.com" />
-                <Field label="Service ID"          value={s.emailjsServiceId}  onChange={v => update({ emailjsServiceId: v })}  placeholder="service_xxxxxxx" />
-                <Field label="Template ID"         value={s.emailjsTemplateId} onChange={v => update({ emailjsTemplateId: v })} placeholder="template_xxxxxxx" />
-                <Field label="Public Key"          value={s.emailjsPublicKey}  onChange={v => update({ emailjsPublicKey: v })}  placeholder="xxxxxxxxxxxxxxxxxxxx" />
-
-                <p style={st.hint}>
-                  <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(96,165,250,0.8)' }}>emailjs.com</a>
-                  {' '}で無料アカウント作成 → サービス追加 → テンプレートに<br />
-                  <code style={st.code}>to_email / event_title / event_date / event_time</code> を設定してください。
-                </p>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                  <button style={st.actionBtn} onClick={sendTestEmail}>テストメール送信</button>
-                  {testResult === 'ok'  && <span style={{ fontSize: 12, color: '#34d399' }}>✓ 送信成功</span>}
-                  {testResult === 'err' && <span style={{ fontSize: 12, color: '#f87171' }}>✗ 送信失敗（設定を確認）</span>}
-                </div>
-              </>
             )}
           </section>
         </div>
@@ -193,24 +139,6 @@ function Toggle({ checked, disabled = false, onChange, label }: { checked: boole
   )
 }
 
-function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 10 }}>
-      <label style={{ fontSize: 11, color: 'var(--text-sub)', fontWeight: 600, letterSpacing: '0.04em' }}>{label}</label>
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          background: 'var(--bg-subtle)', border: '1px solid var(--glass-border)',
-          borderRadius: 8, color: 'var(--text)', fontSize: 13,
-          padding: '7px 10px', fontFamily: 'inherit', outline: 'none',
-        }}
-      />
-    </div>
-  )
-}
-
 const st: Record<string, React.CSSProperties> = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-dim)', flexShrink: 0 },
   title:  { display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' },
@@ -221,5 +149,4 @@ const st: Record<string, React.CSSProperties> = {
   row: { display: 'flex', alignItems: 'center' },
   actionBtn: { padding: '7px 14px', borderRadius: 8, background: 'rgba(96,165,250,0.14)', border: '1px solid rgba(96,165,250,0.30)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, width: 'fit-content' },
   hint: { fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 4 },
-  code: { background: 'var(--bg-medium)', borderRadius: 4, padding: '1px 5px', fontSize: 11, fontFamily: 'monospace' },
 }

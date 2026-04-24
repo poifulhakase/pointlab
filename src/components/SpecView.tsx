@@ -25,10 +25,11 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: '主要機能',
         items: [
-          'カレンダー（月/週/日ビュー）＋ メモ・スケジュール管理',
-          'TradingView チャート（日経225・ドル円・米国債）',
-          '需給分析（VIX・NS倍率・信用倍率・投資主体別売買動向）',
-          'YouTube マーケット動画ビュー',
+          'ホーム：カレンダー（月/週/日ビュー）＋ メモ・スケジュール管理',
+          'チャート：TradingView チャート（日経225・ドル円・米国債）',
+          'データ：需給分析（VIX・NS倍率・信用倍率・投資主体別売買動向）',
+          'ノート：記事一覧（実装予定）',
+          'ムービー：YouTube マーケット動画ビュー',
           'AI分析プロンプト自動生成・クリップボードコピー',
           'Firebase Auth（Googleログイン）によるメモ・設定のクロスデバイス同期',
         ],
@@ -50,7 +51,17 @@ const SPEC_SECTIONS = [
         items: [
           '「今日」ボタン：現在のビューを変えずに今日の日付へ移動（ラジオボタンではなく独立ボタン）',
           '「日」「週」「月」：ラジオ式タブで各サブビューを切り替え',
-          '本日パネルは背景色（薄青）＋上部アクセントボーダー（青）でハイライト表示',
+          '本日パネルは背景色（薄青）＋上部アクセントボーダー（青）でハイライト表示、白色の波紋アニメーション（2.8秒周期）で強調',
+          'スマートフォンでは日付ナビゲーションエリア（← 年月 →）を高めに表示してタップしやすく改善',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: '月次イベント帯（ページ下部）',
+        items: [
+          '特定月に関連するイベント情報をカレンダー下部に帯として表示（月・週・日ビュー共通）',
+          'URLリンクが設定されているアイテムは別タブで開くリンクになり、末尾に外部リンクアイコン（↗）を表示',
+          'イベントがない月でも同一高さを確保（visibility: hidden プレースホルダー）',
         ],
       },
       {
@@ -95,7 +106,7 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: 'カレンダー左側のサイドバーには、リアルタイム時計・スティッキーメモ・マーケットイベントフィルター・ミニカレンダーが上から順に配置されています。',
+        text: 'カレンダー左側のサイドバーには、リアルタイム時計・スティッキーメモ・マーケットイベントフィルターが上から順に配置されています。',
       },
       {
         type: 'list' as const,
@@ -111,7 +122,7 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: 'スティッキーメモ',
         items: [
-          '最大2件まで自由なメモを保存可能',
+          '最大1件まで自由なメモを保存可能',
           'メモカードをクリックすると全画面モーダルエディタが開く',
           'Ctrl+S（⌘+S）で保存 / Esc で閉じる / 保存後「保存しました」を2秒間表示',
           '「＋」ボタンで新規追加、「✕」ボタンで削除（削除時は確認ダイアログあり）',
@@ -125,14 +136,6 @@ const SPEC_SECTIONS = [
           '米国イベント（FOMC・雇用統計・CPI・PCE・GDP）の表示ON/OFF',
           '日本イベント（日銀決定会合・短観）の表示ON/OFF',
           '設定はカレンダー全ビューに即時反映',
-        ],
-      },
-      {
-        type: 'list' as const,
-        heading: 'ミニカレンダー',
-        items: [
-          '月単位の小型カレンダーで日付を素早く選択',
-          '選択した日付がメインカレンダーに反映される',
         ],
       },
     ],
@@ -170,11 +173,11 @@ const SPEC_SECTIONS = [
   {
     id: 'quant',
     icon: '📊',
-    title: '需給ビュー（QuantView）',
+    title: 'データビュー（QuantView）',
     content: [
       {
         type: 'para' as const,
-        text: '需給分析に特化したビューです。3カラム構成（左：VIX＋NS倍率 / 中：信用倍率＋[空売り比率・騰落レシオ横並び] / 右：投資主体別売買動向＋裁定買い残）で市場の過熱感・資金動向を把握します。スマートフォンでは縦1列に並びます。',
+        text: '需給分析に特化したビューです。3カラム構成（左：VIX＋NS倍率 / 中：信用倍率＋需給指標統合テーブル / 右：投資主体別売買動向＋クオンツ分析レポート）で市場の過熱感・資金動向を把握します。スマートフォンでは縦1列に並びます。',
       },
       {
         type: 'list' as const,
@@ -219,15 +222,15 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: '中カラム下段（空売り比率＋騰落レシオ 横並び）',
+        heading: '中カラム下段（需給指標統合テーブル）',
         items: [
-          '空売り比率データソース: nikkei225jp.com daily2year.json（col[11]）',
-          '空売り比率の着色: ≥50%=赤（売り圧力大）/ ≤38%=緑（売り圧力小）',
-          'キャッシュ: localStorage 24時間（`poical-short-sell-data`）',
-          '騰落レシオデータソース: nikkei225jp.com daily2year.json（col[7]・25日移動平均）',
-          '騰落レシオの着色: ≥120=赤（過熱）/ ≤70=緑（売られすぎ）',
-          'キャッシュ: localStorage 24時間（`poical-ad-ratio-data`）',
-          'PCでは2列横並び表示、スマートフォンでは縦積み',
+          '空売り比率・騰落レシオ・裁定買い残を1つのテーブルに統合表示',
+          '週カラムは共通化（日付キーで3データをマージ）。データがない週は「-」表示',
+          '空売り比率データソース: nikkei225jp.com daily2year.json（col[11]）・着色: ≥50%=赤 / ≤38%=緑',
+          '騰落レシオデータソース: nikkei225jp.com daily2year.json（col[7]・25日）・着色: ≥120=赤 / ≤70=緑',
+          '裁定買い残データソース: nikkei225jp.com daily_saitei.json（col[8]）・着色: Q1/Q3四分位基準',
+          '更新ボタン1つで3データを同時リフレッシュ',
+          'キャッシュ: poical-short-sell-data / poical-ad-ratio-data / poical-arbitrage-data（各24時間）',
         ],
       },
       {
@@ -241,13 +244,13 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: '右カラム下段（裁定買い残）',
+        heading: '右カラム下段（クオンツ分析レポート）',
         items: [
-          'データソース: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json（col[8]）',
-          '単位: 百万円（先物裁定・週次）',
-          '着色: 四分位数（Q1/Q3）基準。多い=赤（将来の売り圧力）/ 少ない=緑（需給良好）',
-          'キャッシュ: localStorage 24時間（`poical-arbitrage-data`）',
-          'データファイル: public/data/arbitrage.json（週次・52件）',
+          'データビュー専用のメモパネル',
+          'テキストエリアが常時表示（全文見える・長い場合は縦スクロール）',
+          '未保存時のみ「保存」ボタンが活性化。保存後2秒間「保存しました」を表示',
+          'データは localStorage `poical-quant-memo` に永続保存',
+          '編集はデータビュー内のこのパネルからのみ可能',
         ],
       },
       {
@@ -268,7 +271,7 @@ const SPEC_SECTIONS = [
   {
     id: 'youtube',
     icon: '▶️',
-    title: '動画ビュー',
+    title: 'ムービービュー',
     content: [
       {
         type: 'para' as const,
@@ -304,10 +307,11 @@ const SPEC_SECTIONS = [
           ['poical-investor-data', '24時間', '投資主体別JSONキャッシュ'],
           ['poical-nhk-news', '30分', 'NHKニュースRSS'],
           ['poical-yt-videos-{id}', '3週間', 'YouTube動画リスト'],
-          ['poical-sticky-notes', '永続', 'サイドバースティッキーメモ（最大2件）'],
+          ['poical-sticky-notes', '永続', 'サイドバースティッキーメモ（最大1件）'],
           ['poical-short-sell-data', '24時間', '空売り比率JSONキャッシュ'],
           ['poical-ad-ratio-data', '24時間', '騰落レシオJSONキャッシュ'],
           ['poical-arbitrage-data', '24時間', '裁定買い残JSONキャッシュ'],
+          ['poical-quant-memo', '永続', 'データビュー クオンツ分析レポートメモ'],
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
           ['poical-yt-channels', '永続', 'YouTube登録チャンネルリスト'],
@@ -345,6 +349,9 @@ const SPEC_SECTIONS = [
           '未ログイン時: localStorageにフォールバック（データ消失なし）',
           'Firestoreデータ保持期間: 2年（自動削除ルール適用）',
           'authDomain: pointlab.vercel.app（Vercel でFirebaseへプロキシ）',
+          '同期エラー時はアカウントモーダルに「再試行」ボタンが表示される',
+          'オフライン検知時（code=unavailable）は8秒後に自動リトライ（1回）',
+          'Firestore接続: HTTP長ポーリング固定（WebSocketではなくHTTPS経由で接続・CSP互換）',
         ],
       },
     ],
@@ -473,7 +480,7 @@ export function SpecView({ theme, isMobile }: Props) {
               説明書
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいらぼ — 最終更新: 2026-04-20
+              ぽいらぼ — 最終更新: 2026-04-21
             </p>
           </div>
         </div>

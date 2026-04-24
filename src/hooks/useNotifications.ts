@@ -3,36 +3,8 @@ import { getAllNoteData } from '../utils/noteStorage'
 import { getSettings } from '../utils/settingsStorage'
 import { hasAlertFired, markAlertFired, cleanOldAlerts } from '../utils/alertStorage'
 
-const CHECK_INTERVAL_MS = 30_000  // 30秒ごとにチェック
-const FIRE_WINDOW_MS    = 5 * 60 * 1000  // アラート時刻から5分以内なら発火
-
-async function sendEmailViaEmailJS(
-  title: string,
-  dateLabel: string,
-  startTime: string,
-  settings: ReturnType<typeof getSettings>
-) {
-  if (!settings.emailjsServiceId || !settings.emailjsTemplateId || !settings.emailjsPublicKey || !settings.email) return
-  try {
-    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id:  settings.emailjsServiceId,
-        template_id: settings.emailjsTemplateId,
-        user_id:     settings.emailjsPublicKey,
-        template_params: {
-          to_email:    settings.email,
-          event_title: title || '（無題）',
-          event_date:  dateLabel,
-          event_time:  startTime,
-        },
-      }),
-    })
-  } catch {
-    // ネットワークエラーは無視
-  }
-}
+const CHECK_INTERVAL_MS = 30_000
+const FIRE_WINDOW_MS    = 5 * 60 * 1000
 
 function fireBrowserNotification(title: string, dateLabel: string, startTime: string, alertMinutes: number) {
   if (Notification.permission !== 'granted') return
@@ -47,36 +19,36 @@ function checkAndFire() {
   const nowMs    = Date.now()
 
   for (const [dateKey, note] of notes) {
-    if (!note.scheduled || !note.startTime || !note.alertMinutes) continue
+    const schedules = note.schedules ?? []
 
-    const [y, m, d] = dateKey.split('-').map(Number)
-    const [h, min]  = note.startTime.split(':').map(Number)
-    const eventMs   = new Date(y, m - 1, d, h, min, 0).getTime()
-    const alertMs   = eventMs - note.alertMinutes * 60 * 1000
+    for (const sch of schedules) {
+      if (!sch.startTime || !sch.alertMinutes) continue
 
-    if (nowMs < alertMs || nowMs > alertMs + FIRE_WINDOW_MS) continue
+      const [y, m, d] = dateKey.split('-').map(Number)
+      const [h, min]  = sch.startTime.split(':').map(Number)
+      const eventMs   = new Date(y, m - 1, d, h, min, 0).getTime()
+      const alertMs   = eventMs - sch.alertMinutes * 60 * 1000
 
-    const alertKey = `${dateKey}|${note.startTime}|${note.alertMinutes}`
-    if (hasAlertFired(alertKey)) continue
+      if (nowMs < alertMs || nowMs > alertMs + FIRE_WINDOW_MS) continue
 
-    markAlertFired(alertKey)
+      const alertKey = `${dateKey}|${sch.id}|${sch.startTime}|${sch.alertMinutes}`
+      if (hasAlertFired(alertKey)) continue
 
-    const dateLabel = new Date(y, m - 1, d).toLocaleDateString('ja-JP', {
-      month: 'long', day: 'numeric', weekday: 'short',
-    })
+      markAlertFired(alertKey)
 
-    if (settings.browserNotifEnabled) {
-      fireBrowserNotification(note.title, dateLabel, note.startTime, note.alertMinutes)
-    }
-    if (settings.emailEnabled) {
-      sendEmailViaEmailJS(note.title, dateLabel, note.startTime, settings)
+      const dateLabel = new Date(y, m - 1, d).toLocaleDateString('ja-JP', {
+        month: 'long', day: 'numeric', weekday: 'short',
+      })
+
+      if (settings.browserNotifEnabled) {
+        fireBrowserNotification(sch.title || note.title, dateLabel, sch.startTime, sch.alertMinutes)
+      }
     }
   }
 }
 
 export function useNotifications() {
   useEffect(() => {
-    // ブラウザ通知の許可状態を確認（未決定なら後でユーザーが設定パネルから許可）
     checkAndFire()
     const id = setInterval(checkAndFire, CHECK_INTERVAL_MS)
     return () => clearInterval(id)

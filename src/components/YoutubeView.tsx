@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { themeVars } from '../utils/themeVars'
-import { type Video, fetchChannelName, resolveChannel, fetchVideoList, getVideoCacheInfo } from '../utils/youtubeProxy'
+import { loadYouTubeApi, type YTPlayer } from '../utils/youtubePlayerApi'
+import { type Video, fetchVideoList, getVideoCacheInfo, resolveChannel, fetchChannelName } from '../utils/youtubeProxy'
+import { type YtPlayInfo } from './MiniPlayer'
 
 type Channel = { id: string; name: string }
 
+const MAX_CHANNELS = 5
 const STORAGE_KEY = 'poical-yt-channels'
 
 function loadChannels(): Channel[] {
@@ -20,11 +23,18 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
+export function YoutubeView({
+  theme, isMobile, isVisible = true, onPlayStateChange, onChannelsSaved,
+}: {
   theme: 'dark' | 'light'
   isMobile: boolean
+  isVisible?: boolean
+  onPlayStateChange?: (info: YtPlayInfo | null) => void
   onChannelsSaved?: (channels: Channel[]) => void
 }) {
+  const v = themeVars(theme)
+
+  // ── channels ──────────────────────────────────────────────
   const [channels, setChannels]         = useState<Channel[]>(loadChannels)
   const [activeIdx, setActiveIdx]       = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -33,55 +43,167 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
   const [resolveError, setResolveError] = useState('')
   const [manualMode, setManualMode]         = useState(false)
   const [manualChannelId, setManualChannelId] = useState('')
-  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null)
-  const [failedThumbs, setFailedThumbs]     = useState<Set<string>>(() => new Set())
-  const [thumbErr, setThumbErr]             = useState(false)
 
   const active = channels[activeIdx] ?? null
 
+  // ── videos ────────────────────────────────────────────────
   const [videos, setVideos]                   = useState<Video[]>([])
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null)
   const [loadingVideos, setLoadingVideos]     = useState(false)
   const [videoError, setVideoError]           = useState('')
-  const [playing, setPlaying]                 = useState(false)
   const [cacheTime, setCacheTime]             = useState<Date | null>(null)
+  const [hoveredVideoId, setHoveredVideoId]   = useState<string | null>(null)
+  const [failedThumbs, setFailedThumbs]       = useState<Set<string>>(() => new Set())
 
+  // ── YT player ─────────────────────────────────────────────
+  const playerRef        = useRef<YTPlayer | null>(null)
+  const playerDivRef     = useRef<HTMLDivElement>(null)
+  const [apiReady, setApiReady]       = useState(false)
+  const [ytState, setYtState]         = useState(-1) // YT.PlayerState
+  const currentTimeRef   = useRef(0)
+  const playingVideoRef  = useRef<string | null>(null)
+  const prevVisibleRef   = useRef(isVisible)
+  // 常に最新値を参照するための ref（クロージャ stale 回避）
+  const videosRef           = useRef(videos)
+  const onPlayStateChangeRef = useRef(onPlayStateChange)
+  useEffect(() => { videosRef.current = videos }, [videos])
+  useEffect(() => { onPlayStateChangeRef.current = onPlayStateChange }, [onPlayStateChange])
+
+  // Load IFrame API once
+  useEffect(() => {
+    loadYouTubeApi().then(() => setApiReady(true))
+  }, [])
+
+  // Fetch videos when channel changes
   useEffect(() => {
     if (!active) { setVideos([]); setSelectedVideoId(null); setVideoError(''); setCacheTime(null); return }
-
     const ac = new AbortController()
-    setLoadingVideos(true)
-    setVideos([])
-    setSelectedVideoId(null)
-    setVideoError('')
-    setPlaying(false)
+    setLoadingVideos(true); setVideos([]); setSelectedVideoId(null); setVideoError('')
 
-    fetchVideoList(active.id) // localStorageキャッシュ使用（TTL 3週間）
+    // Destroy old player on channel change
+    playerRef.current?.destroy()
+    playerRef.current = null
+    playingVideoRef.current = null
+    onPlayStateChange?.(null)
+
+    fetchVideoList(active.id)
       .then(vids => {
         if (ac.signal.aborted) return
         setVideos(vids)
         if (vids.length > 0) setSelectedVideoId(vids[0].id)
         setCacheTime(getVideoCacheInfo(active.id)?.fetchedAt ?? new Date())
         setFailedThumbs(new Set())
-        setThumbErr(false)
       })
-      .catch(e => {
-        if (ac.signal.aborted) return
-        setVideoError(e instanceof Error ? e.message : '動画を取得できませんでした')
-      })
+      .catch(e => { if (!ac.signal.aborted) setVideoError(e instanceof Error ? e.message : '動画を取得できませんでした') })
       .finally(() => { if (!ac.signal.aborted) setLoadingVideos(false) })
 
     return () => ac.abort()
   }, [active?.id])
 
-  useEffect(() => { setThumbErr(false) }, [selectedVideoId])
+  // YT プレイヤー作成（videoId 変化時）
+  useEffect(() => {
+    if (!selectedVideoId || !apiReady || !playerDivRef.current) return
 
+    if (playerRef.current && playingVideoRef.current) {
+      // 既存プレイヤーに新しい動画をロード（再生成不要）
+      playerRef.current.loadVideoById(selectedVideoId)
+      playingVideoRef.current = selectedVideoId
+      return
+    }
+
+    // 新規プレイヤー作成
+    playerDivRef.current.innerHTML = ''
+    const div = document.createElement('div')
+    playerDivRef.current.appendChild(div)
+
+    const player = new window.YT.Player(div, {
+      width: '100%',
+      height: '100%',
+      videoId: selectedVideoId,
+      playerVars: {
+        autoplay: 1,
+        controls: 1,
+        rel: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        enablejsapi: 1,
+      },
+      events: {
+        onStateChange: (e) => {
+          setYtState(e.data)
+          const vid = playingVideoRef.current
+          if (e.data === 1) { // PLAYING
+            const t = e.target.getCurrentTime()
+            currentTimeRef.current = t
+            const title = vid ? (videosRef.current.find(v => v.id === vid)?.title ?? '') : ''
+            if (vid) onPlayStateChangeRef.current?.({ videoId: vid, title, time: t })
+          } else if (e.data === 0) { // ENDED
+            onPlayStateChangeRef.current?.(null)
+          }
+        },
+      },
+    })
+    playerRef.current = player
+    playingVideoRef.current = selectedVideoId
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVideoId, apiReady])
+
+  // 再生中は2秒ごとに現在位置を親に通知
+  useEffect(() => {
+    if (ytState !== 1) return
+    const t = setInterval(() => {
+      if (!playerRef.current) return
+      const time = playerRef.current.getCurrentTime()
+      currentTimeRef.current = time
+      const vid = playingVideoRef.current
+      if (vid) {
+        const title = videosRef.current.find(v => v.id === vid)?.title ?? ''
+        onPlayStateChangeRef.current?.({ videoId: vid, title, time })
+      }
+    }, 2000)
+    return () => clearInterval(t)
+  }, [ytState])
+
+  // ビュー切替時: ポーズ / レジューム
+  useEffect(() => {
+    if (prevVisibleRef.current === isVisible) return
+    prevVisibleRef.current = isVisible
+
+    if (!playerRef.current) return
+
+    if (!isVisible) {
+      const state = playerRef.current.getPlayerState()
+      if (state === 1) { // 再生中 → ポーズして位置を親に通知
+        const time = playerRef.current.getCurrentTime()
+        currentTimeRef.current = time
+        playerRef.current.pauseVideo()
+        const vid = playingVideoRef.current
+        if (vid) {
+          const title = videosRef.current.find(v => v.id === vid)?.title ?? ''
+          onPlayStateChangeRef.current?.({ videoId: vid, title, time })
+        }
+      }
+    } else {
+      // ムービービューに戻った → 自動レジューム
+      const state = playerRef.current.getPlayerState()
+      if (state === 2) playerRef.current.playVideo()
+    }
+  }, [isVisible])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      playerRef.current?.destroy()
+      playerRef.current = null
+    }
+  }, [])
+
+  // ── channel actions ───────────────────────────────────────
   async function retryLoad() {
     if (!active) return
-    setVideoError('')
-    setLoadingVideos(true)
+    setVideoError(''); setLoadingVideos(true)
     try {
-      const vids = await fetchVideoList(active.id, true) // 強制フレッシュ
+      const vids = await fetchVideoList(active.id, true)
       setVideos(vids)
       if (vids.length > 0) setSelectedVideoId(vids[0].id)
       setCacheTime(new Date())
@@ -93,29 +215,27 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
   }
 
   async function addChannel() {
-    if (!newId.trim()) return
-    setResolving(true)
-    setResolveError('')
+    if (!newId.trim() || channels.length >= MAX_CHANNELS) return
+    setResolving(true); setResolveError('')
     try {
       const { id, name } = await resolveChannel(newId)
+      if (channels.some(c => c.id === id)) {
+        setResolveError('このチャンネルはすでに登録済みです')
+        return
+      }
       const updated = [...channels, { id, name }]
-      setChannels(updated)
-      saveChannels(updated)
-      onChannelsSaved?.(updated)
-      setActiveIdx(updated.length - 1)
-      setNewId('')
+      setChannels(updated); saveChannels(updated); onChannelsSaved?.(updated)
+      setActiveIdx(updated.length - 1); setNewId('')
     } catch {
-      setManualMode(true)
-      setManualChannelId('')
-      setResolveError('')
+      setManualMode(true); setManualChannelId('')
     } finally {
       setResolving(false)
     }
   }
 
   function deriveNameFromInput(channelId: string): string {
-    const mHandle = newId.match(/\/@?([A-Za-z0-9_.-]+)/)
-    if (mHandle) return `@${mHandle[1]}`
+    const m = newId.match(/\/@?([A-Za-z0-9_.-]+)/)
+    if (m) return `@${m[1]}`
     if (newId.trim().startsWith('@')) return newId.trim()
     return channelId
   }
@@ -125,55 +245,51 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
     if (!id) return
     setResolving(true)
     let name: string
-    try {
-      name = await fetchChannelName(id)
-    } catch {
-      name = deriveNameFromInput(id)
-    } finally {
-      setResolving(false)
-    }
+    try { name = await fetchChannelName(id) }
+    catch { name = deriveNameFromInput(id) }
+    finally { setResolving(false) }
+    if (channels.some(c => c.id === id)) { setResolveError('このチャンネルはすでに登録済みです'); return }
     const updated = [...channels, { id, name }]
-    setChannels(updated)
-    saveChannels(updated)
-    onChannelsSaved?.(updated)
-    setActiveIdx(updated.length - 1)
-    setManualMode(false)
-    setManualChannelId('')
-    setNewId('')
+    setChannels(updated); saveChannels(updated); onChannelsSaved?.(updated)
+    setActiveIdx(updated.length - 1); setManualMode(false); setManualChannelId(''); setNewId('')
   }
 
   async function refreshChannelName(idx: number) {
     const ch = channels[idx]
     try {
-      const name    = await fetchChannelName(ch.id)
+      const name = await fetchChannelName(ch.id)
       const updated = channels.map((c, i) => i === idx ? { ...c, name } : c)
-      setChannels(updated)
-      saveChannels(updated)
-      onChannelsSaved?.(updated)
-    } catch { /* 失敗時は何もしない */ }
-  }
-
-  function cancelManual() {
-    setManualMode(false)
-    setManualChannelId('')
-    setResolveError('')
+      setChannels(updated); saveChannels(updated); onChannelsSaved?.(updated)
+    } catch { /* ignore */ }
   }
 
   function removeChannel(idx: number) {
     const updated = channels.filter((_, i) => i !== idx)
-    setChannels(updated)
-    saveChannels(updated)
-    onChannelsSaved?.(updated)
+    setChannels(updated); saveChannels(updated); onChannelsSaved?.(updated)
     setActiveIdx(prev => Math.min(prev, Math.max(0, updated.length - 1)))
   }
 
-  // ── 共通パーツ：タブバー内容 ─────────────────────────
-  const tabBarContent = (
+  const canAddChannel = channels.length < MAX_CHANNELS
+
+  // ── video list click ──────────────────────────────────────
+  function selectVideo(id: string) {
+    if (id === selectedVideoId && playerRef.current) {
+      // Already selected – toggle play/pause
+      const state = playerRef.current.getPlayerState()
+      if (state === 1) playerRef.current.pauseVideo()
+      else playerRef.current.playVideo()
+      return
+    }
+    setSelectedVideoId(id)
+  }
+
+  // ── layout parts ──────────────────────────────────────────
+  const tabBar = (
     <>
       <div style={s.tabGroup} className="glass">
         {channels.map((ch, i) => (
           <button
-            key={i}
+            key={ch.id}
             style={{ ...s.tab, ...(i === activeIdx ? s.tabActive : {}) }}
             onClick={() => setActiveIdx(i)}
           >
@@ -184,11 +300,10 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
         {active && (
           <button
-            style={{ ...s.gearBtn, opacity: loadingVideos ? 0.4 : 1 }}
+            style={{ ...s.iconBtn, opacity: loadingVideos ? 0.4 : 1 }}
             onClick={retryLoad}
             disabled={loadingVideos}
             title="新着動画を取得"
-            aria-label="更新"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
               style={loadingVideos ? { animation: 'spin 0.8s linear infinite' } : {}}>
@@ -197,59 +312,30 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
             </svg>
           </button>
         )}
-        <button style={s.gearBtn} onClick={() => setSettingsOpen(true)} title="チャンネル設定">
+        <button style={s.iconBtn} onClick={() => setSettingsOpen(true)} title="チャンネル設定">
           <GearIcon />
         </button>
       </div>
     </>
   )
 
-  // ── 共通パーツ：動画プレイヤー内容 ──────────────────
-  const playerContent = (
-    <div style={s.videoArea}>
-      {selectedVideoId && playing ? (
-        <iframe
-          key={selectedVideoId}
-          style={s.iframe}
-          src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          title={videos.find(v => v.id === selectedVideoId)?.title ?? 'YouTube'}
-        />
-      ) : selectedVideoId ? (
-        <div style={s.thumbPlayer} onClick={() => setPlaying(true)}>
-          {!thumbErr && (
-            <img
-              src={`https://i.ytimg.com/vi/${selectedVideoId}/hqdefault.jpg`}
-              style={s.thumbPlayerImg}
-              alt=""
-              onError={() => setThumbErr(true)}
-            />
-          )}
-          <div style={s.playOverlay}>
-            <div style={s.playBtn}>
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="white">
-                <polygon points="5,3 19,12 5,21" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div style={s.playerPlaceholder}>
-          <div style={s.emptyIcon}>▶</div>
-          <p style={s.emptyText}>{loadingVideos ? '読み込み中…' : '動画がありません'}</p>
+  const playerArea = (
+    <div style={s.playerDiv} ref={playerDivRef}>
+      {!selectedVideoId && (
+        <div style={s.placeholder}>
+          <div style={s.placeholderIcon}>▶</div>
+          <p style={s.placeholderText}>{loadingVideos ? '読み込み中…' : '動画を選択してください'}</p>
         </div>
       )}
     </div>
   )
 
-  // ── 共通パーツ：動画リスト ───────────────────────────
-  const videoListContent = (
+  const videoList = (
     <>
       {loadingVideos ? (
-        <div style={s.listLoading}>読み込み中…</div>
+        <div style={s.listMsg}>読み込み中…</div>
       ) : videoError ? (
-        <div style={s.listError}>
+        <div style={s.listMsg}>
           <p>動画を取得できませんでした</p>
           <button style={s.retryBtn} onClick={retryLoad}>再試行</button>
         </div>
@@ -261,7 +347,7 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
             ...(v.id === selectedVideoId ? s.videoItemActive : {}),
             ...(v.id === hoveredVideoId && v.id !== selectedVideoId ? s.videoItemHover : {}),
           }}
-          onClick={() => { setSelectedVideoId(v.id); setPlaying(true) }}
+          onClick={() => selectVideo(v.id)}
           onMouseEnter={() => setHoveredVideoId(v.id)}
           onMouseLeave={() => setHoveredVideoId(null)}
         >
@@ -277,6 +363,9 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
                 onError={() => setFailedThumbs(prev => { const n = new Set(prev); n.add(v.id); return n })}
               />
             )}
+            {v.id === selectedVideoId && ytState === 1 && (
+              <div style={s.playingBadge}>▶ 再生中</div>
+            )}
           </div>
           <div style={s.videoInfo}>
             <span style={s.videoTitle}>{v.title}</span>
@@ -286,98 +375,67 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
       ))}
       {cacheTime && !loadingVideos && !videoError && (
         <div style={s.cacheInfo}>
-          <span>取得: {cacheTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}</span>
+          取得: {cacheTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
     </>
   )
 
   return (
-    <div style={{ ...s.wrap, ...themeVars(theme) }}>
-
+    <div style={{ ...s.wrap, ...v }}>
       {isMobile ? (
-        /* ══ モバイルレイアウト：プレイヤー上・リスト中・タブ下 ══ */
         <>
-          {/* スクロールエリア（プレイヤー + リスト） */}
           <div style={s.mobileScroll}>
             {channels.length === 0 ? (
               <div style={{ ...s.empty, minHeight: 300 }}>
-                <div style={s.emptyIcon}>▶</div>
-                <p style={s.emptyText}>チャンネルが登録されていません</p>
-                <button style={s.emptyAddBtn} onClick={() => setSettingsOpen(true)}>
-                  + チャンネルを追加
-                </button>
+                <EmptyChannels onAdd={() => setSettingsOpen(true)} />
               </div>
             ) : (
               <>
-                {/* プレイヤー：余白なし・100%幅 */}
                 <div style={s.mobilePlayer}>
                   <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative' as const }}>
-                    {playerContent}
+                    {playerArea}
                   </div>
                 </div>
-                {/* タイトル */}
                 {selectedVideoId && (
-                  <div style={{ ...s.playerTitle, fontSize: 15, display: 'block', overflow: 'visible', WebkitLineClamp: 'unset' as unknown as number }}>
+                  <div style={s.mobileTitle}>
                     {videos.find(v => v.id === selectedVideoId)?.title ?? ''}
                   </div>
                 )}
-                {/* 動画リスト */}
-                <div style={{ ...s.videoList, flex: 'none', borderLeft: 'none', borderTop: '1px solid var(--border-dim)' }}>
-                  {videoListContent}
+                <div style={{ ...s.videoListWrap, borderLeft: 'none', borderTop: '1px solid var(--border-dim)' }}>
+                  {videoList}
                 </div>
               </>
             )}
           </div>
-
-          {/* タブバー：画面最下部 */}
-          <div style={s.mobileTabBar} className="glass">
-            {tabBarContent}
-          </div>
+          <div style={s.mobileTabBar} className="glass">{tabBar}</div>
         </>
       ) : (
-        /* ══ デスクトップレイアウト：従来通り ══ */
         <>
-          {/* タブバー */}
-          <div style={s.tabBar} className="glass">
-            {tabBarContent}
-          </div>
-
-          {/* メインエリア */}
+          <div style={s.tabBarRow} className="glass">{tabBar}</div>
           <div style={s.main}>
             {channels.length === 0 ? (
               <div style={s.empty}>
-                <div style={s.emptyIcon}>▶</div>
-                <p style={s.emptyText}>チャンネルが登録されていません</p>
-                <button style={s.emptyAddBtn} onClick={() => setSettingsOpen(true)}>
-                  + チャンネルを追加
-                </button>
+                <EmptyChannels onAdd={() => setSettingsOpen(true)} />
               </div>
             ) : (
               <>
-                {/* 左: プレイヤー列 */}
-                <div style={s.playerColumn}>
-                  <div style={s.playerWrap}>
-                    {playerContent}
-                  </div>
+                <div style={s.playerCol}>
+                  <div style={s.playerWrap}>{playerArea}</div>
                   {selectedVideoId && (
-                    <div style={{ ...s.playerTitle, fontSize: 24 }}>
+                    <div style={s.playerTitle}>
                       {videos.find(v => v.id === selectedVideoId)?.title ?? ''}
                     </div>
                   )}
                 </div>
-
-                {/* 右: 動画リスト */}
-                <div style={s.videoList}>
-                  {videoListContent}
-                </div>
+                <div style={s.videoListWrap}>{videoList}</div>
               </>
             )}
           </div>
         </>
       )}
 
-      {/* 設定モーダル */}
+      {/* Settings modal */}
       {settingsOpen && (
         <div style={s.overlay} onClick={() => setSettingsOpen(false)}>
           <div style={s.modal} className="glass" onClick={e => e.stopPropagation()}>
@@ -386,11 +444,17 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
               <button style={s.closeBtn} onClick={() => setSettingsOpen(false)}>✕</button>
             </div>
 
+            {/* Registered channels */}
             {channels.length > 0 && (
               <div style={s.section}>
-                <div style={s.sectionLabel}>登録済みチャンネル</div>
+                <div style={s.sectionLabel}>
+                  登録済みチャンネル
+                  <span style={{ fontWeight: 400, color: 'var(--text-dim)', marginLeft: 8 }}>
+                    {channels.length} / {MAX_CHANNELS}
+                  </span>
+                </div>
                 {channels.map((ch, i) => (
-                  <div key={i} style={s.channelRow}>
+                  <div key={ch.id} style={s.channelRow}>
                     <div style={s.channelInfo}>
                       <span style={s.channelName}>{ch.name}</span>
                       <span style={s.channelId}>{ch.id}</span>
@@ -402,22 +466,26 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
               </div>
             )}
 
+            {/* Add channel */}
             <div style={s.section}>
               <div style={s.sectionLabel}>チャンネルを追加</div>
-
-              {!manualMode ? (
+              {!canAddChannel ? (
+                <p style={{ fontSize: 12, color: 'rgba(251,191,36,0.9)' }}>
+                  登録上限（{MAX_CHANNELS}チャンネル）に達しています。削除してから追加してください。
+                </p>
+              ) : !manualMode ? (
                 <>
                   <div style={s.inputRow}>
                     <input
                       style={{ ...s.input, flex: 1 }}
                       value={newId}
                       onChange={e => { setNewId(e.target.value); setResolveError('') }}
-                      placeholder="チャンネルID（UCxxxxxxx）またはチャンネルURL"
+                      placeholder="チャンネルURL・ID・@ハンドル"
                       onKeyDown={e => e.key === 'Enter' && !resolving && addChannel()}
                       disabled={resolving}
                     />
                     <button
-                      style={{ ...s.addBtnInline, ...((!newId.trim() || resolving) ? s.addBtnDisabled : {}) }}
+                      style={{ ...s.addBtn, ...(!newId.trim() || resolving ? s.addBtnDisabled : {}) }}
                       onClick={addChannel}
                       disabled={!newId.trim() || resolving}
                     >
@@ -425,15 +493,11 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
                     </button>
                   </div>
                   {resolveError && <p style={s.errorText}>{resolveError}</p>}
-                  <p style={s.hint}>
-                    チャンネルID（UCxxxx）・チャンネルURL・@ハンドルURL に対応。チャンネル名は自動取得します。
-                  </p>
+                  <p style={s.hint}>チャンネルID（UCxxxx）・URL・@ハンドルに対応。チャンネル名を自動取得します。</p>
                 </>
               ) : (
                 <>
-                  <p style={s.manualNote}>
-                    自動取得に失敗しました。チャンネルIDを入力してください。
-                  </p>
+                  <p style={s.manualNote}>自動取得に失敗しました。チャンネルIDを直接入力してください。</p>
                   <div style={s.inputRow}>
                     <input
                       style={{ ...s.input, flex: 1 }}
@@ -444,17 +508,18 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
                       autoFocus
                     />
                     <button
-                      style={{ ...s.addBtnInline, ...(!manualChannelId.trim() ? s.addBtnDisabled : {}) }}
+                      style={{ ...s.addBtn, ...(!manualChannelId.trim() ? s.addBtnDisabled : {}) }}
                       onClick={addChannelManual}
                       disabled={!manualChannelId.trim()}
                     >
                       追加
                     </button>
-                    <button style={s.cancelBtn} onClick={cancelManual}>キャンセル</button>
+                    <button style={s.cancelBtn} onClick={() => { setManualMode(false); setManualChannelId(''); setResolveError('') }}>
+                      キャンセル
+                    </button>
                   </div>
-                  <p style={s.hint}>
-                    チャンネルIDの調べ方: YouTube チャンネルページ →「概要」→「チャンネル情報」→「チャンネル ID をコピー」
-                  </p>
+                  {resolveError && <p style={s.errorText}>{resolveError}</p>}
+                  <p style={s.hint}>チャンネルページ →「概要」→「チャンネル情報」→「チャンネル ID をコピー」</p>
                 </>
               )}
             </div>
@@ -462,6 +527,21 @@ export function YoutubeView({ theme, isMobile, onChannelsSaved }: {
         </div>
       )}
     </div>
+  )
+}
+
+function EmptyChannels({ onAdd }: { onAdd: () => void }) {
+  return (
+    <>
+      <div style={{ fontSize: 48, opacity: 0.25 }}>▶</div>
+      <p style={{ color: 'var(--text-sub)', fontSize: 14 }}>チャンネルが登録されていません</p>
+      <button
+        style={{ padding: '8px 20px', borderRadius: 20, background: 'rgba(96,165,250,0.15)', border: '1px solid rgba(96,165,250,0.32)', color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}
+        onClick={onAdd}
+      >
+        + チャンネルを追加
+      </button>
+    </>
   )
 }
 
@@ -476,26 +556,23 @@ function GearIcon() {
 
 const s: Record<string, React.CSSProperties> = {
   wrap:        { display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' },
-  // モバイル専用
   mobileScroll: {
-    flex: 1, minHeight: 0,
-    overflowY: 'auto' as const, overflowX: 'hidden' as const,
-    display: 'flex', flexDirection: 'column' as const,
-    paddingBottom: 56, // 固定タブバー分の余白
+    flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden',
+    display: 'flex', flexDirection: 'column', paddingBottom: 56,
   },
   mobilePlayer: { width: '100%', flexShrink: 0, background: '#000' },
-  mobileTabBar: {
-    position: 'fixed' as const, bottom: 'var(--header-height)', left: 0, right: 0,
-    zIndex: 200,
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '6px 12px', gap: 6,
-    borderTop: '1px solid var(--border-dim)',
-    userSelect: 'none',
-    background: 'var(--modal-bg)',
-    backdropFilter: 'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
+  mobileTitle: {
+    padding: '8px 12px', fontSize: 14, fontWeight: 600,
+    color: 'var(--text)', lineHeight: 1.4,
   },
-  tabBar: {
+  mobileTabBar: {
+    position: 'fixed', bottom: 'var(--header-height)', left: 0, right: 0, zIndex: 200,
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '6px 12px', gap: 6, borderTop: '1px solid var(--border-dim)',
+    userSelect: 'none', background: 'var(--modal-bg)',
+    backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+  },
+  tabBarRow: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '6px 12px', gap: 6, flexShrink: 0,
     borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none',
@@ -503,135 +580,98 @@ const s: Record<string, React.CSSProperties> = {
   },
   tabGroup: { display: 'flex', borderRadius: 10, overflow: 'hidden', padding: 3, gap: 2 },
   tab: {
-    padding: '5px 14px', borderRadius: 7,
-    fontSize: 13, fontWeight: 500,
-    color: 'var(--text-sub)', transition: 'background 0.15s, color 0.15s',
-    cursor: 'pointer',
+    padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500,
+    color: 'var(--text-sub)', transition: 'background 0.15s, color 0.15s', cursor: 'pointer',
   },
   tabActive: {
-    background: 'var(--view-btn-active-bg)',
-    color: 'var(--view-btn-active-color)',
+    background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)',
     boxShadow: '0 2px 8px rgba(100,120,200,0.15)',
   },
-  gearBtn: {
+  iconBtn: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: 32, height: 32, borderRadius: 8,
-    color: 'var(--text-sub)', flexShrink: 0,
+    width: 32, height: 32, borderRadius: 8, color: 'var(--text-sub)', flexShrink: 0,
   },
-  dropdown: {
-    position: 'absolute', top: 'calc(100% + 6px)', left: 0,
-    minWidth: 160, borderRadius: 10, overflow: 'hidden',
-    zIndex: 100, display: 'flex', flexDirection: 'column',
-    background: 'var(--modal-bg)',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-  },
-  dropdownItem: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '10px 16px', fontSize: 13, fontWeight: 500,
-    color: 'var(--text)', cursor: 'pointer', textAlign: 'left',
-    background: 'transparent',
-  },
-  dropdownIcon: { display: 'flex', alignItems: 'center', color: 'var(--text-sub)' },
-  dropdownDivider: { height: 1, background: 'var(--border-dim)', margin: '0 12px' },
   main: { display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden', padding: '10px 14px 14px', gap: 8 },
-  playerColumn:  { flex: '1 1 60%', maxWidth: 1300, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' as const },
-  playerWrap:    { flex: '1 1 0', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', borderRadius: 10, overflow: 'hidden' },
-  videoArea:     { width: '100%', aspectRatio: '16/9', maxHeight: '100%', position: 'relative' as const },
-  playerPlaceholder: { position: 'absolute' as const, inset: 0, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  iframe:        { position: 'absolute' as const, inset: 0, width: '100%', height: '100%', border: 'none', display: 'block' },
-  thumbPlayer:   { position: 'absolute' as const, inset: 0, cursor: 'pointer', overflow: 'hidden' },
-  thumbPlayerImg:{ width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' },
-  playOverlay: {
-    position: 'absolute' as const, inset: 0,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(0,0,0,0.25)',
-  },
-  playBtn: {
-    width: 80, height: 80, borderRadius: '50%',
-    background: 'rgba(0,0,0,0.65)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    transition: 'transform 0.15s',
-  },
-  playerTitle: {
-    padding: '10px 16px', flexShrink: 0,
-    fontSize: 26, fontWeight: 600, color: 'var(--text)',
-    background: 'var(--glass-bg)',
-    borderTop: '1px solid var(--border-dim)',
-    lineHeight: 1.4,
-    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
-    overflow: 'hidden',
-  },
-  videoList: {
-    flex: '1 1 0', minWidth: 260,
-    overflowY: 'auto', overflowX: 'hidden',
-    borderLeft: '1px solid var(--border-dim)',
+  playerCol: {
+    flex: '1 1 60%', maxWidth: 1300, minWidth: 0, minHeight: 0,
     display: 'flex', flexDirection: 'column',
   },
-  listLoading: {
-    padding: 20, fontSize: 13, color: 'var(--text-dim)',
-    textAlign: 'center' as const,
+  playerWrap: {
+    flex: '1 1 0', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: '#000', borderRadius: 10, overflow: 'hidden', position: 'relative',
   },
-  listError: {
-    padding: 20, fontSize: 12, color: 'var(--text-dim)',
-    textAlign: 'center' as const, display: 'flex', flexDirection: 'column' as const, gap: 10,
+  playerDiv: {
+    width: '100%', height: '100%', position: 'relative',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  placeholder: {
+    position: 'absolute', inset: 0,
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+  },
+  placeholderIcon: { fontSize: 48, opacity: 0.2 },
+  placeholderText: { color: 'var(--text-dim)', fontSize: 14 },
+  playerTitle: {
+    padding: '10px 16px', flexShrink: 0, fontSize: 20, fontWeight: 600,
+    color: 'var(--text)', background: 'var(--glass-bg)', borderTop: '1px solid var(--border-dim)',
+    lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical', overflow: 'hidden',
+  },
+  videoListWrap: {
+    flex: '1 1 0', minWidth: 260, overflowY: 'auto', overflowX: 'hidden',
+    borderLeft: '1px solid var(--border-dim)', display: 'flex', flexDirection: 'column',
+  },
+  listMsg: {
+    padding: 20, fontSize: 13, color: 'var(--text-dim)',
+    textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10,
   },
   retryBtn: {
-    padding: '5px 14px', borderRadius: 20, fontSize: 12,
+    padding: '5px 14px', borderRadius: 20, fontSize: 12, margin: '0 auto',
     background: 'var(--bg-subtle)', border: '1px solid var(--border-dim)',
     color: 'var(--text-sub)', cursor: 'pointer',
   },
   videoItem: {
-    display: 'flex', flexDirection: 'row' as const, gap: 10,
-    padding: '8px 10px', textAlign: 'left' as const,
-    borderBottom: '1px solid var(--border-dim)',
+    display: 'flex', flexDirection: 'row', gap: 10, padding: '8px 10px',
+    textAlign: 'left', borderBottom: '1px solid var(--border-dim)',
     cursor: 'pointer', transition: 'background 0.12s', alignItems: 'flex-start',
   },
   videoItemActive: { background: 'var(--bg-subtle)' },
   videoItemHover:  { background: 'var(--glass-bg)' },
-  thumbWrap: { width: 120, aspectRatio: '16/9', overflow: 'hidden', borderRadius: 5, flexShrink: 0 },
-  thumb: { width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' },
+  thumbWrap: { width: 120, aspectRatio: '16/9', overflow: 'hidden', borderRadius: 5, flexShrink: 0, position: 'relative' },
+  thumb: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   thumbFallback: {
-    width: '100%', height: '100%',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(255,255,255,0.05)',
-    color: 'var(--text-dim)', fontSize: 20,
+    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)', fontSize: 20,
   },
-  videoInfo: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: 4, minWidth: 0 },
+  playingBadge: {
+    position: 'absolute', bottom: 3, left: 3,
+    fontSize: 9, fontWeight: 700, color: '#fff',
+    background: 'rgba(255,0,0,0.85)', borderRadius: 3, padding: '1px 4px',
+  },
+  videoInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 },
   videoTitle: {
     fontSize: 13, fontWeight: 600, color: 'var(--text)',
-    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
+    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
     overflow: 'hidden', lineHeight: 1.4,
   },
   videoDate: { fontSize: 11, color: 'var(--text-dim)' },
   cacheInfo: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '6px 10px', flexShrink: 0,
-    borderTop: '1px solid var(--border-dim)',
+    display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+    padding: '6px 10px', borderTop: '1px solid var(--border-dim)',
     fontSize: 10, color: 'var(--text-dim)',
   },
   empty: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     flex: 1, gap: 16,
   },
-  emptyIcon:   { fontSize: 48, opacity: 0.25 },
-  emptyText:   { color: 'var(--text-sub)', fontSize: 14 },
-  emptyAddBtn: {
-    padding: '8px 20px', borderRadius: 20,
-    background: 'rgba(96,165,250,0.15)',
-    border: '1px solid rgba(96,165,250,0.32)',
-    color: 'var(--accent)', fontSize: 13, fontWeight: 600,
-  },
   overlay: {
-    position: 'fixed', inset: 0,
-    background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
-    zIndex: 300,
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+    backdropFilter: 'blur(4px)', zIndex: 300,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   modal: {
-    width: 440, maxWidth: 'calc(100vw - 32px)',
-    borderRadius: 16, padding: '20px 24px',
-    background: 'var(--modal-bg)',
-    display: 'flex', flexDirection: 'column', gap: 16,
+    width: 460, maxWidth: 'calc(100vw - 32px)', borderRadius: 16, padding: '20px 24px',
+    background: 'var(--modal-bg)', display: 'flex', flexDirection: 'column', gap: 16,
+    maxHeight: 'calc(100vh - 64px)', overflowY: 'auto',
   },
   modalHeader:  { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   modalTitle:   { fontSize: 16, fontWeight: 700, color: 'var(--text)' },
@@ -643,11 +683,10 @@ const s: Record<string, React.CSSProperties> = {
   section:      { display: 'flex', flexDirection: 'column', gap: 8 },
   sectionLabel: {
     fontSize: 11, fontWeight: 700, letterSpacing: '0.5px',
-    color: 'var(--text-sub)', textTransform: 'uppercase',
+    color: 'var(--text-sub)', textTransform: 'uppercase', display: 'flex', alignItems: 'center',
   },
   channelRow: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '8px 12px', borderRadius: 8,
+    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8,
     background: 'var(--bg-item)', border: '1px solid var(--border-dim)',
   },
   channelInfo:  { flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 },
@@ -657,32 +696,25 @@ const s: Record<string, React.CSSProperties> = {
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   refreshBtn: {
-    padding: '3px 8px', borderRadius: 6,
-    background: 'rgba(96,165,250,0.12)',
-    border: '1px solid rgba(96,165,250,0.25)',
-    color: 'var(--accent)',
+    padding: '3px 8px', borderRadius: 6, background: 'rgba(96,165,250,0.12)',
+    border: '1px solid rgba(96,165,250,0.25)', color: 'var(--accent)',
     fontSize: 14, fontWeight: 600, flexShrink: 0, cursor: 'pointer',
   },
   deleteBtn: {
-    padding: '3px 10px', borderRadius: 6,
-    background: 'rgba(248,113,113,0.12)',
-    border: '1px solid rgba(248,113,113,0.25)',
-    color: 'rgba(248,113,113,0.85)',
+    padding: '3px 10px', borderRadius: 6, background: 'rgba(248,113,113,0.12)',
+    border: '1px solid rgba(248,113,113,0.25)', color: 'rgba(248,113,113,0.85)',
     fontSize: 12, fontWeight: 600, flexShrink: 0,
   },
   inputRow: { display: 'flex', gap: 8, alignItems: 'center' },
   input: {
-    padding: '8px 12px',
-    background: 'var(--bg-subtle)', border: '1px solid var(--border-dim)',
-    borderRadius: 8, color: 'var(--text)', fontSize: 13,
-    fontFamily: 'inherit', outline: 'none', minWidth: 0,
+    padding: '8px 12px', background: 'var(--bg-subtle)', border: '1px solid var(--border-dim)',
+    borderRadius: 8, color: 'var(--text)', fontSize: 13, fontFamily: 'inherit',
+    outline: 'none', minWidth: 0,
   },
-  addBtnInline: {
+  addBtn: {
     padding: '8px 16px', borderRadius: 8, flexShrink: 0,
-    background: 'rgba(96,165,250,0.18)',
-    border: '1px solid rgba(96,165,250,0.35)',
-    color: 'var(--accent)', fontSize: 13, fontWeight: 700,
-    whiteSpace: 'nowrap',
+    background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.35)',
+    color: 'var(--accent)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
   },
   addBtnDisabled: { opacity: 0.4, cursor: 'not-allowed' },
   cancelBtn: {

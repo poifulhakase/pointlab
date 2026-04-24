@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { type CheckItem, type DayNote, getNote, saveNote } from '../utils/noteStorage'
+import { type CheckItem, type DayNote, type ScheduleEntry, getNote, saveNote } from '../utils/noteStorage'
 import { TimeField } from './TimeField'
 import { CustomSelect } from './CustomSelect'
 
@@ -9,42 +9,58 @@ type Props = {
   onClose: () => void
   onSave: () => void
   onAfterSave?: (date: Date, note: DayNote) => void
+  onSaved?: () => void
   isMobile?: boolean
 }
 
-export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, isMobile }: Props) {
+const ALERT_OPTIONS = [
+  { value: 0,  label: 'アラートなし' },
+  { value: 5,  label: '5分前' },
+  { value: 10, label: '10分前' },
+  { value: 15, label: '15分前' },
+  { value: 30, label: '30分前' },
+  { value: 60, label: '1時間前' },
+]
+
+function calcDefaultEnd(start: string): string {
+  const [h, m] = start.split(':').map(Number)
+  const total = h * 60 + m + 60
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, onSaved, isMobile }: Props) {
   const [title, setTitle]         = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime]     = useState('')
   const [memo, setMemo]           = useState('')
   const [checklist, setChecklist] = useState<CheckItem[]>([])
-  const [scheduled, setScheduled]       = useState(false)
-  const [alertMinutes, setAlertMinutes] = useState(0)
-  const [newText, setNewText]           = useState('')
+  const [schedules, setSchedules] = useState<ScheduleEntry[]>([])
+  const [newText, setNewText]     = useState('')
+  const [isDirty, setIsDirty]     = useState(false)
   const [titleFocused, setTitleFocused] = useState(false)
-  const addInputRef  = useRef<HTMLInputElement>(null)
+  const addInputRef   = useRef<HTMLInputElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
-
-  const calcDefaultEnd = (start: string): string => {
-    const [h, m] = start.split(':').map(Number)
-    const total = h * 60 + m + 30
-    return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
-  }
 
   useEffect(() => {
     if (!date) return
     const note = getNote(date)
     setTitle(note.title)
-    const resolvedStart = note.startTime || prefillTime || ''
-    setStartTime(resolvedStart)
-    const resolvedEnd = note.endTime || (prefillTime && !note.startTime ? calcDefaultEnd(prefillTime) : '')
-    setEndTime(resolvedEnd)
     setMemo(note.memo)
     setChecklist(note.checklist)
-    setScheduled(note.scheduled ?? false)
-    setAlertMinutes(note.alertMinutes ?? 0)
+    let scheds = note.schedules ?? []
+    if (prefillTime) {
+      const alreadyExists = scheds.some(s => s.startTime === prefillTime)
+      if (!alreadyExists) {
+        scheds = [...scheds, {
+          id: String(Date.now()),
+          title: '',
+          startTime: prefillTime,
+          endTime: calcDefaultEnd(prefillTime),
+          alertMinutes: 0,
+        }]
+      }
+    }
+    setSchedules(scheds)
     setNewText('')
-    // 少し遅延してタイトルにフォーカス
+    setIsDirty(prefillTime ? true : false)
     setTimeout(() => titleInputRef.current?.focus(), 20)
   }, [date?.toDateString(), prefillTime])
 
@@ -54,59 +70,81 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     return () => document.removeEventListener('keydown', fn)
   }, [onClose])
 
-  const persist = (t: string, st: string, et: string, m: string, cl: CheckItem[], sc: boolean, am: number) => {
+  const persist = (t: string, m: string, cl: CheckItem[], schs: ScheduleEntry[]) => {
     if (!date) return
-    const note: DayNote = { title: t, startTime: st, endTime: et, memo: m, checklist: cl, scheduled: sc, alertMinutes: am }
+    setIsDirty(true)
+    const note: DayNote = { title: t, memo: m, checklist: cl, schedules: schs }
     saveNote(date, note)
     onSave()
     onAfterSave?.(date, note)
   }
 
-  const handleTitle      = (v: string) => { setTitle(v);      persist(v, startTime, endTime, memo, checklist, scheduled, alertMinutes) }
-  const handleStartTime  = (v: string) => { setStartTime(v);  persist(title, v, endTime, memo, checklist, scheduled, alertMinutes) }
-  const handleEndTime    = (v: string) => { setEndTime(v);    persist(title, startTime, v, memo, checklist, scheduled, alertMinutes) }
-  const handleMemo       = (v: string) => { setMemo(v);       persist(title, startTime, endTime, v, checklist, scheduled, alertMinutes) }
-  const handleAlert      = (v: number) => { setAlertMinutes(v); persist(title, startTime, endTime, memo, checklist, scheduled, v) }
+  // ── ノートフィールド ──
+  const handleTitle = (v: string) => { setTitle(v); persist(v, memo, checklist, schedules) }
+  const handleMemo  = (v: string) => { setMemo(v);  persist(title, v, checklist, schedules) }
 
+  // ── スケジュール ──
+  const handleSchTitle = (id: string, v: string) => {
+    const next = schedules.map(s => s.id === id ? { ...s, title: v } : s)
+    setSchedules(next); persist(title, memo, checklist, next)
+  }
+  const handleSchStart = (id: string, v: string) => {
+    const next = schedules.map(s => {
+      if (s.id !== id) return s
+      const endTime = s.endTime || calcDefaultEnd(v)
+      return { ...s, startTime: v, endTime }
+    })
+    setSchedules(next); persist(title, memo, checklist, next)
+  }
+  const handleSchEnd = (id: string, v: string) => {
+    const next = schedules.map(s => s.id === id ? { ...s, endTime: v } : s)
+    setSchedules(next); persist(title, memo, checklist, next)
+  }
+  const handleSchAlert = (id: string, v: number) => {
+    const next = schedules.map(s => s.id === id ? { ...s, alertMinutes: v } : s)
+    setSchedules(next); persist(title, memo, checklist, next)
+  }
+  const handleSchDelete = (id: string) => {
+    const next = schedules.filter(s => s.id !== id)
+    setSchedules(next); persist(title, memo, checklist, next)
+  }
+  const handleSchAdd = () => {
+    const newSch: ScheduleEntry = {
+      id: String(Date.now()),
+      title: '',
+      startTime: '',
+      endTime: '',
+      alertMinutes: 0,
+    }
+    const next = [...schedules, newSch]
+    setSchedules(next); persist(title, memo, checklist, next)
+  }
+
+  // ── チェックリスト ──
   const toggleItem = (id: string) => {
     const next = checklist.map(i => i.id === id ? { ...i, done: !i.done } : i)
-    setChecklist(next); persist(title, startTime, endTime, memo, next, scheduled, alertMinutes)
+    setChecklist(next); persist(title, memo, next, schedules)
   }
   const deleteItem = (id: string) => {
     const next = checklist.filter(i => i.id !== id)
-    setChecklist(next); persist(title, startTime, endTime, memo, next, scheduled, alertMinutes)
+    setChecklist(next); persist(title, memo, next, schedules)
   }
   const clearDone = () => {
     const next = checklist.filter(i => !i.done)
-    setChecklist(next); persist(title, startTime, endTime, memo, next, scheduled, alertMinutes)
+    setChecklist(next); persist(title, memo, next, schedules)
   }
   const addItem = () => {
     const text = newText.trim()
     if (!text) return
     const next = [...checklist, { id: String(Date.now()), text, done: false }]
-    setChecklist(next); setNewText(''); persist(title, startTime, endTime, memo, next, scheduled, alertMinutes)
+    setChecklist(next); setNewText(''); persist(title, memo, next, schedules)
     setTimeout(() => addInputRef.current?.focus(), 0)
   }
-  const handleSchedule = () => {
-    const next = !scheduled
 
-    // タイトルが空の場合、メモまたはチェックリスト先頭行を補完
-    let effectiveTitle = title
-    if (!title.trim() && next) {
-      const fromMemo = memo.trim().split('\n').find(l => l.trim())?.trim()
-      const fromChecklist = checklist[0]?.text.trim()
-      effectiveTitle = fromMemo || fromChecklist || ''
-      if (effectiveTitle) setTitle(effectiveTitle)
-    }
-
-    setScheduled(next)
-    persist(effectiveTitle, startTime, endTime, memo, checklist, next, alertMinutes)
-    if (next) onClose()
-  }
   const handleDelete = () => {
     if (!date) return
-    if (!window.confirm('このスケジュールを削除してよろしいですか？')) return
-    saveNote(date, { title: '', startTime: '', endTime: '', memo: '', checklist: [] })
+    if (!window.confirm('このメモ・スケジュールを削除してよろしいですか？')) return
+    saveNote(date, { title: '', memo: '', checklist: [], schedules: [] })
     onSave()
     onClose()
   }
@@ -114,9 +152,8 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   const doneCount  = checklist.filter(i => i.done).length
   const progress   = checklist.length > 0 ? Math.round(doneCount / checklist.length * 100) : 0
   const isOpen     = !!date
-  const hasContent = !!(title.trim() || memo.trim() || checklist.length > 0 || startTime || endTime)
+  const hasContent = !!(title.trim() || memo.trim() || checklist.length > 0 || schedules.length > 0)
 
-  // アンマウント管理: closing アニメーション（150ms）後に DOM から外す
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     if (isOpen) {
@@ -127,7 +164,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     }
   }, [isOpen])
 
-  // visualViewport でキーボード表示を検出（スマホのみ）
   const [vvHeight, setVvHeight] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerHeight : 0
   )
@@ -146,12 +182,10 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     ? date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })
     : ''
 
-
   if (!mounted) return null
 
   return (
     <>
-      {/* バックドロップ */}
       <div
         style={{
           position: 'fixed', inset: 0, zIndex: 299,
@@ -163,11 +197,9 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
         onClick={onClose}
       />
 
-      {/* モーダル */}
       <div
         style={{
           position: 'fixed',
-          // キーボード表示時: 上端固定 / 通常: 中央
           ...(keyboardOpen
             ? {
                 top: 8,
@@ -229,41 +261,66 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
           />
         </div>
 
-        {/* ── 時間設定 ── */}
-        <div style={styles.timeRow}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <div style={styles.timeFields}>
-            <TimeField value={startTime} onChange={handleStartTime} placeholder="開始時刻" />
-            <span style={styles.timeSep}>—</span>
-            <TimeField value={endTime} onChange={handleEndTime} placeholder="終了時刻" />
-          </div>
-        </div>
-
-        {/* ── アラート設定 ── */}
-        <div style={styles.alertRow}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: alertMinutes ? 'var(--accent)' : 'var(--text-dim)', flexShrink: 0 }}>
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <CustomSelect
-            value={alertMinutes}
-            onChange={handleAlert}
-            options={[
-              { value: 0,  label: 'アラートなし' },
-              { value: 5,  label: '5分前' },
-              { value: 10, label: '10分前' },
-              { value: 15, label: '15分前' },
-              { value: 30, label: '30分前' },
-              { value: 60, label: '1時間前' },
-            ]}
-            icon={null}
-          />
-        </div>
-
         {/* ── スクロールボディ ── */}
         <div style={styles.body}>
+
+          {/* スケジュール */}
+          <section style={styles.section}>
+            <div style={styles.sectionTitle}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              スケジュール
+              {schedules.length > 0 && (
+                <span style={styles.countBadge}>{schedules.length}</span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {schedules.map(sch => (
+                <div key={sch.id} style={styles.schedCard}>
+                  <div style={styles.schedCardHeader}>
+                    <input
+                      value={sch.title}
+                      onChange={e => handleSchTitle(sch.id, e.target.value)}
+                      placeholder="スケジュールのタイトル"
+                      style={styles.schTitleInput}
+                    />
+                    <button style={styles.schDeleteBtn} onClick={() => handleSchDelete(sch.id)} title="削除">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div style={styles.schedCardBody}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <TimeField value={sch.startTime} onChange={v => handleSchStart(sch.id, v)} placeholder="開始" />
+                    <span style={styles.timeSep}>—</span>
+                    <TimeField value={sch.endTime} onChange={v => handleSchEnd(sch.id, v)} placeholder="終了" />
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: sch.alertMinutes ? 'var(--accent)' : 'var(--text-dim)', flexShrink: 0, marginLeft: 4 }}>
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <CustomSelect
+                      value={sch.alertMinutes}
+                      onChange={v => handleSchAlert(sch.id, v)}
+                      options={ALERT_OPTIONS}
+                      icon={null}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button style={styles.addSchBtn} onClick={handleSchAdd}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              スケジュールを追加
+            </button>
+          </section>
 
           {/* チェックリスト */}
           <section style={styles.section}>
@@ -368,24 +425,10 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
             : <div />
           }
           <button
-            disabled={!hasContent}
-            style={{
-              ...styles.gcalBtn,
-              background: !hasContent ? 'transparent' : scheduled ? 'rgba(96,165,250,0.28)' : 'rgba(96,165,250,0.10)',
-              borderColor: !hasContent ? 'rgba(255,255,255,0.10)' : scheduled ? 'rgba(96,165,250,0.65)' : 'rgba(96,165,250,0.28)',
-              color: !hasContent ? 'rgba(255,255,255,0.22)' : scheduled ? 'rgba(96,165,250,1)' : 'rgba(96,165,250,0.80)',
-              cursor: !hasContent ? 'not-allowed' : 'pointer',
-            }}
-            onClick={handleSchedule}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            {scheduled ? 'スケジュール済み ✓' : 'スケジュールに追加'}
-          </button>
+            disabled={!isDirty}
+            style={{ ...styles.saveFooterBtn, ...(!isDirty ? styles.saveFooterBtnDisabled : {}) }}
+            onClick={() => { onSaved?.(); onClose() }}
+          >保存</button>
         </div>
       </div>
     </>
@@ -418,24 +461,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2px 0 8px', fontFamily: 'inherit', outline: 'none',
     transition: 'border-bottom-color 0.15s',
   },
-  timeRow: {
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '10px 20px 10px',
-    borderBottom: '1px solid var(--border-dim)',
-    flexShrink: 0,
-  },
-  timeFields: {
-    display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const,
-  },
-  timeSep: {
-    color: 'var(--text-dim)', fontSize: 13,
-  },
-  alertRow: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '8px 20px',
-    borderBottom: '1px solid var(--border-dim)',
-    flexShrink: 0,
-  },
   body: {
     flex: 1, overflowY: 'auto',
     padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 20,
@@ -458,15 +483,42 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'rgba(255,100,100,0.65)',
     textTransform: 'none' as const, letterSpacing: 0,
   },
-  textarea: {
-    background: 'var(--bg-subtle)',
-    border: '1px solid var(--glass-border)',
-    borderRadius: 10, color: 'var(--text)',
-    fontSize: 13, lineHeight: 1.65, padding: '10px 12px',
-    width: '100%', resize: 'vertical' as const, minHeight: 80,
-    fontFamily: 'inherit', outline: 'none',
+  // スケジュールカード
+  schedCard: {
+    background: 'var(--bg-item)',
+    border: '1px solid var(--border-dim)',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
-  textareaGrow: { flex: 1, resize: 'none' as const, height: '100%', minHeight: 0 },
+  schedCardHeader: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    padding: '8px 10px 6px',
+    borderBottom: '1px solid var(--border-dim)',
+  },
+  schTitleInput: {
+    flex: 1, background: 'none', border: 'none', outline: 'none',
+    color: 'var(--text)', fontSize: 13, fontWeight: 600,
+    fontFamily: 'inherit',
+  },
+  schDeleteBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 22, height: 22, borderRadius: 4, flexShrink: 0,
+    color: 'var(--text-dim)',
+  },
+  schedCardBody: {
+    display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const,
+    padding: '6px 10px 8px',
+  },
+  timeSep: { color: 'var(--text-dim)', fontSize: 13 },
+  addSchBtn: {
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '7px 14px', borderRadius: 8,
+    background: 'rgba(96,165,250,0.08)', border: '1px dashed rgba(96,165,250,0.30)',
+    color: 'rgba(96,165,250,0.75)', fontSize: 12, fontWeight: 600,
+    alignSelf: 'flex-start',
+    cursor: 'pointer',
+  },
+  // チェックリスト
   progressWrap: { display: 'flex', alignItems: 'center', gap: 8 },
   progressPct: { fontSize: 10, fontWeight: 700, color: 'var(--accent)', minWidth: 28, textAlign: 'right' as const },
   progressTrack: { flex: 1, height: 6, borderRadius: 3, background: 'var(--bg-medium)', overflow: 'hidden' },
@@ -501,6 +553,17 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'rgba(96,165,250,0.20)', border: '1px solid rgba(96,165,250,0.35)',
     color: 'var(--accent)', fontSize: 12, fontWeight: 600, flexShrink: 0,
   },
+  // メモ
+  textarea: {
+    background: 'var(--bg-subtle)',
+    border: '1px solid var(--glass-border)',
+    borderRadius: 10, color: 'var(--text)',
+    fontSize: 13, lineHeight: 1.65, padding: '10px 12px',
+    width: '100%', resize: 'vertical' as const, minHeight: 80,
+    fontFamily: 'inherit', outline: 'none',
+  },
+  textareaGrow: { flex: 1, resize: 'none' as const, height: '100%', minHeight: 0 },
+  // フッター
   footer: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '12px 20px',
@@ -513,11 +576,14 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)',
     color: 'rgba(252,165,165,0.90)', fontSize: 12, fontWeight: 600,
   },
-  gcalBtn: {
-    display: 'flex', alignItems: 'center', gap: 6,
-    padding: '7px 16px', borderRadius: 8,
-    background: 'rgba(96,165,250,0.14)', border: '1px solid rgba(96,165,250,0.30)',
-    color: 'var(--accent)', fontSize: 12, fontWeight: 600,
-    textDecoration: 'none',
+  saveFooterBtn: {
+    padding: '7px 24px', borderRadius: 8,
+    background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.45)',
+    color: 'rgba(96,165,250,1)', fontSize: 12, fontWeight: 700,
+    cursor: 'pointer', transition: 'opacity 0.15s',
+  },
+  saveFooterBtnDisabled: {
+    background: 'var(--bg-subtle)', border: '1px solid var(--glass-border)',
+    color: 'var(--text-dim)', cursor: 'not-allowed', opacity: 0.5,
   },
 }
