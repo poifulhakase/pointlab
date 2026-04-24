@@ -10,6 +10,7 @@ import { getNote, saveNote } from '../utils/noteStorage'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, type ArbitrageWeekData } from '../utils/arbitrageData'
+import { fetchFuturesOiData, type FuturesOiWeekData } from '../utils/futuresOiData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
 import type { NtRatioPoint } from '../utils/ntRatioData'
@@ -243,6 +244,7 @@ function buildExportJson(
   adData: AdvanceDeclineWeekData[],
   ssData: ShortSellWeekData[],
   arbData: ArbitrageWeekData[],
+  foiData: FuturesOiWeekData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -289,10 +291,16 @@ function buildExportJson(
     })
     .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0)
 
+  // 先物OI: 直近12週分（月次公表のため最新データは約1ヶ月遅延）
+  const foiRows = foiData
+    .slice(0, EXPORT_WEEKS)
+    .map(d => ({ date: d.date, oi: d.oi }))
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
+    nk225_futures_oi: foiRows,
     data: rows,
   }
 }
@@ -603,6 +611,8 @@ export function QuantView({ theme, isMobile }: Props) {
   const [arbError,   setArbError]   = useState('')
   const [arbLoaded,  setArbLoaded]  = useState(false)
 
+  const [foiData, setFoiData] = useState<FuturesOiWeekData[]>([])
+
   const [ntData, setNtData] = useState<NtRatioPoint[]>([])
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
@@ -670,6 +680,10 @@ export function QuantView({ theme, isMobile }: Props) {
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
 
   useEffect(() => {
+    fetchFuturesOiData().then(setFoiData).catch(() => { /* 月次データ未公表時は無視 */ })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     fetchNhkNews().then(setNhkNews).catch(() => {})
   }, [])
 
@@ -679,7 +693,7 @@ export function QuantView({ theme, isMobile }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -691,7 +705,7 @@ export function QuantView({ theme, isMobile }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)

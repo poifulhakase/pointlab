@@ -608,6 +608,86 @@ async function buildArbitrageData() {
   }))
 }
 
+// ── 先物建玉残高（OI） ────────────────────────────────
+// データソース: JPX月間統計資料「指数先物取引取引状況（日別）」
+// URL: /automation/markets/statistics-derivatives/monthly-statistics/files/{YYYY}/SIF_D_{YYYYMM}.xlsx
+// 列構成: col[1]=商品名, col[0]=日, col[9]=OIマーカー(◎●), col[10]=建玉現在高(枚)
+// 公表タイミング: 翌月上旬（約1ヶ月遅延）→ GitHub Actions が月次で自動取得
+
+async function buildFuturesOIData() {
+  console.log('\n[futuresOI] 先物建玉残高（OI）取得中...')
+
+  const STATS_REFERER = `${BASE}/markets/statistics-derivatives/monthly-statistics/index.html`
+  const STATS_BASE    = `${BASE}/automation/markets/statistics-derivatives/monthly-statistics`
+
+  // 1. 年一覧 JSON を取得
+  const yearListRes = await fetch(`${STATS_BASE}/json/monthly_statistics_report_yearlist.json`, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Referer': STATS_REFERER },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!yearListRes.ok) throw new Error(`yearList HTTP ${yearListRes.status}`)
+  const yearList = await yearListRes.json()
+
+  // 2. 各年の月別ファイルURLを収集
+  const MONTH_KEYS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const fileEntries = [] // { year, month, url }
+
+  for (const { Year, Jsonfile } of yearList.TableDatas.slice(0, 2)) {
+    const reportRes = await fetch(`${BASE}${Jsonfile}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Referer': STATS_REFERER },
+      signal: AbortSignal.timeout(20000),
+    })
+    if (!reportRes.ok) continue
+    const report = await reportRes.json()
+    const row = report.TableDatas.find(r => r.Quotations === '指数先物取引取引状況（日別）')
+    if (!row) continue
+    for (let mi = 0; mi < MONTH_KEYS.length; mi++) {
+      const urlPath = row[MONTH_KEYS[mi]]
+      if (urlPath && urlPath !== '-') {
+        fileEntries.push({ year: parseInt(Year), month: mi + 1, url: `${BASE}${urlPath}` })
+      }
+    }
+  }
+
+  // 最新4ヶ月分（週次12件を確保するのに十分）
+  fileEntries.sort((a, b) => b.year - a.year || b.month - a.month)
+  const entriesToFetch = fileEntries.slice(0, 4)
+  console.log(`  ${entriesToFetch.length}ヶ月分のファイルを取得`)
+
+  // 3. 各月の Excel から col[10]=建玉現在高 を抽出
+  const dailyOIMap = new Map() // "YYYY/MM/DD" → oi(枚)
+
+  for (const { year, month, url } of entriesToFetch) {
+    try {
+      const buf  = await fetchBinary(url)
+      const wb   = XLSX.read(buf, { type: 'array' })
+      const ws   = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' })
+      let count = 0
+      for (const row of rows) {
+        if (row[1] !== '日経225先物') continue
+        const day = parseInt(String(row[0]))
+        if (!day || day < 1 || day > 31) continue
+        const oi = typeof row[10] === 'number' ? row[10] : null
+        if (oi && oi > 0) {
+          const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`
+          dailyOIMap.set(dateStr, oi)
+          count++
+        }
+      }
+      console.log(`  ${year}/${String(month).padStart(2,'0')}: ${count}日分`)
+    } catch (e) {
+      console.warn(`  ✗ ${year}/${month}: ${e.message}`)
+    }
+  }
+
+  if (dailyOIMap.size === 0) throw new Error('OIデータが取得できませんでした')
+
+  // 4. 週次変換（各週の最終営業日を採用）
+  const weekly = dailyToWeekly(dailyOIMap, 52)
+  return weekly.map(({ date, label, val }) => ({ date, label, oi: val }))
+}
+
 // ── メイン ─────────────────────────────────────
 
 async function main() {
@@ -620,6 +700,7 @@ async function main() {
   let advanceDeclineOk = false
   let shortSellOk     = false
   let arbitrageOk     = false
+  let futuresOIOk     = false
 
   try {
     const data = await fetchInvestorData()
@@ -681,12 +762,23 @@ async function main() {
     console.error('\n✗ arbitrage:', e.message)
   }
 
+  try {
+    const data = await buildFuturesOIData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'futures_oi.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ futures_oi.json 保存 (${data.length}件)`)
+    futuresOIOk = true
+  } catch (e) {
+    console.error('\n✗ futuresOI:', e.message)
+  }
+
   console.log('\n=== 完了 ===')
   if (!investorOk || !marginOk) process.exit(1)
-  if (!vixOk)           console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
+  if (!vixOk)            console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
   if (!advanceDeclineOk) console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')
-  if (!shortSellOk)     console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
-  if (!arbitrageOk)     console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
+  if (!shortSellOk)      console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
+  if (!arbitrageOk)      console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
+  if (!futuresOIOk)      console.warn('⚠ futures_oi.json は更新されませんでした（月次データ未公開の可能性）')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
