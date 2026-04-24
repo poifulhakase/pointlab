@@ -11,8 +11,10 @@ import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/a
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, type ArbitrageWeekData } from '../utils/arbitrageData'
 import { fetchFuturesOiData, type FuturesOiWeekData } from '../utils/futuresOiData'
+import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
+import { MicroQuantView } from './MicroQuantView'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean }
@@ -245,6 +247,7 @@ function buildExportJson(
   ssData: ShortSellWeekData[],
   arbData: ArbitrageWeekData[],
   foiData: FuturesOiWeekData[],
+  participantsData: FuturesParticipantDayData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -296,11 +299,38 @@ function buildExportJson(
     .slice(0, 24)
     .map(d => ({ date: d.date, oi: d.oi }))
 
+  // ミクロ需給ベクター
+  const mv = computeMicroVectors(participantsData)
+  const micro_supply_demand = mv && participantsData.length > 0 ? {
+    latest_date: participantsData[0].date,
+    vectors: {
+      trend_vector: {
+        label: '海外勢コンセンサス', firms: ['GS', 'JPM'],
+        net_lots: mv.trend.netLots, direction: mv.trend.direction, day_over_day: mv.trend.dayOverDay,
+      },
+      gravity_vector: {
+        label: '裁定解消圧力', firms: ['SG', 'Barclays', 'BNP'],
+        net_lots: mv.gravity.netLots, direction: mv.gravity.direction, day_over_day: mv.gravity.dayOverDay,
+      },
+      noise_filter: {
+        label: '攪乱・逆張り圧力', firms: ['AMRO', 'Nomura'],
+        net_lots: mv.noise.netLots, direction: mv.noise.direction, day_over_day: mv.noise.dayOverDay,
+      },
+    },
+    sell_pressure_score: mv.sellPressureScore,
+    alert_level: mv.alertLevel,
+    recent: participantsData.slice(0, 5).map(d => ({
+      date: d.date, GS: d.GS, JPM: d.JPM, AMRO: d.AMRO,
+      SG: d.SG, Barclays: d.Barclays, BNP: d.BNP, Nomura: d.Nomura,
+    })),
+  } : null
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     nk225_futures_oi: foiRows,
+    micro_supply_demand,
     data: rows,
   }
 }
@@ -321,6 +351,11 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
 ※確信度が1%変化した際は、必ずその物理的根拠（どのデータがどう動いたか）を添えること。
 
 # 分析アルゴリズム（優先順位）
+0. **日次ミクロ需給ベクトル（執行のトリガー）**:
+   - 以下の3指標を「事象」の核として、マクロ環境との不整合を特定せよ。
+   - **海外大口 (GS+JPM)**: 海外勢のコンセンサス。マクロの方向性と一致しているか？
+   - **裁定売り (SG+Barclays+BNP)**: 裁定解消の「実弾」。ここが大幅マイナスの時はマクロの「裁定買い残」が崩落を開始したと判定。
+   - **個人逆張り (AMRO+野村)**: 目先の反発やヘッジ。これがプラスでも他がマイナスなら「ダマシ」と断定せよ。
 1. **スイング期間内の需給重力（物理限界の測定）**:
    - **裁定買い残**: 3.5兆円超を「臨界点（暴落リスク）」、2.0兆円以下を「整理完了」と定義。
    - **信用買い残**: 倍率2.5倍を閾値とし、2週間以内の反発局面で「戻り売り」として降ってくる価格帯を特定。
@@ -332,6 +367,10 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
    - SQまで14日以内、かつ裁定買い残が3.0兆円を超えている場合、メインシナリオを「解消（アンワインド）」に固定。
 4. **ボラティリティ・ガード**:
    - VIXの急騰（前日比+10%以上、または20超への突入）を、トレンド転換の起爆剤として監視。
+5. **動的ベクトル解析（Δの測定）**:
+   - **先物OIの変化率**: 価格上昇＋OI増加は「本気の買い」、価格上昇＋OI減少は「ショートカバー（燃料切れ間近）」と自動判定せよ。
+   - **需給の乖離ベクトル**: 裁定買い残の前週比変化を算出し、価格推移との「逆行（ダイバージェンス）」が発生していないか監視せよ。
+   - **ボラティリティの加速**: VIXの「値」だけでなく、「上昇スピード（前日比％）」が価格の下落スピードを上回った場合、強制決済の連鎖を警告せよ。
 
 # 💡 出力形式（重要：コピー機能の強制）
 ※回答はすべて、リスク管理部門にコピペしやすいよう、一つのMarkdownコードブロック（\`\`\`）の中に含めて出力すること。枠の外には挨拶や解説を一切書かないこと。
@@ -339,6 +378,12 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
 ■ 戦略展望（2日〜14日のバイアス）
 （強気 / 弱気 / 警戒）
 ※確信度は上記「オーナー基準」に基づき1%単位で算出。
+
+■ 事象分析：ミクロ需給ベクトル（日次）
+・Trend (GS+JPM): [ベクトルと枚数]
+・Gravity (SG+Barclays+BNP): [ベクトルと枚数]
+・Noise (AMRO+野村): [ベクトルと枚数]
+※判定：マクロ環境（環境）に対して、ミクロ（事象）が「順張り」か「逆行」かを明記。
 
 ■ 需給分析：物理的重力の測定
 （裁定買い残、信用残、空売り比率から見た、今後2週間の「売買の偏り」の解説）
@@ -613,12 +658,18 @@ export function QuantView({ theme, isMobile }: Props) {
 
   const [foiData, setFoiData] = useState<FuturesOiWeekData[]>([])
 
+  const [participantsData,    setParticipantsData]    = useState<FuturesParticipantDayData[]>([])
+  const [participantsLoading, setParticipantsLoading] = useState(false)
+  const [participantsError,   setParticipantsError]   = useState('')
+  const [participantsLoaded,  setParticipantsLoaded]  = useState(false)
+
   const [ntData, setNtData] = useState<NtRatioPoint[]>([])
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
+  const [quantTab, setQuantTab] = useState<'macro' | 'micro'>('macro')
 
   const [quantMemo,      setQuantMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [savedMemo,      setSavedMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
@@ -672,7 +723,15 @@ export function QuantView({ theme, isMobile }: Props) {
     finally { setArbLoading(false) }
   }, [])
 
-  useEffect(() => { if (!invLoaded)     loadInvestor()      }, [invLoaded,     loadInvestor])
+  const loadParticipants = useCallback(async (force = false) => {
+    setParticipantsLoading(true); setParticipantsError('')
+    try { setParticipantsData(await fetchFuturesParticipantsData(force)); setParticipantsLoaded(true) }
+    catch (e) { setParticipantsError(e instanceof Error ? e.message : 'データ取得エラー') }
+    finally { setParticipantsLoading(false) }
+  }, [])
+
+  useEffect(() => { if (!invLoaded)          loadInvestor()      }, [invLoaded,          loadInvestor])
+  useEffect(() => { if (!participantsLoaded) loadParticipants()  }, [participantsLoaded, loadParticipants])
   useEffect(() => { if (!marLoaded)     loadMargin()        }, [marLoaded,     loadMargin])
   useEffect(() => { if (!vixWeekLoaded) loadVixWeek()       }, [vixWeekLoaded, loadVixWeek])
   useEffect(() => { if (!adLoaded)      loadAdvanceDecline()}, [adLoaded,      loadAdvanceDecline])
@@ -693,7 +752,7 @@ export function QuantView({ theme, isMobile }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -705,7 +764,7 @@ export function QuantView({ theme, isMobile }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
@@ -720,6 +779,16 @@ export function QuantView({ theme, isMobile }: Props) {
     <div style={{ ...s.wrap, ...tv }}>
       {/* ── 上部タイトルバー ── */}
       <div style={s.topBar} className="glass">
+        <div style={s.quantTabGroup} className="glass">
+          <button
+            style={{ ...s.quantTab, ...(quantTab === 'macro' ? s.quantTabActive : {}) }}
+            onClick={() => setQuantTab('macro')}
+          >マクロ需給</button>
+          <button
+            style={{ ...s.quantTab, ...(quantTab === 'micro' ? s.quantTabActive : {}) }}
+            onClick={() => setQuantTab('micro')}
+          >ミクロ需給</button>
+        </div>
         <div style={{ flex: 1 }} />
         <button style={s.gearBtn} onClick={() => setSettingsOpen(true)} aria-label="設定">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -729,8 +798,16 @@ export function QuantView({ theme, isMobile }: Props) {
         </button>
       </div>
 
-      {/* ── ボディ ── */}
-      <div style={{ ...s.body, flexDirection: isMobile ? 'column' : 'row', overflowY: isMobile ? 'auto' : 'hidden' }}>
+      {/* ── ボディ（スライドラッパー） ── */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <div style={{
+          display: 'flex', width: '200%', height: '100%',
+          transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1)',
+          transform: quantTab === 'macro' ? 'translateX(0)' : 'translateX(-50%)',
+          willChange: 'transform',
+        }}>
+        {/* ━━ マクロ需給スライド ━━ */}
+        <div style={{ width: '50%', flexShrink: 0, display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflowY: isMobile ? 'auto' : 'hidden', overflow: !isMobile ? 'hidden' : undefined }}>
 
         {/* ━━ 左カラム: VIX（上）＋ NS倍率（下） ━━ */}
         <div style={isMobile ? s.panelMobile : s.panel}>
@@ -826,9 +903,9 @@ export function QuantView({ theme, isMobile }: Props) {
                             </td>
                             <td style={{ ...s.td, ...s.tdNum, background: row.evalRatio != null ? evalRatioBg(row.evalRatio, theme) : 'transparent' }}>
                               {row.evalRatio != null ? (
-                                <span style={{ color: evalRatioColor(row.evalRatio, theme), fontWeight: 700, fontSize: 14 }}>
+                                <><span style={{ color: evalRatioColor(row.evalRatio, theme), fontWeight: 700, fontSize: 14 }}>
                                   {row.evalRatio > 0 ? '+' : ''}{row.evalRatio.toFixed(2)}
-                                </span>
+                                </span><span style={s.unit}>%</span></>
                               ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                             </td>
                           </tr>
@@ -872,10 +949,10 @@ export function QuantView({ theme, isMobile }: Props) {
                             <thead>
                               <tr>
                                 <th style={{ ...s.th, ...s.thDate }}>週</th>
-                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>空売り比率</div><div style={s.thSub}>%</div></th>
-                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
                                 <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定買い残</div><div style={s.thSub}>百万円</div></th>
                                 <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>空売り比率</div><div style={s.thSub}>%</div></th>
                               </tr>
                             </thead>
                             <tbody>
@@ -885,9 +962,15 @@ export function QuantView({ theme, isMobile }: Props) {
                                     <div style={s.dateMain}>{row.label}</div>
                                     <div style={s.dateSub}>{row.date}</div>
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
-                                    {row.shortSell != null
-                                      ? <><span style={{ color: shortSellTextColor(row.shortSell, theme), fontWeight: 700, fontSize: 13 }}>{row.shortSell.toFixed(1)}</span><span style={s.unit}>%</span></>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
+                                    {row.arbLongBal != null
+                                      ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbLongBal)}</span>
+                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                    }
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
+                                    {row.arbShortBal != null
+                                      ? <span style={{ color: balTextColor(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbShortBal)}</span>
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                     }
                                   </td>
@@ -897,15 +980,9 @@ export function QuantView({ theme, isMobile }: Props) {
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                     }
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
-                                    {row.arbLongBal != null
-                                      ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 700, fontSize: 13 }}>{fmtHyakuman(row.arbLongBal)}</span>
-                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
-                                    }
-                                  </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
-                                    {row.arbShortBal != null
-                                      ? <span style={{ color: balTextColor(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme), fontWeight: 700, fontSize: 13 }}>{fmtHyakuman(row.arbShortBal)}</span>
+                                  <td style={{ ...s.td, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
+                                    {row.shortSell != null
+                                      ? <><span style={{ color: shortSellTextColor(row.shortSell, theme), fontWeight: 700, fontSize: 13 }}>{row.shortSell.toFixed(1)}</span><span style={s.unit}>%</span></>
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                     }
                                   </td>
@@ -1025,9 +1102,23 @@ export function QuantView({ theme, isMobile }: Props) {
             </div>
           </div>
 
+        </div>{/* /右カラム */}
+        </div>{/* /マクロ需給スライド */}
+
+        {/* ━━ ミクロ需給スライド ━━ */}
+        <div style={{ width: '50%', flexShrink: 0, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MicroQuantView
+            theme={theme}
+            isMobile={isMobile}
+            data={participantsData}
+            loading={participantsLoading}
+            error={participantsError}
+            onReload={() => loadParticipants(true)}
+          />
         </div>
 
-      </div>
+        </div>{/* /slider inner */}
+      </div>{/* /slider outer */}
 
       <QuantSettingsModal
         isOpen={settingsOpen}
@@ -1048,6 +1139,9 @@ const s: Record<string, React.CSSProperties> = {
     userSelect: 'none',
   },
   gearBtn:   { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: 'var(--text-sub)', cursor: 'pointer', flexShrink: 0 },
+  quantTabGroup:  { display: 'flex', borderRadius: 10, overflow: 'hidden', padding: 3, gap: 2, flexShrink: 0 },
+  quantTab:       { padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s' },
+  quantTabActive: { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' },
   body:      { flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 },
 
   panel:       { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },

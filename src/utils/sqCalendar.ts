@@ -56,13 +56,13 @@ export const SQ_META: Record<SqMarker, { label: string; short: string; desc: str
     short: 'SQ',
     desc: '日経225先物・オプション特別清算指数算出日',
     color: '#a78bfa',
-    bg: 'rgba(167,139,250,0.18)',
+    bg: 'rgba(167,139,250,0.30)',
   },
   'sq-mini': {
     label: 'ミニSQ',
     short: 'ミニSQ',
     desc: '日経225ミニ先物特別清算指数算出日',
     color: '#818cf8',
-    bg: 'rgba(129,140,248,0.13)',
+    bg: 'rgba(129,140,248,0.28)',
   },
 }

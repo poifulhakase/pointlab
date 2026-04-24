@@ -5,6 +5,7 @@ type Props = { theme: 'dark' | 'light'; isMobile: boolean }
 type Article = {
   genre: string
   title: string
+  mobileTitle?: string
   url: string | null
   thumb: string | null
 }
@@ -25,7 +26,7 @@ const ARTICLES: Article[] = [
   { genre: 'インジケーター', title: 'RSI',             url: 'https://note.com/pointlab/n/ncd65c830de29', thumb: BASE + 'Stock_Trade_Lab_RSI.png' },
   { genre: 'インジケーター', title: 'パラボリック',     url: 'https://note.com/pointlab/n/n635865776b8e', thumb: BASE + 'Stock_Trade_Lab_ParabolicSAR.png' },
   { genre: 'インジケーター', title: 'ストキャスティクス', url: 'https://note.com/pointlab/n/na7f744ea8158', thumb: BASE + 'Stock_Trade_Lab_Stochastic.png' },
-  { genre: 'インジケーター', title: 'レジスタンスサポート・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
+  { genre: 'インジケーター', title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
   { genre: 'インジケーター', title: '実践統合編',       url: 'https://note.com/pointlab/n/nb4793929edcd', thumb: BASE + 'Stock_Trade_Lab_Multiple_Index.png' },
   // ── イベントドリブン ──────────────────────────────────────────
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png' },
@@ -75,7 +76,7 @@ function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolea
 
       {/* タイトル */}
       <div style={s.cardBody}>
-        <p style={s.cardTitle}>{article.title}</p>
+        <p style={s.cardTitle}>{isMobile && article.mobileTitle ? article.mobileTitle : article.title}</p>
       </div>
     </div>
   )
@@ -90,7 +91,7 @@ export function NoteView({ isMobile }: Props) {
           return (
             <section key={genre} style={s.section}>
               <h2 style={s.genreHeading}>{genre}</h2>
-              <div style={s.grid}>
+              <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                 {items.map(article => (
                   <ArticleCard key={article.title} article={article} isMobile={isMobile} />
                 ))}
@@ -133,6 +134,10 @@ const s: Record<string, React.CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
     gap: 16,
+  },
+  gridMobile: {
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: 12,
   },
   card: {
     borderRadius: 12,

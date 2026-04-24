@@ -129,14 +129,14 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: band.color, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  style={{ color: band.color, fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
                   onClick={e => e.stopPropagation()}
                 >
                   {item.label}
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span style={{ color: band.color, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.label}</span>
+                <span style={{ color: band.color, fontWeight: 400, whiteSpace: 'nowrap' }}>{item.label}</span>
               )}
             </span>
           ))}
@@ -177,19 +177,21 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
   },
   closedBadge: {
-    fontSize: 9, fontWeight: 700,
-    color: 'rgba(255,200,100,0.8)', background: 'rgba(255,180,50,0.12)',
-    border: '1px solid rgba(255,180,50,0.25)',
+    fontSize: 10, fontWeight: 500,
+    color: 'rgba(255,220,130,0.95)', background: 'rgba(255,180,50,0.22)',
+    border: '1px solid rgba(255,180,50,0.50)',
     borderRadius: 3, padding: '1px 4px', whiteSpace: 'nowrap',
+    letterSpacing: '0.02em',
   },
   noteBand: {
     width: '100%',
-    background: 'rgba(96,165,250,0.18)',
+    background: 'rgba(96,165,250,0.30)',
     borderRadius: 3,
-    padding: '2px 4px',
+    padding: '2px 5px',
     marginTop: 3,
-    fontSize: 11, fontWeight: 600,
-    color: 'rgba(96,165,250,0.92)',
+    fontSize: 11, fontWeight: 500,
+    letterSpacing: '0.02em',
+    color: 'rgba(255,255,255,0.95)',
     overflow: 'hidden',
     display: '-webkit-box',
     WebkitBoxOrient: 'vertical' as const,

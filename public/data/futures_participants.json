@@ -1,0 +1,26 @@
+{
+  "updatedAt": "2026-04-24T00:00:00.000Z",
+  "note": "JPX公表「証券会社別先物別売買高（ネット枚数）」日経225先物 日次。scripts/fetch-jpx.mjs の buildFuturesParticipantsData() で自動更新予定。",
+  "data": [
+    {"date":"2026-04-24","label":"4/24","GS":-3200,"JPM":-1800,"AMRO":420,"SG":-2600,"Barclays":-1100,"BNP":null,"Nomura":980},
+    {"date":"2026-04-23","label":"4/23","GS":-2800,"JPM":-1500,"AMRO":350,"SG":-2100,"Barclays":-900,"BNP":null,"Nomura":760},
+    {"date":"2026-04-22","label":"4/22","GS":-1200,"JPM":-800,"AMRO":-200,"SG":-1800,"Barclays":-600,"BNP":null,"Nomura":-350},
+    {"date":"2026-04-21","label":"4/21","GS":500,"JPM":300,"AMRO":800,"SG":-500,"Barclays":200,"BNP":null,"Nomura":1200},
+    {"date":"2026-04-18","label":"4/18","GS":-4500,"JPM":-2200,"AMRO":600,"SG":-3200,"Barclays":-1500,"BNP":null,"Nomura":450},
+    {"date":"2026-04-17","label":"4/17","GS":-3800,"JPM":-1900,"AMRO":280,"SG":-2800,"Barclays":-1200,"BNP":null,"Nomura":620},
+    {"date":"2026-04-16","label":"4/16","GS":-2500,"JPM":-1400,"AMRO":-100,"SG":-2200,"Barclays":-800,"BNP":null,"Nomura":200},
+    {"date":"2026-04-15","label":"4/15","GS":800,"JPM":400,"AMRO":1100,"SG":-800,"Barclays":300,"BNP":null,"Nomura":1500},
+    {"date":"2026-04-14","label":"4/14","GS":-5200,"JPM":-2800,"AMRO":150,"SG":-3800,"Barclays":-1800,"BNP":null,"Nomura":320},
+    {"date":"2026-04-11","label":"4/11","GS":-4800,"JPM":-2500,"AMRO":380,"SG":-3500,"Barclays":-1600,"BNP":null,"Nomura":580},
+    {"date":"2026-04-10","label":"4/10","GS":-3600,"JPM":-1800,"AMRO":220,"SG":-2900,"Barclays":-1200,"BNP":null,"Nomura":420},
+    {"date":"2026-04-09","label":"4/9","GS":1200,"JPM":600,"AMRO":900,"SG":-600,"Barclays":400,"BNP":null,"Nomura":1800},
+    {"date":"2026-04-08","label":"4/8","GS":-2200,"JPM":-1100,"AMRO":-300,"SG":-1800,"Barclays":-700,"BNP":null,"Nomura":-400},
+    {"date":"2026-04-07","label":"4/7","GS":-1800,"JPM":-900,"AMRO":150,"SG":-1500,"Barclays":-600,"BNP":null,"Nomura":280},
+    {"date":"2026-04-04","label":"4/4","GS":-3000,"JPM":-1600,"AMRO":400,"SG":-2400,"Barclays":-1000,"BNP":null,"Nomura":750},
+    {"date":"2026-04-03","label":"4/3","GS":-2600,"JPM":-1400,"AMRO":350,"SG":-2100,"Barclays":-900,"BNP":null,"Nomura":630},
+    {"date":"2026-04-02","label":"4/2","GS":600,"JPM":300,"AMRO":700,"SG":-400,"Barclays":200,"BNP":null,"Nomura":1100},
+    {"date":"2026-04-01","label":"4/1","GS":-1500,"JPM":-800,"AMRO":-150,"SG":-1200,"Barclays":-500,"BNP":null,"Nomura":-200},
+    {"date":"2026-03-31","label":"3/31","GS":-4200,"JPM":-2100,"AMRO":480,"SG":-3100,"Barclays":-1400,"BNP":null,"Nomura":860},
+    {"date":"2026-03-28","label":"3/28","GS":-3800,"JPM":-1900,"AMRO":320,"SG":-2800,"Barclays":-1200,"BNP":null,"Nomura":670}
+  ]
+}

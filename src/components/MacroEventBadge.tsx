@@ -25,18 +25,17 @@ export function MacroEventBadge({ events, size = 'md' }: Props) {
               key={i}
               style={{
                 display: 'inline-block',
-                fontSize: isSm ? 10 : 12,
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-                color: meta.color,
+                fontSize: isSm ? 11 : 12,
+                fontWeight: 500,
+                letterSpacing: '0.03em',
+                color: 'rgba(255,255,255,0.95)',
                 background: meta.bg,
-                border: `1px solid ${meta.color}40`,
+                border: `1px solid ${meta.color}99`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
                 whiteSpace: 'nowrap',
-                backdropFilter: 'blur(4px)',
-                boxShadow: `0 1px 6px ${meta.color}20`,
+                boxShadow: `0 1px 4px ${meta.color}30`,
                 cursor: 'pointer',
               }}
               onClick={ev => {

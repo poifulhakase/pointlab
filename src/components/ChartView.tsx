@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { themeVars } from '../utils/themeVars'
 
 type Props = {
@@ -14,10 +14,11 @@ const SYMBOLS: { label: string; symbol: string }[] = [
 ]
 
 // ── 単一チャートパネル ─────────────────────────────────────
-function ChartPanel({ symbol, interval, theme, isMobile }: { symbol: string; interval: string; theme: 'dark' | 'light'; isMobile?: boolean }) {
+function ChartPanel({ symbol, interval, theme, isMobile, height }: { symbol: string; interval: string; theme: 'dark' | 'light'; isMobile?: boolean; height: number }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (height === 0) return
     const el = containerRef.current
     if (!el) return
     el.innerHTML = ''
@@ -46,13 +47,13 @@ function ChartPanel({ symbol, interval, theme, isMobile }: { symbol: string; int
     el.appendChild(script)
 
     return () => { el.innerHTML = '' }
-  }, [symbol, interval, theme])
+  }, [symbol, interval, theme, height])
 
   return (
     <div
       ref={containerRef}
       className="tradingview-widget-container"
-      style={{ flex: 1, height: 0, minWidth: 0, borderRadius: isMobile ? 0 : 12, overflow: 'hidden', border: isMobile ? 'none' : '1px solid var(--glass-border)' }}
+      style={{ flex: 1, height, minWidth: 0, borderRadius: isMobile ? 0 : 12, overflow: 'hidden', border: isMobile ? 'none' : '1px solid var(--glass-border)' }}
     />
   )
 }
@@ -267,6 +268,19 @@ export function ChartView({ theme, isMobile }: Props) {
   const [symbol, setSymbol] = useState('INDEX:NKY')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [snapStatus, setSnapStatus]     = useState<'' | 'copied' | 'error'>('')
+  const [panelsHeight, setPanelsHeight] = useState(0)
+  const panelsRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const el = panelsRef.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      const h = entries[0]?.contentRect.height ?? 0
+      if (h > 0) setPanelsHeight(h)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const handleScreenshot = async () => {
     setSettingsOpen(false)
@@ -340,12 +354,12 @@ export function ChartView({ theme, isMobile }: Props) {
         </div>
       </div>
 
-      <div style={{ ...styles.panels, ...(isMobile ? { padding: '0' } : {}) }}>
-        <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} />
+      <div ref={panelsRef} style={{ ...styles.panels, ...(isMobile ? { padding: '0' } : {}) }}>
+        <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} height={panelsHeight} />
         {effectiveSplit === 2 && (
           <>
             <div style={{ width: 10, flexShrink: 0 }} />
-            <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} />
+            <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} height={panelsHeight} />
           </>
         )}
       </div>

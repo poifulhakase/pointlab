@@ -688,19 +688,39 @@ async function buildFuturesOIData() {
   return weekly.map(({ date, label, val }) => ({ date, label, oi: val }))
 }
 
+// ── 証券会社別先物手口（ミクロ需給エンジン用） ────────────────────
+// JPX公表「証券会社別先物別売買高（ネット枚数）」日経225先物 日次
+// ※ 実際のURL・Excel列定義はJPX統計ページで確認して設定してください
+// 参考: https://www.jpx.co.jp/markets/statistics-derivatives/sector-type/
+async function buildFuturesParticipantsData() {
+  // TODO: JPXが公表する「証券会社別先物別売買高」のExcel URLを確認して実装
+  // 以下は構造サンプル。実データ取得時はXLSXで列を特定してください。
+  //
+  // const PAGE_URL = 'https://www.jpx.co.jp/markets/statistics-derivatives/sector-type/'
+  // const html = await fetchHtml(PAGE_URL)
+  // const xlsLink = ... // ページからExcelリンクを抽出
+  // const buf = await fetchBinary(BASE + xlsLink)
+  // const wb  = XLSX.read(buf, { type: 'array' })
+  // const ws  = wb.Sheets[wb.SheetNames[0]]
+  // const rows = XLSX.utils.sheet_to_json(ws, { header: 1 })
+  // → 各行から日付・GS・JPM・AMRO・SG・Barclays（またはBNP）・野村 の列を特定
+  throw new Error('buildFuturesParticipantsData: JPX URL未設定 - JPX統計ページを確認の上実装してください')
+}
+
 // ── メイン ─────────────────────────────────────
 
 async function main() {
   console.log('=== JPXデータ取得開始 ===')
   mkdirSync(OUT_DIR, { recursive: true })
 
-  let investorOk      = false
-  let marginOk        = false
-  let vixOk           = false
-  let advanceDeclineOk = false
-  let shortSellOk     = false
-  let arbitrageOk     = false
-  let futuresOIOk     = false
+  let investorOk           = false
+  let marginOk             = false
+  let vixOk                = false
+  let advanceDeclineOk     = false
+  let shortSellOk          = false
+  let arbitrageOk          = false
+  let futuresOIOk          = false
+  let futuresParticipantsOk = false
 
   try {
     const data = await fetchInvestorData()
@@ -772,13 +792,24 @@ async function main() {
     console.error('\n✗ futuresOI:', e.message)
   }
 
+  try {
+    const data = await buildFuturesParticipantsData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'futures_participants.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ futures_participants.json 保存 (${data.length}件)`)
+    futuresParticipantsOk = true
+  } catch (e) {
+    console.warn('\n⚠ futures_participants:', e.message)
+  }
+
   console.log('\n=== 完了 ===')
   if (!investorOk || !marginOk) process.exit(1)
-  if (!vixOk)            console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
-  if (!advanceDeclineOk) console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')
-  if (!shortSellOk)      console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
-  if (!arbitrageOk)      console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
-  if (!futuresOIOk)      console.warn('⚠ futures_oi.json は更新されませんでした（月次データ未公開の可能性）')
+  if (!vixOk)                   console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
+  if (!advanceDeclineOk)        console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')
+  if (!shortSellOk)             console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
+  if (!arbitrageOk)             console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
+  if (!futuresOIOk)             console.warn('⚠ futures_oi.json は更新されませんでした（月次データ未公開の可能性）')
+  if (!futuresParticipantsOk)   console.warn('⚠ futures_participants.json は更新されませんでした（JPX URL設定要確認）')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

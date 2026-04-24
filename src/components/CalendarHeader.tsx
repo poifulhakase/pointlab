@@ -191,9 +191,10 @@ export function ChevronRight() {
 // ── スタイル ─────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
   header: {
-    height: 'var(--header-height)',
+    height: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px))',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '0 12px',
+    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
     flexShrink: 0, position: 'relative', zIndex: 10, gap: 8,
     userSelect: 'none',
