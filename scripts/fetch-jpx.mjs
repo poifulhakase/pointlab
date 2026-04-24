@@ -632,7 +632,7 @@ async function buildFuturesOIData() {
   const MONTH_KEYS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const fileEntries = [] // { year, month, url }
 
-  for (const { Year, Jsonfile } of yearList.TableDatas.slice(0, 2)) {
+  for (const { Year, Jsonfile } of yearList.TableDatas) {  // 全年取得
     const reportRes = await fetch(`${BASE}${Jsonfile}`, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Referer': STATS_REFERER },
       signal: AbortSignal.timeout(20000),
@@ -649,9 +649,9 @@ async function buildFuturesOIData() {
     }
   }
 
-  // 最新4ヶ月分（週次12件を確保するのに十分）
+  // 全利用可能月（降順）
   fileEntries.sort((a, b) => b.year - a.year || b.month - a.month)
-  const entriesToFetch = fileEntries.slice(0, 4)
+  const entriesToFetch = fileEntries  // 全期間取得（JPXは3年分公開）
   console.log(`  ${entriesToFetch.length}ヶ月分のファイルを取得`)
 
   // 3. 各月の Excel から col[10]=建玉現在高 を抽出

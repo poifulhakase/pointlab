@@ -291,9 +291,9 @@ function buildExportJson(
     })
     .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0)
 
-  // 先物OI: 直近12週分（月次公表のため最新データは約1ヶ月遅延）
+  // 先物OI: 直近24週分（月次公表のため最新データは約1ヶ月遅延）
   const foiRows = foiData
-    .slice(0, EXPORT_WEEKS)
+    .slice(0, 24)
     .map(d => ({ date: d.date, oi: d.oi }))
 
   return {
