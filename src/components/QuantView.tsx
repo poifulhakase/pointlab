@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import type React from 'react'
 import { themeVars } from '../utils/themeVars'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, getStoredMarginUpdatedAt, type MarginWeekData } from '../utils/jpxMarginData'
@@ -15,6 +16,7 @@ import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticip
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView } from './MicroQuantView'
+import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean }
@@ -259,20 +261,23 @@ function buildExportJson(
 
   const allDates = new Set([...invMap.keys(), ...marMap.keys(), ...vixMap.keys()])
 
-  const rows = Array.from(allDates)
-    .sort((a, b) => b.localeCompare(a))
-    .slice(0, EXPORT_WEEKS)
-    .map(date => {
-      const inv = invMap.get(date)
-      const mar = marMap.get(date)
-      const vix = vixMap.get(date)
-      const nt  = findNtForDate(ntMap, date)
-      const ad  = adMap.get(date)
-      const ss  = ssMap.get(date)
-      const arb = arbMap.get(date)
+  const sortedDates = Array.from(allDates).sort((a, b) => b.localeCompare(a)).slice(0, EXPORT_WEEKS)
+
+  const rows = sortedDates
+    .map((date, i) => {
+      const inv     = invMap.get(date)
+      const mar     = marMap.get(date)
+      const marPrev = i < sortedDates.length - 1 ? marMap.get(sortedDates[i + 1]) : undefined
+      const vix     = vixMap.get(date)
+      const nt      = findNtForDate(ntMap, date)
+      const ad      = adMap.get(date)
+      const ss      = ssMap.get(date)
+      const ssPrev  = i < sortedDates.length - 1 ? ssMap.get(sortedDates[i + 1])  : undefined
+      const arb     = arbMap.get(date)
+      const arbPrev = i < sortedDates.length - 1 ? arbMap.get(sortedDates[i + 1]) : undefined
       return {
         date,
-        vix: { value: vix?.close ?? 0, change: vix?.change ?? 0 },
+        vix: { value: vix?.close ?? 0, change: vix?.change ?? 0, change_pct: vix?.changePct ?? null },
         ns_ratio: nt ? {
           value:  r2(nt.ratio),
           nikkei: Math.round(nt.nikkei),
@@ -290,6 +295,15 @@ function buildExportJson(
         short_sell_ratio:           ss?.ratio ?? null,
         arbitrage_long_bal_trillion:  arb ? r2(arb.longBal / 1000000) : null,
         arbitrage_short_bal_trillion: arb && arb.shortBal > 0 ? r2(arb.shortBal / 1000000) : null,
+        delta: {
+          credit_long_pct:         mar && marPrev && marPrev.longBal > 0
+            ? r2((mar.longBal - marPrev.longBal) / marPrev.longBal * 100) : null,
+          arbitrage_long_100m:     arb && arbPrev
+            ? Math.round((arb.longBal - arbPrev.longBal) / 100) : null,
+          short_sell_pp:           ss && ssPrev
+            ? r2(ss.ratio - ssPrev.ratio) : null,
+          vix_pct:                 vix?.changePct ?? null,
+        },
       }
     })
     .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0)
@@ -669,7 +683,8 @@ export function QuantView({ theme, isMobile }: Props) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
-  const [quantTab, setQuantTab] = useState<'macro' | 'micro'>('macro')
+  const [quantTab,    setQuantTab]    = useState<'macro' | 'micro'>('macro')
+  const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
   const [quantMemo,      setQuantMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [savedMemo,      setSavedMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
@@ -777,6 +792,17 @@ export function QuantView({ theme, isMobile }: Props) {
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
+      {/* ── Δ分析モーダル ── */}
+      {deltaModal && (
+        <DeltaModal
+          type={deltaModal}
+          marData={marData}
+          arbData={arbData}
+          ssData={ssData}
+          theme={theme}
+          onClose={() => setDeltaModal(null)}
+        />
+      )}
       {/* ── 上部タイトルバー ── */}
       <div style={s.topBar} className="glass">
         <div style={s.quantTabGroup} className="glass">
@@ -823,7 +849,7 @@ export function QuantView({ theme, isMobile }: Props) {
                 <span style={s.panelSub}>恐怖指数（CBOE・日足・約15分遅延）</span>
               </div>
             </div>
-            <VixPanel theme={theme} />
+            <VixPanel theme={theme} vixWeekData={vixWeekData} />
           </div>
 
           <div style={s.dividerH} />
@@ -869,7 +895,13 @@ export function QuantView({ theme, isMobile }: Props) {
                     <thead>
                       <tr>
                         <th style={{ ...s.th, ...s.thDate }}>週</th>
-                        <th style={s.th}><div style={s.thLabel}>買い残</div><div style={s.thSub}>百万円</div></th>
+                        <th style={s.th}>
+                          <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            買い残
+                            <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>
+                          </div>
+                          <div style={s.thSub}>百万円</div>
+                        </th>
                         <th style={s.th}><div style={s.thLabel}>売り残</div><div style={s.thSub}>百万円</div></th>
                         <th style={s.th}><div style={s.thLabel}>信用倍率</div><div style={s.thSub}>買残÷売残</div></th>
                         <th style={s.th}><div style={s.thLabel}>評価損益率</div><div style={s.thSub}>%</div></th>
@@ -949,10 +981,22 @@ export function QuantView({ theme, isMobile }: Props) {
                             <thead>
                               <tr>
                                 <th style={{ ...s.th, ...s.thDate }}>週</th>
-                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定買い残</div><div style={s.thSub}>百万円</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}>
+                                  <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    裁定買い残
+                                    <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>
+                                  </div>
+                                  <div style={s.thSub}>百万円</div>
+                                </th>
                                 <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
                                 <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
-                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>空売り比率</div><div style={s.thSub}>%</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}>
+                                  <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    空売り比率
+                                    <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>
+                                  </div>
+                                  <div style={s.thSub}>%</div>
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1205,4 +1249,5 @@ const s: Record<string, React.CSSProperties> = {
   dateMain:  { fontSize: 11, fontWeight: 600, color: 'var(--text)' },
   dateSub:   { fontSize: 10, color: 'var(--text-dim)', marginTop: 2 },
   unit:      { fontSize: 10, color: 'var(--text-dim)', marginLeft: 3 },
+  deltaBtn:  { background: 'none', border: '1px solid var(--border-dim)', borderRadius: 3, cursor: 'pointer', color: 'var(--accent)', fontSize: 10, fontWeight: 700, padding: '0px 3px', lineHeight: 1.4, letterSpacing: '0.02em', flexShrink: 0 } as React.CSSProperties,
 }

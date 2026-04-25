@@ -55,22 +55,12 @@ function RobotIcon() {
   )
 }
 
-function VideoIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="23 7 16 12 23 17 23 7"/>
-      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-    </svg>
-  )
-}
-
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
-  { label: 'ホーム',     targetView: 'month'   as ViewMode, isActive: isCalendarView,                icon: <HomeIcon /> },
-  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',  icon: <ChartWaveIcon /> },
-  { label: 'データ',     targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',  icon: <RobotIcon /> },
-  { label: 'ノート',     targetView: 'note'    as ViewMode, isActive: (v: ViewMode) => v === 'note',   icon: <NoteIcon /> },
-  { label: 'ムービー',   targetView: 'youtube' as ViewMode, isActive: (v: ViewMode) => v === 'youtube',icon: <VideoIcon /> },
+  { label: 'ホーム',   targetView: 'month' as ViewMode, isActive: isCalendarView,                icon: <HomeIcon /> },
+  { label: 'チャート', targetView: 'chart' as ViewMode, isActive: (v: ViewMode) => v === 'chart', icon: <ChartWaveIcon /> },
+  { label: 'データ',   targetView: 'quant' as ViewMode, isActive: (v: ViewMode) => v === 'quant', icon: <RobotIcon /> },
+  { label: 'ノート',   targetView: 'note'  as ViewMode, isActive: (v: ViewMode) => v === 'note',  icon: <NoteIcon /> },
 ]
 
 // ── コンポーネント ────────────────────────────────────

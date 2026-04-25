@@ -9,7 +9,7 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: 'ぽいらぼは、株式投資家向けのWebカレンダーアプリです。配当日・SQ日・マクロイベント・市場休場日を一画面で把握し、メモ・チャート・需給分析・YouTube視聴を統合した投資支援ツールです。',
+        text: 'ぽいらぼは、株式投資家向けのWebカレンダーアプリです。配当日・SQ日・マクロイベント・市場休場日を一画面で把握し、メモ・チャート・需給分析を統合した投資支援ツールです。',
       },
       {
         type: 'table' as const,
@@ -29,7 +29,6 @@ const SPEC_SECTIONS = [
           'チャート：TradingView チャート（日経225・ドル円・米国債）',
           'データ：需給分析（VIX・NS倍率・信用倍率・投資主体別売買動向）',
           'ノート：記事一覧（実装予定）',
-          'ムービー：YouTube マーケット動画ビュー',
           'AI分析プロンプト自動生成・クリップボードコピー',
           'Firebase Auth（Googleログイン）によるメモ・設定のクロスデバイス同期',
         ],
@@ -269,28 +268,6 @@ const SPEC_SECTIONS = [
     ],
   },
   {
-    id: 'youtube',
-    icon: '▶️',
-    title: 'ムービービュー',
-    content: [
-      {
-        type: 'para' as const,
-        text: '登録したYouTubeチャンネルの最新動画を一覧表示するビューです。マーケット解説・経済ニュース等の動画を効率よく視聴できます。',
-      },
-      {
-        type: 'list' as const,
-        heading: '機能',
-        items: [
-          'チャンネルURLまたはIDを入力して追加・削除',
-          'サムネイル・動画タイトル・再生時間・投稿日を表示',
-          '動画クリックでYouTube（アプリ）を開く',
-          '↻ボタンで強制更新（通常はTTL 3週間のキャッシュを使用）',
-          'キャッシュ: localStorage `poical-yt-videos-{channelId}`',
-        ],
-      },
-    ],
-  },
-  {
     id: 'data',
     icon: '🗄️',
     title: 'データ仕様',
@@ -306,7 +283,6 @@ const SPEC_SECTIONS = [
           ['poical-margin-data', '24時間', '信用倍率JSONキャッシュ'],
           ['poical-investor-data', '24時間', '投資主体別JSONキャッシュ'],
           ['poical-nhk-news', '30分', 'NHKニュースRSS'],
-          ['poical-yt-videos-{id}', '3週間', 'YouTube動画リスト'],
           ['poical-sticky-notes', '永続', 'サイドバースティッキーメモ（最大1件）'],
           ['poical-short-sell-data', '24時間', '空売り比率JSONキャッシュ'],
           ['poical-ad-ratio-data', '24時間', '騰落レシオJSONキャッシュ'],
@@ -314,7 +290,6 @@ const SPEC_SECTIONS = [
           ['poical-quant-memo', '永続', 'データビュー クオンツ分析レポートメモ'],
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
-          ['poical-yt-channels', '永続', 'YouTube登録チャンネルリスト'],
         ],
       },
       {
@@ -338,14 +313,14 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: 'Googleアカウントでログインすると、メモ・YouTubeチャンネルリストがFirestoreに保存され、PCとスマートフォン間で自動同期されます。',
+        text: 'Googleアカウントでログインすると、メモがFirestoreに保存され、PCとスマートフォン間で自動同期されます。',
       },
       {
         type: 'list' as const,
         heading: '仕様',
         items: [
           'ログイン方法: Googleサインイン（ポップアップ）',
-          '同期対象: カレンダーメモ（stock-cal-notes）・YouTubeチャンネルリスト・スティッキーメモ',
+          '同期対象: カレンダーメモ（stock-cal-notes）・スティッキーメモ',
           '未ログイン時: localStorageにフォールバック（データ消失なし）',
           'Firestoreデータ保持期間: 2年（自動削除ルール適用）',
           'authDomain: pointlab.vercel.app（Vercel でFirebaseへプロキシ）',

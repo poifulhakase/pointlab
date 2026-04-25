@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { createChart, LineSeries, ColorType, CrosshairMode, type ISeriesApi } from 'lightweight-charts'
+import { createChart, LineSeries, HistogramSeries, ColorType, CrosshairMode, type ISeriesApi } from 'lightweight-charts'
+import { type VixWeekData } from '../utils/vixData'
 
-type Props = { theme: 'dark' | 'light' }
+type Props = { theme: 'dark' | 'light'; vixWeekData?: VixWeekData[] }
 type Point = { time: string; value: number }
 
 // ── 米国市場時間判定（UTC 13:30〜21:15、平日） ────
@@ -140,16 +141,71 @@ function vixLabel(val: number): string {
   return '低位'
 }
 
+// ── VIX 週次Δヒストグラム ─────────────────────────
+function VixDeltaHistogram({ data, theme }: { data: VixWeekData[]; theme: 'dark' | 'light' }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const isDark = theme === 'dark'
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const pts = [...data].reverse().filter(d => d.changePct != null)
+    if (pts.length < 2) return
+
+    const chart = createChart(el, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: isDark ? 'rgba(160,165,185,0.7)' : 'rgba(60,65,90,0.7)',
+        fontSize: 9,
+      },
+      grid: {
+        vertLines: { color: 'transparent' },
+        horzLines: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+      },
+      crosshair: { mode: CrosshairMode.Normal },
+      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.05, bottom: 0.05 } },
+      timeScale: { borderVisible: false, fixLeftEdge: true, fixRightEdge: true },
+      autoSize: true,
+    })
+
+    const hist = chart.addSeries(HistogramSeries, { base: 0, priceLineVisible: false, lastValueVisible: true })
+    hist.setData(pts.map(d => ({
+      time: d.date.replace(/\//g, '-') as any,
+      value: d.changePct!,
+      color: d.changePct! >= 0
+        ? (isDark ? 'rgba(255,100,80,0.80)' : 'rgba(200,50,30,0.75)')
+        : (isDark ? 'rgba(96,200,140,0.75)' : 'rgba(22,163,74,0.70)'),
+    })))
+
+    hist.createPriceLine({ price: 15,  color: isDark ? 'rgba(255,80,60,0.45)'  : 'rgba(200,40,20,0.45)',  lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '+15%' })
+    hist.createPriceLine({ price: -15, color: isDark ? 'rgba(96,200,140,0.45)' : 'rgba(22,163,74,0.45)',  lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '-15%' })
+
+    chart.timeScale().fitContent()
+    return () => chart.remove()
+  }, [data, isDark])
+
+  return (
+    <div style={{ flexShrink: 0, borderTop: '1px solid var(--border-dim)' }}>
+      <div style={{ padding: '4px 12px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>VIX Δ 前週比 %</span>
+        <span style={{ fontSize: 9, color: 'var(--text-dim)' }}>±15% ライン表示</span>
+      </div>
+      <div ref={ref} style={{ height: 88 }} />
+    </div>
+  )
+}
+
 // ── メインコンポーネント ──────────────────────────
-export function VixPanel({ theme }: Props) {
+export function VixPanel({ theme, vixWeekData = [] }: Props) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef          = useRef<ReturnType<typeof createChart> | null>(null)
   const seriesRef         = useRef<ISeriesApi<'Line'> | null>(null)
 
-  const [data,      setData]      = useState<Point[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [error,     setError]     = useState('')
-  const [updatedAt, setUpdatedAt] = useState<Date | null>(null)
+  const [data,          setData]          = useState<Point[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState('')
+  const [updatedAt,     setUpdatedAt]     = useState<Date | null>(null)
+  const [showHistogram, setShowHistogram] = useState(false)
 
   // ── データ取得 ──────────────────────────────────
   const load = useCallback(async (silent = false) => {
@@ -296,6 +352,20 @@ export function VixPanel({ theme }: Props) {
       {/* ── チャートエリア ── */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
         <div ref={chartContainerRef} style={{ position: 'absolute', inset: 0 }} />
+        {/* Δヒストグラム トグルボタン */}
+        <button
+          onClick={() => setShowHistogram(v => !v)}
+          title="VIX Δ ヒストグラム"
+          style={{
+            position: 'absolute', top: 6, right: 6, zIndex: 3,
+            background: showHistogram ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'),
+            border: '1px solid ' + (showHistogram ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)')),
+            borderRadius: 5, cursor: 'pointer',
+            color: showHistogram ? '#fff' : 'var(--text-dim)',
+            fontSize: 10, fontWeight: 700, padding: '2px 6px',
+            lineHeight: 1.4, letterSpacing: '0.02em',
+          }}
+        >Δ</button>
         {loading && (
           <div style={{
             position: 'absolute', inset: 0, zIndex: 2,
@@ -306,6 +376,11 @@ export function VixPanel({ theme }: Props) {
           </div>
         )}
       </div>
+
+      {/* ── Δヒストグラム（トグル表示） ── */}
+      {showHistogram && vixWeekData.length > 0 && (
+        <VixDeltaHistogram data={vixWeekData} theme={theme} />
+      )}
     </div>
   )
 }

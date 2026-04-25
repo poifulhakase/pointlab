@@ -8,8 +8,6 @@ import type { DayNote } from './noteStorage'
 import { isPendingDelete, removePendingDelete } from './noteStorage'
 import { loadStickyNotes, saveStickyNotes, type StickyNote } from './stickyNotes'
 
-type Channel = { id: string; name: string }
-
 // Firestore 構造: users/{uid}/notes/{YYYY-MM}
 // 各ドキュメント: { [dateKey]: DayNote, _updatedAt: string }
 
@@ -213,48 +211,6 @@ export function subscribeToNotes(uid: string, onRemoteChange: () => void): () =>
     },
     (error) => console.error('[Firestore] snapshot error:', error)
   )
-}
-
-// ── YouTube チャンネル同期 ────────────────────────────────
-
-const CHANNELS_KEY = 'poical-yt-channels'
-
-function loadLocalChannels(): Channel[] {
-  try { return JSON.parse(localStorage.getItem(CHANNELS_KEY) ?? '[]') } catch { return [] }
-}
-
-/**
- * ログイン時のチャンネル初期同期。
- * Firestoreにデータがあれば Firestore 優先でマージ、なければローカルをアップロード。
- */
-export async function syncChannelsOnLogin(uid: string): Promise<void> {
-  const snap = await restGetDoc(`users/${uid}/data/channels`)
-  const local = loadLocalChannels()
-
-  if (!snap.exists()) {
-    if (local.length > 0) {
-      await restSetDoc(`users/${uid}/data/channels`, { channels: local, updatedAt: new Date().toISOString() })
-    }
-    return
-  }
-
-  const firestoreChannels: Channel[] = (snap.data().channels as Channel[] | undefined) ?? []
-
-  // Firestore 優先。ローカルのみのチャンネルを末尾に追加
-  const firestoreIds = new Set(firestoreChannels.map(c => c.id))
-  const localOnly = local.filter(c => !firestoreIds.has(c.id))
-  const merged = [...firestoreChannels, ...localOnly]
-
-  localStorage.setItem(CHANNELS_KEY, JSON.stringify(merged))
-
-  if (localOnly.length > 0) {
-    await restSetDoc(`users/${uid}/data/channels`, { channels: merged, updatedAt: new Date().toISOString() })
-  }
-}
-
-/** チャンネルリストを Firestore に保存 */
-export async function saveChannelsToFirestore(uid: string, channels: Channel[]): Promise<void> {
-  await restSetDoc(`users/${uid}/data/channels`, { channels, updatedAt: new Date().toISOString() })
 }
 
 // ── スティッキーメモ同期 ──────────────────────────────────

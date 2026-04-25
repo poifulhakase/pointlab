@@ -47,7 +47,6 @@ const PRIVACY_SECTIONS: LegalSection[] = [
       { type: 'para', text: '本サービスは以下の外部サービスを利用しています。各サービスのプライバシーポリシーも合わせてご参照ください。' },
       { type: 'list', heading: '外部サービス一覧', items: [
         'Google Firebase（認証・Firestore データベース）',
-        'YouTube（動画フィード取得）',
         'Yahoo Finance（株価・指数データ取得）',
         'nikkei225jp.com / JPX（需給統計データ取得）',
         'TradingView（チャートウィジェット表示）',
@@ -110,7 +109,6 @@ const DISCLAIMER_SECTIONS: LegalSection[] = [
         '日本取引所グループ（JPX）',
         'nikkei225jp.com',
         'Yahoo Finance',
-        'YouTube Data Feed',
         'TradingView',
       ]},
     ],

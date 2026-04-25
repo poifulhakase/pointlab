@@ -9,7 +9,6 @@ import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
 import { DayNotePanel } from './components/DayNotePanel'
-import { MiniPlayer, type YtPlayInfo } from './components/MiniPlayer'
 import { LegalModal } from './components/LegalModal'
 import { SettingsPanel } from './components/SettingsPanel'
 import { useNotifications } from './hooks/useNotifications'
@@ -24,7 +23,6 @@ import { isGuestAuthed } from './utils/guestAuth'
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
 const ChartView   = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
 const QuantView   = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
-const YoutubeView = lazy(() => import('./components/YoutubeView').then(m => ({ default: m.YoutubeView })))
 const SpecView    = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
 const NoteView    = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
 
@@ -179,14 +177,12 @@ export default function App() {
   const closeGear = useCallback(() => setGearOpen(false), [])
 
   // ── 遅延マウント（状態保持 + コード分割の組み合わせ） ───────────────
-  const [chartMounted,   setChartMounted]   = useState(() => cal.view === 'chart')
-  const [quantMounted,   setQuantMounted]   = useState(() => cal.view === 'quant')
-  const [youtubeMounted, setYoutubeMounted] = useState(() => cal.view === 'youtube')
+  const [chartMounted, setChartMounted] = useState(() => cal.view === 'chart')
+  const [quantMounted, setQuantMounted] = useState(() => cal.view === 'quant')
 
   useEffect(() => {
-    if (cal.view === 'chart')   setChartMounted(true)
-    if (cal.view === 'quant')   setQuantMounted(true)
-    if (cal.view === 'youtube') setYoutubeMounted(true)
+    if (cal.view === 'chart') setChartMounted(true)
+    if (cal.view === 'quant') setQuantMounted(true)
   }, [cal.view])
 
   const [sidebarOpen, setSidebarOpen] = useState(isDesktop)
@@ -208,7 +204,7 @@ export default function App() {
   // ── Firebase 同期 ─────────────────────────────────────────────────────
   const {
     user, signIn, signOut, syncStatus, retrySync,
-    handleAfterSave, handleChannelsSaved,
+    handleAfterSave,
     authLoading, stickyNotes, handleStickyNotesSaved,
     loginToast, clearLoginToast,
   } = useFirebaseSync(refreshNoteMap)
@@ -235,11 +231,6 @@ export default function App() {
   const [isUnlocked, setIsUnlocked] = useState(() => isGuestAuthed())
   useEffect(() => { if (user) setIsUnlocked(true) }, [user])
   const showLoading = authLoading && !isUnlocked
-
-  // ── ミニプレイヤー ────────────────────────────────────────────────────
-  const [ytPlayInfo, setYtPlayInfo] = useState<YtPlayInfo | null>(null)
-  const handleYtPlayState = useCallback((info: YtPlayInfo | null) => setYtPlayInfo(info), [])
-  const closeMiniPlayer   = useCallback(() => setYtPlayInfo(null), [])
 
   // ── カレンダーイベント系 ──────────────────────────────────────────────
   const year = cal.current.getFullYear()
@@ -287,7 +278,7 @@ export default function App() {
 
   // サイドバー表示条件
   const showSidebar = cal.view !== 'chart' && cal.view !== 'quant' &&
-    cal.view !== 'youtube' && cal.view !== 'note' && cal.view !== 'spec' && cal.view !== 'legal'
+    cal.view !== 'note' && cal.view !== 'spec' && cal.view !== 'legal'
 
   if (showLoading) {
     return (
@@ -424,29 +415,8 @@ export default function App() {
               </Suspense>
             </div>
           )}
-          {youtubeMounted && (
-            <div style={{ display: cal.view === 'youtube' ? 'flex' : 'none', flex: 1, minHeight: 0 }}>
-              <Suspense fallback={<ViewLoader />}>
-                <YoutubeView
-                  theme={theme} isMobile={isMobile}
-                  isVisible={cal.view === 'youtube'}
-                  onPlayStateChange={handleYtPlayState}
-                  onChannelsSaved={handleChannelsSaved}
-                />
-              </Suspense>
-            </div>
-          )}
         </main>
       </div>
-
-      {/* ミニプレイヤー */}
-      {ytPlayInfo && cal.view !== 'youtube' && (
-        <MiniPlayer
-          info={ytPlayInfo}
-          onClose={closeMiniPlayer}
-          onExpand={() => { cal.setView('youtube'); closeMiniPlayer() }}
-        />
-      )}
 
       {/* 歯車ドロップダウン */}
       {gearOpen && (

@@ -8,7 +8,6 @@ import { auth, db } from '../utils/firebase'
 import { enableNetwork } from 'firebase/firestore'
 import {
   initialSync, saveNoteToFirestore, subscribeToNotes,
-  syncChannelsOnLogin, saveChannelsToFirestore,
   syncStickyNotesOnLogin, saveStickyNotesToFirestore, subscribeToStickyNotes,
 } from '../utils/firestoreSync'
 import { dateKey } from '../utils/noteStorage'
@@ -44,9 +43,8 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     try {
       // Firestore SDK が offline 状態になっている場合に強制再接続
       await enableNetwork(db).catch(() => {})
-      const [, , syncedSticky] = await Promise.all([
+      const [, syncedSticky] = await Promise.all([
         initialSync(u.uid),
-        syncChannelsOnLogin(u.uid),
         syncStickyNotesOnLogin(u.uid),
       ])
       refreshNoteMap()
@@ -133,13 +131,6 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     )
   }
 
-  const handleChannelsSaved = (channels: { id: string; name: string }[]) => {
-    if (!user) return
-    saveChannelsToFirestore(user.uid, channels).catch(err =>
-      console.error('[Firebase] channels save error:', err)
-    )
-  }
-
   const handleStickyNotesSaved = (notes: StickyNote[]) => {
     saveStickyNotes(notes)
     setStickyNotes(notes)
@@ -151,7 +142,7 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
 
   return {
     user, signIn, signOut, syncStatus, retrySync, authLoading,
-    handleAfterSave, handleChannelsSaved,
+    handleAfterSave,
     stickyNotes, handleStickyNotesSaved,
     loginToast, clearLoginToast: () => setLoginToast(false),
   }
