@@ -897,8 +897,8 @@ export function QuantView({ theme, isMobile }: Props) {
                         <th style={{ ...s.th, ...s.thDate }}>週</th>
                         <th style={s.th}>
                           <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            買い残
                             <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>
+                            買い残
                           </div>
                           <div style={s.thSub}>百万円</div>
                         </th>
@@ -983,8 +983,8 @@ export function QuantView({ theme, isMobile }: Props) {
                                 <th style={{ ...s.th, ...s.thDate }}>週</th>
                                 <th style={{ ...s.th, minWidth: 80 }}>
                                   <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    裁定買い残
                                     <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>
+                                    裁定買い残
                                   </div>
                                   <div style={s.thSub}>百万円</div>
                                 </th>
@@ -992,8 +992,8 @@ export function QuantView({ theme, isMobile }: Props) {
                                 <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
                                 <th style={{ ...s.th, minWidth: 80 }}>
                                   <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    空売り比率
                                     <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>
+                                    空売り比率
                                   </div>
                                   <div style={s.thSub}>%</div>
                                 </th>
