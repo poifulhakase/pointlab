@@ -271,6 +271,7 @@ function buildExportJson(
       const vix     = vixMap.get(date)
       const nt      = findNtForDate(ntMap, date)
       const ad      = adMap.get(date)
+      const adPrev  = i < sortedDates.length - 1 ? adMap.get(sortedDates[i + 1])  : undefined
       const ss      = ssMap.get(date)
       const ssPrev  = i < sortedDates.length - 1 ? ssMap.get(sortedDates[i + 1])  : undefined
       const arb     = arbMap.get(date)
@@ -302,6 +303,8 @@ function buildExportJson(
             ? Math.round((arb.longBal - arbPrev.longBal) / 100) : null,
           short_sell_pp:           ss && ssPrev
             ? r2(ss.ratio - ssPrev.ratio) : null,
+          advance_decline_pp:      ad && adPrev
+            ? r2(ad.ratio25 - adPrev.ratio25) : null,
           vix_pct:                 vix?.changePct ?? null,
         },
       }
@@ -799,6 +802,7 @@ export function QuantView({ theme, isMobile }: Props) {
           marData={marData}
           arbData={arbData}
           ssData={ssData}
+          adData={adData}
           theme={theme}
           onClose={() => setDeltaModal(null)}
         />
@@ -989,7 +993,13 @@ export function QuantView({ theme, isMobile }: Props) {
                                   <div style={s.thSub}>百万円</div>
                                 </th>
                                 <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
-                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>騰落レシオ</div><div style={s.thSub}>25日</div></th>
+                                <th style={{ ...s.th, minWidth: 80 }}>
+                                  <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                    <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>
+                                    騰落レシオ
+                                  </div>
+                                  <div style={s.thSub}>25日</div>
+                                </th>
                                 <th style={{ ...s.th, minWidth: 80 }}>
                                   <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
                                     <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>

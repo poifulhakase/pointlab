@@ -4,23 +4,26 @@ import { createChart, HistogramSeries, LineSeries, ColorType, CrosshairMode } fr
 import { type MarginWeekData } from '../utils/jpxMarginData'
 import { type ArbitrageWeekData } from '../utils/arbitrageData'
 import { type ShortSellWeekData } from '../utils/shortSellData'
+import { type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { themeVars } from '../utils/themeVars'
 
-export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'short_sell'
+export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'short_sell' | 'advance_decline'
 
 type Props = {
   type: DeltaModalType
   marData: MarginWeekData[]
   arbData: ArbitrageWeekData[]
   ssData: ShortSellWeekData[]
+  adData: AdvanceDeclineWeekData[]
   theme: 'dark' | 'light'
   onClose: () => void
 }
 
 const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBad: boolean }> = {
-  credit_long:    { title: '信用買い残 Δ（前週比 %）',    unit: '%',  positiveIsBad: true  },
-  arbitrage_long: { title: '裁定買い残 Δ（週次変化 億円）', unit: '億円', positiveIsBad: false },
-  short_sell:     { title: '空売り比率 Δ（週次変化 pp）',  unit: 'pp', positiveIsBad: true  },
+  credit_long:      { title: '信用買い残 Δ（前週比 %）',    unit: '%',  positiveIsBad: true  },
+  arbitrage_long:   { title: '裁定買い残 Δ（週次変化 億円）', unit: '億円', positiveIsBad: false },
+  short_sell:       { title: '空売り比率 Δ（週次変化 pp）',  unit: 'pp', positiveIsBad: true  },
+  advance_decline:  { title: '騰落レシオ Δ（週次変化 pp）',  unit: 'pp', positiveIsBad: true  },
 }
 
 function toIso(d: string) { return d.replace(/\//g, '-') }
@@ -30,6 +33,7 @@ function computeDeltas(
   marData: MarginWeekData[],
   arbData: ArbitrageWeekData[],
   ssData: ShortSellWeekData[],
+  adData: AdvanceDeclineWeekData[],
 ): { time: string; value: number }[] {
   const N = 14
   if (type === 'credit_long') {
@@ -49,11 +53,18 @@ function computeDeltas(
       return { time: toIso(row.date), value: Math.round((row.longBal - prev.longBal) / 100) }
     })
   }
-  // short_sell: ssData は降順前提
-  const arr = [...ssData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
+  if (type === 'short_sell') {
+    const arr = [...ssData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
+    return arr.slice(1).map((row, i) => {
+      const prev = arr[i]
+      return { time: toIso(row.date), value: Math.round((row.ratio - prev.ratio) * 100) / 100 }
+    })
+  }
+  // advance_decline: adData は降順前提
+  const arr = [...adData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
   return arr.slice(1).map((row, i) => {
     const prev = arr[i]
-    return { time: toIso(row.date), value: Math.round((row.ratio - prev.ratio) * 100) / 100 }
+    return { time: toIso(row.date), value: Math.round((row.ratio25 - prev.ratio25) * 100) / 100 }
   })
 }
 
@@ -100,7 +111,7 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
     const hist = chart.addSeries(HistogramSeries, { base: 0, priceLineVisible: false, lastValueVisible: true })
     hist.setData(deltas.map(d => ({ time: d.time as any, value: d.value, color: d.value >= 0 ? posColor : negColor })))
 
-    if (type === 'short_sell') {
+    if (type === 'short_sell' || type === 'advance_decline') {
       const maData = computeMA4(deltas)
       if (maData.length > 0) {
         const ma = chart.addSeries(LineSeries, {
@@ -121,10 +132,10 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
   return <div ref={ref} style={{ height: 220, width: '100%' }} />
 }
 
-export function DeltaModal({ type, marData, arbData, ssData, theme, onClose }: Props) {
+export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onClose }: Props) {
   const tv = themeVars(theme)
   const cfg = CONFIG[type]
-  const deltas = computeDeltas(type, marData, arbData, ssData)
+  const deltas = computeDeltas(type, marData, arbData, ssData, adData)
   const isLight = theme === 'light'
 
   return createPortal(
@@ -173,7 +184,7 @@ export function DeltaModal({ type, marData, arbData, ssData, theme, onClose }: P
             <span style={{ color: cfg.positiveIsBad ? (isLight ? 'rgba(26,115,232,0.9)' : 'rgba(96,165,250,0.9)') : (isLight ? 'rgba(200,50,30,0.9)' : 'rgba(255,100,80,0.9)') }}>■</span>
             {' '}負（−）
           </span>
-          {type === 'short_sell' && (
+          {(type === 'short_sell' || type === 'advance_decline') && (
             <span style={{ color: isLight ? 'rgba(161,120,0,0.9)' : 'rgba(251,191,36,0.9)' }}>— 4週MA</span>
           )}
         </div>
