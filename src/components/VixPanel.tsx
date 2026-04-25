@@ -18,7 +18,7 @@ function isUsMarketOpen(): boolean {
 const TARGET_Q1 = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1y'
 const TARGET_Q2 = 'https://query2.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1y'
 
-const VIX_CACHE_KEY = 'poical-vix-data'
+const VIX_CACHE_KEY = 'poical-vix-daily'
 const VIX_CACHE_TTL_OPEN   = 30 * 60 * 1000      // 30分（市場オープン中）
 const VIX_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000  // 2時間（市場クローズ中）
 
