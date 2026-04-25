@@ -1,5 +1,7 @@
 // NS倍率 = 日経平均 ÷ S&P500（日足・Yahoo Finance プロキシ経由）
 
+import { proxyFetch } from './proxyFetch'
+
 export interface NtRatioPoint {
   time:   string        // YYYY-MM-DD
   nikkei: number        // 日経225終値
@@ -26,12 +28,6 @@ function writeNtCache(data: NtRatioPoint[]) {
   } catch { /* ignore */ }
 }
 
-function timeoutSignal(ms: number): AbortSignal {
-  const ac = new AbortController()
-  setTimeout(() => ac.abort(), ms)
-  return ac.signal
-}
-
 // Yahoo Finance v8 の JSON → date→close マップ
 function parseYahooClose(json: unknown): Map<string, number> {
   const r = (json as any)?.chart?.result?.[0]
@@ -47,46 +43,8 @@ function parseYahooClose(json: unknown): Map<string, number> {
   return map
 }
 
-type ProxyDef = { url: (u: string) => string; parse: (res: Response) => Promise<unknown> }
-
-const parseRaw = async (res: Response) => {
-  const text = await res.text()
-  try {
-    return JSON.parse(text)
-  } catch {
-    throw new Error(`プロキシ応答エラー: ${text.slice(0, 80)}`)
-  }
-}
-const parseAlloriginsGet = async (res: Response) => {
-  const w = await res.json() as { contents?: string }
-  if (!w.contents) throw new Error('empty contents')
-  try {
-    return JSON.parse(w.contents)
-  } catch {
-    throw new Error(`プロキシ応答エラー: ${w.contents.slice(0, 80)}`)
-  }
-}
-
-const PROXY_DEFS: ProxyDef[] = [
-  { url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,            parse: parseAlloriginsGet },
-  { url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,            parse: parseRaw },
-  { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,       parse: parseRaw },
-]
-
 async function tryFetch(target: string): Promise<Map<string, number>> {
-  let lastErr = ''
-  for (let i = 0; i < PROXY_DEFS.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 500 * i))
-    const def = PROXY_DEFS[i]
-    try {
-      const res = await fetch(def.url(target), { signal: timeoutSignal(12000) })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return parseYahooClose(await def.parse(res))
-    } catch (e) {
-      lastErr = e instanceof Error ? e.message : String(e)
-    }
-  }
-  throw new Error(lastErr)
+  return parseYahooClose(await proxyFetch(target))
 }
 
 async function fetchSymbol(sym: string): Promise<Map<string, number>> {

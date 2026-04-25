@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean }
+type Props = { theme: 'dark' | 'light'; isMobile: boolean; onOpenSpec: () => void }
 
 type Article = {
   genre: string
@@ -82,29 +82,86 @@ function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolea
   )
 }
 
-export function NoteView({ isMobile }: Props) {
+export function NoteView({ isMobile, onOpenSpec }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
-    <div style={s.wrap}>
-      <div style={s.inner}>
-        {GENRES.map(genre => {
-          const items = ARTICLES.filter(a => a.genre === genre)
-          return (
-            <section key={genre} style={s.section}>
-              <h2 style={s.genreHeading}>{genre}</h2>
-              <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
-                {items.map(article => (
-                  <ArticleCard key={article.title} article={article} isMobile={isMobile} />
-                ))}
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* ヘッダー */}
+      <div style={s.header}>
+        <div style={{ flex: 1 }} />
+        <div style={{ position: 'relative' }}>
+          <button style={s.gearBtn} onClick={() => setMenuOpen(o => !o)} aria-label="設定">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+          {menuOpen && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setMenuOpen(false)} />
+              <div style={s.menuDropdown}>
+                <button style={s.menuItem} onClick={() => { setMenuOpen(false); onOpenSpec() }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                  仕様書
+                </button>
               </div>
-            </section>
-          )
-        })}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* コンテンツ */}
+      <div style={s.wrap}>
+        <div style={s.inner}>
+          {GENRES.map(genre => {
+            const items = ARTICLES.filter(a => a.genre === genre)
+            return (
+              <section key={genre} style={s.section}>
+                <h2 style={s.genreHeading}>{genre}</h2>
+                <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
+                  {items.map(article => (
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} />
+                  ))}
+                </div>
+              </section>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
 }
 
 const s: Record<string, React.CSSProperties> = {
+  header: {
+    display: 'flex', alignItems: 'center',
+    padding: '4px 12px', minHeight: 40, flexShrink: 0,
+    borderBottom: '1px solid var(--border-dim)',
+    userSelect: 'none',
+  },
+  gearBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 32, height: 32, borderRadius: 8,
+    color: 'var(--text-sub)', cursor: 'pointer',
+    background: 'transparent', border: 'none',
+  },
+  menuDropdown: {
+    position: 'absolute', right: 0, top: '100%', marginTop: 4,
+    background: 'var(--modal-bg)', borderRadius: 10, overflow: 'hidden',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.18)', minWidth: 140, zIndex: 100,
+  },
+  menuItem: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    padding: '10px 16px', fontSize: 13, fontWeight: 500,
+    color: 'var(--text)', cursor: 'pointer', width: '100%',
+    textAlign: 'left', background: 'transparent', border: 'none',
+  },
   wrap: {
     flex: 1,
     overflowY: 'auto',

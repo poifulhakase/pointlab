@@ -236,6 +236,19 @@ function findNtForDate(ntMap: Map<string, NtRatioPoint>, weekDate: string): NtRa
   return undefined
 }
 
+function findVixForDate(vixMap: Map<string, VixWeekData>, date: string): VixWeekData | undefined {
+  if (vixMap.has(date)) return vixMap.get(date)
+  const base = new Date(date)
+  for (let d = 1; d <= 5; d++) {
+    for (const s of [1, -1]) {
+      const t = new Date(base); t.setDate(base.getDate() + s * d)
+      const k = t.toISOString().slice(0, 10)
+      if (vixMap.has(k)) return vixMap.get(k)
+    }
+  }
+  return undefined
+}
+
 function buildExportJson(
   invData: InvestorWeekData[],
   marData: MarginWeekData[],
@@ -264,7 +277,7 @@ function buildExportJson(
       const inv     = invMap.get(date)
       const mar     = marMap.get(date)
       const marPrev = i < sortedDates.length - 1 ? marMap.get(sortedDates[i + 1]) : undefined
-      const vix     = vixMap.get(date)
+      const vix     = findVixForDate(vixMap, date)
       const nt      = findNtForDate(ntMap, date)
       const ad      = adMap.get(date)
       const adPrev  = i < sortedDates.length - 1 ? adMap.get(sortedDates[i + 1])  : undefined
@@ -385,12 +398,44 @@ function buildExportJson(
 }
 
 // ── AI 分析プロンプトテンプレート ─────────────────
-const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジスト：需給解析エンジン
+const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジスト：需給解析エンジン (Ver. 99)
 
 # 役割定義
 あなたは、機関投資家向けレポートを作成する「シニア・クオンツ・ストラテジスト」です。
 目的は、市場の「物理的な重力（需給）」を可視化し、ユーザーがテクニカル指標でエントリーするための戦略的バイアスを提供することです。
-チャートの形状よりも、「2日〜14日程度のスイングトレード」の期間内に発生する、売買の質量（強制決済）の波及に特化して分析せよ。
+チャートの形状よりも、「2日〜14日程度のスイングトレード」期間内に発生する、売買の質量（強制決済）の波及に特化して分析せよ。
+
+# 🔴 最重要判定：加速フェーズ検知ロジック（高精度・最終形態）
+
+以下の3条件を厳密に評価し、**2条件以上の成立、または①が「極大かつ加速」の場合に「加速フェーズ発動」**と断定せよ。
+
+■ 判定条件
+① 【ミクロ需給の極大・加速（実弾の加速度）】
+   - Gravity (SG+Barclays+BNP) のネット枚数が絶対値で 6,000枚を超過
+   - かつ、その絶対値が前日比で「増加」していること（＝投げ/踏みの加速）
+   - ※上記成立で「強シグナル」
+
+② 【先物OIのエネルギー解析（ポジションの歪み）】
+   - 価格と逆方向にOI（建玉）が前日比 3.0%以上増加 → 「強シグナル」
+   - 価格と同方向にOI（建玉）が前日比 3.0%以上増加 かつ ①が同一方向 → 「弱シグナル」
+
+③ 【ボラティリティ・乖離率の拡大検知（速度変化）】
+   - VIXが前日比 +5.0%以上
+   - または、5日移動平均乖離率が ±3.0%を超過し、かつ「前日より乖離が拡大」していること
+
+■ 判定ルール
+- 2条件以上成立（または①強が単独成立）→ 「加速フェーズ：発動」と断定。
+- 確信度補正: 発動時は一律 +10% 加算。①と②（強）が同時成立した場合は最大 +15% 加算。
+- 曖昧な表現は禁止。必ず「発動 / 未発動」を明記すること。
+
+# 🛡️ 最終執行トリガー（誤発動防止フィルター）
+
+加速フェーズ判定後、以下のフィルターを適用して「戦術指示」を決定せよ。
+
+1. 【時間フィルター】
+   - 発動後、次の1セッション（翌日寄り〜前場）内で価格が判定方向に進行しない場合、シグナルを「ダマシ」と断定し、戦略を【静観】に格下げせよ。
+2. 【価格確認フィルター】
+   - 直近3営業日の高値/安値（バイアス方向）を終値ベースでブレイクするまでは、エントリー許可状態を【待機】とせよ。ブレイクで初めて【許可】へ移行。
 
 # ⚡️ 意思決定の閾値（オーナー基準）
 あなたの算出する「確信度」は、以下のユーザー行動に直結する。1%単位で厳密に判定せよ。
@@ -421,30 +466,37 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
    - **需給の乖離ベクトル**: 裁定買い残の前週比変化を算出し、価格推移との「逆行（ダイバージェンス）」が発生していないか監視せよ。
    - **ボラティリティの加速**: VIXの「値」だけでなく、「上昇スピード（前日比％）」が価格の下落スピードを上回った場合、強制決済の連鎖を警告せよ。
 
-# 💡 出力形式（重要：コピー機能の強制）
+# 💡 出力形式（Markdownコードブロック内のみ）
 ※回答はすべて、リスク管理部門にコピペしやすいよう、一つのMarkdownコードブロック（\`\`\`）の中に含めて出力すること。枠の外には挨拶や解説を一切書かないこと。
+
+■ 加速フェーズ判定
+・判定結果: 【発動 / 未発動】
+・成立条件: ①実弾加速 [成立/未成立] ②OI歪み [強/弱/不成立] ③速度変化 [成立/未成立]
+・確信度補正: [+X% / 補正なし]
+・判定根拠: （各条件の具体的な数値とその判定理由を一行で明記）
 
 ■ 戦略展望（2日〜14日のバイアス）
 （強気 / 弱気 / 警戒）
-※確信度は上記「オーナー基準」に基づき1%単位で算出。
+※確信度は補正後の最終値を1%単位で算出。冒頭に加速判定の結果を再記。
 
 ■ 事象分析：ミクロ需給ベクトル（日次）
 ・Trend (GS+JPM): [ベクトルと枚数]
 ・Gravity (SG+Barclays+BNP): [ベクトルと枚数]
 ・Noise (AMRO+野村): [ベクトルと枚数]
-※判定：マクロ環境（環境）に対して、ミクロ（事象）が「順張り」か「逆行」かを明記。
+※判定：マクロ環境に対し、ミクロ（実弾）が「順張り」か「逆行」かを明記。
 
 ■ 需給分析：物理的重力の測定
-（裁定買い残、信用残、空売り比率から見た、今後2週間の「売買の偏り」の解説）
+（裁定買い残、信用残、空売り比率から見た「売買の偏り」の解説）
 
 ■ 戦術指示（テクニカル連携用）
+・エントリー許可状態: 【許可 / 待機 / 禁止】（最終執行トリガーを適用）
 ・バイアス: （例：戻り売り推奨 / 押し目買い厳禁 等）
-・需給の壁（上値）: （やれやれ売りが密集する具体的な価格帯）
-・需給の底（目標）: （強制決済が一巡し、反発が期待できる価格帯）
-・撤退条件（無効化ライン）: （この価格を抜け、かつこのデータが変わったらシナリオ破棄）
+・需給の壁（上値）: （具体的な価格帯）
+・需給の底（目標）: （具体的な価格帯）
+・撤退条件: （この価格を抜け、かつこのデータが変わったらシナリオ破棄）
 
 ■ 構造的リスクとイベント
-（SQ日、大型連休、重要指標など、スイング期間内の流動性インパクトを特定）
+（SQ日、重要指標など、スイング期間内の流動性インパクトを特定）
 
 # 入力データ（JSON）
 `
@@ -857,15 +909,16 @@ export function QuantView({ theme, isMobile }: Props) {
       </div>
 
       {/* ── ボディ（スライドラッパー） ── */}
-      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+      <div style={{ flex: 1, overflowX: 'hidden', overflowY: isMobile ? 'auto' : 'hidden', minHeight: 0 }}>
         <div style={{
-          display: 'flex', width: '200%', height: '100%',
+          display: 'flex', width: '200%',
+          height: isMobile ? 'auto' : '100%',
           transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1)',
           transform: quantTab === 'macro' ? 'translateX(0)' : 'translateX(-50%)',
-          willChange: 'transform',
+          ...(isMobile ? {} : { willChange: 'transform' }),
         }}>
         {/* ━━ マクロ需給スライド ━━ */}
-        <div style={{ width: '50%', flexShrink: 0, display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflowY: isMobile ? 'auto' : 'hidden', overflow: !isMobile ? 'hidden' : undefined }}>
+        <div style={{ width: '50%', flexShrink: 0, display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: isMobile ? 'auto' : '100%', overflow: !isMobile ? 'hidden' : undefined }}>
 
         {/* ━━ 左カラム: VIX（上）＋ NS倍率（下） ━━ */}
         <div style={isMobile ? s.panelMobile : s.panel}>
@@ -1156,7 +1209,7 @@ export function QuantView({ theme, isMobile }: Props) {
         </div>{/* /マクロ需給スライド */}
 
         {/* ━━ ミクロ需給スライド ━━ */}
-        <div style={{ width: '50%', flexShrink: 0, height: '100%', overflowY: isMobile ? 'auto' : 'hidden', overflow: !isMobile ? 'hidden' : undefined, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '50%', flexShrink: 0, height: isMobile ? 'auto' : '100%', overflow: !isMobile ? 'hidden' : undefined, display: 'flex', flexDirection: 'column' }}>
           <MicroQuantView
             theme={theme}
             isMobile={isMobile}

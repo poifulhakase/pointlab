@@ -25,6 +25,7 @@ const ChartView   = lazy(() => import('./components/ChartView').then(m => ({ def
 const QuantView   = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
 const SpecView    = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
 const NoteView    = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
+const ManualView  = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
 
 // ── ローディングスピナー（Suspense フォールバック） ───────────────────
 function ViewLoader() {
@@ -56,12 +57,12 @@ interface GearDropdownProps {
   onToggleTheme: () => void
   onOpenNotifications: () => void
   onOpenLegal: () => void
-  onOpenSpec: () => void
+  onOpenManual: () => void
   onOpenAccount: () => void
 }
 const GearDropdown = memo(({
   dropRef, pos, theme, user, syncStatus,
-  onToggleTheme, onOpenNotifications, onOpenLegal, onOpenSpec, onOpenAccount,
+  onToggleTheme, onOpenNotifications, onOpenLegal, onOpenManual, onOpenAccount,
 }: GearDropdownProps) => (
   <div ref={dropRef} style={{ ...styles.gearDropdown, top: pos.top, right: pos.right }} className="glass">
     <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
@@ -70,7 +71,7 @@ const GearDropdown = memo(({
     <Divider />
     <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>通知設定</GearItem>
     <Divider />
-    <GearItem icon={<DocIcon />} onClick={onOpenSpec}>説明書</GearItem>
+    <GearItem icon={<BookIcon />} onClick={onOpenManual}>説明書</GearItem>
     <Divider />
     <GearItem icon={<ShieldIcon />} onClick={onOpenLegal}>プライバシー・免責事項</GearItem>
     <Divider />
@@ -114,13 +115,11 @@ function ShieldIcon() {
     </svg>
   )
 }
-function DocIcon() {
+function BookIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
     </svg>
   )
 }
@@ -272,13 +271,13 @@ export default function App() {
     onToggleTheme:       () => { toggleTheme(); closeGear() },
     onOpenNotifications: () => { setSettingsOpen(true); closeGear() },
     onOpenLegal:         () => { cal.setView('legal'); closeGear() },
-    onOpenSpec:          () => { cal.setView('spec'); closeGear() },
+    onOpenManual:        () => { cal.setView('manual'); closeGear() },
     onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
   }), [toggleTheme, closeGear, cal])
 
   // サイドバー表示条件
   const showSidebar = cal.view !== 'chart' && cal.view !== 'quant' &&
-    cal.view !== 'note' && cal.view !== 'spec' && cal.view !== 'legal'
+    cal.view !== 'note' && cal.view !== 'spec' && cal.view !== 'legal' && cal.view !== 'manual'
 
   if (showLoading) {
     return (
@@ -388,12 +387,17 @@ export default function App() {
           {/* Suspense ラップ: 初回アクセス時にチャンク非同期ロード */}
           {cal.view === 'note' && (
             <Suspense fallback={<ViewLoader />}>
-              <NoteView theme={theme} isMobile={isMobile} />
+              <NoteView theme={theme} isMobile={isMobile} onOpenSpec={() => cal.setView('spec')} />
             </Suspense>
           )}
           {cal.view === 'spec' && (
             <Suspense fallback={<ViewLoader />}>
               <SpecView theme={theme} isMobile={isMobile} />
+            </Suspense>
+          )}
+          {cal.view === 'manual' && (
+            <Suspense fallback={<ViewLoader />}>
+              <ManualView theme={theme} isMobile={isMobile} />
             </Suspense>
           )}
           {cal.view === 'legal' && (

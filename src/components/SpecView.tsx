@@ -452,7 +452,7 @@ export function SpecView({ theme, isMobile }: Props) {
           <img src="/logo.svg" alt="ぽいらぼ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
-              説明書
+              仕様書
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
               ぽいらぼ — 最終更新: 2026-04-21

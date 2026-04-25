@@ -7,6 +7,14 @@ export default defineConfig({
   base: '/calendar/',
   build: {
     outDir: 'dist/calendar',
+    rollupOptions: {
+      output: {
+        manualChunks: (id: string) => {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react-vendor'
+          if (id.includes('node_modules/firebase')) return 'firebase'
+        },
+      },
+    },
   },
   plugins: [
     react(),
