@@ -342,11 +342,24 @@ function buildExportJson(
     weekly_change_pct: vixSorted[0].changePct,
   } : null
 
+  // 日経225現在値（ntDataはascending順・最新が末尾）
+  const nk = ntData.length > 0 ? ntData[ntData.length - 1] : null
+  const nk1w = ntData.length > 5  ? ntData[ntData.length - 6]  : null
+  const nk1m = ntData.length > 21 ? ntData[ntData.length - 22] : null
+  const nikkei225_latest = nk ? {
+    date:         nk.time,
+    close:        Math.round(nk.nikkei),
+    change_1w_pt:  nk1w ? Math.round(nk.nikkei - nk1w.nikkei) : null,
+    change_1w_pct: nk1w ? r2((nk.nikkei - nk1w.nikkei) / nk1w.nikkei * 100) : null,
+    change_1m_pct: nk1m ? r2((nk.nikkei - nk1m.nikkei) / nk1m.nikkei * 100) : null,
+  } : null
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     vix_latest,
+    nikkei225_latest,
     micro_supply_demand,
     data: rows,
   }
