@@ -333,10 +333,20 @@ function buildExportJson(
     })),
   } : null
 
+  // 直近VIXサマリー（AIがdata配列を掘らずに即参照できるよう最新値をトップレベルに展開）
+  const vixSorted = [...vixData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const vix_latest = vixSorted[0] ? {
+    date:              toDate(vixSorted[0].date),
+    close:             vixSorted[0].close,
+    weekly_change_pt:  vixSorted[0].change,
+    weekly_change_pct: vixSorted[0].changePct,
+  } : null
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
+    vix_latest,
     micro_supply_demand,
     data: rows,
   }
