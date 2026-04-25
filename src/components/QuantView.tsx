@@ -909,7 +909,10 @@ export function QuantView({ theme, isMobile }: Props) {
       </div>
 
       {/* ── ボディ（スライドラッパー） ── */}
-      <div style={{ flex: 1, overflowX: 'hidden', overflowY: isMobile ? 'auto' : 'hidden', minHeight: 0 }}>
+      {/* 外側: 横方向クリップのみ（overflow-x と overflow-y を同一要素に混在させない → iOS Safari バグ回避） */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        {/* 内側: 縦スクロール専用（overflow-x は設定しない＝ visible のまま） */}
+        <div style={{ height: '100%', overflowY: isMobile ? 'auto' : 'hidden' }}>
         <div style={{
           display: 'flex', width: '200%',
           height: isMobile ? 'auto' : '100%',
@@ -1221,7 +1224,8 @@ export function QuantView({ theme, isMobile }: Props) {
         </div>
 
         </div>{/* /slider inner */}
-      </div>{/* /slider outer */}
+        </div>{/* /scroll container */}
+      </div>{/* /clip wrapper */}
 
       <QuantSettingsModal
         isOpen={settingsOpen}
