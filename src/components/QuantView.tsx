@@ -918,14 +918,24 @@ export function QuantView({ theme, isMobile }: Props) {
       </div>
 
       {/* ── ボディ ── */}
-      <div style={{ flex: 1, minHeight: 0, ...(isMobile ? { overflowY: 'auto' } : { overflow: 'hidden' }) }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        {/* スライダートラック */}
+        <div style={{
+          display: 'flex',
+          width: '200%',
+          height: '100%',
+          transform: quantTab === 'macro' ? 'translateX(0)' : 'translateX(-50%)',
+          transition: 'transform 0.25s ease',
+        }}>
 
         {/* ━━ マクロ需給 ━━ */}
         <div style={{
-          display: quantTab === 'macro' ? 'flex' : 'none',
+          width: '50%',
+          flexShrink: 0,
+          display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          height: isMobile ? 'auto' : '100%',
-          overflow: !isMobile ? 'hidden' : undefined,
+          height: '100%',
+          overflowY: isMobile ? 'auto' : 'hidden',
         }}>
 
         {/* ━━ 左カラム: VIX（上）＋ NS倍率（下） ━━ */}
@@ -1218,10 +1228,12 @@ export function QuantView({ theme, isMobile }: Props) {
 
         {/* ━━ ミクロ需給 ━━ */}
         <div style={{
-          display: quantTab === 'micro' ? 'flex' : 'none',
+          width: '50%',
+          flexShrink: 0,
+          display: 'flex',
           flexDirection: 'column',
-          height: isMobile ? 'auto' : '100%',
-          overflow: !isMobile ? 'hidden' : undefined,
+          height: '100%',
+          overflowY: isMobile ? 'auto' : 'hidden',
         }}>
           <MicroQuantView
             theme={theme}
@@ -1232,6 +1244,7 @@ export function QuantView({ theme, isMobile }: Props) {
             onReload={() => loadParticipants(true)}
           />
         </div>
+        </div>{/* /スライダートラック */}
 
       </div>{/* /ボディ */}
 

@@ -88,7 +88,7 @@ export function NoteView({ isMobile, onOpenSpec }: Props) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* ヘッダー */}
-      <div style={s.header}>
+      <div style={s.header} className="glass">
         <div style={{ flex: 1 }} />
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <button style={s.gearBtn} onClick={() => setMenuOpen(o => !o)} aria-label="設定">
@@ -142,7 +142,7 @@ const s: Record<string, React.CSSProperties> = {
   header: {
     display: 'flex', alignItems: 'center',
     padding: '6px 12px', minHeight: 44, flexShrink: 0,
-    borderBottom: '1px solid var(--border-dim)',
+    borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none',
     userSelect: 'none',
   },
   gearBtn: {
