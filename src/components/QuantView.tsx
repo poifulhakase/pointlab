@@ -973,6 +973,78 @@ export function QuantView({ theme, isMobile }: Props) {
 
           <div style={s.dividerH} />
 
+          {/* ガンマプロファイル */}
+          <div style={halfPanel}>
+            <GammaPanel
+              gammaData={gammaData}
+              gammaLoading={gammaLoading}
+              gammaError={gammaError}
+              onGammaReload={() => loadGamma(true)}
+              theme={theme}
+            />
+          </div>
+
+        </div>
+
+        <div style={isMobile ? s.dividerH : s.divider} />
+
+        {/* ━━ 右カラム: 投資主体別（上）＋ 需給指標（下） ━━ */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+
+          {/* 投資主体別売買動向 */}
+          <div style={halfPanel}>
+            <PanelHeader
+              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="17" cy="8" r="3"/><circle cx="7" cy="16" r="3"/><path d="M14 8H7M17 11v5"/></svg>}
+              title="投資主体別売買動向"
+              sub="差引金額（百万円）"
+              dateRange={invData.length > 0 ? `${invData[invData.length - 1]?.date} 〜 ${invData[0]?.date}` : undefined}
+              loading={invLoading}
+              onReload={() => loadInvestor(true)}
+            />
+            <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
+              {(invLoading && invData.length === 0) || invError
+                ? <PanelCenter loading={invLoading && invData.length === 0} error={invError} onRetry={() => loadInvestor(true)} />
+                : (
+                  <table style={s.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...s.th, ...s.thDate }}>週</th>
+                        {INVESTOR_COLS.map(col => (
+                          <th key={col.key} style={s.th}>
+                            <div style={s.thLabel}>{col.label}</div>
+                            <div style={s.thSub}>{col.sub}</div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invData.map((row, i) => (
+                        <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                          <td style={{ ...s.td, ...s.tdDate }}>
+                            <div style={s.dateMain}>{row.label}</div>
+                            <div style={s.dateSub}>{row.date}</div>
+                          </td>
+                          {INVESTOR_COLS.map(col => {
+                            const val = row[col.key] as number
+                            return (
+                              <td key={col.key} style={{ ...s.td, ...s.tdNum, background: valueBg(val, theme) }}>
+                                <span style={{ color: valueTextColor(val, theme), fontWeight: val !== 0 ? 600 : 400 }}>
+                                  {fmtOku(val)}
+                                </span>
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              }
+            </div>
+          </div>
+
+          <div style={s.dividerH} />
+
           {/* 空売り比率 ＋ 騰落レシオ ＋ 裁定買い残（統合テーブル） */}
           <div style={halfPanel}>
             {(() => {
@@ -1067,78 +1139,6 @@ export function QuantView({ theme, isMobile }: Props) {
                 </>
               )
             })()}
-          </div>
-
-        </div>
-
-        <div style={isMobile ? s.dividerH : s.divider} />
-
-        {/* ━━ 右カラム: 投資主体別（上）＋ 裁定買い残（下） ━━ */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
-
-          {/* 投資主体別売買動向 */}
-          <div style={halfPanel}>
-            <PanelHeader
-              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="17" cy="8" r="3"/><circle cx="7" cy="16" r="3"/><path d="M14 8H7M17 11v5"/></svg>}
-              title="投資主体別売買動向"
-              sub="差引金額（百万円）"
-              dateRange={invData.length > 0 ? `${invData[invData.length - 1]?.date} 〜 ${invData[0]?.date}` : undefined}
-              loading={invLoading}
-              onReload={() => loadInvestor(true)}
-            />
-            <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
-              {(invLoading && invData.length === 0) || invError
-                ? <PanelCenter loading={invLoading && invData.length === 0} error={invError} onRetry={() => loadInvestor(true)} />
-                : (
-                  <table style={s.table}>
-                    <thead>
-                      <tr>
-                        <th style={{ ...s.th, ...s.thDate }}>週</th>
-                        {INVESTOR_COLS.map(col => (
-                          <th key={col.key} style={s.th}>
-                            <div style={s.thLabel}>{col.label}</div>
-                            <div style={s.thSub}>{col.sub}</div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invData.map((row, i) => (
-                        <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                          <td style={{ ...s.td, ...s.tdDate }}>
-                            <div style={s.dateMain}>{row.label}</div>
-                            <div style={s.dateSub}>{row.date}</div>
-                          </td>
-                          {INVESTOR_COLS.map(col => {
-                            const val = row[col.key] as number
-                            return (
-                              <td key={col.key} style={{ ...s.td, ...s.tdNum, background: valueBg(val, theme) }}>
-                                <span style={{ color: valueTextColor(val, theme), fontWeight: val !== 0 ? 600 : 400 }}>
-                                  {fmtOku(val)}
-                                </span>
-                              </td>
-                            )
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )
-              }
-            </div>
-          </div>
-
-          <div style={s.dividerH} />
-
-          {/* ガンマプロファイル */}
-          <div style={halfPanel}>
-            <GammaPanel
-              gammaData={gammaData}
-              gammaLoading={gammaLoading}
-              gammaError={gammaError}
-              onGammaReload={() => loadGamma(true)}
-              theme={theme}
-            />
           </div>
 
         </div>{/* /右カラム */}

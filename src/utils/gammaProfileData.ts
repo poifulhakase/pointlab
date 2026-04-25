@@ -110,22 +110,35 @@ function findGammaFlip(bars: GexBar[]): number | null {
 }
 
 // ── CORS プロキシ経由フェッチ ─────────────────────────
+type ProxyDef = { url: (u: string) => string; parse: (r: Response) => Promise<unknown> }
+
+const parseRaw = async (r: Response): Promise<unknown> => {
+  const text = await r.text()
+  try { return JSON.parse(text) }
+  catch { throw new Error(`レスポンス解析エラー: ${text.slice(0, 100)}`) }
+}
+const parseAlloriginsGet = async (r: Response): Promise<unknown> => {
+  const w = await r.json() as { contents?: string }
+  if (!w.contents) throw new Error('プロキシ: コンテンツ空')
+  try { return JSON.parse(w.contents) }
+  catch { throw new Error(`プロキシ応答エラー: ${w.contents.slice(0, 100)}`) }
+}
+
+const PROXIES: ProxyDef[] = [
+  { url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: parseAlloriginsGet },
+  { url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, parse: parseRaw },
+  { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, parse: parseRaw },
+]
+
 async function fetchViaProxy(url: string): Promise<unknown> {
-  const proxies = [
-    { mk: (u: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, wrap: true  },
-    { mk: (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, wrap: false },
-  ]
   let lastErr = '接続エラー'
-  for (const proxy of proxies) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 600 * i))
+    const def = PROXIES[i]
     try {
-      const res = await fetch(proxy.mk(url), { signal: AbortSignal.timeout(14000) })
+      const res = await fetch(def.url(url), { signal: AbortSignal.timeout(14000) })
       if (!res.ok) { lastErr = `HTTP ${res.status}`; continue }
-      const text = await res.text()
-      if (proxy.wrap) {
-        const w = JSON.parse(text) as { contents?: string }
-        if (w.contents) return JSON.parse(w.contents)
-      }
-      return JSON.parse(text)
+      return await def.parse(res)
     } catch (e) {
       lastErr = e instanceof Error ? e.message : String(e)
     }
@@ -151,8 +164,15 @@ export async function fetchGammaProfile(force = false): Promise<GammaProfileResu
     } catch { /* ignore */ }
   }
 
-  const TARGET = 'https://query1.finance.yahoo.com/v7/finance/options/%5EN225'
-  const json = await fetchViaProxy(TARGET) as { optionChain?: { result?: RawOptionChain[] } }
+  const Q1 = 'https://query1.finance.yahoo.com/v7/finance/options/%5EN225'
+  const Q2 = 'https://query2.finance.yahoo.com/v7/finance/options/%5EN225'
+  type OptionsJson = { optionChain?: { result?: RawOptionChain[] } }
+  let json: OptionsJson
+  try {
+    json = await fetchViaProxy(Q1) as OptionsJson
+  } catch {
+    json = await fetchViaProxy(Q2) as OptionsJson
+  }
   const chain = json?.optionChain?.result?.[0]
   if (!chain) throw new Error('オプションデータが取得できませんでした')
 
