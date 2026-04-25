@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
+import type React from 'react'
 import { themeVars } from '../utils/themeVars'
 import {
   computeMicroVectors,
@@ -101,6 +102,78 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '裁定売り', sub: '合計', isTotal: true },
 ]
 
+// ── クオンツ分析レポート（左カラム上段） ─────────────
+const QUANT_MEMO_KEY = 'poical-quant-memo'
+
+function QuantMemoPanel(_props: { theme: 'dark' | 'light' }) {
+  const [quantMemo,     setQuantMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
+  const [savedMemo,     setSavedMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
+  const [memoSaveFlash, setMemoSaveFlash] = useState(false)
+  const memoIsDirty = quantMemo !== savedMemo
+
+  const handleSave = useCallback(() => {
+    localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
+    setSavedMemo(quantMemo)
+    setMemoSaveFlash(true)
+    setTimeout(() => setMemoSaveFlash(false), 2000)
+  }, [quantMemo])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* ヘッダー */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '7px 14px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)',
+        userSelect: 'none',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          クオンツ分析レポート
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {memoSaveFlash && <span style={{ fontSize: 11, color: '#34d399' }}>保存しました</span>}
+          <button
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '4px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600,
+              color: 'var(--text-sub)', background: 'var(--glass-bg)',
+              border: '1px solid var(--glass-border)', cursor: memoIsDirty ? 'pointer' : 'default',
+              opacity: memoIsDirty ? 1 : 0.45,
+            }}
+            onClick={handleSave}
+            disabled={!memoIsDirty}
+          >
+            保存
+          </button>
+        </div>
+      </div>
+      {/* テキストエリア */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+        <textarea
+          value={quantMemo}
+          onChange={e => setQuantMemo(e.target.value)}
+          placeholder="AI分析レポート・トレードメモを入力…"
+          style={{
+            flex: 1,
+            resize: 'none',
+            background: 'transparent',
+            color: 'var(--text)',
+            border: 'none',
+            outline: 'none',
+            padding: '12px 14px',
+            fontSize: 13,
+            lineHeight: 1.8,
+            fontFamily: 'inherit',
+            overflowY: 'auto',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ── メインコンポーネント ──────────────────────────
 export function MicroQuantView({ theme, isMobile, data, loading, error, onReload }: Props) {
   const tv = themeVars(theme)
@@ -134,173 +207,216 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
       </div>
 
       {/* ── ボディ ── */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, padding: isMobile ? '12px' : '16px', minHeight: 0 }}>
+      <div style={{
+        flex: 1, overflow: 'hidden', minHeight: 0,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+      }}>
 
-        {loading && data.length === 0 ? (
-          <div style={s.center}>
-            <div style={s.spinner} />
-            <span style={{ color: 'var(--text-sub)', fontSize: 13 }}>取得中…</span>
+        {/* ━━ 左カラム（1/3） ━━ */}
+        <div style={{
+          ...(isMobile
+            ? { flexShrink: 0, display: 'flex', flexDirection: 'column', height: 340 }
+            : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }),
+          borderRight: isMobile ? 'none' : '1px solid var(--border-dim)',
+          borderBottom: isMobile ? '1px solid var(--border-dim)' : 'none',
+        }}>
+
+          {/* 上段: クオンツ分析レポート */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+            <QuantMemoPanel theme={theme} />
           </div>
-        ) : error ? (
-          <div style={s.center}>
-            <span style={{ color: 'var(--text-sub)', fontSize: 12, textAlign: 'center' }}>{error}</span>
-            <button style={s.retryBtn} onClick={onReload}>再試行</button>
+
+          {/* 下段: 準備中 */}
+          <div style={{
+            flexShrink: 0,
+            height: isMobile ? 60 : '30%',
+            background: theme === 'dark' ? 'rgba(0,0,0,0.40)' : 'rgba(0,0,0,0.05)',
+            borderTop: '1px solid var(--border-dim)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 10, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>準備中</span>
           </div>
-        ) : (
-          <>
-            {/* ── ベクター3枚カード ── */}
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10 }}>
-              {VECTORS.map(def => {
-                const v   = vectors?.[def.key]
-                const dir = v?.direction ?? 'neutral'
-                const ac  = dirColor(dir, theme)
-                const cardBg = dir === 'bear'
-                  ? (theme === 'dark' ? 'rgba(255,80,60,0.06)'  : 'rgba(200,50,30,0.04)')
-                  : dir === 'bull'
-                    ? (theme === 'dark' ? 'rgba(60,200,140,0.06)' : 'rgba(22,130,80,0.04)')
-                    : 'transparent'
+        </div>
 
-                return (
-                  <div key={def.key} style={{ ...s.vCard, background: cardBg, flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                      <span style={{ color: 'var(--accent)', display: 'flex' }}>{def.icon}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)' }}>{def.label}</span>
-                    </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-sub)' }}>{def.firms}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 10 }}>{def.sub}</div>
+        {/* ━━ 右カラム（2/3）: 証券会社別先物手口 ━━ */}
+        <div style={{
+          ...(isMobile
+            ? { flexShrink: 0, display: 'flex', flexDirection: 'column' }
+            : { flex: 2, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }),
+        }}>
+          <div style={{
+            flex: 1, overflowY: 'auto', overflowX: 'hidden',
+            display: 'flex', flexDirection: 'column', gap: 14,
+            padding: isMobile ? '12px' : '16px',
+            minHeight: 0,
+          }}>
 
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                      <span style={{ fontSize: 20, fontWeight: 800, color: ac, lineHeight: 1 }}>{dirIcon(dir)}</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: ac, fontVariantNumeric: 'tabular-nums' }}>
-                        {v ? v.netLots.toLocaleString() : '—'}
-                      </span>
-                      <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>枚</span>
-                    </div>
+            {loading && data.length === 0 ? (
+              <div style={s.center}>
+                <div style={s.spinner} />
+                <span style={{ color: 'var(--text-sub)', fontSize: 13 }}>取得中…</span>
+              </div>
+            ) : error ? (
+              <div style={s.center}>
+                <span style={{ color: 'var(--text-sub)', fontSize: 12, textAlign: 'center' }}>{error}</span>
+                <button style={s.retryBtn} onClick={onReload}>再試行</button>
+              </div>
+            ) : (
+              <>
+                {/* ── ベクター3枚カード ── */}
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10 }}>
+                  {VECTORS.map(def => {
+                    const v   = vectors?.[def.key]
+                    const dir = v?.direction ?? 'neutral'
+                    const ac  = dirColor(dir, theme)
+                    const cardBg = dir === 'bear'
+                      ? (theme === 'dark' ? 'rgba(255,80,60,0.06)'  : 'rgba(200,50,30,0.04)')
+                      : dir === 'bull'
+                        ? (theme === 'dark' ? 'rgba(60,200,140,0.06)' : 'rgba(22,130,80,0.04)')
+                        : 'transparent'
 
-                    {v?.dayOverDay != null && (
-                      <div style={{ fontSize: 10, marginTop: 3, color: v.dayOverDay < 0 ? 'rgba(255,120,100,0.8)' : 'rgba(96,200,140,0.8)' }}>
-                        前日比 {v.dayOverDay > 0 ? '+' : ''}{v.dayOverDay.toLocaleString()}枚
+                    return (
+                      <div key={def.key} style={{ ...s.vCard, background: cardBg, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          <span style={{ color: 'var(--accent)', display: 'flex' }}>{def.icon}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)' }}>{def.label}</span>
+                        </div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-sub)' }}>{def.firms}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 10 }}>{def.sub}</div>
+
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                          <span style={{ fontSize: 20, fontWeight: 800, color: ac, lineHeight: 1 }}>{dirIcon(dir)}</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: ac, fontVariantNumeric: 'tabular-nums' }}>
+                            {v ? v.netLots.toLocaleString() : '—'}
+                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>枚</span>
+                        </div>
+
+                        {v?.dayOverDay != null && (
+                          <div style={{ fontSize: 10, marginTop: 3, color: v.dayOverDay < 0 ? 'rgba(255,120,100,0.8)' : 'rgba(96,200,140,0.8)' }}>
+                            前日比 {v.dayOverDay > 0 ? '+' : ''}{v.dayOverDay.toLocaleString()}枚
+                          </div>
+                        )}
+
+                        <div style={{ marginTop: 10, height: 3, background: 'var(--border-dim)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', borderRadius: 2, background: ac,
+                            width: `${Math.min(Math.abs(v?.netLots ?? 0) / 80, 100)}%`,
+                            transition: 'width 0.5s ease',
+                          }} />
+                        </div>
                       </div>
-                    )}
+                    )
+                  })}
+                </div>
 
-                    {/* 質量バー */}
-                    <div style={{ marginTop: 10, height: 3, background: 'var(--border-dim)', borderRadius: 2, overflow: 'hidden' }}>
+                {/* ── 需給圧力スコア ── */}
+                {vectors && (
+                  <div style={s.scoreCard}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>需給圧力スコア</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 10,
+                          background: ALERT[vectors.alertLevel].bg,
+                          color:      ALERT[vectors.alertLevel].text,
+                        }}>
+                          {ALERT[vectors.alertLevel].label}
+                        </span>
+                        <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: ALERT[vectors.alertLevel].text, lineHeight: 1 }}>
+                          {vectors.sellPressureScore}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>/ 100</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'var(--border-dim)' }}>
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(96,200,140,0.55) 0%, rgba(250,190,80,0.55) 38%, rgba(255,150,60,0.55) 62%, rgba(255,80,80,0.55) 100%)' }} />
                       <div style={{
-                        height: '100%', borderRadius: 2, background: ac,
-                        width: `${Math.min(Math.abs(v?.netLots ?? 0) / 80, 100)}%`,
-                        transition: 'width 0.5s ease',
+                        position: 'absolute', top: 0, left: 0, height: '100%',
+                        width: `${vectors.sellPressureScore}%`,
+                        borderRight: `3px solid ${ALERT[vectors.alertLevel].text}`,
+                        transition: 'width 0.6s ease',
                       }} />
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 9, color: 'var(--text-dim)' }}>
+                      <span>低</span><span>注意▲30</span><span>警戒▲50</span><span>危険▲70</span>
+                    </div>
+                    <div style={{ marginTop: 10, display: 'flex', gap: 16, fontSize: 10, color: 'var(--text-dim)', flexWrap: 'wrap' }}>
+                      <span>海外大口 <strong style={{ color: dirColor(vectors.trend.direction, theme) }}>{vectors.trend.netLots.toLocaleString()}</strong>枚</span>
+                      <span>裁定売り <strong style={{ color: dirColor(vectors.gravity.direction, theme) }}>{vectors.gravity.netLots.toLocaleString()}</strong>枚</span>
+                      <span>個人逆張り <strong style={{ color: dirColor(vectors.noise.direction, theme) }}>{vectors.noise.netLots.toLocaleString()}</strong>枚 (緩衝)</span>
+                    </div>
                   </div>
-                )
-              })}
-            </div>
+                )}
 
-            {/* ── 需給圧力スコア ── */}
-            {vectors && (
-              <div style={s.scoreCard}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>需給圧力スコア</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 10,
-                      background: ALERT[vectors.alertLevel].bg,
-                      color:      ALERT[vectors.alertLevel].text,
-                    }}>
-                      {ALERT[vectors.alertLevel].label}
-                    </span>
-                    <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: ALERT[vectors.alertLevel].text, lineHeight: 1 }}>
-                      {vectors.sellPressureScore}
-                    </span>
-                    <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>/ 100</span>
+                {/* ── 日次手口テーブル ── */}
+                <div style={{ ...s.tableCard, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <div style={s.tableHead}>
+                    <span>日次手口テーブル</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>ネット枚数（買越し=+）</span>
                   </div>
-                </div>
-                {/* グラデーションバー */}
-                <div style={{ height: 8, borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'var(--border-dim)' }}>
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(96,200,140,0.55) 0%, rgba(250,190,80,0.55) 38%, rgba(255,150,60,0.55) 62%, rgba(255,80,80,0.55) 100%)' }} />
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, height: '100%',
-                    width: `${vectors.sellPressureScore}%`,
-                    borderRight: `3px solid ${ALERT[vectors.alertLevel].text}`,
-                    transition: 'width 0.6s ease',
-                  }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 9, color: 'var(--text-dim)' }}>
-                  <span>低</span><span>注意▲30</span><span>警戒▲50</span><span>危険▲70</span>
-                </div>
-                {/* 内訳メモ */}
-                <div style={{ marginTop: 10, display: 'flex', gap: 16, fontSize: 10, color: 'var(--text-dim)', flexWrap: 'wrap' }}>
-                  <span>海外大口 <strong style={{ color: dirColor(vectors.trend.direction, theme) }}>{vectors.trend.netLots.toLocaleString()}</strong>枚</span>
-                  <span>裁定売り <strong style={{ color: dirColor(vectors.gravity.direction, theme) }}>{vectors.gravity.netLots.toLocaleString()}</strong>枚</span>
-                  <span>個人逆張り <strong style={{ color: dirColor(vectors.noise.direction, theme) }}>{vectors.noise.netLots.toLocaleString()}</strong>枚 (緩衝)</span>
-                </div>
-              </div>
-            )}
-
-            {/* ── 日次手口テーブル ── */}
-            <div style={{ ...s.tableCard, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <div style={s.tableHead}>
-                <span>日次手口テーブル</span>
-                <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>ネット枚数（買越し=+）</span>
-              </div>
-              <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 580 }}>
-                  <thead>
-                    <tr>
-                      {TABLE_COLS.map((col, i) => (
-                        <th key={i} style={{
-                          ...s.th,
-                          textAlign: i === 0 ? 'left' : 'right',
-                          borderLeft: col.isTotal ? '2px solid var(--border-dim)' : undefined,
-                          background: col.isTotal ? (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') : 'var(--modal-bg)',
-                        }}>
-                          <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
-                          {col.sub && <div style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginTop: 1 }}>{col.sub}</div>}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((row, i) => {
-                      const trendT   = (row.GS   ?? 0) + (row.JPM   ?? 0)
-                      const noiseT   = (row.AMRO  ?? 0) + (row.Nomura ?? 0)
-                      const gravityT = (row.SG    ?? 0) + (row.Barclays ?? 0) + (row.BNP ?? 0)
-                      const cells: (number | null)[] = [
-                        row.GS, row.JPM, trendT,
-                        row.AMRO, row.Nomura, noiseT,
-                        row.SG, row.Barclays, gravityT,
-                      ]
-                      const isTotalIdx = new Set([2, 5, 8])
-                      return (
-                        <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
-                          <td style={{ ...s.td, minWidth: 68 }}>
-                            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{row.label}</div>
-                            <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{row.date}</div>
-                          </td>
-                          {cells.map((v, ci) => (
-                            <td key={ci} style={{
-                              ...s.td, ...s.tdNum,
-                              background: cellBg(v, theme),
-                              fontWeight: isTotalIdx.has(ci) ? 700 : 500,
-                              borderLeft: isTotalIdx.has(ci) ? '2px solid var(--border-dim)' : undefined,
+                  <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 580 }}>
+                      <thead>
+                        <tr>
+                          {TABLE_COLS.map((col, i) => (
+                            <th key={i} style={{
+                              ...s.th,
+                              textAlign: i === 0 ? 'left' : 'right',
+                              borderLeft: col.isTotal ? '2px solid var(--border-dim)' : undefined,
+                              background: col.isTotal ? (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') : 'var(--modal-bg)',
                             }}>
-                              <span style={{ color: cellColor(v, theme) }}>{fmt(v)}</span>
-                            </td>
+                              <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
+                              {col.sub && <div style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginTop: 1 }}>{col.sub}</div>}
+                            </th>
                           ))}
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                      </thead>
+                      <tbody>
+                        {data.map((row, i) => {
+                          const trendT   = (row.GS   ?? 0) + (row.JPM   ?? 0)
+                          const noiseT   = (row.AMRO  ?? 0) + (row.Nomura ?? 0)
+                          const gravityT = (row.SG    ?? 0) + (row.Barclays ?? 0) + (row.BNP ?? 0)
+                          const cells: (number | null)[] = [
+                            row.GS, row.JPM, trendT,
+                            row.AMRO, row.Nomura, noiseT,
+                            row.SG, row.Barclays, gravityT,
+                          ]
+                          const isTotalIdx = new Set([2, 5, 8])
+                          return (
+                            <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
+                              <td style={{ ...s.td, minWidth: 68 }}>
+                                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{row.label}</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{row.date}</div>
+                              </td>
+                              {cells.map((v, ci) => (
+                                <td key={ci} style={{
+                                  ...s.td, ...s.tdNum,
+                                  background: cellBg(v, theme),
+                                  fontWeight: isTotalIdx.has(ci) ? 700 : 500,
+                                  borderLeft: isTotalIdx.has(ci) ? '2px solid var(--border-dim)' : undefined,
+                                }}>
+                                  <span style={{ color: cellColor(v, theme) }}>{fmt(v)}</span>
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-            {/* 注記 */}
-            <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
-              ※ データは日次。ネット枚数 = 買建 − 売建。裁定売り は裁定買い残の解消（物理的売り圧力）の進捗を示す。スコアは 海外大口・裁定売り の売り越し強度から算出し 個人逆張り で補正。
-            </div>
-          </>
-        )}
+                {/* 注記 */}
+                <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
+                  ※ データは日次。ネット枚数 = 買建 − 売建。裁定売り は裁定買い残の解消（物理的売り圧力）の進捗を示す。スコアは 海外大口・裁定売り の売り越し強度から算出し 個人逆張り で補正。
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   )

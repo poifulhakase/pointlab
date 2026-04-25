@@ -18,6 +18,8 @@ import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView } from './MicroQuantView'
 import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import type { NtRatioPoint } from '../utils/ntRatioData'
+import { fetchGammaProfile, type GammaProfileResult } from '../utils/gammaProfileData'
+import { GammaPanel } from './GammaPanel'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean }
 
@@ -186,9 +188,6 @@ function buildCombinedRows(
     })
 }
 
-// ── クオンツメモ ──────────────────────────────────
-const QUANT_MEMO_KEY = 'poical-quant-memo'
-
 // ── エクスポート用データ構築 ──────────────────────
 function toDate(s: string) { return s.replace(/\//g, '-') }
 const r2 = (n: number) => Math.round(n * 100) / 100
@@ -250,6 +249,7 @@ function buildExportJson(
   arbData: ArbitrageWeekData[],
   foiData: FuturesOiWeekData[],
   participantsData: FuturesParticipantDayData[],
+  gammaData: GammaProfileResult | null,
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -342,12 +342,24 @@ function buildExportJson(
     })),
   } : null
 
+  const gamma_profile = gammaData ? {
+    spot: gammaData.spot,
+    expiry: gammaData.expiryLabel,
+    gamma_flip: gammaData.gammaFlip,
+    net_gex: gammaData.netGex,
+    regime: gammaData.netGex >= 0 ? 'positive' : 'negative',
+    pos_gex_total: gammaData.posGexTotal,
+    neg_gex_total: gammaData.negGexTotal,
+    updated_at: gammaData.updatedAt.toISOString(),
+  } : null
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     nk225_futures_oi: foiRows,
     micro_supply_demand,
+    gamma_profile,
     data: rows,
   }
 }
@@ -684,22 +696,14 @@ export function QuantView({ theme, isMobile }: Props) {
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
 
+  const [gammaData,    setGammaData]    = useState<GammaProfileResult | null>(null)
+  const [gammaLoading, setGammaLoading] = useState(false)
+  const [gammaError,   setGammaError]   = useState('')
+
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
   const [quantTab,    setQuantTab]    = useState<'macro' | 'micro'>('macro')
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
-
-  const [quantMemo,      setQuantMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
-  const [savedMemo,      setSavedMemo]      = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
-  const [memoSaveFlash,  setMemoSaveFlash]  = useState(false)
-  const memoIsDirty = quantMemo !== savedMemo
-
-  const handleMemoSave = useCallback(() => {
-    localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
-    setSavedMemo(quantMemo)
-    setMemoSaveFlash(true)
-    setTimeout(() => setMemoSaveFlash(false), 2000)
-  }, [quantMemo])
 
   const loadInvestor = useCallback(async (force = false) => {
     setInvLoading(true); setInvError('')
@@ -748,8 +752,21 @@ export function QuantView({ theme, isMobile }: Props) {
     finally { setParticipantsLoading(false) }
   }, [])
 
+  const loadGamma = useCallback(async (force = false) => {
+    setGammaLoading(true); setGammaError('')
+    try { setGammaData(await fetchGammaProfile(force)) }
+    catch (e) { setGammaError(e instanceof Error ? e.message : 'ガンマデータ取得エラー') }
+    finally { setGammaLoading(false) }
+  }, [])
+
   useEffect(() => { if (!invLoaded)          loadInvestor()      }, [invLoaded,          loadInvestor])
   useEffect(() => { if (!participantsLoaded) loadParticipants()  }, [participantsLoaded, loadParticipants])
+
+  useEffect(() => {
+    loadGamma()
+    const id = setInterval(() => loadGamma(), 30 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [loadGamma])
   useEffect(() => { if (!marLoaded)     loadMargin()        }, [marLoaded,     loadMargin])
   useEffect(() => { if (!vixWeekLoaded) loadVixWeek()       }, [vixWeekLoaded, loadVixWeek])
   useEffect(() => { if (!adLoaded)      loadAdvanceDecline()}, [adLoaded,      loadAdvanceDecline])
@@ -770,7 +787,7 @@ export function QuantView({ theme, isMobile }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData, gammaData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -782,11 +799,11 @@ export function QuantView({ theme, isMobile }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData, gammaData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, nhkNews])
+  }, [invData, marData, vixWeekData, nhkNews, gammaData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tv = themeVars(theme)
 
@@ -1113,47 +1130,15 @@ export function QuantView({ theme, isMobile }: Props) {
 
           <div style={s.dividerH} />
 
-          {/* メモ */}
+          {/* ガンマプロファイル */}
           <div style={halfPanel}>
-            <div style={s.panelHead}>
-              <div style={s.panelTitle}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-                クオンツ分析レポート
-              </div>
-              <div style={s.panelRight}>
-                {memoSaveFlash && <span style={{ fontSize: 11, color: '#34d399' }}>保存しました</span>}
-                <button
-                  style={{ ...s.reloadBtn, opacity: memoIsDirty ? 1 : 0.45, cursor: memoIsDirty ? 'pointer' : 'default' }}
-                  onClick={handleMemoSave}
-                  disabled={!memoIsDirty}
-                >
-                  保存
-                </button>
-              </div>
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: isMobile ? 180 : 0 }}>
-              <textarea
-                value={quantMemo}
-                onChange={e => setQuantMemo(e.target.value)}
-                placeholder="メモを入力…"
-                style={{
-                  flex: 1,
-                  resize: 'none',
-                  background: 'transparent',
-                  color: 'var(--text)',
-                  border: 'none',
-                  outline: 'none',
-                  padding: '12px 14px',
-                  fontSize: 13,
-                  lineHeight: 1.8,
-                  fontFamily: 'inherit',
-                  overflowY: 'auto',
-                  minHeight: isMobile ? 180 : 0,
-                }}
-              />
-            </div>
+            <GammaPanel
+              gammaData={gammaData}
+              gammaLoading={gammaLoading}
+              gammaError={gammaError}
+              onGammaReload={() => loadGamma(true)}
+              theme={theme}
+            />
           </div>
 
         </div>{/* /右カラム */}
