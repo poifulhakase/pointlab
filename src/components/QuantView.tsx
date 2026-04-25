@@ -18,8 +18,7 @@ import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView } from './MicroQuantView'
 import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import type { NtRatioPoint } from '../utils/ntRatioData'
-import { fetchGammaProfile, type GammaProfileResult } from '../utils/gammaProfileData'
-import { GammaPanel } from './GammaPanel'
+import { FuturesOiPanel } from './FuturesOiPanel'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean }
 
@@ -249,7 +248,6 @@ function buildExportJson(
   arbData: ArbitrageWeekData[],
   foiData: FuturesOiWeekData[],
   participantsData: FuturesParticipantDayData[],
-  gammaData: GammaProfileResult | null,
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -342,24 +340,12 @@ function buildExportJson(
     })),
   } : null
 
-  const gamma_profile = gammaData ? {
-    spot: gammaData.spot,
-    expiry: gammaData.expiryLabel,
-    gamma_flip: gammaData.gammaFlip,
-    net_gex: gammaData.netGex,
-    regime: gammaData.netGex >= 0 ? 'positive' : 'negative',
-    pos_gex_total: gammaData.posGexTotal,
-    neg_gex_total: gammaData.negGexTotal,
-    updated_at: gammaData.updatedAt.toISOString(),
-  } : null
-
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     nk225_futures_oi: foiRows,
     micro_supply_demand,
-    gamma_profile,
     data: rows,
   }
 }
@@ -696,10 +682,6 @@ export function QuantView({ theme, isMobile }: Props) {
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
 
-  const [gammaData,    setGammaData]    = useState<GammaProfileResult | null>(null)
-  const [gammaLoading, setGammaLoading] = useState(false)
-  const [gammaError,   setGammaError]   = useState('')
-
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
   const [quantTab,    setQuantTab]    = useState<'macro' | 'micro'>('macro')
@@ -752,21 +734,22 @@ export function QuantView({ theme, isMobile }: Props) {
     finally { setParticipantsLoading(false) }
   }, [])
 
-  const loadGamma = useCallback(async (force = false) => {
-    setGammaLoading(true); setGammaError('')
-    try { setGammaData(await fetchGammaProfile(force)) }
-    catch (e) { setGammaError(e instanceof Error ? e.message : 'ガンマデータ取得エラー') }
-    finally { setGammaLoading(false) }
-  }, [])
-
   useEffect(() => { if (!invLoaded)          loadInvestor()      }, [invLoaded,          loadInvestor])
   useEffect(() => { if (!participantsLoaded) loadParticipants()  }, [participantsLoaded, loadParticipants])
 
+  // JST 18:30 daily auto-refresh for participants (futures_participants.json is updated daily around this time)
   useEffect(() => {
-    loadGamma()
-    const id = setInterval(() => loadGamma(), 30 * 60 * 1000)
-    return () => clearInterval(id)
-  }, [loadGamma])
+    function scheduleNextRefresh() {
+      const now = new Date()
+      const next = new Date(now)
+      next.setUTCHours(9, 30, 0, 0)  // UTC 09:30 = JST 18:30
+      if (next <= now) next.setUTCDate(next.getUTCDate() + 1)
+      const id = setTimeout(() => { loadParticipants(true); scheduleNextRefresh() }, next.getTime() - now.getTime())
+      return id
+    }
+    const id = scheduleNextRefresh()
+    return () => clearTimeout(id)
+  }, [loadParticipants])
   useEffect(() => { if (!marLoaded)     loadMargin()        }, [marLoaded,     loadMargin])
   useEffect(() => { if (!vixWeekLoaded) loadVixWeek()       }, [vixWeekLoaded, loadVixWeek])
   useEffect(() => { if (!adLoaded)      loadAdvanceDecline()}, [adLoaded,      loadAdvanceDecline])
@@ -787,7 +770,7 @@ export function QuantView({ theme, isMobile }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData, gammaData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -799,11 +782,11 @@ export function QuantView({ theme, isMobile }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData, gammaData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, nhkNews, gammaData]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [invData, marData, vixWeekData, nhkNews]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tv = themeVars(theme)
 
@@ -973,13 +956,13 @@ export function QuantView({ theme, isMobile }: Props) {
 
           <div style={s.dividerH} />
 
-          {/* ガンマプロファイル */}
+          {/* 先物OI */}
           <div style={halfPanel}>
-            <GammaPanel
-              gammaData={gammaData}
-              gammaLoading={gammaLoading}
-              gammaError={gammaError}
-              onGammaReload={() => loadGamma(true)}
+            <FuturesOiPanel
+              data={participantsData}
+              loading={participantsLoading}
+              error={participantsError}
+              onReload={() => loadParticipants(true)}
               theme={theme}
             />
           </div>
