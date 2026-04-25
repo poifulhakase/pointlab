@@ -56,13 +56,12 @@ interface GearDropdownProps {
   syncStatus: string
   onToggleTheme: () => void
   onOpenNotifications: () => void
-  onOpenLegal: () => void
   onOpenManual: () => void
   onOpenAccount: () => void
 }
 const GearDropdown = memo(({
   dropRef, pos, theme, user, syncStatus,
-  onToggleTheme, onOpenNotifications, onOpenLegal, onOpenManual, onOpenAccount,
+  onToggleTheme, onOpenNotifications, onOpenManual, onOpenAccount,
 }: GearDropdownProps) => (
   <div ref={dropRef} style={{ ...styles.gearDropdown, top: pos.top, right: pos.right }} className="glass">
     <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
@@ -72,8 +71,6 @@ const GearDropdown = memo(({
     <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>通知設定</GearItem>
     <Divider />
     <GearItem icon={<BookIcon />} onClick={onOpenManual}>説明書</GearItem>
-    <Divider />
-    <GearItem icon={<ShieldIcon />} onClick={onOpenLegal}>プライバシー・免責事項</GearItem>
     <Divider />
     <GearItem
       icon={
@@ -108,13 +105,6 @@ function GearItem({ icon, children, onClick, suffix }: {
 const Divider = () => <div style={styles.gearDivider} />
 
 // ── 小さいアイコン群 ───────────────────────────────────────────────────
-function ShieldIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  )
-}
 function BookIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -270,7 +260,6 @@ export default function App() {
   const gearActions = useMemo(() => ({
     onToggleTheme:       () => { toggleTheme(); closeGear() },
     onOpenNotifications: () => { setSettingsOpen(true); closeGear() },
-    onOpenLegal:         () => { cal.setView('legal'); closeGear() },
     onOpenManual:        () => { cal.setView('manual'); closeGear() },
     onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
   }), [toggleTheme, closeGear, cal])
@@ -387,7 +376,7 @@ export default function App() {
           {/* Suspense ラップ: 初回アクセス時にチャンク非同期ロード */}
           {cal.view === 'note' && (
             <Suspense fallback={<ViewLoader />}>
-              <NoteView theme={theme} isMobile={isMobile} onOpenSpec={() => cal.setView('spec')} />
+              <NoteView theme={theme} isMobile={isMobile} onOpenSpec={() => cal.setView('spec')} onOpenLegal={() => cal.setView('legal')} />
             </Suspense>
           )}
           {cal.view === 'spec' && (
@@ -415,7 +404,7 @@ export default function App() {
           {quantMounted && (
             <div style={{ display: cal.view === 'quant' ? 'flex' : 'none', flex: 1, minHeight: 0 }}>
               <Suspense fallback={<ViewLoader />}>
-                <QuantView theme={theme} isMobile={isMobile} />
+                <QuantView theme={theme} isMobile={isMobile} user={user} />
               </Suspense>
             </div>
           )}

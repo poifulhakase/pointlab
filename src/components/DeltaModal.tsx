@@ -129,7 +129,7 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
     return () => chart.remove()
   }, [deltas, theme, type, isDark, cfg.positiveIsBad])
 
-  return <div ref={ref} style={{ height: 220, width: '100%' }} />
+  return <div ref={ref} style={{ height: 240, width: '100%' }} />
 }
 
 export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onClose }: Props) {
@@ -158,24 +158,24 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
           </svg>
-          <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{cfg.title}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', fontSize: 20, lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>×</button>
+          <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{cfg.title}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', fontSize: 22, lineHeight: 1, padding: '0 4px', flexShrink: 0 }}>×</button>
         </div>
 
         {/* Chart */}
-        <div style={{ flexShrink: 0, padding: '0 4px' }}>
+        <div style={{ flexShrink: 0, padding: '8px 14px 0' }}>
           {deltas.length < 2
-            ? <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
+            ? <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
             : <DeltaChart type={type} deltas={deltas} theme={theme} />
           }
         </div>
 
         {/* Legend */}
-        <div style={{ padding: '4px 18px 14px', display: 'flex', gap: 14, fontSize: 11, color: 'var(--text-dim)', flexWrap: 'wrap', flexShrink: 0 }}>
+        <div style={{ padding: '10px 20px 20px', display: 'flex', gap: 18, fontSize: 11, color: 'var(--text-dim)', flexWrap: 'wrap', flexShrink: 0 }}>
           <span>
             <span style={{ color: cfg.positiveIsBad ? (isLight ? 'rgba(200,50,30,0.9)' : 'rgba(255,100,80,0.9)') : (isLight ? 'rgba(26,115,232,0.9)' : 'rgba(96,165,250,0.9)') }}>■</span>
             {' '}正（＋）

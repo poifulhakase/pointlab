@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type React from 'react'
+import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, getStoredMarginUpdatedAt, type MarginWeekData } from '../utils/jpxMarginData'
@@ -19,7 +20,7 @@ import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 import { FuturesOiPanel } from './FuturesOiPanel'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean }
+type Props = { theme: 'dark' | 'light'; isMobile: boolean; user: User | null }
 
 // ── 投資主体別 列定義 ──────────────────────────────
 const INVESTOR_COLS: { key: keyof InvestorWeekData; label: string; sub: string }[] = [
@@ -728,7 +729,7 @@ function PanelCenter({ loading, error, onRetry }: { loading: boolean; error: str
 }
 
 // ── メインコンポーネント ───────────────────────────
-export function QuantView({ theme, isMobile }: Props) {
+export function QuantView({ theme, isMobile, user }: Props) {
   const [invData,    setInvData]    = useState<InvestorWeekData[]>([])
   const [invLoading, setInvLoading] = useState(false)
   const [invError,   setInvError]   = useState('')
@@ -1242,6 +1243,7 @@ export function QuantView({ theme, isMobile }: Props) {
             loading={participantsLoading}
             error={participantsError}
             onReload={() => loadParticipants(true)}
+            user={user}
           />
         </div>
         </div>{/* /スライダートラック */}

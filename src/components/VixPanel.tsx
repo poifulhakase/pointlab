@@ -298,6 +298,22 @@ export function VixPanel({ theme, vixWeekData = [] }: Props) {
     }
   }, [data])
 
+  // ── Δヒストグラム切り替え時にグラデーション背景を強制再適用 ──
+  // lightweight-charts が resize 後に VerticalGradient を描画しないバグの回避
+  useEffect(() => {
+    if (!chartRef.current) return
+    const isDark = theme === 'dark'
+    chartRef.current.applyOptions({
+      layout: {
+        background: {
+          type: ColorType.VerticalGradient,
+          topColor:    isDark ? 'rgba(255,60,60,0.18)'  : 'rgba(255,60,60,0.11)',
+          bottomColor: isDark ? 'rgba(37,99,235,0.18)'  : 'rgba(37,99,235,0.11)',
+        },
+      },
+    })
+  }, [showHistogram, theme])
+
   const latest = data.at(-1)?.value
   const prev   = data.at(-2)?.value
   const change = latest != null && prev != null
@@ -350,7 +366,12 @@ export function VixPanel({ theme, vixWeekData = [] }: Props) {
       </div>
 
       {/* ── チャートエリア ── */}
-      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+      <div style={{
+        flex: 1, minHeight: 0, position: 'relative',
+        background: isDark
+          ? 'linear-gradient(to bottom, rgba(255,60,60,0.10) 0%, rgba(37,99,235,0.10) 100%)'
+          : 'linear-gradient(to bottom, rgba(255,60,60,0.06) 0%, rgba(37,99,235,0.06) 100%)',
+      }}>
         <div ref={chartContainerRef} style={{ position: 'absolute', inset: 0 }} />
         {/* Δヒストグラム トグルボタン */}
         <button

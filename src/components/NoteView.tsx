@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean; onOpenSpec: () => void }
+type Props = { theme: 'dark' | 'light'; isMobile: boolean; onOpenSpec: () => void; onOpenLegal: () => void }
 
 type Article = {
   genre: string
@@ -14,19 +14,19 @@ const BASE = import.meta.env.BASE_URL + 'notes/'
 
 const ARTICLES: Article[] = [
   // ── 基本 ──────────────────────────────────────────────────────
-  { genre: '基本',           title: 'TradingView',    url: 'https://note.com/pointlab/n/n7b69eccb90f3', thumb: BASE + 'Stock_Trade_Lab_TradingView.png' },
+  { genre: '基本',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
   { genre: '基本',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.png' },
   { genre: '基本',           title: '時間軸',          url: 'https://note.com/pointlab/n/nd74fce56edcc', thumb: BASE + 'Stock_Trade_Lab_Timeframe.png' },
   { genre: '基本',           title: 'MTF分析',         url: null,                                         thumb: BASE + 'Stock_Trade_Lab_Mtf_Analysis.png' },
   { genre: '基本',           title: '分割エントリー',   url: 'https://note.com/pointlab/n/nb16ef04958ae', thumb: BASE + 'Stock_Trade_Lab_SplitEntry.png' },
   // ── インジケーター ────────────────────────────────────────────
+  { genre: 'インジケーター', title: 'TradingView',    url: 'https://note.com/pointlab/n/n7b69eccb90f3', thumb: BASE + 'Stock_Trade_Lab_TradingView.png' },
   { genre: 'インジケーター', title: 'CVD',             url: null,                                         thumb: BASE + 'Stock_Trade_Lab_Cumulative_Volume_Delta.png' },
   { genre: 'インジケーター', title: 'MACD',            url: 'https://note.com/pointlab/n/n2817e9181530', thumb: BASE + 'Stock_Trade_Lab_Macd.png' },
   { genre: 'インジケーター', title: 'ボリンジャーバンド', url: 'https://note.com/pointlab/n/n91f688571407', thumb: BASE + 'Stock_Trade_Lab_BB.png' },
   { genre: 'インジケーター', title: 'RSI',             url: 'https://note.com/pointlab/n/ncd65c830de29', thumb: BASE + 'Stock_Trade_Lab_RSI.png' },
   { genre: 'インジケーター', title: 'パラボリック',     url: 'https://note.com/pointlab/n/n635865776b8e', thumb: BASE + 'Stock_Trade_Lab_ParabolicSAR.png' },
   { genre: 'インジケーター', title: 'ストキャスティクス', url: 'https://note.com/pointlab/n/na7f744ea8158', thumb: BASE + 'Stock_Trade_Lab_Stochastic.png' },
-  { genre: 'インジケーター', title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
   { genre: 'インジケーター', title: '実践統合編',       url: 'https://note.com/pointlab/n/nb4793929edcd', thumb: BASE + 'Stock_Trade_Lab_Multiple_Index.png' },
   // ── イベントドリブン ──────────────────────────────────────────
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png' },
@@ -82,7 +82,7 @@ function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolea
   )
 }
 
-export function NoteView({ isMobile, onOpenSpec }: Props) {
+export function NoteView({ isMobile, onOpenSpec, onOpenLegal }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -109,6 +109,13 @@ export function NoteView({ isMobile, onOpenSpec }: Props) {
                     <line x1="16" y1="17" x2="8" y2="17"/>
                   </svg>
                   仕様書
+                </button>
+                <div style={{ height: 1, background: 'var(--glass-border)', margin: '2px 0' }} />
+                <button style={s.menuItem} onClick={() => { setMenuOpen(false); onOpenLegal() }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  プライバシー・免責事項
                 </button>
               </div>
             </>

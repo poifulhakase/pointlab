@@ -1,6 +1,8 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import type React from 'react'
+import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
+import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import {
   computeMicroVectors,
   type FuturesParticipantDayData,
@@ -14,6 +16,7 @@ type Props = {
   loading:  boolean
   error:    string
   onReload: () => void
+  user:     User | null
 }
 
 // ── ヘルパー ──────────────────────────────────────
@@ -104,19 +107,50 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
 
 // ── クオンツ分析レポート（左カラム上段） ─────────────
 const QUANT_MEMO_KEY = 'poical-quant-memo'
+const QUANT_MEMO_FS_PATH = (uid: string) => `users/${uid}/data/quantMemo`
 
-function QuantMemoPanel(_props: { theme: 'dark' | 'light' }) {
+function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }) {
   const [quantMemo,     setQuantMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [savedMemo,     setSavedMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
   const memoIsDirty = quantMemo !== savedMemo
+
+  // ログイン/ログアウト時に Firestore からロード
+  useEffect(() => {
+    if (!user) {
+      const local = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
+      setQuantMemo(local)
+      setSavedMemo(local)
+      return
+    }
+    restGetDoc(QUANT_MEMO_FS_PATH(user.uid))
+      .then(snap => {
+        if (snap.exists()) {
+          const text = (snap.data().text as string) ?? ''
+          setQuantMemo(text)
+          setSavedMemo(text)
+          localStorage.setItem(QUANT_MEMO_KEY, text)
+        } else {
+          const local = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
+          setQuantMemo(local)
+          setSavedMemo(local)
+          if (local) {
+            restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { text: local, updatedAt: new Date().toISOString() }).catch(() => {})
+          }
+        }
+      })
+      .catch(() => {})
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = useCallback(() => {
     localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
     setSavedMemo(quantMemo)
     setMemoSaveFlash(true)
     setTimeout(() => setMemoSaveFlash(false), 2000)
-  }, [quantMemo])
+    if (user) {
+      restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { text: quantMemo, updatedAt: new Date().toISOString() }).catch(() => {})
+    }
+  }, [quantMemo, user])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -175,7 +209,7 @@ function QuantMemoPanel(_props: { theme: 'dark' | 'light' }) {
 }
 
 // ── メインコンポーネント ──────────────────────────
-export function MicroQuantView({ theme, isMobile, data, loading, error, onReload }: Props) {
+export function MicroQuantView({ theme, isMobile, data, loading, error, onReload, user }: Props) {
   const tv = themeVars(theme)
   const vectors = useMemo(() => computeMicroVectors(data), [data])
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
@@ -429,7 +463,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
             ? { flexShrink: 0, display: 'flex', flexDirection: 'column', height: 360, borderTop: '1px solid var(--border-dim)' }
             : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
         }>
-          <QuantMemoPanel theme={theme} />
+          <QuantMemoPanel theme={theme} user={user} />
         </div>
 
       </div>
