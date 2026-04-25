@@ -917,20 +917,16 @@ export function QuantView({ theme, isMobile }: Props) {
         </button>
       </div>
 
-      {/* ── ボディ（スライドラッパー） ── */}
-      {/* 外側: 横方向クリップのみ（overflow-x と overflow-y を同一要素に混在させない → iOS Safari バグ回避） */}
-      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-        {/* 内側: 縦スクロール専用（overflow-x は設定しない＝ visible のまま） */}
-        <div style={{ height: '100%', overflowY: isMobile ? 'auto' : 'hidden' }}>
+      {/* ── ボディ ── */}
+      <div style={{ flex: 1, minHeight: 0, ...(isMobile ? { overflowY: 'auto' } : { overflow: 'hidden' }) }}>
+
+        {/* ━━ マクロ需給 ━━ */}
         <div style={{
-          display: 'flex', width: '200%',
+          display: quantTab === 'macro' ? 'flex' : 'none',
+          flexDirection: isMobile ? 'column' : 'row',
           height: isMobile ? 'auto' : '100%',
-          transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1)',
-          transform: quantTab === 'macro' ? 'translateX(0)' : 'translateX(-50%)',
-          ...(isMobile ? {} : { willChange: 'transform' }),
+          overflow: !isMobile ? 'hidden' : undefined,
         }}>
-        {/* ━━ マクロ需給スライド ━━ */}
-        <div style={{ width: '50%', flexShrink: 0, display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: isMobile ? 'auto' : '100%', overflow: !isMobile ? 'hidden' : undefined }}>
 
         {/* ━━ 左カラム: VIX（上）＋ NS倍率（下） ━━ */}
         <div style={isMobile ? s.panelMobile : s.panel}>
@@ -1218,10 +1214,15 @@ export function QuantView({ theme, isMobile }: Props) {
           </div>
 
         </div>{/* /右カラム */}
-        </div>{/* /マクロ需給スライド */}
+        </div>{/* /マクロ需給 */}
 
-        {/* ━━ ミクロ需給スライド ━━ */}
-        <div style={{ width: '50%', flexShrink: 0, height: isMobile ? 'auto' : '100%', overflow: !isMobile ? 'hidden' : undefined, display: 'flex', flexDirection: 'column' }}>
+        {/* ━━ ミクロ需給 ━━ */}
+        <div style={{
+          display: quantTab === 'micro' ? 'flex' : 'none',
+          flexDirection: 'column',
+          height: isMobile ? 'auto' : '100%',
+          overflow: !isMobile ? 'hidden' : undefined,
+        }}>
           <MicroQuantView
             theme={theme}
             isMobile={isMobile}
@@ -1232,9 +1233,7 @@ export function QuantView({ theme, isMobile }: Props) {
           />
         </div>
 
-        </div>{/* /slider inner */}
-        </div>{/* /scroll container */}
-      </div>{/* /clip wrapper */}
+      </div>{/* /ボディ */}
 
       <QuantSettingsModal
         isOpen={settingsOpen}
