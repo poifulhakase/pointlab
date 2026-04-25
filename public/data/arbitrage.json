@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-24T10:14:56.673Z",
+  "updatedAt": "2026-04-25T00:15:21.438Z",
   "data": [
     {
       "date": "2025/04/25",
@@ -23,7 +23,7 @@
       "date": "2025/05/16",
       "label": "5月第3週",
       "longBal": 1384035,
-      "shortBal": 0
+      "shortBal": 16203
     },
     {
       "date": "2025/05/23",
@@ -41,7 +41,7 @@
       "date": "2025/06/06",
       "label": "6月第1週",
       "longBal": 1618627,
-      "shortBal": 0
+      "shortBal": 979
     },
     {
       "date": "2025/06/13",
@@ -53,31 +53,31 @@
       "date": "2025/06/20",
       "label": "6月第3週",
       "longBal": 1638170,
-      "shortBal": 0
+      "shortBal": 96040
     },
     {
       "date": "2025/06/27",
       "label": "6月第4週",
       "longBal": 1490994,
-      "shortBal": 0
+      "shortBal": 96040
     },
     {
       "date": "2025/07/04",
       "label": "7月第1週",
       "longBal": 1390454,
-      "shortBal": 0
+      "shortBal": 96040
     },
     {
       "date": "2025/07/11",
       "label": "7月第2週",
       "longBal": 1249384,
-      "shortBal": 0
+      "shortBal": 96040
     },
     {
       "date": "2025/07/18",
       "label": "7月第3週",
       "longBal": 1246647,
-      "shortBal": 0
+      "shortBal": 96040
     },
     {
       "date": "2025/07/25",
@@ -89,7 +89,7 @@
       "date": "2025/08/01",
       "label": "8月第1週",
       "longBal": 1414933,
-      "shortBal": 0
+      "shortBal": 304921
     },
     {
       "date": "2025/08/08",
@@ -107,7 +107,7 @@
       "date": "2025/08/22",
       "label": "8月第4週",
       "longBal": 2127523,
-      "shortBal": 0
+      "shortBal": 361898
     },
     {
       "date": "2025/08/29",
@@ -119,13 +119,13 @@
       "date": "2025/09/05",
       "label": "9月第1週",
       "longBal": 2141760,
-      "shortBal": 0
+      "shortBal": 23868
     },
     {
       "date": "2025/09/12",
       "label": "9月第2週",
       "longBal": 2117821,
-      "shortBal": 0
+      "shortBal": 23868
     },
     {
       "date": "2025/09/19",
@@ -143,7 +143,7 @@
       "date": "2025/10/03",
       "label": "10月第1週",
       "longBal": 2281282,
-      "shortBal": 0
+      "shortBal": 193620
     },
     {
       "date": "2025/10/10",
@@ -155,7 +155,7 @@
       "date": "2025/10/17",
       "label": "10月第3週",
       "longBal": 2161715,
-      "shortBal": 0
+      "shortBal": 307611
     },
     {
       "date": "2025/10/24",
@@ -167,13 +167,13 @@
       "date": "2025/10/31",
       "label": "10月第5週",
       "longBal": 2148377,
-      "shortBal": 0
+      "shortBal": 293282
     },
     {
       "date": "2025/11/07",
       "label": "11月第1週",
       "longBal": 1866481,
-      "shortBal": 0
+      "shortBal": 293282
     },
     {
       "date": "2025/11/14",
@@ -197,7 +197,7 @@
       "date": "2025/12/05",
       "label": "12月第1週",
       "longBal": 2354130,
-      "shortBal": 0
+      "shortBal": 96858
     },
     {
       "date": "2025/12/12",
@@ -227,7 +227,7 @@
       "date": "2026/01/09",
       "label": "1月第2週",
       "longBal": 2623511,
-      "shortBal": 0
+      "shortBal": 50401
     },
     {
       "date": "2026/01/16",
@@ -239,13 +239,13 @@
       "date": "2026/01/23",
       "label": "1月第4週",
       "longBal": 2847304,
-      "shortBal": 0
+      "shortBal": 244498
     },
     {
       "date": "2026/01/30",
       "label": "1月第5週",
       "longBal": 2362473,
-      "shortBal": 0
+      "shortBal": 244498
     },
     {
       "date": "2026/02/06",
@@ -275,13 +275,13 @@
       "date": "2026/03/06",
       "label": "3月第1週",
       "longBal": 3184214,
-      "shortBal": 0
+      "shortBal": 398327
     },
     {
       "date": "2026/03/13",
       "label": "3月第2週",
       "longBal": 2791062,
-      "shortBal": 0
+      "shortBal": 398327
     },
     {
       "date": "2026/03/19",
@@ -299,7 +299,7 @@
       "date": "2026/04/03",
       "label": "4月第1週",
       "longBal": 3363553,
-      "shortBal": 0
+      "shortBal": 672665
     },
     {
       "date": "2026/04/10",
@@ -311,7 +311,7 @@
       "date": "2026/04/17",
       "label": "4月第3週",
       "longBal": 3610350,
-      "shortBal": 0
+      "shortBal": 355719
     }
   ]
 }

@@ -594,18 +594,25 @@ async function buildArbitrageData() {
   }
 
   if (longBalMap.size === 0) throw new Error('裁定買い残データが空です')
-  console.log(`  裁定買い残: ${longBalMap.size}件`)
+  console.log(`  裁定買い残: ${longBalMap.size}件, 裁定売り残(金額あり): ${shortBalMap.size}件`)
 
-  // この数列はすでに週次（JPX毎週金曜公表）なのでそのまま最新52件を取る
+  // 週次（JPX毎週金曜公表）なのでそのまま最新52件を取る
   const sortedDates = [...longBalMap.keys()].sort()
   const last52 = sortedDates.slice(-52)
 
-  return last52.map(date => ({
-    date,
-    label:    dateToLabel(date),
-    longBal:  longBalMap.get(date),
-    shortBal: shortBalMap.get(date) ?? 0,
-  }))
+  // 売り残金額は毎週公表されず col[9](株数) と col[10](金額) が交互になる週がある。
+  // LOCF（前値補完）: 欠損週は直前の既知値を引き継ぐ。
+  let lastKnownShortBal = 0
+  return last52.map(date => {
+    const short = shortBalMap.get(date)
+    if (short != null && short > 0) lastKnownShortBal = short
+    return {
+      date,
+      label:    dateToLabel(date),
+      longBal:  longBalMap.get(date),
+      shortBal: lastKnownShortBal,
+    }
+  })
 }
 
 // ── 先物建玉残高（OI） ────────────────────────────────
