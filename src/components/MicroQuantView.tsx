@@ -290,8 +290,13 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                 {/* ── 需給圧力スコア ── */}
                 {vectors && (
                   <div style={s.scoreCard}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>需給圧力スコア</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>需給圧力スコア</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 8 }}>
+                          直近{vectors.historyDays}日比較
+                        </span>
+                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{
                           fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 10,
@@ -306,18 +311,43 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                         <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>/ 100</span>
                       </div>
                     </div>
-                    <div style={{ height: 8, borderRadius: 4, overflow: 'hidden', position: 'relative', background: 'var(--border-dim)' }}>
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(96,200,140,0.55) 0%, rgba(250,190,80,0.55) 38%, rgba(255,150,60,0.55) 62%, rgba(255,80,80,0.55) 100%)' }} />
+
+                    {/* パーセンタイルバッジ */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                      <span style={{
+                        fontSize: 12, fontWeight: 700, padding: '3px 12px', borderRadius: 8,
+                        background: ALERT[vectors.alertLevel].bg, color: ALERT[vectors.alertLevel].text,
+                      }}>
+                        上位 {100 - vectors.scorePercentile}%
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
+                        中央値 {vectors.scoreMedian}
+                      </span>
+                    </div>
+
+                    {/* スコアバー（中央値マーカー付き） */}
+                    <div style={{ height: 8, borderRadius: 4, position: 'relative', background: 'var(--border-dim)', overflow: 'visible' }}>
+                      <div style={{ position: 'absolute', inset: 0, borderRadius: 4, overflow: 'hidden', background: 'linear-gradient(90deg, rgba(96,200,140,0.55) 0%, rgba(250,190,80,0.55) 50%, rgba(255,150,60,0.55) 75%, rgba(255,80,80,0.55) 100%)' }} />
+                      {/* 今日の位置 */}
                       <div style={{
                         position: 'absolute', top: 0, left: 0, height: '100%',
                         width: `${vectors.sellPressureScore}%`,
                         borderRight: `3px solid ${ALERT[vectors.alertLevel].text}`,
                         transition: 'width 0.6s ease',
                       }} />
+                      {/* 中央値マーカー */}
+                      <div style={{
+                        position: 'absolute', top: -3, left: `${vectors.scoreMedian}%`,
+                        width: 2, height: 14, background: 'var(--text-dim)', borderRadius: 1,
+                        transform: 'translateX(-50%)',
+                      }} />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 9, color: 'var(--text-dim)' }}>
-                      <span>低</span><span>注意▲30</span><span>警戒▲50</span><span>危険▲70</span>
+                      <span>低</span>
+                      <span>中央値 ▲{vectors.scoreMedian}</span>
+                      <span>100</span>
                     </div>
+
                     <div style={{ marginTop: 10, display: 'flex', gap: 16, fontSize: 10, color: 'var(--text-dim)', flexWrap: 'wrap' }}>
                       <span>海外大口 <strong style={{ color: dirColor(vectors.trend.direction, theme) }}>{vectors.trend.netLots.toLocaleString()}</strong>枚</span>
                       <span>裁定売り <strong style={{ color: dirColor(vectors.gravity.direction, theme) }}>{vectors.gravity.netLots.toLocaleString()}</strong>枚</span>

@@ -24,7 +24,10 @@ export interface MicroVectors {
   trend:             MicroVector  // GS + JPM: 海外勢コンセンサス
   gravity:           MicroVector  // SG + Barclays + BNP: 裁定解消圧力
   noise:             MicroVector  // AMRO + 野村: 攪乱・逆張り
-  sellPressureScore: number       // 0-100
+  sellPressureScore: number       // 0-100（絶対スコア）
+  scorePercentile:   number       // 直近historyDays日中での百分位（高いほど売り圧力が強い）
+  scoreMedian:       number       // 直近historyDays日の中央値
+  historyDays:       number       // 比較に使った日数
   alertLevel:        'green' | 'yellow' | 'orange' | 'red'
 }
 
@@ -87,6 +90,16 @@ function vsum(day: FuturesParticipantDayData, keys: (keyof FuturesParticipantDay
   }, 0)
 }
 
+// 1日分のスコアを計算（computeMicroVectors内でも履歴計算でも共用）
+function computeRawScore(day: FuturesParticipantDayData): number {
+  const tc = Math.min(Math.max(-vsum(day, ['GS', 'JPM'])                 / 50,  0), 40)
+  const gc = Math.min(Math.max(-vsum(day, ['SG', 'Barclays', 'BNP'])     / 50,  0), 40)
+  const no = Math.min(Math.max( vsum(day, ['AMRO', 'Nomura'])             / 100, 0), 20)
+  return Math.round(Math.min(Math.max(tc + gc - no, 0), 100))
+}
+
+const SCORE_HISTORY_DAYS = 65  // 約3ヶ月（取引日ベース）
+
 export function computeMicroVectors(data: FuturesParticipantDayData[]): MicroVectors | null {
   if (data.length === 0) return null
   const cur  = data[0]
@@ -96,21 +109,34 @@ export function computeMicroVectors(data: FuturesParticipantDayData[]): MicroVec
   const gravityLots = vsum(cur, ['SG', 'Barclays', 'BNP'])
   const noiseLots   = vsum(cur, ['AMRO', 'Nomura'])
 
-  const prevT = prev ? vsum(prev, ['GS', 'JPM'])                      : null
-  const prevG = prev ? vsum(prev, ['SG', 'Barclays', 'BNP'])          : null
-  const prevN = prev ? vsum(prev, ['AMRO', 'Nomura'])                  : null
+  const prevT = prev ? vsum(prev, ['GS', 'JPM'])             : null
+  const prevG = prev ? vsum(prev, ['SG', 'Barclays', 'BNP']) : null
+  const prevN = prev ? vsum(prev, ['AMRO', 'Nomura'])         : null
 
-  // 売り圧力スコア 0-100
-  // 海外大口 + 裁定売り の売り越しがスコアを上げ、個人逆張り の買い越しが緩衝
-  const tc = Math.min(Math.max(-trendLots   / 50, 0), 40)
-  const gc = Math.min(Math.max(-gravityLots / 50, 0), 40)
-  const no = Math.min(Math.max( noiseLots   / 100, 0), 20)
-  const sellPressureScore = Math.round(Math.min(Math.max(tc + gc - no, 0), 100))
+  // 直近3ヶ月分のスコア分布を計算
+  const history = data.slice(0, SCORE_HISTORY_DAYS)
+  const historyScores = history.map(computeRawScore)
+  const sellPressureScore = historyScores[0]  // 今日
 
+  // 中央値（今日を含む全履歴）
+  const sorted = [...historyScores].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  const scoreMedian = sorted.length % 2 === 0
+    ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+    : sorted[mid]
+
+  // 百分位: 今日のスコアが過去N-1日の中で何%ile か
+  const pastScores = historyScores.slice(1)
+  const scorePercentile = pastScores.length > 0
+    ? Math.round(pastScores.filter(s => s < sellPressureScore).length / pastScores.length * 100)
+    : 50
+
+  // アラートレベル: 固定閾値→パーセンタイルベース
+  // 上位15%以上=red / 上位35%以上=orange / 上位50%以上=yellow / それ以下=green
   const alertLevel = (
-    sellPressureScore >= 70 ? 'red'    :
-    sellPressureScore >= 50 ? 'orange' :
-    sellPressureScore >= 30 ? 'yellow' : 'green'
+    scorePercentile >= 85 ? 'red'    :
+    scorePercentile >= 65 ? 'orange' :
+    scorePercentile >= 50 ? 'yellow' : 'green'
   ) as MicroVectors['alertLevel']
 
   return {
@@ -118,6 +144,9 @@ export function computeMicroVectors(data: FuturesParticipantDayData[]): MicroVec
     gravity: { netLots: gravityLots, direction: direction(gravityLots), dayOverDay: prevG !== null ? gravityLots - prevG : null },
     noise:   { netLots: noiseLots,   direction: direction(noiseLots),   dayOverDay: prevN !== null ? noiseLots   - prevN : null },
     sellPressureScore,
+    scorePercentile,
+    scoreMedian,
+    historyDays: history.length,
     alertLevel,
   }
 }

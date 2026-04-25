@@ -310,7 +310,9 @@ function buildExportJson(
   // ミクロ需給ベクター
   const mv = computeMicroVectors(participantsData)
   const micro_supply_demand = mv && participantsData.length > 0 ? {
-    latest_date: participantsData[0].date,
+    data_as_of: participantsData[0].date,
+    frequency: '日次',
+    lag_note: 'JPX翌営業日公表',
     vectors: {
       trend_vector: {
         label: '海外勢コンセンサス', firms: ['GS', 'JPM'],
@@ -326,6 +328,9 @@ function buildExportJson(
       },
     },
     sell_pressure_score: mv.sellPressureScore,
+    score_percentile:    mv.scorePercentile,
+    score_median:        mv.scoreMedian,
+    score_history_days:  mv.historyDays,
     alert_level: mv.alertLevel,
     recent: participantsData.slice(0, 5).map(d => ({
       date: d.date, GS: d.GS, JPM: d.JPM, AMRO: d.AMRO,
@@ -354,8 +359,22 @@ function buildExportJson(
     change_1m_pct: nk1m ? r2((nk.nikkei - nk1m.nikkei) / nk1m.nikkei * 100) : null,
   } : null
 
+  // 各指標の時間軸を明示（AIが時間軸のズレを誤解しないように）
+  const data_freshness = {
+    note: '各指標は公表タイミングが異なります。週次指標と日次指標を混同しないでください。',
+    nikkei225:          { data_as_of: nk?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
+    vix:                { data_as_of: vix_latest?.date ?? null,                 frequency: '週次', lag_note: '週末終値ベース' },
+    futures_hand:       { data_as_of: participantsData[0]?.date ?? null,        frequency: '日次', lag_note: 'JPX翌営業日公表' },
+    investor_flows:     { data_as_of: toDate(invData[0]?.date ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
+    credit_ratio:       { data_as_of: toDate(marData[0]?.date ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
+    short_sell_ratio:   { data_as_of: toDate(ssData[0]?.date  ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
+    advance_decline:    { data_as_of: toDate(adData[0]?.date  ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
+    arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
+  }
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
+    data_freshness,
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     vix_latest,
