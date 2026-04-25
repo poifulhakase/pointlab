@@ -208,45 +208,21 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
 
       {/* ── ボディ ── */}
       <div style={{
-        flex: 1, overflow: 'hidden', minHeight: 0,
+        flex: 1, overflow: isMobile ? 'auto' : 'hidden', minHeight: 0,
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
       }}>
 
-        {/* ━━ 左カラム（1/3） ━━ */}
-        <div style={{
-          ...(isMobile
-            ? { flexShrink: 0, display: 'flex', flexDirection: 'column', height: 340 }
-            : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }),
-          borderRight: isMobile ? 'none' : '1px solid var(--border-dim)',
-          borderBottom: isMobile ? '1px solid var(--border-dim)' : 'none',
-        }}>
-
-          {/* 上段: クオンツ分析レポート */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-            <QuantMemoPanel theme={theme} />
-          </div>
-
-          {/* 下段: 準備中 */}
-          <div style={{
-            flexShrink: 0,
-            height: isMobile ? 60 : '30%',
-            background: theme === 'dark' ? 'rgba(0,0,0,0.40)' : 'rgba(0,0,0,0.05)',
-            borderTop: '1px solid var(--border-dim)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontSize: 10, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>準備中</span>
-          </div>
-        </div>
-
-        {/* ━━ 右カラム（2/3）: 証券会社別先物手口 ━━ */}
+        {/* ━━ 左カラム（2/3）: 証券会社別先物手口 ━━ */}
         <div style={{
           ...(isMobile
             ? { flexShrink: 0, display: 'flex', flexDirection: 'column' }
             : { flex: 2, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }),
+          borderRight: isMobile ? 'none' : '1px solid var(--border-dim)',
+          borderBottom: isMobile ? '1px solid var(--border-dim)' : 'none',
         }}>
           <div style={{
-            flex: 1, overflowY: 'auto', overflowX: 'hidden',
+            flex: 1, overflowY: isMobile ? 'visible' : 'auto', overflowX: 'hidden',
             display: 'flex', flexDirection: 'column', gap: 14,
             padding: isMobile ? '12px' : '16px',
             minHeight: 0,
@@ -415,6 +391,15 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
               </>
             )}
           </div>
+        </div>
+
+        {/* ━━ 右カラム（1/3）: クオンツ分析レポート ━━ */}
+        <div style={
+          isMobile
+            ? { flexShrink: 0, display: 'flex', flexDirection: 'column', height: 360, borderTop: '1px solid var(--border-dim)' }
+            : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
+        }>
+          <QuantMemoPanel theme={theme} />
         </div>
 
       </div>

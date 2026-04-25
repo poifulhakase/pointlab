@@ -11,7 +11,6 @@ import { getNote, saveNote } from '../utils/noteStorage'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, type ArbitrageWeekData } from '../utils/arbitrageData'
-import { fetchFuturesOiData, type FuturesOiWeekData } from '../utils/futuresOiData'
 import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
@@ -188,7 +187,7 @@ function buildCombinedRows(
 }
 
 // ── エクスポート用データ構築 ──────────────────────
-function toDate(s: string) { return s.replace(/\//g, '-') }
+function toDate(s: string) { return (s ?? '').replace(/\//g, '-') }
 const r2 = (n: number) => Math.round(n * 100) / 100
 
 function getUpcomingEvents(days = 28): { date: string; day: string; events: string[] }[] {
@@ -246,7 +245,6 @@ function buildExportJson(
   adData: AdvanceDeclineWeekData[],
   ssData: ShortSellWeekData[],
   arbData: ArbitrageWeekData[],
-  foiData: FuturesOiWeekData[],
   participantsData: FuturesParticipantDayData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
@@ -309,11 +307,6 @@ function buildExportJson(
     })
     .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0)
 
-  // 先物OI: 直近24週分（月次公表のため最新データは約1ヶ月遅延）
-  const foiRows = foiData
-    .slice(0, 24)
-    .map(d => ({ date: d.date, oi: d.oi }))
-
   // ミクロ需給ベクター
   const mv = computeMicroVectors(participantsData)
   const micro_supply_demand = mv && participantsData.length > 0 ? {
@@ -344,7 +337,6 @@ function buildExportJson(
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
-    nk225_futures_oi: foiRows,
     micro_supply_demand,
     data: rows,
   }
@@ -671,8 +663,6 @@ export function QuantView({ theme, isMobile }: Props) {
   const [arbError,   setArbError]   = useState('')
   const [arbLoaded,  setArbLoaded]  = useState(false)
 
-  const [foiData, setFoiData] = useState<FuturesOiWeekData[]>([])
-
   const [participantsData,    setParticipantsData]    = useState<FuturesParticipantDayData[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError,   setParticipantsError]   = useState('')
@@ -757,10 +747,6 @@ export function QuantView({ theme, isMobile }: Props) {
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
 
   useEffect(() => {
-    fetchFuturesOiData().then(setFoiData).catch(() => { /* 月次データ未公表時は無視 */ })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
     fetchNhkNews().then(setNhkNews).catch(() => {})
   }, [])
 
@@ -770,7 +756,7 @@ export function QuantView({ theme, isMobile }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -782,7 +768,7 @@ export function QuantView({ theme, isMobile }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, foiData, participantsData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
@@ -1128,7 +1114,7 @@ export function QuantView({ theme, isMobile }: Props) {
         </div>{/* /マクロ需給スライド */}
 
         {/* ━━ ミクロ需給スライド ━━ */}
-        <div style={{ width: '50%', flexShrink: 0, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ width: '50%', flexShrink: 0, height: '100%', overflowY: isMobile ? 'auto' : 'hidden', overflow: !isMobile ? 'hidden' : undefined, display: 'flex', flexDirection: 'column' }}>
           <MicroQuantView
             theme={theme}
             isMobile={isMobile}
