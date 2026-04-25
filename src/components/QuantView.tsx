@@ -873,6 +873,15 @@ export function QuantView({ theme, isMobile }: Props) {
   // パネル共通スタイル: PC = flex 1、モバイル = 固定高さなし（自然な高さ）
   const halfPanel = isMobile ? s.halfPanelMobile : s.halfPanel
 
+  // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
+  const mTblWrap  = isMobile
+    ? { ...s.tableWrap, overflowX: 'hidden' as const, overflowY: 'visible' as const, flex: 'none' as const }
+    : s.tableWrap
+  const mTh       = isMobile ? { ...s.th, padding: '6px 5px', whiteSpace: 'normal' as const, fontSize: 10 } : s.th
+  const mTd       = isMobile ? { ...s.td, padding: '6px 5px', fontSize: 11 } : s.td
+  const mThDate   = isMobile ? { ...s.th, ...s.thDate, padding: '6px 5px', width: 52, minWidth: 52, whiteSpace: 'normal' as const, fontSize: 10 } : { ...s.th, ...s.thDate }
+  const mTdDate   = isMobile ? { ...s.td, ...s.tdDate, padding: '6px 5px', width: 52, minWidth: 52 } : { ...s.td, ...s.tdDate }
+
   return (
     <div style={{ ...s.wrap, ...tv }}>
       {/* ── Δ分析モーダル ── */}
@@ -975,24 +984,24 @@ export function QuantView({ theme, isMobile }: Props) {
               loading={marLoading}
               onReload={() => loadMargin(true)}
             />
-            <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
+            <div style={mTblWrap}>
               {(marLoading && marData.length === 0) || marError
                 ? <PanelCenter loading={marLoading && marData.length === 0} error={marError} onRetry={() => loadMargin(true)} />
                 : (
                   <table style={s.table}>
                     <thead>
                       <tr>
-                        <th style={{ ...s.th, ...s.thDate }}>週</th>
-                        <th style={s.th}>
+                        <th style={mThDate}>週</th>
+                        <th style={mTh}>
                           <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                            <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>
+                            {!isMobile && <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
                             買い残
                           </div>
                           <div style={s.thSub}>百万円</div>
                         </th>
-                        <th style={s.th}><div style={s.thLabel}>売り残</div><div style={s.thSub}>百万円</div></th>
-                        <th style={s.th}><div style={s.thLabel}>信用倍率</div><div style={s.thSub}>買残÷売残</div></th>
-                        <th style={s.th}><div style={s.thLabel}>評価損益率</div><div style={s.thSub}>%</div></th>
+                        <th style={mTh}><div style={s.thLabel}>売り残</div><div style={s.thSub}>百万円</div></th>
+                        <th style={mTh}><div style={s.thLabel}>信用倍率</div><div style={s.thSub}>買残÷売残</div></th>
+                        <th style={mTh}><div style={s.thLabel}>評価損益率</div><div style={s.thSub}>%</div></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1001,27 +1010,27 @@ export function QuantView({ theme, isMobile }: Props) {
                         const [shortQ1, shortQ3] = quartiles(marData.map(r => r.shortBal))
                         return marData.map((row, i) => (
                           <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                            <td style={{ ...s.td, ...s.tdDate }}>
+                            <td style={mTdDate}>
                               <div style={s.dateMain}>{row.label}</div>
                               <div style={s.dateSub}>{row.date}</div>
                             </td>
-                            <td style={{ ...s.td, ...s.tdNum, background: balBg(row.longBal, longQ1, longQ3, true, theme) }}>
+                            <td style={{ ...mTd, ...s.tdNum, background: balBg(row.longBal, longQ1, longQ3, true, theme) }}>
                               <span style={{ color: balTextColor(row.longBal, longQ1, longQ3, true, theme), fontWeight: 500 }}>
                                 {fmtHyakuman(row.longBal)}
                               </span>
                             </td>
-                            <td style={{ ...s.td, ...s.tdNum, background: balBg(row.shortBal, shortQ1, shortQ3, false, theme) }}>
+                            <td style={{ ...mTd, ...s.tdNum, background: balBg(row.shortBal, shortQ1, shortQ3, false, theme) }}>
                               <span style={{ color: balTextColor(row.shortBal, shortQ1, shortQ3, false, theme), fontWeight: 500 }}>
                                 {fmtHyakuman(row.shortBal)}
                               </span>
                             </td>
-                            <td style={{ ...s.td, ...s.tdNum, background: ratioBg(row.ratio, theme) }}>
+                            <td style={{ ...mTd, ...s.tdNum, background: ratioBg(row.ratio, theme) }}>
                               <span style={{ color: ratioTextColor(row.ratio, theme), fontWeight: 700, fontSize: 14 }}>
                                 {fmtRatio(row.ratio)}
                               </span>
                               <span style={s.unit}>倍</span>
                             </td>
-                            <td style={{ ...s.td, ...s.tdNum, background: row.evalRatio != null ? evalRatioBg(row.evalRatio, theme) : 'transparent' }}>
+                            <td style={{ ...mTd, ...s.tdNum, background: row.evalRatio != null ? evalRatioBg(row.evalRatio, theme) : 'transparent' }}>
                               {row.evalRatio != null ? (
                                 <><span style={{ color: evalRatioColor(row.evalRatio, theme), fontWeight: 700, fontSize: 14 }}>
                                   {row.evalRatio > 0 ? '+' : ''}{row.evalRatio.toFixed(2)}
@@ -1068,16 +1077,16 @@ export function QuantView({ theme, isMobile }: Props) {
               loading={invLoading}
               onReload={() => loadInvestor(true)}
             />
-            <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
+            <div style={mTblWrap}>
               {(invLoading && invData.length === 0) || invError
                 ? <PanelCenter loading={invLoading && invData.length === 0} error={invError} onRetry={() => loadInvestor(true)} />
                 : (
                   <table style={s.table}>
                     <thead>
                       <tr>
-                        <th style={{ ...s.th, ...s.thDate }}>週</th>
+                        <th style={mThDate}>週</th>
                         {INVESTOR_COLS.map(col => (
-                          <th key={col.key} style={s.th}>
+                          <th key={col.key} style={mTh}>
                             <div style={s.thLabel}>{col.label}</div>
                             <div style={s.thSub}>{col.sub}</div>
                           </th>
@@ -1087,14 +1096,14 @@ export function QuantView({ theme, isMobile }: Props) {
                     <tbody>
                       {invData.map((row, i) => (
                         <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                          <td style={{ ...s.td, ...s.tdDate }}>
+                          <td style={mTdDate}>
                             <div style={s.dateMain}>{row.label}</div>
                             <div style={s.dateSub}>{row.date}</div>
                           </td>
                           {INVESTOR_COLS.map(col => {
                             const val = row[col.key] as number
                             return (
-                              <td key={col.key} style={{ ...s.td, ...s.tdNum, background: valueBg(val, theme) }}>
+                              <td key={col.key} style={{ ...mTd, ...s.tdNum, background: valueBg(val, theme) }}>
                                 <span style={{ color: valueTextColor(val, theme), fontWeight: val !== 0 ? 600 : 400 }}>
                                   {fmtOku(val)}
                                 </span>
@@ -1131,7 +1140,7 @@ export function QuantView({ theme, isMobile }: Props) {
                     loading={ssLoading || adLoading || arbLoading}
                     onReload={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }}
                   />
-                  <div style={{ ...s.tableWrap, ...(isMobile ? { overflowY: 'visible', flex: 'none' } : {}) }}>
+                  <div style={mTblWrap}>
                     {combinedLoading || combinedError
                       ? <PanelCenter loading={combinedLoading} error={combinedError} onRetry={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }} />
                       : combinedRows.length === 0
@@ -1140,25 +1149,25 @@ export function QuantView({ theme, isMobile }: Props) {
                           <table style={s.table}>
                             <thead>
                               <tr>
-                                <th style={{ ...s.th, ...s.thDate }}>週</th>
-                                <th style={{ ...s.th, minWidth: 80 }}>
+                                <th style={mThDate}>週</th>
+                                <th style={mTh}>
                                   <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>
+                                    {!isMobile && <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
                                     裁定買い残
                                   </div>
                                   <div style={s.thSub}>百万円</div>
                                 </th>
-                                <th style={{ ...s.th, minWidth: 80 }}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
-                                <th style={{ ...s.th, minWidth: 80 }}>
+                                <th style={mTh}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
+                                <th style={mTh}>
                                   <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>
+                                    {!isMobile && <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>}
                                     騰落レシオ
                                   </div>
                                   <div style={s.thSub}>25日</div>
                                 </th>
-                                <th style={{ ...s.th, minWidth: 80 }}>
+                                <th style={mTh}>
                                   <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>
+                                    {!isMobile && <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>}
                                     空売り比率
                                   </div>
                                   <div style={s.thSub}>%</div>
@@ -1168,29 +1177,29 @@ export function QuantView({ theme, isMobile }: Props) {
                             <tbody>
                               {combinedRows.map((row, i) => (
                                 <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                  <td style={{ ...s.td, ...s.tdDate }}>
+                                  <td style={mTdDate}>
                                     <div style={s.dateMain}>{row.label}</div>
                                     <div style={s.dateSub}>{row.date}</div>
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
+                                  <td style={{ ...mTd, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
                                     {row.arbLongBal != null
                                       ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbLongBal)}</span>
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                     }
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
+                                  <td style={{ ...mTd, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
                                     {row.arbShortBal != null
                                       ? <span style={{ color: balTextColor(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbShortBal)}</span>
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                     }
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.adRatio != null ? adRatioBg(row.adRatio, theme) : 'transparent' }}>
+                                  <td style={{ ...mTd, ...s.tdNum, background: row.adRatio != null ? adRatioBg(row.adRatio, theme) : 'transparent' }}>
                                     {row.adRatio != null
                                       ? <span style={{ color: adRatioTextColor(row.adRatio, theme), fontWeight: 700, fontSize: 13 }}>{row.adRatio.toFixed(1)}</span>
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                     }
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
+                                  <td style={{ ...mTd, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
                                     {row.shortSell != null
                                       ? <><span style={{ color: shortSellTextColor(row.shortSell, theme), fontWeight: 700, fontSize: 13 }}>{row.shortSell.toFixed(1)}</span><span style={s.unit}>%</span></>
                                       : <span style={{ color: 'var(--text-dim)' }}>-</span>
