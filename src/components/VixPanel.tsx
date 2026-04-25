@@ -355,17 +355,39 @@ export function VixPanel({ theme, vixWeekData = [] }: Props) {
         {/* Δヒストグラム トグルボタン */}
         <button
           onClick={() => setShowHistogram(v => !v)}
-          title="VIX Δ ヒストグラム"
+          title={showHistogram ? 'VIX 変化率Δ を非表示' : 'VIX 変化率Δ を表示'}
           style={{
-            position: 'absolute', top: 6, right: 6, zIndex: 3,
-            background: showHistogram ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'),
-            border: '1px solid ' + (showHistogram ? 'var(--accent)' : (isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)')),
+            position: 'absolute', top: 6, left: 6, zIndex: 3,
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: showHistogram
+              ? (isDark ? 'rgba(96,165,250,0.18)' : 'rgba(37,99,235,0.10)')
+              : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+            border: '1px solid ' + (showHistogram
+              ? (isDark ? 'rgba(96,165,250,0.55)' : 'rgba(37,99,235,0.45)')
+              : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)')),
             borderRadius: 5, cursor: 'pointer',
-            color: showHistogram ? '#fff' : 'var(--text-dim)',
-            fontSize: 10, fontWeight: 700, padding: '2px 6px',
+            color: showHistogram
+              ? (isDark ? 'rgba(96,165,250,0.95)' : 'rgba(37,99,235,0.95)')
+              : 'var(--text-dim)',
+            fontSize: 10, fontWeight: 700, padding: '3px 7px',
             lineHeight: 1.4, letterSpacing: '0.02em',
           }}
-        >Δ</button>
+        >
+          変化率 Δ
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            {showHistogram ? (
+              <>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </>
+            ) : (
+              <>
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </>
+            )}
+          </svg>
+        </button>
         {loading && (
           <div style={{
             position: 'absolute', inset: 0, zIndex: 2,
