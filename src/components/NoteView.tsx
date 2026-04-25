@@ -90,7 +90,7 @@ export function NoteView({ isMobile, onOpenSpec }: Props) {
       {/* ヘッダー */}
       <div style={s.header}>
         <div style={{ flex: 1 }} />
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <button style={s.gearBtn} onClick={() => setMenuOpen(o => !o)} aria-label="設定">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3"/>
@@ -141,7 +141,7 @@ export function NoteView({ isMobile, onOpenSpec }: Props) {
 const s: Record<string, React.CSSProperties> = {
   header: {
     display: 'flex', alignItems: 'center',
-    padding: '4px 12px', minHeight: 40, flexShrink: 0,
+    padding: '6px 12px', minHeight: 44, flexShrink: 0,
     borderBottom: '1px solid var(--border-dim)',
     userSelect: 'none',
   },
