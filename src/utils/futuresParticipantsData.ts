@@ -42,16 +42,6 @@ interface LocalCache {
   fetchedAt: number
 }
 
-function readCache(): LocalCache | null {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const c = JSON.parse(raw) as LocalCache
-    if (Date.now() - c.fetchedAt > CACHE_TTL) return null
-    return c
-  } catch { return null }
-}
-
 function writeCache(updatedAt: string, data: FuturesParticipantDayData[]) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, data, fetchedAt: Date.now() }))
@@ -59,18 +49,29 @@ function writeCache(updatedAt: string, data: FuturesParticipantDayData[]) {
 }
 
 export async function fetchFuturesParticipantsData(force = false): Promise<FuturesParticipantDayData[]> {
-  if (!force) {
-    const cached = readCache()
-    if (cached) return cached.data
+  let stale: FuturesParticipantDayData[] | null = null
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as LocalCache
+      stale = c.data
+      if (!force && Date.now() - c.fetchedAt <= CACHE_TTL) return c.data
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}data/futures_participants.json`, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json: CachedResponse = await res.json()
+    if (!json.data || json.data.length === 0) throw new Error('データが空です')
+    writeCache(json.updatedAt, json.data)
+    return json.data
+  } catch (e) {
+    if (stale) return stale
+    throw e
   }
-  const res = await fetch(`${import.meta.env.BASE_URL}data/futures_participants.json`, {
-    signal: AbortSignal.timeout(10000),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json: CachedResponse = await res.json()
-  if (!json.data || json.data.length === 0) throw new Error('データが空です')
-  writeCache(json.updatedAt, json.data)
-  return json.data
 }
 
 function direction(lots: number): 'bull' | 'bear' | 'neutral' {

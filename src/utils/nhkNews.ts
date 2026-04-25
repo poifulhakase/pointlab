@@ -9,30 +9,36 @@ export type NhkNewsItem = {
 }
 
 export async function fetchNhkNews(): Promise<NhkNewsItem[]> {
-  // キャッシュ確認
+  let stale: NhkNewsItem[] | null = null
   try {
     const raw = localStorage.getItem(CACHE_KEY)
     if (raw) {
       const { ts, items } = JSON.parse(raw) as { ts: number; items: NhkNewsItem[] }
+      stale = items
       if (Date.now() - ts < CACHE_TTL) return items
     }
   } catch { /* ignore */ }
 
-  const res  = await fetch(RSS_URL)
-  const text = await res.text()
-  const doc  = new DOMParser().parseFromString(text, 'text/xml')
-
-  const items: NhkNewsItem[] = Array.from(doc.querySelectorAll('item'))
-    .slice(0, 5)
-    .map(el => ({
-      title:       el.querySelector('title')?.textContent?.trim()       ?? '',
-      pubDate:     el.querySelector('pubDate')?.textContent?.trim()     ?? '',
-      description: el.querySelector('description')?.textContent?.trim() ?? '',
-    }))
-
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), items }))
-  } catch { /* ignore */ }
+    const res  = await fetch(RSS_URL)
+    const text = await res.text()
+    const doc  = new DOMParser().parseFromString(text, 'text/xml')
 
-  return items
+    const items: NhkNewsItem[] = Array.from(doc.querySelectorAll('item'))
+      .slice(0, 5)
+      .map(el => ({
+        title:       el.querySelector('title')?.textContent?.trim()       ?? '',
+        pubDate:     el.querySelector('pubDate')?.textContent?.trim()     ?? '',
+        description: el.querySelector('description')?.textContent?.trim() ?? '',
+      }))
+
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), items }))
+    } catch { /* ignore */ }
+
+    return items
+  } catch (e) {
+    if (stale) return stale
+    throw e
+  }
 }

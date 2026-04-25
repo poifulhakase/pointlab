@@ -13,12 +13,31 @@ interface CachedResponse {
   data: VixWeekData[]
 }
 
+const CACHE_KEY = 'poical-vix-data'
+const CACHE_TTL = 24 * 60 * 60 * 1000
+
 export async function fetchVixData(): Promise<VixWeekData[]> {
-  const res = await fetch(`${import.meta.env.BASE_URL}data/vix.json`, {
-    signal: AbortSignal.timeout(10000),
-  })
-  if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
-  const json: CachedResponse = await res.json()
-  if (!json.data || json.data.length === 0) throw new Error('データが空です')
-  return json.data
+  let stale: VixWeekData[] | null = null
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as { data: VixWeekData[]; fetchedAt: number }
+      stale = c.data
+      if (Date.now() - c.fetchedAt <= CACHE_TTL) return c.data
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}data/vix.json`, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
+    const json: CachedResponse = await res.json()
+    if (!json.data || json.data.length === 0) throw new Error('データが空です')
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.data, fetchedAt: Date.now() })) } catch { /* ignore */ }
+    return json.data
+  } catch (e) {
+    if (stale) return stale
+    throw e
+  }
 }

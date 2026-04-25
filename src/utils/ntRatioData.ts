@@ -20,17 +20,6 @@ function isUsMarketOpen(): boolean {
   return mins >= 13 * 60 + 30 && mins <= 21 * 60 + 15
 }
 
-function readNtCache(): { data: NtRatioPoint[]; fetchedAt: number } | null {
-  try {
-    const raw = localStorage.getItem(NT_CACHE_KEY)
-    if (!raw) return null
-    const cache = JSON.parse(raw) as { data: NtRatioPoint[]; fetchedAt: number }
-    const ttl = isUsMarketOpen() ? NT_CACHE_TTL_OPEN : NT_CACHE_TTL_CLOSED
-    if (Date.now() - cache.fetchedAt > ttl) return null
-    return cache
-  } catch { return null }
-}
-
 function writeNtCache(data: NtRatioPoint[]) {
   try {
     localStorage.setItem(NT_CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
@@ -111,11 +100,20 @@ async function fetchSymbol(sym: string): Promise<Map<string, number>> {
 }
 
 export async function fetchNtRatioData(force = false): Promise<NtRatioPoint[]> {
-  if (!force) {
-    const cached = readNtCache()
-    if (cached) return cached.data
-  }
+  let stale: NtRatioPoint[] | null = null
+  try {
+    const raw = localStorage.getItem(NT_CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as { data: NtRatioPoint[]; fetchedAt: number }
+      stale = c.data
+      if (!force) {
+        const ttl = isUsMarketOpen() ? NT_CACHE_TTL_OPEN : NT_CACHE_TTL_CLOSED
+        if (Date.now() - c.fetchedAt <= ttl) return c.data
+      }
+    }
+  } catch { /* ignore */ }
 
+  try {
   // 日経225 と S&P500 を直列取得（同一プロキシへの同時リクエストによるレート制限を回避）
   const nikkeiMap = await fetchSymbol('^N225')
   await new Promise(r => setTimeout(r, 1500))
@@ -142,4 +140,8 @@ export async function fetchNtRatioData(force = false): Promise<NtRatioPoint[]> {
 
   writeNtCache(pts)
   return pts
+  } catch (e) {
+    if (stale) return stale
+    throw e
+  }
 }

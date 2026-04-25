@@ -22,16 +22,6 @@ interface LocalCache {
   fetchedAt: number
 }
 
-function readCache(): LocalCache | null {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const c = JSON.parse(raw) as LocalCache
-    if (Date.now() - c.fetchedAt > CACHE_TTL) return null
-    return c
-  } catch { return null }
-}
-
 function writeCache(updatedAt: string, data: ArbitrageWeekData[]) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, data, fetchedAt: Date.now() }))
@@ -39,16 +29,27 @@ function writeCache(updatedAt: string, data: ArbitrageWeekData[]) {
 }
 
 export async function fetchArbitrageData(force = false): Promise<ArbitrageWeekData[]> {
-  if (!force) {
-    const cached = readCache()
-    if (cached) return cached.data
+  let stale: ArbitrageWeekData[] | null = null
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as LocalCache
+      stale = c.data
+      if (!force && Date.now() - c.fetchedAt <= CACHE_TTL) return c.data
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage.json`, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
+    const json: CachedResponse = await res.json()
+    if (!json.data || json.data.length === 0) throw new Error('データが空です')
+    writeCache(json.updatedAt, json.data)
+    return json.data
+  } catch (e) {
+    if (stale) return stale
+    throw e
   }
-  const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage.json`, {
-    signal: AbortSignal.timeout(10000),
-  })
-  if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
-  const json: CachedResponse = await res.json()
-  if (!json.data || json.data.length === 0) throw new Error('データが空です')
-  writeCache(json.updatedAt, json.data)
-  return json.data
 }

@@ -1,5 +1,6 @@
 // ガンマプロファイル（GEX）データ取得・計算
-// データソース: Yahoo Finance v7 options API for ^N225（期近限月）
+// データソース: /api/gamma-options (Vercel serverless → Yahoo Finance v7 options for ^N225)
+// CORS proxy fallback あり
 
 export interface GexBar {
   strike: number     // 権利行使価格
@@ -51,6 +52,8 @@ interface RawOptionChain {
   }>
 }
 
+type OptionsJson = { optionChain?: { result?: RawOptionChain[] } }
+
 // ── GEX バー計算 ─────────────────────────────────────
 function computeGexBars(
   spot: number,
@@ -77,18 +80,9 @@ function computeGexBars(
     map.set(p.strike, e)
   }
 
-  // スケール: spot^2 × 0.0001 で数値を適度な範囲に正規化
   const SCALE = spot * spot * 0.0001
-
   const bars: GexBar[] = []
   for (const [strike, e] of map) {
-    // ディーラーGEX規約:
-    // ディーラーがクライアントにオプションを売ると仮定（ショートオプション）
-    // コール: クライアント買い → ディーラーはショートコール → ショートガンマ
-    // プット: クライアント買い → ディーラーはショートプット → ショートガンマ
-    // ディーラーGEX = -(callOI × callGamma + putOI × putGamma) × SCALE
-    // ただし業界標準では (callOI - putOI) × gamma を使うことが多い
-    // ここでは: callOI × callGamma - putOI × putGamma（プットはディーラー有利）
     const callG = bsGamma(spot, strike, T, e.callIV)
     const putG  = bsGamma(spot, strike, T, e.putIV)
     const gex   = (e.callOI * callG - e.putOI * putG) * SCALE
@@ -109,7 +103,7 @@ function findGammaFlip(bars: GexBar[]): number | null {
   return null
 }
 
-// ── CORS プロキシ経由フェッチ ─────────────────────────
+// ── フェッチ: API ルート優先 → CORS プロキシ fallback ─
 type ProxyDef = { url: (u: string) => string; parse: (r: Response) => Promise<unknown> }
 
 const parseRaw = async (r: Response): Promise<unknown> => {
@@ -146,65 +140,81 @@ async function fetchViaProxy(url: string): Promise<unknown> {
   throw new Error(lastErr)
 }
 
+async function fetchOptionsJson(): Promise<OptionsJson> {
+  // 1. Vercel serverless API（CORS なし・最も信頼性が高い）
+  try {
+    const res = await fetch('/api/gamma-options', { signal: AbortSignal.timeout(16000) })
+    if (res.ok) {
+      const data = await res.json() as OptionsJson
+      if (data?.optionChain?.result?.[0]) return data
+    }
+  } catch { /* fall through */ }
+
+  // 2. CORS プロキシ経由 query1 → query2
+  const Q1 = 'https://query1.finance.yahoo.com/v7/finance/options/%5EN225'
+  const Q2 = 'https://query2.finance.yahoo.com/v7/finance/options/%5EN225'
+  try {
+    return await fetchViaProxy(Q1) as OptionsJson
+  } catch {
+    return await fetchViaProxy(Q2) as OptionsJson
+  }
+}
+
 // ── キャッシュ ──────────────────────────────────────
 const CACHE_KEY = 'poical-gamma-profile'
 const CACHE_TTL = 30 * 60 * 1000  // 30分
 
 // ── メインエクスポート ────────────────────────────────
 export async function fetchGammaProfile(force = false): Promise<GammaProfileResult> {
-  if (!force) {
-    try {
-      const raw = localStorage.getItem(CACHE_KEY)
-      if (raw) {
-        const c = JSON.parse(raw) as { data: GammaProfileResult & { updatedAt: string }; fetchedAt: number }
-        if (Date.now() - c.fetchedAt < CACHE_TTL) {
-          return { ...c.data, updatedAt: new Date(c.data.updatedAt) }
-        }
-      }
-    } catch { /* ignore */ }
-  }
-
-  const Q1 = 'https://query1.finance.yahoo.com/v7/finance/options/%5EN225'
-  const Q2 = 'https://query2.finance.yahoo.com/v7/finance/options/%5EN225'
-  type OptionsJson = { optionChain?: { result?: RawOptionChain[] } }
-  let json: OptionsJson
+  // stale cache（期限切れでも保持・エラー時に使う）
+  let stale: GammaProfileResult | null = null
   try {
-    json = await fetchViaProxy(Q1) as OptionsJson
-  } catch {
-    json = await fetchViaProxy(Q2) as OptionsJson
-  }
-  const chain = json?.optionChain?.result?.[0]
-  if (!chain) throw new Error('オプションデータが取得できませんでした')
-
-  const spot = chain.quote?.regularMarketPrice ?? 0
-  if (!spot) throw new Error('日経225現在価格を取得できませんでした')
-
-  const opts = chain.options?.[0]
-  if (!opts) throw new Error('期近オプションデータがありません')
-
-  const T = timeToExpiryYears(opts.expirationDate ?? 0)
-  const expiryLabel = opts.expirationDate
-    ? new Date(opts.expirationDate * 1000).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
-    : '不明'
-
-  // ±15%フィルタ
-  const allBars = computeGexBars(spot, opts.calls ?? [], opts.puts ?? [], T)
-  const bars    = allBars.filter(b => b.strike >= spot * 0.85 && b.strike <= spot * 1.15)
-
-  const gammaFlip    = findGammaFlip(bars)
-  const posGexTotal  = Math.round(bars.reduce((s, b) => s + Math.max(0, b.gex), 0))
-  const negGexTotal  = Math.round(bars.reduce((s, b) => s + Math.min(0, b.gex), 0))
-  const netGex       = posGexTotal + negGexTotal
-
-  const result: GammaProfileResult = {
-    updatedAt: new Date(),
-    spot, expiryLabel, bars, gammaFlip,
-    posGexTotal, negGexTotal, netGex,
-  }
-
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: result, fetchedAt: Date.now() }))
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as { data: GammaProfileResult & { updatedAt: string }; fetchedAt: number }
+      const cached = { ...c.data, updatedAt: new Date(c.data.updatedAt) }
+      stale = cached
+      if (!force && Date.now() - c.fetchedAt < CACHE_TTL) return cached
+    }
   } catch { /* ignore */ }
 
-  return result
+  try {
+    const json = await fetchOptionsJson()
+    const chain = json?.optionChain?.result?.[0]
+    if (!chain) throw new Error('オプションデータが取得できませんでした')
+
+    const spot = chain.quote?.regularMarketPrice ?? 0
+    if (!spot) throw new Error('日経225現在価格を取得できませんでした')
+
+    const opts = chain.options?.[0]
+    if (!opts) throw new Error('期近オプションデータがありません')
+
+    const T = timeToExpiryYears(opts.expirationDate ?? 0)
+    const expiryLabel = opts.expirationDate
+      ? new Date(opts.expirationDate * 1000).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
+      : '不明'
+
+    const allBars = computeGexBars(spot, opts.calls ?? [], opts.puts ?? [], T)
+    const bars    = allBars.filter(b => b.strike >= spot * 0.85 && b.strike <= spot * 1.15)
+
+    const gammaFlip   = findGammaFlip(bars)
+    const posGexTotal = Math.round(bars.reduce((s, b) => s + Math.max(0, b.gex), 0))
+    const negGexTotal = Math.round(bars.reduce((s, b) => s + Math.min(0, b.gex), 0))
+    const netGex      = posGexTotal + negGexTotal
+
+    const result: GammaProfileResult = {
+      updatedAt: new Date(),
+      spot, expiryLabel, bars, gammaFlip,
+      posGexTotal, negGexTotal, netGex,
+    }
+
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ data: result, fetchedAt: Date.now() }))
+    } catch { /* ignore */ }
+
+    return result
+  } catch (e) {
+    if (stale) return stale  // ネットワークエラー時は期限切れキャッシュを返す
+    throw e
+  }
 }
