@@ -1,10 +1,12 @@
 import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
+import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
 import { MacroEventBadge } from './MacroEventBadge'
+import { AnomalyBadge } from './AnomalyBadge'
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -19,6 +21,7 @@ type Props = {
   getMarkers: (d: Date) => MarkerType[]
   getSqMarkers: (d: Date) => SqMarker[]
   getMacroEvents: (d: Date) => MacroEvent[]
+  getAnomalyEvents?: (d: Date) => AnomalyEvent[]
   isMarketClosed: (d: Date) => boolean
   getClosedReason: (d: Date) => string | null
   hasNote: (d: Date) => boolean
@@ -27,9 +30,11 @@ type Props = {
   theme?: 'dark' | 'light'
 }
 
-export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark' }: Props) {
+export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark' }: Props) {
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
+  const bandColor = band ? (isLight ? '#92400e' : band.color) : 'transparent'
+  const bandBg    = band ? (isLight ? 'rgba(180,83,9,0.07)' : band.bg) : 'transparent'
 
   return (
     <div style={styles.wrap}>
@@ -53,10 +58,11 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
           const isSat     = i % 7 === 6
           const dim       = !isCurrentMonth(d)
           const td        = isToday(d)
-          const markers   = getMarkers(d)
-          const sqMarkers = getSqMarkers(d)
-          const macroEvts = getMacroEvents(d)
-          const closed    = isMarketClosed(d)
+          const markers       = getMarkers(d)
+          const sqMarkers     = getSqMarkers(d)
+          const macroEvts     = getMacroEvents(d)
+          const anomalyEvts   = getAnomalyEvents?.(d) ?? []
+          const closed        = isMarketClosed(d)
           const reason    = getClosedReason(d)
           const showBadge  = closed && !isS && !isSat
           const noted      = hasNote(d)
@@ -118,6 +124,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
               <DividendMarker markers={markers} size="sm" />
               <SqMarkerBadge markers={sqMarkers} size="sm" theme={theme} />
               <MacroEventBadge events={macroEvts} size="sm" theme={theme} />
+              {!isMobile && <AnomalyBadge events={anomalyEvts} size="sm" theme={theme} />}
             </div>
           )
         })}
@@ -128,11 +135,11 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
         ...styles.seasonBanner,
         fontSize: isMobile ? 10 : 12,
         padding: isMobile ? '4px 8px' : '5px 12px',
-        borderColor: band ? band.color : 'transparent',
-        background: band ? band.bg : 'transparent',
+        borderColor: bandColor,
+        background: bandBg,
         visibility: band ? 'visible' : 'hidden',
       }}>
-        <span style={{ ...styles.seasonDot, background: band?.color ?? 'transparent', flexShrink: 0 }} />
+        <span style={{ ...styles.seasonDot, background: bandColor, flexShrink: 0 }} />
         <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0 6px', minWidth: 0 }}>
           {band && band.items.map((item, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -142,14 +149,14 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: band.color, fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  style={{ color: bandColor, fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
                   onClick={e => e.stopPropagation()}
                 >
                   {item.label}
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span style={{ color: band.color, fontWeight: 400, whiteSpace: 'nowrap' }}>{item.label}</span>
+                <span style={{ color: bandColor, fontWeight: 400, whiteSpace: 'nowrap' }}>{item.label}</span>
               )}
             </span>
           ))}

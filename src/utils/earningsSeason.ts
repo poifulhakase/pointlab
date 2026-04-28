@@ -10,6 +10,10 @@ export type MonthBand = {
   bg: string
 }
 
+// アンバー統一色（決算帯・アノマリー帯と同系）
+const AMBER = '#fbbf24'
+const AMBER_BG = 'rgba(251,191,36,0.07)'
+
 export const MONTH_BANDS: MonthBand[] = [
   {
     month: 1,
@@ -17,21 +21,21 @@ export const MONTH_BANDS: MonthBand[] = [
       { label: 'TOPIX 浮動株比率見直し（末日）', url: 'https://www.jpx.co.jp/markets/indices/revisions-indices/03.html' },
       { label: '3Q決算ピーク' },
     ],
-    color: '#38bdf8', bg: 'rgba(56,189,248,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 3,
     items: [
       { label: '日経平均 春の定期入替発表（上旬）', url: 'https://indexes.nikkei.co.jp/nkave/newsroom' },
     ],
-    color: '#fbbf24', bg: 'rgba(251,191,36,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 4,
     items: [
       { label: '日経平均 入替実施（第1営業日）', url: 'https://indexes.nikkei.co.jp/nkave/newsroom' },
     ],
-    color: '#fbbf24', bg: 'rgba(251,191,36,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 5,
@@ -39,7 +43,7 @@ export const MONTH_BANDS: MonthBand[] = [
       { label: 'MSCI 定期レビュー発表（中旬）', url: 'https://www.msci.com/index-review' },
       { label: '本決算ピーク' },
     ],
-    color: '#fb7185', bg: 'rgba(251,113,133,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 7,
@@ -47,21 +51,21 @@ export const MONTH_BANDS: MonthBand[] = [
       { label: 'TOPIX 浮動株比率見直し（末日）', url: 'https://www.jpx.co.jp/markets/indices/revisions-indices/03.html' },
       { label: '1Q決算ピーク' },
     ],
-    color: '#4ade80', bg: 'rgba(74,222,128,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 8,
     items: [
       { label: '1Q決算発表（中旬まで）', url: 'https://www.jpx.co.jp/listing/event-schedules/financial-announcement/index.html' },
     ],
-    color: '#4ade80', bg: 'rgba(74,222,128,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 9,
     items: [
       { label: '日経平均 秋の定期入替発表（上旬）', url: 'https://indexes.nikkei.co.jp/nkave/newsroom' },
     ],
-    color: '#fbbf24', bg: 'rgba(251,191,36,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 10,
@@ -69,14 +73,14 @@ export const MONTH_BANDS: MonthBand[] = [
       { label: '日経平均 入替実施（第1営業日）／ TOPIX定期入替', url: 'https://indexes.nikkei.co.jp/nkave/newsroom' },
       { label: '中間決算ピーク' },
     ],
-    color: '#fb923c', bg: 'rgba(251,146,60,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
   {
     month: 11,
     items: [
       { label: 'MSCI 定期レビュー発表（中旬）', url: 'https://www.msci.com/index-review' },
     ],
-    color: '#a78bfa', bg: 'rgba(167,139,250,0.07)',
+    color: AMBER, bg: AMBER_BG,
   },
 ]
 

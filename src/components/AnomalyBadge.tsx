@@ -1,21 +1,21 @@
 import { useState } from 'react'
-import { type MacroEvent, type MacroEventType, MACRO_META, MACRO_COLOR, MACRO_BG, MACRO_COLOR_LIGHT, MACRO_BG_LIGHT } from '../utils/macroCalendar'
+import { type AnomalyEvent, ANOMALY_META, ANOMALY_COLOR, ANOMALY_BG, ANOMALY_COLOR_LIGHT, ANOMALY_BG_LIGHT } from '../utils/anomalyCalendar'
 import { BadgePopup } from './BadgePopup'
 
 type Props = {
-  events: MacroEvent[]
+  events: AnomalyEvent[]
   size?: 'sm' | 'md'
   theme?: 'dark' | 'light'
 }
 
-type PopupState = { type: MacroEventType; x: number; y: number }
+type PopupState = { key: string; x: number; y: number }
 
-export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) {
+export function AnomalyBadge({ events, size = 'md', theme = 'dark' }: Props) {
   const [popup, setPopup] = useState<PopupState | null>(null)
   const isSm = size === 'sm'
   const isLight = theme === 'light'
-  const badgeColor = isLight ? MACRO_COLOR_LIGHT : MACRO_COLOR
-  const badgeBg    = isLight ? MACRO_BG_LIGHT    : MACRO_BG
+  const badgeColor = isLight ? ANOMALY_COLOR_LIGHT : ANOMALY_COLOR
+  const badgeBg    = isLight ? ANOMALY_BG_LIGHT    : ANOMALY_BG
 
   if (events.length === 0) return null
 
@@ -23,32 +23,33 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
         {events.map((e, i) => {
-          const meta = MACRO_META[e.type]
+          const meta = ANOMALY_META[e.type]
           return (
             <span
               key={i}
               style={{
                 display: 'inline-block',
-                fontSize: isSm ? 11 : 12,
+                fontSize: isSm ? 10 : 11,
                 fontWeight: 600,
                 letterSpacing: '0.03em',
-                color: isLight ? badgeColor : 'rgba(255,255,255,0.95)',
+                color: isLight ? badgeColor : 'rgba(255,255,255,0.92)',
                 background: badgeBg,
-                border: `1px solid ${badgeColor}${isLight ? 'cc' : '99'}`,
+                border: `1px solid ${badgeColor}${isLight ? 'cc' : '88'}`,
                 borderRadius: 4,
-                padding: isSm ? '1px 4px' : '3px 7px',
+                padding: isSm ? '1px 4px' : '2px 6px',
                 lineHeight: 1.5,
                 whiteSpace: 'nowrap',
-                boxShadow: `0 1px 4px ${badgeColor}30`,
+                boxShadow: `0 1px 4px ${badgeColor}28`,
                 cursor: 'pointer',
               }}
               onClick={ev => {
                 ev.stopPropagation()
                 const rect = ev.currentTarget.getBoundingClientRect()
-                setPopup(prev => prev?.type === e.type ? null : { type: e.type, x: rect.left, y: rect.bottom + 6 })
+                const key = e.type
+                setPopup(prev => prev?.key === key ? null : { key, x: rect.left, y: rect.bottom + 6 })
               }}
             >
-              {isSm ? meta.short : meta.label}
+              {meta.label}
             </span>
           )
         })}
@@ -58,8 +59,8 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
         <BadgePopup
           x={popup.x} y={popup.y}
           color={badgeColor}
-          label={MACRO_META[popup.type].label}
-          desc={MACRO_META[popup.type].desc}
+          label={ANOMALY_META[popup.key as keyof typeof ANOMALY_META].label}
+          desc={ANOMALY_META[popup.key as keyof typeof ANOMALY_META].desc}
           onClose={() => setPopup(null)}
         />
       )}

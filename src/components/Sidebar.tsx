@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { ClockWidget } from './ClockWidget'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
-import { type MacroFilter } from '../utils/macroCalendar'
+import { type MacroFilter, MACRO_COLOR } from '../utils/macroCalendar'
+import { ANOMALY_COLOR } from '../utils/anomalyCalendar'
 
 type Props = {
   current?: Date
@@ -17,14 +18,16 @@ type Props = {
   onStickyNotesSaved: (notes: StickyNote[]) => void
   showPrivate: boolean
   onShowPrivateChange: (v: boolean) => void
+  showAnomaly: boolean
+  onShowAnomalyChange: (v: boolean) => void
 }
 
-const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color: string }[] = [
-  { key: 'us', label: '米国',  sub: 'FOMC・雇用統計・CPI・PCE・GDP', color: '#f59e0b' },
-  { key: 'jp', label: '日本',  sub: '日銀決定会合・短観',             color: '#f87171' },
+const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string }[] = [
+  { key: 'us', label: '米国',  sub: 'FOMC・雇用統計・CPI・PCE・GDP' },
+  { key: 'jp', label: '日本',  sub: '日銀決定会合・短観' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -209,8 +212,8 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span
                 style={{
                   ...styles.customCheckbox,
-                  background: macroFilter[item.key] ? item.color : 'transparent',
-                  borderColor: macroFilter[item.key] ? item.color : 'var(--text-dim)',
+                  background: macroFilter[item.key] ? MACRO_COLOR : 'transparent',
+                  borderColor: macroFilter[item.key] ? MACRO_COLOR : 'var(--text-dim)',
                 }}
                 onClick={() => onMacroFilterChange({ ...macroFilter, [item.key]: !macroFilter[item.key] })}
               >
@@ -230,6 +233,34 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               </span>
             </label>
           ))}
+
+          {/* アノマリー（PC限定・月ビューのみ） */}
+          {!isMobile && (
+            <label style={styles.filterRow}>
+              <span
+                style={{
+                  ...styles.customCheckbox,
+                  background: showAnomaly ? ANOMALY_COLOR : 'transparent',
+                  borderColor: showAnomaly ? ANOMALY_COLOR : 'var(--text-dim)',
+                }}
+                onClick={() => onShowAnomalyChange(!showAnomaly)}
+              >
+                {showAnomaly && (
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </span>
+              <span style={styles.filterLabel} onClick={() => onShowAnomalyChange(!showAnomaly)}>
+                <span style={{ ...styles.filterCountry, color: showAnomaly ? 'var(--text)' : 'var(--text-dim)' }}>
+                  アノマリー
+                </span>
+                <span style={{ ...styles.filterSub, color: showAnomaly ? 'var(--text-sub)' : 'var(--text-dim)' }}>
+                  節分天井・彼岸底・セルインメイ等
+                </span>
+              </span>
+            </label>
+          )}
         </div>
 
         </div>

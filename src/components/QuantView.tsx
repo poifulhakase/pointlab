@@ -777,6 +777,10 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
   const [ntData, setNtData] = useState<NtRatioPoint[]>([])
   const [ntLoaded, setNtLoaded] = useState(false)
+  const handleNtDataLoaded = useCallback((d: NtRatioPoint[]) => {
+    setNtData(d)
+    setNtLoaded(true)
+  }, [])
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
 
@@ -990,7 +994,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
                 <span style={s.panelSub}>日経225 ÷ S&amp;P500（日足・約15分遅延）</span>
               </div>
             </div>
-            <NtRatioPanel theme={theme} onDataLoaded={(d) => { setNtData(d); setNtLoaded(true) }} />
+            <NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} />
           </div>
 
         </div>
