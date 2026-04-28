@@ -17,10 +17,10 @@ export type AnomalyEvent = {
   isEnd: boolean
 }
 
-export const ANOMALY_COLOR  = '#fbbf24'
-export const ANOMALY_COLOR_LIGHT = '#92400e'
-export const ANOMALY_BG     = 'rgba(251,191,36,0.20)'
-export const ANOMALY_BG_LIGHT = 'rgba(180,83,9,0.13)'
+export const ANOMALY_COLOR       = '#60a5fa'
+export const ANOMALY_COLOR_LIGHT = '#1d4ed8'
+export const ANOMALY_BG          = 'rgba(96,165,250,0.15)'
+export const ANOMALY_BG_LIGHT    = 'rgba(29,78,216,0.10)'
 
 export const ANOMALY_META: Record<AnomalyType, { label: string; desc: string }> = {
   january_effect: {

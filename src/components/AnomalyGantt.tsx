@@ -24,13 +24,8 @@ const COL_COUNT = 7
 const BAR_H    = 17
 const BAR_GAP  = 3
 
-const TYPE_COLOR: Partial<Record<AnomalyType, string>> = {
-  xmas_rally:       '#60a5fa',
-  tax_loss_selling: '#f87171',
-}
-
-function typeColor(type: AnomalyType, isLight: boolean): string {
-  return TYPE_COLOR[type] ?? (isLight ? ANOMALY_COLOR_LIGHT : ANOMALY_COLOR)
+function typeColor(_type: AnomalyType, isLight: boolean): string {
+  return isLight ? ANOMALY_COLOR_LIGHT : ANOMALY_COLOR
 }
 
 export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) {
