@@ -1,13 +1,9 @@
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
-import {
-  computeMicroVectors,
-  type FuturesParticipantDayData,
-  type MicroVector,
-} from '../utils/futuresParticipantsData'
+import type { FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 
 type Props = {
   theme:    'dark' | 'light'
@@ -26,16 +22,6 @@ function fmt(v: number | null): string {
   return (v > 0 ? '+' : '') + v.toLocaleString()
 }
 
-function dirIcon(dir: MicroVector['direction']): string {
-  return dir === 'bear' ? '▼' : dir === 'bull' ? '▲' : '—'
-}
-
-function dirColor(dir: MicroVector['direction'], theme: 'dark' | 'light'): string {
-  if (dir === 'bear') return theme === 'dark' ? 'rgba(255,120,100,0.95)' : 'rgba(200,50,30,0.9)'
-  if (dir === 'bull') return theme === 'dark' ? 'rgba(96,200,140,0.95)'  : 'rgba(22,130,80,0.9)'
-  return 'var(--text-dim)'
-}
-
 function cellBg(v: number | null, theme: 'dark' | 'light'): string {
   if (!v) return 'transparent'
   if (v > 0) return theme === 'dark' ? 'rgba(96,200,140,0.10)' : 'rgba(22,130,80,0.07)'
@@ -48,44 +34,136 @@ function cellColor(v: number | null, theme: 'dark' | 'light'): string {
   return theme === 'dark' ? 'rgba(255,120,100,0.95)' : 'rgba(200,50,30,0.9)'
 }
 
+// ── タンク定義 ──────────────────────────────────────
+type TankGroup = 'trend' | 'gravity' | 'noise'
 
-const VECTORS = [
-  {
-    key:   'trend'   as const,
-    label: '海外大口',
-    sub:   '海外勢コンセンサス',
-    firms: 'ゴールドマン・サックス + JPモルガン',
-    icon:  (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>
-      </svg>
-    ),
-  },
-  {
-    key:   'gravity' as const,
-    label: '裁定売り',
-    sub:   '裁定解消圧力',
-    firms: 'ソシエテ・ジェネラル + バークレイズ',
-    icon:  (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-      </svg>
-    ),
-  },
-  {
-    key:   'noise'   as const,
-    label: '個人逆張り',
-    sub:   '攪乱・逆張り要因',
-    firms: 'ABNアムロ + 野村証券',
-    icon:  (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-      </svg>
-    ),
-  },
+type TankFirm = {
+  firm:           string
+  firmShort:      string
+  group:          TankGroup
+  cumulativeLots: number  // 限月累積ネット建玉（枚）
+  delta:          number  // 前日比
+  maxCapacity:    number  // 過去1年最大 × 1.2
+}
+
+const GROUP_META: Record<TankGroup, { label: string; color: string; desc: string }> = {
+  trend:   { label: 'Trend',   color: '#60a5fa', desc: '海外大口' },
+  gravity: { label: 'Gravity', color: '#fb923c', desc: '裁定解消' },
+  noise:   { label: 'Noise',   color: '#a78bfa', desc: '個人逆張り' },
+}
+
+// ダミーデータ（実データ取得実装まで）
+const TANK_DUMMIES: TankFirm[] = [
+  { firm: 'Goldman Sachs', firmShort: 'GS',       group: 'trend',   cumulativeLots: -5000, delta:  -700, maxCapacity: 12000 },
+  { firm: 'JP Morgan',     firmShort: 'JPM',      group: 'trend',   cumulativeLots: -2800, delta:  -350, maxCapacity:  8000 },
+  { firm: 'SG',            firmShort: 'SG',       group: 'gravity', cumulativeLots: -3700, delta:  -500, maxCapacity: 10000 },
+  { firm: 'Barclays',      firmShort: 'Barclays', group: 'gravity', cumulativeLots: -1800, delta:  -200, maxCapacity:  6000 },
+  { firm: 'ABN AMRO',      firmShort: 'ABN',      group: 'noise',   cumulativeLots:  1400, delta:   290, maxCapacity:  5000 },
+  { firm: '野村証券',       firmShort: '野村',     group: 'noise',   cumulativeLots:   900, delta:   150, maxCapacity:  4000 },
 ]
 
+// ── タンクカード ──────────────────────────────────────
+function TankCard({ firmShort, group, cumulativeLots, delta, maxCapacity, theme }: TankFirm & { theme: 'dark' | 'light' }) {
+  const isLight   = theme === 'light'
+  const waterLevel = Math.min(Math.abs(cumulativeLots) / maxCapacity * 100, 105)
+  const isShort   = cumulativeLots <= 0
+  const groupColor = GROUP_META[group].color
+  const isOverflow = waterLevel >= 100
+
+  const liquidColor = isShort
+    ? (isLight ? 'rgba(239,68,68,0.45)' : 'rgba(239,68,68,0.40)')
+    : (isLight ? 'rgba(52,211,153,0.45)' : 'rgba(52,211,153,0.40)')
+  const liquidBorder = isShort ? 'rgba(239,68,68,0.80)' : 'rgba(52,211,153,0.80)'
+
+  const numColor = isShort
+    ? (isLight ? 'rgba(200,50,30,0.9)' : 'rgba(255,120,100,0.95)')
+    : (isLight ? 'rgba(22,130,80,0.9)' : 'rgba(96,200,140,0.95)')
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
+
+      {/* 社名 */}
+      <div style={{ fontSize: 10, fontWeight: 700, color: groupColor, textAlign: 'center', whiteSpace: 'nowrap' }}>
+        {firmShort}
+      </div>
+
+      {/* タンク本体 */}
+      <div style={{
+        width: '100%', maxWidth: 68, height: 116,
+        position: 'relative',
+        borderRadius: '5px 5px 9px 9px',
+        border: `1.5px solid ${groupColor}45`,
+        background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
+        overflow: 'hidden',
+      }}>
+        {/* 液体 */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: `${Math.min(waterLevel, 100)}%`,
+          background: liquidColor,
+          borderTop: `2px solid ${liquidBorder}`,
+          transition: 'height 0.9s cubic-bezier(0.4,0,0.2,1)',
+        }}>
+          {/* 水面シマー */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+            background: `linear-gradient(90deg, transparent 0%, ${liquidBorder} 50%, transparent 100%)`,
+            animation: 'tankShimmer 3s ease-in-out infinite',
+          }} />
+        </div>
+
+        {/* オーバーフロー警告 */}
+        {isOverflow && (
+          <div style={{
+            position: 'absolute', top: 3, left: 0, right: 0,
+            textAlign: 'center', fontSize: 8, fontWeight: 900,
+            color: isShort ? 'rgba(255,80,80,0.95)' : 'rgba(52,211,153,0.95)',
+            letterSpacing: 1,
+          }}>MAX!</div>
+        )}
+
+        {/* % ラベル */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 13, fontWeight: 800, letterSpacing: '-0.5px',
+          color: waterLevel > 52
+            ? 'rgba(255,255,255,0.92)'
+            : (isLight ? 'rgba(0,0,0,0.60)' : 'rgba(255,255,255,0.60)'),
+          textShadow: waterLevel > 52 ? '0 1px 4px rgba(0,0,0,0.5)' : 'none',
+          pointerEvents: 'none',
+        }}>
+          {waterLevel.toFixed(1)}%
+        </div>
+
+        {/* 目盛り (25/50/75%) */}
+        {[25, 50, 75].map(pct => (
+          <div key={pct} style={{
+            position: 'absolute', right: 0, bottom: `${pct}%`,
+            width: 5, height: 1,
+            background: isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.18)',
+          }} />
+        ))}
+      </div>
+
+      {/* 累積枚数 */}
+      <div style={{ fontSize: 13, fontWeight: 800, color: numColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+        {cumulativeLots > 0 ? '+' : ''}{cumulativeLots.toLocaleString()}
+      </div>
+      <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: -2 }}>枚</div>
+
+      {/* 前日比 */}
+      <div style={{
+        fontSize: 10, fontVariantNumeric: 'tabular-nums',
+        color: delta < 0 ? 'rgba(255,120,100,0.75)' : 'rgba(96,200,140,0.75)',
+      }}>
+        {delta > 0 ? '+' : ''}{delta.toLocaleString()}枚
+      </div>
+    </div>
+  )
+}
+
+// ── テーブル列定義 ────────────────────────────────────
 const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '日付' },
   { label: 'ゴールドマン・サックス' },
@@ -99,7 +177,7 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '裁定売り', sub: '合計', isTotal: true },
 ]
 
-// ── クオンツ分析レポート（左カラム上段） ─────────────
+// ── クオンツ分析メモパネル ────────────────────────────
 const QUANT_MEMO_KEY = 'poical-quant-memo'
 const QUANT_MEMO_FS_PATH = (uid: string) => `users/${uid}/data/quantMemo`
 
@@ -109,7 +187,6 @@ function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
   const memoIsDirty = quantMemo !== savedMemo
 
-  // ログイン/ログアウト時に Firestore からロード
   useEffect(() => {
     if (!user) {
       const local = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
@@ -148,7 +225,6 @@ function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* ヘッダー */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '7px 14px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)',
@@ -177,24 +253,16 @@ function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }
           </button>
         </div>
       </div>
-      {/* テキストエリア */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
         <textarea
           value={quantMemo}
           onChange={e => setQuantMemo(e.target.value)}
           placeholder="AI分析レポート・トレードメモを入力…"
           style={{
-            flex: 1,
-            resize: 'none',
-            background: 'transparent',
-            color: 'var(--text)',
-            border: 'none',
-            outline: 'none',
-            padding: '12px 14px',
-            fontSize: 13,
-            lineHeight: 1.8,
-            fontFamily: 'inherit',
-            overflowY: 'auto',
+            flex: 1, resize: 'none', background: 'transparent',
+            color: 'var(--text)', border: 'none', outline: 'none',
+            padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+            fontFamily: 'inherit', overflowY: 'auto',
           }}
         />
       </div>
@@ -202,14 +270,19 @@ function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }
   )
 }
 
-// ── メインコンポーネント ──────────────────────────
+// ── メインコンポーネント ──────────────────────────────
 export function MicroQuantView({ theme, isMobile, data, loading, error, onReload, user }: Props) {
   const tv = themeVars(theme)
-  const vectors = useMemo(() => computeMicroVectors(data), [data])
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
 
   return (
     <div style={{ ...tv, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <style>{`
+        @keyframes tankShimmer {
+          0%, 100% { opacity: 0.3; transform: translateX(-40%); }
+          50%       { opacity: 1;   transform: translateX(40%);  }
+        }
+      `}</style>
 
       {/* ── ヘッダー ── */}
       <div style={s.topBar} className="glass">
@@ -237,11 +310,10 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
       {/* ── ボディ ── */}
       <div style={{
         flex: 1, overflow: isMobile ? 'auto' : 'hidden', minHeight: 0,
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
+        display: 'flex', flexDirection: isMobile ? 'column' : 'row',
       }}>
 
-        {/* ━━ 左カラム（2/3）: 証券会社別先物手口 ━━ */}
+        {/* ━━ 左カラム（2/3）━━ */}
         <div style={{
           ...(isMobile
             ? { flexShrink: 0, display: 'flex', flexDirection: 'column' }
@@ -268,54 +340,41 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
               </div>
             ) : (
               <>
-                {/* ── ベクター3枚カード ── */}
-                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10 }}>
-                  {VECTORS.map(def => {
-                    const v   = vectors?.[def.key]
-                    const dir = v?.direction ?? 'neutral'
-                    const ac  = dirColor(dir, theme)
-                    const cardBg = dir === 'bear'
-                      ? (theme === 'dark' ? 'rgba(255,80,60,0.06)'  : 'rgba(200,50,30,0.04)')
-                      : dir === 'bull'
-                        ? (theme === 'dark' ? 'rgba(60,200,140,0.06)' : 'rgba(22,130,80,0.04)')
-                        : 'transparent'
-
+                {/* ── 6連タンク ── */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: 8,
+                }}>
+                  {(['trend', 'gravity', 'noise'] as const).map(group => {
+                    const firms = TANK_DUMMIES.filter(t => t.group === group)
+                    const meta  = GROUP_META[group]
                     return (
-                      <div key={def.key} style={{ ...s.vCard, background: cardBg, flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                          <span style={{ color: 'var(--accent)', display: 'flex' }}>{def.icon}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)' }}>{def.label}</span>
-                        </div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-sub)' }}>{def.firms}</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 10 }}>{def.sub}</div>
-
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                          <span style={{ fontSize: 20, fontWeight: 800, color: ac, lineHeight: 1 }}>{dirIcon(dir)}</span>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: ac, fontVariantNumeric: 'tabular-nums' }}>
-                            {v ? v.netLots.toLocaleString() : '—'}
+                      <div key={group} style={{
+                        flex: 1,
+                        display: 'flex', flexDirection: 'column', gap: 10,
+                        padding: '10px 12px',
+                        borderRadius: 12,
+                        border: `1px solid ${meta.color}28`,
+                        background: theme === 'dark' ? `${meta.color}07` : `${meta.color}04`,
+                      }}>
+                        {/* グループヘッダー */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ flex: 1, height: 1, background: `${meta.color}35` }} />
+                          <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, letterSpacing: 0.5 }}>
+                            {meta.label}
                           </span>
-                          <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>枚</span>
+                          <span style={{ fontSize: 9, color: 'var(--text-dim)' }}>{meta.desc}</span>
+                          <div style={{ flex: 1, height: 1, background: `${meta.color}35` }} />
                         </div>
-
-                        {v?.dayOverDay != null && (
-                          <div style={{ fontSize: 10, marginTop: 3, color: v.dayOverDay < 0 ? 'rgba(255,120,100,0.8)' : 'rgba(96,200,140,0.8)' }}>
-                            前日比 {v.dayOverDay > 0 ? '+' : ''}{v.dayOverDay.toLocaleString()}枚
-                          </div>
-                        )}
-
-                        <div style={{ marginTop: 10, height: 3, background: 'var(--border-dim)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{
-                            height: '100%', borderRadius: 2, background: ac,
-                            width: `${Math.min(Math.abs(v?.netLots ?? 0) / 80, 100)}%`,
-                            transition: 'width 0.5s ease',
-                          }} />
+                        {/* タンク2本 */}
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          {firms.map(f => <TankCard key={f.firmShort} {...f} theme={theme} />)}
                         </div>
                       </div>
                     )
                   })}
                 </div>
-
-                {/* 需給圧力スコア: UI非表示（computeMicroVectors は維持） */}
 
                 {/* ── 日次手口テーブル ── */}
                 <div style={{ ...s.tableCard, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -342,9 +401,9 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                       </thead>
                       <tbody>
                         {data.map((row, i) => {
-                          const trendT   = (row.GS   ?? 0) + (row.JPM   ?? 0)
-                          const noiseT   = (row.AMRO  ?? 0) + (row.Nomura ?? 0)
-                          const gravityT = (row.SG    ?? 0) + (row.Barclays ?? 0) + (row.BNP ?? 0)
+                          const trendT   = (row.GS      ?? 0) + (row.JPM      ?? 0)
+                          const noiseT   = (row.AMRO    ?? 0) + (row.Nomura   ?? 0)
+                          const gravityT = (row.SG      ?? 0) + (row.Barclays ?? 0) + (row.BNP ?? 0)
                           const cells: (number | null)[] = [
                             row.GS, row.JPM, trendT,
                             row.AMRO, row.Nomura, noiseT,
@@ -377,7 +436,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
 
                 {/* 注記 */}
                 <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
-                  ※ データは日次。ネット枚数 = 買建 − 売建。裁定売り は裁定買い残の解消（物理的売り圧力）の進捗を示す。スコアは 海外大口・裁定売り の売り越し強度から算出し 個人逆張り で補正。
+                  ※ タンク水位 = |累積ネット建玉| ÷ 過去1年最大値×1.2。SQ日に限月リセット。赤=売り越し・緑=買い越し。
                 </div>
               </>
             )}
@@ -418,12 +477,6 @@ const s: Record<string, React.CSSProperties> = {
   center:   { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 },
   spinner:  { width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--border-dim)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' },
   retryBtn: { padding: '6px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'var(--accent-glass)', border: '1px solid var(--accent)', color: '#fff', cursor: 'pointer' },
-
-  vCard: {
-    padding: '14px 16px', borderRadius: 12,
-    border: '1px solid var(--glass-border)',
-    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-  },
   tableCard: {
     borderRadius: 12, border: '1px solid var(--glass-border)',
     overflow: 'hidden',
