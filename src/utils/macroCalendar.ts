@@ -29,7 +29,7 @@ export const MACRO_META: Record<MacroEventType, {
   fomc:   { color: MACRO_COLOR, bg: MACRO_BG, colorLight: MACRO_COLOR_LIGHT, bgLight: MACRO_BG_LIGHT,
     short: 'FOMC',    label: 'FOMC（声明発表）',         category: 'us',
     desc: 'FRB（連邦準備制度理事会）が年8回開催する金融政策会合。政策金利の変更・維持を決定し声明文を発表。株・債券・為替すべてに大きな影響を与える。' },
-  boj:    { color: MACRO_JP_COLOR, bg: MACRO_JP_BG, colorLight: MACRO_JP_COLOR_LIGHT, bgLight: MACRO_JP_BG_LIGHT,
+  boj:    { color: MACRO_COLOR, bg: MACRO_BG, colorLight: MACRO_COLOR_LIGHT, bgLight: MACRO_BG_LIGHT,
     short: '日銀',    label: '日銀政策決定会合',         category: 'jp',
     desc: '日本銀行が年8回開催する金融政策決定会合。政策金利や資産買い入れ方針を決定。円相場・日本株に直接影響する。' },
   nfp:    { color: MACRO_COLOR, bg: MACRO_BG, colorLight: MACRO_COLOR_LIGHT, bgLight: MACRO_BG_LIGHT,
@@ -44,7 +44,7 @@ export const MACRO_META: Record<MacroEventType, {
   gdp:    { color: MACRO_COLOR, bg: MACRO_BG, colorLight: MACRO_COLOR_LIGHT, bgLight: MACRO_BG_LIGHT,
     short: 'GDP',     label: '米GDP速報値',              category: 'us',
     desc: '米商務省が四半期ごとに発表するGDP速報値。米国経済の成長率を示す最重要統計。景気後退（2四半期連続マイナス）の判断基準にもなる。' },
-  tankan: { color: MACRO_JP_COLOR, bg: MACRO_JP_BG, colorLight: MACRO_JP_COLOR_LIGHT, bgLight: MACRO_JP_BG_LIGHT,
+  tankan: { color: MACRO_COLOR, bg: MACRO_BG, colorLight: MACRO_COLOR_LIGHT, bgLight: MACRO_BG_LIGHT,
     short: '短観',    label: '日銀短観',                 category: 'jp',
     desc: '日本銀行が四半期ごとに発表する企業短期経済観測調査。大企業・中小企業の景況感（DI）を数値化。日本経済の体温計として機関投資家が注目する。' },
 }
