@@ -1,0 +1,43 @@
+name: Fetch market data
+
+on:
+  schedule:
+    # 毎週月曜〜金曜 08:30 JST (23:30 UTC) に実行
+    # JPXは前週データを週後半〜翌週初に公開するため月曜朝が最適
+    - cron: '30 23 * * 0-4'
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch JPX data
+        run: npm run fetch-data
+        continue-on-error: true  # 一部失敗しても続行
+
+      - name: Commit updated data files
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/*.json
+          if git diff --cached --quiet; then
+            echo "データ変更なし（スキップ）"
+          else
+            git commit -m "chore: auto-update market data [skip ci]"
+            git push
+          fi
