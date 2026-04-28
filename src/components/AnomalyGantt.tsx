@@ -112,9 +112,9 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
                 height:      BAR_H,
                 marginBottom: BAR_GAP + seg.lane * (BAR_H + BAR_GAP),
                 background:  isActive
-                  ? (isLight ? `${color}44` : `${color}50`)
-                  : (isLight ? `${color}22` : `${color}28`),
-                border:      `1px solid ${color}${isLight ? 'cc' : '90'}`,
+                  ? (isLight ? `${color}30` : `${color}38`)
+                  : (isLight ? `${color}14` : `${color}18`),
+                border:      `1px solid ${color}${isLight ? '70' : '48'}`,
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

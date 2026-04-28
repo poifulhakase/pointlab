@@ -151,6 +151,11 @@ function arbTextColor(val: number, q1: number, q3: number, theme: 'dark' | 'ligh
   return balTextColor(val, q1, q3, true, theme)
 }
 
+function withYear(label: string, date: string): string {
+  const year = parseInt(date.slice(0, 4))
+  return year !== new Date().getFullYear() ? `${year}/${label}` : label
+}
+
 // ── 3指標統合テーブル ─────────────────────────────
 type CombinedRow = {
   date: string
@@ -1041,7 +1046,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
                         return marData.map((row, i) => (
                           <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
                             <td style={mTdDate}>
-                              <div style={s.dateMain}>{row.label}</div>
+                              <div style={s.dateMain}>{withYear(row.label, row.date)}</div>
                               <div style={s.dateSub}>{row.date}</div>
                             </td>
                             <td style={{ ...mTd, ...s.tdNum, background: balBg(row.longBal, longQ1, longQ3, true, theme) }}>
