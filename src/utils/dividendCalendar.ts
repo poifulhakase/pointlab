@@ -117,7 +117,7 @@ export function getMarkersForDate(date: Date, sets: DividendDateSet[]): MarkerTy
 // ---- 表示設定 ----
 
 export const MARKER_META: Record<MarkerType, { label: string; desc: string; short: string; color: string; bg: string }> = {
-  saishu:  { label: '権利付最終日', desc: 'この日までに買えば配当取得', short: '権付', color: '#34d399', bg: 'rgba(52,211,153,0.18)'  },
-  ochi:    { label: '権利落ち日',   desc: 'この日から権利なしで取引',   short: '権落', color: '#fb923c', bg: 'rgba(251,146,60,0.18)'  },
-  kakutei: { label: '権利確定日',   desc: '株主として名簿に確定',       short: '権確', color: '#f472b6', bg: 'rgba(244,114,182,0.18)' },
+  saishu:  { label: '権利付最終日', desc: 'この日までに買えば配当取得', short: '権付', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)' },
+  ochi:    { label: '権利落ち日',   desc: 'この日から権利なしで取引',   short: '権落', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)' },
+  kakutei: { label: '権利確定日',   desc: '株主として名簿に確定',       short: '権確', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)' },
 }
