@@ -454,21 +454,22 @@ export default function App() {
 
               {/* 日/週/月 スワイプカルーセル */}
               <div
-                style={{ flex: 1, overflow: 'hidden', display: 'flex', minHeight: 0 }}
+                style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}
                 onTouchStart={handleCalTouchStart}
                 onTouchMove={handleCalTouchMove}
                 onTouchEnd={handleCalTouchEnd}
               >
                 <div style={{
-                  display: 'flex', minHeight: 0,
+                  position: 'absolute',
+                  top: 0, left: 0, bottom: 0,
                   width: '300%',
-                  height: '100%',
+                  display: 'flex',
                   transform: `translateX(calc(-${calPanelIndex * 33.333}% + ${calDragOffset}px))`,
                   transition: calDragOffset !== 0 ? 'none' : 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
                   willChange: 'transform',
                 }}>
                   {/* Panel 0: 日 */}
-                  <div style={{ width: '33.333%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                  <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     <DayView
                       date={cal.current} isToday={cal.isToday}
                       getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
@@ -479,7 +480,7 @@ export default function App() {
                   </div>
 
                   {/* Panel 1: 週 */}
-                  <div style={{ width: '33.333%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                  <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     <WeekView
                       days={cal.getWeekDays()} current={cal.current} isToday={cal.isToday}
                       getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
@@ -490,7 +491,7 @@ export default function App() {
                   </div>
 
                   {/* Panel 2: 月 */}
-                  <div style={{ width: '33.333%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                  <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     <MonthView
                       days={cal.getMonthGrid()} today={cal.today} current={cal.current}
                       isToday={cal.isToday} isCurrentMonth={cal.isCurrentMonth}
