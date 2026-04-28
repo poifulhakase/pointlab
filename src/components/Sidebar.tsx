@@ -401,5 +401,7 @@ const styles: Record<string, React.CSSProperties> = {
   filterSub: {
     fontSize: 10,
     transition: 'color 0.15s',
+    whiteSpace: 'normal' as const,
+    lineHeight: 1.5,
   },
 }
