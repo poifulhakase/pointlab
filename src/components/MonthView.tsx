@@ -6,7 +6,7 @@ import { getMonthBand } from '../utils/earningsSeason'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
 import { MacroEventBadge } from './MacroEventBadge'
-import { AnomalyBadge } from './AnomalyBadge'
+import { AnomalyGantt } from './AnomalyGantt'
 
 const DOW = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -52,7 +52,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
       </div>
 
       {/* 日付グリッド */}
-      <div style={styles.grid}>
+      <div style={{ ...styles.grid, position: 'relative' }}>
         {days.map((d, i) => {
           const isS       = i % 7 === 0
           const isSat     = i % 7 === 6
@@ -61,7 +61,6 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
           const markers       = getMarkers(d)
           const sqMarkers     = getSqMarkers(d)
           const macroEvts     = getMacroEvents(d)
-          const anomalyEvts   = getAnomalyEvents?.(d) ?? []
           const closed        = isMarketClosed(d)
           const reason    = getClosedReason(d)
           const showBadge  = closed && !isS && !isSat
@@ -124,10 +123,14 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
               <DividendMarker markers={markers} size="sm" />
               <SqMarkerBadge markers={sqMarkers} size="sm" theme={theme} />
               <MacroEventBadge events={macroEvts} size="sm" theme={theme} />
-              {!isMobile && <AnomalyBadge events={anomalyEvts} size="sm" theme={theme} />}
             </div>
           )
         })}
+
+        {/* アノマリーガント（PC限定・グリッドオーバーレイ） */}
+        {!isMobile && getAnomalyEvents && (
+          <AnomalyGantt days={days} getAnomalyEvents={getAnomalyEvents} theme={theme} />
+        )}
       </div>
 
       {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}

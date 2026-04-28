@@ -24,7 +24,7 @@ type Props = {
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string }[] = [
   { key: 'us', label: '米国',  sub: 'FOMC・雇用統計・CPI・PCE・GDP' },
-  { key: 'jp', label: '日本',  sub: '日銀決定会合・短観' },
+  { key: 'jp', label: '日本',  sub: '日銀決定会合・短観・メジャーSQ・ミニSQ・権利付最終日・権利落ち日・権利確定日' },
 ]
 
 export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange }: Props) {

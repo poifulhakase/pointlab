@@ -245,8 +245,8 @@ export default function App() {
     [...getSqDates(year - 1), ...getSqDates(year), ...getSqDates(year + 1)],
     [year])
 
-  const getMarkers     = useCallback((d: Date) => getMarkersForDate(d, dividendSets), [dividendSets])
-  const getSqMarkers   = useCallback((d: Date) => getSqMarkersForDate(d, sqDates),    [sqDates])
+  const getMarkers     = useCallback((d: Date) => macroFilter.jp ? getMarkersForDate(d, dividendSets) : [], [dividendSets, macroFilter.jp])
+  const getSqMarkers   = useCallback((d: Date) => macroFilter.jp ? getSqMarkersForDate(d, sqDates) : [],    [sqDates, macroFilter.jp])
   const getMacroEvents = useCallback((d: Date) => getMacroEventsForDate(d, macroFilter), [macroFilter])
 
   const hasNote  = useCallback((d: Date) => showPrivate ? noteMap.has(dateKey(d)) : false, [noteMap, showPrivate])
