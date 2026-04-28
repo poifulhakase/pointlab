@@ -276,6 +276,7 @@ function buildExportJson(
   const rows = sortedDates
     .map((date, i) => {
       const inv     = invMap.get(date)
+      const invPrev = i < sortedDates.length - 1 ? invMap.get(sortedDates[i + 1]) : undefined
       const mar     = marMap.get(date)
       const marPrev = i < sortedDates.length - 1 ? marMap.get(sortedDates[i + 1]) : undefined
       const vix     = findVixForDate(vixMap, date)
@@ -298,6 +299,8 @@ function buildExportJson(
         flows: {
           foreign:     r2(inv?.foreigner  ?? 0),
           institution: r2((inv?.trustBank ?? 0) + (inv?.securities ?? 0)),
+          trust_bank:  inv?.trustBank  != null ? r2(inv.trustBank)  : null,
+          securities:  inv?.securities != null ? r2(inv.securities) : null,
           retail:      r2(inv?.individual ?? 0),
         },
         credit_ratio:               mar?.ratio ?? 0,
@@ -307,15 +310,22 @@ function buildExportJson(
         arbitrage_long_bal_trillion:  arb ? r2(arb.longBal / 1000000) : null,
         arbitrage_short_bal_trillion: arb && arb.shortBal > 0 ? r2(arb.shortBal / 1000000) : null,
         delta: {
+          foreign_flows_delta:     inv && invPrev
+            ? r2(inv.foreigner - invPrev.foreigner) : null,
           credit_long_pct:         mar && marPrev && marPrev.longBal > 0
             ? r2((mar.longBal - marPrev.longBal) / marPrev.longBal * 100) : null,
+          credit_eval_ratio_pp:    mar?.evalRatio != null && marPrev?.evalRatio != null
+            ? r2(mar.evalRatio - marPrev.evalRatio) : null,
           arbitrage_long_100m:     arb && arbPrev
             ? Math.round((arb.longBal - arbPrev.longBal) / 100) : null,
+          arbitrage_short_100m:    arb && arbPrev && arb.shortBal > 0 && arbPrev.shortBal > 0
+            ? Math.round((arb.shortBal - arbPrev.shortBal) / 100) : null,
           short_sell_pp:           ss && ssPrev
             ? r2(ss.ratio - ssPrev.ratio) : null,
           advance_decline_pp:      ad && adPrev
             ? r2(ad.ratio25 - adPrev.ratio25) : null,
           vix_pct:                 vix?.changePct ?? null,
+          ns_ratio_change:         nt?.change ?? null,
         },
       }
     })
@@ -334,6 +344,7 @@ function buildExportJson(
       },
       gravity_vector: {
         label: '裁定解消圧力', firms: ['SG', 'Barclays', 'BNP'],
+        firms_note: 'BarclaysとBNPは排他的。通常どちらか一方のみアクティブで、もう一方はnull。',
         net_lots: mv.gravity.netLots, direction: mv.gravity.direction, day_over_day: mv.gravity.dayOverDay,
       },
       noise_filter: {
@@ -343,6 +354,7 @@ function buildExportJson(
     },
     sell_pressure_score: mv.sellPressureScore,
     score_percentile:    mv.scorePercentile,
+    score_top_pct:       100 - mv.scorePercentile,
     score_median:        mv.scoreMedian,
     score_history_days:  mv.historyDays,
     alert_level: mv.alertLevel,
@@ -764,6 +776,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
   const [participantsLoaded,  setParticipantsLoaded]  = useState(false)
 
   const [ntData, setNtData] = useState<NtRatioPoint[]>([])
+  const [ntLoaded, setNtLoaded] = useState(false)
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
 
@@ -845,9 +858,15 @@ export function QuantView({ theme, isMobile, user }: Props) {
     fetchNhkNews().then(setNhkNews).catch(() => {})
   }, [])
 
+  // NTデータ未ロード時のフォールバック: 10秒後に強制的にntLoadedをtrueにする
+  useEffect(() => {
+    const t = setTimeout(() => setNtLoaded(true), 10000)
+    return () => clearTimeout(t)
+  }, [])
+
   const AUTO_PROMPT_KEY = 'poical-auto-prompt-last-added'
   useEffect(() => {
-    if (!invLoaded || !marLoaded || !vixWeekLoaded || !arbLoaded) return
+    if (!invLoaded || !marLoaded || !vixWeekLoaded || !arbLoaded || !ntLoaded) return
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
@@ -860,7 +879,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
       : promptText
     saveNote(today, { ...existing, memo: newMemo })
     localStorage.setItem(AUTO_PROMPT_KEY, updatedAt)
-  }, [invLoaded, marLoaded, vixWeekLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [invLoaded, marLoaded, vixWeekLoaded, ntLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
     const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData), null, 2)
@@ -953,7 +972,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
                 <span style={s.panelSub}>恐怖指数（CBOE・日足・約15分遅延）</span>
               </div>
             </div>
-            <VixPanel theme={theme} vixWeekData={vixWeekData} />
+            <VixPanel theme={theme} vixWeekData={vixWeekData} isMobile={isMobile} />
           </div>
 
           <div style={s.dividerH} />
@@ -971,7 +990,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
                 <span style={s.panelSub}>日経225 ÷ S&amp;P500（日足・約15分遅延）</span>
               </div>
             </div>
-            <NtRatioPanel theme={theme} onDataLoaded={setNtData} />
+            <NtRatioPanel theme={theme} onDataLoaded={(d) => { setNtData(d); setNtLoaded(true) }} />
           </div>
 
         </div>

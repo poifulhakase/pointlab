@@ -73,6 +73,8 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 background: td && !dim ? 'rgba(96,165,250,0.18)' : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
                 borderTop: td && !dim ? '3px solid rgba(96,165,250,0.85)' : undefined,
                 cursor: 'pointer',
+                position: 'relative',
+                isolation: 'isolate',
               }}
               className={`glass${td && !dim ? ' today-pulse' : ''}`}
             >

@@ -1,5 +1,5 @@
 import { lazy, Suspense, memo, useMemo, useState, useEffect, useCallback, useRef } from 'react'
-import { useCalendar } from './hooks/useCalendar'
+import { useCalendar, type ViewMode } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
 import { CalendarHeader, GearIcon, SunIcon, MoonIcon, BellIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
@@ -64,13 +64,13 @@ const GearDropdown = memo(({
   onToggleTheme, onOpenNotifications, onOpenManual, onOpenAccount,
 }: GearDropdownProps) => (
   <div ref={dropRef} style={{ ...styles.gearDropdown, top: pos.top, right: pos.right }} className="glass">
-    <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
-      {theme === 'dark' ? 'ライトモード' : 'ダークモード'}
-    </GearItem>
+    <GearItem icon={<BookIcon />} onClick={onOpenManual}>使い方</GearItem>
     <Divider />
     <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>通知設定</GearItem>
     <Divider />
-    <GearItem icon={<BookIcon />} onClick={onOpenManual}>説明書</GearItem>
+    <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
+      {theme === 'dark' ? 'ライトモード' : 'ダークモード'}
+    </GearItem>
     <Divider />
     <GearItem
       icon={
@@ -165,14 +165,13 @@ export default function App() {
 
   const closeGear = useCallback(() => setGearOpen(false), [])
 
-  // ── 遅延マウント（状態保持 + コード分割の組み合わせ） ───────────────
-  const [chartMounted, setChartMounted] = useState(() => cal.view === 'chart')
-  const [quantMounted, setQuantMounted] = useState(() => cal.view === 'quant')
-
-  useEffect(() => {
-    if (cal.view === 'chart') setChartMounted(true)
-    if (cal.view === 'quant') setQuantMounted(true)
-  }, [cal.view])
+  // ── スワイプナビゲーション ────────────────────────────────────────────
+  const touchStartXRef  = useRef(0)
+  const touchStartYRef  = useRef(0)
+  const isDraggingRef   = useRef(false)
+  const dragOffsetRef   = useRef(0)
+  const [dragOffset, setDragOffset] = useState(0)
+  const lastCalViewRef = useRef<'month' | 'week' | 'day'>('month')
 
   const [sidebarOpen, setSidebarOpen] = useState(isDesktop)
   useEffect(() => { setSidebarOpen(isDesktop) }, [isDesktop])
@@ -183,6 +182,13 @@ export default function App() {
 
   // ── マクロフィルター ──────────────────────────────────────────────────
   const [macroFilter, setMacroFilter] = useState<MacroFilter>({ us: true, jp: true })
+
+  // ── プライベートモード ────────────────────────────────────────────────
+  const [showPrivate, setShowPrivate] = useState<boolean>(() => getSettings().showPrivate)
+  const handleShowPrivateChange = useCallback((v: boolean) => {
+    setShowPrivate(v)
+    saveSettings({ ...getSettings(), showPrivate: v })
+  }, [])
 
   // ── ノートパネル ──────────────────────────────────────────────────────
   const [noteDate,       setNoteDate]       = useState<Date | null>(null)
@@ -236,8 +242,9 @@ export default function App() {
   const getSqMarkers   = useCallback((d: Date) => getSqMarkersForDate(d, sqDates),    [sqDates])
   const getMacroEvents = useCallback((d: Date) => getMacroEventsForDate(d, macroFilter), [macroFilter])
 
-  const hasNote  = useCallback((d: Date) => noteMap.has(dateKey(d)), [noteMap])
+  const hasNote  = useCallback((d: Date) => showPrivate ? noteMap.has(dateKey(d)) : false, [noteMap, showPrivate])
   const getNoteTitle = useCallback((d: Date) => {
+    if (!showPrivate) return ''
     const data = noteMap.get(dateKey(d))
     if (!data) return ''
     if (data.schedules.length > 0) {
@@ -246,15 +253,74 @@ export default function App() {
       return [first.startTime, first.title].filter(Boolean).join(' ') + suffix
     }
     return data.title
-  }, [noteMap])
+  }, [noteMap, showPrivate])
   const getScheduledEvents = useCallback((d: Date): ScheduleEntry[] =>
-    noteMap.get(dateKey(d))?.schedules ?? [], [noteMap])
+    showPrivate ? (noteMap.get(dateKey(d))?.schedules ?? []) : [], [noteMap, showPrivate])
 
   const openNote  = useCallback((d: Date, time?: string) => { setNoteDate(d); setNotePrefillTime(time) }, [])
   const closeNote = useCallback(() => { setNoteDate(null); setNotePrefillTime(undefined) }, [])
 
   const handleMenuClick    = useCallback(() => setSidebarOpen(p => !p), [])
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), [])
+
+  // ── スワイプナビ計算 ──────────────────────────────────────────────────
+  // メインパネルインデックス: -1 は carousel 外のビュー（spec/legal/manual）
+  const mainPanelIndex = useMemo(() => {
+    if (cal.view === 'month' || cal.view === 'week' || cal.view === 'day') return 0
+    if (cal.view === 'chart') return 1
+    if (cal.view === 'quant') return 2
+    if (cal.view === 'note')  return 3
+    return -1
+  }, [cal.view])
+
+  // カレンダーサブビューを記憶（スワイプで戻った時に復元）
+  useEffect(() => {
+    if (cal.view === 'month' || cal.view === 'week' || cal.view === 'day') {
+      lastCalViewRef.current = cal.view
+    }
+  }, [cal.view])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (mainPanelIndex < 0) return
+    touchStartXRef.current = e.touches[0].clientX
+    touchStartYRef.current = e.touches[0].clientY
+    isDraggingRef.current = false
+  }, [mainPanelIndex])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (mainPanelIndex < 0) return
+    const dx = e.touches[0].clientX - touchStartXRef.current
+    const dy = e.touches[0].clientY - touchStartYRef.current
+    if (!isDraggingRef.current) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        isDraggingRef.current = true
+      } else if (Math.abs(dy) > 8) {
+        return
+      }
+    }
+    if (isDraggingRef.current) {
+      const clamped = mainPanelIndex === 0 && dx > 0 ? Math.min(dx, 60)
+        : mainPanelIndex === 3 && dx < 0 ? Math.max(dx, -60)
+        : dx
+      dragOffsetRef.current = clamped
+      setDragOffset(clamped)
+    }
+  }, [mainPanelIndex])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDraggingRef.current) return
+    const dx = dragOffsetRef.current
+    dragOffsetRef.current = 0
+    isDraggingRef.current = false
+    setDragOffset(0)
+    if (Math.abs(dx) < 50) return
+    const VIEWS: ViewMode[] = ['month', 'chart', 'quant', 'note']
+    if (dx < 0 && mainPanelIndex < 3) {
+      cal.setView(VIEWS[mainPanelIndex + 1])
+    } else if (dx > 0 && mainPanelIndex > 0) {
+      cal.setView(mainPanelIndex === 1 ? lastCalViewRef.current : VIEWS[mainPanelIndex - 1])
+    }
+  }, [mainPanelIndex, cal])
 
   // ── 歯車アクション（closeGear を含む） ───────────────────────────────
   const gearActions = useMemo(() => ({
@@ -264,9 +330,8 @@ export default function App() {
     onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
   }), [toggleTheme, closeGear, cal])
 
-  // サイドバー表示条件
-  const showSidebar = cal.view !== 'chart' && cal.view !== 'quant' &&
-    cal.view !== 'note' && cal.view !== 'spec' && cal.view !== 'legal' && cal.view !== 'manual'
+  // サイドバー表示条件（カレンダーパネルのみ）
+  const showSidebar = mainPanelIndex === 0
 
   if (showLoading) {
     return (
@@ -292,93 +357,13 @@ export default function App() {
             onMacroFilterChange={setMacroFilter}
             stickyNotes={stickyNotes}
             onStickyNotesSaved={handleStickyNotesSaved}
+            showPrivate={showPrivate}
+            onShowPrivateChange={handleShowPrivateChange}
           />
         )}
 
         <main style={styles.main}>
-          {/* カレンダーサブバー */}
-          {(cal.view === 'day' || cal.view === 'week' || cal.view === 'month') && (
-            <div style={styles.calSubBar} className="glass">
-              <div style={styles.calSubLeft}>
-                <div style={styles.calTabGroup} className="glass">
-                  <button style={styles.calTodayTab} onClick={cal.goToday}>今日</button>
-                  <span style={styles.calTabDivider} />
-                  {CAL_VIEW_TABS.map(([key, label]) => (
-                    <button
-                      key={key}
-                      style={{ ...styles.calTab, ...(cal.view === key ? styles.calTabActive : {}) }}
-                      onClick={() => cal.setView(key)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={styles.calSubCenter}>
-                {!isMobile && (
-                  <>
-                    <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-                    <h1 style={styles.subLabel}>{cal.label()}</h1>
-                    <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
-                  </>
-                )}
-              </div>
-
-              <div style={styles.calSubRight}>
-                <button ref={gearBtnRef} style={styles.gearBtn} onClick={openGear} aria-label="設定">
-                  <GearIcon />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* スマホ共通ナビ */}
-          {isMobile && (cal.view === 'month' || cal.view === 'week' || cal.view === 'day') && (
-            <div style={styles.mobileCalNav}>
-              <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-              <h1 style={{ ...styles.subLabel, fontSize: 15 }}>{cal.label()}</h1>
-              <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
-            </div>
-          )}
-
-          {/* カレンダービュー */}
-          {cal.view === 'month' && (
-            <MonthView
-              days={cal.getMonthGrid()} today={cal.today} current={cal.current}
-              isToday={cal.isToday} isCurrentMonth={cal.isCurrentMonth}
-              onClickDay={(d) => { cal.goToDate(d); if (isMobile) cal.setView('day') }}
-              onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
-              getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
-              isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-              hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
-            />
-          )}
-          {cal.view === 'week' && (
-            <WeekView
-              days={cal.getWeekDays()} current={cal.current} isToday={cal.isToday}
-              getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
-              isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-              onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-              getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
-            />
-          )}
-          {cal.view === 'day' && (
-            <DayView
-              date={cal.current} isToday={cal.isToday}
-              getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
-              isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-              onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-              getScheduledEvents={getScheduledEvents} theme={theme}
-            />
-          )}
-
-          {/* Suspense ラップ: 初回アクセス時にチャンク非同期ロード */}
-          {cal.view === 'note' && (
-            <Suspense fallback={<ViewLoader />}>
-              <NoteView theme={theme} isMobile={isMobile} onOpenSpec={() => cal.setView('spec')} onOpenLegal={() => cal.setView('legal')} />
-            </Suspense>
-          )}
+          {/* spec / legal / manual はカルーセル外 */}
           {cal.view === 'spec' && (
             <Suspense fallback={<ViewLoader />}>
               <SpecView theme={theme} isMobile={isMobile} />
@@ -393,19 +378,121 @@ export default function App() {
             <LegalModal theme={theme} isMobile={isMobile} />
           )}
 
-          {/* 重いビュー: 初回訪問後は display で切替（状態保持） */}
-          {chartMounted && (
-            <div style={{ display: cal.view === 'chart' ? 'flex' : 'none', flex: 1, minHeight: 0 }}>
-              <Suspense fallback={<ViewLoader />}>
-                <ChartView theme={theme} isMobile={isMobile} />
-              </Suspense>
-            </div>
-          )}
-          {quantMounted && (
-            <div style={{ display: cal.view === 'quant' ? 'flex' : 'none', flex: 1, minHeight: 0 }}>
-              <Suspense fallback={<ViewLoader />}>
-                <QuantView theme={theme} isMobile={isMobile} user={user} />
-              </Suspense>
+          {/* ── カルーセル（ホーム/チャート/データ/ノート） ── */}
+          {mainPanelIndex >= 0 && (
+            <div
+              style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {/* カレンダーサブバー（カレンダーパネルのみ） */}
+              {mainPanelIndex === 0 && (
+                <>
+                  <div style={styles.calSubBar} className="glass">
+                    <div style={styles.calSubLeft}>
+                      <div style={styles.calTabGroup} className="glass">
+                        <button style={styles.calTodayTab} onClick={cal.goToday}>今日</button>
+                        <span style={styles.calTabDivider} />
+                        {CAL_VIEW_TABS.map(([key, label]) => (
+                          <button
+                            key={key}
+                            style={{ ...styles.calTab, ...(cal.view === key ? styles.calTabActive : {}) }}
+                            onClick={() => cal.setView(key)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={styles.calSubCenter}>
+                      {!isMobile && (
+                        <>
+                          <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
+                          <h1 style={styles.subLabel}>{cal.label()}</h1>
+                          <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
+                        </>
+                      )}
+                    </div>
+                    <div style={styles.calSubRight}>
+                      <button ref={gearBtnRef} style={styles.gearBtn} onClick={openGear} aria-label="設定">
+                        <GearIcon />
+                      </button>
+                    </div>
+                  </div>
+                  {isMobile && (
+                    <div style={styles.mobileCalNav}>
+                      <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
+                      <h1 style={{ ...styles.subLabel, fontSize: 15 }}>{cal.label()}</h1>
+                      <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* スライドトラック */}
+              <div style={{
+                flex: 1, display: 'flex', minHeight: 0,
+                width: '400%',
+                height: '100%',
+                transform: `translateX(calc(-${mainPanelIndex * 25}% + ${dragOffset}px))`,
+                transition: dragOffset !== 0 ? 'none' : 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+                willChange: 'transform',
+              }}>
+                {/* Panel 0: カレンダー */}
+                <div style={{ width: '25%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                  {cal.view === 'month' && (
+                    <MonthView
+                      days={cal.getMonthGrid()} today={cal.today} current={cal.current}
+                      isToday={cal.isToday} isCurrentMonth={cal.isCurrentMonth}
+                      onClickDay={(d) => { cal.goToDate(d); if (isMobile) cal.setView('day') }}
+                      onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
+                      getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
+                      isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
+                      hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
+                    />
+                  )}
+                  {cal.view === 'week' && (
+                    <WeekView
+                      days={cal.getWeekDays()} current={cal.current} isToday={cal.isToday}
+                      getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
+                      isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
+                      onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
+                      getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
+                    />
+                  )}
+                  {cal.view === 'day' && (
+                    <DayView
+                      date={cal.current} isToday={cal.isToday}
+                      getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
+                      isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
+                      onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
+                      getScheduledEvents={getScheduledEvents} theme={theme}
+                    />
+                  )}
+                </div>
+
+                {/* Panel 1: チャート */}
+                <div style={{ width: '25%', display: 'flex', minHeight: 0 }}>
+                  <Suspense fallback={<ViewLoader />}>
+                    <ChartView theme={theme} isMobile={isMobile} />
+                  </Suspense>
+                </div>
+
+                {/* Panel 2: データ（需給） */}
+                <div style={{ width: '25%', display: 'flex', minHeight: 0 }}>
+                  <Suspense fallback={<ViewLoader />}>
+                    <QuantView theme={theme} isMobile={isMobile} user={user} />
+                  </Suspense>
+                </div>
+
+                {/* Panel 3: ノート */}
+                <div style={{ width: '25%', display: 'flex', minHeight: 0 }}>
+                  <Suspense fallback={<ViewLoader />}>
+                    <NoteView theme={theme} isMobile={isMobile} onOpenSpec={() => cal.setView('spec')} onOpenLegal={() => cal.setView('legal')} />
+                  </Suspense>
+                </div>
+              </div>
             </div>
           )}
         </main>

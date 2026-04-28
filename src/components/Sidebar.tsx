@@ -15,6 +15,8 @@ type Props = {
   onMacroFilterChange: (f: MacroFilter) => void
   stickyNotes: StickyNote[]
   onStickyNotesSaved: (notes: StickyNote[]) => void
+  showPrivate: boolean
+  onShowPrivateChange: (v: boolean) => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color: string }[] = [
@@ -22,7 +24,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string; color:
   { key: 'jp', label: '日本',  sub: '日銀決定会合・短観',             color: '#f87171' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -163,6 +165,34 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
           ))}
         </div>
 
+        {/* ──── プライベート ──── */}
+        <div style={styles.privateWrap}>
+          <label style={styles.filterRow}>
+            <span
+              style={{
+                ...styles.customCheckbox,
+                background: showPrivate ? 'rgba(96,165,250,0.85)' : 'transparent',
+                borderColor: showPrivate ? 'rgba(96,165,250,0.85)' : 'var(--text-dim)',
+              }}
+              onClick={() => onShowPrivateChange(!showPrivate)}
+            >
+              {showPrivate && (
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              )}
+            </span>
+            <span style={styles.filterLabel} onClick={() => onShowPrivateChange(!showPrivate)}>
+              <span style={{ ...styles.filterCountry, color: showPrivate ? 'var(--text)' : 'var(--text-dim)' }}>
+                プライベート
+              </span>
+              <span style={{ ...styles.filterSub, color: showPrivate ? 'var(--text-sub)' : 'var(--text-dim)' }}>
+                メモ・スケジュールを表示
+              </span>
+            </span>
+          </label>
+        </div>
+
         {/* ──── マーケット情報フィルター ──── */}
         <div style={{ ...styles.filterWrap, marginTop: 0, borderTop: 'none', borderBottom: '1px solid var(--border-dim)' }}>
           <div style={styles.filterHeading}>
@@ -298,6 +328,10 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--text)',
     boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
     flexShrink: 0,
+  },
+  privateWrap: {
+    padding: '10px 16px 12px',
+    borderBottom: '1px solid var(--border-dim)',
   },
   filterWrap: {
     marginTop: 'auto',

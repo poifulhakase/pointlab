@@ -36,6 +36,8 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   const [newText, setNewText]     = useState('')
   const [isDirty, setIsDirty]     = useState(false)
   const [titleFocused, setTitleFocused] = useState(false)
+  const [editingItemId, setEditingItemId]     = useState<string | null>(null)
+  const [editingItemText, setEditingItemText] = useState('')
   const addInputRef   = useRef<HTMLInputElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
@@ -139,6 +141,18 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     const next = [...checklist, { id: String(Date.now()), text, done: false }]
     setChecklist(next); setNewText(''); persist(title, memo, next, schedules)
     setTimeout(() => addInputRef.current?.focus(), 0)
+  }
+
+  const startEditItem = (item: CheckItem) => {
+    setEditingItemId(item.id)
+    setEditingItemText(item.text)
+  }
+  const commitEditItem = (id: string) => {
+    const text = editingItemText.trim()
+    setEditingItemId(null)
+    if (!text) return
+    const next = checklist.map(i => i.id === id ? { ...i, text } : i)
+    setChecklist(next); persist(title, memo, next, schedules)
   }
 
   const handleDelete = () => {
@@ -364,9 +378,26 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
                       </svg>
                     )}
                   </button>
-                  <span style={{ ...styles.itemText, textDecoration: item.done ? 'line-through' : 'none', opacity: item.done ? 0.40 : 1 }}>
-                    {item.text}
-                  </span>
+                  {editingItemId === item.id ? (
+                    <input
+                      autoFocus
+                      value={editingItemText}
+                      onChange={e => setEditingItemText(e.target.value)}
+                      onBlur={() => commitEditItem(item.id)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); commitEditItem(item.id) }
+                        if (e.key === 'Escape') setEditingItemId(null)
+                      }}
+                      style={styles.itemEditInput}
+                    />
+                  ) : (
+                    <span
+                      style={{ ...styles.itemText, textDecoration: item.done ? 'line-through' : 'none', opacity: item.done ? 0.40 : 1, cursor: 'text' }}
+                      onClick={() => startEditItem(item)}
+                    >
+                      {item.text}
+                    </span>
+                  )}
                   <button style={styles.delBtn} onClick={() => deleteItem(item.id)}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                       <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -536,6 +567,11 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'all 0.15s',
   },
   itemText: { flex: 1, fontSize: 13, color: 'var(--text)', lineHeight: 1.4, transition: 'opacity 0.15s' },
+  itemEditInput: {
+    flex: 1, background: 'none', border: 'none', borderBottom: '1px solid var(--accent)',
+    outline: 'none', color: 'var(--text)', fontSize: 13, lineHeight: 1.4,
+    fontFamily: 'inherit', padding: '0 0 1px',
+  },
   delBtn: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     width: 22, height: 22, borderRadius: 4, flexShrink: 0,

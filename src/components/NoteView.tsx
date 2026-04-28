@@ -21,7 +21,7 @@ const ARTICLES: Article[] = [
   { genre: '基本',           title: '分割エントリー',   url: 'https://note.com/pointlab/n/nb16ef04958ae', thumb: BASE + 'Stock_Trade_Lab_SplitEntry.png' },
   // ── インジケーター ────────────────────────────────────────────
   { genre: 'インジケーター', title: 'TradingView',    url: 'https://note.com/pointlab/n/n7b69eccb90f3', thumb: BASE + 'Stock_Trade_Lab_TradingView.png' },
-  { genre: 'インジケーター', title: 'CVD',             url: null,                                         thumb: BASE + 'Stock_Trade_Lab_Cumulative_Volume_Delta.png' },
+  { genre: 'インジケーター', title: 'CVD',             url: 'https://note.com/pointlab/n/ned4eb2264600',  thumb: BASE + 'Stock_Trade_Lab_Cumulative_Volume_Delta.png' },
   { genre: 'インジケーター', title: 'MACD',            url: 'https://note.com/pointlab/n/n2817e9181530', thumb: BASE + 'Stock_Trade_Lab_Macd.png' },
   { genre: 'インジケーター', title: 'ボリンジャーバンド', url: 'https://note.com/pointlab/n/n91f688571407', thumb: BASE + 'Stock_Trade_Lab_BB.png' },
   { genre: 'インジケーター', title: 'RSI',             url: 'https://note.com/pointlab/n/ncd65c830de29', thumb: BASE + 'Stock_Trade_Lab_RSI.png' },
@@ -108,7 +108,7 @@ export function NoteView({ isMobile, onOpenSpec, onOpenLegal }: Props) {
                     <line x1="16" y1="13" x2="8" y2="13"/>
                     <line x1="16" y1="17" x2="8" y2="17"/>
                   </svg>
-                  仕様書
+                  システム仕様
                 </button>
                 <div style={{ height: 1, background: 'var(--glass-border)', margin: '2px 0' }} />
                 <button style={s.menuItem} onClick={() => { setMenuOpen(false); onOpenLegal() }}>
@@ -148,7 +148,7 @@ export function NoteView({ isMobile, onOpenSpec, onOpenLegal }: Props) {
 const s: Record<string, React.CSSProperties> = {
   header: {
     display: 'flex', alignItems: 'center',
-    padding: '6px 12px', minHeight: 44, flexShrink: 0,
+    padding: '7px 12px', minHeight: 46, flexShrink: 0,
     borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none',
     userSelect: 'none',
   },

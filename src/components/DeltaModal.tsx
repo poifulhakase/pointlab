@@ -23,7 +23,7 @@ const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBa
   credit_long:      { title: '信用買い残 Δ（前週比 %）',    unit: '%',  positiveIsBad: true  },
   arbitrage_long:   { title: '裁定買い残 Δ（週次変化 億円）', unit: '億円', positiveIsBad: false },
   short_sell:       { title: '空売り比率 Δ（週次変化 pp）',  unit: 'pp', positiveIsBad: true  },
-  advance_decline:  { title: '騰落レシオ Δ（週次変化 pp）',  unit: 'pp', positiveIsBad: true  },
+  advance_decline:  { title: '騰落レシオ Δ（Δは変化率）',    unit: 'pp', positiveIsBad: true  },
 }
 
 function toIso(d: string) { return d.replace(/\//g, '-') }

@@ -136,7 +136,7 @@ export function ManualView({ theme, isMobile }: Props) {
 
         {/* フッター */}
         <p style={{ marginTop: 24, fontSize: 11, color: c.logoText, textAlign: 'center' }}>
-          詳細な技術仕様は歯車メニュー →「仕様書」をご覧ください。
+          詳細な技術仕様はノートメニュー →「システム仕様」をご覧ください。
         </p>
 
       </div>

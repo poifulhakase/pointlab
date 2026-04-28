@@ -79,8 +79,8 @@ export function useCalendar() {
     if (view === 'chart')   return 'チャート'
     if (view === 'quant')   return '需給'
     if (view === 'note')    return 'ノート'
-    if (view === 'spec')    return '仕様書'
-    if (view === 'manual')  return '説明書'
+    if (view === 'spec')    return 'システム仕様'
+    if (view === 'manual')  return '使い方'
     if (view === 'legal')   return 'プライバシー・免責事項'
     if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
