@@ -48,12 +48,6 @@ function cellColor(v: number | null, theme: 'dark' | 'light'): string {
   return theme === 'dark' ? 'rgba(255,120,100,0.95)' : 'rgba(200,50,30,0.9)'
 }
 
-const ALERT = {
-  green:  { bg: 'rgba(96,200,140,0.13)',  text: 'rgba(96,200,140,0.95)',  label: '低' },
-  yellow: { bg: 'rgba(250,190,80,0.13)',  text: 'rgba(250,190,80,0.95)',  label: '注意' },
-  orange: { bg: 'rgba(255,150,60,0.15)',  text: 'rgba(255,150,60,0.95)',  label: '警戒' },
-  red:    { bg: 'rgba(255,80,80,0.15)',   text: 'rgba(255,80,80,0.95)',   label: '危険' },
-}
 
 const VECTORS = [
   {
@@ -426,11 +420,6 @@ const s: Record<string, React.CSSProperties> = {
   retryBtn: { padding: '6px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'var(--accent-glass)', border: '1px solid var(--accent)', color: '#fff', cursor: 'pointer' },
 
   vCard: {
-    padding: '14px 16px', borderRadius: 12,
-    border: '1px solid var(--glass-border)',
-    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-  },
-  scoreCard: {
     padding: '14px 16px', borderRadius: 12,
     border: '1px solid var(--glass-border)',
     backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
