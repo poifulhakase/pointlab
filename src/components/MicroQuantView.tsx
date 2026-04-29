@@ -90,7 +90,7 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
       <div style={{
         fontSize: 10, fontWeight: 700, color: groupColor,
         textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.35,
-        minHeight: 28,
+        minHeight: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {firmDisplay}
       </div>
