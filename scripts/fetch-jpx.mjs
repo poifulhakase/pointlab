@@ -720,23 +720,94 @@ async function buildFuturesOIData() {
   return weekly.map(({ date, label, val }) => ({ date, label, oi: val }))
 }
 
-// ── 証券会社別先物手口（ミクロ需給エンジン用） ────────────────────
-// JPX公表「証券会社別先物別売買高（ネット枚数）」日経225先物 日次
-// ※ 実際のURL・Excel列定義はJPX統計ページで確認して設定してください
-// 参考: https://www.jpx.co.jp/markets/statistics-derivatives/sector-type/
+// ── 投資主体別先物手口（ミクロ需給エンジン用） ────────────────────
+// JPX公表「投資部門別売買高」日経225先物（product=301）週次 CSV
+// ソース: https://www.jpx.co.jp/markets/statistics-derivatives/sector/
+// 新形式(p[1]='1'): コード 60=外国人 / 23=信託銀行 / 11=生命保険 / 31=投資信託 / 51=個人 / 41=証券会社
+//                   net = p[9]-p[7]  (unit=1行のみ)
+// 旧形式(p[1]='0'): コード 60=外国人 / 23=信託銀行 / 31=投資信託 / 41=証券会社 (11/51は非対応)
+//                   net = p[14]-p[8] (vol・yen混在の1行)
 async function buildFuturesParticipantsData() {
-  // TODO: JPXが公表する「証券会社別先物別売買高」のExcel URLを確認して実装
-  // 以下は構造サンプル。実データ取得時はXLSXで列を特定してください。
-  //
-  // const PAGE_URL = 'https://www.jpx.co.jp/markets/statistics-derivatives/sector-type/'
-  // const html = await fetchHtml(PAGE_URL)
-  // const xlsLink = ... // ページからExcelリンクを抽出
-  // const buf = await fetchBinary(BASE + xlsLink)
-  // const wb  = XLSX.read(buf, { type: 'array' })
-  // const ws  = wb.Sheets[wb.SheetNames[0]]
-  // const rows = XLSX.utils.sheet_to_json(ws, { header: 1 })
-  // → 各行から日付・GS・JPM・AMRO・SG・Barclays（またはBNP）・野村 の列を特定
-  throw new Error('buildFuturesParticipantsData: JPX URL未設定 - JPX統計ページを確認の上実装してください')
+  const SECTOR_PAGE = `${BASE}/markets/statistics-derivatives/sector/index.html`
+  const html = await fetchHtml(SECTOR_PAGE)
+
+  // 週次CSVリンクを収集
+  const csvLinks = [...html.matchAll(/href="(\/[^"]*Tousi_DV_W[^"]*\.csv)"/gi)]
+    .map(m => m[1])
+
+  if (csvLinks.length === 0) throw new Error('週次CSVリンクが見つかりません')
+
+  // 対象コード → フィールド名マッピング
+  const CODE_MAP = { '60': 'foreign', '23': 'trustBank', '11': 'lifeIns', '31': 'invTrust', '51': 'individual', '41': 'securities' }
+  // 旧形式では 11(生命保険)/51(個人) の詳細区分が存在しないため部分的にのみ取得可
+
+  // 既存JSONを読み込んで履歴を維持
+  const existingPath = join(OUT_DIR, 'futures_participants.json')
+  const existingMap = new Map()
+  try {
+    const raw = readFileSync(existingPath, 'utf-8')
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed.data)) {
+      parsed.data.forEach(e => {
+        // 旧スキーマ（GS/JPM等）のエントリは無視
+        if ('foreign' in e || 'trustBank' in e) existingMap.set(e.date, e)
+      })
+    }
+  } catch { /* 初回は空 */ }
+
+  const newMap = new Map()
+
+  for (const link of csvLinks) {
+    try {
+      const buf  = await fetchBinary(BASE + link)
+      const text = new TextDecoder('shift_jis').decode(buf)
+      const lines = text.split('\n').filter(l => l.trim())
+
+      for (const line of lines.slice(1)) {
+        const p = line.split(',').map(v => v.replace(/"/g, '').trim())
+        if (p[0] !== '301') continue
+
+        let field, dateStr, net
+
+        if (p[1] === '1' && p[6] === '1') {
+          // ── 新形式: "301","1",yww,startYMD,endYMD,code,"1",sell,...,buy,net,total
+          field = CODE_MAP[p[5]]
+          if (!field) continue
+          dateStr = `${p[4].slice(0,4)}-${p[4].slice(4,6)}-${p[4].slice(6,8)}`
+          net = parseInt(p[9]) - parseInt(p[7])
+        } else if (p[1] === '0') {
+          // ── 旧形式: 301,0,3,cycle,yww,startYMD,endYMD,code,sell_vol,sell_ratio,...,buy_vol,...
+          field = CODE_MAP[p[7]]
+          if (!field) continue
+          // 集計行（70=委託合計/80=総合計/50=国内委託/20=国内機関投資家合計/30=自己等）は除外
+          if (['70','80','50','20','30'].includes(p[7])) continue
+          dateStr = `${p[6].slice(0,4)}-${p[6].slice(4,6)}-${p[6].slice(6,8)}`
+          net = parseInt(p[14]) - parseInt(p[8])  // 買vol - 売vol
+        } else {
+          continue
+        }
+
+        if (!newMap.has(dateStr)) {
+          newMap.set(dateStr, { date: dateStr, label: dateToLabel(dateStr.replace(/-/g, '/')) })
+        }
+        const entry = newMap.get(dateStr)
+        // 商品取引所CSVが全ゼロで上書きするケース対策: ゼロ以外が既にある場合は上書きしない
+        if (entry[field] === undefined || entry[field] === null || (entry[field] === 0 && net !== 0)) {
+          entry[field] = net
+        }
+      }
+    } catch (e) {
+      console.warn(`  ✗ ${link}: ${e.message}`)
+    }
+  }
+
+  if (newMap.size === 0) throw new Error('パース結果が0件（CSVフォーマット変更の可能性）')
+
+  // 新データで既存を上書きマージし、最大52週保持
+  newMap.forEach((v, k) => existingMap.set(k, v))
+  return [...existingMap.values()]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 52)
 }
 
 // ── メイン ─────────────────────────────────────

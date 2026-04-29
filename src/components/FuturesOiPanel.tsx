@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import type React from 'react'
 import type { FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+
+const MOBILE_ROW_LIMIT = 10
 
 interface OiRow {
   date:       string
@@ -8,13 +11,13 @@ interface OiRow {
   delta:      number | null
 }
 
-function computeRows(data: FuturesParticipantDayData[], n = 14): OiRow[] {
+function computeRows(data: FuturesParticipantDayData[], n = 60): OiRow[] {
   if (data.length === 0) return []
   const source = [...data].reverse()
   const rows: OiRow[] = []
   for (const d of source) {
-    const total = (d.GS ?? 0) + (d.JPM ?? 0) + (d.AMRO ?? 0) +
-                  (d.SG ?? 0) + (d.Barclays ?? 0) + (d.BNP ?? 0) + (d.Nomura ?? 0)
+    const total = (d.foreign ?? 0) + (d.trustBank ?? 0) + (d.lifeIns ?? 0) +
+                  (d.invTrust ?? 0) + (d.individual ?? 0) + (d.securities ?? 0)
     const prev = rows.length > 0 ? rows[rows.length - 1] : null
     rows.push({ date: d.date, label: d.label, totalNets: total, delta: prev ? total - prev.totalNets : null })
   }
@@ -39,14 +42,18 @@ export function FuturesOiPanel({
   error,
   onReload,
   theme,
+  isMobile = false,
 }: {
-  data:     FuturesParticipantDayData[]
-  loading:  boolean
-  error:    string
-  onReload: () => void
-  theme:    'dark' | 'light'
+  data:      FuturesParticipantDayData[]
+  loading:   boolean
+  error:     string
+  onReload:  () => void
+  theme:     'dark' | 'light'
+  isMobile?: boolean
 }) {
-  const rows = computeRows(data)
+  const [expanded, setExpanded] = useState(false)
+  const allRows = computeRows(data)
+  const rows = isMobile && !expanded ? allRows.slice(0, MOBILE_ROW_LIMIT) : allRows
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
@@ -133,6 +140,11 @@ export function FuturesOiPanel({
               ))}
             </tbody>
           </table>
+          {isMobile && allRows.length > MOBILE_ROW_LIMIT && (
+            <button style={s.expandBtn} onClick={() => setExpanded(v => !v)}>
+              {expanded ? '▲ 折りたたむ' : `▼ 全${allRows.length}日を表示`}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -161,4 +173,5 @@ const s: Record<string, React.CSSProperties> = {
   dateMain:  { fontSize: 11, fontWeight: 600, color: 'var(--text)' },
   dateSub:   { fontSize: 10, color: 'var(--text-dim)', marginTop: 2 },
   unit:      { fontSize: 10, color: 'var(--text-dim)', marginLeft: 3 },
+  expandBtn: { display: 'block', width: '100%', padding: '9px 14px', textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--text-sub)', background: 'var(--glass-bg)', border: 'none', borderTop: '1px solid var(--border-dim)', cursor: 'pointer', letterSpacing: '0.03em' },
 }

@@ -1,17 +1,17 @@
-// 証券会社別先物手口データ
+// 投資主体別先物手口データ
 // データソース: /data/futures_participants.json (scripts/fetch-jpx.mjs で生成)
-// 元データ: JPX公表「証券会社別先物別売買高（ネット枚数）」日経225先物 日次
+// 元データ: JPX公表「投資部門別売買高」日経225先物 週次
+// コード: 60=外国人 / 23=信託銀行 / 11=生命保険 / 31=投資信託 / 51=個人 / 41=証券会社
 
 export interface FuturesParticipantDayData {
-  date:     string        // "2026-04-24"
-  label:    string        // "4/24"
-  GS:       number | null // Goldman Sachs net lots (buy - sell)
-  JPM:      number | null // JPMorgan
-  AMRO:     number | null // ABN AMRO
-  SG:       number | null // Société Générale
-  Barclays: number | null // Barclays
-  BNP:      number | null // BNP Paribas (Barclaysと排他、通常どちらか)
-  Nomura:   number | null // 野村証券
+  date:       string         // "2026-04-17" (週末金曜日)
+  label:      string         // "4月第3週"
+  foreign:    number | null  // 外国人 (code 60)  net = 買-売
+  trustBank:  number | null  // 信託銀行 (code 23)
+  lifeIns:    number | null  // 生命保険 (code 11) ※旧形式データでは null
+  invTrust:   number | null  // 投資信託 (code 31)
+  individual: number | null  // 個人 (code 51)     ※旧形式データでは null
+  securities: number | null  // 証券会社 (code 41)
 }
 
 export interface MicroVector {
@@ -21,13 +21,13 @@ export interface MicroVector {
 }
 
 export interface MicroVectors {
-  trend:             MicroVector  // GS + JPM: 海外勢コンセンサス
-  gravity:           MicroVector  // SG + Barclays + BNP: 裁定解消圧力
-  noise:             MicroVector  // AMRO + 野村: 攪乱・逆張り
+  trend:             MicroVector  // 外国人 + 信託銀行: スマートマネー方向
+  gravity:           MicroVector  // 生命保険 + 投資信託: 機関投資家フロー
+  noise:             MicroVector  // 個人 + 証券会社: 逆張り/ヘッジ
   sellPressureScore: number       // 0-100（絶対スコア）
-  scorePercentile:   number       // 直近historyDays日中での百分位（高いほど売り圧力が強い）
-  scoreMedian:       number       // 直近historyDays日の中央値
-  historyDays:       number       // 比較に使った日数
+  scorePercentile:   number       // 直近historyDays週中での百分位（高いほど売り圧力が強い）
+  scoreMedian:       number       // 直近historyDays週の中央値
+  historyDays:       number       // 比較に使った週数
   alertLevel:        'green' | 'yellow' | 'orange' | 'red'
 }
 
@@ -90,49 +90,45 @@ function vsum(day: FuturesParticipantDayData, keys: (keyof FuturesParticipantDay
   }, 0)
 }
 
-// 1日分のスコアを計算（computeMicroVectors内でも履歴計算でも共用）
+// 1週分のスコアを計算（computeMicroVectors内でも履歴計算でも共用）
 function computeRawScore(day: FuturesParticipantDayData): number {
-  const tc = Math.min(Math.max(-vsum(day, ['GS', 'JPM'])                 / 50,  0), 40)
-  const gc = Math.min(Math.max(-vsum(day, ['SG', 'Barclays', 'BNP'])     / 50,  0), 40)
-  const no = Math.min(Math.max( vsum(day, ['AMRO', 'Nomura'])             / 100, 0), 20)
+  const tc = Math.min(Math.max(-vsum(day, ['foreign', 'trustBank']) / 80, 0), 40)
+  const gc = Math.min(Math.max(-vsum(day, ['lifeIns', 'invTrust'])  / 60, 0), 40)
+  const no = Math.min(Math.max( vsum(day, ['individual', 'securities']) / 100, 0), 20)
   return Math.round(Math.min(Math.max(tc + gc - no, 0), 100))
 }
 
-const SCORE_HISTORY_DAYS = 65  // 約3ヶ月（取引日ベース）
+const SCORE_HISTORY_WEEKS = 26  // 約6ヶ月（取引週ベース）
 
 export function computeMicroVectors(data: FuturesParticipantDayData[]): MicroVectors | null {
   if (data.length === 0) return null
   const cur  = data[0]
   const prev = data[1] ?? null
 
-  const trendLots   = vsum(cur, ['GS', 'JPM'])
-  const gravityLots = vsum(cur, ['SG', 'Barclays', 'BNP'])
-  const noiseLots   = vsum(cur, ['AMRO', 'Nomura'])
+  const trendLots   = vsum(cur, ['foreign', 'trustBank'])
+  const gravityLots = vsum(cur, ['lifeIns', 'invTrust'])
+  const noiseLots   = vsum(cur, ['individual', 'securities'])
 
-  const prevT = prev ? vsum(prev, ['GS', 'JPM'])             : null
-  const prevG = prev ? vsum(prev, ['SG', 'Barclays', 'BNP']) : null
-  const prevN = prev ? vsum(prev, ['AMRO', 'Nomura'])         : null
+  const prevT = prev ? vsum(prev, ['foreign', 'trustBank']) : null
+  const prevG = prev ? vsum(prev, ['lifeIns', 'invTrust'])  : null
+  const prevN = prev ? vsum(prev, ['individual', 'securities']) : null
 
-  // 直近3ヶ月分のスコア分布を計算
-  const history = data.slice(0, SCORE_HISTORY_DAYS)
+  // 直近N週のスコア分布を計算
+  const history = data.slice(0, SCORE_HISTORY_WEEKS)
   const historyScores = history.map(computeRawScore)
-  const sellPressureScore = historyScores[0]  // 今日
+  const sellPressureScore = historyScores[0]
 
-  // 中央値（今日を含む全履歴）
   const sorted = [...historyScores].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   const scoreMedian = sorted.length % 2 === 0
     ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
     : sorted[mid]
 
-  // 百分位: 今日のスコアが過去N-1日の中で何%ile か
   const pastScores = historyScores.slice(1)
   const scorePercentile = pastScores.length > 0
     ? Math.round(pastScores.filter(s => s < sellPressureScore).length / pastScores.length * 100)
     : 50
 
-  // アラートレベル: 固定閾値→パーセンタイルベース
-  // 上位15%以上=red / 上位35%以上=orange / 上位50%以上=yellow / それ以下=green
   const alertLevel = (
     scorePercentile >= 85 ? 'red'    :
     scorePercentile >= 65 ? 'orange' :

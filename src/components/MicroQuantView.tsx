@@ -46,20 +46,42 @@ type TankFirm = {
 }
 
 const GROUP_META: Record<TankGroup, { label: string; color: string; desc: string }> = {
-  trend:   { label: 'Trend',   color: '#60a5fa', desc: '海外大口' },
-  gravity: { label: 'Gravity', color: '#fb923c', desc: '裁定解消' },
-  noise:   { label: 'Noise',   color: '#a78bfa', desc: '個人逆張り' },
+  trend:   { label: 'Trend',   color: '#60a5fa', desc: 'スマートマネー' },
+  gravity: { label: 'Gravity', color: '#fb923c', desc: '機関投資家フロー' },
+  noise:   { label: 'Noise',   color: '#a78bfa', desc: '個人/証券' },
 }
 
-// ダミーデータ（実データ取得実装まで）
-const TANK_DUMMIES: TankFirm[] = [
-  { firmDisplay: 'ゴールドマン\n・サックス', group: 'trend',   cumulativeLots: -5000, delta:  -700, maxCapacity: 12000 },
-  { firmDisplay: 'JPモルガン',              group: 'trend',   cumulativeLots: -2800, delta:  -350, maxCapacity:  8000 },
-  { firmDisplay: 'ソシエテ\n・ジェネラル',  group: 'gravity', cumulativeLots: -3700, delta:  -500, maxCapacity: 10000 },
-  { firmDisplay: 'バークレイズ',            group: 'gravity', cumulativeLots: -1800, delta:  -200, maxCapacity:  6000 },
-  { firmDisplay: 'ABNアムロ',               group: 'noise',   cumulativeLots:  1400, delta:   290, maxCapacity:  5000 },
-  { firmDisplay: '野村証券',               group: 'noise',   cumulativeLots:   900, delta:   150, maxCapacity:  4000 },
+// タンク定義: 投資主体別セクター（JPX「投資部門別売買高」日経225先物 週次）
+// Trend群: 外国人(code 60) + 信託銀行(code 23)
+// Gravity群: 生命保険(code 11) + 投資信託(code 31)
+// Noise群: 個人(code 51) + 証券会社(code 41)
+const TANK_SECTOR_DEFS: { key: keyof import('../utils/futuresParticipantsData').FuturesParticipantDayData; display: string; group: TankGroup }[] = [
+  { key: 'foreign',    display: '外国人',    group: 'trend'   },
+  { key: 'trustBank',  display: '信託銀行',  group: 'trend'   },
+  { key: 'lifeIns',    display: '生命保険',  group: 'gravity' },
+  { key: 'invTrust',   display: '投資信託',  group: 'gravity' },
+  { key: 'individual', display: '個人',      group: 'noise'   },
+  { key: 'securities', display: '証券会社',  group: 'noise'   },
 ]
+
+function buildTankFirms(data: import('../utils/futuresParticipantsData').FuturesParticipantDayData[]): TankFirm[] {
+  if (data.length === 0) return []
+  const cur  = data[0]
+  const prev = data[1] ?? null
+  return TANK_SECTOR_DEFS.map(def => {
+    const lots  = (cur[def.key] as number | null) ?? 0
+    const pLots = prev ? ((prev[def.key] as number | null) ?? 0) : 0
+    const delta = prev ? lots - pLots : 0
+    const maxAbs = Math.max(...data.map(d => Math.abs((d[def.key] as number | null) ?? 0)), 1000)
+    return {
+      firmDisplay:    def.display,
+      group:          def.group,
+      cumulativeLots: lots,
+      delta,
+      maxCapacity:    maxAbs * 1.2,
+    }
+  })
+}
 
 const BUBBLES = [
   { size: 5, left: '22%', delay: '0s',    dur: '2.8s' },
@@ -192,15 +214,15 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
 // ── テーブル列定義 ────────────────────────────────────
 const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '日付' },
-  { label: 'ゴールドマン・サックス' },
-  { label: 'JPモルガン' },
-  { label: '海外大口', sub: '合計', isTotal: true },
-  { label: 'ABNアムロ' },
-  { label: '野村証券' },
-  { label: '個人逆張り', sub: '合計', isTotal: true },
-  { label: 'ソシエテ・ジェネラル' },
-  { label: 'バークレイズ' },
-  { label: '裁定売り', sub: '合計', isTotal: true },
+  { label: '外国人' },
+  { label: '信託銀行' },
+  { label: 'スマートマネー', sub: '合計', isTotal: true },
+  { label: '生命保険' },
+  { label: '投資信託' },
+  { label: '機関投資家', sub: '合計', isTotal: true },
+  { label: '個人' },
+  { label: '証券会社' },
+  { label: '個人/証券', sub: '合計', isTotal: true },
 ]
 
 // ── クオンツ分析メモパネル ────────────────────────────
@@ -322,8 +344,8 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
           </svg>
-          証券会社別先物手口
-          <span style={s.titleSub}>日次</span>
+          投資主体別先物手口
+          <span style={s.titleSub}>週次 · JPX</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {dateLabel && <span style={s.dateLabel}>{dateLabel}</span>}
@@ -370,7 +392,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                   gap: 8,
                 }}>
                   {(['trend', 'gravity', 'noise'] as const).map(group => {
-                    const firms = TANK_DUMMIES.filter(t => t.group === group)
+                    const firms = buildTankFirms(data).filter(t => t.group === group)
                     const meta  = GROUP_META[group]
                     return (
                       <div key={group} style={{
@@ -402,8 +424,8 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                 {/* ── 日次手口テーブル ── */}
                 <div style={{ ...s.tableCard, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                   <div style={s.tableHead}>
-                    <span>日次手口テーブル</span>
-                    <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>ネット枚数（買越し=+）</span>
+                    <span>週次ネット枚数テーブル</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>買越し=+ / 売越し=−</span>
                   </div>
                   <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 580 }}>
@@ -424,13 +446,13 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                       </thead>
                       <tbody>
                         {data.map((row, i) => {
-                          const trendT   = (row.GS      ?? 0) + (row.JPM      ?? 0)
-                          const noiseT   = (row.AMRO    ?? 0) + (row.Nomura   ?? 0)
-                          const gravityT = (row.SG      ?? 0) + (row.Barclays ?? 0) + (row.BNP ?? 0)
+                          const trendT   = (row.foreign    ?? 0) + (row.trustBank  ?? 0)
+                          const gravityT = (row.lifeIns    ?? 0) + (row.invTrust   ?? 0)
+                          const noiseT   = (row.individual ?? 0) + (row.securities ?? 0)
                           const cells: (number | null)[] = [
-                            row.GS, row.JPM, trendT,
-                            row.AMRO, row.Nomura, noiseT,
-                            row.SG, row.Barclays, gravityT,
+                            row.foreign, row.trustBank, trendT,
+                            row.lifeIns, row.invTrust, gravityT,
+                            row.individual, row.securities, noiseT,
                           ]
                           const isTotalIdx = new Set([2, 5, 8])
                           return (
@@ -459,7 +481,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
 
                 {/* 注記 */}
                 <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
-                  ※ タンク水位 = |累積ネット建玉| ÷ 過去1年最大値×1.2。SQ日に限月リセット。赤=売り越し・緑=買い越し。
+                  ※ タンク水位 = |週次ネット枚数| ÷ 過去最大値×1.2。赤=売越し・緑=買越し。生命保険・個人は新形式のみ収録。
                 </div>
               </>
             )}

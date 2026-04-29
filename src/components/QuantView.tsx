@@ -340,32 +340,31 @@ function buildExportJson(
   const mv = computeMicroVectors(participantsData)
   const micro_supply_demand = mv && participantsData.length > 0 ? {
     data_as_of: participantsData[0].date,
-    frequency: '日次',
-    lag_note: 'JPX翌営業日公表',
+    frequency: '週次',
+    lag_note: 'JPX毎週公表',
     vectors: {
       trend_vector: {
-        label: '海外勢コンセンサス', firms: ['GS', 'JPM'],
-        net_lots: mv.trend.netLots, direction: mv.trend.direction, day_over_day: mv.trend.dayOverDay,
+        label: 'スマートマネー', sectors: ['外国人(code60)', '信託銀行(code23)'],
+        net_lots: mv.trend.netLots, direction: mv.trend.direction, week_over_week: mv.trend.dayOverDay,
       },
       gravity_vector: {
-        label: '裁定解消圧力', firms: ['SG', 'Barclays', 'BNP'],
-        firms_note: 'BarclaysとBNPは排他的。通常どちらか一方のみアクティブで、もう一方はnull。',
-        net_lots: mv.gravity.netLots, direction: mv.gravity.direction, day_over_day: mv.gravity.dayOverDay,
+        label: '機関投資家フロー', sectors: ['生命保険(code11)', '投資信託(code31)'],
+        net_lots: mv.gravity.netLots, direction: mv.gravity.direction, week_over_week: mv.gravity.dayOverDay,
       },
       noise_filter: {
-        label: '攪乱・逆張り圧力', firms: ['AMRO', 'Nomura'],
-        net_lots: mv.noise.netLots, direction: mv.noise.direction, day_over_day: mv.noise.dayOverDay,
+        label: '個人/証券', sectors: ['個人(code51)', '証券会社(code41)'],
+        net_lots: mv.noise.netLots, direction: mv.noise.direction, week_over_week: mv.noise.dayOverDay,
       },
     },
     sell_pressure_score: mv.sellPressureScore,
     score_percentile:    mv.scorePercentile,
     score_top_pct:       100 - mv.scorePercentile,
     score_median:        mv.scoreMedian,
-    score_history_days:  mv.historyDays,
+    score_history_weeks: mv.historyDays,
     alert_level: mv.alertLevel,
     recent: participantsData.slice(0, 5).map(d => ({
-      date: d.date, GS: d.GS, JPM: d.JPM, AMRO: d.AMRO,
-      SG: d.SG, Barclays: d.Barclays, BNP: d.BNP, Nomura: d.Nomura,
+      date: d.date, foreign: d.foreign, trustBank: d.trustBank, lifeIns: d.lifeIns,
+      invTrust: d.invTrust, individual: d.individual, securities: d.securities,
     })),
   } : null
 
@@ -463,11 +462,11 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
 ※確信度が1%変化した際は、必ずその物理的根拠（どのデータがどう動いたか）を添えること。
 
 # 分析アルゴリズム（優先順位）
-0. **日次ミクロ需給ベクトル（執行のトリガー）**:
+0. **週次ミクロ需給ベクトル（執行のトリガー）**:
    - 以下の3指標を「事象」の核として、マクロ環境との不整合を特定せよ。
-   - **海外大口 (GS+JPM)**: 海外勢のコンセンサス。マクロの方向性と一致しているか？
-   - **裁定売り (SG+Barclays+BNP)**: 裁定解消の「実弾」。ここが大幅マイナスの時はマクロの「裁定買い残」が崩落を開始したと判定。
-   - **個人逆張り (AMRO+野村)**: 目先の反発やヘッジ。これがプラスでも他がマイナスなら「ダマシ」と断定せよ。
+   - **スマートマネー (外国人+信託銀行)**: 海外勢と年金/信託のコンセンサス。マクロの方向性と一致しているか？
+   - **機関投資家フロー (生命保険+投資信託)**: 大口機関の「実弾」。ここが大幅マイナスの時は本格的な売りが始まったと判定。
+   - **個人/証券 (個人+証券会社)**: 目先の反発やヘッジ。これがプラスでも他がマイナスなら「ダマシ」と断定せよ。
 1. **スイング期間内の需給重力（物理限界の測定）**:
    - **裁定買い残**: 3.5兆円超を「臨界点（暴落リスク）」、2.0兆円以下を「整理完了」と定義。
    - **信用買い残**: 倍率2.5倍を閾値とし、2週間以内の反発局面で「戻り売り」として降ってくる価格帯を特定。
@@ -497,10 +496,10 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
 （強気 / 弱気 / 警戒）
 ※確信度は補正後の最終値を1%単位で算出。冒頭に加速判定の結果を再記。
 
-■ 事象分析：ミクロ需給ベクトル（日次）
-・Trend (GS+JPM): [ベクトルと枚数]
-・Gravity (SG+Barclays+BNP): [ベクトルと枚数]
-・Noise (AMRO+野村): [ベクトルと枚数]
+■ 事象分析：ミクロ需給ベクトル（週次）
+・Trend (外国人+信託銀行): [ベクトルと枚数]
+・Gravity (生命保険+投資信託): [ベクトルと枚数]
+・Noise (個人+証券会社): [ベクトルと枚数]
 ※判定：マクロ環境に対し、ミクロ（実弾）が「順張り」か「逆行」かを明記。
 
 ■ 需給分析：物理的重力の測定
@@ -1104,6 +1103,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
               error={participantsError}
               onReload={() => loadParticipants(true)}
               theme={theme}
+              isMobile={isMobile}
             />
           </div>
 

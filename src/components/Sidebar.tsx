@@ -280,7 +280,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
     {/* 保存トースト */}
     {createPortal(
       <div style={{
-        position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+        position: 'fixed', bottom: 88, right: 24, zIndex: 9999,
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '10px 16px', borderRadius: 12,
         background: 'var(--glass-bg-strong)',
