@@ -120,7 +120,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 </div>
               )}
 
-              <DividendMarker markers={markers} size="sm" />
+              <DividendMarker markers={markers} size="sm" theme={theme} />
               <SqMarkerBadge markers={sqMarkers} size="sm" theme={theme} />
               <MacroEventBadge events={macroEvts} size="sm" theme={theme} />
             </div>

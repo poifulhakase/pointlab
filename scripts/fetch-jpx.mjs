@@ -48,12 +48,35 @@ function serialToDateStr(serial) {
 }
 
 function dateToLabel(dateStr) {
-  const d = new Date(dateStr)
+  const raw = (typeof dateStr === 'string' ? dateStr : String(dateStr)).replace(/\//g, '-')
+  const d = new Date(raw)
   if (isNaN(d.getTime())) return dateStr
   const m = d.getMonth() + 1
-  const w = Math.ceil(d.getDate() / 7)
-  const KANJI = ['', '第1週', '第2週', '第3週', '第4週', '第5週']
-  return `${m}月${KANJI[w] ?? '末'}`
+  const y = d.getFullYear()
+
+  // この日付が属する週の月曜日を求める（ISO: 月曜=週頭）
+  const dow = d.getDay()  // 0=日, 1=月, ..., 6=土
+  const daysToMon = dow === 0 ? -6 : 1 - dow
+  const monDate = new Date(d)
+  monDate.setDate(d.getDate() + daysToMon)
+
+  // 月曜が前月なら「第1週（前週またがり）」
+  if (monDate.getMonth() + 1 !== m || monDate.getFullYear() !== y) {
+    return `${m}月第1週`
+  }
+
+  // その月の1日が属する週の月曜日を基準に週番号を算出
+  const firstDay  = new Date(y, m - 1, 1)
+  const firstDow  = firstDay.getDay()
+  const daysToFirstMon = firstDow === 0 ? -6 : 1 - firstDow
+  const firstWeekMon = new Date(firstDay)
+  firstWeekMon.setDate(1 + daysToFirstMon)
+
+  const msPerWeek = 7 * 24 * 3600 * 1000
+  const weekNum   = Math.round((monDate.getTime() - firstWeekMon.getTime()) / msPerWeek) + 1
+
+  const KANJI = ['', '第1週', '第2週', '第3週', '第4週', '第5週', '第6週']
+  return `${m}月${KANJI[weekNum] ?? '末'}`
 }
 
 function senToOku(senYen) {

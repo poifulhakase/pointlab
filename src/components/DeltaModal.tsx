@@ -19,11 +19,18 @@ type Props = {
   onClose: () => void
 }
 
-const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBad: boolean }> = {
-  credit_long:      { title: '信用買い残 Δ（前週比 %）',    unit: '%',  positiveIsBad: true  },
-  arbitrage_long:   { title: '裁定買い残 Δ（週次変化 億円）', unit: '億円', positiveIsBad: false },
-  short_sell:       { title: '空売り比率 Δ（週次変化 pp）',  unit: 'pp', positiveIsBad: true  },
-  advance_decline:  { title: '騰落レシオ Δ（Δは変化率）',    unit: 'pp', positiveIsBad: true  },
+const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBad: boolean; accent: string }> = {
+  credit_long:     { title: '信用買い残 Δ',    unit: '%',   positiveIsBad: true,  accent: '#f87171' },
+  arbitrage_long:  { title: '裁定買い残 Δ',    unit: '億円', positiveIsBad: false, accent: '#60a5fa' },
+  short_sell:      { title: '空売り比率 Δ',    unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
+  advance_decline: { title: '騰落レシオ Δ',    unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
+}
+
+const SUB_LABEL: Record<DeltaModalType, string> = {
+  credit_long:     '前週比 %',
+  arbitrage_long:  '週次変化 億円',
+  short_sell:      '週次変化 pp',
+  advance_decline: '変化率 pp',
 }
 
 function toIso(d: string) { return d.replace(/\//g, '-') }
@@ -37,7 +44,6 @@ function computeDeltas(
 ): { time: string; value: number }[] {
   const N = 14
   if (type === 'credit_long') {
-    // marData は降順（新→古）前提
     const arr = [...marData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
     return arr.slice(1).map((row, i) => {
       const prev = arr[i]
@@ -46,7 +52,6 @@ function computeDeltas(
     })
   }
   if (type === 'arbitrage_long') {
-    // arbData は降順（新→古）で揃えてから処理
     const arr = [...arbData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
     return arr.slice(1).map((row, i) => {
       const prev = arr[i]
@@ -60,7 +65,6 @@ function computeDeltas(
       return { time: toIso(row.date), value: Math.round((row.ratio - prev.ratio) * 100) / 100 }
     })
   }
-  // advance_decline: adData は降順前提
   const arr = [...adData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
   return arr.slice(1).map((row, i) => {
     const prev = arr[i]
@@ -88,7 +92,7 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
     const chart = createChart(el, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: isDark ? 'rgba(180,185,210,0.8)' : 'rgba(40,45,70,0.8)',
+        textColor: isDark ? 'rgba(180,185,210,0.75)' : 'rgba(40,45,70,0.75)',
         fontSize: 10,
       },
       grid: {
@@ -96,17 +100,17 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
         horzLines: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
       },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.08, bottom: 0.08 } },
+      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.1 } },
       timeScale: { borderVisible: false, fixLeftEdge: true, fixRightEdge: true },
       autoSize: true,
     })
 
     const posColor = cfg.positiveIsBad
-      ? (isDark ? 'rgba(255,100,80,0.82)' : 'rgba(200,50,30,0.82)')
-      : (isDark ? 'rgba(96,165,250,0.80)' : 'rgba(26,115,232,0.80)')
+      ? (isDark ? 'rgba(248,113,113,0.85)' : 'rgba(200,50,30,0.82)')
+      : (isDark ? 'rgba(96,165,250,0.85)' : 'rgba(26,115,232,0.80)')
     const negColor = cfg.positiveIsBad
-      ? (isDark ? 'rgba(96,165,250,0.80)' : 'rgba(26,115,232,0.80)')
-      : (isDark ? 'rgba(255,100,80,0.82)' : 'rgba(200,50,30,0.82)')
+      ? (isDark ? 'rgba(96,165,250,0.85)' : 'rgba(26,115,232,0.80)')
+      : (isDark ? 'rgba(248,113,113,0.85)' : 'rgba(200,50,30,0.82)')
 
     const hist = chart.addSeries(HistogramSeries, { base: 0, priceLineVisible: false, lastValueVisible: true })
     hist.setData(deltas.map(d => ({ time: d.time as any, value: d.value, color: d.value >= 0 ? posColor : negColor })))
@@ -129,63 +133,183 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
     return () => chart.remove()
   }, [deltas, theme, type, isDark, cfg.positiveIsBad])
 
-  return <div ref={ref} style={{ height: 240, width: '100%' }} />
+  return <div ref={ref} style={{ height: 220, width: '100%' }} />
 }
 
 export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onClose }: Props) {
   const tv = themeVars(theme)
   const cfg = CONFIG[type]
   const deltas = computeDeltas(type, marData, arbData, ssData, adData)
-  const isLight = theme === 'light'
+  const isDark = theme === 'dark'
+
+  const latest = deltas.length > 0 ? deltas[deltas.length - 1].value : null
+  const vals = deltas.map(d => d.value)
+  const maxV = vals.length > 0 ? Math.max(...vals) : null
+  const minV = vals.length > 0 ? Math.min(...vals) : null
+
+  const posCol = cfg.positiveIsBad
+    ? (isDark ? 'rgba(248,113,113,0.95)' : 'rgba(200,50,30,0.9)')
+    : (isDark ? 'rgba(96,165,250,0.95)' : 'rgba(26,115,232,0.9)')
+  const negCol = cfg.positiveIsBad
+    ? (isDark ? 'rgba(96,165,250,0.95)' : 'rgba(26,115,232,0.9)')
+    : (isDark ? 'rgba(248,113,113,0.95)' : 'rgba(200,50,30,0.9)')
+  const latestCol = latest != null ? (latest >= 0 ? posCol : negCol) : 'var(--text-dim)'
 
   return createPortal(
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)' }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1200,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: isDark ? 'rgba(0,0,0,0.62)' : 'rgba(0,0,0,0.38)',
+        backdropFilter: 'blur(8px)',
+      }}
       onClick={onClose}
     >
       <div
         style={{
           ...tv,
-          background: 'var(--modal-bg)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: 16,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.38)',
-          width: '92vw', maxWidth: 560,
+          position: 'relative',
+          background: isDark
+            ? 'rgba(16,20,36,0.94)'
+            : 'rgba(255,255,255,0.94)',
+          backdropFilter: 'blur(40px)',
+          WebkitBackdropFilter: 'blur(40px)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+          borderRadius: 20,
+          boxShadow: isDark
+            ? `0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px ${cfg.accent}18, inset 0 1px 0 rgba(255,255,255,0.06)`
+            : `0 24px 60px rgba(0,0,0,0.18), 0 0 0 1px ${cfg.accent}28`,
+          width: '92vw', maxWidth: 540,
           maxHeight: '88vh',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
-          </svg>
-          <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{cfg.title}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', fontSize: 22, lineHeight: 1, padding: '0 4px', flexShrink: 0 }}>×</button>
+        {/* アクセントバー */}
+        <div style={{
+          height: 3,
+          background: `linear-gradient(90deg, ${cfg.accent}00 0%, ${cfg.accent} 40%, ${cfg.accent}cc 70%, ${cfg.accent}00 100%)`,
+          flexShrink: 0,
+        }} />
+
+        {/* ヘッダー */}
+        <div style={{
+          padding: '14px 20px 12px',
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          flexShrink: 0,
+        }}>
+          {/* アイコン */}
+          <div style={{
+            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+            background: `${cfg.accent}18`,
+            border: `1px solid ${cfg.accent}30`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={cfg.accent} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+              {cfg.title}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 3 }}>
+              {SUB_LABEL[type]}　直近13週
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+              border: 'none', cursor: 'pointer',
+              color: 'var(--text-dim)',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
-        {/* Chart */}
-        <div style={{ flexShrink: 0, padding: '8px 14px 0' }}>
+        {/* 統計サマリー行 */}
+        {latest !== null && (
+          <div style={{
+            display: 'flex', gap: 8,
+            padding: '0 20px 14px',
+            flexShrink: 0,
+          }}>
+            {[
+              { label: '直近', value: latest, colored: true },
+              { label: '最大', value: maxV, colored: false },
+              { label: '最小', value: minV, colored: false },
+            ].map(({ label, value, colored }) => (
+              <div key={label} style={{
+                flex: 1, padding: '8px 10px', borderRadius: 10,
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
+                display: 'flex', flexDirection: 'column', gap: 3,
+              }}>
+                <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{label}</div>
+                <div style={{
+                  fontSize: 14, fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: colored
+                    ? latestCol
+                    : (value != null && value >= 0 ? posCol : negCol),
+                }}>
+                  {value != null ? (value > 0 ? '+' : '') + value.toFixed(2) : '—'}
+                  <span style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginLeft: 2 }}>{cfg.unit}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* セパレーター */}
+        <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+
+        {/* チャート */}
+        <div style={{ flexShrink: 0, padding: '16px 16px 4px' }}>
           {deltas.length < 2
-            ? <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
+            ? <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
             : <DeltaChart type={type} deltas={deltas} theme={theme} />
           }
         </div>
 
-        {/* Legend */}
-        <div style={{ padding: '10px 20px 20px', display: 'flex', gap: 18, fontSize: 11, color: 'var(--text-dim)', flexWrap: 'wrap', flexShrink: 0 }}>
-          <span>
-            <span style={{ color: cfg.positiveIsBad ? (isLight ? 'rgba(200,50,30,0.9)' : 'rgba(255,100,80,0.9)') : (isLight ? 'rgba(26,115,232,0.9)' : 'rgba(96,165,250,0.9)') }}>■</span>
-            {' '}正（＋）
-          </span>
-          <span>
-            <span style={{ color: cfg.positiveIsBad ? (isLight ? 'rgba(26,115,232,0.9)' : 'rgba(96,165,250,0.9)') : (isLight ? 'rgba(200,50,30,0.9)' : 'rgba(255,100,80,0.9)') }}>■</span>
-            {' '}負（−）
-          </span>
+        {/* レジェンド */}
+        <div style={{ padding: '10px 20px 20px', display: 'flex', gap: 10, fontSize: 11, flexWrap: 'wrap' as const, flexShrink: 0 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '4px 10px', borderRadius: 20,
+            background: `${posCol.replace(/[\d.]+\)$/, '0.12)')}`,
+            border: `1px solid ${posCol.replace(/[\d.]+\)$/, '0.25)')}`,
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: posCol, display: 'inline-block' }} />
+            <span style={{ color: 'var(--text-sub)', fontWeight: 600 }}>正（＋）</span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '4px 10px', borderRadius: 20,
+            background: `${negCol.replace(/[\d.]+\)$/, '0.12)')}`,
+            border: `1px solid ${negCol.replace(/[\d.]+\)$/, '0.25)')}`,
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: negCol, display: 'inline-block' }} />
+            <span style={{ color: 'var(--text-sub)', fontWeight: 600 }}>負（−）</span>
+          </div>
           {(type === 'short_sell' || type === 'advance_decline') && (
-            <span style={{ color: isLight ? 'rgba(161,120,0,0.9)' : 'rgba(251,191,36,0.9)' }}>— 4週MA</span>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '4px 10px', borderRadius: 20,
+              background: isDark ? 'rgba(251,191,36,0.10)' : 'rgba(161,120,0,0.08)',
+              border: `1px solid ${isDark ? 'rgba(251,191,36,0.28)' : 'rgba(161,120,0,0.25)'}`,
+            }}>
+              <span style={{ width: 14, height: 2, background: isDark ? 'rgba(251,191,36,0.92)' : 'rgba(161,120,0,0.92)', display: 'inline-block', borderRadius: 1 }} />
+              <span style={{ color: 'var(--text-sub)', fontWeight: 600 }}>4週MA</span>
+            </div>
           )}
         </div>
       </div>

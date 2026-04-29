@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getMacroEventsForDate, MACRO_META } from '../utils/macroCalendar'
 import { getSqDates, getSqMarkersForDate } from '../utils/sqCalendar'
+import { isMarketClosed as isMarketClosedDay } from '../utils/marketHolidays'
 
 // JST の各コンポーネントを取得（トリックを使わず UTC で正確に計算）
 function getJST(date: Date) {
@@ -29,8 +30,8 @@ const PHASE_META: Record<Phase, { label: string; color: string; dot: string; glo
   holiday: { label: '休場',     color: 'var(--text-dim)', dot: 'rgba(148,163,184,0.35)', glow: false },
 }
 
-function getPhase(h: number, mi: number, wd: number): Phase {
-  if (wd === 0 || wd === 6) return 'holiday'
+function getPhase(h: number, mi: number, dateObj: Date): Phase {
+  if (isMarketClosedDay(dateObj)) return 'holiday'
   const t = h * 60 + mi
   if (t < 540) return 'before'
   if (t < 690) return 'zenba'
@@ -74,8 +75,8 @@ function getCountdowns(now: Date): CdItem[] {
   const items: CdItem[] = []
   const MAX = 24 * 3600
 
-  // 市場セッション
-  if (jst.wd !== 0 && jst.wd !== 6) {
+  // 市場セッション（祝日・休場日は除外）
+  if (!isMarketClosedDay(jst.dateObj)) {
     for (const sess of SESSIONS) {
       const remain = (jstTs(jst.y, jst.mo, jst.d, sess.h, sess.mi) - now.getTime()) / 1000
       if (remain > 0 && remain < MAX) items.push({ label: sess.label, sec: Math.floor(remain) })
@@ -117,7 +118,7 @@ export function ClockWidget({ isMobile = false }: { isMobile?: boolean }) {
   }, [])
 
   const jst  = getJST(now)
-  const phase = getPhase(jst.h, jst.mi, jst.wd)
+  const phase = getPhase(jst.h, jst.mi, jst.dateObj)
   const meta  = PHASE_META[phase]
   const countdowns = getCountdowns(now)
   const timeStr = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`

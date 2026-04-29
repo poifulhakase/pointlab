@@ -794,6 +794,12 @@ export function QuantView({ theme, isMobile, user }: Props) {
   const [quantTab,    setQuantTab]    = useState<'macro' | 'micro'>('macro')
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
+  // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
+  const [marExpanded,      setMarExpanded]      = useState(false)
+  const [invExpanded,      setInvExpanded]      = useState(false)
+  const [combinedExpanded, setCombinedExpanded] = useState(false)
+  const MOBILE_ROW_LIMIT = 10
+
   const loadInvestor = useCallback(async (force = false) => {
     setInvLoading(true); setInvError('')
     try { setInvData(await fetchInvestorData(force)); setInvLoaded(true) }
@@ -1043,7 +1049,8 @@ export function QuantView({ theme, isMobile, user }: Props) {
                       {(() => {
                         const [longQ1, longQ3]   = quartiles(marData.map(r => r.longBal))
                         const [shortQ1, shortQ3] = quartiles(marData.map(r => r.shortBal))
-                        return marData.map((row, i) => (
+                        const visibleRows = isMobile && !marExpanded ? marData.slice(0, MOBILE_ROW_LIMIT) : marData
+                        return visibleRows.map((row, i) => (
                           <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
                             <td style={mTdDate}>
                               <div style={s.dateMain}>{withYear(row.label, row.date)}</div>
@@ -1080,6 +1087,11 @@ export function QuantView({ theme, isMobile, user }: Props) {
                 )
               }
             </div>
+            {isMobile && marData.length > MOBILE_ROW_LIMIT && (
+              <button style={s.expandBtn} onClick={() => setMarExpanded(v => !v)}>
+                {marExpanded ? `▲ 折りたたむ` : `▼ 全${marData.length}週を表示`}
+              </button>
+            )}
           </div>
 
           <div style={s.dividerH} />
@@ -1129,7 +1141,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
                       </tr>
                     </thead>
                     <tbody>
-                      {invData.map((row, i) => (
+                      {(isMobile && !invExpanded ? invData.slice(0, MOBILE_ROW_LIMIT) : invData).map((row, i) => (
                         <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
                           <td style={mTdDate}>
                             <div style={s.dateMain}>{row.label}</div>
@@ -1152,6 +1164,11 @@ export function QuantView({ theme, isMobile, user }: Props) {
                 )
               }
             </div>
+            {isMobile && invData.length > MOBILE_ROW_LIMIT && (
+              <button style={s.expandBtn} onClick={() => setInvExpanded(v => !v)}>
+                {invExpanded ? `▲ 折りたたむ` : `▼ 全${invData.length}週を表示`}
+              </button>
+            )}
           </div>
 
           <div style={s.dividerH} />
@@ -1210,7 +1227,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
                               </tr>
                             </thead>
                             <tbody>
-                              {combinedRows.map((row, i) => (
+                              {(isMobile && !combinedExpanded ? combinedRows.slice(0, MOBILE_ROW_LIMIT) : combinedRows).map((row, i) => (
                                 <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
                                   <td style={mTdDate}>
                                     <div style={s.dateMain}>{row.label}</div>
@@ -1247,6 +1264,11 @@ export function QuantView({ theme, isMobile, user }: Props) {
                         )
                     }
                   </div>
+                  {isMobile && combinedRows.length > MOBILE_ROW_LIMIT && (
+                    <button style={s.expandBtn} onClick={() => setCombinedExpanded(v => !v)}>
+                      {combinedExpanded ? `▲ 折りたたむ` : `▼ 全${combinedRows.length}週を表示`}
+                    </button>
+                  )}
                 </>
               )
             })()}
@@ -1364,4 +1386,12 @@ const s: Record<string, React.CSSProperties> = {
   dateSub:   { fontSize: 10, color: 'var(--text-dim)', marginTop: 2 },
   unit:      { fontSize: 10, color: 'var(--text-dim)', marginLeft: 3 },
   deltaBtn:  { background: 'none', border: '1px solid var(--border-dim)', borderRadius: 3, cursor: 'pointer', color: 'var(--accent)', fontSize: 10, fontWeight: 700, padding: '0px 3px', lineHeight: 1.4, letterSpacing: '0.02em', flexShrink: 0 } as React.CSSProperties,
+  expandBtn: {
+    display: 'block', width: '100%',
+    padding: '9px 14px', textAlign: 'center' as const,
+    fontSize: 11, fontWeight: 600, color: 'var(--text-sub)',
+    background: 'var(--glass-bg)', border: 'none',
+    borderTop: '1px solid var(--border-dim)',
+    cursor: 'pointer', letterSpacing: '0.03em',
+  },
 }

@@ -5,13 +5,15 @@ import { BadgePopup } from './BadgePopup'
 type Props = {
   markers: MarkerType[]
   size?: 'sm' | 'md'
+  theme?: 'dark' | 'light'
 }
 
 type PopupState = { key: MarkerType; x: number; y: number }
 
-export function DividendMarker({ markers, size = 'md' }: Props) {
+export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) {
   const [popup, setPopup] = useState<PopupState | null>(null)
   const isSm = size === 'sm'
+  const isLight = theme === 'light'
 
   if (markers.length === 0) return null
 
@@ -28,7 +30,7 @@ export function DividendMarker({ markers, size = 'md' }: Props) {
                 fontSize: isSm ? 10 : 12,
                 fontWeight: 700,
                 letterSpacing: '0.02em',
-                color: meta.color,
+                color: isLight ? meta.color : 'rgba(255,255,255,0.92)',
                 background: meta.bg,
                 border: `1px solid ${meta.color}40`,
                 borderRadius: 4,

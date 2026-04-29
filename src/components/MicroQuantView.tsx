@@ -54,10 +54,10 @@ const GROUP_META: Record<TankGroup, { label: string; color: string; desc: string
 // ダミーデータ（実データ取得実装まで）
 const TANK_DUMMIES: TankFirm[] = [
   { firmDisplay: 'ゴールドマン\n・サックス', group: 'trend',   cumulativeLots: -5000, delta:  -700, maxCapacity: 12000 },
-  { firmDisplay: 'JP\nモルガン',            group: 'trend',   cumulativeLots: -2800, delta:  -350, maxCapacity:  8000 },
+  { firmDisplay: 'JPモルガン',              group: 'trend',   cumulativeLots: -2800, delta:  -350, maxCapacity:  8000 },
   { firmDisplay: 'ソシエテ\n・ジェネラル',  group: 'gravity', cumulativeLots: -3700, delta:  -500, maxCapacity: 10000 },
   { firmDisplay: 'バークレイズ',            group: 'gravity', cumulativeLots: -1800, delta:  -200, maxCapacity:  6000 },
-  { firmDisplay: 'ABN\nアムロ',             group: 'noise',   cumulativeLots:  1400, delta:   290, maxCapacity:  5000 },
+  { firmDisplay: 'ABNアムロ',               group: 'noise',   cumulativeLots:  1400, delta:   290, maxCapacity:  5000 },
   { firmDisplay: '野村証券',               group: 'noise',   cumulativeLots:   900, delta:   150, maxCapacity:  4000 },
 ]
 
@@ -327,14 +327,6 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {dateLabel && <span style={s.dateLabel}>{dateLabel}</span>}
-          <button style={s.reloadBtn} onClick={onReload} disabled={loading}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-              style={loading ? { animation: 'spin 0.8s linear infinite' } : {}}>
-              <polyline points="1 4 1 10 7 10"/>
-              <path d="M3.51 15a9 9 0 1 0 .49-3.65"/>
-            </svg>
-            更新
-          </button>
         </div>
       </div>
 
