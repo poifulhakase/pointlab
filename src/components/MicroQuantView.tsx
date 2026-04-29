@@ -38,12 +38,11 @@ function cellColor(v: number | null, theme: 'dark' | 'light'): string {
 type TankGroup = 'trend' | 'gravity' | 'noise'
 
 type TankFirm = {
-  firm:           string
-  firmShort:      string
+  firmDisplay:    string    // 表示名（\n で改行可）
   group:          TankGroup
-  cumulativeLots: number  // 限月累積ネット建玉（枚）
-  delta:          number  // 前日比
-  maxCapacity:    number  // 過去1年最大 × 1.2
+  cumulativeLots: number    // 限月累積ネット建玉（枚）
+  delta:          number    // 前日比
+  maxCapacity:    number    // 過去1年最大 × 1.2
 }
 
 const GROUP_META: Record<TankGroup, { label: string; color: string; desc: string }> = {
@@ -54,25 +53,30 @@ const GROUP_META: Record<TankGroup, { label: string; color: string; desc: string
 
 // ダミーデータ（実データ取得実装まで）
 const TANK_DUMMIES: TankFirm[] = [
-  { firm: 'Goldman Sachs', firmShort: 'GS',       group: 'trend',   cumulativeLots: -5000, delta:  -700, maxCapacity: 12000 },
-  { firm: 'JP Morgan',     firmShort: 'JPM',      group: 'trend',   cumulativeLots: -2800, delta:  -350, maxCapacity:  8000 },
-  { firm: 'SG',            firmShort: 'SG',       group: 'gravity', cumulativeLots: -3700, delta:  -500, maxCapacity: 10000 },
-  { firm: 'Barclays',      firmShort: 'Barclays', group: 'gravity', cumulativeLots: -1800, delta:  -200, maxCapacity:  6000 },
-  { firm: 'ABN AMRO',      firmShort: 'ABN',      group: 'noise',   cumulativeLots:  1400, delta:   290, maxCapacity:  5000 },
-  { firm: '野村証券',       firmShort: '野村',     group: 'noise',   cumulativeLots:   900, delta:   150, maxCapacity:  4000 },
+  { firmDisplay: 'ゴールドマン\n・サックス', group: 'trend',   cumulativeLots: -5000, delta:  -700, maxCapacity: 12000 },
+  { firmDisplay: 'JP\nモルガン',            group: 'trend',   cumulativeLots: -2800, delta:  -350, maxCapacity:  8000 },
+  { firmDisplay: 'ソシエテ\n・ジェネラル',  group: 'gravity', cumulativeLots: -3700, delta:  -500, maxCapacity: 10000 },
+  { firmDisplay: 'バークレイズ',            group: 'gravity', cumulativeLots: -1800, delta:  -200, maxCapacity:  6000 },
+  { firmDisplay: 'ABN\nアムロ',             group: 'noise',   cumulativeLots:  1400, delta:   290, maxCapacity:  5000 },
+  { firmDisplay: '野村証券',               group: 'noise',   cumulativeLots:   900, delta:   150, maxCapacity:  4000 },
+]
+
+const BUBBLES = [
+  { size: 5, left: '22%', delay: '0s',    dur: '2.8s' },
+  { size: 4, left: '58%', delay: '1.1s',  dur: '3.2s' },
+  { size: 3, left: '40%', delay: '2.0s',  dur: '2.4s' },
 ]
 
 // ── タンクカード ──────────────────────────────────────
-function TankCard({ firmShort, group, cumulativeLots, delta, maxCapacity, theme }: TankFirm & { theme: 'dark' | 'light' }) {
-  const isLight   = theme === 'light'
+function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, theme }: TankFirm & { theme: 'dark' | 'light' }) {
+  const isLight    = theme === 'light'
   const waterLevel = Math.min(Math.abs(cumulativeLots) / maxCapacity * 100, 105)
-  const isShort   = cumulativeLots <= 0
+  const isShort    = cumulativeLots <= 0
   const groupColor = GROUP_META[group].color
   const isOverflow = waterLevel >= 100
 
-  const liquidColor = isShort
-    ? (isLight ? 'rgba(239,68,68,0.45)' : 'rgba(239,68,68,0.40)')
-    : (isLight ? 'rgba(52,211,153,0.45)' : 'rgba(52,211,153,0.40)')
+  const liquidTop    = isShort ? 'rgba(239,68,68,0.22)' : 'rgba(52,211,153,0.22)'
+  const liquidBottom = isShort ? 'rgba(239,68,68,0.52)' : 'rgba(52,211,153,0.52)'
   const liquidBorder = isShort ? 'rgba(239,68,68,0.80)' : 'rgba(52,211,153,0.80)'
 
   const numColor = isShort
@@ -83,42 +87,65 @@ function TankCard({ firmShort, group, cumulativeLots, delta, maxCapacity, theme 
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
 
       {/* 社名 */}
-      <div style={{ fontSize: 10, fontWeight: 700, color: groupColor, textAlign: 'center', whiteSpace: 'nowrap' }}>
-        {firmShort}
+      <div style={{
+        fontSize: 10, fontWeight: 700, color: groupColor,
+        textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.35,
+        minHeight: 28,
+      }}>
+        {firmDisplay}
       </div>
 
       {/* タンク本体 */}
       <div style={{
-        width: '100%', maxWidth: 68, height: 116,
+        width: '100%', maxWidth: 72, height: 120,
         position: 'relative',
-        borderRadius: '5px 5px 9px 9px',
-        border: `1.5px solid ${groupColor}45`,
+        borderRadius: '10px 10px 26px 26px',
+        border: `1.5px solid ${groupColor}50`,
         background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
         overflow: 'hidden',
+        boxShadow: `0 4px 12px rgba(0,0,0,0.18), inset 0 0 0 1px ${groupColor}18`,
       }}>
-        {/* 液体 */}
+        {/* 液体（グラデーション） */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           height: `${Math.min(waterLevel, 100)}%`,
-          background: liquidColor,
+          background: `linear-gradient(180deg, ${liquidTop} 0%, ${liquidBottom} 100%)`,
           borderTop: `2px solid ${liquidBorder}`,
           transition: 'height 0.9s cubic-bezier(0.4,0,0.2,1)',
         }}>
           {/* 水面シマー */}
           <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+            position: 'absolute', top: 0, left: 0, right: 0, height: 4,
             background: `linear-gradient(90deg, transparent 0%, ${liquidBorder} 50%, transparent 100%)`,
             animation: 'tankShimmer 3s ease-in-out infinite',
           }} />
+          {/* 気泡 */}
+          {BUBBLES.map((b, i) => (
+            <div key={i} style={{
+              position: 'absolute', bottom: '8%', left: b.left,
+              width: b.size, height: b.size,
+              borderRadius: '50%',
+              background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), ${liquidBorder}60)`,
+              animation: `tankBubble ${b.dur} ${b.delay} ease-in infinite`,
+            }} />
+          ))}
         </div>
+
+        {/* ガラスハイライト */}
+        <div style={{
+          position: 'absolute', top: '6%', left: '9%',
+          width: '16%', height: '32%',
+          borderRadius: 6,
+          background: 'rgba(255,255,255,0.11)',
+          pointerEvents: 'none',
+        }} />
 
         {/* オーバーフロー警告 */}
         {isOverflow && (
           <div style={{
             position: 'absolute', top: 3, left: 0, right: 0,
             textAlign: 'center', fontSize: 8, fontWeight: 900,
-            color: isShort ? 'rgba(255,80,80,0.95)' : 'rgba(52,211,153,0.95)',
-            letterSpacing: 1,
+            color: liquidBorder, letterSpacing: 1,
           }}>MAX!</div>
         )}
 
@@ -128,7 +155,7 @@ function TankCard({ firmShort, group, cumulativeLots, delta, maxCapacity, theme 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 13, fontWeight: 800, letterSpacing: '-0.5px',
           color: waterLevel > 52
-            ? 'rgba(255,255,255,0.92)'
+            ? 'rgba(255,255,255,0.93)'
             : (isLight ? 'rgba(0,0,0,0.60)' : 'rgba(255,255,255,0.60)'),
           textShadow: waterLevel > 52 ? '0 1px 4px rgba(0,0,0,0.5)' : 'none',
           pointerEvents: 'none',
@@ -136,13 +163,12 @@ function TankCard({ firmShort, group, cumulativeLots, delta, maxCapacity, theme 
           {waterLevel.toFixed(1)}%
         </div>
 
-        {/* 目盛り (25/50/75%) */}
+        {/* 目盛り（両側） */}
         {[25, 50, 75].map(pct => (
-          <div key={pct} style={{
-            position: 'absolute', right: 0, bottom: `${pct}%`,
-            width: 5, height: 1,
-            background: isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.18)',
-          }} />
+          <div key={pct}>
+            <div style={{ position: 'absolute', right: 0, bottom: `${pct}%`, width: 5, height: 1, background: isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.18)' }} />
+            <div style={{ position: 'absolute', left: 0,  bottom: `${pct}%`, width: 5, height: 1, background: isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.18)' }} />
+          </div>
         ))}
       </div>
 
@@ -282,6 +308,11 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
           0%, 100% { opacity: 0.3; transform: translateX(-40%); }
           50%       { opacity: 1;   transform: translateX(40%);  }
         }
+        @keyframes tankBubble {
+          0%   { transform: translateY(0)    scale(1);   opacity: 0.7; }
+          60%  { transform: translateY(-55px) scale(1.3); opacity: 0.3; }
+          100% { transform: translateY(-80px) scale(0.6); opacity: 0;   }
+        }
       `}</style>
 
       {/* ── ヘッダー ── */}
@@ -369,7 +400,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                         </div>
                         {/* タンク2本 */}
                         <div style={{ display: 'flex', gap: 10 }}>
-                          {firms.map(f => <TankCard key={f.firmShort} {...f} theme={theme} />)}
+                          {firms.map(f => <TankCard key={f.firmDisplay} {...f} theme={theme} />)}
                         </div>
                       </div>
                     )
