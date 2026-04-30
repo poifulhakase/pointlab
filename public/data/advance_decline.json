@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-29T00:13:46.659Z",
+  "updatedAt": "2026-04-30T00:13:37.349Z",
   "data": [
     {
       "date": "2026/04/28",
@@ -38,56 +38,56 @@
     },
     {
       "date": "2026/03/27",
-      "label": "3月第4週",
+      "label": "3月第5週",
       "ratio25": 99.1,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/03/19",
-      "label": "3月第3週",
+      "label": "3月第4週",
       "ratio25": 92.73,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/03/13",
-      "label": "3月第2週",
+      "label": "3月第3週",
       "ratio25": 107.51,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/03/06",
-      "label": "3月第1週",
+      "label": "3月第2週",
       "ratio25": 128.19,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/02/27",
-      "label": "2月第4週",
+      "label": "2月第5週",
       "ratio25": 136.16,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/02/20",
-      "label": "2月第3週",
+      "label": "2月第4週",
       "ratio25": 110.44,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/02/13",
-      "label": "2月第2週",
+      "label": "2月第3週",
       "ratio25": 123.01,
       "advances": null,
       "declines": null
     },
     {
       "date": "2026/02/06",
-      "label": "2月第1週",
+      "label": "2月第2週",
       "ratio25": 119.21,
       "advances": null,
       "declines": null
@@ -157,28 +157,28 @@
     },
     {
       "date": "2025/11/28",
-      "label": "11月第4週",
+      "label": "11月第5週",
       "ratio25": 124.66,
       "advances": null,
       "declines": null
     },
     {
       "date": "2025/11/21",
-      "label": "11月第3週",
+      "label": "11月第4週",
       "ratio25": 119.24,
       "advances": null,
       "declines": null
     },
     {
       "date": "2025/11/14",
-      "label": "11月第2週",
+      "label": "11月第3週",
       "ratio25": 113.87,
       "advances": null,
       "declines": null
     },
     {
       "date": "2025/11/07",
-      "label": "11月第1週",
+      "label": "11月第2週",
       "ratio25": 111.89,
       "advances": null,
       "declines": null
@@ -311,28 +311,28 @@
     },
     {
       "date": "2025/06/27",
-      "label": "6月第4週",
+      "label": "6月第5週",
       "ratio25": 118.78,
       "advances": null,
       "declines": null
     },
     {
       "date": "2025/06/20",
-      "label": "6月第3週",
+      "label": "6月第4週",
       "ratio25": 104.05,
       "advances": null,
       "declines": null
     },
     {
       "date": "2025/06/13",
-      "label": "6月第2週",
+      "label": "6月第3週",
       "ratio25": 97.97,
       "advances": null,
       "declines": null
     },
     {
       "date": "2025/06/06",
-      "label": "6月第1週",
+      "label": "6月第2週",
       "ratio25": 109.27,
       "advances": null,
       "declines": null

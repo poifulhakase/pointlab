@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-29T00:13:43.217Z",
+  "updatedAt": "2026-04-30T00:13:33.364Z",
   "data": [
     {
       "date": "2026/04/17",
@@ -27,7 +27,7 @@
     },
     {
       "date": "2026/03/27",
-      "label": "3月第4週",
+      "label": "3月第5週",
       "foreigner": -15090.505,
       "individual": -145.766,
       "trustBank": -1034.491,
@@ -35,7 +35,7 @@
     },
     {
       "date": "2026/03/19",
-      "label": "3月第3週",
+      "label": "3月第4週",
       "foreigner": -5191.099,
       "individual": 3383.981,
       "trustBank": -598.936,
@@ -43,7 +43,7 @@
     },
     {
       "date": "2026/03/13",
-      "label": "3月第2週",
+      "label": "3月第3週",
       "foreigner": -4906.714,
       "individual": 4267.233,
       "trustBank": -2700.942,
@@ -51,7 +51,7 @@
     },
     {
       "date": "2026/03/06",
-      "label": "3月第1週",
+      "label": "3月第2週",
       "foreigner": 2377.868,
       "individual": 8329.426,
       "trustBank": -10863.222,
@@ -59,7 +59,7 @@
     },
     {
       "date": "2026/02/27",
-      "label": "2月第4週",
+      "label": "2月第5週",
       "foreigner": 7910.728,
       "individual": -4604.782,
       "trustBank": -7497.114,
@@ -67,7 +67,7 @@
     },
     {
       "date": "2026/02/20",
-      "label": "2月第3週",
+      "label": "2月第4週",
       "foreigner": 5426.666,
       "individual": 5466.193,
       "trustBank": -9515.761,
@@ -75,7 +75,7 @@
     },
     {
       "date": "2026/02/13",
-      "label": "2月第2週",
+      "label": "2月第3週",
       "foreigner": 12323.554,
       "individual": -11658.717,
       "trustBank": -4440.044,
@@ -83,7 +83,7 @@
     },
     {
       "date": "2026/02/06",
-      "label": "2月第1週",
+      "label": "2月第2週",
       "foreigner": 2745.981,
       "individual": -4402.746,
       "trustBank": -3788.79,
@@ -163,7 +163,7 @@
     },
     {
       "date": "2025/11/28",
-      "label": "11月第4週",
+      "label": "11月第5週",
       "foreigner": -1162.673,
       "individual": -4528.329,
       "trustBank": 236.349,
@@ -171,7 +171,7 @@
     },
     {
       "date": "2025/11/21",
-      "label": "11月第3週",
+      "label": "11月第4週",
       "foreigner": -3836.329,
       "individual": 1158.955,
       "trustBank": -834.611,
@@ -179,7 +179,7 @@
     },
     {
       "date": "2025/11/14",
-      "label": "11月第2週",
+      "label": "11月第3週",
       "foreigner": 5147.697,
       "individual": -2366.187,
       "trustBank": -5397.653,
@@ -187,7 +187,7 @@
     },
     {
       "date": "2025/11/07",
-      "label": "11月第1週",
+      "label": "11月第2週",
       "foreigner": -3559.369,
       "individual": 5557.514,
       "trustBank": 755.782,
