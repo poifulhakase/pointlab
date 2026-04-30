@@ -627,7 +627,7 @@ async function buildArbitrageData() {
   // 売り残金額は毎週公表されず col[9](株数) と col[10](金額) が交互になる週がある。
   // LOCF（前値補完）: 欠損週は直前の既知値を引き継ぐ。
   let lastKnownShortBal = 0
-  const result = last52Asc.map(date => {
+  const weekly = last52Asc.map(date => {
     const short = shortBalMap.get(date)
     if (short != null && short > 0) lastKnownShortBal = short
     return {
@@ -636,8 +636,21 @@ async function buildArbitrageData() {
       longBal:  longBalMap.get(date),
       shortBal: lastKnownShortBal,
     }
-  })
-  return result.reverse() // 降順（新→古）に統一
+  }).reverse() // 降順（新→古）に統一
+
+  // 日次: 最新30営業日 + 前日比デルタ
+  const last31Asc = sortedAsc.slice(-31)
+  const daily = last31Asc.slice(1).map((date, i) => {
+    const prev = longBalMap.get(last31Asc[i])
+    const cur  = longBalMap.get(date)
+    return {
+      date,
+      longBal:      cur,
+      longBalDelta: prev != null && cur != null ? cur - prev : null,
+    }
+  }).reverse() // 降順（新→古）
+
+  return { weekly, daily }
 }
 
 // ── 先物建玉残高（OI） ────────────────────────────────
@@ -876,10 +889,13 @@ async function main() {
   }
 
   try {
-    const data = await buildArbitrageData()
-    const out  = { updatedAt: new Date().toISOString(), data }
+    const { weekly, daily } = await buildArbitrageData()
+    const out  = { updatedAt: new Date().toISOString(), data: weekly }
     writeFileSync(join(OUT_DIR, 'arbitrage.json'), JSON.stringify(out, null, 2))
-    console.log(`\n✓ arbitrage.json 保存 (${data.length}件)`)
+    console.log(`\n✓ arbitrage.json 保存 (${weekly.length}件)`)
+    const dailyOut = { updatedAt: new Date().toISOString(), data: daily }
+    writeFileSync(join(OUT_DIR, 'arbitrage_daily.json'), JSON.stringify(dailyOut, null, 2))
+    console.log(`✓ arbitrage_daily.json 保存 (${daily.length}件)`)
     arbitrageOk = true
   } catch (e) {
     console.error('\n✗ arbitrage:', e.message)

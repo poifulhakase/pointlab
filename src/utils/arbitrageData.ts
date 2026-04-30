@@ -1,5 +1,5 @@
 // 裁定買い残データ
-// データソース: /data/arbitrage.json (scripts/fetch-jpx.mjs で生成)
+// データソース: /data/arbitrage.json, arbitrage_daily.json (scripts/fetch-jpx.mjs で生成)
 
 export interface ArbitrageWeekData {
   date:     string  // "2026/04/03"
@@ -8,13 +8,25 @@ export interface ArbitrageWeekData {
   shortBal: number  // 裁定売り残（百万円）
 }
 
+export interface ArbitrageDayData {
+  date:         string        // "2026-04-28"
+  longBal:      number        // 裁定買い残（百万円）
+  longBalDelta: number | null // 前日比（百万円）
+}
+
 interface CachedResponse {
   updatedAt: string
   data: ArbitrageWeekData[]
 }
 
-const CACHE_KEY = 'poical-arbitrage-data'
-const CACHE_TTL = 24 * 60 * 60 * 1000
+interface DailyCachedResponse {
+  updatedAt: string
+  data: ArbitrageDayData[]
+}
+
+const CACHE_KEY       = 'poical-arbitrage-data'
+const DAILY_CACHE_KEY = 'poical-arbitrage-daily-data'
+const CACHE_TTL       = 24 * 60 * 60 * 1000
 
 interface LocalCache {
   updatedAt: string
@@ -22,9 +34,21 @@ interface LocalCache {
   fetchedAt: number
 }
 
+interface DailyLocalCache {
+  updatedAt: string
+  data: ArbitrageDayData[]
+  fetchedAt: number
+}
+
 function writeCache(updatedAt: string, data: ArbitrageWeekData[]) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, data, fetchedAt: Date.now() }))
+  } catch { /* ignore */ }
+}
+
+function writeDailyCache(updatedAt: string, data: ArbitrageDayData[]) {
+  try {
+    localStorage.setItem(DAILY_CACHE_KEY, JSON.stringify({ updatedAt, data, fetchedAt: Date.now() }))
   } catch { /* ignore */ }
 }
 
@@ -47,6 +71,32 @@ export async function fetchArbitrageData(force = false): Promise<ArbitrageWeekDa
     const json: CachedResponse = await res.json()
     if (!json.data || json.data.length === 0) throw new Error('データが空です')
     writeCache(json.updatedAt, json.data)
+    return json.data
+  } catch (e) {
+    if (stale) return stale
+    throw e
+  }
+}
+
+export async function fetchArbitrageDailyData(force = false): Promise<ArbitrageDayData[]> {
+  let stale: ArbitrageDayData[] | null = null
+  try {
+    const raw = localStorage.getItem(DAILY_CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as DailyLocalCache
+      stale = c.data
+      if (!force && Date.now() - c.fetchedAt <= CACHE_TTL) return c.data
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage_daily.json`, {
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json: DailyCachedResponse = await res.json()
+    if (!json.data || json.data.length === 0) throw new Error('データが空です')
+    writeDailyCache(json.updatedAt, json.data)
     return json.data
   } catch (e) {
     if (stale) return stale

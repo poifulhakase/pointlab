@@ -1,0 +1,155 @@
+{
+  "updatedAt": "2026-04-30T05:54:24.357Z",
+  "data": [
+    {
+      "date": "2026/04/17",
+      "longBal": 3610350,
+      "longBalDelta": -108922
+    },
+    {
+      "date": "2026/04/10",
+      "longBal": 3719272,
+      "longBalDelta": 355719
+    },
+    {
+      "date": "2026/04/03",
+      "longBal": 3363553,
+      "longBalDelta": -149005
+    },
+    {
+      "date": "2026/03/27",
+      "longBal": 3512558,
+      "longBalDelta": 672665
+    },
+    {
+      "date": "2026/03/19",
+      "longBal": 2839893,
+      "longBalDelta": 48831
+    },
+    {
+      "date": "2026/03/13",
+      "longBal": 2791062,
+      "longBalDelta": -393152
+    },
+    {
+      "date": "2026/03/06",
+      "longBal": 3184214,
+      "longBalDelta": -684138
+    },
+    {
+      "date": "2026/02/27",
+      "longBal": 3868352,
+      "longBalDelta": 398327
+    },
+    {
+      "date": "2026/02/20",
+      "longBal": 3470025,
+      "longBalDelta": 130313
+    },
+    {
+      "date": "2026/02/13",
+      "longBal": 3339712,
+      "longBalDelta": 424191
+    },
+    {
+      "date": "2026/02/06",
+      "longBal": 2915521,
+      "longBalDelta": 553048
+    },
+    {
+      "date": "2026/01/30",
+      "longBal": 2362473,
+      "longBalDelta": -484831
+    },
+    {
+      "date": "2026/01/23",
+      "longBal": 2847304,
+      "longBalDelta": -20705
+    },
+    {
+      "date": "2026/01/16",
+      "longBal": 2868009,
+      "longBalDelta": 244498
+    },
+    {
+      "date": "2026/01/09",
+      "longBal": 2623511,
+      "longBalDelta": -82102
+    },
+    {
+      "date": "2025/12/30",
+      "longBal": 2705613,
+      "longBalDelta": 50401
+    },
+    {
+      "date": "2025/12/26",
+      "longBal": 2655212,
+      "longBalDelta": 144186
+    },
+    {
+      "date": "2025/12/19",
+      "longBal": 2511026,
+      "longBalDelta": 12713
+    },
+    {
+      "date": "2025/12/12",
+      "longBal": 2498313,
+      "longBalDelta": 144183
+    },
+    {
+      "date": "2025/12/05",
+      "longBal": 2354130,
+      "longBalDelta": -50163
+    },
+    {
+      "date": "2025/11/28",
+      "longBal": 2404293,
+      "longBalDelta": 96858
+    },
+    {
+      "date": "2025/11/21",
+      "longBal": 2307435,
+      "longBalDelta": 276254
+    },
+    {
+      "date": "2025/11/14",
+      "longBal": 2031181,
+      "longBalDelta": 164700
+    },
+    {
+      "date": "2025/11/07",
+      "longBal": 1866481,
+      "longBalDelta": -281896
+    },
+    {
+      "date": "2025/10/31",
+      "longBal": 2148377,
+      "longBalDelta": -306620
+    },
+    {
+      "date": "2025/10/24",
+      "longBal": 2454997,
+      "longBalDelta": 293282
+    },
+    {
+      "date": "2025/10/17",
+      "longBal": 2161715,
+      "longBalDelta": -427178
+    },
+    {
+      "date": "2025/10/10",
+      "longBal": 2588893,
+      "longBalDelta": 307611
+    },
+    {
+      "date": "2025/10/03",
+      "longBal": 2281282,
+      "longBalDelta": -306755
+    },
+    {
+      "date": "2025/09/26",
+      "longBal": 2588037,
+      "longBalDelta": 193620
+    }
+  ]
+}

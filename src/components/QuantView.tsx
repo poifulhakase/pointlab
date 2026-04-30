@@ -11,12 +11,14 @@ import { getSqDates, getSqMarkersForDate, SQ_META } from '../utils/sqCalendar'
 import { getNote, saveNote } from '../utils/noteStorage'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
-import { fetchArbitrageData, type ArbitrageWeekData } from '../utils/arbitrageData'
+import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
 import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
 import { DeltaModal, type DeltaModalType } from './DeltaModal'
+import { MarketDailyPanel } from './MarketDailyPanel'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; user: User | null }
@@ -264,6 +266,8 @@ function buildExportJson(
   ssData: ShortSellWeekData[],
   arbData: ArbitrageWeekData[],
   participantsData: FuturesParticipantDayData[],
+  arbDailyData: ArbitrageDayData[],
+  usdjpyData: UsdjpyDayData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -388,17 +392,35 @@ function buildExportJson(
     change_1m_pct: nk1m ? r2((nk.nikkei - nk1m.nikkei) / nk1m.nikkei * 100) : null,
   } : null
 
+  // ドル円最新値
+  const fx = usdjpyData.length > 0 ? usdjpyData[usdjpyData.length - 1] : null
+  const usdjpy_latest = fx ? {
+    date:        fx.time,
+    close:       fx.close,
+    change:      fx.change,
+    change_pct:  fx.changePct,
+    ma5:         fx.ma5,
+    ma5_dev_pct: fx.ma5dev,
+  } : null
+
+  // 裁定日次（直近7件）
+  const arbitrage_daily_recent = arbDailyData.slice(0, 7).map(d => ({
+    date: d.date, longBal: d.longBal, delta: d.longBalDelta,
+  }))
+
   // 各指標の時間軸を明示（AIが時間軸のズレを誤解しないように）
   const data_freshness = {
     note: '各指標は公表タイミングが異なります。週次指標と日次指標を混同しないでください。',
     nikkei225:          { data_as_of: nk?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    vix:                { data_as_of: vix_latest?.date ?? null,                 frequency: '週次', lag_note: '週末終値ベース' },
-    futures_hand:       { data_as_of: participantsData[0]?.date ?? null,        frequency: '日次', lag_note: 'JPX翌営業日公表' },
-    investor_flows:     { data_as_of: toDate(invData[0]?.date ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
-    credit_ratio:       { data_as_of: toDate(marData[0]?.date ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
-    short_sell_ratio:   { data_as_of: toDate(ssData[0]?.date  ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
-    advance_decline:    { data_as_of: toDate(adData[0]?.date  ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
-    arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,   frequency: '週次', lag_note: '約1週間遅延' },
+    usdjpy:             { data_as_of: fx?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
+    vix:                { data_as_of: vix_latest?.date ?? null,                frequency: '週次', lag_note: '週末終値ベース' },
+    futures_hand:       { data_as_of: participantsData[0]?.date ?? null,       frequency: '日次', lag_note: 'JPX翌営業日公表' },
+    investor_flows:     { data_as_of: toDate(invData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
+    credit_ratio:       { data_as_of: toDate(marData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
+    short_sell_ratio:   { data_as_of: toDate(ssData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
+    advance_decline:    { data_as_of: toDate(adData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
+    arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
+    arbitrage_daily:    { data_as_of: arbDailyData[0]?.date ?? null,           frequency: '日次', lag_note: 'nikkei225jp.com' },
   }
 
   return {
@@ -408,6 +430,8 @@ function buildExportJson(
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     vix_latest,
     nikkei225_latest,
+    usdjpy_latest,
+    arbitrage_daily_recent,
     micro_supply_demand,
     data: rows,
   }
@@ -773,6 +797,16 @@ export function QuantView({ theme, isMobile, user }: Props) {
   const [arbError,   setArbError]   = useState('')
   const [arbLoaded,  setArbLoaded]  = useState(false)
 
+  const [arbDailyData,    setArbDailyData]    = useState<ArbitrageDayData[]>([])
+  const [arbDailyLoading, setArbDailyLoading] = useState(false)
+  const [arbDailyError,   setArbDailyError]   = useState('')
+  const [arbDailyLoaded,  setArbDailyLoaded]  = useState(false)
+
+  const [usdjpyData,    setUsdjpyData]    = useState<UsdjpyDayData[]>([])
+  const [usdjpyLoading, setUsdjpyLoading] = useState(false)
+  const [usdjpyError,   setUsdjpyError]   = useState('')
+  const [usdjpyLoaded,  setUsdjpyLoaded]  = useState(false)
+
   const [participantsData,    setParticipantsData]    = useState<FuturesParticipantDayData[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError,   setParticipantsError]   = useState('')
@@ -838,6 +872,20 @@ export function QuantView({ theme, isMobile, user }: Props) {
     finally { setArbLoading(false) }
   }, [])
 
+  const loadArbDaily = useCallback(async (force = false) => {
+    setArbDailyLoading(true); setArbDailyError('')
+    try { setArbDailyData(await fetchArbitrageDailyData(force)); setArbDailyLoaded(true) }
+    catch (e) { setArbDailyError(e instanceof Error ? e.message : 'データ取得エラー') }
+    finally { setArbDailyLoading(false) }
+  }, [])
+
+  const loadUsdjpy = useCallback(async (force = false) => {
+    setUsdjpyLoading(true); setUsdjpyError('')
+    try { setUsdjpyData(await fetchUsdjpyData(force)); setUsdjpyLoaded(true) }
+    catch (e) { setUsdjpyError(e instanceof Error ? e.message : 'データ取得エラー') }
+    finally { setUsdjpyLoading(false) }
+  }, [])
+
   const loadParticipants = useCallback(async (force = false) => {
     setParticipantsLoading(true); setParticipantsError('')
     try { setParticipantsData(await fetchFuturesParticipantsData(force)); setParticipantsLoaded(true) }
@@ -866,6 +914,8 @@ export function QuantView({ theme, isMobile, user }: Props) {
   useEffect(() => { if (!adLoaded)      loadAdvanceDecline()}, [adLoaded,      loadAdvanceDecline])
   useEffect(() => { if (!ssLoaded)      loadShortSell()     }, [ssLoaded,      loadShortSell])
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
+  useEffect(() => { if (!arbDailyLoaded) loadArbDaily()     }, [arbDailyLoaded, loadArbDaily])
+  useEffect(() => { if (!usdjpyLoaded)   loadUsdjpy()       }, [usdjpyLoaded,   loadUsdjpy])
 
   useEffect(() => {
     fetchNhkNews().then(setNhkNews).catch(() => {})
@@ -883,7 +933,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -895,7 +945,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded, ntLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
@@ -1014,17 +1064,20 @@ export function QuantView({ theme, isMobile, user }: Props) {
         </div>{/* /環境 */}
 
         {/* ━━ 現物需給 ━━ */}
-        <div style={{
-          width: '33.333333%',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          height: '100%',
-          overflowY: isMobile ? 'auto' : 'hidden',
+        <div style={isMobile ? {
+          width: '33.333333%', flexShrink: 0,
+          display: 'flex', flexDirection: 'column',
+          height: '100%', overflowY: 'auto',
+        } : {
+          width: '33.333333%', flexShrink: 0,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
+          height: '100%', overflow: 'hidden',
         }}>
 
-        {/* 信用倍率 */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
+        {/* TL: 信用倍率 */}
+        <div style={isMobile ? s.panelMobile : { ...s.panel, borderRight: '1px solid var(--border-dim)', borderBottom: '1px solid var(--border-dim)' }}>
           <PanelHeader
             icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>}
             title="信用倍率"
@@ -1102,10 +1155,10 @@ export function QuantView({ theme, isMobile, user }: Props) {
           )}
         </div>
 
-        <div style={isMobile ? s.dividerH : s.divider} />
+        {isMobile && <div style={s.dividerH} />}
 
-        {/* 投資主体別売買動向 */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
+        {/* TR: 投資主体別売買動向 */}
+        <div style={isMobile ? s.panelMobile : { ...s.panel, borderBottom: '1px solid var(--border-dim)' }}>
           <PanelHeader
             icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="17" cy="8" r="3"/><circle cx="7" cy="16" r="3"/><path d="M14 8H7M17 11v5"/></svg>}
             title="投資主体別売買動向"
@@ -1161,10 +1214,10 @@ export function QuantView({ theme, isMobile, user }: Props) {
           )}
         </div>
 
-        <div style={isMobile ? s.dividerH : s.divider} />
+        {isMobile && <div style={s.dividerH} />}
 
-        {/* 需給指標（騰落レシオ・空売り比率・裁定残高） */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
+        {/* BL: 需給指標（騰落レシオ・空売り比率・裁定残高） */}
+        <div style={isMobile ? s.panelMobile : { ...s.panel, borderRight: '1px solid var(--border-dim)' }}>
           {(() => {
             const combinedRows = buildCombinedRows(ssData, adData, arbData)
             const [arbQ1, arbQ3]           = quartiles(arbData.map(r => r.longBal))
@@ -1262,6 +1315,24 @@ export function QuantView({ theme, isMobile, user }: Props) {
               </>
             )
           })()}
+        </div>
+
+        {isMobile && <div style={s.dividerH} />}
+
+        {/* BR: 日次指標（裁定日次・ドル円） */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          <MarketDailyPanel
+            theme={theme}
+            isMobile={isMobile}
+            arbDailyData={arbDailyData}
+            arbDailyLoading={arbDailyLoading}
+            arbDailyError={arbDailyError}
+            onArbDailyReload={() => loadArbDaily(true)}
+            usdjpyData={usdjpyData}
+            usdjpyLoading={usdjpyLoading}
+            usdjpyError={usdjpyError}
+            onUsdjpyReload={() => loadUsdjpy(true)}
+          />
         </div>
 
         </div>{/* /現物需給 */}

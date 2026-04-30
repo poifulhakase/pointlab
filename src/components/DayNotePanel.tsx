@@ -510,16 +510,17 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--text-sub)',
   },
   advisorRow: {
-    display: 'flex', justifyContent: 'center', paddingBottom: 4,
+    display: 'flex', justifyContent: 'center', padding: '2px 0 6px',
   },
   advisorBtn: {
-    background: 'none', border: 'none', padding: 0, cursor: 'default',
-    borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-    width: 56, height: 56,
-    boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
+    width: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '12px 0', borderRadius: 16,
+    background: 'var(--bg-item)', border: '1px solid var(--border-dim)',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.20)', cursor: 'pointer',
   },
   advisorImg: {
     width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' as const, display: 'block',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.20)',
   },
   countBadge: {
     marginLeft: 4, fontSize: 11, fontWeight: 600,
