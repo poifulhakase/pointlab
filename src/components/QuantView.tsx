@@ -790,7 +790,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
-  const [quantTab,    setQuantTab]    = useState<'macro' | 'micro'>('macro')
+  const [quantTab,    setQuantTab]    = useState<'kankyou' | 'macro' | 'micro'>('kankyou')
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
@@ -904,9 +904,6 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
   const tv = themeVars(theme)
 
-  // パネル共通スタイル: PC = flex 1、モバイル = 固定高さなし（自然な高さ）
-  const halfPanel = isMobile ? s.halfPanelMobile : s.halfPanel
-
   // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
   const mTblWrap  = isMobile
     ? { ...s.tableWrap, overflowX: 'hidden' as const, overflowY: 'visible' as const, flex: 'none' as const }
@@ -934,6 +931,10 @@ export function QuantView({ theme, isMobile, user }: Props) {
       <div style={s.topBar} className="glass">
         <div style={s.quantTabGroup} className="glass">
           <button
+            style={{ ...s.quantTab, ...(quantTab === 'kankyou' ? s.quantTabActive : {}) }}
+            onClick={() => setQuantTab('kankyou')}
+          >環境</button>
+          <button
             style={{ ...s.quantTab, ...(quantTab === 'macro' ? s.quantTabActive : {}) }}
             onClick={() => setQuantTab('macro')}
           >マクロ需給</button>
@@ -956,15 +957,15 @@ export function QuantView({ theme, isMobile, user }: Props) {
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '200%',
+          width: '300%',
           height: '100%',
-          transform: quantTab === 'macro' ? 'translateX(0)' : 'translateX(-50%)',
+          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'macro' ? 'translateX(-33.333333%)' : 'translateX(-66.666667%)',
           transition: 'transform 0.25s ease',
         }}>
 
-        {/* ━━ マクロ需給 ━━ */}
+        {/* ━━ 環境 ━━ */}
         <div style={{
-          width: '50%',
+          width: '33.333333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -972,314 +973,310 @@ export function QuantView({ theme, isMobile, user }: Props) {
           overflowY: isMobile ? 'auto' : 'hidden',
         }}>
 
-        {/* ━━ 左カラム: VIX（上）＋ NS倍率（下） ━━ */}
+        {/* VIX */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-
-          {/* VIX */}
-          <div style={halfPanel}>
-            <div style={s.panelHead}>
-              <div style={s.panelTitle}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                </svg>
-                VIX
-                <span style={s.panelSub}>恐怖指数（CBOE・日足・約15分遅延）</span>
-              </div>
+          <div style={s.panelHead}>
+            <div style={s.panelTitle}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              VIX
+              <span style={s.panelSub}>恐怖指数（CBOE・日足・約15分遅延）</span>
             </div>
-            <VixPanel theme={theme} vixWeekData={vixWeekData} isMobile={isMobile} />
           </div>
-
-          <div style={s.dividerH} />
-
-          {/* NS倍率 */}
-          <div style={halfPanel}>
-            <div style={s.panelHead}>
-              <div style={s.panelTitle}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6"  y1="20" x2="6"  y2="14"/>
-                </svg>
-                NS倍率
-                <span style={s.panelSub}>日経225 ÷ S&amp;P500（日足・約15分遅延）</span>
-              </div>
-            </div>
-            <NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} />
-          </div>
-
+          <VixPanel theme={theme} vixWeekData={vixWeekData} isMobile={isMobile} />
         </div>
 
         <div style={isMobile ? s.dividerH : s.divider} />
 
-        {/* ━━ 中央カラム: 信用倍率（上）＋ 空売り比率（下） ━━ */}
+        {/* NS倍率 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-
-          {/* 信用倍率 */}
-          <div style={halfPanel}>
-            <PanelHeader
-              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>}
-              title="信用倍率"
-              sub="2市場計（週次）"
-              dateRange={marData.length > 0 ? `${marData[marData.length - 1]?.date} 〜 ${marData[0]?.date}` : undefined}
-              loading={marLoading}
-              onReload={() => loadMargin(true)}
-            />
-            <div style={mTblWrap}>
-              {(marLoading && marData.length === 0) || marError
-                ? <PanelCenter loading={marLoading && marData.length === 0} error={marError} onRetry={() => loadMargin(true)} />
-                : (
-                  <table style={s.table}>
-                    <thead>
-                      <tr>
-                        <th style={mThDate}>週</th>
-                        <th style={mTh}>
-                          <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                            {!isMobile && <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
-                            買い残
-                          </div>
-                          <div style={s.thSub}>百万円</div>
-                        </th>
-                        <th style={mTh}><div style={s.thLabel}>売り残</div><div style={s.thSub}>百万円</div></th>
-                        <th style={mTh}><div style={s.thLabel}>信用倍率</div><div style={s.thSub}>買残÷売残</div></th>
-                        <th style={mTh}><div style={s.thLabel}>評価損益率</div><div style={s.thSub}>%</div></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        const [longQ1, longQ3]   = quartiles(marData.map(r => r.longBal))
-                        const [shortQ1, shortQ3] = quartiles(marData.map(r => r.shortBal))
-                        const visibleRows = isMobile && !marExpanded ? marData.slice(0, MOBILE_ROW_LIMIT) : marData
-                        return visibleRows.map((row, i) => (
-                          <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                            <td style={mTdDate}>
-                              <div style={s.dateMain}>{withYear(row.label, row.date)}</div>
-                              <div style={s.dateSub}>{row.date}</div>
-                            </td>
-                            <td style={{ ...mTd, ...s.tdNum, background: balBg(row.longBal, longQ1, longQ3, true, theme) }}>
-                              <span style={{ color: balTextColor(row.longBal, longQ1, longQ3, true, theme), fontWeight: 500 }}>
-                                {fmtHyakuman(row.longBal)}
-                              </span>
-                            </td>
-                            <td style={{ ...mTd, ...s.tdNum, background: balBg(row.shortBal, shortQ1, shortQ3, false, theme) }}>
-                              <span style={{ color: balTextColor(row.shortBal, shortQ1, shortQ3, false, theme), fontWeight: 500 }}>
-                                {fmtHyakuman(row.shortBal)}
-                              </span>
-                            </td>
-                            <td style={{ ...mTd, ...s.tdNum, background: ratioBg(row.ratio, theme) }}>
-                              <span style={{ color: ratioTextColor(row.ratio, theme), fontWeight: 700, fontSize: 14 }}>
-                                {fmtRatio(row.ratio)}
-                              </span>
-                              <span style={s.unit}>倍</span>
-                            </td>
-                            <td style={{ ...mTd, ...s.tdNum, background: row.evalRatio != null ? evalRatioBg(row.evalRatio, theme) : 'transparent' }}>
-                              {row.evalRatio != null ? (
-                                <><span style={{ color: evalRatioColor(row.evalRatio, theme), fontWeight: 700, fontSize: 14 }}>
-                                  {row.evalRatio > 0 ? '+' : ''}{row.evalRatio.toFixed(2)}
-                                </span><span style={s.unit}>%</span></>
-                              ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
-                            </td>
-                          </tr>
-                        ))
-                      })()}
-                    </tbody>
-                  </table>
-                )
-              }
+          <div style={s.panelHead}>
+            <div style={s.panelTitle}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6"  y1="20" x2="6"  y2="14"/>
+              </svg>
+              NS倍率
+              <span style={s.panelSub}>日経225 ÷ S&amp;P500（日足・約15分遅延）</span>
             </div>
-            {isMobile && marData.length > MOBILE_ROW_LIMIT && (
-              <button style={s.expandBtn} onClick={() => setMarExpanded(v => !v)}>
-                {marExpanded ? `▲ 折りたたむ` : `▼ 全${marData.length}週を表示`}
-              </button>
-            )}
           </div>
-
-          <div style={s.dividerH} />
-
-          {/* 先物OI */}
-          <div style={halfPanel}>
-            <FuturesOiPanel
-              data={participantsData}
-              loading={participantsLoading}
-              error={participantsError}
-              onReload={() => loadParticipants(true)}
-              theme={theme}
-              isMobile={isMobile}
-            />
-          </div>
-
+          <NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} />
         </div>
 
         <div style={isMobile ? s.dividerH : s.divider} />
 
-        {/* ━━ 右カラム: 投資主体別（上）＋ 需給指標（下） ━━ */}
+        {/* 信用倍率 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-
-          {/* 投資主体別売買動向 */}
-          <div style={halfPanel}>
-            <PanelHeader
-              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="17" cy="8" r="3"/><circle cx="7" cy="16" r="3"/><path d="M14 8H7M17 11v5"/></svg>}
-              title="投資主体別売買動向"
-              sub="差引金額（百万円）"
-              dateRange={invData.length > 0 ? `${invData[invData.length - 1]?.date} 〜 ${invData[0]?.date}` : undefined}
-              loading={invLoading}
-              onReload={() => loadInvestor(true)}
-            />
-            <div style={mTblWrap}>
-              {(invLoading && invData.length === 0) || invError
-                ? <PanelCenter loading={invLoading && invData.length === 0} error={invError} onRetry={() => loadInvestor(true)} />
-                : (
-                  <table style={s.table}>
-                    <thead>
-                      <tr>
-                        <th style={mThDate}>週</th>
-                        {INVESTOR_COLS.map(col => (
-                          <th key={col.key} style={mTh}>
-                            <div style={s.thLabel}>{col.label}</div>
-                            <div style={s.thSub}>{col.sub}</div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(isMobile && !invExpanded ? invData.slice(0, MOBILE_ROW_LIMIT) : invData).map((row, i) => (
+          <PanelHeader
+            icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>}
+            title="信用倍率"
+            sub="2市場計（週次）"
+            dateRange={marData.length > 0 ? `${marData[marData.length - 1]?.date} 〜 ${marData[0]?.date}` : undefined}
+            loading={marLoading}
+            onReload={() => loadMargin(true)}
+          />
+          <div style={mTblWrap}>
+            {(marLoading && marData.length === 0) || marError
+              ? <PanelCenter loading={marLoading && marData.length === 0} error={marError} onRetry={() => loadMargin(true)} />
+              : (
+                <table style={s.table}>
+                  <thead>
+                    <tr>
+                      <th style={mThDate}>週</th>
+                      <th style={mTh}>
+                        <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                          {!isMobile && <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
+                          買い残
+                        </div>
+                        <div style={s.thSub}>百万円</div>
+                      </th>
+                      <th style={mTh}><div style={s.thLabel}>売り残</div><div style={s.thSub}>百万円</div></th>
+                      <th style={mTh}><div style={s.thLabel}>信用倍率</div><div style={s.thSub}>買残÷売残</div></th>
+                      <th style={mTh}><div style={s.thLabel}>評価損益率</div><div style={s.thSub}>%</div></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const [longQ1, longQ3]   = quartiles(marData.map(r => r.longBal))
+                      const [shortQ1, shortQ3] = quartiles(marData.map(r => r.shortBal))
+                      const visibleRows = isMobile && !marExpanded ? marData.slice(0, MOBILE_ROW_LIMIT) : marData
+                      return visibleRows.map((row, i) => (
                         <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
                           <td style={mTdDate}>
-                            <div style={s.dateMain}>{row.label}</div>
+                            <div style={s.dateMain}>{withYear(row.label, row.date)}</div>
                             <div style={s.dateSub}>{row.date}</div>
                           </td>
-                          {INVESTOR_COLS.map(col => {
-                            const val = row[col.key] as number
-                            return (
-                              <td key={col.key} style={{ ...mTd, ...s.tdNum, background: valueBg(val, theme) }}>
-                                <span style={{ color: valueTextColor(val, theme), fontWeight: val !== 0 ? 600 : 400 }}>
-                                  {fmtOku(val)}
-                                </span>
-                              </td>
-                            )
-                          })}
+                          <td style={{ ...mTd, ...s.tdNum, background: balBg(row.longBal, longQ1, longQ3, true, theme) }}>
+                            <span style={{ color: balTextColor(row.longBal, longQ1, longQ3, true, theme), fontWeight: 500 }}>
+                              {fmtHyakuman(row.longBal)}
+                            </span>
+                          </td>
+                          <td style={{ ...mTd, ...s.tdNum, background: balBg(row.shortBal, shortQ1, shortQ3, false, theme) }}>
+                            <span style={{ color: balTextColor(row.shortBal, shortQ1, shortQ3, false, theme), fontWeight: 500 }}>
+                              {fmtHyakuman(row.shortBal)}
+                            </span>
+                          </td>
+                          <td style={{ ...mTd, ...s.tdNum, background: ratioBg(row.ratio, theme) }}>
+                            <span style={{ color: ratioTextColor(row.ratio, theme), fontWeight: 700, fontSize: 14 }}>
+                              {fmtRatio(row.ratio)}
+                            </span>
+                            <span style={s.unit}>倍</span>
+                          </td>
+                          <td style={{ ...mTd, ...s.tdNum, background: row.evalRatio != null ? evalRatioBg(row.evalRatio, theme) : 'transparent' }}>
+                            {row.evalRatio != null ? (
+                              <><span style={{ color: evalRatioColor(row.evalRatio, theme), fontWeight: 700, fontSize: 14 }}>
+                                {row.evalRatio > 0 ? '+' : ''}{row.evalRatio.toFixed(2)}
+                              </span><span style={s.unit}>%</span></>
+                            ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
+                          </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )
-              }
-            </div>
-            {isMobile && invData.length > MOBILE_ROW_LIMIT && (
-              <button style={s.expandBtn} onClick={() => setInvExpanded(v => !v)}>
-                {invExpanded ? `▲ 折りたたむ` : `▼ 全${invData.length}週を表示`}
-              </button>
-            )}
-          </div>
-
-          <div style={s.dividerH} />
-
-          {/* 空売り比率 ＋ 騰落レシオ ＋ 裁定買い残（統合テーブル） */}
-          <div style={halfPanel}>
-            {(() => {
-              const combinedRows = buildCombinedRows(ssData, adData, arbData)
-              const [arbQ1, arbQ3]      = quartiles(arbData.map(r => r.longBal))
-              const [arbShortQ1, arbShortQ3] = quartiles(arbData.map(r => r.shortBal))
-              const combinedLoading = (ssLoading || adLoading || arbLoading) && combinedRows.length === 0
-              const combinedError = ssError || adError || arbError
-              const latestDate = combinedRows[0]?.date
-              return (
-                <>
-                  <PanelHeader
-                    icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
-                    title="需給指標"
-                    sub="空売り比率・騰落レシオ・裁定残高（週次）"
-                    dateRange={latestDate ? `最新: ${latestDate}` : undefined}
-                    loading={ssLoading || adLoading || arbLoading}
-                    onReload={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }}
-                  />
-                  <div style={mTblWrap}>
-                    {combinedLoading || combinedError
-                      ? <PanelCenter loading={combinedLoading} error={combinedError} onRetry={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }} />
-                      : combinedRows.length === 0
-                        ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12, textAlign: 'center' }}>データなし</span></div>
-                        : (
-                          <table style={s.table}>
-                            <thead>
-                              <tr>
-                                <th style={mThDate}>週</th>
-                                <th style={mTh}>
-                                  <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    {!isMobile && <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
-                                    裁定買い残
-                                  </div>
-                                  <div style={s.thSub}>百万円</div>
-                                </th>
-                                <th style={mTh}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
-                                <th style={mTh}>
-                                  <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    {!isMobile && <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>}
-                                    騰落レシオ
-                                  </div>
-                                  <div style={s.thSub}>25日</div>
-                                </th>
-                                <th style={mTh}>
-                                  <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    {!isMobile && <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>}
-                                    空売り比率
-                                  </div>
-                                  <div style={s.thSub}>%</div>
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(isMobile && !combinedExpanded ? combinedRows.slice(0, MOBILE_ROW_LIMIT) : combinedRows).map((row, i) => (
-                                <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                  <td style={mTdDate}>
-                                    <div style={s.dateMain}>{row.label}</div>
-                                    <div style={s.dateSub}>{row.date}</div>
-                                  </td>
-                                  <td style={{ ...mTd, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
-                                    {row.arbLongBal != null
-                                      ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbLongBal)}</span>
-                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
-                                    }
-                                  </td>
-                                  <td style={{ ...mTd, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
-                                    {row.arbShortBal != null
-                                      ? <span style={{ color: balTextColor(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbShortBal)}</span>
-                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
-                                    }
-                                  </td>
-                                  <td style={{ ...mTd, ...s.tdNum, background: row.adRatio != null ? adRatioBg(row.adRatio, theme) : 'transparent' }}>
-                                    {row.adRatio != null
-                                      ? <span style={{ color: adRatioTextColor(row.adRatio, theme), fontWeight: 700, fontSize: 13 }}>{row.adRatio.toFixed(1)}</span>
-                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
-                                    }
-                                  </td>
-                                  <td style={{ ...mTd, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
-                                    {row.shortSell != null
-                                      ? <><span style={{ color: shortSellTextColor(row.shortSell, theme), fontWeight: 700, fontSize: 13 }}>{row.shortSell.toFixed(1)}</span><span style={s.unit}>%</span></>
-                                      : <span style={{ color: 'var(--text-dim)' }}>-</span>
-                                    }
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )
-                    }
-                  </div>
-                  {isMobile && combinedRows.length > MOBILE_ROW_LIMIT && (
-                    <button style={s.expandBtn} onClick={() => setCombinedExpanded(v => !v)}>
-                      {combinedExpanded ? `▲ 折りたたむ` : `▼ 全${combinedRows.length}週を表示`}
-                    </button>
-                  )}
-                </>
+                      ))
+                    })()}
+                  </tbody>
+                </table>
               )
-            })()}
+            }
           </div>
+          {isMobile && marData.length > MOBILE_ROW_LIMIT && (
+            <button style={s.expandBtn} onClick={() => setMarExpanded(v => !v)}>
+              {marExpanded ? `▲ 折りたたむ` : `▼ 全${marData.length}週を表示`}
+            </button>
+          )}
+        </div>
 
-        </div>{/* /右カラム */}
+        </div>{/* /環境 */}
+
+        {/* ━━ マクロ需給 ━━ */}
+        <div style={{
+          width: '33.333333%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          height: '100%',
+          overflowY: isMobile ? 'auto' : 'hidden',
+        }}>
+
+        {/* 先物OI */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          <FuturesOiPanel
+            data={participantsData}
+            loading={participantsLoading}
+            error={participantsError}
+            onReload={() => loadParticipants(true)}
+            theme={theme}
+            isMobile={isMobile}
+          />
+        </div>
+
+        <div style={isMobile ? s.dividerH : s.divider} />
+
+        {/* 投資主体別売買動向 */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          <PanelHeader
+            icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="17" cy="8" r="3"/><circle cx="7" cy="16" r="3"/><path d="M14 8H7M17 11v5"/></svg>}
+            title="投資主体別売買動向"
+            sub="差引金額（百万円）"
+            dateRange={invData.length > 0 ? `${invData[invData.length - 1]?.date} 〜 ${invData[0]?.date}` : undefined}
+            loading={invLoading}
+            onReload={() => loadInvestor(true)}
+          />
+          <div style={mTblWrap}>
+            {(invLoading && invData.length === 0) || invError
+              ? <PanelCenter loading={invLoading && invData.length === 0} error={invError} onRetry={() => loadInvestor(true)} />
+              : (
+                <table style={s.table}>
+                  <thead>
+                    <tr>
+                      <th style={mThDate}>週</th>
+                      {INVESTOR_COLS.map(col => (
+                        <th key={col.key} style={mTh}>
+                          <div style={s.thLabel}>{col.label}</div>
+                          <div style={s.thSub}>{col.sub}</div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(isMobile && !invExpanded ? invData.slice(0, MOBILE_ROW_LIMIT) : invData).map((row, i) => (
+                      <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                        <td style={mTdDate}>
+                          <div style={s.dateMain}>{row.label}</div>
+                          <div style={s.dateSub}>{row.date}</div>
+                        </td>
+                        {INVESTOR_COLS.map(col => {
+                          const val = row[col.key] as number
+                          return (
+                            <td key={col.key} style={{ ...mTd, ...s.tdNum, background: valueBg(val, theme) }}>
+                              <span style={{ color: valueTextColor(val, theme), fontWeight: val !== 0 ? 600 : 400 }}>
+                                {fmtOku(val)}
+                              </span>
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            }
+          </div>
+          {isMobile && invData.length > MOBILE_ROW_LIMIT && (
+            <button style={s.expandBtn} onClick={() => setInvExpanded(v => !v)}>
+              {invExpanded ? `▲ 折りたたむ` : `▼ 全${invData.length}週を表示`}
+            </button>
+          )}
+        </div>
+
+        <div style={isMobile ? s.dividerH : s.divider} />
+
+        {/* 需給指標 */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          {(() => {
+            const combinedRows = buildCombinedRows(ssData, adData, arbData)
+            const [arbQ1, arbQ3]           = quartiles(arbData.map(r => r.longBal))
+            const [arbShortQ1, arbShortQ3] = quartiles(arbData.map(r => r.shortBal))
+            const combinedLoading = (ssLoading || adLoading || arbLoading) && combinedRows.length === 0
+            const combinedError = ssError || adError || arbError
+            const latestDate = combinedRows[0]?.date
+            return (
+              <>
+                <PanelHeader
+                  icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
+                  title="需給指標"
+                  sub="空売り比率・騰落レシオ・裁定残高（週次）"
+                  dateRange={latestDate ? `最新: ${latestDate}` : undefined}
+                  loading={ssLoading || adLoading || arbLoading}
+                  onReload={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }}
+                />
+                <div style={mTblWrap}>
+                  {combinedLoading || combinedError
+                    ? <PanelCenter loading={combinedLoading} error={combinedError} onRetry={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }} />
+                    : combinedRows.length === 0
+                      ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12, textAlign: 'center' }}>データなし</span></div>
+                      : (
+                        <table style={s.table}>
+                          <thead>
+                            <tr>
+                              <th style={mThDate}>週</th>
+                              <th style={mTh}>
+                                <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                  {!isMobile && <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  裁定買い残
+                                </div>
+                                <div style={s.thSub}>百万円</div>
+                              </th>
+                              <th style={mTh}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
+                              <th style={mTh}>
+                                <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                  {!isMobile && <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  騰落レシオ
+                                </div>
+                                <div style={s.thSub}>25日</div>
+                              </th>
+                              <th style={mTh}>
+                                <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                  {!isMobile && <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  空売り比率
+                                </div>
+                                <div style={s.thSub}>%</div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(isMobile && !combinedExpanded ? combinedRows.slice(0, MOBILE_ROW_LIMIT) : combinedRows).map((row, i) => (
+                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                                <td style={mTdDate}>
+                                  <div style={s.dateMain}>{row.label}</div>
+                                  <div style={s.dateSub}>{row.date}</div>
+                                </td>
+                                <td style={{ ...mTd, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
+                                  {row.arbLongBal != null
+                                    ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbLongBal)}</span>
+                                    : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                  }
+                                </td>
+                                <td style={{ ...mTd, ...s.tdNum, background: row.arbShortBal != null ? balBg(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme) : 'transparent' }}>
+                                  {row.arbShortBal != null
+                                    ? <span style={{ color: balTextColor(row.arbShortBal, arbShortQ1, arbShortQ3, false, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbShortBal)}</span>
+                                    : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                  }
+                                </td>
+                                <td style={{ ...mTd, ...s.tdNum, background: row.adRatio != null ? adRatioBg(row.adRatio, theme) : 'transparent' }}>
+                                  {row.adRatio != null
+                                    ? <span style={{ color: adRatioTextColor(row.adRatio, theme), fontWeight: 700, fontSize: 13 }}>{row.adRatio.toFixed(1)}</span>
+                                    : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                  }
+                                </td>
+                                <td style={{ ...mTd, ...s.tdNum, background: row.shortSell != null ? shortSellBg(row.shortSell, theme) : 'transparent' }}>
+                                  {row.shortSell != null
+                                    ? <><span style={{ color: shortSellTextColor(row.shortSell, theme), fontWeight: 700, fontSize: 13 }}>{row.shortSell.toFixed(1)}</span><span style={s.unit}>%</span></>
+                                    : <span style={{ color: 'var(--text-dim)' }}>-</span>
+                                  }
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )
+                  }
+                </div>
+                {isMobile && combinedRows.length > MOBILE_ROW_LIMIT && (
+                  <button style={s.expandBtn} onClick={() => setCombinedExpanded(v => !v)}>
+                    {combinedExpanded ? `▲ 折りたたむ` : `▼ 全${combinedRows.length}週を表示`}
+                  </button>
+                )}
+              </>
+            )
+          })()}
+        </div>
+
         </div>{/* /マクロ需給 */}
 
         {/* ━━ ミクロ需給 ━━ */}
         <div style={{
-          width: '50%',
+          width: '33.333333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
