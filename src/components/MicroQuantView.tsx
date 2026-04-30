@@ -16,19 +16,19 @@ type Props = {
 }
 
 // ── ヘルパー ──────────────────────────────────────
-function fmt(v: number | null): string {
-  if (v === null) return '—'
+function fmt(v: number | null | undefined): string {
+  if (v == null) return '—'
   if (v === 0)   return '0'
   return (v > 0 ? '+' : '') + v.toLocaleString()
 }
 
-function cellBg(v: number | null, theme: 'dark' | 'light'): string {
+function cellBg(v: number | null | undefined, theme: 'dark' | 'light'): string {
   if (!v) return 'transparent'
   if (v > 0) return theme === 'dark' ? 'rgba(96,200,140,0.10)' : 'rgba(22,130,80,0.07)'
   return theme === 'dark' ? 'rgba(255,120,100,0.10)' : 'rgba(200,50,30,0.07)'
 }
 
-function cellColor(v: number | null, theme: 'dark' | 'light'): string {
+function cellColor(v: number | null | undefined, theme: 'dark' | 'light'): string {
   if (!v) return 'var(--text-dim)'
   if (v > 0) return theme === 'dark' ? 'rgba(96,200,140,0.95)' : 'rgba(22,130,80,0.9)'
   return theme === 'dark' ? 'rgba(255,120,100,0.95)' : 'rgba(200,50,30,0.9)'
@@ -449,11 +449,11 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                           const trendT   = (row.foreign    ?? 0) + (row.trustBank  ?? 0)
                           const gravityT = (row.lifeIns    ?? 0) + (row.invTrust   ?? 0)
                           const noiseT   = (row.individual ?? 0) + (row.securities ?? 0)
-                          const cells: (number | null)[] = [
-                            row.foreign, row.trustBank, trendT,
-                            row.lifeIns, row.invTrust, gravityT,
-                            row.individual, row.securities, noiseT,
-                          ]
+                          const cells = [
+                            row.foreign ?? null, row.trustBank ?? null, trendT,
+                            row.lifeIns ?? null, row.invTrust  ?? null, gravityT,
+                            row.individual ?? null, row.securities ?? null, noiseT,
+                          ] as (number | null)[]
                           const isTotalIdx = new Set([2, 5, 8])
                           return (
                             <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>

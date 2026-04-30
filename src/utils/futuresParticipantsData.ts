@@ -36,7 +36,7 @@ interface CachedResponse {
   data: FuturesParticipantDayData[]
 }
 
-const CACHE_KEY = 'poical-futures-participants-data'
+const CACHE_KEY = 'poical-futures-participants-v2'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
 interface LocalCache {
