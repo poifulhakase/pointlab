@@ -15,7 +15,7 @@ import { fetchArbitrageData, type ArbitrageWeekData } from '../utils/arbitrageDa
 import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
-import { MicroQuantView } from './MicroQuantView'
+import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
 import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 import { FuturesOiPanel } from './FuturesOiPanel'
@@ -945,7 +945,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
           <button
             style={{ ...s.quantTab, ...(quantTab === 'micro' ? s.quantTabActive : {}) }}
             onClick={() => setQuantTab('micro')}
-          >ミクロ需給</button>
+          >先物需給</button>
         </div>
         <div style={{ flex: 1 }} />
         <button style={s.gearBtn} onClick={() => setSettingsOpen(true)} aria-label="設定">
@@ -1010,6 +1010,23 @@ export function QuantView({ theme, isMobile, user }: Props) {
         </div>
 
         <div style={isMobile ? s.dividerH : s.divider} />
+
+        {/* クオンツ分析レポート */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          <QuantMemoPanel theme={theme} user={user} />
+        </div>
+
+        </div>{/* /環境 */}
+
+        {/* ━━ 現物需給 ━━ */}
+        <div style={{
+          width: '25%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          height: '100%',
+          overflowY: isMobile ? 'auto' : 'hidden',
+        }}>
 
         {/* 信用倍率 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
@@ -1090,17 +1107,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
           )}
         </div>
 
-        </div>{/* /環境 */}
-
-        {/* ━━ 現物需給 ━━ */}
-        <div style={{
-          width: '25%',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          height: '100%',
-          overflowY: isMobile ? 'auto' : 'hidden',
-        }}>
+        <div style={isMobile ? s.dividerH : s.divider} />
 
         {/* 投資主体別売買動向 */}
         <div style={isMobile ? s.panelMobile : s.panel}>

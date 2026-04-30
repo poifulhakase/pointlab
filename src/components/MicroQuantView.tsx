@@ -229,7 +229,7 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
 const QUANT_MEMO_KEY = 'poical-quant-memo'
 const QUANT_MEMO_FS_PATH = (uid: string) => `users/${uid}/data/quantMemo`
 
-function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }) {
+export function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }) {
   const [quantMemo,     setQuantMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [savedMemo,     setSavedMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
