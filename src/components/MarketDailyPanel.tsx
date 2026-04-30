@@ -34,7 +34,7 @@ export function MarketDailyPanel({
 
   const th: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 2,
-    padding: isMobile ? '6px 5px' : '9px 14px',
+    padding: isMobile ? '9px 5px' : '9px 14px',
     background: 'var(--modal-bg)', backdropFilter: 'blur(16px)',
     borderBottom: '2px solid var(--border-dim)',
     fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text)',
@@ -42,7 +42,7 @@ export function MarketDailyPanel({
   }
   const thL: React.CSSProperties = { ...th, textAlign: 'left' as const, width: isMobile ? 60 : 74, minWidth: isMobile ? 60 : 74 }
   const td: React.CSSProperties = {
-    padding: isMobile ? '5px 5px' : '13px 14px',
+    padding: isMobile ? '13px 5px' : '13px 14px',
     borderBottom: '1px solid var(--border-dim)',
     fontSize: isMobile ? 11 : 12, textAlign: 'right' as const,
     fontVariantNumeric: 'tabular-nums' as const, whiteSpace: 'nowrap' as const,
