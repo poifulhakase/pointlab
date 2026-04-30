@@ -57,6 +57,49 @@ async function fetchSymbol(sym: string): Promise<Map<string, number>> {
   }
 }
 
+const NT_TOPIX_CACHE_KEY = 'poical-nt-topix-data'
+
+export async function fetchNtTopixData(force = false): Promise<NtRatioPoint[]> {
+  let stale: NtRatioPoint[] | null = null
+  try {
+    const raw = localStorage.getItem(NT_TOPIX_CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as { data: NtRatioPoint[]; fetchedAt: number }
+      stale = c.data
+      if (!force) {
+        const ttl = isUsMarketOpen() ? NT_CACHE_TTL_OPEN : NT_CACHE_TTL_CLOSED
+        if (Date.now() - c.fetchedAt <= ttl) return c.data
+      }
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const nikkeiMap = await fetchSymbol('^N225')
+    await new Promise(r => setTimeout(r, 1500))
+    const topixMap  = await fetchSymbol('^TPX')
+
+    const dates = Array.from(nikkeiMap.keys())
+      .filter(d => topixMap.has(d))
+      .sort()
+
+    const pts: NtRatioPoint[] = dates.map((time, i) => {
+      const nikkei = nikkeiMap.get(time)!
+      const topix  = topixMap.get(time)!
+      const ratio  = Math.round((nikkei / topix) * 1000) / 1000
+      const prev   = i > 0
+        ? Math.round((nikkeiMap.get(dates[i - 1])! / topixMap.get(dates[i - 1])!) * 1000) / 1000
+        : null
+      return { time, nikkei, sp500: topix, ratio, change: prev != null ? Math.round((ratio - prev) * 1000) / 1000 : null }
+    })
+
+    localStorage.setItem(NT_TOPIX_CACHE_KEY, JSON.stringify({ data: pts, fetchedAt: Date.now() }))
+    return pts
+  } catch (e) {
+    if (stale) return stale
+    throw e
+  }
+}
+
 export async function fetchNtRatioData(force = false): Promise<NtRatioPoint[]> {
   let stale: NtRatioPoint[] | null = null
   try {
