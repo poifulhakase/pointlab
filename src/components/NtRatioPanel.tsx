@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createChart, LineSeries, ColorType, CrosshairMode, type ISeriesApi } from 'lightweight-charts'
-import { fetchNtRatioData, fetchNtTopixData, type NtRatioPoint } from '../utils/ntRatioData'
-
-type Mode = 'ns' | 'nt'
+import { fetchNtRatioData, type NtRatioPoint } from '../utils/ntRatioData'
 
 type Props = {
   theme: 'dark' | 'light'
@@ -23,27 +21,6 @@ function nsColor(val: number, isDark: boolean): string {
   return isDark ? 'rgba(96,165,250,0.95)' : 'rgba(37,99,235,0.95)'
 }
 
-// ── NT倍率 水準ラベル・配色（日経÷TOPIX、範囲 13〜16）──
-function ntLabel(val: number): string {
-  if (val >= 15.5) return '日経独歩高'
-  if (val >= 14.5) return '高め'
-  if (val >= 13.5) return '適温'
-  return 'TOPIX優位'
-}
-function ntColor(val: number, isDark: boolean): string {
-  if (val >= 15.5) return isDark ? 'rgba(255,80,60,0.95)'   : 'rgba(200,30,30,0.95)'
-  if (val >= 14.5) return isDark ? 'rgba(255,155,50,0.95)'  : 'rgba(190,100,0,0.95)'
-  if (val >= 13.5) return isDark ? 'rgba(255,235,150,0.95)' : 'rgba(140,110,0,0.95)'
-  return isDark ? 'rgba(96,165,250,0.95)' : 'rgba(37,99,235,0.95)'
-}
-
-function getLabel(mode: Mode, val: number): string {
-  return mode === 'ns' ? nsLabel(val) : ntLabel(val)
-}
-function getColor(mode: Mode, val: number, isDark: boolean): string {
-  return mode === 'ns' ? nsColor(val, isDark) : ntColor(val, isDark)
-}
-
 function fmtNum(v: number): string {
   return v.toLocaleString('ja-JP', { maximumFractionDigits: 2 })
 }
@@ -54,7 +31,6 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
   const chartRef          = useRef<ReturnType<typeof createChart> | null>(null)
   const seriesRef         = useRef<ISeriesApi<'Line'> | null>(null)
 
-  const [mode,      setMode]      = useState<Mode>('ns')
   const [data,      setData]      = useState<NtRatioPoint[]>([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState('')
@@ -65,18 +41,16 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
     setError('')
     setData([])
     try {
-      const d = mode === 'ns'
-        ? await fetchNtRatioData(force)
-        : await fetchNtTopixData(force)
+      const d = await fetchNtRatioData(force)
       setData(d)
       setUpdatedAt(new Date())
-      if (mode === 'ns') onDataLoaded?.(d)
+      onDataLoaded?.(d)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'エラー')
     } finally {
       setLoading(false)
     }
-  }, [mode, onDataLoaded])
+  }, [onDataLoaded])
 
   useEffect(() => { load() }, [load])
 
@@ -146,18 +120,6 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
   const latest = data.at(-1)
   const isDark  = theme === 'dark'
 
-  const tabActive: React.CSSProperties = {
-    background: 'var(--view-btn-active-bg)',
-    color: 'var(--view-btn-active-color)',
-    fontWeight: 700,
-  }
-  const tabBase: React.CSSProperties = {
-    padding: '3px 9px', fontSize: 11, fontWeight: 500,
-    color: 'var(--text-dim)', cursor: 'pointer',
-    transition: 'background 0.15s, color 0.15s',
-    border: 'none', background: 'transparent',
-  }
-
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
@@ -165,65 +127,51 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
       <div style={{
         padding: '6px 14px 4px', flexShrink: 0,
         borderBottom: '1px solid var(--border-dim)',
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
       }}>
-
-        {/* 値表示 */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {loading ? (
-            <div style={{ color: 'var(--text-dim)', fontSize: 12 }}>取得中…</div>
-          ) : error ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,100,80,0.8)', whiteSpace: 'pre-wrap' }}>{error}</span>
-              <button
-                onClick={() => load(true)}
-                style={{ alignSelf: 'flex-start', fontSize: 11, padding: '3px 10px', borderRadius: 6, cursor: 'pointer', color: 'var(--text-sub)', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
-              >
-                再試行
-              </button>
+        {loading ? (
+          <div style={{ color: 'var(--text-dim)', fontSize: 12 }}>取得中…</div>
+        ) : error ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,100,80,0.8)', whiteSpace: 'pre-wrap' }}>{error}</span>
+            <button
+              onClick={() => load(true)}
+              style={{ alignSelf: 'flex-start', fontSize: 11, padding: '3px 10px', borderRadius: 6, cursor: 'pointer', color: 'var(--text-sub)', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+            >
+              再試行
+            </button>
+          </div>
+        ) : latest != null ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: nsColor(latest.ratio, isDark) }}>
+                {latest.ratio.toFixed(2)}
+              </span>
+              {latest.change != null && (
+                <span style={{ fontSize: 12, fontWeight: 600,
+                  color: latest.change > 0 ? 'rgba(255,120,80,0.95)' : 'rgba(96,200,140,0.9)' }}>
+                  {latest.change > 0 ? '+' : ''}{latest.change.toFixed(3)}
+                </span>
+              )}
+              <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 4,
+                color: nsColor(latest.ratio, isDark), opacity: 0.85 }}>
+                {nsLabel(latest.ratio)}
+              </span>
             </div>
-          ) : latest != null ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                <span style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: getColor(mode, latest.ratio, isDark) }}>
-                  {latest.ratio.toFixed(2)}
+            <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
+                日経 {fmtNum(latest.nikkei)}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
+                S&P {fmtNum(latest.sp500)}
+              </span>
+              {updatedAt && (
+                <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 'auto' }}>
+                  更新: {updatedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
                 </span>
-                {latest.change != null && (
-                  <span style={{ fontSize: 12, fontWeight: 600,
-                    color: latest.change > 0 ? 'rgba(255,120,80,0.95)' : 'rgba(96,200,140,0.9)' }}>
-                    {latest.change > 0 ? '+' : ''}{latest.change.toFixed(3)}
-                  </span>
-                )}
-                <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 4,
-                  color: getColor(mode, latest.ratio, isDark), opacity: 0.85 }}>
-                  {getLabel(mode, latest.ratio)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
-                  日経 {fmtNum(latest.nikkei)}
-                </span>
-                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
-                  {mode === 'ns' ? `S&P ${fmtNum(latest.sp500)}` : `TOPIX ${fmtNum(latest.sp500)}`}
-                </span>
-                {updatedAt && (
-                  <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 'auto' }}>
-                    更新: {updatedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        {/* NS / NT トグル */}
-        <div style={{
-          display: 'flex', borderRadius: 8, overflow: 'hidden',
-          border: '1px solid var(--border-dim)', flexShrink: 0, marginTop: 2,
-        }}>
-          <button style={{ ...tabBase, ...(mode === 'ns' ? tabActive : {}) }} onClick={() => setMode('ns')}>NS</button>
-          <button style={{ ...tabBase, ...(mode === 'nt' ? tabActive : {}) }} onClick={() => setMode('nt')}>NT</button>
-        </div>
+              )}
+            </div>
+          </>
+        ) : null}
       </div>
 
       {/* ── チャートエリア ── */}
