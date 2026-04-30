@@ -195,41 +195,41 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
 
         {/* ヘッダー */}
         <div style={{
-          padding: '14px 20px 12px',
-          display: 'flex', alignItems: 'flex-start', gap: 12,
+          padding: '18px 22px 16px',
+          display: 'flex', alignItems: 'flex-start', gap: 14,
           flexShrink: 0,
         }}>
           {/* アイコン */}
           <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+            width: 40, height: 40, borderRadius: 12, flexShrink: 0,
             background: `${cfg.accent}18`,
             border: `1px solid ${cfg.accent}30`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={cfg.accent} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={cfg.accent} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
               <polyline points="16 7 22 7 22 13"/>
             </svg>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
               {cfg.title}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
               {SUB_LABEL[type]}　直近13週
             </div>
           </div>
           <button
             onClick={onClose}
             style={{
-              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
               border: 'none', cursor: 'pointer',
               color: 'var(--text-dim)',
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
@@ -238,8 +238,8 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
         {/* 統計サマリー行 */}
         {latest !== null && (
           <div style={{
-            display: 'flex', gap: 8,
-            padding: '0 20px 14px',
+            display: 'flex', gap: 10,
+            padding: '0 22px 20px',
             flexShrink: 0,
           }}>
             {[
@@ -248,21 +248,21 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
               { label: '最小', value: minV, colored: false },
             ].map(({ label, value, colored }) => (
               <div key={label} style={{
-                flex: 1, padding: '8px 10px', borderRadius: 10,
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-                display: 'flex', flexDirection: 'column', gap: 3,
+                flex: 1, padding: '13px 16px', borderRadius: 13,
+                background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
+                display: 'flex', flexDirection: 'column', gap: 7,
               }}>
-                <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{label}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{label}</div>
                 <div style={{
-                  fontSize: 14, fontWeight: 700,
+                  fontSize: 17, fontWeight: 700,
                   fontVariantNumeric: 'tabular-nums',
                   color: colored
                     ? latestCol
                     : (value != null && value >= 0 ? posCol : negCol),
                 }}>
                   {value != null ? (value > 0 ? '+' : '') + value.toFixed(2) : '—'}
-                  <span style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginLeft: 2 }}>{cfg.unit}</span>
+                  <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-dim)', marginLeft: 3 }}>{cfg.unit}</span>
                 </div>
               </div>
             ))}
@@ -273,7 +273,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
         <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
 
         {/* チャート */}
-        <div style={{ flexShrink: 0, padding: '16px 16px 4px' }}>
+        <div style={{ flexShrink: 0, padding: '6px 20px 8px' }}>
           {deltas.length < 2
             ? <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
             : <DeltaChart type={type} deltas={deltas} theme={theme} />
@@ -281,7 +281,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
         </div>
 
         {/* レジェンド */}
-        <div style={{ padding: '10px 20px 20px', display: 'flex', gap: 10, fontSize: 11, flexWrap: 'wrap' as const, flexShrink: 0 }}>
+        <div style={{ padding: '10px 22px 24px', display: 'flex', gap: 10, fontSize: 11, flexWrap: 'wrap' as const, flexShrink: 0 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '4px 10px', borderRadius: 20,
