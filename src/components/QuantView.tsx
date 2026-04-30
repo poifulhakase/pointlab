@@ -790,7 +790,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
-  const [quantTab,    setQuantTab]    = useState<'kankyou' | 'macro' | 'micro'>('kankyou')
+  const [quantTab,    setQuantTab]    = useState<'kankyou' | 'genbutsu' | 'macro' | 'micro'>('kankyou')
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
@@ -935,6 +935,10 @@ export function QuantView({ theme, isMobile, user }: Props) {
             onClick={() => setQuantTab('kankyou')}
           >環境</button>
           <button
+            style={{ ...s.quantTab, ...(quantTab === 'genbutsu' ? s.quantTabActive : {}) }}
+            onClick={() => setQuantTab('genbutsu')}
+          >現物需給</button>
+          <button
             style={{ ...s.quantTab, ...(quantTab === 'macro' ? s.quantTabActive : {}) }}
             onClick={() => setQuantTab('macro')}
           >マクロ需給</button>
@@ -957,15 +961,15 @@ export function QuantView({ theme, isMobile, user }: Props) {
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '300%',
+          width: '400%',
           height: '100%',
-          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'macro' ? 'translateX(-33.333333%)' : 'translateX(-66.666667%)',
+          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-25%)' : quantTab === 'macro' ? 'translateX(-50%)' : 'translateX(-75%)',
           transition: 'transform 0.25s ease',
         }}>
 
         {/* ━━ 環境 ━━ */}
         <div style={{
-          width: '33.333333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1088,29 +1092,15 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         </div>{/* /環境 */}
 
-        {/* ━━ マクロ需給 ━━ */}
+        {/* ━━ 現物需給 ━━ */}
         <div style={{
-          width: '33.333333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
           height: '100%',
           overflowY: isMobile ? 'auto' : 'hidden',
         }}>
-
-        {/* 先物OI */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
-          <FuturesOiPanel
-            data={participantsData}
-            loading={participantsLoading}
-            error={participantsError}
-            onReload={() => loadParticipants(true)}
-            theme={theme}
-            isMobile={isMobile}
-          />
-        </div>
-
-        <div style={isMobile ? s.dividerH : s.divider} />
 
         {/* 投資主体別売買動向 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
@@ -1171,7 +1161,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         <div style={isMobile ? s.dividerH : s.divider} />
 
-        {/* 需給指標 */}
+        {/* 需給指標（騰落レシオ・空売り比率・裁定残高） */}
         <div style={isMobile ? s.panelMobile : s.panel}>
           {(() => {
             const combinedRows = buildCombinedRows(ssData, adData, arbData)
@@ -1272,11 +1262,35 @@ export function QuantView({ theme, isMobile, user }: Props) {
           })()}
         </div>
 
+        </div>{/* /現物需給 */}
+
+        {/* ━━ マクロ需給 ━━ */}
+        <div style={{
+          width: '25%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          height: '100%',
+          overflowY: isMobile ? 'auto' : 'hidden',
+        }}>
+
+        {/* 先物OI */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          <FuturesOiPanel
+            data={participantsData}
+            loading={participantsLoading}
+            error={participantsError}
+            onReload={() => loadParticipants(true)}
+            theme={theme}
+            isMobile={isMobile}
+          />
+        </div>
+
         </div>{/* /マクロ需給 */}
 
         {/* ━━ ミクロ需給 ━━ */}
         <div style={{
-          width: '33.333333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
