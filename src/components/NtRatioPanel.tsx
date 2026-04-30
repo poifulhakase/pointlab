@@ -63,6 +63,7 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
   const load = useCallback(async (force = false) => {
     setLoading(true)
     setError('')
+    setData([])
     try {
       const d = mode === 'ns'
         ? await fetchNtRatioData(force)

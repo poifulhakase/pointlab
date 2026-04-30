@@ -76,7 +76,7 @@ export async function fetchNtTopixData(force = false): Promise<NtRatioPoint[]> {
   try {
     const nikkeiMap = await fetchSymbol('^N225')
     await new Promise(r => setTimeout(r, 1500))
-    const topixMap  = await fetchSymbol('^TPX')
+    const topixMap  = await fetchSymbol('^TOPX')
 
     const dates = Array.from(nikkeiMap.keys())
       .filter(d => topixMap.has(d))
