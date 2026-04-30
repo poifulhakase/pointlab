@@ -74,13 +74,23 @@ export async function fetchNtTopixData(force = false): Promise<NtRatioPoint[]> {
   } catch { /* ignore */ }
 
   try {
+    // TOPIX: CI/CDで生成済みの topix.json から取得（stooq データ）
+    const topixRes = await fetch(
+      (import.meta.env.BASE_URL ?? '/') + 'data/topix.json',
+      { signal: AbortSignal.timeout(10000) }
+    )
+    if (!topixRes.ok) throw new Error(`topix.json HTTP ${topixRes.status}`)
+    const topixJson = await topixRes.json() as { data: { time: string; close: number }[] }
+    const topixMap = new Map(topixJson.data.map(d => [d.time, d.close]))
+
+    // 日経225: Yahoo Finance 経由
     const nikkeiMap = await fetchSymbol('^N225')
-    await new Promise(r => setTimeout(r, 1500))
-    const topixMap  = await fetchSymbol('^TOPX')
 
     const dates = Array.from(nikkeiMap.keys())
       .filter(d => topixMap.has(d))
       .sort()
+
+    if (dates.length === 0) throw new Error('共通日付が見つかりません（topix.jsonとN225の日付が不一致）')
 
     const pts: NtRatioPoint[] = dates.map((time, i) => {
       const nikkei = nikkeiMap.get(time)!

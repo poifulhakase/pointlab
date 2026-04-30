@@ -120,7 +120,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
         {/* ──── アドバイザーボタン ──── */}
         <div style={styles.advisorRow}>
           <button style={styles.advisorBtn}>
-            <img src={`${import.meta.env.BASE_URL}1on1.jpg`} alt="アドバイザー" style={styles.advisorImg} />
+            <img src={`${import.meta.env.BASE_URL}support.png`} alt="研究員サポート室" style={styles.advisorImg} />
           </button>
         </div>
 
@@ -318,14 +318,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'center', padding: '10px 14px 8px',
   },
   advisorBtn: {
-    width: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: '12px 0', borderRadius: 16,
-    background: 'var(--bg-item)', border: '1px solid var(--border-dim)',
+    width: '80%', padding: 0, borderRadius: 16, overflow: 'hidden',
+    border: 'none', background: 'none',
     boxShadow: '0 2px 10px rgba(0,0,0,0.20)', cursor: 'pointer',
+    display: 'block',
   },
   advisorImg: {
-    width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' as const, display: 'block',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.20)',
+    width: '100%', height: 'auto', display: 'block', objectFit: 'cover' as const,
   },
   memoWrap: {
     padding: '10px 14px 12px',

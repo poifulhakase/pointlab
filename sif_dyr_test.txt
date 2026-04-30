@@ -1,0 +1,7950 @@
+225
+Nikkei 225 Futures
+
+
+
+
+ 
+
+
+
+Auction Market  Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+202709
+
+09.09
+
+202712
+
+12.09
+
+202806
+
+06.08
+
+202812
+
+12.07
+
+202906
+
+06.07
+
+202912
+
+12.13
+
+203006
+
+06.13
+
+203012
+
+12.12
+
+203106
+
+06.12
+
+203112
+
+12.11
+
+203206
+
+06.10
+
+203212
+
+12.09
+
+203306
+
+06.09
+
+203312
+
+12.08
+
+161060018 161090018 161120018 162030018 162060018 162090018 162120018 163060018 163120018 164060018 164120018 165060018 165120018 166060018 166120018 167060018 167120018 168060018 168120018
+
+
+Open
+ 59,760 59,850 60,020 60,000
+... ... ... ... ... ... ... ... ... ... ... ... ... ... ...
+
+
+High
+ 60,140 60,150 60,020 60,000
+... ... ... ... ... ... ... ... ... ... ... ... ... ... ...
+
+
+Low
+ 59,420 59,530 59,600 60,000
+... ... ... ... ... ... ... ... ... ... ... ... ... ... ...
+
+
+Close
+ 60,140 60,110 60,000 60,000
+... ... ... ... ... ... ... ... ... ... ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 59,950
+
+High
+ 60,970
+
+Low
+ 59,670
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+60,240 +
+
+520
+
+37,781
+
+46
+
+2,277,128
+
+2,772
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+60,240.00
+
+146,506
+
+60,070
+
+61,000
+
+59,790
+
+60,340 +
+
+520
+
+352
+
+46
+
+21,208
+
+2,776
+
+60,340.00
+
+4,022
+
+60,300
+
+60,540
+
+60,300
+
+60,540 +
+
+880
+
+15
+
+...
+
+900
+
+...
+
+60,170.00
+
+13,194
+
+60,350
+
+61,170
+
+60,350
+
+61,170
+
+...
+
+3
+
+...
+
+181
+
+...
+
+60,320.00
+
+425
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,170.00
+
+859
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,360.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,280.00
+
+7,973
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,400.00
+
+3
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,600.00
+
+3,886
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,800.00
+
+102
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+61,100.00
+
+1,925
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+61,370.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+61,700.00
+
+124
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+62,010.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+62,370.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+62,690.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+63,060.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+63,430.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+63,850.00
+
+...
+
+  Nikkei 225
+
+59,880.71
+
+60,903.95
+
+59,608.63
+
+60,537.36 +
+
+821.18
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+225mini
+Nikkei 225 mini
+
+
+
+
+ 
+
+
+
+Auction Market  Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202605
+
+05.07
+
+202606
+
+06.11
+
+202607
+
+07.09
+
+202608
+
+08.13
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+202709
+
+09.09
+
+202712
+
+12.09
+
+202806
+
+06.08
+
+202812
+
+12.07
+
+202906
+
+06.07
+
+202912
+
+12.13
+
+203006
+
+06.13
+
+203012
+
+12.12
+
+161050019 161060019 161070019 161080019 161090019 161120019 162030019 162060019 162090019 162120019 163060019 163120019 164060019 164120019 165060019 165120019
+
+
+Open
+ 59,700 59,760 59,665 59,675 59,835 59,715 59,880 59,550 60,000 59,560 59,715 60,000 60,285 60,650 60,750 61,570
+
+
+High
+ 60,090 60,150 60,100 60,165 60,225 60,050 60,195 60,050 60,030 60,100 60,060 60,250 60,285 60,650 60,750 61,570
+
+
+Low
+ 59,355 59,415 59,490 59,675 59,510 59,400 59,500 59,550 59,745 59,500 59,715 60,000 60,285 60,650 60,750 60,955
+
+
+Close
+ 60,060 60,125 60,050 60,120 60,215 59,800 60,185 59,915 60,030 60,000 60,060 60,185 60,285 60,650 60,750 60,955
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 59,890
+
+High
+ 60,920
+
+Low
+ 59,620
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+60,180 +
+
+480
+
+23,276
+
+100
+
+139,965
+
+606
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+60,180.00
+
+30,143
+
+59,950
+
+60,980
+
+59,675
+
+60,240 +
+
+520
+
+563,787
+
+100
+
+3,392,592
+
+606
+
+60,240.00
+
+199,621
+
+59,995
+
+60,950
+
+59,775
+
+60,270 +
+
+520
+
+382
+
+...
+
+2,299
+
+...
+
+60,270.00
+
+5,267
+
+60,120
+
+61,035
+
+59,770
+
+60,735 +
+
+950
+
+60
+
+...
+
+360
+
+...
+
+60,735.00
+
+39
+
+60,050
+
+61,060
+
+59,770
+
+60,330 +
+
+495
+
+11,990
+
+...
+
+72,232
+
+...
+
+60,340.00
+
+5,460
+
+59,820
+
+60,905
+
+59,635
+
+60,150 +
+
+425
+
+1,466
+
+...
+
+8,821
+
+...
+
+60,170.00
+
+2,262
+
+60,010
+
+61,005
+
+59,785
+
+60,330 +
+
+510
+
+123
+
+...
+
+742
+
+...
+
+60,320.00
+
+1,009
+
+59,990
+
+60,905
+
+59,685
+
+60,575 +
+
+870
+
+118
+
+...
+
+711
+
+...
+
+60,170.00
+
+575
+
+60,125
+
+60,125
+
+60,125
+
+60,125 +
+
+410
+
+5
+
+...
+
+29
+
+...
+
+60,360.00
+
+30
+
+59,995
+
+60,900
+
+59,900
+
+60,300 +
+
+550
+
+114
+
+...
+
+687
+
+...
+
+60,280.00
+
+756
+
+...
+
+...
+
+...
+
+...
+
+...
+
+4
+
+...
+
+23
+
+...
+
+60,400.00
+
+93
+
+60,250
+
+61,000
+
+60,200
+
+60,885 +
+
+1,380
+
+16
+
+...
+
+96
+
+...
+
+60,600.00
+
+628
+
+61,005
+
+61,005
+
+61,005
+
+61,005
+
+...
+
+2
+
+...
+
+12
+
+...
+
+60,800.00
+
+308
+
+60,590
+
+61,400
+
+60,500
+
+61,400 +
+
+2,215
+
+10
+
+...
+
+60
+
+...
+
+61,100.00
+
+135
+
+61,215
+
+61,215
+
+61,215
+
+61,215 +
+
+710
+
+2
+
+...
+
+12
+
+...
+
+61,370.00
+
+229
+
+...
+
+...
+
+...
+
+...+
+
+455
+
+2
+
+...
+
+12
+
+...
+
+61,700.00
+
+87
+
+  Nikkei 225
+
+59,880.71
+
+60,903.95
+
+59,608.63
+
+60,537.36 +
+
+821.18
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+225
+
+Nikkei 225 Micro Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202605
+
+05.07
+
+202606
+
+06.11
+
+202607
+
+07.09
+
+202609
+
+09.10
+
+161050023 161060023 161070023 161090023
+
+
+Open
+ 59,700 59,750 59,715 59,820
+
+
+High
+ 60,085 60,150 60,150 60,225
+
+
+Low
+ 59,360 59,410 59,480 59,505
+
+
+Close
+ 60,070 60,105 60,100 60,200
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 59,905
+
+High
+ 60,910
+
+Low
+ 59,625
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+60,175 +
+
+505
+
+57,042
+
+...
+
+34,313
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+60,180
+
+9,570
+
+59,965
+
+60,980
+
+59,675
+
+60,245 +
+
+525
+
+907,879
+
+...
+
+545,922
+
+...
+
+60,240
+
+90,812
+
+60,000
+
+60,960
+
+59,760
+
+60,205 +
+
+435
+
+1,489
+
+...
+
+896
+
+...
+
+60,270
+
+849
+
+60,050
+
+61,060
+
+59,770
+
+60,340 +
+
+525
+
+27,075
+
+...
+
+16,321
+
+...
+
+60,340
+
+9,406
+
+  Nikkei 225
+
+59,880.71
+
+60,903.95
+
+59,608.63
+
+60,537.36 +
+
+821.18
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+TOPIX
+TOPIX Futures
+
+
+
+
+ 
+
+
+
+Auction Market  Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+202709
+
+09.09
+
+202712
+
+12.09
+
+202806
+
+06.08
+
+202812
+
+12.07
+
+202906
+
+06.07
+
+202912
+
+12.13
+
+203006
+
+06.13
+
+203012
+
+12.12
+
+161060005 161090005 161120005 162030005 162060005 162090005 162120005 163060005 163120005 164060005 164120005 165060005 165120005
+
+
+Open
+ 3,718.0 3,710.0
+... ... ... ... ... ... ... ... ... ... ...
+
+
+High
+ 3,729.5 3,713.0
+... ... ... ... ... ... ... ... ... ... ...
+
+
+Low
+ 3,690.0 3,710.0
+... ... ... ... ... ... ... ... ... ... ...
+
+
+Close
+ 3,714.5 3,713.0
+... ... ... ... ... ... ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 3,707.0
+
+High
+ 3,759.0
+
+Low
+ 3,694.0
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+3,732.0 +
+
+16.5
+
+60,697
+
+...
+
+2,262,459
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+3,732.00
+
+427,381
+
+...
+
+...
+
+...
+
+...
+
+...
+
+5
+
+...
+
+185
+
+...
+
+3,738.50
+
+4,720
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,723.00
+
+2,928
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,730.00
+
+200
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,707.50
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,715.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,697.00
+
+1,361
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,682.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,672.00
+
+1,725
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,657.50
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,649.00
+
+200
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,634.50
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,625.50
+
+...
+
+ TOPIX TOPIX
+
+3,710.88
+
+3,753.65
+
+3,689.75
+
+3,735.28 +
+
+18.69
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+TOPIX
+
+mini-TOPIX Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060006 161090006 161120006
+
+
+Open
+ 3,719.25 3,718.25
+...
+
+
+High
+ 3,729.50 3,718.25
+...
+
+
+Low
+ 3,689.75 3,691.75
+...
+
+
+Close
+ 3,706.25 3,702.25
+...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 3,707.75
+
+High
+ 3,758.75
+
+Low
+ 3,693.75
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+3,731.75 +
+
+14.75
+
+27,026
+
+...
+
+100,612
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+3,732.00
+
+47,604
+
+3,704.25
+
+3,760.50
+
+3,702.25
+
+3,702.25 -
+
+27.75
+
+107
+
+...
+
+397
+
+...
+
+3,738.50
+
+94
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+3,723.00
+
+3
+
+ TOPIX TOPIX
+
+3,710.88
+
+3,753.65
+
+3,689.75
+
+3,735.28 +
+
+18.69
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+JPX150
+
+JPX Prime 150 Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+161060012 161090012 161120012 162030012 162060012
+
+
+Open
+ ... ... ... ... ...
+
+
+High
+ ... ... ... ... ...
+
+
+Low
+ ... ... ... ... ...
+
+
+Close
+ ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+1,583.0
+
+34
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,587.0
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,579.0
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,582.0
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,572.5
+
+...
+
+ JPX150 JPX Prime 150 Index
+
+1,570.57
+
+1,589.29
+
+1,561.44
+
+1,580.98 +
+
+10.73
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+JPX400
+
+JPX-Nikkei Index 400 Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+161060022 161090022 161120022 162030022 162060022
+
+
+Open
+ 33,920
+... ... ... ...
+
+
+High
+ 34,000
+... ... ... ...
+
+
+Low
+ 33,665
+... ... ... ...
+
+
+Close
+ 33,845
+... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 33,860
+
+High
+ 34,280
+
+Low
+ 33,715
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+34,050 +
+
+130
+
+1,902
+
+...
+
+6,464
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+34,050.00
+
+42,284
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+34,135.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+33,970.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+34,030.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+33,845.00
+
+...
+
+ JPX400 JPX-Nikkei Index 400
+
+33,834.66
+
+34,236.01
+
+33,642.46
+
+34,066.08 +
+
+193.71
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+TOPIX Core30
+
+TOPIX Core30 Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060063 161090063 161120063
+
+
+Open
+ ... ... ...
+
+
+High
+ ... ... ...
+
+
+Low
+ ... ... ...
+
+
+Close
+ ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+1,937.50
+
+342
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,944.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,933.50
+
+...
+
+ TOPIX Core30 TOPIX Core30
+
+1,916.49
+
+1,945.99
+
+1,906.96
+
+1,935.07 +
+
+17.75
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+TOPIX Banks Index Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060032 161090032 161120032
+
+
+Open
+ ... ... ...
+
+
+High
+ ... ... ...
+
+
+Low
+ ... ... ...
+
+
+Close
+ ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+584.50
+
+22,837
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+586.70
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+581.70
+
+...
+
+  TOPIX Banks Index
+
+572.24
+
+585.86
+
+568.07
+
+583.76 +
+
+6.47
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+REIT
+
+TSE REIT Index Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060069 161090069 161120069
+
+
+Open
+ ... ... ...
+
+
+High
+ ... ... ...
+
+
+Low
+ ... ... ...
+
+
+Close
+ ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 1,896.0
+
+High
+ 1,899.5
+
+Low
+ 1,887.0
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+1,887.0 -
+
+1.0
+
+146
+
+...
+
+276
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+1,893.50
+
+71,301
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,872.50
+
+50
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,864.50
+
+...
+
+ REIT TSE REIT
+
+1,902.28
+
+1,908.38
+
+1,897.94
+
+1,903.01 +
+
+1.39
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+RN
+
+RN Prime Index Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+161060076 161090076 161120076 162030076 162060076
+
+
+Open
+ ... ... ... ... ...
+
+
+High
+ ... ... ... ... ...
+
+
+Low
+ ... ... ... ... ...
+
+
+Close
+ ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+1,702.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,706.50
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,698.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,701.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,690.50
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+250
+
+TSE Growth Market 250 Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+202703
+
+03.11
+
+202706
+
+06.10
+
+161060011 161090011 161120011 162030011 162060011
+
+
+Open
+ 751.0 733.0
+... ... ...
+
+
+High
+ 756.0 733.0
+... ... ...
+
+
+Low
+ 741.0 724.0
+... ... ...
+
+
+Close
+ 742.0 724.0
+... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 744.0
+
+High
+ 750.0
+
+Low
+ 738.0
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+742.0 -
+
+9.0
+
+4,857
+
+...
+
+3,620
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+763.00
+
+34,084
+
+725.0
+
+730.0
+
+722.0
+
+725.0 -
+
+8.0
+
+21
+
+...
+
+15
+
+...
+
+765.00
+
+315
+
+711.0
+
+715.0
+
+711.0
+
+715.0 -
+
+13.0
+
+2
+
+...
+
+1
+
+...
+
+767.00
+
+114
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+768.00
+
+13
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+769.00
+
+...
+
+ 250 TSE Growth Market 250 Index
+
+769.15
+
+769.16
+
+756.37
+
+762.59 -
+
+5.51
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+NY
+DJIA Futures
+
+
+
+
+ 
+
+
+
+Auction Market  Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.18
+
+202609
+
+09.18
+
+202612
+
+12.18
+
+202703
+
+03.19
+
+161060073 161090073 161120073 162030073
+
+
+Open
+ 49,423.00 49,705.00
+... ...
+
+
+High
+ 49,598.00 49,706.00
+... ...
+
+
+Low
+ 49,293.00 49,705.00
+... ...
+
+
+Close
+ 49,400.00 49,706.00
+... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 49,274.00
+
+High
+ 49,373.00
+
+Low
+ 49,248.00
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+49,333.00 -
+
+72.00
+
+128
+
+...
+
+632
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+49,303.00
+
+458
+
+...
+
+...
+
+...
+
+...
+
+...
+
+8
+
+...
+
+39
+
+...
+
+49,706.00
+
+21
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+50,044.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+50,466.00
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+TAIEX Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202605
+
+05.19
+
+202606
+
+06.16
+
+202609
+
+09.15
+
+202612
+
+12.15
+
+202703
+
+03.16
+
+161050078 161060078 161090078 161120078 162030078
+
+
+Open
+ ... ... ... ... ...
+
+
+High
+ ... ... ... ... ...
+
+
+Low
+ ... ... ... ... ...
+
+
+Close
+ ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+39,888.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+39,976.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+40,019.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+40,353.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+40,785.00
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+FTSE50
+
+FTSE China 50 Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202604
+
+04.28
+
+202605
+
+05.28
+
+202606
+
+06.29
+
+202609
+
+09.29
+
+161040079 161050079 161060079 161090079
+
+
+Open
+ ... ... ... ...
+
+
+High
+ ... ... ... ...
+
+
+Low
+ ... ... ... ...
+
+
+Close
+ ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+16,850.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+16,785.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+16,715.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+16,670.00
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+Nikkei 225 Dividend Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202612
+
+03.31
+
+202712
+
+03.31
+
+202812
+
+03.30
+
+202912
+
+03.29
+
+203012
+
+03.31
+
+203112
+
+03.31
+
+203212
+
+03.31
+
+203312
+
+03.31
+
+161120017 162120017 163120017 164120017 165120017 166120017 167120017 168120017
+
+
+Open
+ ... ... ... ... ... ... ... ...
+
+
+High
+ ... ... ... ... ... ... ... ...
+
+
+Low
+ ... ... ... ... ... ... ... ...
+
+
+Close
+ ... ... ... ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+934.00
+
+1,345
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,025.00
+
+4,833
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,069.00
+
+1,340
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+1,090.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+947.60
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+947.60
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+947.60
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+947.60
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+VI
+
+Nikkei 225 VI Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202605
+
+05.12
+
+202606
+
+06.09
+
+202607
+
+07.14
+
+202608
+
+08.10
+
+202609
+
+09.08
+
+202610
+
+10.13
+
+202611
+
+11.10
+
+202612
+
+12.08
+
+161050015 161060015 161070015 161080015 161090015 161100015 161110015 161120015
+
+
+Open
+ ... ... ... ... ... ... ... ...
+
+
+High
+ ... ... ... ... ... ... ... ...
+
+
+Low
+ ... ... ... ... ... ... ... ...
+
+
+Close
+ ... ... ... ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 34.45
+
+High
+ 34.45
+
+Low
+ 33.40
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+33.40 -
+
+0.15
+
+9
+
+...
+
+3
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+33.95
+
+81
+
+33.60
+
+33.60
+
+33.60
+
+33.60
+
+0.00
+
+3
+
+...
+
+1
+
+...
+
+33.40
+
+18
+
+32.75
+
+32.75
+
+32.75
+
+32.75
+
+...
+
+1
+
+...
+
+0
+
+...
+
+33.15
+
+10
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+33.00
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+32.65
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+32.70
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+32.45
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+32.50
+
+...
+
+ VI Nikkei 225 VI
+
+30.53
+
+32.59
+
+29.04
+
+29.55 -
+
+0.04
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+S&P/JPX 500 ESG
+
+S&P/JPX 500 ESG Score Tilted Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060065 161090065 161120065
+
+
+Open
+ ... ... ...
+
+
+High
+ ... ... ...
+
+
+
+
+
+Low
+ ... ... ...
+
+Close
+ ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+4,310.5
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+4,321.5
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+4,300.0
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+FTSE JPX500
+
+FTSE JPX Net Zero Japan 500 Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060066 161090066 161120066
+
+
+Open
+ ... ... ...
+
+
+High
+ ... ... ...
+
+
+
+
+
+Low
+ ... ... ...
+
+Close
+ ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+2,424.0
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+2,430.0
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+2,418.0
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+Nikkei Climate 1.5C Target Index Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.11
+
+202609
+
+09.10
+
+202612
+
+12.10
+
+161060067 161090067 161120067
+
+
+Open
+ ... ... ...
+
+
+High
+ ... ... ...
+
+
+Low
+ ... ... ...
+
+
+Close
+ ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+ ...
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...
+
+...
+
+...
+
+...
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+60,520
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,670
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+60,560
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+/
+
+USD/JPY Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.15
+
+202609
+
+09.14
+
+202612
+
+12.14
+
+202703
+
+03.15
+
+202706
+
+06.14
+
+1610600C0 1610900C0 1611200C0 1620300C0 1620600C0
+
+
+Open
+ 159.00
+... ... ... ...
+
+
+High
+ 159.07
+... ... ... ...
+
+
+Low
+ 158.68
+... ... ... ...
+
+
+Close
+ 158.68
+... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 158.82
+
+High
+ 158.82
+
+Low
+ 158.63
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+158.63 -
+
+0.41
+
+3,196
+
+...
+
+5,077
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+158.71
+
+167
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+157.54
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+156.43
+
+25
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+155.37
+
+25
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+154.39
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+/
+
+CNH/JPY Futures
+
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.15
+
+202609
+
+09.14
+
+202612
+
+12.14
+
+202703
+
+03.15
+
+202706
+
+06.14
+
+1610600C1 1610900C1 1611200C1 1620300C1 1620600C1
+
+
+Open
+ 23.327
+... ... ... ...
+
+
+High
+ 23.332
+... ... ... ...
+
+
+Low
+ 23.300
+... ... ... ...
+
+
+Close
+ 23.300
+... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ ...
+
+High
+ ...
+
+Low
+ ...
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+...-
+
+0.047
+
+45
+
+...
+
+104
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+23.321
+
+46
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+23.293
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+23.266
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+23.244
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+23.234
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+/
+
+EUR/JPY Futures
+
+
+Auction Market
+
+
+
+ 
+
+
+
+ Price  Night Session
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606
+
+06.15
+
+202609
+
+09.14
+
+202612
+
+12.14
+
+202703
+
+03.15
+
+202706
+
+06.14
+
+1610600C2 1610900C2 1611200C2 1620300C2 1620600C2
+
+
+Open
+ ... ... ... ... ...
+
+
+High
+ ... ... ... ... ...
+
+
+Low
+ ... ... ... ... ...
+
+
+Close
+ ... ... ... ... ...
+
+ 
+
+225225mini225
+
+///
+
+Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+2026 427()
+
+Monday, April 27, 2026
+
+ Whole Day
+
+Day Session
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+Open
+ 186.44
+
+High
+ 186.44
+
+Low
+ 186.44
+
+Close
+
+
+Net Change
+
+Trading Volume
+
+Strategy
+
+Trading Value
+
+Strategy
+
+ Unit
+
+ Unit
+
+ mil.
+
+ mil.
+
+
+
+186.44 +
+
+0.21
+
+50
+
+...
+
+93
+
+...
+
+Settlement Price
+
+Open Interest
+
+ Unit
+
+
+
+186.48
+
+50
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+185.79
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+185.04
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+184.31
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+...
+
+183.64
+
+...
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+225
+
+Nikkei 225 Futures
+J-NET 
+
+
+
+ 
+
+
+
+J-NET Market Trade Exchanged Issues
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060018
+
+
+Open
+ 59,757.4000
+
+202609 09.10 161090018
+
+59,679.8000
+
+ High
+ 60,970.0000
+61,000.1000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+ Low
+ 59,460.1000
+59,679.8000
+
+
+Close
+ Unit 60,800.0000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+5,607
+
+339,234
+
+60,684.5000
+
+62
+
+3,770
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+225mini
+
+Nikkei 225 mini
+J-NET 
+
+
+
+ 
+
+
+
+J-NET Market Trade Exchanged Issues
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202605 05.07
+
+161050019
+
+
+Open
+ 59,699.9000
+
+202606 06.11 161060019
+
+59,750.1000
+
+202607 07.09 161070019
+
+59,530.1000
+
+202609 09.10 161090019
+
+59,710.1000
+
+ High
+ 60,914.8000 60,979.9000 60,820.1000 61,064.9000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+ Low
+ 59,400.2000 59,432.5000 59,530.1000 59,535.1000
+
+
+Close
+ Unit 60,179.9000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+12,909
+
+77,981
+
+60,609.3700
+
+68,810
+
+413,931
+
+60,524.7000
+
+22
+
+132
+
+60,310.1000
+
+1,155
+
+6,972
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+225
+
+Nikkei 225 Micro Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+TOPIX
+
+TOPIX Futures
+J-NET 
+
+
+
+ 
+
+
+
+J-NET Market Trade Exchanged Issues
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060005
+
+
+Open
+ 3,721.4900
+
+
+High
+ 3,758.0000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 3,695.0000
+
+
+Close
+ Unit 3,739.6382
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+2,915
+
+108,963
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+TOPIX
+
+mini-TOPIX Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060006
+
+
+Open
+ 3,719.7500
+
+
+High
+ 3,757.9500
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 3,690.0500
+
+
+Close
+ Unit 3,730.8000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+1,020
+
+3,803
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+JPX150
+
+JPX Prime 150 Index Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+JPX400
+
+JPX-Nikkei Index 400 Futures
+
+J-NET
+
+J-NET Market
+
+
+
+Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060022
+
+
+Open
+ 33,780.0000
+
+
+High
+ 34,180.1000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 33,780.0000
+
+
+Close
+ Unit 34,100.0000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+61
+
+207
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+TOPIX Core30
+
+TOPIX Core30 Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+TOPIX Banks Index Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060032
+
+
+Open
+ 584.5000
+
+
+High
+ 584.5000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 584.5000
+
+
+Close
+ Unit 584.5000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+190
+
+1,110
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+REIT
+
+TSE REIT Index Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060069
+
+
+Open
+ 1,896.2700
+
+
+High
+ 1,896.2700
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 1,894.5100
+
+
+Close
+ Unit 1,895.6100
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+1,092
+
+2,069
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+RN
+
+RN Prime Index Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+250
+
+TSE Growth Market 250 Index Futures
+
+J-NET
+
+J-NET Market
+
+
+
+Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.11
+
+161060011
+
+
+Open
+ 751.0000
+
+
+High
+ 764.1400
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 738.0000
+
+
+Close
+ Unit 764.1400
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+777
+
+580
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+NY
+
+DJIA Futures
+J-NET 
+
+
+
+ 
+
+
+
+J-NET Market Trade Exchanged Issues
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202606 06.18
+
+161060073
+
+
+Open
+ 49,464.0000
+
+
+High
+ 49,464.0000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+ 49,286.0000
+
+
+Close
+ Unit 49,357.0000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+11
+
+54
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+TAIEX Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+FTSE50
+
+FTSE China 50 Index Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+Nikkei 225 Dividend Index Futures
+
+J-NET
+
+J-NET Market
+
+
+
+Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+Code
+
+yyyymm
+
+mm.dd
+
+202712 03.31
+
+162120017
+
+
+Open
+ 1,038.0000
+
+202812 03.30 163120017
+
+1,079.0000
+
+ High
+ 1,038.0000
+1,079.0000
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+ Low
+ 1,038.0000
+1,079.0000
+
+
+Close
+ Unit 1,038.0000
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+100
+
+103
+
+1,079.0000
+
+100
+
+107
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+VI
+
+Nikkei 225 VI Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+S&P/JPX 500 ESG 225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures,
+
+S&P/JPX 500 ESG Score Tilted Index Futures
+
+USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+J-NET
+
+J-NET Market
+
+2026 427()
+
+
+
+Trade Exchanged Issues
+
+Monday, April 27, 2026
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+FTSE JPX500
+FTSE JPX Net Zero Japan 500 Index Futures
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+
+J-NET
+
+J-NET Market
+
+2026 427()
+
+
+
+Trade Exchanged Issues
+
+Monday, April 27, 2026
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
+
+Nikkei Climate 1.5C Target Index Futures
+
+J-NET
+
+J-NET Market
+
+
+
+Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+/
+
+USD/JPY Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+/
+
+CNH/JPY Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+/
+
+EUR/JPY Futures
+J-NET 
+
+J-NET Market Trade Exchanged Issues
+
+
+
+ 
+
+
+
+ Price
+
+Contract Month
+
+Last Trading
+Day
+
+yyyymm
+
+mm.dd
+
+Code
+
+
+Open
+
+
+
+High
+
+
+225225mini225 /// Price for Nikkei 225 Futures, Nikkei 225 mini, Nikkei 225 Micro Futures, Nikkei 225 Dividend Index Futures, Nikkei Climate 1.5C Target Index Futures, USD/JPY Futures, CNH/JPY Futures, EUR/JPY Futures: JPY, Others : points
+2026 427() Monday, April 27, 2026
+
+
+Low
+
+
+ Close
+
+ Unit
+
+ 
+Trading Volume
+
+
+ 
+
+Trading Value
+
+mil.
+
+
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+

@@ -307,7 +307,7 @@ export function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User |
           onChange={e => setQuantMemo(e.target.value)}
           placeholder="AI分析レポート・トレードメモを入力…"
           style={{
-            flex: 1, resize: 'none', background: 'transparent',
+            flex: 1, minHeight: 280, resize: 'none', background: 'transparent',
             color: 'var(--text)', border: 'none', outline: 'none',
             padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
             fontFamily: 'inherit', overflowY: 'auto',

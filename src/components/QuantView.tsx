@@ -13,6 +13,7 @@ import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/a
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
 import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+import { fetchFuturesOiData, type FuturesOiWeekData } from '../utils/futuresOiData'
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
@@ -268,6 +269,7 @@ function buildExportJson(
   participantsData: FuturesParticipantDayData[],
   arbDailyData: ArbitrageDayData[],
   usdjpyData: UsdjpyDayData[],
+  futuresOiData: FuturesOiWeekData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -421,6 +423,7 @@ function buildExportJson(
     advance_decline:    { data_as_of: toDate(adData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     arbitrage_daily:    { data_as_of: arbDailyData[0]?.date ?? null,           frequency: '日次', lag_note: 'nikkei225jp.com' },
+    futures_oi:         { data_as_of: futuresOiData[0]?.date ?? null,          frequency: '週次', lag_note: 'JPX月次統計・翌月上旬公開（1〜6週間遅延）' },
   }
 
   return {
@@ -432,6 +435,7 @@ function buildExportJson(
     nikkei225_latest,
     usdjpy_latest,
     arbitrage_daily_recent,
+    futures_oi_recent: futuresOiData.slice(0, 13).map(d => ({ date: d.date, label: d.label, oi: d.oi })),
     micro_supply_demand,
     data: rows,
   }
@@ -805,6 +809,9 @@ export function QuantView({ theme, isMobile, user }: Props) {
   const [usdjpyError,   setUsdjpyError]   = useState('')
   const [usdjpyLoaded,  setUsdjpyLoaded]  = useState(false)
 
+  const [futuresOiData,   setFuturesOiData]   = useState<FuturesOiWeekData[]>([])
+  const [futuresOiLoaded, setFuturesOiLoaded] = useState(false)
+
   const [participantsData,    setParticipantsData]    = useState<FuturesParticipantDayData[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError,   setParticipantsError]   = useState('')
@@ -875,6 +882,11 @@ export function QuantView({ theme, isMobile, user }: Props) {
     catch { /* AI export 用のみ・エラーはサイレント */ }
   }, [])
 
+  const loadFuturesOi = useCallback(async (force = false) => {
+    try { setFuturesOiData(await fetchFuturesOiData(force)); setFuturesOiLoaded(true) }
+    catch { /* AI export 用のみ・エラーはサイレント */ }
+  }, [])
+
   const loadUsdjpy = useCallback(async (force = false) => {
     setUsdjpyLoading(true); setUsdjpyError('')
     try { setUsdjpyData(await fetchUsdjpyData(force)); setUsdjpyLoaded(true) }
@@ -910,8 +922,9 @@ export function QuantView({ theme, isMobile, user }: Props) {
   useEffect(() => { if (!adLoaded)      loadAdvanceDecline()}, [adLoaded,      loadAdvanceDecline])
   useEffect(() => { if (!ssLoaded)      loadShortSell()     }, [ssLoaded,      loadShortSell])
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
-  useEffect(() => { if (!arbDailyLoaded) loadArbDaily()     }, [arbDailyLoaded, loadArbDaily])
-  useEffect(() => { if (!usdjpyLoaded)   loadUsdjpy()       }, [usdjpyLoaded,   loadUsdjpy])
+  useEffect(() => { if (!arbDailyLoaded)  loadArbDaily()     }, [arbDailyLoaded,  loadArbDaily])
+  useEffect(() => { if (!usdjpyLoaded)    loadUsdjpy()       }, [usdjpyLoaded,    loadUsdjpy])
+  useEffect(() => { if (!futuresOiLoaded) loadFuturesOi()    }, [futuresOiLoaded, loadFuturesOi])
 
   useEffect(() => {
     fetchNhkNews().then(setNhkNews).catch(() => {})
@@ -929,7 +942,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
     const updatedAt = getStoredMarginUpdatedAt()
     if (!updatedAt) return
     if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresOiData), null, 2)
     const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
     const today = new Date()
     const existing = getNote(today)
@@ -941,7 +954,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
   }, [invLoaded, marLoaded, vixWeekLoaded, ntLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresOiData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
@@ -1053,7 +1066,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
         <div style={isMobile ? s.dividerH : s.divider} />
 
         {/* クオンツ分析レポート */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
+        <div style={isMobile ? { ...s.panelMobile, minHeight: 340 } : s.panel}>
           <QuantMemoPanel theme={theme} user={user} />
         </div>
 

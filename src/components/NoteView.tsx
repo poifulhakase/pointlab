@@ -30,9 +30,11 @@ const ARTICLES: Article[] = [
   { genre: 'インジケーター', title: '実践統合編',       url: 'https://note.com/pointlab/n/nb4793929edcd', thumb: BASE + 'Stock_Trade_Lab_Multiple_Index.png' },
   // ── イベントドリブン ──────────────────────────────────────────
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png' },
+  // ── 未来ガジェット ────────────────────────────────────────────
+  { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.jpg' },
 ]
 
-const GENRES = ['基本', 'インジケーター', 'イベントドリブン']
+const GENRES = ['基本', 'インジケーター', 'イベントドリブン', '未来ガジェット']
 
 function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolean }) {
   const isComingSoon = article.url === null

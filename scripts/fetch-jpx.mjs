@@ -823,6 +823,40 @@ async function buildFuturesParticipantsData() {
     .slice(0, 52)
 }
 
+// ── TOPIX日次（NT倍率用） ──────────────────────────
+// データソース: stooq.com ^tpx 日足CSV（サーバーサイドのみ直接アクセス可）
+
+async function buildTopixData() {
+  console.log('\n[topix] stooq から TOPIX日次データ取得...')
+  const url = 'https://stooq.com/q/d/l/?s=%5Etpx&i=d'
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/csv,text/plain,*/*',
+      'Referer': 'https://stooq.com/',
+    },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const text = await res.text()
+
+  // CSV: Date,Open,High,Low,Close,Volume
+  const lines = text.trim().split('\n').slice(1)
+  const points = []
+  for (const line of lines) {
+    const cols = line.split(',')
+    const date  = cols[0]?.trim()
+    const close = parseFloat(cols[4])
+    if (!date || isNaN(close) || close <= 0) continue
+    points.push({ time: date, close: Math.round(close * 100) / 100 })
+  }
+
+  if (points.length === 0) throw new Error('TOPIXデータが空です')
+  points.sort((a, b) => a.time.localeCompare(b.time))
+  console.log(`  → ${points.length}件取得`)
+  return points.slice(-252) // 約1年分
+}
+
 // ── メイン ─────────────────────────────────────
 
 async function main() {
@@ -837,6 +871,7 @@ async function main() {
   let arbitrageOk          = false
   let futuresOIOk          = false
   let futuresParticipantsOk = false
+  let topixOk               = false
 
   try {
     const data = await fetchInvestorData()
@@ -921,6 +956,16 @@ async function main() {
     console.warn('\n⚠ futures_participants:', e.message)
   }
 
+  try {
+    const data = await buildTopixData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'topix.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ topix.json 保存 (${data.length}件)`)
+    topixOk = true
+  } catch (e) {
+    console.warn('\n⚠ topix:', e.message)
+  }
+
   console.log('\n=== 完了 ===')
   if (!investorOk || !marginOk) process.exit(1)
   if (!vixOk)                   console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
@@ -929,6 +974,7 @@ async function main() {
   if (!arbitrageOk)             console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
   if (!futuresOIOk)             console.warn('⚠ futures_oi.json は更新されませんでした（月次データ未公開の可能性）')
   if (!futuresParticipantsOk)   console.warn('⚠ futures_participants.json は更新されませんでした（JPX URL設定要確認）')
+  if (!topixOk)                 console.warn('⚠ topix.json は更新されませんでした（stooq 接続要確認）')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

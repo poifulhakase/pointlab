@@ -1,0 +1,11297 @@
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+23,624
+
+For J-NET J-NET Market
+the   day Total
+
+11,222 34,846
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+
+
+Month 
+
+Nikkei225
+
+
+
+Daily Average
+
+2
+
+   Auction Market
+
+2
+
+ J-NET
+
+5
+
+ J-NET Market
+
+527,779
+
+151,053
+
+678,832
+
+15
+
+45,255
+
+527,779
+
+151,053
+
+  During Total
+
+678,832
+
+the  Term Daily Average
+
+15
+
+45,255
+
+   Auction Market
+
+3,401,603
+
+ J-NET  J-NET Market
+
+977,438
+
+  Year Total
+
+4,379,041
+
+to  Date Daily Average
+
+73
+
+59,986
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+2
+
+Month 
+
+2
+
+Daily Average
+
+5
+
+   Auction Market
+
+m
+
+ J-NET
+
+i
+
+ J-NET Market
+
+332,955
+
+49,943
+
+382,898
+
+7,293,504
+
+1,274,686
+
+8,568,190
+
+15
+
+571,212
+
+7,293,504
+
+1,274,686
+
+Nikkei225 mini
+
+n
+
+ 
+
+i
+
+During Total
+
+the 
+
+Term Daily Average
+
+8,568,190
+
+15
+
+571,212
+
+   Auction Market
+
+44,915,225
+
+ J-NET  J-NET Market
+
+7,349,046
+
+  Year Total
+
+52,264,271
+
+to  Date Daily Average
+
+73
+
+715,948
+
+
+Trading Value
+
+ Give Up Quantity
+
+1,402,183,745,000
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+9,439
+
+664,886,844,700
+
+
+
+
+
+20,921
+
+2,067,070,589,700
+
+4,287
+
+185,878
+
+30,360
+
+29,537,090,506,000
+
+
+
+
+
+320,060
+
+8,494,215,515,333
+
+
+
+
+
+479,494
+
+38,031,306,021,333
+
+95,833
+
+799,554
+
+2,535,420,401,422
+
+6,388
+
+15
+
+53,303
+
+29,537,090,506,000
+
+
+
+
+
+320,060
+
+8,494,215,515,333
+
+
+
+
+
+479,494
+
+38,031,306,021,333
+
+95,833
+
+799,554
+
+2,535,420,401,422
+
+6,388
+
+15
+
+53,303
+
+185,738,430,112,000
+
+
+
+
+
+1,628,319
+
+53,536,437,734,191
+
+
+
+
+
+2,284,313
+
+239,274,867,846,191
+
+626,596
+
+3,912,632
+
+3,277,737,915,701
+
+8,583
+
+73
+
+53,597
+
+1,973,630,492,500
+
+
+
+
+
+30,669
+
+296,026,858,517
+
+
+
+
+
+2,220
+
+2,269,657,351,017
+
+61,063
+
+228,973
+
+32,889
+
+40,774,154,249,700
+
+
+
+
+
+687,309
+
+7,104,165,525,712
+
+
+
+
+
+68,400
+
+47,878,319,775,412 1,389,552
+
+755,709
+
+3,191,887,985,027
+
+92,636
+
+15
+
+50,380
+
+40,774,154,249,700
+
+
+
+
+
+687,309
+
+7,104,165,525,712
+
+
+
+
+
+68,400
+
+47,878,319,775,412 1,389,552
+
+755,709
+
+3,191,887,985,027
+
+92,636
+
+15
+
+50,380
+
+245,425,740,716,500
+
+
+
+
+
+3,630,997
+
+40,185,565,807,440
+
+
+
+
+
+417,290
+
+285,611,306,523,940 8,513,527
+
+4,048,287
+
+3,912,483,651,012
+
+116,623
+
+73
+
+55,455
+
+
+Trading Value
+
+ Give Up Quantity
+
+3,506,094,000
+
+
+
+27,368,227,340
+
+
+
+30,874,321,340
+
+9,500
+
+97,237,505,000
+
+
+
+442,080,805,727
+
+
+
+539,318,310,727
+
+161,405
+
+35,954,554,048
+
+10,760
+
+97,237,505,000
+
+
+
+442,080,805,727
+
+
+
+539,318,310,727
+
+161,405
+
+35,954,554,048
+
+10,760
+
+535,156,706,000
+
+
+
+2,296,966,959,918
+
+
+
+2,832,123,665,918
+
+884,431
+
+38,796,214,601
+
+12,115
+
+693,327,300
+
+
+
+10,809,960
+
+
+
+704,137,260
+
+2,223
+
+27,993,225,200
+
+
+
+1,195,236,690
+
+
+
+29,188,461,890
+
+68,603
+
+1,945,897,459
+
+4,573
+
+27,993,225,200
+
+
+
+1,195,236,690
+
+
+
+29,188,461,890
+
+68,603
+
+1,945,897,459
+
+4,573
+
+127,265,968,000
+
+
+
+6,026,714,760
+
+
+
+133,292,682,760
+
+454,772
+
+1,825,927,161
+
+6,229
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+
+Trading Volume
+5,542
+
+Put 
+Trading Value
+1,679,085,000
+
+
+Open Interest
+
+
+
+Trading Volume
+3,897
+
+
+
+13,883
+
+17,261,537,190
+
+
+
+7,038
+
+748,855
+
+19,425
+
+18,940,622,190
+
+491,917
+
+10,935
+
+
+
+181,918
+
+53,641,879,000
+
+
+
+138,142
+
+
+
+311,867
+
+227,592,523,644
+
+
+
+167,627
+
+493,785
+
+281,234,402,644
+
+305,769
+
+32,919
+
+18,748,960,176
+
+20,384
+
+
+
+181,918
+
+53,641,879,000
+
+
+
+138,142
+
+
+
+311,867
+
+227,592,523,644
+
+
+
+167,627
+
+493,785
+
+281,234,402,644
+
+305,769
+
+32,919
+
+18,748,960,176
+
+20,384
+
+
+
+920,323
+
+305,652,308,000
+
+
+
+707,996
+
+ 1,424,159
+
+1,222,851,978,141
+
+
+
+860,154
+
+2,344,482
+
+1,528,504,286,141
+
+1,568,150
+
+32,116
+
+20,938,414,878
+
+21,481
+
+
+
+20,244
+
+363,496,600
+
+
+
+10,425
+
+
+
+1,640
+
+5,615,610
+
+
+
+580
+
+74,271
+
+21,884
+
+369,112,210
+
+47,151
+
+11,005
+
+
+
+395,044
+
+11,912,263,300
+
+
+
+292,265
+
+
+
+48,350
+
+808,305,880
+
+
+
+20,050
+
+443,394
+
+12,720,569,180
+
+312,315
+
+29,559
+
+848,037,945
+
+20,821
+
+
+
+395,044
+
+11,912,263,300
+
+
+
+292,265
+
+
+
+48,350
+
+808,305,880
+
+
+
+20,050
+
+443,394
+
+12,720,569,180
+
+312,315
+
+29,559
+
+848,037,945
+
+20,821
+
+ 2,002,612
+
+64,426,526,600
+
+ 1,628,385
+
+
+
+241,370
+
+3,440,937,250
+
+
+
+175,920
+
+2,243,982
+
+67,867,463,850
+
+1,804,305
+
+30,739
+
+929,691,285
+
+24,716
+
+421 As of April 21
+
+Call 
+Trading Value
+1,827,009,000
+
+
+Open Interest
+
+
+10,106,690,150
+
+
+
+11,933,699,150
+
+256,938
+
+43,595,626,000
+
+
+
+214,488,282,083
+
+
+
+258,083,908,083
+
+17,205,593,872
+
+43,595,626,000
+
+
+
+214,488,282,083
+
+
+
+258,083,908,083
+
+17,205,593,872
+
+229,504,398,000
+
+
+
+1,074,114,981,777
+
+
+
+1,303,619,379,777
+
+17,857,799,722
+
+329,830,700
+
+
+
+5,194,350
+
+
+
+335,025,050
+
+27,120
+
+16,080,961,900
+
+
+
+386,930,810
+
+
+
+16,467,892,710
+
+1,097,859,514
+
+16,080,961,900
+
+
+
+386,930,810
+
+
+
+16,467,892,710
+
+1,097,859,514
+
+62,839,441,400
+
+
+
+2,585,777,510
+
+
+
+65,425,218,910
+
+896,235,875
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+556,256
+
+For J-NET J-NET Market
+the   day Total
+
+556,256
+
+Nikkei225 Micro
+
+ 
+
+ Auction Market
+
+
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+2
+
+Month 
+
+2
+
+Daily Average
+
+5
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+11,833,040
+
+11,833,040
+
+15
+
+788,869
+
+11,833,040
+
+
+
+ 
+
+
+
+During Total
+
+the 
+
+Term Daily Average
+
+11,833,040
+
+15
+
+788,869
+
+   Auction Market
+
+64,091,026
+
+ J-NET  J-NET Market
+
+  Year Total
+
+64,091,026
+
+to  Date Daily Average
+
+73
+
+877,959
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+T
+
+Month 
+
+TOPIX
+
+O
+
+Daily Average
+
+P
+
+   Auction Market
+
+I
+
+ J-NET
+
+X
+
+ J-NET Market
+
+43,111
+
+7,637
+
+50,748
+
+846,187
+
+168,158
+
+1,014,345
+
+15
+
+67,623
+
+846,187
+
+168,158
+
+  During Total
+
+1,014,345
+
+the  Term Daily Average
+
+15
+
+67,623
+
+   Auction Market
+
+5,466,776
+
+ J-NET  J-NET Market
+
+1,401,002
+
+  Year Total
+
+6,867,778
+
+to  Date Daily Average
+
+73
+
+94,079
+
+
+Trading Value
+
+ Give Up Quantity
+
+329,595,846,550
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+
+
+
+
+329,595,846,550
+
+14
+
+94,085
+
+6,611,049,678,750
+
+
+
+
+
+
+
+
+
+6,611,049,678,750
+
+938
+
+440,736,645,250
+
+62
+
+6,611,049,678,750
+
+
+
+
+
+
+
+
+
+6,611,049,678,750
+
+938
+
+440,736,645,250
+
+62
+
+35,054,517,639,400
+
+
+
+
+
+
+
+
+
+35,054,517,639,400
+
+5,421
+
+480,198,871,772
+
+74
+
+1,631,975,075,000
+
+
+
+
+
+89
+
+288,665,024,067
+
+
+
+
+
+2,267
+
+1,920,640,099,067
+
+18,081
+
+441,091
+
+2,356
+
+31,543,498,974,000
+
+
+
+
+
+695
+
+6,261,642,897,592
+
+
+
+
+
+29,316
+
+37,805,141,871,592
+
+256,612
+
+30,011
+
+2,520,342,791,439
+
+17,107
+
+15
+
+2,000
+
+31,543,498,974,000
+
+
+
+
+
+695
+
+6,261,642,897,592
+
+
+
+
+
+29,316
+
+37,805,141,871,592
+
+256,612
+
+30,011
+
+2,520,342,791,439
+
+17,107
+
+15
+
+2,000
+
+200,106,288,321,000
+
+
+
+
+
+3,610
+
+51,167,325,510,133
+
+
+
+
+
+224,617
+
+251,273,613,831,133 1,847,749
+
+228,227
+
+3,442,104,299,056
+
+25,311
+
+73
+
+3,126
+
+
+Trading Value
+
+ Give Up Quantity
+
+45,430,000 1,918,748,397 1,964,178,397
+299,521,000 21,381,454,481 21,680,975,481
+1,445,398,365 299,521,000
+21,381,454,481 21,680,975,481
+1,445,398,365 1,218,379,000 186,914,759,945 188,133,138,945 2,577,166,286
+
+  607   8,035 535   8,035 535   113,658 1,556
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+  154,272  
+ 
+ 
+
+0 1,517 1,517
+280 18,303 18,583
+1,238 280
+18,303 18,583
+1,238 1,417 160,192 161,609 2,213
+
+0 1,695,368,897 1,695,368,897
+145,891,000 13,745,383,371 13,891,274,371
+926,084,958 145,891,000 13,745,383,371 13,891,274,371 926,084,958 683,636,000 131,779,864,961 132,463,500,961 1,814,568,506
+
+  105,122  
+ 
+ 
+
+89 750 839 415 11,013 11,428 761 415 11,013 11,428 761 2,193 64,425 66,618 912
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+45,430,000 223,379,500 268,809,500 153,630,000 7,636,071,110 7,789,701,110 519,313,407 153,630,000 7,636,071,110 7,789,701,110 519,313,407 534,743,000 55,134,894,984 55,669,637,984 762,597,780
+
+  49,150  
+ 
+ 
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+12,549
+
+For J-NET J-NET Market
+the   day Total
+
+540 13,089
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+mini-TOPIX
+
+T
+
+Daily Average
+
+O
+
+   Auction Market
+
+P
+
+ J-NET
+
+I
+
+ J-NET Market
+
+292,139
+
+12,151
+
+304,290
+
+15
+
+20,286
+
+292,139
+
+12,151
+
+X
+
+ 
+
+During Total
+
+304,290
+
+the  Term Daily Average
+
+15
+
+20,286
+
+   Auction Market
+
+2,781,335
+
+ J-NET  J-NET Market
+
+115,036
+
+  Year Total
+
+2,896,371
+
+to  Date Daily Average
+
+73
+
+39,676
+
+JPX Prime 150 Index
+
+   Auction Market
+
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+ 
+
+J P
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+0 18
+
+X
+
+During  
+
+
+
+the Total
+
+18
+
+
+
+Month  Daily Average
+
+15
+
+1
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+1
+
+ J-NET
+
+ J-NET Market
+
+18
+
+5
+
+ 
+
+0
+
+During Total
+
+18
+
+
+
+the 
+
+
+
+Term Daily Average
+
+15
+
+1
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+103
+
+  Year Total
+
+103
+
+to  Date Daily Average
+
+73
+
+1
+
+
+Trading Value
+
+ Give Up Quantity
+
+47,511,206,000
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+2,044,950,825
+
+
+
+
+
+49,556,156,825
+
+1,186
+
+41,347
+
+1,088,985,916,750
+
+
+
+
+
+45,293,239,975
+
+
+
+
+
+1,134,279,156,725
+
+17,734
+
+75,618,610,448
+
+1,182
+
+1,088,985,916,750
+
+
+
+
+
+45,293,239,975
+
+
+
+
+
+1,134,279,156,725
+
+17,734
+
+75,618,610,448
+
+1,182
+
+10,202,741,219,150
+
+
+
+
+
+420,214,778,561
+
+
+
+
+
+10,622,955,997,711
+
+135,539
+
+145,519,945,174
+
+1,856
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+34
+
+0
+
+
+
+
+
+27,429,840
+
+
+
+
+
+27,429,840
+
+0
+
+1,828,656
+
+0
+
+0
+
+
+
+
+
+27,429,840
+
+
+
+
+
+27,429,840
+
+0
+
+1,828,656
+
+0
+
+0
+
+
+
+
+
+157,392,120
+
+
+
+
+
+157,392,120
+
+0
+
+2,156,056
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+1,697
+
+For J-NET J-NET Market
+the   day Total
+
+19 1,716
+
+JPX-Nikkei Index 400
+
+J
+
+ 
+
+P X
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+
+
+During  
+
+
+
+the Total
+
+
+
+Month  Daily Average
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+
+
+ 
+
+
+
+During Total
+
+36,626
+
+7,205
+
+43,831
+
+15
+
+2,922
+
+36,626
+
+7,205
+
+43,831
+
+4
+
+the 
+
+0
+
+Term Daily Average
+
+0
+
+   Auction Market
+
+15
+
+2,922
+
+322,624
+
+ J-NET  J-NET Market
+
+97,896
+
+  Year Total
+
+420,520
+
+to  Date Daily Average
+
+73
+
+5,760
+
+   Auction Market
+
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+ 
+
+T O
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+0 0
+
+P
+
+During  
+
+I
+
+the Total
+
+0
+
+X
+
+Month  Daily Average
+
+15
+
+0
+
+TOPIX Core30 Index
+
+ 
+
+C
+
+ Auction Market
+
+0
+
+o
+
+ J-NET
+
+ J-NET Market
+
+0
+
+r
+
+ 
+
+e
+
+During Total
+
+0
+
+3
+
+the 
+
+0
+
+Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+587
+
+  Year Total
+
+587
+
+to  Date Daily Average
+
+73
+
+8
+
+
+Trading Value
+
+ Give Up Quantity
+
+5,830,759,000
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+0
+
+65,359,430
+
+
+
+
+
+0
+
+5,896,118,430
+
+33
+
+42,217
+
+0
+
+123,734,696,000
+
+
+
+
+
+0
+
+23,866,375,375
+
+
+
+
+
+0
+
+147,601,071,375
+
+3,037
+
+0
+
+9,840,071,425
+
+202
+
+15
+
+0
+
+123,734,696,000
+
+
+
+
+
+0
+
+23,866,375,375
+
+
+
+
+
+0
+
+147,601,071,375
+
+3,037
+
+0
+
+9,840,071,425
+
+202
+
+15
+
+0
+
+1,070,991,528,200
+
+
+
+
+
+0
+
+324,427,631,175
+
+
+
+
+
+0
+
+1,395,419,159,375
+
+29,570
+
+0
+
+19,115,330,950
+
+405
+
+73
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+342
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+1,096,554,630
+
+
+
+
+
+1,096,554,630
+
+0
+
+15,021,296
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+
+Trading Volume
+0
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+the   day Total
+
+3,701 3,701
+
+TOPIX Banks Index
+
+ 
+
+ Auction Market
+
+
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+3
+
+11,042
+
+11,045
+
+15
+
+736
+
+3
+
+11,042
+
+
+
+ 
+
+
+
+During Total
+
+the 
+
+Term Daily Average
+
+11,045
+
+15
+
+736
+
+   Auction Market
+
+2,533
+
+ J-NET  J-NET Market
+
+79,259
+
+  Year Total
+
+81,792
+
+to  Date Daily Average
+
+73
+
+1,120
+
+   Auction Market
+
+68
+
+For J-NET J-NET Market
+the   day Total
+
+391 459
+
+   Auction Market
+
+
+
+   During
+
+J-NET J-NET Market
+
+
+
+
+the Total
+
+TSE REIT Index
+
+R
+
+Month  Daily Average
+
+E
+
+ 
+
+I
+
+ Auction Market
+
+T
+
+ J-NET
+
+ 
+
+ J-NET Market
+  During Total
+
+2,113
+
+11,279
+
+13,392
+
+15
+
+892
+
+2,113
+
+11,279
+
+13,392
+
+the  Term Daily Average
+
+15
+
+892
+
+   Auction Market
+
+37,160
+
+ J-NET  J-NET Market
+
+231,085
+
+  Year Total
+
+268,245
+
+to  Date Daily Average
+
+73
+
+3,674
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+0
+
+22,049,929,200
+
+
+
+
+
+0
+
+22,049,929,200
+
+1,091
+
+22,746
+
+0
+
+18,219,000
+
+
+
+
+
+0
+
+66,727,914,831
+
+
+
+
+
+0
+
+66,746,133,831
+
+1,975
+
+0
+
+4,449,742,255
+
+131
+
+7
+
+0
+
+18,219,000
+
+
+
+
+
+0
+
+66,727,914,831
+
+
+
+
+
+0
+
+66,746,133,831
+
+1,975
+
+0
+
+4,449,742,255
+
+131
+
+7
+
+0
+
+14,567,722,000
+
+
+
+
+
+0
+
+457,829,286,242
+
+
+
+
+
+0
+
+472,397,008,242
+
+19,952
+
+0
+
+6,471,191,893
+
+273
+
+7
+
+0
+
+130,051,000
+
+
+
+
+
+0
+
+746,936,032
+
+
+
+
+
+0
+
+876,987,032
+
+300
+
+71,675
+
+0
+
+4,022,435,500
+
+
+
+
+
+0
+
+21,464,584,456
+
+
+
+
+
+0
+
+25,487,019,956
+
+1,271
+
+0
+
+1,699,134,663
+
+84
+
+7
+
+0
+
+4,022,435,500
+
+
+
+
+
+0
+
+21,464,584,456
+
+
+
+
+
+0
+
+25,487,019,956
+
+1,271
+
+0
+
+1,699,134,663
+
+84
+
+7
+
+0
+
+73,049,315,700
+
+
+
+
+
+0
+
+452,467,068,174
+
+
+
+
+
+0
+
+525,516,383,874
+
+7,062
+
+0
+
+7,198,854,573
+
+96
+
+7
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+
+Trading Volume
+0
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+R
+
+During  
+
+N
+
+the Total
+
+0
+
+RN Prime Index
+
+
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+
+
+During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+TSE Growth Market 250 Index
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+
+
+ Auction Market
+
+ 
+
+  
+
+J-NET J-NET Market
+
+ 
+
+During   the Total
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+2
+
+ J-NET Market
+
+2,745
+
+95
+
+2,840
+
+59,641
+
+2,979
+
+62,620
+
+15
+
+4,174
+
+59,641
+
+2,979
+
+5
+
+ 
+
+0
+
+During Total
+
+
+
+the  Term Daily Average
+
+
+
+ 
+
+ Auction Market
+
+62,620
+
+15
+
+4,174
+
+410,653
+
+ J-NET  J-NET Market
+
+98,075
+
+  Year Total
+
+508,728
+
+to  Date Daily Average
+
+73
+
+6,968
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+2,158,586,000
+
+
+
+
+
+75,217,340
+
+
+
+
+
+2,233,803,340
+
+97
+
+33,444
+
+43,921,322,000
+
+
+
+
+
+2,233,169,730
+
+
+
+
+
+46,154,491,730
+
+2,259
+
+3,076,966,115
+
+150
+
+43,921,322,000
+
+
+
+
+
+2,233,169,730
+
+
+
+
+
+46,154,491,730
+
+2,259
+
+3,076,966,115
+
+150
+
+296,457,599,500
+
+
+
+
+
+73,456,623,311
+
+
+
+
+
+369,914,222,811
+
+13,223
+
+5,067,318,120
+
+181
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+169
+
+For J-NET J-NET Market
+the   day Total
+
+12 181
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+1,630 56
+1,686
+
+N
+
+Month  Daily Average
+
+DJIA
+
+Y
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+15
+
+112
+
+1,630
+
+56
+
+  During Total
+
+1,686
+
+the  Term Daily Average
+
+15
+
+112
+
+   Auction Market
+
+29,413
+
+ J-NET  J-NET Market
+
+882
+
+  Year Total
+
+30,295
+
+to  Date Daily Average
+
+73
+
+415
+
+   Auction Market
+
+0
+
+For J-NET J-NET Market
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+During  
+
+
+
+the Total
+
+0
+
+TAIEX
+
+
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET
+
+ J-NET Market
+
+
+
+ 
+
+During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+837,547,900
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+59,551,500
+
+
+
+
+
+897,099,400
+
+12
+
+517
+
+7,833,098,100
+
+
+
+
+
+271,018,050
+
+
+
+
+
+8,104,116,150
+
+56
+
+540,274,410
+
+3
+
+7,833,098,100
+
+
+
+
+
+271,018,050
+
+
+
+
+
+8,104,116,150
+
+56
+
+540,274,410
+
+3
+
+143,024,595,000
+
+
+
+
+
+4,308,984,340
+
+
+
+
+
+147,333,579,340
+
+858
+
+2,018,268,210
+
+11
+
+0
+
+
+
+
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+FTSE China 50 Index
+
+   Auction Market
+
+0
+
+F
+
+  
+
+J-NET J-NET Market
+
+0
+
+T
+
+During  
+
+S
+
+the Total
+
+0
+
+E
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+5
+
+ J-NET
+
+ J-NET Market
+
+0
+
+0
+
+ 
+
+
+
+During Total
+
+0
+
+
+
+the 
+
+Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+Nikkei 225 Dividend Index
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+
+
+Daily Average
+
+15
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+0 48 48
+5 765 770
+51 5
+765
+
+
+
+ 
+
+
+
+During Total
+
+770
+
+the  Term Daily Average
+
+15
+
+51
+
+   Auction Market
+
+45
+
+ J-NET  J-NET Market
+
+980
+
+  Year Total
+
+1,025
+
+to  Date Daily Average
+
+73
+
+14
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+48,576,000
+
+
+
+
+
+48,576,000
+
+0
+
+7,318
+
+4,610,000
+
+
+
+
+
+746,190,760
+
+
+
+
+
+750,800,760
+
+0
+
+50,053,384
+
+0
+
+4,610,000
+
+
+
+
+
+746,190,760
+
+
+
+
+
+750,800,760
+
+0
+
+50,053,384
+
+0
+
+42,955,000
+
+
+
+
+
+943,940,760
+
+
+
+
+
+986,895,760
+
+0
+
+13,519,120
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+10
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+10
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+Nikkei 225 VI
+
+During  
+
+
+
+the Total
+
+
+
+Month  Daily Average
+
+15
+
+
+
+ 
+
+
+
+ Auction Market
+
+V
+
+ J-NET
+
+ J-NET Market
+
+I
+
+ 
+
+During Total
+
+272 0
+272 18
+272 0
+272
+
+the  Term Daily Average
+
+15
+
+18
+
+   Auction Market
+
+1,955
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+1,955
+
+to  Date Daily Average
+
+73
+
+26
+
+   Auction Market
+
+Nikkei 225 Total Return Index Futures
+
+For J-NET
+
+
+
+J-NET Market
+
+0
+
+
+
+the  
+
+
+
+day Total  
+
+0
+
+
+
+ Auction Market
+
+ 
+
+  
+
+J-NET J-NET Market
+
+0
+
+
+
+During   the Total
+
+0
+
+
+
+Month 
+
+
+
+Daily Average
+
+0
+
+0
+
+ 
+
+   Auction Market
+ J-NET
+
+
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+
+
+During Total
+
+0
+
+
+
+the  Term Daily Average
+
+0
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET  J-NET Market
+
+0
+
+
+
+ 
+
+Year Total
+
+0
+
+to  Date Daily Average
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+3,276,500
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+3,276,500
+
+0
+
+90
+
+100,793,500
+
+
+
+
+
+0
+
+
+
+
+
+100,793,500
+
+0
+
+6,719,566
+
+0
+
+100,793,500
+
+
+
+
+
+0
+
+
+
+
+
+100,793,500
+
+0
+
+6,719,566
+
+0
+
+679,843,000
+
+
+
+
+
+0
+
+
+
+
+
+679,843,000
+
+0
+
+9,312,917
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+S&P/JPX ESG
+
+   Auction Market
+
+0
+
+S &
+
+  
+
+J-NET J-NET Market
+
+0
+
+P
+
+During   the Total
+
+0
+
+/
+
+Month 
+
+J
+
+Daily Average
+
+15
+
+0
+
+P
+
+   Auction Market
+
+0
+
+X
+
+ J-NET
+
+ J-NET Market
+
+0
+
+E
+
+ 
+
+S
+
+During Total
+
+0
+
+G
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+   Auction Market
+
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+ 
+
+F
+
+ Auction Market
+
+0
+
+T S
+
+  
+
+J-NET J-NET Market
+
+0
+
+E
+
+During   the Total
+
+0
+
+FTSE JPX Net Zero
+
+Month 
+
+J
+
+Daily Average
+
+15
+
+0
+
+P
+
+   Auction Market
+
+0
+
+X
+
+ J-NET
+
+
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+
+
+During Total
+
+0
+
+
+
+the  Term Daily Average
+
+15
+
+0
+
+
+
+ 
+
+ Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+Nikkei Climate Index
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+
+
+During  
+
+
+
+the Total
+
+0
+
+
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+
+
+During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+USD/JPY
+
+
+
+Daily Average
+
+/
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+3,552
+
+0
+
+3,552
+
+17,458
+
+0
+
+17,458
+
+7
+
+2,494
+
+17,458
+
+0
+
+
+
+ 
+
+During Total
+
+17,458
+
+the  Term Daily Average
+
+7
+
+2,494
+
+   Auction Market
+
+17,458
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+17,458
+
+to  Date Daily Average
+
+7
+
+2,494
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+5,607,500,000
+
+
+
+
+
+0
+
+
+
+
+
+5,607,500,000
+
+0
+
+186
+
+27,605,921,900
+
+
+
+
+
+0
+
+
+
+
+
+27,605,921,900
+
+0
+
+3,943,703,128
+
+0
+
+27,605,921,900
+
+
+
+
+
+0
+
+
+
+
+
+27,605,921,900
+
+0
+
+3,943,703,128
+
+0
+
+27,605,921,900
+
+
+
+
+
+0
+
+
+
+
+
+27,605,921,900
+
+0
+
+3,943,703,128
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+ Index Futures and Index Options
+Futures
+
+ Trading Volume and Value(Settled)
+Options
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+2
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+2
+
+
+
+ 
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+6 0
+
+
+
+During  
+
+
+
+the Total
+
+6
+
+CNH/JPY
+
+
+
+Month 
+
+Daily Average
+
+7
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+6
+
+
+
+ J-NET
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+/
+
+During Total
+
+6
+
+
+
+the 
+
+
+
+Term Daily Average
+
+7
+
+0
+
+
+
+   Auction Market
+
+6
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+6
+
+to  Date Daily Average
+
+7
+
+0
+
+   Auction Market
+
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+4
+
+  
+
+J-NET J-NET Market
+
+0
+
+ 
+
+During   the Total
+Month 
+
+
+
+Daily Average
+
+7
+
+4 0
+
+EUR/JPY
+
+/
+
+   Auction Market
+
+4
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+During Total
+
+4
+
+the  Term Daily Average
+
+7
+
+0
+
+   Auction Market
+
+4
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+4
+
+to  Date Daily Average
+
+7
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+4,656,400
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+4,656,400
+
+0
+
+0
+
+13,991,100
+
+
+
+
+
+0
+
+
+
+
+
+13,991,100
+
+0
+
+1,998,728
+
+0
+
+13,991,100
+
+
+
+
+
+0
+
+
+
+
+
+13,991,100
+
+0
+
+1,998,728
+
+0
+
+13,991,100
+
+
+
+
+
+0
+
+
+
+
+
+13,991,100
+
+0
+
+1,998,728
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+7,453,200
+
+
+
+
+
+0
+
+
+
+
+
+7,453,200
+
+0
+
+1,064,742
+
+0
+
+7,453,200
+
+
+
+
+
+0
+
+
+
+
+
+7,453,200
+
+0
+
+1,064,742
+
+0
+
+7,453,200
+
+
+
+
+
+0
+
+
+
+
+
+7,453,200
+
+0
+
+1,064,742
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+ Trading volume and open interest : unitTrading value :  S&P/JPX ESGS&P/JPX 500 ESG The official long name of "S&P/JPX ESG" is the "S&P/JPX 500 ESG Score Tilted Index Futures".
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+421 As of April 21
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+JGB FuturesInterest Rate Futures and Options on JGB Futures Futures
+
+ Trading Volume and Value(Settled) Options on Futures
+
+Type
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+25,070
+
+Trading Value
+
+Give Up Quantity
+
+3,267,307,620,000
+
+
+
+Open Interest
+
+Trading days
+
+
+
+Trading Volume
+107
+
+For J-NET J-NET Market
+the   day Total
+
+1,941
+
+252,982,510,000
+
+
+
+
+
+40
+
+27,011
+
+3,520,290,130,000
+
+4,489
+
+171,666
+
+147
+
+     During the
+
+ Auction Market
+J-NET J-NET Market
+ Total
+
+477,414
+
+62,134,029,400,000
+
+
+
+
+
+41,834
+
+5,445,132,055,000
+
+
+
+
+
+519,248
+
+67,579,161,455,000
+
+92,235
+
+1,523 2,953 4,476
+
+10-year JGB
+
+
+
+Month  Daily Average
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+15
+
+34,616
+
+477,414
+
+41,834
+
+4,505,277,430,333 62,134,029,400,000 5,445,132,055,000
+
+6,149  
+
+15  
+
+298 1,523 2,953
+
+  During Total
+
+519,248
+
+67,579,161,455,000
+
+92,235
+
+4,476
+
+the  Term Daily Average
+
+15
+
+34,616
+
+4,505,277,430,333
+
+6,149
+
+15
+
+298
+
+   Auction Market
+
+3,234,654
+
+425,750,397,730,000
+
+
+
+
+
+10,392
+
+ J-NET  J-NET Market
+
+500,953
+
+66,032,038,557,700
+
+
+
+
+
+6,939
+
+  Year Total
+
+3,735,607
+
+491,782,436,287,700 1,184,659
+
+17,331
+
+to  Date Daily Average
+
+73
+
+51,172
+
+6,736,745,702,571
+
+16,228
+
+73
+
+237
+
+   Auction Market
+
+255
+
+3,324,285,000
+
+
+
+
+
+For J-NET J-NET Market
+the   day Total
+
+0
+
+0
+
+
+
+
+
+255
+
+3,324,285,000
+
+0
+
+74
+
+mini-10-year JGB(Cash-Settled)
+
+ 
+
+
+
+ Auction Market
+
+ 
+
+  
+
+J-NET J-NET Market
+
+ 
+
+During   the Total
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+2,550
+
+0
+
+2,550
+
+15
+
+170
+
+2,550
+
+0
+
+33,167,090,500
+
+
+
+
+
+0
+
+
+
+
+
+33,167,090,500
+
+0
+
+2,211,139,366
+
+0
+
+33,167,090,500
+
+
+
+
+
+0
+
+
+
+
+
+
+
+ 
+
+
+
+During Total
+
+
+
+the  Term Daily Average
+
+
+
+ 
+
+ Auction Market
+
+2,550
+
+15
+
+170
+
+3,436
+
+33,167,090,500
+
+0
+
+2,211,139,366
+
+0
+
+44,811,760,500
+
+
+
+
+
+ J-NET  J-NET Market
+
+90
+
+1,191,690,000
+
+
+
+
+
+  Year Total
+
+3,526
+
+46,003,450,500
+
+0
+
+to  Date Daily Average
+
+73
+
+48
+
+630,184,253
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+16,800,000
+
+
+
+
+Open Interest
+
+
+5,200,000
+
+
+
+
+
+22,000,000
+
+80
+
+3,832
+
+339,110,000
+
+
+
+
+
+546,655,000
+
+
+
+
+
+885,765,000
+
+2,576
+
+59,051,000
+
+171
+
+339,110,000
+
+
+
+
+
+546,655,000
+
+
+
+
+
+885,765,000
+
+2,576
+
+59,051,000
+
+171
+
+2,114,110,000
+
+
+
+
+
+1,163,310,000
+
+
+
+
+
+3,277,420,000
+
+6,921
+
+44,896,164
+
+94
+
+
+Trading Volume
+77 20 97 886 1,890 2,776 185 886 1,890 2,776 185 5,379 3,326 8,705 119
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+Put
+
+Trading Value
+8,930,000
+
+
+Open Interest
+
+
+
+Trading Volume
+30
+
+2,000,000
+
+
+
+20
+
+10,930,000
+
+2,092
+
+50
+
+155,690,000
+
+
+
+637
+
+328,875,000
+
+
+
+1,063
+
+484,565,000
+
+1,700
+
+32,304,333
+
+113
+
+155,690,000
+
+
+
+637
+
+328,875,000
+
+
+
+1,063
+
+484,565,000
+
+1,700
+
+32,304,333
+
+113
+
+1,045,250,000
+
+
+
+5,013
+
+538,495,000
+
+
+
+3,613
+
+1,583,745,000
+
+8,626
+
+21,695,136
+
+118
+
+Call
+
+Trading Value
+7,870,000
+
+
+Open Interest
+
+
+3,200,000
+
+
+
+11,070,000
+
+1,740
+
+183,420,000
+
+
+
+217,780,000
+
+
+
+401,200,000
+
+26,746,666
+
+183,420,000
+
+
+
+217,780,000
+
+
+
+401,200,000
+
+26,746,666
+
+1,068,860,000
+
+
+
+624,815,000
+
+
+
+1,693,675,000
+
+23,201,027
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+JGB FuturesInterest Rate Futures and Options on JGB Futures Futures
+
+ Trading Volume and Value(Settled) Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+During   the Total
+
+0
+
+5-year JGB
+
+
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET
+
+ J-NET Market
+
+0
+
+  During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+
+
+Daily Average
+
+ 
+
+   Auction Market
+ J-NET
+
+
+
+ J-NET Market
+
+306
+
+0
+
+306
+
+10,537
+
+423
+
+10,960
+
+15
+
+730
+
+10,537
+
+423
+
+mini-20-year JGB
+
+
+
+ 
+
+
+
+During Total
+
+the 
+
+Term Daily Average
+
+10,960
+
+15
+
+730
+
+   Auction Market
+
+65,812
+
+ J-NET  J-NET Market
+
+109,112
+
+  Year Total
+
+174,924
+
+to  Date Daily Average
+
+73
+
+2,396
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+2,947,876,000
+
+
+
+
+
+0
+
+
+
+
+
+2,947,876,000
+
+0
+
+38,151
+
+100,903,072,000
+
+
+
+
+
+4,049,379,000
+
+
+
+
+
+104,952,451,000
+
+573
+
+6,996,830,066
+
+38
+
+100,903,072,000
+
+
+
+
+
+4,049,379,000
+
+
+
+
+
+104,952,451,000
+
+573
+
+6,996,830,066
+
+38
+
+646,612,735,000
+
+
+
+
+
+1,085,041,861,000
+
+
+
+
+
+1,731,654,596,000
+
+4,298
+
+23,721,295,835
+
+58
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put
+
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call
+
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+JGB FuturesInterest Rate Futures and Options on JGB Futures Futures
+
+ Trading Volume and Value(Settled) Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+2,158
+
+For J-NET J-NET Market
+the   day Total
+
+0 2,158
+
+3-Month TONA
+
+ 
+
+ Auction Market
+
+T
+
+  
+
+J-NET J-NET Market
+
+O
+
+During   the Total
+
+N
+
+Month 
+
+A
+
+Daily Average
+
+3
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+27,016
+
+40
+
+27,056
+
+15
+
+1,803
+
+27,016
+
+40
+
+
+
+ 
+
+
+
+During Total
+
+the 
+
+Term Daily Average
+
+27,056
+
+15
+
+1,803
+
+   Auction Market
+
+213,331
+
+ J-NET  J-NET Market
+
+281
+
+  Year Total
+
+213,612
+
+to  Date Daily Average
+
+73
+
+2,926
+
+
+Trading Value
+
+ Give Up Quantity
+
+53,530,285,000
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+53,530,285,000
+
+1,424
+
+48,863
+
+669,686,787,500
+
+
+
+
+
+992,325,000
+
+
+
+
+
+670,679,112,500
+
+6,012
+
+44,711,940,833
+
+400
+
+669,686,787,500
+
+
+
+
+
+992,325,000
+
+
+
+
+
+670,679,112,500
+
+6,012
+
+44,711,940,833
+
+400
+
+5,285,255,904,375
+
+
+
+
+
+6,968,041,250
+
+
+
+
+
+5,292,223,945,625
+
+39,130
+
+72,496,218,433
+
+536
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put
+
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call
+
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+ Securities Options
+
+ Trading Volume and Value(Settled)
+
+
+
+Options
+
+Type
+
+   Auction Market
+
+For J-NET J-NET Market
+the   day Total
+
+     During the
+
+ Auction Market
+J-NET J-NET Market
+ Total
+
+Month  Daily Average
+
+   Auction Market
+
+ J-NET  J-NET Market
+
+  During Total
+
+the  Term Daily Average
+
+   Auction Market
+
+ J-NET  J-NET Market
+
+  Year Total
+
+to  Date Daily Average
+
+
+Trading days
+15 15 73
+
+
+Trading Volume
+6,062 5,009 11,071 218,944 37,764 256,708 17,113 218,944 37,764 256,708 17,113 1,462,573 275,219 1,737,792 23,805
+
+
+Trading Value
+82,304,987 326,786,353 409,091,340 991,038,867 1,901,020,905 2,892,059,772 192,803,984 991,038,867 1,901,020,905 2,892,059,772 192,803,984 5,721,353,520 7,634,032,435 13,355,385,955 182,950,492
+
+ Give Up Quantity
+ 
+0   1,290 86   1,290 86   3,545 48
+
+
+Open Interest
+  361,248  
+ 
+ 
+
+
+Trading Volume
+4,178 2,260 6,438 102,062 20,048 122,110 8,140 102,062 20,048 122,110 8,140 664,178 134,383 798,561 10,939
+
+Put 
+Trading Value
+34,666,377 143,574,000 178,240,377 329,322,298 863,380,146 1,192,702,444
+79,513,496 329,322,298 863,380,146 1,192,702,444
+79,513,496 2,967,425,535 3,764,797,136 6,732,222,671
+92,222,228
+
+421 As of April 21
+
+Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+  190,151  
+ 
+ 
+
+
+Trading Volume
+1,884 2,749 4,633 116,882 17,716 134,598 8,973 116,882 17,716 134,598 8,973 798,395 140,836 939,231 12,866
+
+Call 
+Trading Value
+47,638,610 183,212,353 230,850,963 661,716,569 1,037,640,759 1,699,357,328 113,290,488 661,716,569 1,037,640,759 1,699,357,328 113,290,488 2,753,927,985 3,869,235,299 6,623,163,284
+90,728,264
+
+
+Open Interest
+  171,097  
+ 
+ 
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+7,200
+
+For J-NET J-NET Market
+the   day Total
+
+0 7,200
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+184,817 88
+184,905
+
+Gold Standard
+
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+15
+
+12,327
+
+184,817
+
+88
+
+  During Total
+
+184,905
+
+the  Term Daily Average
+
+15
+
+12,327
+
+   Auction Market
+
+2,034,779
+
+ J-NET  J-NET Market
+
+14,853
+
+  Year Total
+
+2,049,632
+
+to  Date Daily Average
+
+73
+
+28,077
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+ 
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+
+
+Daily Average
+
+
+
+ 
+
+ Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+478
+
+0
+
+478
+
+4,536
+
+0
+
+4,536
+
+7
+
+648
+
+4,536
+
+0
+
+Pocket Gold 100
+
+1
+
+ 
+
+0
+
+During Total
+
+0
+
+the  Term Daily Average
+
+4,536
+
+7
+
+648
+
+   Auction Market
+
+4,536
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+4,536
+
+to  Date Daily Average
+
+7
+
+648
+
+
+Trading Value
+
+ Give Up Quantity
+
+181,954,767,000
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+0
+
+0
+
+
+
+
+
+0
+
+181,954,767,000
+
+19
+
+39,184
+
+0
+
+4,608,003,956,000
+
+
+
+
+
+0
+
+2,170,966,000
+
+
+
+
+
+0
+
+4,610,174,922,000
+
+38
+
+0
+
+307,344,994,800
+
+2
+
+15
+
+0
+
+4,608,003,956,000
+
+
+
+
+
+0
+
+2,170,966,000
+
+
+
+
+
+0
+
+4,610,174,922,000
+
+38
+
+0
+
+307,344,994,800
+
+2
+
+15
+
+0
+
+51,714,052,377,000
+
+
+
+
+
+0
+
+389,391,966,000
+
+
+
+
+
+0
+
+52,103,444,343,000
+
+525
+
+0
+
+713,745,812,917
+
+7
+
+73
+
+0
+
+1,208,712,100
+
+
+
+
+
+0
+
+
+
+
+
+1,208,712,100
+
+0
+
+2,736
+
+11,428,526,200
+
+
+
+
+
+0
+
+
+
+
+
+11,428,526,200
+
+0
+
+1,632,646,600
+
+0
+
+11,428,526,200
+
+
+
+
+
+0
+
+
+
+
+
+11,428,526,200
+
+0
+
+1,632,646,600
+
+0
+
+11,428,526,200
+
+
+
+
+
+0
+
+
+
+
+
+11,428,526,200
+
+0
+
+1,632,646,600
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Open Interest
+
+
+
+Trading Volume
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+Put 
+Trading Value
+
+
+Open Interest
+
+
+Trading Volume
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+0
+
+0
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+Call 
+Trading Value
+
+
+Open Interest
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+0
+
+
+
+0
+
+
+
+0
+
+0
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+7,458
+
+For J-NET J-NET Market
+the   day Total
+
+0 7,458
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+158,258 1
+158,259
+
+Gold Mini
+
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+15
+
+10,550
+
+158,258
+
+1
+
+  During Total
+
+158,259
+
+the  Term Daily Average
+
+15
+
+10,550
+
+   Auction Market
+
+1,168,669
+
+ J-NET  J-NET Market
+
+10
+
+  Year Total
+
+1,168,679
+
+to  Date Daily Average
+
+73
+
+16,009
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+the   day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+473
+
+0
+
+473
+
+6,648
+
+5
+
+6,653
+
+15
+
+443
+
+6,648
+
+5
+
+Gold Rolling-Spot
+
+  During Total
+
+6,653
+
+the  Term Daily Average
+
+15
+
+443
+
+   Auction Market
+
+71,748
+
+ J-NET  J-NET Market
+
+4,288
+
+  Year Total
+
+76,036
+
+to  Date Daily Average
+
+73
+
+1,041
+
+
+Trading Value
+
+ Give Up Quantity
+
+18,899,978,750
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+18,899,978,750
+
+0
+
+11,798
+
+395,743,286,800
+
+
+
+
+
+2,515,550
+
+
+
+
+
+395,745,802,350
+
+0
+
+26,383,053,490
+
+0
+
+395,743,286,800
+
+
+
+
+
+2,515,550
+
+
+
+
+
+395,745,802,350
+
+0
+
+26,383,053,490
+
+0
+
+2,981,137,985,300
+
+
+
+
+
+25,264,250
+
+
+
+
+
+2,981,163,249,550
+
+0
+
+40,837,852,733
+
+0
+
+1,185,606,800
+
+
+
+
+
+0
+
+
+
+
+
+1,185,606,800
+
+0
+
+13,691
+
+16,469,301,600
+
+
+
+
+
+12,270,900
+
+
+
+
+
+16,481,572,500
+
+0
+
+1,098,771,500
+
+0
+
+16,469,301,600
+
+
+
+
+
+12,270,900
+
+
+
+
+
+16,481,572,500
+
+0
+
+1,098,771,500
+
+0
+
+182,251,874,700
+
+
+
+
+
+9,845,945,500
+
+
+
+
+
+192,097,820,200
+
+0
+
+2,631,476,989
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+1
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+1
+
+   Auction Market
+
+30
+
+  
+
+J-NET J-NET Market
+
+38
+
+During   the Total
+
+68
+
+Month  Daily Average
+
+15
+
+4
+
+Silver
+
+
+
+   Auction Market
+
+30
+
+ J-NET  J-NET Market
+
+38
+
+  During Total
+
+68
+
+the  Term Daily Average
+
+15
+
+4
+
+   Auction Market
+
+1,232
+
+ J-NET  J-NET Market
+
+46
+
+  Year Total
+
+1,278
+
+to  Date Daily Average
+
+73
+
+17
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+the   day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+
+
+Month  Daily Average
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+2,248
+
+0
+
+2,248
+
+49,516
+
+56
+
+49,572
+
+15
+
+3,304
+
+49,516
+
+56
+
+Platinum Standard
+
+  During Total
+
+49,572
+
+the  Term Daily Average
+
+15
+
+3,304
+
+   Auction Market
+
+580,188
+
+ J-NET  J-NET Market
+
+227
+
+  Year Total
+
+580,415
+
+to  Date Daily Average
+
+73
+
+7,950
+
+
+Trading Value
+
+ Give Up Quantity
+
+11,490,000
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+11,490,000
+
+0
+
+223
+
+340,896,000
+
+
+
+
+
+388,752,000
+
+
+
+
+
+729,648,000
+
+0
+
+48,643,200
+
+0
+
+340,896,000
+
+
+
+
+
+388,752,000
+
+
+
+
+
+729,648,000
+
+0
+
+48,643,200
+
+0
+
+16,464,900,000
+
+
+
+
+
+456,552,000
+
+
+
+
+
+16,921,452,000
+
+0
+
+231,800,712
+
+0
+
+11,801,785,000
+
+
+
+
+
+0
+
+
+
+
+
+11,801,785,000
+
+0
+
+16,834
+
+253,961,199,500
+
+
+
+
+
+276,530,500
+
+
+
+
+
+254,237,730,000
+
+13
+
+16,949,182,000
+
+0
+
+253,961,199,500
+
+
+
+
+
+276,530,500
+
+
+
+
+
+254,237,730,000
+
+13
+
+16,949,182,000
+
+0
+
+3,189,898,776,500
+
+
+
+
+
+1,229,150,000
+
+
+
+
+
+3,191,127,926,500
+
+535
+
+43,714,081,184
+
+7
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+635
+
+For J-NET J-NET Market
+the   day Total
+
+0 635
+
+Pocket Platinum 100
+
+ 
+
+ Auction Market
+
+ 
+
+  
+
+J-NET J-NET Market
+
+
+
+During   the Total
+
+
+
+Month 
+
+
+
+Daily Average
+
+
+
+   Auction Market
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+12,654
+
+0
+
+12,654
+
+7
+
+1,807
+
+12,654
+
+0
+
+1
+
+ 
+
+0
+
+During Total
+
+0
+
+the  Term Daily Average
+
+12,654
+
+7
+
+1,807
+
+   Auction Market
+
+12,654
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+12,654
+
+to  Date Daily Average
+
+7
+
+1,807
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+the   day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+
+
+Month  Daily Average
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+526
+
+0
+
+526
+
+9,245
+
+0
+
+9,245
+
+15
+
+616
+
+9,245
+
+0
+
+Platinum Mini
+
+  During Total
+
+9,245
+
+the  Term Daily Average
+
+15
+
+616
+
+   Auction Market
+
+99,588
+
+ J-NET  J-NET Market
+
+9
+
+  Year Total
+
+99,597
+
+to  Date Daily Average
+
+73
+
+1,364
+
+
+Trading Value
+
+ Give Up Quantity
+
+677,709,300
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+677,709,300
+
+0
+
+8,330
+
+13,552,587,900
+
+
+
+
+
+0
+
+
+
+
+
+13,552,587,900
+
+0
+
+1,936,083,985
+
+0
+
+13,552,587,900
+
+
+
+
+
+0
+
+
+
+
+
+13,552,587,900
+
+0
+
+1,936,083,985
+
+0
+
+13,552,587,900
+
+
+
+
+
+0
+
+
+
+
+
+13,552,587,900
+
+0
+
+1,936,083,985
+
+0
+
+552,272,900
+
+
+
+
+
+0
+
+
+
+
+
+552,272,900
+
+0
+
+3,291
+
+9,469,974,650
+
+
+
+
+
+0
+
+
+
+
+
+9,469,974,650
+
+0
+
+631,331,643
+
+0
+
+9,469,974,650
+
+
+
+
+
+0
+
+
+
+
+
+9,469,974,650
+
+0
+
+631,331,643
+
+0
+
+108,634,343,250
+
+
+
+
+
+9,911,950
+
+
+
+
+
+108,644,255,200
+
+0
+
+1,488,277,468
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+1,355
+
+For J-NET J-NET Market
+the   day Total
+
+0 1,355
+
+Platinum Rolling-Spot
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+the Total
+
+34,461 0
+34,461
+
+
+
+Month  Daily Average
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+15
+
+2,297
+
+34,461
+
+0
+
+  During Total
+
+34,461
+
+the  Term Daily Average
+
+15
+
+2,297
+
+   Auction Market
+
+181,566
+
+ J-NET  J-NET Market
+
+41
+
+  Year Total
+
+181,607
+
+to  Date Daily Average
+
+73
+
+2,487
+
+   Auction Market
+
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+During   the Total
+
+0
+
+
+
+Month 
+
+
+
+Daily Average
+
+15
+
+0
+
+Palladium
+
+
+
+   Auction Market
+
+0
+
+
+
+ J-NET
+
+
+
+ J-NET Market
+
+0
+
+  During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+1,439,243,500
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+1,439,243,500
+
+0
+
+19,984
+
+35,671,629,000
+
+
+
+
+
+0
+
+
+
+
+
+35,671,629,000
+
+0
+
+2,378,108,600
+
+0
+
+35,671,629,000
+
+
+
+
+
+0
+
+
+
+
+
+35,671,629,000
+
+0
+
+2,378,108,600
+
+0
+
+200,800,921,000
+
+
+
+
+
+53,398,000
+
+
+
+
+
+200,854,319,000
+
+0
+
+2,751,429,027
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+C
+
+During  
+
+M
+
+the Total
+
+0
+
+CME Petroleum
+
+E
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+
+
+During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+
+
+During  
+
+
+
+the Total
+
+RSS3 Rubber
+
+
+
+Month 
+
+Daily Average
+
+R
+
+ 
+
+S
+
+ Auction Market
+
+S
+
+ J-NET
+
+ J-NET Market
+
+3 
+
+  During Total
+
+324
+
+0
+
+324
+
+12,373
+
+668
+
+13,041
+
+15
+
+869
+
+12,373
+
+668
+
+13,041
+
+the  Term Daily Average
+
+15
+
+869
+
+   Auction Market
+
+69,134
+
+ J-NET  J-NET Market
+
+2,384
+
+  Year Total
+
+71,518
+
+to  Date Daily Average
+
+73
+
+979
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+633,522,000
+
+
+
+
+
+0
+
+
+
+
+
+633,522,000
+
+0
+
+5,287
+
+24,001,417,500
+
+
+
+
+
+1,252,945,000
+
+
+
+
+
+25,254,362,500
+
+0
+
+1,683,624,166
+
+0
+
+24,001,417,500
+
+
+
+
+
+1,252,945,000
+
+
+
+
+
+25,254,362,500
+
+0
+
+1,683,624,166
+
+0
+
+125,613,587,000
+
+
+
+
+
+4,318,417,000
+
+
+
+
+
+129,932,004,000
+
+0
+
+1,779,890,465
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+TSR20 Rubber
+
+   Auction Market
+
+0
+
+
+
+  
+
+J-NET J-NET Market
+
+0
+
+ 
+
+During   the Total
+Month 
+
+T
+
+Daily Average
+
+15
+
+0 0
+
+S
+
+   Auction Market
+
+0
+
+R
+
+ J-NET
+
+2
+
+ J-NET Market
+
+0
+
+0
+
+ 
+
+
+
+During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+Shanghai Natural Rubber
+
+ 
+
+ Auction Market
+
+For J-NET J-NET Market
+
+the  
+
+day Total
+
+ 
+
+ Auction Market
+
+  
+
+J-NET J-NET Market
+
+During  
+
+
+
+the Total
+
+
+
+Month  Daily Average
+
+15
+
+
+
+ 
+
+
+
+ Auction Market
+
+
+
+ J-NET
+
+ J-NET Market
+
+
+
+ 
+
+During Total
+
+47 0
+47 827
+0 827
+55 827
+0 827
+
+the  Term Daily Average
+
+15
+
+55
+
+   Auction Market
+
+2,608
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+2,608
+
+to  Date Daily Average
+
+73
+
+35
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+80,342,000
+
+
+
+
+
+0
+
+
+
+
+
+80,342,000
+
+0
+
+162
+
+1,396,888,500
+
+
+
+
+
+0
+
+
+
+
+
+1,396,888,500
+
+0
+
+93,125,900
+
+0
+
+1,396,888,500
+
+
+
+
+
+0
+
+
+
+
+
+1,396,888,500
+
+0
+
+93,125,900
+
+0
+
+4,326,453,500
+
+
+
+
+
+0
+
+
+
+
+
+4,326,453,500
+
+0
+
+59,266,486
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+   Auction Market
+
+Trading days
+
+Trading Volume
+0
+
+For J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+During  
+
+
+
+the Total
+
+0
+
+
+
+Month  Daily Average
+
+15
+
+0
+
+Corn
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET
+
+ J-NET Market
+
+0
+
+
+
+ 
+
+During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+7
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+7
+
+to  Date Daily Average
+
+73
+
+0
+
+   Auction Market
+
+0
+
+For
+
+J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+During   the Total
+
+0
+
+Soybean
+
+
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+
+
+ J-NET  J-NET Market
+
+0
+
+  During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+12,543,000
+
+
+
+
+
+0
+
+
+
+
+
+12,543,000
+
+0
+
+171,821
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+2026 427() Monday, April 27, 2026
+
+
+
+
+Commodity Futures and Options on Commodity Futures
+Futures
+
+ Trading Volume and Value(Settled)
+Options on Futures
+
+Type
+
+
+
+
+
+Trading days Trading Volume
+
+   Auction Market
+
+0
+
+For
+
+J-NET J-NET Market
+
+0
+
+the   day Total
+
+0
+
+Azuki (Red Bean)
+
+   Auction Market
+
+0
+
+  
+
+J-NET J-NET Market
+
+0
+
+During   the Total
+
+0
+
+Month  Daily Average
+
+15
+
+0
+
+
+
+ 
+
+
+
+ Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  During Total
+
+0
+
+the  Term Daily Average
+
+15
+
+0
+
+   Auction Market
+
+0
+
+ J-NET  J-NET Market
+
+0
+
+  Year Total
+
+0
+
+to  Date Daily Average
+
+73
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+0
+
+
+
+
+Open Interest
+
+
+Trading days
+
+
+
+
+Trading Volume
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+0
+
+
+
+
+
+0
+
+
+
+
+
+0
+
+0
+
+0
+
+0
+
+
+Trading Value
+
+ Give Up Quantity
+
+
+Open Interest
+
+
+Trading Volume
+
+Put 
+Trading Value
+
+421 As of April 21
+ Trading volume and open interest : unitTrading value : 
+
+
+Open Interest
+
+
+Trading Volume
+
+Call 
+Trading Value
+
+
+Open Interest
+
+Copyright(c) Osaka Exchange, Inc. All Rights Reserved.
+
+
