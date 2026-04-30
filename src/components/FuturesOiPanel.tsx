@@ -65,7 +65,7 @@ export function FuturesOiPanel({
             <line x1="12" y1="20" x2="12" y2="4"/>
             <line x1="6"  y1="20" x2="6"  y2="14"/>
           </svg>
-          先物需給
+          先物OI
           <span style={s.sub}>証券会社別ネット枚数（日次・JPX）</span>
         </div>
         <div style={s.right}>

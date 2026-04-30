@@ -4,6 +4,7 @@ import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import type { FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+import { FuturesOiPanel } from './FuturesOiPanel'
 
 type Props = {
   theme:    'dark' | 'light'
@@ -12,7 +13,6 @@ type Props = {
   loading:  boolean
   error:    string
   onReload: () => void
-  user:     User | null
 }
 
 // ── ヘルパー ──────────────────────────────────────
@@ -319,7 +319,7 @@ export function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User |
 }
 
 // ── メインコンポーネント ──────────────────────────────
-export function MicroQuantView({ theme, isMobile, data, loading, error, onReload, user }: Props) {
+export function MicroQuantView({ theme, isMobile, data, loading, error, onReload }: Props) {
   const tv = themeVars(theme)
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
 
@@ -488,13 +488,13 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
           </div>
         </div>
 
-        {/* ━━ 右カラム（1/3）: クオンツ分析レポート ━━ */}
+        {/* ━━ 右カラム（1/3）: 先物OI ━━ */}
         <div style={
           isMobile
-            ? { flexShrink: 0, display: 'flex', flexDirection: 'column', height: 360, borderTop: '1px solid var(--border-dim)' }
+            ? { flexShrink: 0, display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-dim)' }
             : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
         }>
-          <QuantMemoPanel theme={theme} user={user} />
+          <FuturesOiPanel data={data} loading={loading} error={error} onReload={onReload} theme={theme} isMobile={isMobile} />
         </div>
 
       </div>

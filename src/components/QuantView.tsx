@@ -18,7 +18,6 @@ import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
 import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import type { NtRatioPoint } from '../utils/ntRatioData'
-import { FuturesOiPanel } from './FuturesOiPanel'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; user: User | null }
 
@@ -790,7 +789,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
-  const [quantTab,    setQuantTab]    = useState<'kankyou' | 'genbutsu' | 'macro' | 'micro'>('kankyou')
+  const [quantTab,    setQuantTab]    = useState<'kankyou' | 'genbutsu' | 'micro'>('kankyou')
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
@@ -939,10 +938,6 @@ export function QuantView({ theme, isMobile, user }: Props) {
             onClick={() => setQuantTab('genbutsu')}
           >現物需給</button>
           <button
-            style={{ ...s.quantTab, ...(quantTab === 'macro' ? s.quantTabActive : {}) }}
-            onClick={() => setQuantTab('macro')}
-          >マクロ需給</button>
-          <button
             style={{ ...s.quantTab, ...(quantTab === 'micro' ? s.quantTabActive : {}) }}
             onClick={() => setQuantTab('micro')}
           >先物需給</button>
@@ -961,15 +956,15 @@ export function QuantView({ theme, isMobile, user }: Props) {
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '400%',
+          width: '300%',
           height: '100%',
-          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-25%)' : quantTab === 'macro' ? 'translateX(-50%)' : 'translateX(-75%)',
+          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-33.333333%)' : 'translateX(-66.666667%)',
           transition: 'transform 0.25s ease',
         }}>
 
         {/* ━━ 環境 ━━ */}
         <div style={{
-          width: '25%',
+          width: '33.333333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1020,7 +1015,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         {/* ━━ 現物需給 ━━ */}
         <div style={{
-          width: '25%',
+          width: '33.333333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1271,33 +1266,9 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         </div>{/* /現物需給 */}
 
-        {/* ━━ マクロ需給 ━━ */}
+        {/* ━━ 先物需給 ━━ */}
         <div style={{
-          width: '25%',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          height: '100%',
-          overflowY: isMobile ? 'auto' : 'hidden',
-        }}>
-
-        {/* 先物OI */}
-        <div style={isMobile ? s.panelMobile : s.panel}>
-          <FuturesOiPanel
-            data={participantsData}
-            loading={participantsLoading}
-            error={participantsError}
-            onReload={() => loadParticipants(true)}
-            theme={theme}
-            isMobile={isMobile}
-          />
-        </div>
-
-        </div>{/* /マクロ需給 */}
-
-        {/* ━━ ミクロ需給 ━━ */}
-        <div style={{
-          width: '25%',
+          width: '33.333333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -1311,7 +1282,6 @@ export function QuantView({ theme, isMobile, user }: Props) {
             loading={participantsLoading}
             error={participantsError}
             onReload={() => loadParticipants(true)}
-            user={user}
           />
         </div>
         </div>{/* /スライダートラック */}
