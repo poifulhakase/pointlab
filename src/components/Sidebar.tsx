@@ -117,6 +117,13 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
         {/* マーケットイベント・スティッキーメモ（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
 
+        {/* ──── アドバイザーボタン ──── */}
+        <div style={styles.advisorRow}>
+          <button style={styles.advisorBtn}>
+            <img src={`${import.meta.env.BASE_URL}1on1.jpg`} alt="アドバイザー" style={styles.advisorImg} />
+          </button>
+        </div>
+
         {/* ──── スティッキーメモ ──── */}
         <div style={styles.memoWrap}>
           <div style={styles.memoHeader}>
@@ -307,6 +314,19 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  advisorRow: {
+    display: 'flex', justifyContent: 'center', padding: '10px 14px 8px',
+  },
+  advisorBtn: {
+    width: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '12px 0', borderRadius: 16,
+    background: 'var(--bg-item)', border: '1px solid var(--border-dim)',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.20)', cursor: 'pointer',
+  },
+  advisorImg: {
+    width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' as const, display: 'block',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.20)',
+  },
   memoWrap: {
     padding: '10px 14px 12px',
     borderBottom: '1px solid var(--border-dim)',

@@ -431,11 +431,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
               </svg>
               メモ
             </div>
-            <div style={styles.advisorRow}>
-              <button style={styles.advisorBtn}>
-                <img src={`${import.meta.env.BASE_URL}1on1.jpg`} alt="アドバイザー" style={styles.advisorImg} />
-              </button>
-            </div>
             <textarea
               value={memo}
               onChange={e => handleMemo(e.target.value)}
@@ -508,19 +503,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11, fontWeight: 700, letterSpacing: '0.07em',
     textTransform: 'uppercase' as const,
     color: 'var(--text-sub)',
-  },
-  advisorRow: {
-    display: 'flex', justifyContent: 'center', padding: '2px 0 6px',
-  },
-  advisorBtn: {
-    width: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: '12px 0', borderRadius: 16,
-    background: 'var(--bg-item)', border: '1px solid var(--border-dim)',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.20)', cursor: 'pointer',
-  },
-  advisorImg: {
-    width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' as const, display: 'block',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.20)',
   },
   countBadge: {
     marginLeft: 4, fontSize: 11, fontWeight: 600,
