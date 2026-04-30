@@ -1028,7 +1028,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
           height: '100%',
-          overflowY: isMobile ? 'auto' : 'hidden',
+          overflow: 'hidden',
         }}>
 
         {/* VIX */}
@@ -1066,7 +1066,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
         <div style={isMobile ? s.dividerH : s.divider} />
 
         {/* クオンツ分析レポート */}
-        <div style={isMobile ? { ...s.panelMobile, minHeight: 340 } : s.panel}>
+        <div style={isMobile ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 340 } : s.panel}>
           <QuantMemoPanel theme={theme} user={user} />
         </div>
 

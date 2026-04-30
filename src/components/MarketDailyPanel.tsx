@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import type { UsdjpyDayData } from '../utils/usdjpyData'
+
+const MOBILE_ROW_LIMIT = 10
 
 type Props = {
   theme: 'dark' | 'light'
@@ -25,7 +28,9 @@ export function MarketDailyPanel({
   theme, isMobile,
   usdjpyData, usdjpyLoading, usdjpyError, onUsdjpyReload,
 }: Props) {
-  const rows = [...usdjpyData].reverse()
+  const [expanded, setExpanded] = useState(false)
+  const allRows = [...usdjpyData].reverse()
+  const rows = isMobile && !expanded ? allRows.slice(0, MOBILE_ROW_LIMIT) : allRows
 
   const th: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 2,
@@ -37,7 +42,7 @@ export function MarketDailyPanel({
   }
   const thL: React.CSSProperties = { ...th, textAlign: 'left' as const, width: isMobile ? 60 : 74, minWidth: isMobile ? 60 : 74 }
   const td: React.CSSProperties = {
-    padding: isMobile ? '5px 5px' : '7px 14px',
+    padding: isMobile ? '5px 5px' : '13px 14px',
     borderBottom: '1px solid var(--border-dim)',
     fontSize: isMobile ? 11 : 12, textAlign: 'right' as const,
     fontVariantNumeric: 'tabular-nums' as const, whiteSpace: 'nowrap' as const,
@@ -107,36 +112,52 @@ export function MarketDailyPanel({
             <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>データなし</span>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={thL}>日付</th>
-                <th style={th}>終値</th>
-                <th style={th}>前日比<br /><span style={{ fontWeight: 400, color: 'var(--text-dim)', fontSize: 9 }}>円</span></th>
-                <th style={th}>前日比<br /><span style={{ fontWeight: 400, color: 'var(--text-dim)', fontSize: 9 }}>%</span></th>
-                <th style={th}>MA5<br /><span style={{ fontWeight: 400, color: 'var(--text-dim)', fontSize: 9 }}>乖離%</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => (
-                <tr key={row.time} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
-                  <td style={tdL}>{row.time}</td>
-                  <td style={{ ...td, color: 'var(--text)', fontWeight: i === 0 ? 700 : 400 }}>
-                    {row.close.toFixed(2)}
-                  </td>
-                  <td style={{ ...td, background: fxBg(row.change, theme), color: fxColor(row.change, theme), fontWeight: row.change != null && row.change !== 0 ? 600 : 400 }}>
-                    {row.change != null ? (row.change > 0 ? '+' : '') + row.change.toFixed(2) : '—'}
-                  </td>
-                  <td style={{ ...td, color: fxColor(row.changePct, theme) }}>
-                    {row.changePct != null ? (row.changePct > 0 ? '+' : '') + row.changePct.toFixed(2) + '%' : '—'}
-                  </td>
-                  <td style={{ ...td, color: fxColor(row.ma5dev, theme) }}>
-                    {row.ma5dev != null ? (row.ma5dev > 0 ? '+' : '') + row.ma5dev.toFixed(2) + '%' : '—'}
-                  </td>
+          <>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={thL}>日付</th>
+                  <th style={th}>終値</th>
+                  <th style={th}>前日比<br /><span style={{ fontWeight: 400, color: 'var(--text-dim)', fontSize: 9 }}>円</span></th>
+                  <th style={th}>前日比<br /><span style={{ fontWeight: 400, color: 'var(--text-dim)', fontSize: 9 }}>%</span></th>
+                  <th style={th}>MA5<br /><span style={{ fontWeight: 400, color: 'var(--text-dim)', fontSize: 9 }}>乖離%</span></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr key={row.time} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
+                    <td style={tdL}>{row.time}</td>
+                    <td style={{ ...td, color: 'var(--text)', fontWeight: i === 0 ? 700 : 400 }}>
+                      {row.close.toFixed(2)}
+                    </td>
+                    <td style={{ ...td, background: fxBg(row.change, theme), color: fxColor(row.change, theme), fontWeight: row.change != null && row.change !== 0 ? 600 : 400 }}>
+                      {row.change != null ? (row.change > 0 ? '+' : '') + row.change.toFixed(2) : '—'}
+                    </td>
+                    <td style={{ ...td, color: fxColor(row.changePct, theme) }}>
+                      {row.changePct != null ? (row.changePct > 0 ? '+' : '') + row.changePct.toFixed(2) + '%' : '—'}
+                    </td>
+                    <td style={{ ...td, color: fxColor(row.ma5dev, theme) }}>
+                      {row.ma5dev != null ? (row.ma5dev > 0 ? '+' : '') + row.ma5dev.toFixed(2) + '%' : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {isMobile && allRows.length > MOBILE_ROW_LIMIT && (
+              <button
+                style={{
+                  display: 'block', width: '100%', padding: '9px 14px',
+                  textAlign: 'center', fontSize: 11, fontWeight: 600,
+                  color: 'var(--text-sub)', background: 'var(--glass-bg)',
+                  border: 'none', borderTop: '1px solid var(--border-dim)',
+                  cursor: 'pointer', letterSpacing: '0.03em',
+                }}
+                onClick={() => setExpanded(v => !v)}
+              >
+                {expanded ? '▲ 折りたたむ' : `▼ 全${allRows.length}日を表示`}
+              </button>
+            )}
+          </>
         )}
       </div>
 

@@ -272,7 +272,7 @@ export function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User |
   }, [quantMemo, user])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '7px 14px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)',
