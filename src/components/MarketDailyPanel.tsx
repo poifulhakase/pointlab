@@ -63,8 +63,8 @@ export function MarketDailyPanel({
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
-          日次指標
-          <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 }}>裁定日次・ドル円</span>
+          需給指標+
+          <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 }}>裁定残高（週次）・ドル円（日次）</span>
         </div>
         <button
           style={{
@@ -137,7 +137,7 @@ export function MarketDailyPanel({
       {/* ── 裁定日次テーブル ── */}
       <div style={{ flexShrink: 0, padding: '6px 14px 4px', borderBottom: '1px solid var(--border-dim)' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          裁定買い残（日次）
+          裁定買い残（週次）
         </div>
       </div>
 
