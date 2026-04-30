@@ -797,10 +797,8 @@ export function QuantView({ theme, isMobile, user }: Props) {
   const [arbError,   setArbError]   = useState('')
   const [arbLoaded,  setArbLoaded]  = useState(false)
 
-  const [arbDailyData,    setArbDailyData]    = useState<ArbitrageDayData[]>([])
-  const [arbDailyLoading, setArbDailyLoading] = useState(false)
-  const [arbDailyError,   setArbDailyError]   = useState('')
-  const [arbDailyLoaded,  setArbDailyLoaded]  = useState(false)
+  const [arbDailyData,   setArbDailyData]   = useState<ArbitrageDayData[]>([])
+  const [arbDailyLoaded, setArbDailyLoaded] = useState(false)
 
   const [usdjpyData,    setUsdjpyData]    = useState<UsdjpyDayData[]>([])
   const [usdjpyLoading, setUsdjpyLoading] = useState(false)
@@ -873,10 +871,8 @@ export function QuantView({ theme, isMobile, user }: Props) {
   }, [])
 
   const loadArbDaily = useCallback(async (force = false) => {
-    setArbDailyLoading(true); setArbDailyError('')
     try { setArbDailyData(await fetchArbitrageDailyData(force)); setArbDailyLoaded(true) }
-    catch (e) { setArbDailyError(e instanceof Error ? e.message : 'データ取得エラー') }
-    finally { setArbDailyLoading(false) }
+    catch { /* AI export 用のみ・エラーはサイレント */ }
   }, [])
 
   const loadUsdjpy = useCallback(async (force = false) => {
@@ -1319,15 +1315,11 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         {isMobile && <div style={s.dividerH} />}
 
-        {/* BR: 日次指標（裁定日次・ドル円） */}
+        {/* BR: USD/JPY 日次 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
           <MarketDailyPanel
             theme={theme}
             isMobile={isMobile}
-            arbDailyData={arbDailyData}
-            arbDailyLoading={arbDailyLoading}
-            arbDailyError={arbDailyError}
-            onArbDailyReload={() => loadArbDaily(true)}
             usdjpyData={usdjpyData}
             usdjpyLoading={usdjpyLoading}
             usdjpyError={usdjpyError}
