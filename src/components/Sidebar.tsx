@@ -315,7 +315,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 
 const styles: Record<string, React.CSSProperties> = {
   advisorRow: {
-    display: 'flex', justifyContent: 'center', padding: '10px 14px 8px',
+    display: 'flex', justifyContent: 'center', padding: '10px 14px 16px',
   },
   advisorBtn: {
     width: '80%', padding: 0, borderRadius: 16, overflow: 'hidden',
