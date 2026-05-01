@@ -1,6 +1,16 @@
 {
-  "updatedAt": "2026-05-01T00:12:53.273Z",
+  "updatedAt": "2026-05-01T10:14:32.461Z",
   "data": [
+    {
+      "date": "2026-04-24",
+      "label": "4月第4週",
+      "lifeIns": -7739,
+      "trustBank": 875,
+      "invTrust": -1570,
+      "securities": -6,
+      "individual": 63,
+      "foreign": 8314
+    },
     {
       "date": "2026-04-17",
       "label": "4月第3週",

@@ -1,6 +1,14 @@
 {
-  "updatedAt": "2026-05-01T00:12:39.593Z",
+  "updatedAt": "2026-05-01T10:14:16.257Z",
   "data": [
+    {
+      "date": "2026/04/24",
+      "label": "4月第4週",
+      "foreigner": 7842.117,
+      "individual": 1617.61,
+      "trustBank": -74.004,
+      "securities": -8385.969
+    },
     {
       "date": "2026/04/17",
       "label": "4月第3週",
@@ -208,14 +216,6 @@
       "individual": -5124.824,
       "trustBank": -786.408,
       "securities": 584.197
-    },
-    {
-      "date": "2025/10/17",
-      "label": "10月第3週",
-      "foreigner": 1532.839,
-      "individual": 3431.165,
-      "trustBank": -109.111,
-      "securities": -3600.517
     }
   ]
 }
