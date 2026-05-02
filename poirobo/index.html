@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
@@ -8,7 +8,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>ぽいらぼ</title>
+    <title>ぽいロボ</title>
     <link rel="stylesheet" href="../poinavi/style.css?v=130" />
     <link rel="stylesheet" href="./style.css?v=1" />
     <script src="./poirobo-swipe-nav.js?v=1"></script>
@@ -40,7 +40,7 @@
     <header class="translate-header">
       <div class="translate-header__icon-btn translate-header__icon-btn--invisible"></div>
       <a href="https://note.com/pointlab/magazines" target="_blank" rel="noopener noreferrer" class="translate-header__title">
-        <img src="./logo.svg" alt="ぽいらぼ" class="translate-header__logo" style="height: 28px; width: auto;" />
+        <img src="./logo.svg" alt="ぽいロボ" class="translate-header__logo" style="height: 28px; width: auto;" />
       </a>
       <button id="settingsButton" class="translate-header__icon-btn translate-header__icon-btn--right" type="button" aria-label="設定">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -64,7 +64,7 @@
           <div class="translate-modal__section">
             <div class="translate-modal__section-title">トップ表示</div>
             <select id="startPageSelect" class="translate-modal__select">
-              <option value="index.html">🤖 ぽいらぼ</option>
+              <option value="index.html">🤖 ぽいロボ</option>
               <option value="lab.html">🔬 研究室</option>
               <option value="shield.html">🛡️ シールド</option>
               <option value="signal.html">📶 シグナル</option>
@@ -88,7 +88,7 @@
     </div>
 
     <main class="poirobo-main">
-      <h1 class="visually-hidden">ぽいらぼ - エントリー判断補助</h1>
+      <h1 class="visually-hidden">ぽいロボ - エントリー判断補助</h1>
       <p class="poirobo-section-title">チェックリスト（銘柄コード入力で判定・将来実装）</p>
       <div id="checklist" class="poirobo-checklist"></div>
       <div id="totalResult" class="poirobo-total poirobo-total--wait">
@@ -125,7 +125,7 @@
         </svg>
         <span class="translate-footer__label">シグナル</span>
       </a>
-      <span class="translate-footer__btn translate-footer__btn--active" aria-label="ぽいらぼ（現在のページ）">
+      <span class="translate-footer__btn translate-footer__btn--active" aria-label="ぽいロボ（現在のページ）">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="10" rx="2"/>
           <circle cx="8.5" cy="16" r="1"/>
@@ -133,7 +133,7 @@
           <path d="M12 11V7"/>
           <path d="M7 7h10"/>
         </svg>
-        <span class="translate-footer__label">ぽいらぼ</span>
+        <span class="translate-footer__label">ぽいロボ</span>
       </span>
     </footer>
 
@@ -177,7 +177,7 @@
         }
       });
 
-      // ぽいらぼ チェックリスト（モック・将来は銘柄入力でAPIから取得）
+      // ぽいロボ チェックリスト（モック・将来は銘柄入力でAPIから取得）
       var checklistItems = [
         { label: "ボリンジャーバンド±2σ接触", point: 2 },
         { label: "出来高増加", point: 2 },

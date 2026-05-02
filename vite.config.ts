@@ -22,8 +22,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.svg'],
       manifest: {
-        name: 'ぽいらぼ',
-        short_name: 'ぽいらぼ',
+        name: 'ぽいロボ',
+        short_name: 'ぽいロボ',
         description: '株式投資家向けマーケットカレンダー',
         theme_color: '#141623',
         background_color: '#141623',

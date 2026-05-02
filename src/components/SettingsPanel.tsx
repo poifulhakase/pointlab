@@ -34,7 +34,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
 
   const testBrowserNotif = () => {
     if (notifStatus !== 'granted') return
-    new Notification('🔔 テスト通知', { body: 'ぽいらぼからのアラートテストです', icon: '/favicon.svg' })
+    new Notification('🔔 テスト通知', { body: 'ぽいロボからのアラートテストです', icon: '/favicon.png' })
   }
 
   return (

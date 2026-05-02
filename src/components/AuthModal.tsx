@@ -72,7 +72,7 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
           <path d="M2 12l10 5 10-5"/>
         </svg>
       </div>
-      <h2 style={styles.title}>ぽいらぼ</h2>
+      <h2 style={styles.title}>ぽいロボ</h2>
       <p style={styles.subtitle}>IDとパスワードを入力してください</p>
 
       <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>

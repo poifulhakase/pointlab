@@ -91,13 +91,13 @@ export function ManualView({ theme, isMobile }: Props) {
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 28, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="ぽいらぼ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
+          <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.title, letterSpacing: '-0.5px' }}>
               説明書
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいらぼ — 使い方ガイド
+              ぽいロボ — 使い方ガイド
             </p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export function ManualView({ theme, isMobile }: Props) {
           background: c.accent, border: `1px solid ${c.accentBorder}`,
           fontSize: 13, color: c.text, lineHeight: 1.7,
         }}>
-          ぽいらぼは、株式投資家向けのカレンダー＋需給分析アプリです。
+          ぽいロボは、株式投資家向けのカレンダー＋需給分析アプリです。
           AI分析プロンプトをワンクリックで生成し、GeminiやClaudeに貼り付けるだけでスイングトレード向けのレポートが得られます。
         </div>
 

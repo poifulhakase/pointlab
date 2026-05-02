@@ -13,7 +13,7 @@ const PRIVACY_SECTIONS: LegalSection[] = [
   {
     id: 'intro', icon: '🧭', title: 'はじめに',
     content: [
-      { type: 'para', text: 'ぽいらぼ（以下「本サービス」）は、株式市場のカレンダー管理・需給分析・マーケット情報閲覧を目的とした個人運営の Web アプリケーションです。本プライバシーポリシーは、本サービスにおける情報の取り扱い方針を定めたものです。' },
+      { type: 'para', text: 'ぽいロボ（以下「本サービス」）は、株式市場のカレンダー管理・需給分析・マーケット情報閲覧を目的とした個人運営の Web アプリケーションです。本プライバシーポリシーは、本サービスにおける情報の取り扱い方針を定めたものです。' },
     ],
   },
   {
@@ -190,13 +190,13 @@ export function LegalModal({ theme, isMobile }: { theme: 'dark' | 'light'; isMob
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="ぽいらぼ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
+          <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
               プライバシー・免責事項
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいらぼ — 最終更新: 2026年4月26日
+              ぽいロボ — 最終更新: 2026年4月26日
             </p>
           </div>
         </div>

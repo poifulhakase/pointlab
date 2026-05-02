@@ -89,7 +89,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
             onClick={() => setView('month')}
             title="カレンダーへ戻る"
           >
-            <img src="/logo.svg" alt="ぽいらぼ" style={{ height: 28, objectFit: 'contain', opacity: isCalendarView(view) ? 1 : 0.85, transition: 'opacity 0.15s' }} />
+            <img src="/logo.svg" alt="ぽいロボ" style={{ height: 28, objectFit: 'contain', opacity: isCalendarView(view) ? 1 : 0.85, transition: 'opacity 0.15s' }} />
           </button>
         )}
       </div>

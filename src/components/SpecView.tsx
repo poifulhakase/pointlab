@@ -9,7 +9,7 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: 'ぽいらぼは、株式投資家向けのWebカレンダーアプリです。配当日・SQ日・マクロイベント・市場休場日を一画面で把握し、メモ・チャート・需給分析を統合した投資支援ツールです。',
+        text: 'ぽいロボは、株式投資家向けのWebカレンダーアプリです。配当日・SQ日・マクロイベント・市場休場日を一画面で把握し、メモ・チャート・需給分析を統合した投資支援ツールです。',
       },
       {
         type: 'table' as const,
@@ -466,13 +466,13 @@ export function SpecView({ theme, isMobile }: Props) {
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="ぽいらぼ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
+          <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいらぼ — 最終更新: 2026-04-30
+              ぽいロボ — 最終更新: 2026-04-30
             </p>
           </div>
         </div>
