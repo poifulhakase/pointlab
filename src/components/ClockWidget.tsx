@@ -109,7 +109,7 @@ function getCountdowns(now: Date): CdItem[] {
   return items.sort((a, b) => a.sec - b.sec).slice(0, 3)
 }
 
-export function ClockWidget({ isMobile = false }: { isMobile?: boolean }) {
+export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolean; onGoToday?: () => void }) {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export function ClockWidget({ isMobile = false }: { isMobile?: boolean }) {
     : { time: 34, status: 13, cdLabel: 12, cdVal: 13, pad: '18px 18px 14px', gap: 6, ptop: 10 }
 
   return (
-    <div style={{ padding: sz.pad, borderBottom: '1px solid var(--border-dim)' }}>
+    <div style={{ padding: sz.pad, borderBottom: '1px solid var(--border-dim)', cursor: onGoToday ? 'pointer' : undefined }} onClick={onGoToday}>
 
       {/* 現在時刻 */}
       <div style={{

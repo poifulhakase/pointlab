@@ -51,7 +51,7 @@ const Toast = memo(({ message }: { message: string }) => (
 // ── 歯車ドロップダウン（メモ化） ──────────────────────────────────────
 interface GearDropdownProps {
   dropRef: React.RefObject<HTMLDivElement | null>
-  pos: { top: number; right: number }
+  pos: { bottom: number; right: number }
   theme: 'dark' | 'light'
   user: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null
   syncStatus: string
@@ -59,20 +59,28 @@ interface GearDropdownProps {
   onOpenNotifications: () => void
   onOpenManual: () => void
   onOpenAccount: () => void
+  onOpenChartSettings: () => void
+  onOpenQuantSettings: () => void
+  onOpenSpec: () => void
+  onOpenLegal: () => void
 }
 const GearDropdown = memo(({
   dropRef, pos, theme, user, syncStatus,
   onToggleTheme, onOpenNotifications, onOpenManual, onOpenAccount,
+  onOpenChartSettings, onOpenQuantSettings, onOpenSpec, onOpenLegal,
 }: GearDropdownProps) => (
-  <div ref={dropRef} style={{ ...styles.gearDropdown, top: pos.top, right: pos.right }} className="glass">
+  <div ref={dropRef} style={{ ...styles.gearDropdown, bottom: pos.bottom, right: pos.right }} className="glass">
     <GearItem icon={<BookIcon />} onClick={onOpenManual}>使い方</GearItem>
-    <Divider />
-    <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>通知設定</GearItem>
-    <Divider />
+    <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>カレンダー通知</GearItem>
+    <GearItem icon={<ChartIcon />} onClick={onOpenChartSettings}>チャートレイアウト</GearItem>
+    <GearItem icon={<RobotIcon />} onClick={onOpenQuantSettings}>ぽいロボエンジン</GearItem>
     <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
       {theme === 'dark' ? 'ライトモード' : 'ダークモード'}
     </GearItem>
-    <Divider />
+    <GearItem icon={<ShieldIcon />} onClick={onOpenLegal}>プライバシー・免責事項</GearItem>
+    {user?.email === 'sushi.ramen.unajyu@gmail.com' && (
+      <GearItem icon={<DocIcon />} onClick={onOpenSpec}>システム仕様</GearItem>
+    )}
     <GearItem
       icon={
         user?.photoURL
@@ -103,8 +111,6 @@ function GearItem({ icon, children, onClick, suffix }: {
     </button>
   )
 }
-const Divider = () => <div style={styles.gearDivider} />
-
 // ── 小さいアイコン群 ───────────────────────────────────────────────────
 function BookIcon() {
   return (
@@ -119,6 +125,39 @@ function UserIcon() {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
+    </svg>
+  )
+}
+function ChartIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+  )
+}
+function RobotIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 8V4H8"/>
+      <rect width="16" height="12" x="4" y="8" rx="2"/>
+      <path d="M2 14h2"/><path d="M20 14h2"/>
+      <path d="M15 13v2"/><path d="M9 13v2"/>
+    </svg>
+  )
+}
+function DocIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+  )
+}
+function ShieldIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
     </svg>
   )
 }
@@ -140,7 +179,7 @@ export default function App() {
 
   // ── 歯車ドロップダウン ───────────────────────────────────────────────
   const [gearOpen, setGearOpen]     = useState(false)
-  const [gearPos, setGearPos]       = useState({ top: 0, right: 0 })
+  const [gearPos, setGearPos]       = useState({ bottom: 0, right: 0 })
   const gearBtnRef  = useRef<HTMLButtonElement>(null)
   const gearDropRef = useRef<HTMLDivElement>(null)
 
@@ -159,7 +198,7 @@ export default function App() {
   const openGear = useCallback(() => {
     if (gearBtnRef.current) {
       const r = gearBtnRef.current.getBoundingClientRect()
-      setGearPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+      setGearPos({ bottom: window.innerHeight - r.top + 6, right: window.innerWidth - r.right })
     }
     setGearOpen(o => !o)
   }, [])
@@ -196,6 +235,12 @@ export default function App() {
     setShowAnomaly(v)
     saveSettings({ ...getSettings(), showAnomaly: v })
   }, [])
+
+  // ── フローティングサブバー用 状態 ─────────────────────────────────────
+  const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
+  const [quantTab,          setQuantTab]          = useState<'kankyou' | 'genbutsu' | 'micro' | 'signal'>('kankyou')
+  const [quantSettingsOpen, setQuantSettingsOpen] = useState(false)
+  const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── ノートパネル ──────────────────────────────────────────────────────
   const [noteDate,       setNoteDate]       = useState<Date | null>(null)
@@ -333,10 +378,14 @@ export default function App() {
 
   // ── 歯車アクション ────────────────────────────────────────────────────
   const gearActions = useMemo(() => ({
-    onToggleTheme:       () => { toggleTheme(); closeGear() },
-    onOpenNotifications: () => { setSettingsOpen(true); closeGear() },
-    onOpenManual:        () => { cal.setView('manual'); closeGear() },
-    onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
+    onToggleTheme:        () => { toggleTheme(); closeGear() },
+    onOpenNotifications:  () => { setSettingsOpen(true); closeGear() },
+    onOpenManual:         () => { cal.setView('manual'); closeGear() },
+    onOpenAccount:        () => { setAuthModalOpen(true); closeGear() },
+    onOpenChartSettings:  () => { cal.setView('chart'); setChartSettingsOpen(true); closeGear() },
+    onOpenQuantSettings:  () => { cal.setView('quant'); setQuantSettingsOpen(true); closeGear() },
+    onOpenSpec:           () => { cal.setView('spec'); closeGear() },
+    onOpenLegal:          () => { cal.setView('legal'); closeGear() },
   }), [toggleTheme, closeGear, cal])
 
   const isCalView = cal.view === 'day' || cal.view === 'week' || cal.view === 'month'
@@ -369,6 +418,7 @@ export default function App() {
             onShowPrivateChange={handleShowPrivateChange}
             showAnomaly={showAnomaly}
             onShowAnomalyChange={handleShowAnomalyChange}
+            onGoToday={() => cal.goToDate(cal.today)}
           />
         )}
 
@@ -391,21 +441,21 @@ export default function App() {
           {/* チャート */}
           {cal.view === 'chart' && (
             <Suspense fallback={<ViewLoader />}>
-              <ChartView theme={theme} isMobile={isMobile} />
+              <ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} />
             </Suspense>
           )}
 
           {/* データ（需給） */}
           {cal.view === 'quant' && (
             <Suspense fallback={<ViewLoader />}>
-              <QuantView theme={theme} isMobile={isMobile} user={user} />
+              <QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} settingsOpen={quantSettingsOpen} onCloseSettings={() => setQuantSettingsOpen(false)} />
             </Suspense>
           )}
 
           {/* ノート */}
           {cal.view === 'note' && (
             <Suspense fallback={<ViewLoader />}>
-              <NoteView theme={theme} isMobile={isMobile} onOpenSpec={() => cal.setView('spec')} onOpenLegal={() => cal.setView('legal')} />
+              <NoteView theme={theme} isMobile={isMobile} />
             </Suspense>
           )}
 
@@ -413,44 +463,11 @@ export default function App() {
           {isCalView && (
             <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               {/* カレンダーサブバー */}
-              <div style={styles.calSubBar} className="glass">
-                <div style={styles.calSubLeft}>
-                  <div style={styles.calTabGroup} className="glass">
-                    <button style={styles.calTodayTab} onClick={cal.goToday}>今日</button>
-                    <span style={styles.calTabDivider} />
-                    {CAL_VIEW_TABS.map(([key, label]) => (
-                      <button
-                        key={key}
-                        style={{ ...styles.calTab, ...(cal.view === key ? styles.calTabActive : {}) }}
-                        onClick={() => cal.setView(key)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={styles.calSubCenter}>
-                  {!isMobile && (
-                    <>
-                      <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-                      <h1 style={styles.subLabel}>{cal.label()}</h1>
-                      <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
-                    </>
-                  )}
-                </div>
-                <div style={styles.calSubRight}>
-                  <button ref={gearBtnRef} style={styles.gearBtn} onClick={openGear} aria-label="設定">
-                    <GearIcon />
-                  </button>
-                </div>
+              <div style={styles.calSubBar}>
+                <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
+                <h1 style={styles.subLabel}>{cal.label()}</h1>
+                <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
               </div>
-              {isMobile && (
-                <div style={styles.mobileCalNav}>
-                  <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-                  <h1 style={{ ...styles.subLabel, fontSize: 15 }}>{cal.label()}</h1>
-                  <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
-                </div>
-              )}
 
               {/* 日/週/月 スワイプカルーセル */}
               <div
@@ -543,6 +560,47 @@ export default function App() {
         isMobile={isMobile}
       />
 
+      {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
+      {(isCalView || cal.view === 'chart' || cal.view === 'quant') && (
+        <div style={styles.floatSubBarBase}>
+          <div style={styles.floatSubBar} className="glass">
+          <div style={styles.floatPill} className="glass">
+            {isCalView && (
+              <>
+                {CAL_VIEW_TABS.map(([key, label]) => (
+                  <button
+                    key={key}
+                    style={{ ...styles.floatTab, ...(cal.view === key ? styles.floatTabActive : {}) }}
+                    onClick={() => cal.setView(key)}
+                  >{label}</button>
+                ))}
+                <span style={styles.floatDivider} />
+                <button ref={gearBtnRef} style={styles.floatIconBtn} onClick={openGear} aria-label="設定">
+                  <GearIcon />
+                </button>
+              </>
+            )}
+            {cal.view === 'chart' && CHART_SYMBOLS.map(s => (
+              <button
+                key={s.symbol}
+                style={{ ...styles.floatTab, ...(chartSymbol === s.symbol ? styles.floatTabActive : {}) }}
+                onClick={() => setChartSymbol(s.symbol)}
+              >{s.label}</button>
+            ))}
+            {cal.view === 'quant' && (
+              (['kankyou', 'genbutsu', 'micro', 'signal'] as const).map((tab, i) => (
+                <button
+                  key={tab}
+                  style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
+                  onClick={() => setQuantTab(tab)}
+                >{['環境', '現物需給', '先物需給', 'シグナル'][i]}</button>
+              ))
+            )}
+          </div>
+          </div>
+        </div>
+      )}
+
       <CalendarHeader
         view={cal.view} setView={cal.setView}
         isMobile={isMobile} isTablet={isTablet}
@@ -559,6 +617,12 @@ export default function App() {
 // ── 定数 ──────────────────────────────────────────────────────────────────
 const CAL_VIEW_TABS = [['day','日'],['week','週'],['month','月']] as const
 
+const CHART_SYMBOLS = [
+  { label: '日経225', symbol: 'INDEX:NKY'  },
+  { label: 'ドル円',  symbol: 'FX:USDJPY' },
+  { label: '米国債',  symbol: 'NASDAQ:TLT' },
+]
+
 const spinnerStyle: React.CSSProperties = {
   width: 32, height: 32, borderRadius: '50%',
   border: '3px solid var(--glass-border)',
@@ -574,7 +638,7 @@ const styles: Record<string, React.CSSProperties> = {
   main:        { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
   mobileOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', zIndex: 199 },
 
-  calSubBar:    { display: 'flex', alignItems: 'center', padding: '6px 12px', flexShrink: 0, borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none', userSelect: 'none' },
+  calSubBar:    { display: 'flex', alignItems: 'center', padding: '6px 12px', flexShrink: 0, background: 'transparent', border: 'none', userSelect: 'none' },
   calSubLeft:   { flex: 1, display: 'flex', alignItems: 'center', gap: 6 },
   calSubCenter: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 },
   calSubRight:  { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' },
@@ -594,5 +658,13 @@ const styles: Record<string, React.CSSProperties> = {
   gearItemIcon: { display: 'flex', alignItems: 'center', color: 'var(--text-sub)', flexShrink: 0 },
   gearDivider:  { height: 1, background: 'var(--border-dim)', margin: '0 12px' },
 
-  toast: { position: 'fixed', bottom: 88, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
+  toast: { position: 'fixed', bottom: 130, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
+
+  floatSubBarBase: { position: 'fixed', bottom: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', right: 12, zIndex: 400, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform' },
+  floatSubBar:  { borderRadius: 14, padding: 4 },
+  floatPill:    { display: 'flex', alignItems: 'center', borderRadius: 10, padding: 2, gap: 2 },
+  floatDivider:    { width: 1, height: 16, background: 'var(--border-dim)', alignSelf: 'center', flexShrink: 0, margin: '0 1px' },
+  floatTab:        { padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s' },
+  floatTabActive:  { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' },
+  floatIconBtn:    { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 7, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s', flexShrink: 0 },
 }

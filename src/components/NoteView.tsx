@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean; onOpenSpec: () => void; onOpenLegal: () => void }
+type Props = { theme: 'dark' | 'light'; isMobile: boolean }
 
 type Article = {
   genre: string
@@ -30,6 +30,9 @@ const ARTICLES: Article[] = [
   { genre: 'インジケーター', title: '実践統合編',       url: 'https://note.com/pointlab/n/nb4793929edcd', thumb: BASE + 'Stock_Trade_Lab_Multiple_Index.png' },
   // ── イベントドリブン ──────────────────────────────────────────
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png' },
+  { genre: 'イベントドリブン', title: '権利落ち日',    url: null, thumb: null },
+  { genre: 'イベントドリブン', title: '権利確定日前',  url: null, thumb: null },
+  { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: null },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.jpg' },
 ]
@@ -84,46 +87,9 @@ function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolea
   )
 }
 
-export function NoteView({ isMobile, onOpenSpec, onOpenLegal }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false)
-
+export function NoteView({ isMobile }: Props) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* ヘッダー */}
-      <div style={s.header} className="glass">
-        <div style={{ flex: 1 }} />
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <button style={s.gearBtn} onClick={() => setMenuOpen(o => !o)} aria-label="設定">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </button>
-          {menuOpen && (
-            <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setMenuOpen(false)} />
-              <div style={s.menuDropdown}>
-                <button style={s.menuItem} onClick={() => { setMenuOpen(false); onOpenSpec() }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
-                  システム仕様
-                </button>
-                <div style={{ height: 1, background: 'var(--glass-border)', margin: '2px 0' }} />
-                <button style={s.menuItem} onClick={() => { setMenuOpen(false); onOpenLegal() }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                  プライバシー・免責事項
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
 
       {/* コンテンツ */}
       <div style={s.wrap}>
@@ -151,7 +117,7 @@ const s: Record<string, React.CSSProperties> = {
   header: {
     display: 'flex', alignItems: 'center',
     padding: '7px 12px', minHeight: 46, flexShrink: 0,
-    borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none',
+    background: 'transparent', border: 'none',
     userSelect: 'none',
   },
   gearBtn: {

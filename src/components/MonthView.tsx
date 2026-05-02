@@ -34,7 +34,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
   const bandColor = band ? (isLight ? '#92400e' : band.color) : 'transparent'
-  const bandBg    = band ? (isLight ? 'rgba(180,83,9,0.07)' : band.bg) : 'transparent'
+  const bandBg    = band ? (isLight ? 'rgba(180,83,9,0.18)' : band.bg) : 'transparent'
 
   return (
     <div style={styles.wrap}>
@@ -75,8 +75,8 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 ...styles.cell,
                 padding: isMobile ? '3px' : '6px',
                 opacity: dim ? 0.35 : 1,
-                background: td && !dim ? 'rgba(96,165,250,0.18)' : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
-                borderTop: td && !dim ? '3px solid rgba(96,165,250,0.85)' : undefined,
+                background: td && !dim ? 'rgba(255,210,80,0.18)' : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
+                borderTop: td && !dim ? '3px solid rgba(255,200,60,0.85)' : undefined,
                 cursor: 'pointer',
                 position: 'relative',
                 isolation: 'isolate',
@@ -90,7 +90,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                     ...styles.dateNum,
                     width: isMobile ? 22 : 26, height: isMobile ? 22 : 26,
                     fontSize: isMobile ? 11 : 13,
-                    color: td ? 'rgba(96,165,250,0.95)' : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
+                    color: td ? 'rgba(255,200,60,0.95)' : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
                     background: 'transparent',
                     boxShadow: 'none',
                     fontWeight: td ? 700 : undefined,

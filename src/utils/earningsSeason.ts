@@ -12,7 +12,7 @@ export type MonthBand = {
 
 // アンバー統一色（決算帯・アノマリー帯と同系）
 const AMBER = '#fbbf24'
-const AMBER_BG = 'rgba(251,191,36,0.07)'
+const AMBER_BG = 'rgba(251,191,36,0.22)'
 
 export const MONTH_BANDS: MonthBand[] = [
   {

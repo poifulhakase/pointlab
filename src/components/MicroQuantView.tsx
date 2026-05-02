@@ -324,7 +324,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
 
   return (
-    <div style={{ ...tv, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ ...tv, flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}>
       <style>{`
         @keyframes tankShimmer {
           0%, 100% { opacity: 0.3; transform: translateX(-40%); }
@@ -354,7 +354,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
 
       {/* ── ボディ ── */}
       <div style={{
-        flex: 1, overflow: isMobile ? 'auto' : 'hidden', minHeight: 0,
+        flex: 1, overflow: isMobile ? 'visible' : 'hidden', minHeight: 0,
         display: 'flex', flexDirection: isMobile ? 'column' : 'row',
       }}>
 

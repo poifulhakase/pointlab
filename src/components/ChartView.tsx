@@ -4,14 +4,11 @@ import { themeVars } from '../utils/themeVars'
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
+  symbol: string
+  onSymbolChange: (s: string) => void
+  settingsOpen: boolean
+  onCloseSettings: () => void
 }
-
-// ── 銘柄リスト（ここに追加していくだけ） ──────────────────
-const SYMBOLS: { label: string; symbol: string }[] = [
-  { label: '日経225', symbol: 'INDEX:NKY'   },
-  { label: 'ドル円',  symbol: 'FX:USDJPY'  },
-  { label: '米国債',   symbol: 'NASDAQ:TLT'  },
-]
 
 // ── 単一チャートパネル ─────────────────────────────────────
 function ChartPanel({ symbol, interval, theme, isMobile, height }: { symbol: string; interval: string; theme: 'dark' | 'light'; isMobile?: boolean; height: number }) {
@@ -259,15 +256,12 @@ const ms: Record<string, React.CSSProperties> = {
 }
 
 // ── メインビュー ───────────────────────────────────────────
-export function ChartView({ theme, isMobile }: Props) {
+export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolChange, settingsOpen, onCloseSettings }: Props) {
   const [split, setSplit] = useState<1 | 2>(() => {
     const saved = localStorage.getItem('poical-chart-split')
     return saved === '2' ? 2 : 1
   })
   const effectiveSplit = isMobile ? 1 : split
-  const [symbol, setSymbol] = useState('INDEX:NKY')
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [snapStatus, setSnapStatus]     = useState<'' | 'copied' | 'error'>('')
   const [panelsHeight, setPanelsHeight] = useState(0)
   const panelsRef = useRef<HTMLDivElement>(null)
 
@@ -282,78 +276,8 @@ export function ChartView({ theme, isMobile }: Props) {
     return () => ro.disconnect()
   }, [])
 
-  const handleScreenshot = async () => {
-    setSettingsOpen(false)
-    await new Promise(r => setTimeout(r, 350)) // モーダルが閉じるのを待つ
-    try {
-      const stream = await (navigator.mediaDevices as any).getDisplayMedia({
-        video: true,
-        preferCurrentTab: true,
-      })
-      const video = document.createElement('video')
-      video.srcObject = stream
-      await new Promise<void>(r => { video.onloadedmetadata = () => r() })
-      video.play()
-      await new Promise(r => setTimeout(r, 200))
-      const canvas = document.createElement('canvas')
-      canvas.width  = video.videoWidth
-      canvas.height = video.videoHeight
-      canvas.getContext('2d')!.drawImage(video, 0, 0)
-      stream.getTracks().forEach((t: MediaStreamTrack) => t.stop())
-      // クリップボードにコピー
-      const blob = await new Promise<Blob>((res, rej) =>
-        canvas.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'))
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-      setSnapStatus('copied')
-    } catch {
-      setSnapStatus('error')
-    }
-    setTimeout(() => setSnapStatus(''), 4000)
-  }
-
   return (
     <div style={{ ...styles.wrap, ...themeVars(theme) }}>
-      <div style={styles.topBar} className="glass">
-
-        {/* 銘柄タブ（1つ選択で両チャートに反映） */}
-        <div style={styles.tabGroup} className="glass">
-          {SYMBOLS.map(s => (
-            <button
-              key={s.symbol}
-              style={{ ...styles.tab, ...(symbol === s.symbol ? styles.tabActive : {}) }}
-              onClick={() => setSymbol(s.symbol)}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 右端: スナップショット + 設定 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-          {/* スナップショットステータス */}
-          {snapStatus === 'copied' && <span style={styles.snapMsg}>✓ コピーしました</span>}
-          {snapStatus === 'error'  && <span style={{ ...styles.snapMsg, color: 'rgba(255,100,80,0.9)' }}>キャンセルされました</span>}
-
-          {/* スナップショットボタン（スマホでは非表示） */}
-          {!isMobile && (
-            <button style={styles.settingsBtn} onClick={handleScreenshot} aria-label="スナップショット">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </button>
-          )}
-
-          {/* 設定ボタン */}
-          <button style={styles.settingsBtn} onClick={() => setSettingsOpen(true)} aria-label="チャート設定">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
       <div ref={panelsRef} style={{ ...styles.panels, ...(isMobile ? { padding: '0' } : {}) }}>
         <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} height={panelsHeight} />
         {effectiveSplit === 2 && (
@@ -366,7 +290,7 @@ export function ChartView({ theme, isMobile }: Props) {
 
       <ChartSettingsModal
         isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={onCloseSettings}
         split={split}
         isMobile={isMobile}
         onApply={(s) => { setSplit(s); localStorage.setItem('poical-chart-split', String(s)) }}
@@ -376,12 +300,6 @@ export function ChartView({ theme, isMobile }: Props) {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  wrap:        { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 },
-  topBar:      { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, padding: '6px 12px', borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none', userSelect: 'none' },
-  tabGroup:    { display: 'flex', borderRadius: 10, overflow: 'hidden', padding: 3, gap: 2 },
-  tab:         { padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s' },
-  tabActive:   { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' },
-  settingsBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: 'var(--text-sub)', cursor: 'pointer', flexShrink: 0 },
-  snapMsg:     { fontSize: 11, fontWeight: 600, color: 'rgba(96,200,140,0.9)', whiteSpace: 'nowrap' as const },
-  panels:      { flex: 1, display: 'flex', minHeight: 0, padding: '10px 14px 14px', gap: 8 },
+  wrap:    { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 },
+  panels:  { flex: 1, display: 'flex', minHeight: 0, padding: '10px 14px 14px', gap: 8 },
 }

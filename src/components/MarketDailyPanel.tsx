@@ -69,27 +69,6 @@ export function MarketDailyPanel({
           USD / JPY
           <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 }}>日次（平日）</span>
         </div>
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '4px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600,
-            color: 'var(--text-sub)', background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)', cursor: 'pointer',
-          }}
-          onClick={onUsdjpyReload}
-          disabled={usdjpyLoading}
-          title="再取得"
-        >
-          <svg
-            width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
-            style={{ transform: usdjpyLoading ? 'rotate(360deg)' : undefined, transition: usdjpyLoading ? 'transform 1s linear infinite' : undefined }}
-          >
-            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          {usdjpyLoading ? '取得中…' : '更新'}
-        </button>
       </div>
 
       {/* ── テーブル ── */}

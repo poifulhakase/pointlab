@@ -7,7 +7,7 @@ import { type ShortSellWeekData } from '../utils/shortSellData'
 import { type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { themeVars } from '../utils/themeVars'
 
-export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'short_sell' | 'advance_decline'
+export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'arbitrage_short' | 'short_sell' | 'advance_decline'
 
 type Props = {
   type: DeltaModalType
@@ -22,6 +22,7 @@ type Props = {
 const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBad: boolean; accent: string }> = {
   credit_long:     { title: '信用買い残 Δ',    unit: '%',   positiveIsBad: true,  accent: '#f87171' },
   arbitrage_long:  { title: '裁定買い残 Δ',    unit: '億円', positiveIsBad: false, accent: '#60a5fa' },
+  arbitrage_short: { title: '裁定売り残 Δ',    unit: '億円', positiveIsBad: true,  accent: '#fb923c' },
   short_sell:      { title: '空売り比率 Δ',    unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
   advance_decline: { title: '騰落レシオ Δ',    unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
 }
@@ -29,6 +30,7 @@ const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBa
 const SUB_LABEL: Record<DeltaModalType, string> = {
   credit_long:     '前週比 %',
   arbitrage_long:  '週次変化 億円',
+  arbitrage_short: '週次変化 億円',
   short_sell:      '週次変化 pp',
   advance_decline: '変化率 pp',
 }
@@ -56,6 +58,13 @@ function computeDeltas(
     return arr.slice(1).map((row, i) => {
       const prev = arr[i]
       return { time: toIso(row.date), value: Math.round((row.longBal - prev.longBal) / 100) }
+    })
+  }
+  if (type === 'arbitrage_short') {
+    const arr = [...arbData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
+    return arr.slice(1).map((row, i) => {
+      const prev = arr[i]
+      return { time: toIso(row.date), value: Math.round((row.shortBal - prev.shortBal) / 100) }
     })
   }
   if (type === 'short_sell') {

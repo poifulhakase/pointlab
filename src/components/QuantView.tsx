@@ -22,7 +22,16 @@ import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import { MarketDailyPanel } from './MarketDailyPanel'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean; user: User | null }
+type QuantTabKey = 'kankyou' | 'genbutsu' | 'micro' | 'signal'
+type Props = {
+  theme: 'dark' | 'light'
+  isMobile: boolean
+  user: User | null
+  quantTab: QuantTabKey
+  onQuantTabChange: (t: QuantTabKey) => void
+  settingsOpen: boolean
+  onCloseSettings: () => void
+}
 
 // ── 投資主体別 列定義 ──────────────────────────────
 const INVESTOR_COLS: { key: keyof InvestorWeekData; label: string; sub: string }[] = [
@@ -166,6 +175,7 @@ type CombinedRow = {
   adRatio: number | null
   arbLongBal: number | null
   arbShortBal: number | null
+  arbShortBalDelta: number | null
 }
 
 function buildCombinedRows(
@@ -177,19 +187,31 @@ function buildCombinedRows(
   const adMap  = new Map(adData.map(d => [d.date, d]))
   const arbMap = new Map(arbData.map(d => [d.date, d]))
   const allDates = new Set([...ssMap.keys(), ...adMap.keys(), ...arbMap.keys()])
+  const arbSorted = [...arbData].sort((a, b) => b.date.localeCompare(a.date))
+  const arbIdxMap = new Map(arbSorted.map((d, i) => [d.date, i]))
   return Array.from(allDates)
     .sort((a, b) => b.localeCompare(a))
     .map(date => {
       const ss  = ssMap.get(date)
       const ad  = adMap.get(date)
       const arb = arbMap.get(date)
+      const arbShortBal = arb ? (arb.shortBal > 0 ? arb.shortBal : null) : null
+      let arbShortBalDelta: number | null = null
+      if (arb && arb.shortBal > 0) {
+        const idx = arbIdxMap.get(date)
+        if (idx !== undefined && idx + 1 < arbSorted.length) {
+          const prev = arbSorted[idx + 1]
+          if (prev.shortBal > 0) arbShortBalDelta = arb.shortBal - prev.shortBal
+        }
+      }
       return {
         date,
         label: (ss ?? ad ?? arb)?.label ?? '',
         shortSell:   ss  ? ss.ratio    : null,
         adRatio:     ad  ? ad.ratio25  : null,
         arbLongBal:  arb ? arb.longBal  : null,
-        arbShortBal: arb ? (arb.shortBal > 0 ? arb.shortBal : null) : null,
+        arbShortBal,
+        arbShortBalDelta,
       }
     })
 }
@@ -599,11 +621,13 @@ function QuantSettingsModal({
       }} onClick={e => e.stopPropagation()}>
         <div style={ms.header}>
           <div style={ms.headerTitle}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 8V4H8"/>
+              <rect width="16" height="12" x="4" y="8" rx="2"/>
+              <path d="M2 14h2"/><path d="M20 14h2"/>
+              <path d="M15 13v2"/><path d="M9 13v2"/>
             </svg>
-            需給 設定
+            ぽいロボエンジン
           </div>
           <button style={ms.closeBtn} onClick={onClose}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -615,11 +639,6 @@ function QuantSettingsModal({
           <div style={ms.section}>
             <div style={ms.sectionTitle}>クオンツ分析用プロンプト</div>
             <p style={ms.desc}>GeminiまたはClaudeにそのまま貼り付けて使用できます。</p>
-            <div style={ms.promptPreview}>
-              <span style={{ color: 'var(--text-sub)' }}>需給解析エンジン（スイング特化）</span>
-              <br />
-              <span style={{ color: 'var(--text-dim)' }}>確信度70%超=勝負圏 / 裁定3.5兆円臨界 / SQアンワインド判定…</span>
-            </div>
             <button style={{ ...ms.actionBtn, ...ms.actionBtnAccent }} onClick={onPromptCopy}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -717,14 +736,12 @@ const ms: Record<string, React.CSSProperties> = {
 
 // ── パネルヘッダー ─────────────────────────────────
 function PanelHeader({
-  icon, title, sub, dateRange, loading, onReload,
+  icon, title, sub, dateRange,
 }: {
   icon: React.ReactNode
   title: string
   sub: string
   dateRange?: string
-  loading: boolean
-  onReload: () => void
 }) {
   return (
     <div style={s.panelHead}>
@@ -735,17 +752,6 @@ function PanelHeader({
       </div>
       <div style={s.panelRight}>
         {dateRange && <span style={s.dataRange}>{dateRange}</span>}
-        <button style={s.reloadBtn} onClick={onReload} disabled={loading} title="再取得">
-          <svg
-            width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
-            style={{ transform: loading ? 'rotate(360deg)' : undefined, transition: loading ? 'transform 1s linear infinite' : undefined }}
-          >
-            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          {loading ? '取得中…' : '更新'}
-        </button>
       </div>
     </div>
   )
@@ -772,7 +778,7 @@ function PanelCenter({ loading, error, onRetry }: { loading: boolean; error: str
 }
 
 // ── メインコンポーネント ───────────────────────────
-export function QuantView({ theme, isMobile, user }: Props) {
+export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onCloseSettings }: Props) {
   const [invData,    setInvData]    = useState<InvestorWeekData[]>([])
   const [invLoading, setInvLoading] = useState(false)
   const [invError,   setInvError]   = useState('')
@@ -826,9 +832,9 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
 
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  // settingsOpen / onCloseSettings は props から受け取る（App.tsx でリフト済み）
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
-  const [quantTab,    setQuantTab]    = useState<'kankyou' | 'genbutsu' | 'micro'>('kankyou')
+  // quantTab / setQuantTab は props から受け取る（App.tsx でリフト済み）
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
@@ -985,45 +991,20 @@ export function QuantView({ theme, isMobile, user }: Props) {
           onClose={() => setDeltaModal(null)}
         />
       )}
-      {/* ── 上部タイトルバー ── */}
-      <div style={s.topBar} className="glass">
-        <div style={s.quantTabGroup} className="glass">
-          <button
-            style={{ ...s.quantTab, ...(quantTab === 'kankyou' ? s.quantTabActive : {}) }}
-            onClick={() => setQuantTab('kankyou')}
-          >環境</button>
-          <button
-            style={{ ...s.quantTab, ...(quantTab === 'genbutsu' ? s.quantTabActive : {}) }}
-            onClick={() => setQuantTab('genbutsu')}
-          >現物需給</button>
-          <button
-            style={{ ...s.quantTab, ...(quantTab === 'micro' ? s.quantTabActive : {}) }}
-            onClick={() => setQuantTab('micro')}
-          >先物需給</button>
-        </div>
-        <div style={{ flex: 1 }} />
-        <button style={s.gearBtn} onClick={() => setSettingsOpen(true)} aria-label="設定">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
-      </div>
-
       {/* ── ボディ ── */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '300%',
+          width: '400%',
           height: '100%',
-          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-33.333333%)' : 'translateX(-66.666667%)',
+          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-25%)' : quantTab === 'micro' ? 'translateX(-50%)' : 'translateX(-75%)',
           transition: 'transform 0.25s ease',
         }}>
 
         {/* ━━ 環境 ━━ */}
         <div style={{
-          width: '33.333333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1074,11 +1055,11 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         {/* ━━ 現物需給 ━━ */}
         <div style={isMobile ? {
-          width: '33.333333%', flexShrink: 0,
+          width: '25%', flexShrink: 0,
           display: 'flex', flexDirection: 'column',
           height: '100%', overflowY: 'auto',
         } : {
-          width: '33.333333%', flexShrink: 0,
+          width: '25%', flexShrink: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gridTemplateRows: '1fr 1fr',
@@ -1092,8 +1073,6 @@ export function QuantView({ theme, isMobile, user }: Props) {
             title="信用倍率"
             sub="2市場計（週次）"
             dateRange={marData.length > 0 ? `${marData[marData.length - 1]?.date} 〜 ${marData[0]?.date}` : undefined}
-            loading={marLoading}
-            onReload={() => loadMargin(true)}
           />
           <div style={mTblWrap}>
             {(marLoading && marData.length === 0) || marError
@@ -1173,8 +1152,6 @@ export function QuantView({ theme, isMobile, user }: Props) {
             title="投資主体別売買動向"
             sub="差引金額（百万円）"
             dateRange={invData.length > 0 ? `${invData[invData.length - 1]?.date} 〜 ${invData[0]?.date}` : undefined}
-            loading={invLoading}
-            onReload={() => loadInvestor(true)}
           />
           <div style={mTblWrap}>
             {(invLoading && invData.length === 0) || invError
@@ -1241,8 +1218,6 @@ export function QuantView({ theme, isMobile, user }: Props) {
                   title="需給指標"
                   sub="空売り比率・騰落レシオ・裁定残高（週次）"
                   dateRange={latestDate ? `最新: ${latestDate}` : undefined}
-                  loading={ssLoading || adLoading || arbLoading}
-                  onReload={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }}
                 />
                 <div style={mTblWrap}>
                   {combinedLoading || combinedError
@@ -1261,7 +1236,13 @@ export function QuantView({ theme, isMobile, user }: Props) {
                                 </div>
                                 <div style={s.thSub}>百万円</div>
                               </th>
-                              <th style={mTh}><div style={s.thLabel}>裁定売り残</div><div style={s.thSub}>先物OI</div></th>
+                              <th style={mTh}>
+                                <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                  {!isMobile && <button onClick={() => setDeltaModal('arbitrage_short')} title="裁定売り残 Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  裁定売り残
+                                </div>
+                                <div style={s.thSub}>先物OI</div>
+                              </th>
                               <th style={mTh}>
                                 <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
                                   {!isMobile && <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>}
@@ -1344,7 +1325,7 @@ export function QuantView({ theme, isMobile, user }: Props) {
 
         {/* ━━ 先物需給 ━━ */}
         <div style={{
-          width: '33.333333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -1360,13 +1341,27 @@ export function QuantView({ theme, isMobile, user }: Props) {
             onReload={() => loadParticipants(true)}
           />
         </div>
+        {/* ━━ シグナル ━━ */}
+        <div style={{
+          width: '25%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+        }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>準備中</span>
+          </div>
+        </div>
+
         </div>{/* /スライダートラック */}
 
       </div>{/* /ボディ */}
 
       <QuantSettingsModal
         isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={onCloseSettings}
         onPromptCopy={handlePromptCopy}
         copyStatus={copyStatus}
       />

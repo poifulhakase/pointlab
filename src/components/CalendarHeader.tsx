@@ -58,9 +58,9 @@ function RobotIcon() {
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
   { label: 'ホーム',   targetView: 'month' as ViewMode, isActive: isCalendarView,                icon: <HomeIcon /> },
-  { label: 'チャート', targetView: 'chart' as ViewMode, isActive: (v: ViewMode) => v === 'chart', icon: <ChartWaveIcon /> },
-  { label: 'データ',   targetView: 'quant' as ViewMode, isActive: (v: ViewMode) => v === 'quant', icon: <RobotIcon /> },
   { label: 'ノート',   targetView: 'note'  as ViewMode, isActive: (v: ViewMode) => v === 'note',  icon: <NoteIcon /> },
+  { label: 'チャート', targetView: 'chart' as ViewMode, isActive: (v: ViewMode) => v === 'chart', icon: <ChartWaveIcon /> },
+  { label: 'ぽいロボ', targetView: 'quant' as ViewMode, isActive: (v: ViewMode) => v === 'quant', icon: <RobotIcon /> },
 ]
 
 // ── コンポーネント ────────────────────────────────────

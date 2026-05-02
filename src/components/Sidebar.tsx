@@ -20,14 +20,15 @@ type Props = {
   onShowPrivateChange: (v: boolean) => void
   showAnomaly: boolean
   onShowAnomalyChange: (v: boolean) => void
+  onGoToday?: () => void
 }
 
-const FILTER_ITEMS: { key: keyof MacroFilter; label: string; sub: string }[] = [
-  { key: 'us', label: '米国',  sub: 'FOMC・雇用統計・CPI・PCE・GDP' },
-  { key: 'jp', label: '日本',  sub: '日銀決定会合・短観・メジャーSQ・ミニSQ・権利付最終日・権利落ち日・権利確定日' },
+const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
+  { key: 'us', label: '米国' },
+  { key: 'jp', label: '日本' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, onGoToday }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -112,7 +113,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
       <div style={contentStyle}>
 
         {/* 時計・市場ステータス・カウントダウン */}
-        <ClockWidget isMobile={isMobile} />
+        <ClockWidget isMobile={isMobile} onGoToday={onGoToday} />
 
         {/* マーケットイベント・スティッキーメモ（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
@@ -196,9 +197,6 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span style={{ ...styles.filterCountry, color: showPrivate ? 'var(--text)' : 'var(--text-dim)' }}>
                 プライベート
               </span>
-              <span style={{ ...styles.filterSub, color: showPrivate ? 'var(--text-sub)' : 'var(--text-dim)' }}>
-                メモ・スケジュールを表示
-              </span>
             </span>
           </label>
         </div>
@@ -234,9 +232,6 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
                 <span style={{ ...styles.filterCountry, color: macroFilter[item.key] ? 'var(--text)' : 'var(--text-dim)' }}>
                   {item.label}
                 </span>
-                <span style={{ ...styles.filterSub, color: macroFilter[item.key] ? 'var(--text-sub)' : 'var(--text-dim)' }}>
-                  {item.sub}
-                </span>
               </span>
             </label>
           ))}
@@ -262,9 +257,6 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
                 <span style={{ ...styles.filterCountry, color: showAnomaly ? 'var(--text)' : 'var(--text-dim)' }}>
                   アノマリー
                 </span>
-                <span style={{ ...styles.filterSub, color: showAnomaly ? 'var(--text-sub)' : 'var(--text-dim)' }}>
-                  節分天井・彼岸底・セルインメイ等
-                </span>
               </span>
             </label>
           )}
@@ -287,7 +279,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
     {/* 保存トースト */}
     {createPortal(
       <div style={{
-        position: 'fixed', bottom: 88, right: 24, zIndex: 9999,
+        position: 'fixed', bottom: 130, right: 24, zIndex: 9999,
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '10px 16px', borderRadius: 12,
         background: 'var(--glass-bg-strong)',
