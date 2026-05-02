@@ -21,6 +21,7 @@ type Props = {
   showAnomaly: boolean
   onShowAnomalyChange: (v: boolean) => void
   onGoToday?: () => void
+  onGoSupport?: () => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
@@ -28,7 +29,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
   { key: 'jp', label: '日本' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, onGoToday }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, onGoToday, onGoSupport }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -120,7 +121,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 
         {/* ──── アドバイザーボタン ──── */}
         <div style={styles.advisorRow}>
-          <button style={styles.advisorBtn}>
+          <button style={styles.advisorBtn} onClick={onGoSupport}>
             <img src={`${import.meta.env.BASE_URL}support.png`} alt="研究員サポート室" style={styles.advisorImg} />
           </button>
         </div>

@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react'
 
-export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'note' | 'spec' | 'legal' | 'manual'
+export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'note' | 'spec' | 'legal' | 'manual' | 'support'
 
 const VIEW_STORAGE_KEY = 'poical-view'
-const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'note', 'spec', 'legal', 'manual']
+const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'note', 'spec', 'legal', 'manual', 'support']
 
 function loadView(): ViewMode {
   const v = localStorage.getItem(VIEW_STORAGE_KEY)

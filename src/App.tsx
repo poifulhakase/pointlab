@@ -27,6 +27,7 @@ const QuantView   = lazy(() => import('./components/QuantView').then(m => ({ def
 const SpecView    = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
 const NoteView    = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
 const ManualView  = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
+const SupportView = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
 
 // ── ローディングスピナー（Suspense フォールバック） ───────────────────
 function ViewLoader() {
@@ -419,6 +420,7 @@ export default function App() {
             showAnomaly={showAnomaly}
             onShowAnomalyChange={handleShowAnomalyChange}
             onGoToday={() => cal.goToDate(cal.today)}
+            onGoSupport={() => cal.setView('support')}
           />
         )}
 
@@ -436,6 +438,13 @@ export default function App() {
           )}
           {cal.view === 'legal' && (
             <LegalModal theme={theme} isMobile={isMobile} />
+          )}
+
+          {/* 研究員サポート室 */}
+          {cal.view === 'support' && (
+            <Suspense fallback={<ViewLoader />}>
+              <SupportView />
+            </Suspense>
           )}
 
           {/* チャート */}
@@ -561,7 +570,7 @@ export default function App() {
       />
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {(isCalView || cal.view === 'chart' || cal.view === 'quant') && (
+      {(isCalView || cal.view === 'chart' || cal.view === 'quant') && cal.view !== 'support' && (
         <div style={styles.floatSubBarBase}>
           <div style={styles.floatSubBar} className="glass">
           <div style={styles.floatPill} className="glass">
