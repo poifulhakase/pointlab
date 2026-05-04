@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type React from 'react'
 import { type MacroEvent, type MacroEventType, MACRO_META } from '../utils/macroCalendar'
 import { BadgePopup } from './BadgePopup'
 
@@ -38,7 +39,11 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
-                whiteSpace: 'nowrap',
+                display: '-webkit-box' as React.CSSProperties['display'],
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                overflow: 'hidden',
+                wordBreak: 'break-all',
                 boxShadow: `0 1px 4px ${color}28`,
                 cursor: 'pointer',
               }}

@@ -138,7 +138,7 @@ function ChartSettingsModal({ isOpen, onClose, split, isMobile, onApply }: Modal
     <>
       <div
         style={{
-          position: 'fixed', inset: 0, zIndex: 399,
+          position: 'fixed', inset: 0, zIndex: 600,
           background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
           opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
           transition: 'opacity 0.20s',
@@ -150,7 +150,7 @@ function ChartSettingsModal({ isOpen, onClose, split, isMobile, onApply }: Modal
           position: 'fixed', top: '50%', left: '50%',
           transform: isOpen ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-50%) scale(0.96)',
           width: 'min(520px, calc(100vw - 32px))',
-          zIndex: 400,
+          zIndex: 601,
           opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
           transition: 'opacity 0.20s, transform 0.20s cubic-bezier(0.4,0,0.2,1)',
           background: 'var(--modal-bg)',

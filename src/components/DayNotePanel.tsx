@@ -163,10 +163,11 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     onClose()
   }
 
-  const doneCount  = checklist.filter(i => i.done).length
-  const progress   = checklist.length > 0 ? Math.round(doneCount / checklist.length * 100) : 0
-  const isOpen     = !!date
-  const hasContent = !!(title.trim() || memo.trim() || checklist.length > 0 || schedules.length > 0)
+  const doneCount       = checklist.filter(i => i.done).length
+  const progress        = checklist.length > 0 ? Math.round(doneCount / checklist.length * 100) : 0
+  const isOpen          = !!date
+  const hasContent      = !!(title.trim() || memo.trim() || checklist.length > 0 || schedules.length > 0)
+  const hasEmptySchTitle = schedules.some(s => !s.title.trim())
 
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
@@ -178,14 +179,16 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     }
   }, [isOpen])
 
-  const [vvHeight, setVvHeight] = useState<number>(() =>
-    typeof window !== 'undefined' ? window.innerHeight : 0
-  )
+  const [vvHeight,    setVvHeight]    = useState<number>(() => typeof window !== 'undefined' ? window.innerHeight : 0)
+  const [vvOffsetTop, setVvOffsetTop] = useState<number>(0)
   useEffect(() => {
     if (!isMobile) return
     const vv = window.visualViewport
     if (!vv) return
-    const onResize = () => setVvHeight(vv.height)
+    const onResize = () => {
+      setVvHeight(vv.height)
+      setVvOffsetTop(vv.offsetTop ?? 0)
+    }
     vv.addEventListener('resize', onResize)
     onResize()
     return () => vv.removeEventListener('resize', onResize)
@@ -216,7 +219,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
           position: 'fixed',
           ...(keyboardOpen
             ? {
-                top: 8,
+                top: vvOffsetTop + 8,
                 left: '50%',
                 transform: isOpen ? 'translateX(-50%) scale(1)' : 'translateX(-50%) scale(0.96)',
                 maxHeight: vvHeight - 16,
@@ -327,6 +330,15 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
                 </div>
               ))}
             </div>
+
+            {hasEmptySchTitle && (
+              <div style={{ fontSize: 11, color: 'rgba(255,100,80,0.90)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                スケジュールのタイトルを入力してください
+              </div>
+            )}
 
             <button style={styles.addSchBtn} onClick={handleSchAdd}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -456,8 +468,8 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
             : <div />
           }
           <button
-            disabled={!isDirty}
-            style={{ ...styles.saveFooterBtn, ...(!isDirty ? styles.saveFooterBtnDisabled : {}) }}
+            disabled={!isDirty || hasEmptySchTitle}
+            style={{ ...styles.saveFooterBtn, ...(!isDirty || hasEmptySchTitle ? styles.saveFooterBtnDisabled : {}) }}
             onClick={() => { onSaved?.(); onClose() }}
           >保存</button>
         </div>

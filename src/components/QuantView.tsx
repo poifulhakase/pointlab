@@ -8,7 +8,6 @@ import { fetchVixData, type VixWeekData } from '../utils/vixData'
 import { fetchNhkNews, type NhkNewsItem } from '../utils/nhkNews'
 import { getMacroEventsForDate, MACRO_META } from '../utils/macroCalendar'
 import { getSqDates, getSqMarkersForDate, SQ_META } from '../utils/sqCalendar'
-import { getNote, saveNote } from '../utils/noteStorage'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
@@ -22,7 +21,7 @@ import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import { MarketDailyPanel } from './MarketDailyPanel'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
-type QuantTabKey = 'kankyou' | 'genbutsu' | 'micro' | 'signal'
+type QuantTabKey = 'kankyou' | 'genbutsu' | 'micro'
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
@@ -604,13 +603,13 @@ function QuantSettingsModal({
   return (
     <>
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 399,
+        position: 'fixed', inset: 0, zIndex: 600,
         background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(4px)',
         opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
         transition: 'opacity 0.18s',
       }} onClick={onClose} />
       <div style={{
-        position: 'fixed', top: '50%', left: '50%', zIndex: 400,
+        position: 'fixed', top: '50%', left: '50%', zIndex: 601,
         transform: isOpen ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-50%) scale(0.96)',
         opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
         transition: 'opacity 0.18s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
@@ -942,23 +941,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     return () => clearTimeout(t)
   }, [])
 
-  const AUTO_PROMPT_KEY = 'poical-auto-prompt-last-added'
-  useEffect(() => {
-    if (!invLoaded || !marLoaded || !vixWeekLoaded || !arbLoaded || !ntLoaded) return
-    const updatedAt = getStoredMarginUpdatedAt()
-    if (!updatedAt) return
-    if (localStorage.getItem(AUTO_PROMPT_KEY) === updatedAt) return
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresOiData), null, 2)
-    const promptText = '# クオンツ分析レポート\n\n' + AI_PROMPT_TEMPLATE + json
-    const today = new Date()
-    const existing = getNote(today)
-    const newMemo = existing.memo.trim()
-      ? existing.memo + '\n\n---\n\n' + promptText
-      : promptText
-    saveNote(today, { ...existing, memo: newMemo })
-    localStorage.setItem(AUTO_PROMPT_KEY, updatedAt)
-  }, [invLoaded, marLoaded, vixWeekLoaded, ntLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const handlePromptCopy = useCallback(async () => {
     const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresOiData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
@@ -996,25 +978,26 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '400%',
+          width: '300%',
           height: '100%',
-          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-25%)' : quantTab === 'micro' ? 'translateX(-50%)' : 'translateX(-75%)',
+          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-33.333%)' : 'translateX(-66.667%)',
           transition: 'transform 0.25s ease',
         }}>
 
         {/* ━━ 環境 ━━ */}
         <div style={{
-          width: '25%',
+          width: '33.333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
           height: '100%',
-          overflow: 'hidden',
+          overflowX: 'hidden',
+          overflowY: isMobile ? 'auto' : 'hidden',
         }}>
 
         {/* VIX */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-          <div style={s.panelHead}>
+          <div style={{ ...s.panelHead, minHeight: 36 }}>
             <div style={s.panelTitle}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -1030,7 +1013,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         {/* NS倍率 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-          <div style={s.panelHead}>
+          <div style={{ ...s.panelHead, minHeight: 36 }}>
             <div style={s.panelTitle}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10"/>
@@ -1047,19 +1030,21 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
         <div style={isMobile ? s.dividerH : s.divider} />
 
         {/* クオンツ分析レポート */}
-        <div style={isMobile ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 340 } : s.panel}>
+        <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 340 } : s.panel}>
           <QuantMemoPanel theme={theme} user={user} />
         </div>
+
+        {isMobile && <div style={{ height: 130, flexShrink: 0 }} />}
 
         </div>{/* /環境 */}
 
         {/* ━━ 現物需給 ━━ */}
         <div style={isMobile ? {
-          width: '25%', flexShrink: 0,
+          width: '33.333%', flexShrink: 0,
           display: 'flex', flexDirection: 'column',
-          height: '100%', overflowY: 'auto',
+          height: '100%', overflowX: 'hidden', overflowY: 'auto',
         } : {
-          width: '25%', flexShrink: 0,
+          width: '33.333%', flexShrink: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gridTemplateRows: '1fr 1fr',
@@ -1321,11 +1306,13 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           />
         </div>
 
+        {isMobile && <div style={{ height: 130, flexShrink: 0 }} />}
+
         </div>{/* /現物需給 */}
 
         {/* ━━ 先物需給 ━━ */}
         <div style={{
-          width: '25%',
+          width: '33.333%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -1340,19 +1327,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             error={participantsError}
             onReload={() => loadParticipants(true)}
           />
-        </div>
-        {/* ━━ シグナル ━━ */}
-        <div style={{
-          width: '25%',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          overflow: 'hidden',
-        }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>準備中</span>
-          </div>
+          {isMobile && <div style={{ height: 130, flexShrink: 0 }} />}
         </div>
 
         </div>{/* /スライダートラック */}

@@ -239,7 +239,8 @@ export default function App() {
 
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
-  const [quantTab,          setQuantTab]          = useState<'kankyou' | 'genbutsu' | 'micro' | 'signal'>('kankyou')
+  const [quantTab,          setQuantTab]          = useState<'kankyou' | 'genbutsu' | 'micro'>('kankyou')
+  const [supportTab,        setSupportTab]        = useState<'session' | 'note' | 'manual'>('session')
   const [quantSettingsOpen, setQuantSettingsOpen] = useState(false)
   const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
@@ -443,7 +444,7 @@ export default function App() {
           {/* 研究員サポート室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} />
             </Suspense>
           )}
 
@@ -570,7 +571,7 @@ export default function App() {
       />
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {(isCalView || cal.view === 'chart' || cal.view === 'quant') && cal.view !== 'support' && (
+      {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'support') && (
         <div style={styles.floatSubBarBase}>
           <div style={styles.floatSubBar} className="glass">
           <div style={styles.floatPill} className="glass">
@@ -597,12 +598,21 @@ export default function App() {
               >{s.label}</button>
             ))}
             {cal.view === 'quant' && (
-              (['kankyou', 'genbutsu', 'micro', 'signal'] as const).map((tab, i) => (
+              (['kankyou', 'genbutsu', 'micro'] as const).map((tab, i) => (
                 <button
                   key={tab}
                   style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
                   onClick={() => setQuantTab(tab)}
-                >{['環境', '現物需給', '先物需給', 'シグナル'][i]}</button>
+                >{['環境', '現物需給', '先物需給'][i]}</button>
+              ))
+            )}
+            {cal.view === 'support' && (
+              (['session', 'note', 'manual'] as const).map((tab, i) => (
+                <button
+                  key={tab}
+                  style={{ ...styles.floatTab, ...(supportTab === tab ? styles.floatTabActive : {}) }}
+                  onClick={() => setSupportTab(tab)}
+                >{['1on1セッション', 'ノート', '使い方'][i]}</button>
               ))
             )}
           </div>

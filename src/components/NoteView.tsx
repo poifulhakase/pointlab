@@ -32,7 +32,7 @@ const ARTICLES: Article[] = [
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png' },
   { genre: 'イベントドリブン', title: '権利落ち日',    url: null, thumb: null },
   { genre: 'イベントドリブン', title: '権利確定日前',  url: null, thumb: null },
-  { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: null },
+  { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_TOPIX_Inclusion.png' },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.jpg' },
 ]

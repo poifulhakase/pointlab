@@ -94,7 +94,7 @@ export function ManualView({ theme, isMobile }: Props) {
           <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.title, letterSpacing: '-0.5px' }}>
-              説明書
+              使い方
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
               ぽいロボ — 使い方ガイド
