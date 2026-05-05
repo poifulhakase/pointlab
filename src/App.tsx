@@ -659,7 +659,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   toast: { position: 'fixed', bottom: 130, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
 
-  floatSubBarBase: { position: 'fixed', bottom: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', right: 12, zIndex: 400, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform' },
+  floatSubBarBase: { position: 'fixed', bottom: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', right: 12, zIndex: 150, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform' },
   floatSubBar:  { borderRadius: 14, padding: 4 },
   floatPill:    { display: 'flex', alignItems: 'center', borderRadius: 10, padding: 2, gap: 2 },
   floatDivider:    { width: 1, height: 16, background: 'var(--border-dim)', alignSelf: 'center', flexShrink: 0, margin: '0 1px' },

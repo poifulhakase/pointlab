@@ -12,6 +12,17 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
   const [content, setContent] = useState(note.content)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const [vvHeight,    setVvHeight]    = useState(() => typeof window !== 'undefined' ? window.innerHeight : 600)
+  const [vvOffsetTop, setVvOffsetTop] = useState(0)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => { setVvHeight(vv.height); setVvOffsetTop(vv.offsetTop ?? 0) }
+    vv.addEventListener('resize', onResize)
+    onResize()
+    return () => vv.removeEventListener('resize', onResize)
+  }, [])
+
   useEffect(() => {
     setContent(note.content)
     const t = setTimeout(() => textareaRef.current?.focus(), 40)
@@ -31,7 +42,7 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
 
   return createPortal(
     <div
-      style={styles.overlay}
+      style={{ ...styles.overlay, top: vvOffsetTop, height: vvHeight }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={styles.modal} className="glass">
@@ -72,13 +83,14 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: {
-    position: 'fixed', inset: 0,
+    position: 'fixed', left: 0, right: 0,
     background: 'rgba(0,0,0,0.65)',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     zIndex: 900,
     display: 'flex', alignItems: 'stretch', justifyContent: 'stretch',
     padding: 20,
+    transition: 'top 0.2s, height 0.2s',
   },
   modal: {
     flex: 1, display: 'flex', flexDirection: 'column',

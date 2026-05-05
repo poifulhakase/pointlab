@@ -1028,8 +1028,8 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
         <div style={isMobile ? s.dividerH : s.divider} />
 
         {/* クオンツ分析レポート */}
-        <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 340 } : s.panel}>
-          <QuantMemoPanel theme={theme} user={user} />
+        <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
+          <QuantMemoPanel theme={theme} user={user} isMobile={isMobile} />
         </div>
 
 

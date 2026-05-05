@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -229,11 +229,25 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
 const QUANT_MEMO_KEY = 'poical-quant-memo'
 const QUANT_MEMO_FS_PATH = (uid: string) => `users/${uid}/data/quantMemo`
 
-export function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User | null }) {
+export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; user: User | null; isMobile?: boolean }) {
   const [quantMemo,     setQuantMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [savedMemo,     setSavedMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
   const memoIsDirty = quantMemo !== savedMemo
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!isMobile) return
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => {
+      if (document.activeElement === textareaRef.current) {
+        setTimeout(() => textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50)
+      }
+    }
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [isMobile])
 
   useEffect(() => {
     if (!user) {
@@ -301,13 +315,15 @@ export function QuantMemoPanel({ user }: { theme: 'dark' | 'light'; user: User |
           </button>
         </div>
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0 }}>
         <textarea
+          ref={textareaRef}
           value={quantMemo}
           onChange={e => setQuantMemo(e.target.value)}
           placeholder="AI分析レポート・トレードメモを入力…"
           style={{
-            flex: 1, minHeight: 280, resize: 'none', background: 'transparent',
+            flex: 1, minHeight: isMobile ? 'max(280px, calc(100svh - 440px))' : 280,
+            resize: 'none', background: 'transparent',
             color: 'var(--text)', border: 'none', outline: 'none',
             padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
             fontFamily: 'inherit', overflowY: 'auto',
