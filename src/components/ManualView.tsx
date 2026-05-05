@@ -135,10 +135,6 @@ export function ManualView({ theme, isMobile }: Props) {
           ))}
         </div>
 
-        {/* フッター */}
-        <p style={{ marginTop: 24, fontSize: 11, color: c.logoText, textAlign: 'center' }}>
-          詳細な技術仕様はノートメニュー →「システム仕様」をご覧ください。
-        </p>
 
       </div>
     </div>
