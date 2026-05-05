@@ -3,7 +3,7 @@ import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
-import { fetchMarginData, getStoredMarginUpdatedAt, type MarginWeekData } from '../utils/jpxMarginData'
+import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
 import { fetchVixData, type VixWeekData } from '../utils/vixData'
 import { fetchNhkNews, type NhkNewsItem } from '../utils/nhkNews'
 import { getMacroEventsForDate, MACRO_META } from '../utils/macroCalendar'
@@ -823,10 +823,8 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   const [participantsLoaded,  setParticipantsLoaded]  = useState(false)
 
   const [ntData, setNtData] = useState<NtRatioPoint[]>([])
-  const [ntLoaded, setNtLoaded] = useState(false)
   const handleNtDataLoaded = useCallback((d: NtRatioPoint[]) => {
     setNtData(d)
-    setNtLoaded(true)
   }, [])
 
   const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
@@ -933,12 +931,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
   useEffect(() => {
     fetchNhkNews().then(setNhkNews).catch(() => {})
-  }, [])
-
-  // NTデータ未ロード時のフォールバック: 10秒後に強制的にntLoadedをtrueにする
-  useEffect(() => {
-    const t = setTimeout(() => setNtLoaded(true), 10000)
-    return () => clearTimeout(t)
   }, [])
 
   const handlePromptCopy = useCallback(async () => {

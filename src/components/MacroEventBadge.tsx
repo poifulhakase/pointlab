@@ -29,7 +29,7 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
             <span
               key={i}
               style={{
-                display: 'inline-block',
+                display: '-webkit-box' as React.CSSProperties['display'],
                 fontSize: isSm ? 11 : 12,
                 fontWeight: 600,
                 letterSpacing: '0.03em',
@@ -39,7 +39,6 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
-                display: '-webkit-box' as React.CSSProperties['display'],
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
                 overflow: 'hidden',
