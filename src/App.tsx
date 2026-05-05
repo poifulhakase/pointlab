@@ -300,10 +300,10 @@ export default function App() {
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), [])
 
   // ── 日/週/月 スワイプ計算 ─────────────────────────────────────────────
-  // Panel order: 0=日, 1=週, 2=月
+  // Panel order: 0=月, 1=週, 2=日
   const calPanelIndex = useMemo(() => {
-    if (cal.view === 'day')  return 0
-    if (cal.view === 'week') return 1
+    if (cal.view === 'month') return 0
+    if (cal.view === 'week')  return 1
     return 2
   }, [cal.view])
 
@@ -339,7 +339,7 @@ export default function App() {
     calIsDraggingRef.current = false
     setCalDragOffset(0)
     if (Math.abs(dx) < 50) return
-    const CAL_VIEWS = ['day', 'week', 'month'] as const
+    const CAL_VIEWS = ['month', 'week', 'day'] as const
     if (dx < 0 && calPanelIndex < 2) {
       cal.setView(CAL_VIEWS[calPanelIndex + 1])
     } else if (dx > 0 && calPanelIndex > 0) {
@@ -461,14 +461,17 @@ export default function App() {
                   transition: calDragOffset !== 0 ? 'none' : 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
                   willChange: 'transform',
                 }}>
-                  {/* Panel 0: 日 */}
+                  {/* Panel 0: 月 */}
                   <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <DayView
-                      date={cal.current} isToday={cal.isToday}
+                    <MonthView
+                      days={cal.getMonthGrid()} today={cal.today} current={cal.current}
+                      isToday={cal.isToday} isCurrentMonth={cal.isCurrentMonth}
+                      onClickDay={(d) => { cal.goToDate(d); if (isMobile) cal.setView('day') }}
+                      onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
                       getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
+                      getAnomalyEvents={getAnomalyEvents}
                       isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-                      onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-                      getScheduledEvents={getScheduledEvents} theme={theme}
+                      hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
                     />
                   </div>
 
@@ -483,17 +486,14 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Panel 2: 月 */}
+                  {/* Panel 2: 日 */}
                   <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <MonthView
-                      days={cal.getMonthGrid()} today={cal.today} current={cal.current}
-                      isToday={cal.isToday} isCurrentMonth={cal.isCurrentMonth}
-                      onClickDay={(d) => { cal.goToDate(d); if (isMobile) cal.setView('day') }}
-                      onOpenNote={(d) => { cal.goToDate(d); openNote(d) }}
+                    <DayView
+                      date={cal.current} isToday={cal.isToday}
                       getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
-                      getAnomalyEvents={getAnomalyEvents}
                       isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-                      hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
+                      onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
+                      getScheduledEvents={getScheduledEvents} theme={theme}
                     />
                   </div>
                 </div>
@@ -614,7 +614,7 @@ export default function App() {
 }
 
 // ── 定数 ──────────────────────────────────────────────────────────────────
-const CAL_VIEW_TABS = [['day','日'],['week','週'],['month','月']] as const
+const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
 const CHART_SYMBOLS = [
   { label: '日経225', symbol: 'INDEX:NKY'  },
