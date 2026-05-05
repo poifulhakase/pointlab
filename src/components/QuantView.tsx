@@ -1312,111 +1312,185 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           width: '33.333%',
           flexShrink: 0,
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: isMobile ? 'column' : 'row',
           height: '100%',
           overflowY: isMobile ? 'auto' : 'hidden',
           paddingBottom: isMobile ? 130 : 0,
         }}>
 
-          {/* 先物OI・取引高（日次） */}
+          {/* 左 2/3: 投資主体別先物手口 */}
+          <div style={isMobile
+            ? { display: 'flex', flexDirection: 'column' }
+            : { flex: 2, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-dim)', overflow: 'hidden', minWidth: 0 }
+          }>
+            <MicroQuantView
+              theme={theme}
+              isMobile={isMobile}
+              data={participantsData}
+              loading={participantsLoading}
+              error={participantsError}
+              onReload={() => loadParticipants(true)}
+            />
+          </div>
+
+          {isMobile && <div style={s.dividerH} />}
+
+          {/* 右 1/3: 先物OI（上下分割） */}
           {(() => {
             const rows = futuresDailyData.slice(0, isMobile ? futuresDailyData.length : 20)
             const fmtOi  = (n: number) => (n / 10000).toFixed(1) + '万'
             const fmtVol = (n: number) => n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString()
             const latestDate = futuresDailyData[0]?.date ?? null
+            const loadingEmpty = futuresDailyLoading && futuresDailyData.length === 0
+            const errorEmpty   = futuresDailyError   && futuresDailyData.length === 0
+
             return (
-              <div style={isMobile ? s.halfPanelMobile : { ...s.halfPanel, minHeight: 0 }}>
-                {/* ヘッダー */}
-                <div style={{ ...s.panelHead, minHeight: 36 }}>
-                  <div style={s.panelTitle}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-                    </svg>
-                    先物OI・取引高
-                    <span style={s.panelSub}>日経225先物 全限月</span>
+              <div style={isMobile
+                ? { display: 'flex', flexDirection: 'column' }
+                : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
+              }>
+
+                {/* 上エリア: 建玉残高 */}
+                <div style={isMobile ? s.halfPanelMobile : s.halfPanel}>
+                  <div style={{ ...s.panelHead, minHeight: 36 }}>
+                    <div style={s.panelTitle}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                      </svg>
+                      建玉残高
+                      <span style={s.panelSub}>日経225先物 全限月</span>
+                    </div>
+                    <div style={s.panelRight}>
+                      {latestDate && <span style={s.dataRange}>{latestDate}</span>}
+                      <button onClick={() => loadFuturesDaily(true)} style={s.reloadBtn} title="再読み込み">↺</button>
+                    </div>
                   </div>
-                  <div style={s.panelRight}>
-                    {latestDate && <span style={s.dataRange}>{latestDate}</span>}
-                    <button onClick={() => loadFuturesDaily(true)} style={s.reloadBtn} title="再読み込み">↺</button>
-                  </div>
+                  {loadingEmpty
+                    ? <div style={s.center}><div style={s.spinner} /></div>
+                    : errorEmpty
+                    ? <div style={s.center}>
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{futuresDailyError}</div>
+                        <button style={s.retryBtn} onClick={() => loadFuturesDaily(true)}>再試行</button>
+                      </div>
+                    : futuresDailyData.length === 0
+                    ? <div style={s.center}><div style={{ fontSize: 12, color: 'var(--text-dim)' }}>データなし</div></div>
+                    : (
+                      <div style={s.tableWrap}>
+                        <table style={s.table}>
+                          <thead>
+                            <tr>
+                              <th style={{ ...s.th, ...s.thDate }}>日付</th>
+                              <th style={s.th}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                  <button onClick={() => setDeltaModal('futures_oi')} title="先物OI前日比 Δ分析" style={s.deltaBtn}>Δ</button>
+                                  建玉残高
+                                </div>
+                                <div style={s.thSub}>万枚</div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((row, i) => {
+                              const prev = futuresDailyData[i + 1]
+                              const oiDelta = prev ? row.oi - prev.oi : null
+                              const oiDeltaColor = oiDelta == null ? undefined
+                                : oiDelta > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
+                                : oiDelta < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
+                                : undefined
+                              return (
+                                <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                                  <td style={{ ...s.td, ...s.tdDate }}>
+                                    <div style={s.dateMain}>{row.date.slice(5).replace('/', '/')}</div>
+                                    <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum }}>
+                                    <span style={{ fontWeight: 600 }}>{fmtOi(row.oi)}</span>
+                                    {oiDelta != null && (
+                                      <span style={{ fontSize: 10, color: oiDeltaColor, marginLeft: 4 }}>
+                                        {oiDelta > 0 ? '+' : ''}{oiDelta >= 10000 || oiDelta <= -10000 ? (oiDelta / 10000).toFixed(1) + '万' : oiDelta.toLocaleString()}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  }
                 </div>
 
-                {/* ボディ */}
-                {futuresDailyLoading && futuresDailyData.length === 0
-                  ? <div style={s.center}><div style={s.spinner} /></div>
-                  : futuresDailyError && futuresDailyData.length === 0
-                  ? <div style={s.center}>
-                      <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{futuresDailyError}</div>
-                      <button style={s.retryBtn} onClick={() => loadFuturesDaily(true)}>再試行</button>
+                <div style={s.dividerH} />
+
+                {/* 下エリア: 取引高 */}
+                <div style={isMobile ? s.halfPanelMobile : s.halfPanel}>
+                  <div style={{ ...s.panelHead, minHeight: 36 }}>
+                    <div style={s.panelTitle}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                      </svg>
+                      取引高
+                      <span style={s.panelSub}>日経225先物 全限月</span>
                     </div>
-                  : futuresDailyData.length === 0
-                  ? <div style={s.center}><div style={{ fontSize: 12, color: 'var(--text-dim)' }}>データなし</div></div>
-                  : (
-                    <div style={s.tableWrap}>
-                      <table style={s.table}>
-                        <thead>
-                          <tr>
-                            <th style={{ ...s.th, ...s.thDate }}>日付</th>
-                            <th style={s.th}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                <button onClick={() => setDeltaModal('futures_oi')} title="先物OI前日比 Δ分析" style={s.deltaBtn}>Δ</button>
-                                建玉残高
-                              </div>
-                              <div style={s.thSub}>万枚</div>
-                            </th>
-                            <th style={s.th}>
-                              取引高
-                              <div style={s.thSub}>枚</div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rows.map((row, i) => {
-                            const prev = futuresDailyData[i + 1]
-                            const oiDelta = prev ? row.oi - prev.oi : null
-                            const oiDeltaColor = oiDelta == null ? undefined
-                              : oiDelta > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
-                              : oiDelta < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
-                              : undefined
-                            return (
-                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                <td style={{ ...s.td, ...s.tdDate }}>
-                                  <div style={s.dateMain}>{row.date.slice(5).replace('/', '/')}</div>
-                                  <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum }}>
-                                  <span style={{ fontWeight: 600 }}>{fmtOi(row.oi)}</span>
-                                  {oiDelta != null && (
-                                    <span style={{ fontSize: 10, color: oiDeltaColor, marginLeft: 4 }}>
-                                      {oiDelta > 0 ? '+' : ''}{oiDelta >= 10000 || oiDelta <= -10000 ? (oiDelta / 10000).toFixed(1) + '万' : oiDelta.toLocaleString()}
-                                    </span>
-                                  )}
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum }}>
-                                  <span style={{ color: 'var(--text-sub)' }}>{fmtVol(row.volume)}</span>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
+                    <div style={s.panelRight}>
+                      {latestDate && <span style={s.dataRange}>{latestDate}</span>}
                     </div>
-                  )
-                }
+                  </div>
+                  {loadingEmpty
+                    ? <div style={s.center}><div style={s.spinner} /></div>
+                    : errorEmpty
+                    ? <div style={s.center}>
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{futuresDailyError}</div>
+                        <button style={s.retryBtn} onClick={() => loadFuturesDaily(true)}>再試行</button>
+                      </div>
+                    : futuresDailyData.length === 0
+                    ? <div style={s.center}><div style={{ fontSize: 12, color: 'var(--text-dim)' }}>データなし</div></div>
+                    : (
+                      <div style={s.tableWrap}>
+                        <table style={s.table}>
+                          <thead>
+                            <tr>
+                              <th style={{ ...s.th, ...s.thDate }}>日付</th>
+                              <th style={s.th}>取引高<div style={s.thSub}>枚</div></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((row, i) => {
+                              const prev = futuresDailyData[i + 1]
+                              const volDelta = prev ? row.volume - prev.volume : null
+                              const volDeltaColor = volDelta == null ? undefined
+                                : volDelta > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
+                                : volDelta < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
+                                : undefined
+                              return (
+                                <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                                  <td style={{ ...s.td, ...s.tdDate }}>
+                                    <div style={s.dateMain}>{row.date.slice(5).replace('/', '/')}</div>
+                                    <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
+                                  </td>
+                                  <td style={{ ...s.td, ...s.tdNum }}>
+                                    <span style={{ color: 'var(--text-sub)' }}>{fmtVol(row.volume)}</span>
+                                    {volDelta != null && (
+                                      <span style={{ fontSize: 10, color: volDeltaColor, marginLeft: 4 }}>
+                                        {volDelta > 0 ? '+' : ''}{fmtVol(Math.abs(volDelta))}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  }
+                </div>
+
               </div>
             )
           })()}
 
-          <div style={s.dividerH} />
-
-          <MicroQuantView
-            theme={theme}
-            isMobile={isMobile}
-            data={participantsData}
-            loading={participantsLoading}
-            error={participantsError}
-            onReload={() => loadParticipants(true)}
-          />
         </div>
 
         </div>{/* /スライダートラック */}

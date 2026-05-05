@@ -109,7 +109,7 @@ export function ManualView({ theme, isMobile }: Props) {
           fontSize: 13, color: c.text, lineHeight: 1.7,
         }}>
           ぽいロボは、株式投資家向けのカレンダー＋需給分析アプリです。
-          AI分析プロンプトをワンクリックで生成し、GeminiやClaudeに貼り付けるだけでスイングトレード向けのレポートが得られます。
+          AI分析プロンプトをワンクリックで生成し、Geminiに貼り付けるだけでスイングトレード向けのレポートが得られます。
         </div>
 
         {/* セクション */}
