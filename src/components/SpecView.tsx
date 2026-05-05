@@ -367,13 +367,13 @@ const SPEC_SECTIONS = [
 // ── レンダラー ────────────────────────────────────────
 function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0], isDark: boolean) {
   const c = {
-    text:       isDark ? 'rgba(200,205,225,0.9)'  : 'rgba(30,35,60,0.88)',
-    sub:        isDark ? 'rgba(160,165,190,0.75)' : 'rgba(60,70,100,0.65)',
-    heading:    isDark ? 'rgba(220,225,245,0.95)' : 'rgba(20,25,50,0.95)',
-    border:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
-    rowEven:    isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.025)',
-    bullet:     isDark ? 'rgba(96,165,250,0.7)'  : 'rgba(37,99,235,0.6)',
-    thBg:       isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+    text:       isDark ? 'rgba(255,255,255,0.90)'  : 'rgba(15,20,50,0.88)',
+    sub:        isDark ? 'rgba(255,255,255,0.60)'  : 'rgba(15,20,50,0.62)',
+    heading:    isDark ? 'rgba(255,255,255,0.97)'  : 'rgba(10,15,45,0.97)',
+    border:     isDark ? 'rgba(255,255,255,0.10)'  : 'rgba(0,0,0,0.08)',
+    rowEven:    isDark ? 'rgba(255,255,255,0.05)'  : 'rgba(0,0,0,0.03)',
+    bullet:     isDark ? 'rgba(96,165,250,0.90)'   : 'rgba(37,99,235,0.70)',
+    thBg:       isDark ? 'rgba(255,255,255,0.08)'  : 'rgba(0,0,0,0.04)',
   }
 
   if (block.type === 'para') {
@@ -449,12 +449,12 @@ export function SpecView({ theme, isMobile }: Props) {
   const isDark = theme === 'dark'
 
   const c = {
-    bg:         isDark ? 'transparent'              : 'transparent',
-    cardBg:     isDark ? 'rgba(255,255,255,0.04)'   : 'rgba(255,255,255,0.7)',
-    cardBorder: isDark ? 'rgba(255,255,255,0.08)'   : 'rgba(0,0,0,0.08)',
-    sectionTitle: isDark ? 'rgba(230,235,255,0.95)' : 'rgba(15,20,50,0.95)',
-    divider:    isDark ? 'rgba(255,255,255,0.07)'   : 'rgba(0,0,0,0.07)',
-    logoText:   isDark ? 'rgba(180,185,210,0.6)'    : 'rgba(80,90,130,0.55)',
+    bg:           isDark ? 'transparent'              : 'transparent',
+    cardBg:       isDark ? 'rgba(255,255,255,0.04)'   : 'rgba(255,255,255,0.7)',
+    cardBorder:   isDark ? 'rgba(255,255,255,0.12)'   : 'rgba(0,0,0,0.08)',
+    sectionTitle: isDark ? 'rgba(255,255,255,0.97)'   : 'rgba(10,15,45,0.97)',
+    divider:      isDark ? 'rgba(255,255,255,0.10)'   : 'rgba(0,0,0,0.07)',
+    logoText:     isDark ? 'rgba(255,255,255,0.45)'   : 'rgba(15,20,50,0.50)',
   }
 
   return (
