@@ -58,23 +58,17 @@ interface GearDropdownProps {
   syncStatus: string
   onToggleTheme: () => void
   onOpenNotifications: () => void
-  onOpenManual: () => void
   onOpenAccount: () => void
-  onOpenChartSettings: () => void
-  onOpenQuantSettings: () => void
   onOpenSpec: () => void
   onOpenLegal: () => void
 }
 const GearDropdown = memo(({
   dropRef, pos, theme, user, syncStatus,
-  onToggleTheme, onOpenNotifications, onOpenManual, onOpenAccount,
-  onOpenChartSettings, onOpenQuantSettings, onOpenSpec, onOpenLegal,
+  onToggleTheme, onOpenNotifications, onOpenAccount,
+  onOpenSpec, onOpenLegal,
 }: GearDropdownProps) => (
   <div ref={dropRef} style={{ ...styles.gearDropdown, bottom: pos.bottom, right: pos.right }} className="glass">
-    <GearItem icon={<BookIcon />} onClick={onOpenManual}>使い方</GearItem>
     <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>カレンダー通知</GearItem>
-    <GearItem icon={<ChartIcon />} onClick={onOpenChartSettings}>チャートレイアウト</GearItem>
-    <GearItem icon={<RobotIcon />} onClick={onOpenQuantSettings}>ぽいロボエンジン</GearItem>
     <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
       {theme === 'dark' ? 'ライトモード' : 'ダークモード'}
     </GearItem>
@@ -380,14 +374,11 @@ export default function App() {
 
   // ── 歯車アクション ────────────────────────────────────────────────────
   const gearActions = useMemo(() => ({
-    onToggleTheme:        () => { toggleTheme(); closeGear() },
-    onOpenNotifications:  () => { setSettingsOpen(true); closeGear() },
-    onOpenManual:         () => { cal.setView('manual'); closeGear() },
-    onOpenAccount:        () => { setAuthModalOpen(true); closeGear() },
-    onOpenChartSettings:  () => { cal.setView('chart'); setChartSettingsOpen(true); closeGear() },
-    onOpenQuantSettings:  () => { cal.setView('quant'); setQuantSettingsOpen(true); closeGear() },
-    onOpenSpec:           () => { cal.setView('spec'); closeGear() },
-    onOpenLegal:          () => { cal.setView('legal'); closeGear() },
+    onToggleTheme:       () => { toggleTheme(); closeGear() },
+    onOpenNotifications: () => { setSettingsOpen(true); closeGear() },
+    onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
+    onOpenSpec:          () => { cal.setView('spec'); closeGear() },
+    onOpenLegal:         () => { cal.setView('legal'); closeGear() },
   }), [toggleTheme, closeGear, cal])
 
   const isCalView = cal.view === 'day' || cal.view === 'week' || cal.view === 'month'
@@ -590,21 +581,35 @@ export default function App() {
                 </button>
               </>
             )}
-            {cal.view === 'chart' && CHART_SYMBOLS.map(s => (
-              <button
-                key={s.symbol}
-                style={{ ...styles.floatTab, ...(chartSymbol === s.symbol ? styles.floatTabActive : {}) }}
-                onClick={() => setChartSymbol(s.symbol)}
-              >{s.label}</button>
-            ))}
+            {cal.view === 'chart' && (
+              <>
+                {CHART_SYMBOLS.map(s => (
+                  <button
+                    key={s.symbol}
+                    style={{ ...styles.floatTab, ...(chartSymbol === s.symbol ? styles.floatTabActive : {}) }}
+                    onClick={() => setChartSymbol(s.symbol)}
+                  >{s.label}</button>
+                ))}
+                <span style={styles.floatDivider} />
+                <button style={styles.floatIconBtn} onClick={() => setChartSettingsOpen(true)} aria-label="チャートレイアウト">
+                  <GearIcon />
+                </button>
+              </>
+            )}
             {cal.view === 'quant' && (
-              (['kankyou', 'genbutsu', 'micro'] as const).map((tab, i) => (
-                <button
-                  key={tab}
-                  style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
-                  onClick={() => setQuantTab(tab)}
-                >{['環境', '現物需給', '先物需給'][i]}</button>
-              ))
+              <>
+                {(['kankyou', 'genbutsu', 'micro'] as const).map((tab, i) => (
+                  <button
+                    key={tab}
+                    style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
+                    onClick={() => setQuantTab(tab)}
+                  >{['環境', '現物需給', '先物需給'][i]}</button>
+                ))}
+                <span style={styles.floatDivider} />
+                <button style={styles.floatIconBtn} onClick={() => setQuantSettingsOpen(true)} aria-label="ぽいロボエンジン">
+                  <GearIcon />
+                </button>
+              </>
             )}
             {cal.view === 'support' && (
               (['session', 'note', 'manual'] as const).map((tab, i) => (
@@ -612,7 +617,7 @@ export default function App() {
                   key={tab}
                   style={{ ...styles.floatTab, ...(supportTab === tab ? styles.floatTabActive : {}) }}
                   onClick={() => setSupportTab(tab)}
-                >{['1on1セッション', 'ノート', '使い方'][i]}</button>
+                >{['1on1', 'ノート', '使い方'][i]}</button>
               ))
             )}
           </div>

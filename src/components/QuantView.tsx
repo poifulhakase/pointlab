@@ -12,7 +12,7 @@ import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/a
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
 import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
-import { fetchFuturesOiData, type FuturesOiWeekData } from '../utils/futuresOiData'
+import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDailyData'
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
@@ -290,7 +290,7 @@ function buildExportJson(
   participantsData: FuturesParticipantDayData[],
   arbDailyData: ArbitrageDayData[],
   usdjpyData: UsdjpyDayData[],
-  futuresOiData: FuturesOiWeekData[],
+  futuresDailyData: FuturesDayData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -444,7 +444,7 @@ function buildExportJson(
     advance_decline:    { data_as_of: toDate(adData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     arbitrage_daily:    { data_as_of: arbDailyData[0]?.date ?? null,           frequency: '日次', lag_note: 'nikkei225jp.com' },
-    futures_oi:         { data_as_of: futuresOiData[0]?.date ?? null,          frequency: '週次', lag_note: 'JPX月次統計・翌月上旬公開（1〜6週間遅延）' },
+    futures_oi:         { data_as_of: futuresDailyData[0]?.date ?? null,        frequency: '日次', lag_note: 'JPX日報PDF・毎営業日16:31更新' },
   }
 
   return {
@@ -456,7 +456,7 @@ function buildExportJson(
     nikkei225_latest,
     usdjpy_latest,
     arbitrage_daily_recent,
-    futures_oi_recent: futuresOiData.slice(0, 13).map(d => ({ date: d.date, label: d.label, oi: d.oi })),
+    futures_oi_recent: futuresDailyData.slice(0, 20).map(d => ({ date: d.date, volume: d.volume, oi: d.oi })),
     micro_supply_demand,
     data: rows,
   }
@@ -814,8 +814,10 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   const [usdjpyError,   setUsdjpyError]   = useState('')
   const [usdjpyLoaded,  setUsdjpyLoaded]  = useState(false)
 
-  const [futuresOiData,   setFuturesOiData]   = useState<FuturesOiWeekData[]>([])
-  const [futuresOiLoaded, setFuturesOiLoaded] = useState(false)
+  const [futuresDailyData,   setFuturesDailyData]   = useState<FuturesDayData[]>([])
+  const [futuresDailyLoaded, setFuturesDailyLoaded] = useState(false)
+  const [futuresDailyLoading, setFuturesDailyLoading] = useState(false)
+  const [futuresDailyError,   setFuturesDailyError]   = useState('')
 
   const [participantsData,    setParticipantsData]    = useState<FuturesParticipantDayData[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(false)
@@ -885,9 +887,11 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     catch { /* AI export 用のみ・エラーはサイレント */ }
   }, [])
 
-  const loadFuturesOi = useCallback(async (force = false) => {
-    try { setFuturesOiData(await fetchFuturesOiData(force)); setFuturesOiLoaded(true) }
-    catch { /* AI export 用のみ・エラーはサイレント */ }
+  const loadFuturesDaily = useCallback(async (force = false) => {
+    setFuturesDailyLoading(true); setFuturesDailyError('')
+    try { setFuturesDailyData(await fetchFuturesDailyData(force)); setFuturesDailyLoaded(true) }
+    catch (e) { setFuturesDailyError(e instanceof Error ? e.message : 'データ取得エラー') }
+    finally { setFuturesDailyLoading(false) }
   }, [])
 
   const loadUsdjpy = useCallback(async (force = false) => {
@@ -927,14 +931,14 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
   useEffect(() => { if (!arbDailyLoaded)  loadArbDaily()     }, [arbDailyLoaded,  loadArbDaily])
   useEffect(() => { if (!usdjpyLoaded)    loadUsdjpy()       }, [usdjpyLoaded,    loadUsdjpy])
-  useEffect(() => { if (!futuresOiLoaded) loadFuturesOi()    }, [futuresOiLoaded, loadFuturesOi])
+  useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
 
   useEffect(() => {
     fetchNhkNews().then(setNhkNews).catch(() => {})
   }, [])
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresOiData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
@@ -961,6 +965,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           arbData={arbData}
           ssData={ssData}
           adData={adData}
+          futuresDailyData={futuresDailyData}
           theme={theme}
           onClose={() => setDeltaModal(null)}
         />
@@ -985,6 +990,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           height: '100%',
           overflowX: 'hidden',
           overflowY: isMobile ? 'auto' : 'hidden',
+          paddingBottom: isMobile ? 130 : 0,
         }}>
 
         {/* VIX */}
@@ -1026,7 +1032,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           <QuantMemoPanel theme={theme} user={user} />
         </div>
 
-        {isMobile && <div style={{ height: 130, flexShrink: 0 }} />}
 
         </div>{/* /環境 */}
 
@@ -1035,6 +1040,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           width: '33.333%', flexShrink: 0,
           display: 'flex', flexDirection: 'column',
           height: '100%', overflowX: 'hidden', overflowY: 'auto',
+          paddingBottom: 130,
         } : {
           width: '33.333%', flexShrink: 0,
           display: 'grid',
@@ -1298,7 +1304,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           />
         </div>
 
-        {isMobile && <div style={{ height: 130, flexShrink: 0 }} />}
 
         </div>{/* /現物需給 */}
 
@@ -1310,7 +1315,100 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           flexDirection: 'column',
           height: '100%',
           overflowY: isMobile ? 'auto' : 'hidden',
+          paddingBottom: isMobile ? 130 : 0,
         }}>
+
+          {/* 先物OI・取引高（日次） */}
+          {(() => {
+            const rows = futuresDailyData.slice(0, isMobile ? futuresDailyData.length : 20)
+            const fmtOi  = (n: number) => (n / 10000).toFixed(1) + '万'
+            const fmtVol = (n: number) => n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString()
+            const latestDate = futuresDailyData[0]?.date ?? null
+            return (
+              <div style={isMobile ? s.halfPanelMobile : { ...s.halfPanel, minHeight: 0 }}>
+                {/* ヘッダー */}
+                <div style={{ ...s.panelHead, minHeight: 36 }}>
+                  <div style={s.panelTitle}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                    </svg>
+                    先物OI・取引高
+                    <span style={s.panelSub}>日経225先物 全限月</span>
+                  </div>
+                  <div style={s.panelRight}>
+                    {latestDate && <span style={s.dataRange}>{latestDate}</span>}
+                    <button onClick={() => loadFuturesDaily(true)} style={s.reloadBtn} title="再読み込み">↺</button>
+                  </div>
+                </div>
+
+                {/* ボディ */}
+                {futuresDailyLoading && futuresDailyData.length === 0
+                  ? <div style={s.center}><div style={s.spinner} /></div>
+                  : futuresDailyError && futuresDailyData.length === 0
+                  ? <div style={s.center}>
+                      <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{futuresDailyError}</div>
+                      <button style={s.retryBtn} onClick={() => loadFuturesDaily(true)}>再試行</button>
+                    </div>
+                  : futuresDailyData.length === 0
+                  ? <div style={s.center}><div style={{ fontSize: 12, color: 'var(--text-dim)' }}>データなし</div></div>
+                  : (
+                    <div style={s.tableWrap}>
+                      <table style={s.table}>
+                        <thead>
+                          <tr>
+                            <th style={{ ...s.th, ...s.thDate }}>日付</th>
+                            <th style={s.th}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                <button onClick={() => setDeltaModal('futures_oi')} title="先物OI前日比 Δ分析" style={s.deltaBtn}>Δ</button>
+                                建玉残高
+                              </div>
+                              <div style={s.thSub}>万枚</div>
+                            </th>
+                            <th style={s.th}>
+                              取引高
+                              <div style={s.thSub}>枚</div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((row, i) => {
+                            const prev = futuresDailyData[i + 1]
+                            const oiDelta = prev ? row.oi - prev.oi : null
+                            const oiDeltaColor = oiDelta == null ? undefined
+                              : oiDelta > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
+                              : oiDelta < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
+                              : undefined
+                            return (
+                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                                <td style={{ ...s.td, ...s.tdDate }}>
+                                  <div style={s.dateMain}>{row.date.slice(5).replace('/', '/')}</div>
+                                  <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  <span style={{ fontWeight: 600 }}>{fmtOi(row.oi)}</span>
+                                  {oiDelta != null && (
+                                    <span style={{ fontSize: 10, color: oiDeltaColor, marginLeft: 4 }}>
+                                      {oiDelta > 0 ? '+' : ''}{oiDelta >= 10000 || oiDelta <= -10000 ? (oiDelta / 10000).toFixed(1) + '万' : oiDelta.toLocaleString()}
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  <span style={{ color: 'var(--text-sub)' }}>{fmtVol(row.volume)}</span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                }
+              </div>
+            )
+          })()}
+
+          <div style={s.dividerH} />
+
           <MicroQuantView
             theme={theme}
             isMobile={isMobile}
@@ -1319,7 +1417,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             error={participantsError}
             onReload={() => loadParticipants(true)}
           />
-          {isMobile && <div style={{ height: 130, flexShrink: 0 }} />}
         </div>
 
         </div>{/* /スライダートラック */}

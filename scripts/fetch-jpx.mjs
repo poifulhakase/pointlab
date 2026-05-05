@@ -10,7 +10,8 @@ import { dirname, join } from 'path'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
-const XLSX = require('../node_modules/xlsx/xlsx.js')
+const XLSX    = require('../node_modules/xlsx/xlsx.js')
+const AdmZip  = require('../node_modules/adm-zip')
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT      = join(__dirname, '..')
@@ -857,19 +858,137 @@ async function buildTopixData() {
   return points.slice(-252) // 約1年分
 }
 
+// ── 先物日次OI・取引高（PDF抽出） ────────────────────────────────
+// JPX日報ZIP: OseAll = /automation/markets/statistics-derivatives/daily/files/YYYYMM/Daily_Report_OSE_YYYYMMDD.zip
+// ZIP内の sif_dyr_YYYYMMDD.pdf (Page 1 = 日経225先物) から全限月合計を抽出
+// x座標によるカラム判定: yyyymm形式が先頭の行がデータ行
+//   取引高 x≈800-875, 建玉残高 x≈1130-1210
+
+async function parseSifDyrPdf(pdfBytes) {
+  const pdfjsLib = await import('../node_modules/pdfjs-dist/legacy/build/pdf.mjs')
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    '../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
+    import.meta.url
+  ).href
+
+  const data = new Uint8Array(pdfBytes)
+  const pdf  = await pdfjsLib.getDocument({ data, useSystemFonts: true }).promise
+  const page = await pdf.getPage(1)
+  const content = await page.getTextContent()
+
+  const byY = new Map()
+  for (const item of content.items) {
+    if (!('str' in item) || !item.str.trim()) continue
+    const y = Math.round(item.transform[5])
+    if (!byY.has(y)) byY.set(y, [])
+    byY.get(y).push({ x: Math.round(item.transform[4]), str: item.str.trim() })
+  }
+  for (const items of byY.values()) items.sort((a, b) => a.x - b.x)
+
+  let totalVolume = 0
+  let totalOI = 0
+
+  for (const [y, items] of byY.entries()) {
+    if (!items.length || !/^\d{6}$/.test(items[0].str)) continue
+    // 数値はヘッダー行と同じY, またはy-1に出現する場合がある
+    const dataItems = [...items, ...(byY.get(y - 1) ?? [])]
+    const volItem = dataItems.find(i => i.x >= 800 && i.x <= 875 && /^[\d,]+$/.test(i.str))
+    const oiItem  = dataItems.find(i => i.x >= 1130 && i.x <= 1210 && /^[\d,]+$/.test(i.str))
+    if (volItem) totalVolume += parseNum(volItem.str)
+    if (oiItem)  totalOI    += parseNum(oiItem.str)
+  }
+
+  return { volume: totalVolume, oi: totalOI }
+}
+
+async function buildFuturesDailyData() {
+  console.log('\n[futuresDaily] 先物日次OI・取引高取得中...')
+
+  const DAILY_REFERER = `${BASE}/markets/statistics-derivatives/daily/index.html`
+  const DAILY_BASE    = `${BASE}/automation/markets/statistics-derivatives/daily`
+  const H = { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Referer': DAILY_REFERER }
+
+  // 既存データをロードして増分更新
+  const existingPath = join(OUT_DIR, 'futures_daily.json')
+  const existingMap = new Map()
+  try {
+    const raw = readFileSync(existingPath, 'utf-8')
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed.data)) parsed.data.forEach(e => existingMap.set(e.date, e))
+  } catch { /* 初回は空 */ }
+
+  // 月次リスト取得
+  const monthListRes = await fetch(`${DAILY_BASE}/json/daily_report_monthlylist.json`, {
+    headers: H, signal: AbortSignal.timeout(20000),
+  })
+  if (!monthListRes.ok) throw new Error(`monthList HTTP ${monthListRes.status}`)
+  const monthList = await monthListRes.json()
+
+  const months = (monthList.TableDatas ?? []).map(r => r.Month).filter(Boolean)
+  console.log(`  ${months.length}ヶ月分の月次リスト取得`)
+
+  // 直近3ヶ月のみ処理（それ以前は既存JSONから維持）
+  for (const ym of months.slice(0, 3)) {
+    try {
+      const dayListRes = await fetch(`${DAILY_BASE}/json/daily_report_${ym}.json`, {
+        headers: H, signal: AbortSignal.timeout(20000),
+      })
+      if (!dayListRes.ok) { console.warn(`  ✗ daily_report_${ym}.json HTTP ${dayListRes.status}`); continue }
+      const dayList = await dayListRes.json()
+
+      for (const entry of (dayList.TableDatas ?? [])) {
+        const td      = entry.TradeDate  // "YYYYMMDD"
+        const zipPath = entry.OseAll     // "/automation/.../Daily_Report_OSE_YYYYMMDD.zip"
+        if (!td || !zipPath) continue
+
+        const dateStr = `${td.slice(0,4)}/${td.slice(4,6)}/${td.slice(6,8)}`
+        if (existingMap.has(dateStr)) continue  // 既存データはスキップ
+
+        try {
+          const buf      = await fetchBinary(`${BASE}${zipPath}`)
+          const zip      = new AdmZip(Buffer.from(buf))
+          const zipEntry = zip.getEntry(`sif_dyr_${td}.pdf`)
+          if (!zipEntry) { console.warn(`  ✗ ${dateStr}: sif_dyr_${td}.pdf が見つかりません`); continue }
+
+          const { volume, oi } = await parseSifDyrPdf(zipEntry.getData())
+          if (oi > 0) {
+            existingMap.set(dateStr, { date: dateStr, volume, oi })
+            console.log(`  ✓ ${dateStr}: volume=${volume.toLocaleString()}, oi=${oi.toLocaleString()}`)
+          } else {
+            console.warn(`  ✗ ${dateStr}: OI取得失敗 (volume=${volume})`)
+          }
+        } catch (e) {
+          console.warn(`  ✗ ${dateStr}: ${e.message}`)
+        }
+      }
+    } catch (e) {
+      console.warn(`  ✗ ${ym}: ${e.message}`)
+    }
+  }
+
+  if (existingMap.size === 0) throw new Error('先物日次データが取得できませんでした')
+
+  const data = [...existingMap.values()]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 252)
+  console.log(`  → ${data.length}日分`)
+  return data
+}
+
 // ── メイン ─────────────────────────────────────
 
 async function main() {
   console.log('=== JPXデータ取得開始 ===')
   mkdirSync(OUT_DIR, { recursive: true })
 
-  let investorOk           = false
-  let marginOk             = false
-  let vixOk                = false
-  let advanceDeclineOk     = false
-  let shortSellOk          = false
-  let arbitrageOk          = false
-  let futuresOIOk          = false
+  let investorOk            = false
+  let marginOk              = false
+  let vixOk                 = false
+  let advanceDeclineOk      = false
+  let shortSellOk           = false
+  let arbitrageOk           = false
+  let futuresOIOk           = false
+  let futuresDailyOk        = false
   let futuresParticipantsOk = false
   let topixOk               = false
 
@@ -947,6 +1066,16 @@ async function main() {
   }
 
   try {
+    const data = await buildFuturesDailyData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'futures_daily.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ futures_daily.json 保存 (${data.length}件)`)
+    futuresDailyOk = true
+  } catch (e) {
+    console.error('\n✗ futuresDaily:', e.message)
+  }
+
+  try {
     const data = await buildFuturesParticipantsData()
     const out  = { updatedAt: new Date().toISOString(), data }
     writeFileSync(join(OUT_DIR, 'futures_participants.json'), JSON.stringify(out, null, 2))
@@ -973,6 +1102,7 @@ async function main() {
   if (!shortSellOk)             console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
   if (!arbitrageOk)             console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
   if (!futuresOIOk)             console.warn('⚠ futures_oi.json は更新されませんでした（月次データ未公開の可能性）')
+  if (!futuresDailyOk)          console.warn('⚠ futures_daily.json は更新されませんでした（JPX日次PDF取得要確認）')
   if (!futuresParticipantsOk)   console.warn('⚠ futures_participants.json は更新されませんでした（JPX URL設定要確認）')
   if (!topixOk)                 console.warn('⚠ topix.json は更新されませんでした（stooq 接続要確認）')
 }

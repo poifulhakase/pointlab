@@ -5,9 +5,10 @@ import { type MarginWeekData } from '../utils/jpxMarginData'
 import { type ArbitrageWeekData } from '../utils/arbitrageData'
 import { type ShortSellWeekData } from '../utils/shortSellData'
 import { type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
+import { type FuturesDayData } from '../utils/futuresDailyData'
 import { themeVars } from '../utils/themeVars'
 
-export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'arbitrage_short' | 'short_sell' | 'advance_decline'
+export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'arbitrage_short' | 'short_sell' | 'advance_decline' | 'futures_oi'
 
 type Props = {
   type: DeltaModalType
@@ -15,16 +16,18 @@ type Props = {
   arbData: ArbitrageWeekData[]
   ssData: ShortSellWeekData[]
   adData: AdvanceDeclineWeekData[]
+  futuresDailyData: FuturesDayData[]
   theme: 'dark' | 'light'
   onClose: () => void
 }
 
 const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBad: boolean; accent: string }> = {
-  credit_long:     { title: '信用買い残 Δ',    unit: '%',   positiveIsBad: true,  accent: '#f87171' },
-  arbitrage_long:  { title: '裁定買い残 Δ',    unit: '億円', positiveIsBad: false, accent: '#60a5fa' },
-  arbitrage_short: { title: '裁定売り残 Δ',    unit: '億円', positiveIsBad: true,  accent: '#fb923c' },
-  short_sell:      { title: '空売り比率 Δ',    unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
-  advance_decline: { title: '騰落レシオ Δ',    unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
+  credit_long:     { title: '信用買い残 Δ',      unit: '%',   positiveIsBad: true,  accent: '#f87171' },
+  arbitrage_long:  { title: '裁定買い残 Δ',      unit: '億円', positiveIsBad: false, accent: '#60a5fa' },
+  arbitrage_short: { title: '裁定売り残 Δ',      unit: '億円', positiveIsBad: true,  accent: '#fb923c' },
+  short_sell:      { title: '空売り比率 Δ',      unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
+  advance_decline: { title: '騰落レシオ Δ',      unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
+  futures_oi:      { title: '先物OI前日比 Δ',    unit: '枚',  positiveIsBad: false, accent: '#34d399' },
 }
 
 const SUB_LABEL: Record<DeltaModalType, string> = {
@@ -33,6 +36,7 @@ const SUB_LABEL: Record<DeltaModalType, string> = {
   arbitrage_short: '週次変化 億円',
   short_sell:      '週次変化 pp',
   advance_decline: '変化率 pp',
+  futures_oi:      '前日比 枚（日経225先物 全限月）',
 }
 
 function toIso(d: string) { return d.replace(/\//g, '-') }
@@ -43,8 +47,16 @@ function computeDeltas(
   arbData: ArbitrageWeekData[],
   ssData: ShortSellWeekData[],
   adData: AdvanceDeclineWeekData[],
+  futuresDailyData: FuturesDayData[],
 ): { time: string; value: number }[] {
   const N = 14
+  if (type === 'futures_oi') {
+    const arr = [...futuresDailyData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
+    return arr.slice(1).map((row, i) => ({
+      time: toIso(row.date),
+      value: row.oi - arr[i].oi,
+    }))
+  }
   if (type === 'credit_long') {
     const arr = [...marData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
     return arr.slice(1).map((row, i) => {
@@ -145,10 +157,10 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
   return <div ref={ref} style={{ height: 220, width: '100%' }} />
 }
 
-export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onClose }: Props) {
+export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDailyData, theme, onClose }: Props) {
   const tv = themeVars(theme)
   const cfg = CONFIG[type]
-  const deltas = computeDeltas(type, marData, arbData, ssData, adData)
+  const deltas = computeDeltas(type, marData, arbData, ssData, adData, futuresDailyData)
   const isDark = theme === 'dark'
 
   const latest = deltas.length > 0 ? deltas[deltas.length - 1].value : null
@@ -225,7 +237,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, theme, onCl
               {cfg.title}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
-              {SUB_LABEL[type]}　直近13週
+              {SUB_LABEL[type]}　直近{type === 'futures_oi' ? '13営業日' : '13週'}
             </div>
           </div>
           <button
