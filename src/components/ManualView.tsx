@@ -76,11 +76,11 @@ export function ManualView({ theme, isMobile }: Props) {
   const c = {
     bg:          isDark ? 'transparent'                 : 'transparent',
     cardBg:      isDark ? 'rgba(255,255,255,0.04)'      : 'rgba(0,0,0,0.03)',
-    cardBorder:  isDark ? 'rgba(255,255,255,0.08)'      : 'rgba(0,0,0,0.08)',
-    title:       isDark ? 'rgba(220,225,245,0.95)'      : 'rgba(30,40,80,0.95)',
-    text:        isDark ? 'rgba(180,185,210,0.85)'      : 'rgba(50,60,100,0.80)',
-    bullet:      isDark ? 'rgba(96,165,250,0.7)'        : 'rgba(37,99,235,0.7)',
-    logoText:    isDark ? 'rgba(180,185,210,0.6)'       : 'rgba(80,90,130,0.55)',
+    cardBorder:  isDark ? 'rgba(255,255,255,0.12)'      : 'rgba(0,0,0,0.08)',
+    title:       isDark ? 'rgba(255,255,255,0.97)'      : 'rgba(30,40,80,0.95)',
+    text:        isDark ? 'rgba(255,255,255,0.90)'      : 'rgba(50,60,100,0.80)',
+    bullet:      isDark ? 'rgba(96,165,250,0.90)'       : 'rgba(37,99,235,0.7)',
+    logoText:    isDark ? 'rgba(255,255,255,0.45)'      : 'rgba(80,90,130,0.55)',
     accent:      isDark ? 'rgba(96,165,250,0.15)'       : 'rgba(37,99,235,0.08)',
     accentBorder:isDark ? 'rgba(96,165,250,0.25)'       : 'rgba(37,99,235,0.2)',
   }
