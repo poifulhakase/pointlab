@@ -3,6 +3,7 @@ export type AppSettings = {
   theme: 'dark' | 'light'
   showPrivate: boolean
   showAnomaly: boolean
+  showPoiroboAlert: boolean
 }
 
 const KEY = 'poical-settings'
@@ -12,6 +13,7 @@ const DEFAULTS: AppSettings = {
   theme: 'dark',
   showPrivate: true,
   showAnomaly: false,
+  showPoiroboAlert: false,
 }
 
 export function getSettings(): AppSettings {

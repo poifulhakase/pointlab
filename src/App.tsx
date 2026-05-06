@@ -197,6 +197,13 @@ export default function App() {
     saveSettings({ ...getSettings(), showAnomaly: v })
   }, [])
 
+  // ── ぽいロボアラート（SQ日ハイライト） ────────────────────────────────
+  const [showPoiroboAlert, setShowPoiroboAlert] = useState<boolean>(() => getSettings().showPoiroboAlert)
+  const handleShowPoiroboAlertChange = useCallback((v: boolean) => {
+    setShowPoiroboAlert(v)
+    saveSettings({ ...getSettings(), showPoiroboAlert: v })
+  }, [])
+
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
   const [quantTab,          setQuantTab]          = useState<'kankyou' | 'genbutsu' | 'micro'>('kankyou')
@@ -376,6 +383,8 @@ export default function App() {
             onShowPrivateChange={handleShowPrivateChange}
             showAnomaly={showAnomaly}
             onShowAnomalyChange={handleShowAnomalyChange}
+            showPoiroboAlert={showPoiroboAlert}
+            onShowPoiroboAlertChange={handleShowPoiroboAlertChange}
             onGoToday={() => cal.goToDate(cal.today)}
             onGoSupport={() => cal.setView('support')}
           />
@@ -467,6 +476,7 @@ export default function App() {
                       getAnomalyEvents={getAnomalyEvents}
                       isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
                       hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
+                      showPoiroboAlert={showPoiroboAlert}
                     />
                   </div>
 

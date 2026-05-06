@@ -28,9 +28,10 @@ type Props = {
   getNoteTitle: (d: Date) => string
   isMobile: boolean
   theme?: 'dark' | 'light'
+  showPoiroboAlert?: boolean
 }
 
-export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark' }: Props) {
+export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false }: Props) {
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
   const bandColor = band ? (isLight ? '#92400e' : band.color) : 'transparent'
@@ -75,7 +76,11 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 ...styles.cell,
                 padding: isMobile ? '3px' : '6px',
                 opacity: dim ? 0.35 : 1,
-                background: td && !dim ? 'rgba(255,210,80,0.18)' : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
+                background: td && !dim
+                  ? 'rgba(255,210,80,0.18)'
+                  : showPoiroboAlert && sqMarkers.length > 0 && !dim
+                    ? 'rgba(248,113,113,0.18)'
+                    : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
                 borderTop: td && !dim ? '3px solid rgba(255,200,60,0.85)' : undefined,
                 cursor: 'pointer',
                 position: 'relative',

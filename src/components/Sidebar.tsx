@@ -6,6 +6,8 @@ import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter, MACRO_COLOR } from '../utils/macroCalendar'
 import { ANOMALY_COLOR } from '../utils/anomalyCalendar'
 
+const POIROBO_ALERT_COLOR = '#f87171'
+
 type Props = {
   current?: Date
   today?: Date
@@ -20,6 +22,8 @@ type Props = {
   onShowPrivateChange: (v: boolean) => void
   showAnomaly: boolean
   onShowAnomalyChange: (v: boolean) => void
+  showPoiroboAlert: boolean
+  onShowPoiroboAlertChange: (v: boolean) => void
   onGoToday?: () => void
   onGoSupport?: () => void
 }
@@ -29,7 +33,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
   { key: 'jp', label: '日本' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, onGoToday, onGoSupport }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onGoToday, onGoSupport }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -257,6 +261,31 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span style={styles.filterLabel} onClick={() => onShowAnomalyChange(!showAnomaly)}>
                 <span style={{ ...styles.filterCountry, color: showAnomaly ? 'var(--text)' : 'var(--text-dim)' }}>
                   アノマリー
+                </span>
+              </span>
+            </label>
+          )}
+
+          {/* ぽいロボアラート（月ビューのみ・SQ日を赤くハイライト） */}
+          {!isMobile && (
+            <label style={styles.filterRow}>
+              <span
+                style={{
+                  ...styles.customCheckbox,
+                  background: showPoiroboAlert ? POIROBO_ALERT_COLOR : 'transparent',
+                  borderColor: showPoiroboAlert ? POIROBO_ALERT_COLOR : 'var(--text-dim)',
+                }}
+                onClick={() => onShowPoiroboAlertChange(!showPoiroboAlert)}
+              >
+                {showPoiroboAlert && (
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                )}
+              </span>
+              <span style={styles.filterLabel} onClick={() => onShowPoiroboAlertChange(!showPoiroboAlert)}>
+                <span style={{ ...styles.filterCountry, color: showPoiroboAlert ? 'var(--text)' : 'var(--text-dim)' }}>
+                  ぽいロボアラート
                 </span>
               </span>
             </label>
