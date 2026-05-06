@@ -57,16 +57,52 @@ function isBaseHoliday(date: Date): boolean {
   return false
 }
 
+/**
+ * 振替休日かどうか。
+ * 日曜に当たった基本祝日を起点に、連続する祝日ブロックを飛び越えた
+ * 最初の平日が振替休日になる（ゴールデンウィーク等の多段振替に対応）。
+ */
+function isSubstituteHoliday(date: Date): boolean {
+  const wd = date.getDay()
+  if (wd === 0 || wd === 6) return false  // 土日は対象外
+  if (isBaseHoliday(date)) return false   // 基本祝日は対象外
+
+  // 直前の連続した祝日ブロックを遡り、日曜に当たる基本祝日を探す
+  let sundayHolidayCount = 0
+  const d = new Date(date)
+  d.setDate(d.getDate() - 1)
+
+  while (true) {
+    const w = d.getDay()
+    if (w === 6) break  // 土曜で打ち切り
+
+    if (w === 0) {
+      if (isBaseHoliday(d)) {
+        sundayHolidayCount++
+        d.setDate(d.getDate() - 1)
+      } else {
+        break  // 祝日でない日曜なら打ち切り
+      }
+    } else {
+      // 平日：基本祝日 or 国民の休日（前後が基本祝日に挟まれた日）なら継続
+      const prevD = new Date(d); prevD.setDate(d.getDate() - 1)
+      const nextD = new Date(d); nextD.setDate(d.getDate() + 1)
+      const isSandwiched = isBaseHoliday(prevD) && isBaseHoliday(nextD)
+      if (isBaseHoliday(d) || isSandwiched) {
+        d.setDate(d.getDate() - 1)
+      } else {
+        break
+      }
+    }
+  }
+
+  return sundayHolidayCount >= 1
+}
+
 /** 国民の祝日かどうか（振替休日・国民の休日を含む） */
 export function isNationalHoliday(date: Date): boolean {
   if (isBaseHoliday(date)) return true
-
-  // 振替休日：日曜が祝日なら翌月曜
-  if (date.getDay() === 1) {
-    const prev = new Date(date)
-    prev.setDate(date.getDate() - 1)
-    if (isBaseHoliday(prev)) return true
-  }
+  if (isSubstituteHoliday(date)) return true
 
   // 国民の休日：前後が祝日に挟まれた平日（再帰しないよう isBaseHoliday を使う）
   const day = date.getDay()
