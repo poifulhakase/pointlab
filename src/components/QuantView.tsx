@@ -1335,7 +1335,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
           {isMobile && <div style={s.dividerH} />}
 
-          {/* 右 1/3: 先物OI（上下分割） */}
+          {/* 右 1/3: 建玉残高・取引高（統合テーブル） */}
           {(() => {
             const rows = futuresDailyData.slice(0, isMobile ? futuresDailyData.length : 20)
             const fmtOi  = (n: number) => (n / 10000).toFixed(1) + '万'
@@ -1349,16 +1349,14 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                 ? { display: 'flex', flexDirection: 'column' }
                 : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
               }>
-
-                {/* 上エリア: 建玉残高 */}
-                <div style={isMobile ? s.halfPanelMobile : s.halfPanel}>
+                <div style={isMobile ? s.halfPanelMobile : { ...s.halfPanel, flex: 1 }}>
                   <div style={{ ...s.panelHead, minHeight: 36 }}>
                     <div style={s.panelTitle}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
                       </svg>
-                      建玉残高
-                      <span style={s.panelSub}>日経225先物 全限月</span>
+                      建玉残高・取引高
+                      <span style={s.panelSub}>日経225先物 全限月 (日次)</span>
                     </div>
                     <div style={s.panelRight}>
                       {latestDate && <span style={s.dataRange}>{latestDate}</span>}
@@ -1376,7 +1374,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                     ? <div style={s.center}><div style={{ fontSize: 12, color: 'var(--text-dim)' }}>データなし</div></div>
                     : (
                       <div style={s.tableWrap}>
-                        <table style={s.table}>
+                        <table style={{ ...s.table, minWidth: 260 }}>
                           <thead>
                             <tr>
                               <th style={{ ...s.th, ...s.thDate }}>日付</th>
@@ -1387,15 +1385,17 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                                 </div>
                                 <div style={s.thSub}>万枚</div>
                               </th>
+                              <th style={s.th}>取引高<div style={s.thSub}>枚</div></th>
                             </tr>
                           </thead>
                           <tbody>
                             {rows.map((row, i) => {
                               const prev = futuresDailyData[i + 1]
-                              const oiDelta = prev ? row.oi - prev.oi : null
-                              const oiDeltaColor = oiDelta == null ? undefined
-                                : oiDelta > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
-                                : oiDelta < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
+                              const oiDelta  = prev ? row.oi - prev.oi : null
+                              const volDelta = prev ? row.volume - prev.volume : null
+                              const posDeltaColor = (d: number | null) => d == null ? undefined
+                                : d > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
+                                : d < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
                                 : undefined
                               return (
                                 <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
@@ -1406,73 +1406,15 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                                   <td style={{ ...s.td, ...s.tdNum }}>
                                     <span style={{ fontWeight: 600 }}>{fmtOi(row.oi)}</span>
                                     {oiDelta != null && (
-                                      <span style={{ fontSize: 10, color: oiDeltaColor, marginLeft: 4 }}>
-                                        {oiDelta > 0 ? '+' : ''}{oiDelta >= 10000 || oiDelta <= -10000 ? (oiDelta / 10000).toFixed(1) + '万' : oiDelta.toLocaleString()}
+                                      <span style={{ fontSize: 10, color: posDeltaColor(oiDelta), marginLeft: 4 }}>
+                                        {oiDelta > 0 ? '+' : ''}{Math.abs(oiDelta) >= 10000 ? (oiDelta / 10000).toFixed(1) + '万' : oiDelta.toLocaleString()}
                                       </span>
                                     )}
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )
-                  }
-                </div>
-
-                <div style={s.dividerH} />
-
-                {/* 下エリア: 取引高 */}
-                <div style={isMobile ? s.halfPanelMobile : s.halfPanel}>
-                  <div style={{ ...s.panelHead, minHeight: 36 }}>
-                    <div style={s.panelTitle}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-                      </svg>
-                      取引高
-                      <span style={s.panelSub}>日経225先物 全限月</span>
-                    </div>
-                    <div style={s.panelRight}>
-                      {latestDate && <span style={s.dataRange}>{latestDate}</span>}
-                    </div>
-                  </div>
-                  {loadingEmpty
-                    ? <div style={s.center}><div style={s.spinner} /></div>
-                    : errorEmpty
-                    ? <div style={s.center}>
-                        <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{futuresDailyError}</div>
-                        <button style={s.retryBtn} onClick={() => loadFuturesDaily(true)}>再試行</button>
-                      </div>
-                    : futuresDailyData.length === 0
-                    ? <div style={s.center}><div style={{ fontSize: 12, color: 'var(--text-dim)' }}>データなし</div></div>
-                    : (
-                      <div style={s.tableWrap}>
-                        <table style={s.table}>
-                          <thead>
-                            <tr>
-                              <th style={{ ...s.th, ...s.thDate }}>日付</th>
-                              <th style={s.th}>取引高<div style={s.thSub}>枚</div></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rows.map((row, i) => {
-                              const prev = futuresDailyData[i + 1]
-                              const volDelta = prev ? row.volume - prev.volume : null
-                              const volDeltaColor = volDelta == null ? undefined
-                                : volDelta > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
-                                : volDelta < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
-                                : undefined
-                              return (
-                                <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
-                                  <td style={{ ...s.td, ...s.tdDate }}>
-                                    <div style={s.dateMain}>{row.date.slice(5).replace('/', '/')}</div>
-                                    <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
                                   </td>
                                   <td style={{ ...s.td, ...s.tdNum }}>
                                     <span style={{ color: 'var(--text-sub)' }}>{fmtVol(row.volume)}</span>
                                     {volDelta != null && (
-                                      <span style={{ fontSize: 10, color: volDeltaColor, marginLeft: 4 }}>
+                                      <span style={{ fontSize: 10, color: posDeltaColor(volDelta), marginLeft: 4 }}>
                                         {volDelta > 0 ? '+' : ''}{fmtVol(Math.abs(volDelta))}
                                       </span>
                                     )}
@@ -1486,7 +1428,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                     )
                   }
                 </div>
-
               </div>
             )
           })()}
