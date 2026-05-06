@@ -30,7 +30,7 @@ const ARTICLES: Article[] = [
   { genre: 'インジケーター', title: '実践統合編',       url: 'https://note.com/pointlab/n/nb4793929edcd', thumb: BASE + 'Stock_Trade_Lab_Multiple_Index.png' },
   // ── イベントドリブン ──────────────────────────────────────────
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.png' },
-  { genre: 'イベントドリブン', title: '権利落ち日',    url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Ex_Rights_Day.jpg' },
+  { genre: 'イベントドリブン', title: '権利落ち日',    url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Ex_Rights_Day.png' },
   { genre: 'イベントドリブン', title: '権利確定日前',  url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Rights_Record_Day.png' },
   { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_TOPIX_Inclusion.png' },
   // ── 未来ガジェット ────────────────────────────────────────────
