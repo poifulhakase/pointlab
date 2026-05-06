@@ -4,7 +4,6 @@ import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import type { FuturesParticipantDayData } from '../utils/futuresParticipantsData'
-import { FuturesOiPanel } from './FuturesOiPanel'
 
 type Props = {
   theme:    'dark' | 'light'
@@ -223,6 +222,8 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '個人' },
   { label: '証券会社' },
   { label: '個人/証券', sub: '合計', isTotal: true },
+  { label: 'ネット合計', sub: '全体', isTotal: true },
+  { label: '週次Δ', sub: '増減', isTotal: true },
 ]
 
 // ── クオンツ分析メモパネル ────────────────────────────
@@ -371,17 +372,14 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
       {/* ── ボディ ── */}
       <div style={{
         flex: 1, overflow: isMobile ? 'visible' : 'hidden', minHeight: 0,
-        display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+        display: 'flex', flexDirection: 'column',
       }}>
 
-        {/* ━━ 左カラム（2/3）━━ */}
-        <div style={{
-          ...(isMobile
-            ? { flexShrink: 0, display: 'flex', flexDirection: 'column' }
-            : { flex: 2, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }),
-          borderRight: isMobile ? 'none' : '1px solid var(--border-dim)',
-          borderBottom: isMobile ? '1px solid var(--border-dim)' : 'none',
-        }}>
+        {/* ━━ テーブルエリア（全幅）━━ */}
+        <div style={isMobile
+          ? { flexShrink: 0, display: 'flex', flexDirection: 'column' }
+          : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
+        }>
           <div style={{
             flex: 1, overflowY: isMobile ? 'visible' : 'auto', overflowX: 'hidden',
             display: 'flex', flexDirection: 'column', gap: 14,
@@ -444,7 +442,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                     <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>買越し=+ / 売越し=−</span>
                   </div>
                   <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 580 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                       <thead>
                         <tr>
                           {TABLE_COLS.map((col, i) => (
@@ -465,12 +463,21 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                           const trendT   = (row.foreign    ?? 0) + (row.trustBank  ?? 0)
                           const gravityT = (row.lifeIns    ?? 0) + (row.invTrust   ?? 0)
                           const noiseT   = (row.individual ?? 0) + (row.securities ?? 0)
+                          const totalNets = trendT + gravityT + noiseT
+                          const prevRow  = data[i + 1]
+                          const prevNets = prevRow
+                            ? ((prevRow.foreign ?? 0) + (prevRow.trustBank ?? 0) +
+                               (prevRow.lifeIns ?? 0) + (prevRow.invTrust  ?? 0) +
+                               (prevRow.individual ?? 0) + (prevRow.securities ?? 0))
+                            : null
+                          const weeklyDelta = prevNets !== null ? totalNets - prevNets : null
                           const cells = [
                             row.foreign ?? null, row.trustBank ?? null, trendT,
                             row.lifeIns ?? null, row.invTrust  ?? null, gravityT,
                             row.individual ?? null, row.securities ?? null, noiseT,
+                            totalNets, weeklyDelta,
                           ] as (number | null)[]
-                          const isTotalIdx = new Set([2, 5, 8])
+                          const isTotalIdx = new Set([2, 5, 8, 9, 10])
                           return (
                             <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
                               <td style={{ ...s.td, minWidth: 68 }}>
@@ -502,15 +509,6 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
               </>
             )}
           </div>
-        </div>
-
-        {/* ━━ 右カラム（1/3）: 先物OI ━━ */}
-        <div style={
-          isMobile
-            ? { flexShrink: 0, display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-dim)' }
-            : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
-        }>
-          <FuturesOiPanel data={data} loading={loading} error={error} onReload={onReload} theme={theme} isMobile={isMobile} />
         </div>
 
       </div>
