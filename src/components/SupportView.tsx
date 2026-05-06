@@ -9,6 +9,8 @@ type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   supportTab: SupportTab
+  onOpenManual?: () => void
+  onOpenLegal?: () => void
 }
 
 function ViewLoader() {
@@ -24,7 +26,7 @@ function ViewLoader() {
   )
 }
 
-export function SupportView({ theme, isMobile, supportTab }: Props) {
+export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenLegal }: Props) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -97,7 +99,7 @@ export function SupportView({ theme, isMobile, supportTab }: Props) {
           WebkitBackdropFilter: 'blur(2px)',
         }}>
           <Suspense fallback={<ViewLoader />}>
-            <NoteView theme={theme} isMobile={isMobile} />
+            <NoteView theme={theme} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} />
           </Suspense>
         </div>
 

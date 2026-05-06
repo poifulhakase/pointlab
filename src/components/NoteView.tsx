@@ -1,6 +1,11 @@
 import React from 'react'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean }
+type Props = {
+  theme: 'dark' | 'light'
+  isMobile: boolean
+  onOpenManual?: () => void
+  onOpenLegal?: () => void
+}
 
 type Article = {
   genre: string
@@ -8,11 +13,15 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
+  internalAction?: 'manual' | 'legal'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
 
 const ARTICLES: Article[] = [
+  // ── ぽいロボ ──────────────────────────────────────────────────
+  { genre: 'ぽいロボ', title: 'ぽいロボの使い方',             url: null, thumb: null, internalAction: 'manual' },
+  { genre: 'ぽいロボ', title: 'プライバシーポリシー・免責事項', url: null, thumb: null, internalAction: 'legal'  },
   // ── 基本 ──────────────────────────────────────────────────────
   { genre: '基本',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
   { genre: '基本',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.png' },
@@ -37,14 +46,22 @@ const ARTICLES: Article[] = [
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.jpg' },
 ]
 
-const GENRES = ['基本', 'インジケーター', 'イベントドリブン', '未来ガジェット']
+const GENRES = ['ぽいロボ', '基本', 'インジケーター', 'イベントドリブン', '未来ガジェット']
 
-function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolean }) {
-  const isComingSoon = article.url === null
+function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal }: {
+  article: Article
+  isMobile: boolean
+  onOpenManual?: () => void
+  onOpenLegal?: () => void
+}) {
+  const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
 
   const handleClick = () => {
-    if (isComingSoon || !article.url) return
+    if (isComingSoon) return
+    if (article.internalAction === 'manual') { onOpenManual?.(); return }
+    if (article.internalAction === 'legal')  { onOpenLegal?.();  return }
+    if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
     } else {
@@ -87,7 +104,7 @@ function ArticleCard({ article, isMobile }: { article: Article; isMobile: boolea
   )
 }
 
-export function NoteView({ isMobile }: Props) {
+export function NoteView({ isMobile, onOpenManual, onOpenLegal }: Props) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -101,7 +118,7 @@ export function NoteView({ isMobile }: Props) {
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} />
                   ))}
                 </div>
               </section>

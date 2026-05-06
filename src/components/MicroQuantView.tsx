@@ -6,12 +6,13 @@ import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import type { FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 
 type Props = {
-  theme:    'dark' | 'light'
-  isMobile: boolean
-  data:     FuturesParticipantDayData[]
-  loading:  boolean
-  error:    string
-  onReload: () => void
+  theme:           'dark' | 'light'
+  isMobile:        boolean
+  data:            FuturesParticipantDayData[]
+  loading:         boolean
+  error:           string
+  onReload:        () => void
+  onOpenNetDelta?: () => void
 }
 
 // ── ヘルパー ──────────────────────────────────────
@@ -223,7 +224,6 @@ const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '証券会社' },
   { label: '個人/証券', sub: '合計', isTotal: true },
   { label: 'ネット合計', sub: '全体', isTotal: true },
-  { label: '週次Δ', sub: '増減', isTotal: true },
 ]
 
 // ── クオンツ分析メモパネル ────────────────────────────
@@ -336,7 +336,7 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
 }
 
 // ── メインコンポーネント ──────────────────────────────
-export function MicroQuantView({ theme, isMobile, data, loading, error, onReload }: Props) {
+export function MicroQuantView({ theme, isMobile, data, loading, error, onReload, onOpenNetDelta }: Props) {
   const tv = themeVars(theme)
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
 
@@ -445,17 +445,31 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                       <thead>
                         <tr>
-                          {TABLE_COLS.map((col, i) => (
-                            <th key={i} style={{
-                              ...s.th,
-                              textAlign: i === 0 ? 'left' : 'right',
-                              borderLeft: col.isTotal ? '2px solid var(--border-dim)' : undefined,
-                              background: col.isTotal ? (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') : 'var(--modal-bg)',
-                            }}>
-                              <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
-                              {col.sub && <div style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginTop: 1 }}>{col.sub}</div>}
-                            </th>
-                          ))}
+                          {TABLE_COLS.map((col, i) => {
+                            const isNetDeltaCol = col.label === 'ネット合計'
+                            return (
+                              <th key={i} style={{
+                                ...s.th,
+                                textAlign: i === 0 ? 'left' : 'right',
+                                borderLeft: col.isTotal ? '2px solid var(--border-dim)' : undefined,
+                                background: col.isTotal ? (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') : 'var(--modal-bg)',
+                              }}>
+                                {isNetDeltaCol && onOpenNetDelta && !isMobile ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                    <button
+                                      onClick={onOpenNetDelta}
+                                      title="ネット合計 週次Δ 分析"
+                                      style={{ background: 'none', border: '1px solid var(--border-dim)', borderRadius: 3, cursor: 'pointer', color: 'var(--accent)', fontSize: 10, fontWeight: 700, padding: '0px 3px', lineHeight: 1.4, letterSpacing: '0.02em', flexShrink: 0 }}
+                                    >Δ</button>
+                                    <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
+                                  </div>
+                                ) : (
+                                  <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
+                                )}
+                                {col.sub && <div style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginTop: 1 }}>{col.sub}</div>}
+                              </th>
+                            )
+                          })}
                         </tr>
                       </thead>
                       <tbody>
@@ -464,20 +478,13 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                           const gravityT = (row.lifeIns    ?? 0) + (row.invTrust   ?? 0)
                           const noiseT   = (row.individual ?? 0) + (row.securities ?? 0)
                           const totalNets = trendT + gravityT + noiseT
-                          const prevRow  = data[i + 1]
-                          const prevNets = prevRow
-                            ? ((prevRow.foreign ?? 0) + (prevRow.trustBank ?? 0) +
-                               (prevRow.lifeIns ?? 0) + (prevRow.invTrust  ?? 0) +
-                               (prevRow.individual ?? 0) + (prevRow.securities ?? 0))
-                            : null
-                          const weeklyDelta = prevNets !== null ? totalNets - prevNets : null
                           const cells = [
                             row.foreign ?? null, row.trustBank ?? null, trendT,
                             row.lifeIns ?? null, row.invTrust  ?? null, gravityT,
                             row.individual ?? null, row.securities ?? null, noiseT,
-                            totalNets, weeklyDelta,
+                            totalNets,
                           ] as (number | null)[]
-                          const isTotalIdx = new Set([2, 5, 8, 9, 10])
+                          const isTotalIdx = new Set([2, 5, 8, 9])
                           return (
                             <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
                               <td style={{ ...s.td, minWidth: 68 }}>

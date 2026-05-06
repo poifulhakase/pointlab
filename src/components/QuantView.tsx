@@ -982,6 +982,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           ssData={ssData}
           adData={adData}
           futuresDailyData={futuresDailyData}
+          participantsData={participantsData}
           theme={theme}
           onClose={() => setDeltaModal(null)}
         />
@@ -1346,6 +1347,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
               loading={participantsLoading}
               error={participantsError}
               onReload={() => loadParticipants(true)}
+              onOpenNetDelta={() => setDeltaModal('futures_net_weekly')}
             />
           </div>
 
@@ -1409,7 +1411,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                               const prev = futuresDailyData[i + 1]
                               const oiDelta  = prev ? row.oi - prev.oi : null
                               const volDelta = prev ? row.volume - prev.volume : null
-                              const posDeltaColor = (d: number | null) => d == null ? undefined
+                              const deltaColor = (d: number | null) => d == null ? undefined
                                 : d > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
                                 : d < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
                                 : undefined
@@ -1419,19 +1421,19 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                                     <div style={s.dateMain}>{row.date.slice(5).replace('/', '/')}</div>
                                     <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum }}>
+                                  <td style={{ ...s.td, ...s.tdNum, background: oiDelta != null ? valueBg(oiDelta, theme) : 'transparent' }}>
                                     <span style={{ fontWeight: 600 }}>{fmtOi(row.oi)}</span>
                                     {oiDelta != null && (
-                                      <span style={{ fontSize: 10, color: posDeltaColor(oiDelta), marginLeft: 4 }}>
+                                      <span style={{ fontSize: 10, color: deltaColor(oiDelta), marginLeft: 4 }}>
                                         {oiDelta > 0 ? '+' : ''}{Math.abs(oiDelta) >= 10000 ? (oiDelta / 10000).toFixed(1) + '万' : oiDelta.toLocaleString()}
                                       </span>
                                     )}
                                   </td>
-                                  <td style={{ ...s.td, ...s.tdNum }}>
+                                  <td style={{ ...s.td, ...s.tdNum, background: volDelta != null ? valueBg(volDelta, theme) : 'transparent' }}>
                                     <span style={{ color: 'var(--text-sub)' }}>{fmtVol(row.volume)}</span>
                                     {volDelta != null && (
-                                      <span style={{ fontSize: 10, color: posDeltaColor(volDelta), marginLeft: 4 }}>
-                                        {volDelta > 0 ? '+' : ''}{fmtVol(Math.abs(volDelta))}
+                                      <span style={{ fontSize: 10, color: deltaColor(volDelta), marginLeft: 4 }}>
+                                        {volDelta > 0 ? '+' : volDelta < 0 ? '-' : ''}{fmtVol(Math.abs(volDelta))}
                                       </span>
                                     )}
                                   </td>

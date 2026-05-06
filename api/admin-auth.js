@@ -2,10 +2,16 @@
  * 管理画面の簡易パスワード認証
  * Vercel の環境変数 ADMIN_PASSWORD を設定してください
  */
+const ALLOWED_ORIGIN = "https://pointlab.vercel.app";
+
 module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin || "";
+  if (origin === ALLOWED_ORIGIN) {
+    res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Vary", "Origin");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -13,6 +19,11 @@ module.exports = async (req, res) => {
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // 自ドメイン以外からのリクエストを拒否
+  if (origin !== ALLOWED_ORIGIN) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
   const password = process.env.ADMIN_PASSWORD;

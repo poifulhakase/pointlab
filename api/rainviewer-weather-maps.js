@@ -2,8 +2,12 @@
  * RainViewer API プロキシ
  * クライアントの CORS / ネットワーク制限を回避
  */
+const ALLOWED_ORIGIN = "https://pointlab.vercel.app";
+
 module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin || "";
+  res.setHeader("Access-Control-Allow-Origin", origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "null");
+  res.setHeader("Vary", "Origin");
   res.setHeader("Cache-Control", "public, max-age=300");
   try {
     const r = await fetch("https://api.rainviewer.com/public/weather-maps.json");

@@ -3,9 +3,13 @@
  * サーバーサイドで取得するのでCORSの制約なし
  * Vercel Edge Cache: 1時間
  */
+const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
+
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const origin = req.headers.origin || ''
+  res.setHeader('Access-Control-Allow-Origin', origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : 'null')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Vary', 'Origin')
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()

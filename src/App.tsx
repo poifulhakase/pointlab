@@ -60,19 +60,17 @@ interface GearDropdownProps {
   onOpenNotifications: () => void
   onOpenAccount: () => void
   onOpenSpec: () => void
-  onOpenLegal: () => void
 }
 const GearDropdown = memo(({
   dropRef, pos, theme, user, syncStatus,
   onToggleTheme, onOpenNotifications, onOpenAccount,
-  onOpenSpec, onOpenLegal,
+  onOpenSpec,
 }: GearDropdownProps) => (
   <div ref={dropRef} style={{ ...styles.gearDropdown, bottom: pos.bottom, right: pos.right }} className="glass">
     <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>カレンダー通知</GearItem>
     <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
       {theme === 'dark' ? 'ライトモード' : 'ダークモード'}
     </GearItem>
-    <GearItem icon={<ShieldIcon />} onClick={onOpenLegal}>プライバシー・免責事項</GearItem>
     {user?.email === 'sushi.ramen.unajyu@gmail.com' && (
       <GearItem icon={<DocIcon />} onClick={onOpenSpec}>システム仕様</GearItem>
     )}
@@ -121,13 +119,6 @@ function DocIcon() {
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
       <polyline points="14 2 14 8 20 8"/>
       <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>
-  )
-}
-function ShieldIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
     </svg>
   )
 }
@@ -209,7 +200,7 @@ export default function App() {
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
   const [quantTab,          setQuantTab]          = useState<'kankyou' | 'genbutsu' | 'micro'>('kankyou')
-  const [supportTab,        setSupportTab]        = useState<'session' | 'note' | 'manual'>('session')
+  const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('session')
   const [quantSettingsOpen, setQuantSettingsOpen] = useState(false)
   const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
@@ -353,7 +344,6 @@ export default function App() {
     onOpenNotifications: () => { setSettingsOpen(true); closeGear() },
     onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
     onOpenSpec:          () => { cal.setView('spec'); closeGear() },
-    onOpenLegal:         () => { cal.setView('legal'); closeGear() },
   }), [toggleTheme, closeGear, cal])
 
   const isCalView = cal.view === 'day' || cal.view === 'week' || cal.view === 'month'
@@ -410,7 +400,7 @@ export default function App() {
           {/* 研究員サポート室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} />
             </Suspense>
           )}
 
@@ -431,7 +421,12 @@ export default function App() {
           {/* ノート */}
           {cal.view === 'note' && (
             <Suspense fallback={<ViewLoader />}>
-              <NoteView theme={theme} isMobile={isMobile} />
+              <NoteView
+                theme={theme}
+                isMobile={isMobile}
+                onOpenManual={() => cal.setView('manual')}
+                onOpenLegal={() => cal.setView('legal')}
+              />
             </Suspense>
           )}
 
@@ -565,10 +560,14 @@ export default function App() {
                     onClick={() => setChartSymbol(s.symbol)}
                   >{s.label}</button>
                 ))}
-                <span style={styles.floatDivider} />
-                <button style={styles.floatIconBtn} onClick={() => setChartSettingsOpen(true)} aria-label="チャートレイアウト">
-                  <GearIcon />
-                </button>
+                {!isMobile && (
+                  <>
+                    <span style={styles.floatDivider} />
+                    <button style={styles.floatIconBtn} onClick={() => setChartSettingsOpen(true)} aria-label="チャートレイアウト">
+                      <GearIcon />
+                    </button>
+                  </>
+                )}
               </>
             )}
             {cal.view === 'quant' && (
@@ -589,12 +588,12 @@ export default function App() {
               </>
             )}
             {cal.view === 'support' && (
-              (['session', 'note', 'manual'] as const).map((tab, i) => (
+              (['session', 'note'] as const).map((tab, i) => (
                 <button
                   key={tab}
                   style={{ ...styles.floatTab, ...(supportTab === tab ? styles.floatTabActive : {}) }}
                   onClick={() => setSupportTab(tab)}
-                >{['研究室', '資料', '使い方'][i]}</button>
+                >{['研究室', '資料'][i]}</button>
               ))
             )}
           </div>
