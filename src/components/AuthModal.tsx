@@ -66,11 +66,7 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div style={styles.body}>
       <div style={styles.logoWrap}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}>
-          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-          <path d="M2 17l10 5 10-5"/>
-          <path d="M2 12l10 5 10-5"/>
-        </svg>
+        <img src="/poirobo.png" alt="ぽいロボ" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
       </div>
       <h2 style={styles.title}>ぽいロボ</h2>
       <p style={styles.subtitle}>IDとパスワードを入力してください</p>
@@ -261,8 +257,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   body: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 },
   logoWrap: {
-    width: 56, height: 56, borderRadius: '50%',
-    background: 'var(--bg-subtle)', border: '1px solid var(--glass-border)',
+    width: 80, height: 80, borderRadius: '50%',
+    background: '#fff', overflow: 'hidden',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   avatarWrap: { width: 64, height: 64, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--glass-border)' },
