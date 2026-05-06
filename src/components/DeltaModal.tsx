@@ -154,7 +154,7 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
     return () => chart.remove()
   }, [deltas, theme, type, isDark, cfg.positiveIsBad])
 
-  return <div ref={ref} style={{ height: 220, width: '100%' }} />
+  return <div ref={ref} style={{ height: 440, width: '100%' }} />
 }
 
 export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDailyData, theme, onClose }: Props) {
@@ -296,7 +296,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
         {/* チャート */}
         <div style={{ flexShrink: 0, padding: '6px 20px 8px' }}>
           {deltas.length < 2
-            ? <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
+            ? <div style={{ height: 440, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
             : <DeltaChart type={type} deltas={deltas} theme={theme} />
           }
         </div>
