@@ -599,7 +599,7 @@ export default function App() {
                   key={tab}
                   style={{ ...styles.floatTab, ...(supportTab === tab ? styles.floatTabActive : {}) }}
                   onClick={() => setSupportTab(tab)}
-                >{['研究室', 'データ', '使い方'][i]}</button>
+                >{['研究室', '資料', '使い方'][i]}</button>
               ))
             )}
           </div>
