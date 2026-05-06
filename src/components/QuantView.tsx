@@ -456,7 +456,14 @@ function buildExportJson(
     nikkei225_latest,
     usdjpy_latest,
     arbitrage_daily_recent,
-    futures_oi_recent: futuresDailyData.slice(0, 20).map(d => ({ date: d.date, volume: d.volume, oi: d.oi })),
+    futures_oi_recent: futuresDailyData.slice(0, 20).map((d, i) => {
+      const prev = futuresDailyData[i + 1]
+      const oi_delta      = prev ? d.oi - prev.oi : null
+      const oi_delta_pct  = prev && prev.oi > 0 ? r2((d.oi - prev.oi) / prev.oi * 100) : null
+      const vol_delta     = prev ? d.volume - prev.volume : null
+      const vol_delta_pct = prev && prev.volume > 0 ? r2((d.volume - prev.volume) / prev.volume * 100) : null
+      return { date: d.date, oi: d.oi, oi_delta, oi_delta_pct, volume: d.volume, vol_delta, vol_delta_pct }
+    }),
     micro_supply_demand,
     data: rows,
   }
@@ -562,6 +569,15 @@ const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジ
 
 ■ 構造的リスクとイベント
 （SQ日、重要指標など、スイング期間内の流動性インパクトを特定）
+
+# データフィールド補足
+- futures_oi_recent[].oi : 建玉残高（枚）全限月合計
+- futures_oi_recent[].oi_delta : 前日比枚数変化
+- futures_oi_recent[].oi_delta_pct : 前日比変化率（%）← ②OI歪み判定に使用
+- futures_oi_recent[].volume : 取引高（枚）
+- futures_oi_recent[].vol_delta_pct : 取引高前日比変化率（%）
+- micro_supply_demand.vectors : 週次ベクター（Trend/Gravity/Noise）← ①実弾判定に使用
+- arbitrage_daily_recent[].delta : 裁定買い残前日比（百万円）
 
 # 入力データ（JSON）
 `
