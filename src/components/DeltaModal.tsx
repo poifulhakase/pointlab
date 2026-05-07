@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createChart, HistogramSeries, LineSeries, ColorType, CrosshairMode } from 'lightweight-charts'
 import { type MarginWeekData } from '../utils/jpxMarginData'
 import { type ArbitrageWeekData } from '../utils/arbitrageData'
@@ -24,14 +24,14 @@ type Props = {
 }
 
 const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBad: boolean; accent: string }> = {
-  credit_long:        { title: '信用買い残 Δ',          unit: '%',   positiveIsBad: true,  accent: '#f87171' },
-  arbitrage_long:     { title: '裁定買い残 Δ',          unit: '億円', positiveIsBad: false, accent: '#60a5fa' },
-  arbitrage_short:    { title: '裁定売り残 Δ',          unit: '億円', positiveIsBad: true,  accent: '#fb923c' },
-  short_sell:         { title: '空売り比率 Δ',          unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
-  advance_decline:    { title: '騰落レシオ Δ',          unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
-  futures_oi:         { title: '先物OI前日比 Δ',        unit: '枚',  positiveIsBad: false, accent: '#34d399' },
-  futures_net_weekly: { title: 'ネット合計 週次Δ',      unit: '枚',  positiveIsBad: false, accent: '#34d399' },
-  pcr:                { title: 'PCR 前日比 Δ',          unit: '',    positiveIsBad: true,  accent: '#f87171' },
+  credit_long:        { title: '信用買い残 変化率',        unit: '%',   positiveIsBad: true,  accent: '#f87171' },
+  arbitrage_long:     { title: '裁定買い残 変化率',        unit: '億円', positiveIsBad: false, accent: '#60a5fa' },
+  arbitrage_short:    { title: '裁定売り残 変化率',        unit: '億円', positiveIsBad: true,  accent: '#fb923c' },
+  short_sell:         { title: '空売り比率 変化率',        unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
+  advance_decline:    { title: '騰落レシオ 変化率',        unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
+  futures_oi:         { title: '先物OI 変化率',            unit: '枚',  positiveIsBad: false, accent: '#34d399' },
+  futures_net_weekly: { title: 'ネット合計 週次変化率',    unit: '枚',  positiveIsBad: false, accent: '#34d399' },
+  pcr:                { title: 'PCR 変化率',               unit: '',    positiveIsBad: true,  accent: '#f87171' },
 }
 
 const SUB_LABEL: Record<DeltaModalType, string> = {
@@ -185,6 +185,13 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
   const cfg = CONFIG[type]
   const deltas = computeDeltas(type, marData, arbData, ssData, adData, futuresDailyData, participantsData)
   const isDark = theme === 'dark'
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 600)
+
+  useEffect(() => {
+    const fn = () => setIsDesktop(window.innerWidth >= 600)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
 
   const latest = deltas.length > 0 ? deltas[deltas.length - 1].value : null
   const vals = deltas.map(d => d.value)
@@ -223,7 +230,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
           boxShadow: isDark
             ? `0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px ${cfg.accent}18, inset 0 1px 0 rgba(255,255,255,0.06)`
             : `0 24px 60px rgba(0,0,0,0.18), 0 0 0 1px ${cfg.accent}28`,
-          width: '92vw', maxWidth: 540,
+          width: '92vw', maxWidth: isDesktop ? 600 : 540,
           maxHeight: '88vh',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
@@ -239,7 +246,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
 
         {/* ヘッダー */}
         <div style={{
-          padding: '18px 22px 16px',
+          padding: isDesktop ? '24px 32px 20px' : '18px 22px 16px',
           display: 'flex', alignItems: 'flex-start', gap: 14,
           flexShrink: 0,
         }}>
@@ -283,7 +290,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
         {latest !== null && (
           <div style={{
             display: 'flex', gap: 10,
-            padding: '0 22px 20px',
+            padding: isDesktop ? '0 32px 26px' : '0 22px 20px',
             flexShrink: 0,
           }}>
             {[
@@ -317,7 +324,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
         <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
 
         {/* チャート */}
-        <div style={{ flexShrink: 0, padding: '6px 20px 8px' }}>
+        <div style={{ flexShrink: 0, padding: isDesktop ? '8px 28px 12px' : '6px 20px 8px' }}>
           {deltas.length < 2
             ? <div style={{ height: 440, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', fontSize: 12 }}>データ不足（2週以上必要）</div>
             : <DeltaChart type={type} deltas={deltas} theme={theme} />
@@ -325,7 +332,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
         </div>
 
         {/* レジェンド */}
-        <div style={{ padding: '10px 22px 24px', display: 'flex', gap: 10, fontSize: 11, flexWrap: 'wrap' as const, flexShrink: 0 }}>
+        <div style={{ padding: isDesktop ? '12px 32px 30px' : '10px 22px 24px', display: 'flex', gap: 10, fontSize: 11, flexWrap: 'wrap' as const, flexShrink: 0 }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '4px 10px', borderRadius: 20,

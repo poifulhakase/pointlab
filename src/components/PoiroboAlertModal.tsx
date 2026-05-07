@@ -46,21 +46,22 @@ const GROUPS: GroupDef[] = [
   {
     label: 'アノマリー',
     items: [
-      { key: 'january_effect',  label: '1月効果',       sub: '年初1〜5営業日' },
-      { key: 'setsubun_top',    label: '節分天井',       sub: '節分（2/3）前後2営業日' },
-      { key: 'nisa_day',        label: 'NISAの日',       sub: '2月13日 前後1営業日' },
-      { key: 'higan_bottom',    label: '彼岸底',         sub: '春分の日の前5営業日' },
-      { key: 'new_fiscal_year', label: '新年度入り',     sub: '4月第1〜3営業日' },
-      { key: 'sell_in_may',     label: 'セルインメイ',   sub: '5月第1〜第2金曜日' },
-      { key: 'investment_day',  label: '投資の日',       sub: '10月4日 前後1営業日' },
-      { key: 'xmas_rally',      label: "X'masラリー",    sub: '12月25日〜年内受渡最終日' },
-      { key: 'tax_loss_selling', label: '損出し売り',    sub: '12月25日〜年内受渡最終日' },
+      { key: 'january_effect',   label: '1月効果',     sub: '年初1〜5営業日' },
+      { key: 'setsubun_top',     label: '節分天井',     sub: '節分（2/3）前後2営業日' },
+      { key: 'nisa_day',         label: 'NISAの日',     sub: '2月13日 前後1営業日' },
+      { key: 'higan_bottom',     label: '彼岸底',       sub: '春分の日の前5営業日' },
+      { key: 'new_fiscal_year',  label: '新年度入り',   sub: '4月第1〜3営業日' },
+      { key: 'sell_in_may',      label: 'セルインメイ', sub: '5月第1〜第2金曜日' },
+      { key: 'investment_day',   label: '投資の日',     sub: '10月4日 前後1営業日' },
+      { key: 'xmas_rally',       label: 'クリスマスラリー', sub: '12月25日〜年内受渡最終日' },
+      { key: 'tax_loss_selling', label: 'タックスロスセリング', sub: '12月25日〜年内受渡最終日' },
     ],
   },
 ]
 
 export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Props) {
   const [local, setLocal] = useState<PoiroboAlertConfig>(config)
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 600)
   const isLight = theme === 'light'
 
   useEffect(() => {
@@ -74,10 +75,60 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
     return () => document.removeEventListener('keydown', fn)
   }, [isOpen, onClose])
 
+  useEffect(() => {
+    const fn = () => setIsDesktop(window.innerWidth >= 600)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+
   if (!isOpen) return null
 
   const toggle = (key: keyof PoiroboAlertConfig) =>
     setLocal(prev => ({ ...prev, [key]: !prev[key] }))
+
+  const bgColor = isLight ? '#fff' : 'rgba(22,22,26,0.97)'
+
+  const renderGroupItems = (group: GroupDef) =>
+    group.items.map(({ key, label, sub }) => {
+      const checked = local[key]
+      return (
+        <label
+          key={key}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => toggle(key)}
+        >
+          <span style={{
+            width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+            border: `2px solid ${checked ? '#f87171' : 'var(--text-dim)'}`,
+            background: checked ? '#f87171' : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s, border-color 0.15s',
+          }}>
+            {checked && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            )}
+          </span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: checked ? 'var(--text)' : 'var(--text-sub)' }}>{label}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>{sub}</div>
+          </div>
+        </label>
+      )
+    })
+
+  const renderGroup = (group: GroupDef, showDivider: boolean) => (
+    <div key={group.label}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 2 }}>
+        {group.label}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {renderGroupItems(group)}
+      </div>
+      {showDivider && <div style={{ height: 1, background: 'var(--border-dim)', margin: '14px 0' }} />}
+    </div>
+  )
 
   const overlay: React.CSSProperties = {
     position: 'fixed', inset: 0, zIndex: 900,
@@ -86,10 +137,11 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
   const panel: React.CSSProperties = {
     position: 'fixed', top: '50%', left: '50%', zIndex: 901,
     transform: 'translate(-50%,-50%)',
-    width: 'min(380px, calc(100vw - 32px))',
+    width: isDesktop ? 'min(680px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))',
     maxHeight: 'calc(100vh - 48px)',
-    overflowY: 'auto',
-    background: isLight ? '#fff' : 'rgba(22,22,26,0.97)',
+    display: 'flex',
+    flexDirection: 'column',
+    background: bgColor,
     border: '1px solid var(--glass-border)',
     borderRadius: 16,
     boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
@@ -101,7 +153,11 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
       <div style={panel} onClick={e => e.stopPropagation()}>
 
         {/* ヘッダー */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid var(--border-dim)', position: 'sticky', top: 0, background: isLight ? '#fff' : 'rgba(22,22,26,0.97)', zIndex: 1 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 18px', borderBottom: '1px solid var(--border-dim)',
+          flexShrink: 0, background: bgColor, borderRadius: '16px 16px 0 0',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -120,58 +176,35 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         </div>
 
         {/* 説明文 */}
-        <div style={{ padding: '14px 18px 10px', fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.65, borderBottom: '1px solid var(--border-dim)' }}>
+        <div style={{ padding: '12px 18px 10px', fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.65, borderBottom: '1px solid var(--border-dim)', flexShrink: 0 }}>
           ハイライトしたいイベントを選択してください。
           チェックした種類のイベントがある日付パネルを<span style={{ color: '#f87171', fontWeight: 600 }}>薄い赤</span>でハイライト表示します。
         </div>
 
         {/* グループ別チェックボックス */}
-        <div style={{ padding: '10px 18px', display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {GROUPS.map((group, gi) => (
-            <div key={group.label} style={{ marginTop: gi > 0 ? 12 : 0 }}>
-              {/* グループラベル */}
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 2 }}>
-                {group.label}
+        <div style={{ padding: '14px 18px', overflowY: 'auto', flex: 1 }}>
+          {isDesktop ? (
+            /* PC: 2列レイアウト（左: SQ日+米国 / 右: 日本+アノマリー） */
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 0', alignItems: 'start' }}>
+              <div style={{ paddingRight: 22, borderRight: '1px solid var(--border-dim)' }}>
+                {renderGroup(GROUPS[0], true)}
+                {renderGroup(GROUPS[1], false)}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {group.items.map(({ key, label, sub }) => {
-                  const checked = local[key]
-                  return (
-                    <label
-                      key={key}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => toggle(key)}
-                    >
-                      <span style={{
-                        width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-                        border: `2px solid ${checked ? '#f87171' : 'var(--text-dim)'}`,
-                        background: checked ? '#f87171' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background 0.15s, border-color 0.15s',
-                      }}>
-                        {checked && (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        )}
-                      </span>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: checked ? 'var(--text)' : 'var(--text-sub)' }}>{label}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>{sub}</div>
-                      </div>
-                    </label>
-                  )
-                })}
+              <div style={{ paddingLeft: 22 }}>
+                {renderGroup(GROUPS[2], true)}
+                {renderGroup(GROUPS[3], false)}
               </div>
-              {gi < GROUPS.length - 1 && (
-                <div style={{ height: 1, background: 'var(--border-dim)', marginTop: 12 }} />
-              )}
             </div>
-          ))}
+          ) : (
+            /* スマホ: 1列 */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {GROUPS.map((group, gi) => renderGroup(group, gi < GROUPS.length - 1))}
+            </div>
+          )}
         </div>
 
         {/* ボタン */}
-        <div style={{ padding: '10px 18px 18px', display: 'flex', gap: 8, position: 'sticky', bottom: 0, background: isLight ? '#fff' : 'rgba(22,22,26,0.97)' }}>
+        <div style={{ padding: '10px 18px 18px', display: 'flex', gap: 8, flexShrink: 0, background: bgColor, borderRadius: '0 0 16px 16px', borderTop: '1px solid var(--border-dim)' }}>
           <button
             onClick={onClose}
             style={{ flex: 1, padding: '9px 0', borderRadius: 9, fontSize: 13, fontWeight: 600, color: 'var(--text-sub)', background: 'var(--bg-medium)', border: '1px solid var(--glass-border)', cursor: 'pointer' }}

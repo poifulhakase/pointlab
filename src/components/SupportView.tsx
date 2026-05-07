@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 
 const NoteView   = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const ManualView = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
@@ -28,6 +28,8 @@ function ViewLoader() {
 
 export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenLegal }: Props) {
   const [visible, setVisible] = useState(false)
+  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([])
+  const rippleIdRef = useRef(0)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -36,16 +38,30 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
     return () => cancelAnimationFrame(id)
   }, [])
 
+  const handleRipple = (e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const id = ++rippleIdRef.current
+    setRipples(prev => [...prev, { id, x, y }])
+    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 1000)
+  }
+
   const tabIndex = supportTab === 'session' ? 0 : supportTab === 'note' ? 1 : 2
   const isDark = theme === 'dark'
   const overlayBg = isDark ? 'rgba(8,16,36,0.82)' : 'rgba(10,20,48,0.75)'
 
   return (
-    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }} onPointerDown={handleRipple}>
       <style>{`
         @keyframes supportKenBurns {
           0%   { transform: scale(1.08); }
           100% { transform: scale(1.00); }
+        }
+        @keyframes supportRipple {
+          0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+          70%  { opacity: 0.4; }
+          100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
         }
       `}</style>
 
@@ -75,6 +91,23 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
         pointerEvents: 'none',
         zIndex: 1,
       }} />
+
+      {/* 波紋レイヤー */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
+        {ripples.map(r => (
+          <div key={r.id} style={{
+            position: 'absolute',
+            left: r.x,
+            top: r.y,
+            width: 700,
+            height: 700,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(180,230,255,0.55) 0%, rgba(103,232,249,0.28) 35%, transparent 68%)',
+            animation: 'supportRipple 1s cubic-bezier(0.2,0.6,0.4,1) forwards',
+            pointerEvents: 'none',
+          }} />
+        ))}
+      </div>
 
       {/* コンテンツカルーセル */}
       <div style={{
