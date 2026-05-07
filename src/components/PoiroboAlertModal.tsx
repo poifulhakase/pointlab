@@ -164,7 +164,7 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
               <path d="M10 22h4"/>
               <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6H8.3C6.3 13.7 5 11.5 5 9a7 7 0 0 1 7-7z"/>
             </svg>
-            ぽいロボ スキャン
+            ぽいロボ レーダー
           </div>
           <button
             onClick={onClose}

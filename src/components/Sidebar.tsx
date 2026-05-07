@@ -285,7 +285,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
             </span>
             <span style={styles.filterLabel} onClick={() => showPoiroboAlert ? onShowPoiroboAlertChange(false) : onPoiroboAlertOpen()}>
               <span style={{ ...styles.filterCountry, color: showPoiroboAlert ? 'var(--text)' : 'var(--text-dim)' }}>
-                ぽいロボ スキャン
+                ぽいロボ レーダー
               </span>
             </span>
           </label>
