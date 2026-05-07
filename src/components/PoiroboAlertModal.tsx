@@ -160,8 +160,9 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              <path d="M9 18h6"/>
+              <path d="M10 22h4"/>
+              <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6H8.3C6.3 13.7 5 11.5 5 9a7 7 0 0 1 7-7z"/>
             </svg>
             ぽいロボ スキャン
           </div>
@@ -184,15 +185,15 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         {/* グループ別チェックボックス */}
         <div style={{ padding: '14px 18px', overflowY: 'auto', flex: 1 }}>
           {isDesktop ? (
-            /* PC: 2列レイアウト（左: SQ日+米国 / 右: 日本+アノマリー） */
+            /* PC: 2列レイアウト（左: SQ日+アノマリー / 右: 米国+日本） */
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 0', alignItems: 'start' }}>
               <div style={{ paddingRight: 22, borderRight: '1px solid var(--border-dim)' }}>
                 {renderGroup(GROUPS[0], true)}
-                {renderGroup(GROUPS[1], false)}
+                {renderGroup(GROUPS[3], false)}
               </div>
               <div style={{ paddingLeft: 22 }}>
-                {renderGroup(GROUPS[2], true)}
-                {renderGroup(GROUPS[3], false)}
+                {renderGroup(GROUPS[1], true)}
+                {renderGroup(GROUPS[2], false)}
               </div>
             </div>
           ) : (
