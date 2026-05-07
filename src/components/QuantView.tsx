@@ -616,7 +616,7 @@ function QuantSettingsModal({
           {/* AI チャットへのリンク */}
           <div style={ms.section}>
             <div style={ms.sectionTitle}>AI チャットで開く</div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
 
               {/* Gemini */}
               <a
@@ -723,7 +723,7 @@ const ms: Record<string, React.CSSProperties> = {
   actionBtn:       { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '9px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: 'var(--text)', background: 'var(--bg-medium)', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'background 0.15s' },
   actionBtnAccent: { background: 'var(--accent-glass)', border: '1px solid var(--accent)', color: '#fff' },
   aiCard: {
-    flex: 1, display: 'flex', alignItems: 'center', gap: 10,
+    flex: '1 1 140px', display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 12px', borderRadius: 10,
     background: 'var(--bg-subtle)', border: '1px solid var(--glass-border)',
     textDecoration: 'none', cursor: 'pointer',
