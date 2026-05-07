@@ -317,7 +317,8 @@ export default function App() {
   useEffect(() => {
     const prev = prevViewRef2.current
     prevViewRef2.current = cal.view
-    if (cal.view === 'quant') setQuantTab('kankyou')
+    if (cal.view === 'chart')  setChartSymbol('INDEX:NKY')
+    if (cal.view === 'quant')  setQuantTab('kankyou')
     // legal/manual/spec から戻る場合はタブを保持（資料タブに留まる）
     if (cal.view === 'support' && prev !== 'legal' && prev !== 'manual' && prev !== 'spec') {
       setSupportTab('session')
