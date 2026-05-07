@@ -35,11 +35,11 @@ const SECTIONS = [
     icon: '🤖',
     title: 'AI分析プロンプト',
     items: [
-      'データビュー右上の「ぽいロボエンジン（レンチアイコン）」ボタン →「プロンプト＋データをコピー」を押します。',
-      'モーダル内の Gemini / Claude ボタンをタップするとAIチャットが直接開きます（Android PWA対応）。',
+      'データビュー右上の「ぽいロボ エンジン（レンチアイコン）」ボタン →「プロンプト＋データをコピー」を押します。',
+      'モーダル内の Gemini / Claude / ChatGPT ボタンをタップするとAIチャットが直接開きます（Android PWA対応）。',
       'クリップボードにコピーされたテキストをそのまま貼り付けるだけです。',
-      'AIが最新の需給データ（VIX・信用倍率・投資主体別・先物OI・PCR など）を読み取り、スイングトレード向けの戦略レポートを自動生成します。',
-      '「確信度70%超 = 勝負圏」「60〜69% = 打診」「59%以下 = 見送り」が判定基準です。',
+      'AIが最新の需給データ（VIX・信用倍率・投資主体別・先物OI・PCRなど）を読み取り、市場の「脆弱性」と「清算プロセス」を定量的に特定します。',
+      '出力形式: 脆弱性シミュレーション報告書（フェーズ / 偏差スコア / Signal Density）・Pain Capacity（主体別耐久限界）・清算・流動性マップ（天井/断崖/安住帯/底）・観測限界。',
     ],
   },
   {
@@ -96,10 +96,10 @@ export function ManualView({ theme, isMobile }: Props) {
           <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.title, letterSpacing: '-0.5px' }}>
-              使い方
+              説明書
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいロボ — 使い方ガイド
+              ぽいロボ — 説明書
             </p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export function ManualView({ theme, isMobile }: Props) {
           fontSize: 13, color: c.text, lineHeight: 1.7,
         }}>
           ぽいロボは、株式投資家向けのカレンダー＋需給分析アプリです。
-          AI分析プロンプトをワンクリックで生成し、Geminiに貼り付けるだけでスイングトレード向けのレポートが得られます。
+          AI分析プロンプトをワンクリックで生成し、Gemini / Claude / ChatGPT に貼り付けるだけで市場の脆弱性・清算プロセスの定量レポートが得られます。
         </div>
 
         {/* セクション */}

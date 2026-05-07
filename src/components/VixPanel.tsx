@@ -146,7 +146,7 @@ function VixDeltaHistogram({ data, theme }: { data: VixWeekData[]; theme: 'dark'
         <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>VIX Δ 前週比 %</span>
         <span style={{ fontSize: 9, color: 'var(--text-dim)' }}>±15% ライン表示</span>
       </div>
-      <div ref={ref} style={{ height: 88 }} />
+      <div ref={ref} style={{ height: 176 }} />
     </div>
   )
 }

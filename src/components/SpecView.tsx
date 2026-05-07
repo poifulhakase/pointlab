@@ -293,13 +293,19 @@ const SPEC_SECTIONS = [
         heading: 'AI分析プロンプト',
         items: [
           '直近12週分のデータをJSON形式でエクスポート（buildExportJson）',
-          '含まれるフィールド: VIX・NS倍率・投資主体別フロー・信用倍率・空売り比率・騰落レシオ・裁定買い残・先物ミクロベクター・PCR',
+          '含まれるフィールド: VIX・NS倍率・投資主体別フロー・信用倍率・空売り比率・騰落レシオ・裁定買い残・先物ミクロベクター・PCR・NAS100日次・VIX日次・偏差スコア・観測限界・SQ/TPI・価格帯空間情報',
           'futures_oi_recent: 日付/OI/OI前日比Δ/OI前日比%/取引高/取引高Δ/PCR/PCR前日比Δ（直近20件）',
           '今後28日のSQ・FOMC等のイベント一覧も含む',
-          'AIプロンプトテンプレート名: 需給解析エンジン（スイング特化）Ver.99',
-          'Gravity条件: 生命保険+投資信託のネット枚数が絶対値6,000枚超かつ加速で強シグナル',
-          'プロンプト基準: 確信度59%以下=静観 / 60〜69%=打診 / 70%超=勝負圏',
-          'ぽいロボエンジンモーダル: Gemini / Claude のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
+          'AIプロンプトテンプレート名: シニア・クオンツ・ストラテジスト（需給ストレス監視エンジン）',
+          'フレームワーク: Layer 0（固定観測ルール） / ステージ1（耐久限界とレジーム） / 解析レイヤー（清算フェーズと自己増殖）',
+          '偏差スコア: 0.30×Z_USDJPY + 0.25×Z_NAS100 + 0.20×Z_VIX⁻¹ + 0.15×Z_OI（MIN_Z=3件以上あれば計算・NAS100失敗時は日経225でフォールバック）',
+          '偏差加速度: Acc = 本日Score - 3日前Score（scoreAtOffset()で計算）',
+          'TPI: (1/SQ残日数) × |VIX日次変化率| — iv_proxyはvixDailyData末尾のchangePct',
+          'price_levels: 日経225 MA5/MA20/MA60・MA乖離率・60日高値/安値 / USDJPY MA5/MA20・MA乖離率・60日高値/安値 / OI集積日Top3',
+          '出力: 脆弱性シミュレーション報告書 / Pain Capacity / 清算・流動性マップ（天井・断崖・安住・底） / 観測限界（Tier比率）',
+          'Cascade Phase 0〜4: 通常→局所清算→自己増殖→パニック連鎖→投げ切り',
+          'Signal Density: [Price急変/OI減少/IV急騰/VIX急騰/USDJPY急変/出来高急増] の同時点灯数/6',
+          'ぽいロボエンジンモーダル: Gemini / Claude / ChatGPT のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
           'ぽいロボエンジンボタンアイコン: レンチ（スパナ）形状',
         ],
       },
@@ -331,6 +337,8 @@ const SPEC_SECTIONS = [
           ['poical-futures-participants-v2', '24時間', '先物投資部門別ネット枚数データ（先物タブ・週次）'],
           ['poical-futures-daily-data', '24時間', '先物建玉残高・取引高・PCRデータ（先物タブ・日次）'],
           ['poical-usdjpy-data', '30分（平日）/ 2時間（土日）', 'USD/JPY 日次データ（現物タブ）'],
+          ['poical-nas100-data', '30分（平日）/ 2時間（土日）', 'NAS100(^NDX) 日次データ（偏差スコア計算用）'],
+          ['poical-vix-daily-data', '30分（平日）/ 2時間（土日）', 'VIX 日次データ（偏差スコア・TPI計算用）'],
         ],
       },
       {
@@ -484,7 +492,7 @@ export function SpecView({ theme, isMobile }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいロボ — 最終更新: 2026-05-07
+              ぽいロボ — 最終更新: 2026-05-08
             </p>
           </div>
         </div>

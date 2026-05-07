@@ -4,8 +4,18 @@ export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'note' | '
 
 const VIEW_STORAGE_KEY = 'poical-view'
 const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'note', 'spec', 'legal', 'manual', 'support']
+const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
 function loadView(): ViewMode {
+  // 管理画面から ?from=admin で遷移してきた場合の初回ウェルカム処理
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('from') === 'admin') {
+    if (!localStorage.getItem(ADMIN_WELCOMED_KEY)) {
+      localStorage.setItem(ADMIN_WELCOMED_KEY, '1')
+      return 'support'
+    }
+    return 'month'
+  }
   const v = localStorage.getItem(VIEW_STORAGE_KEY)
   return VALID_VIEWS.includes(v as ViewMode) ? (v as ViewMode) : 'month'
 }
@@ -81,7 +91,7 @@ export function useCalendar() {
     if (view === 'note')    return 'ノート'
     if (view === 'spec')    return 'システム仕様'
     if (view === 'support') return '研究員サポート室'
-    if (view === 'manual')  return '使い方'
+    if (view === 'manual')  return '説明書'
     if (view === 'legal')   return 'プライバシー・免責事項'
     if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {

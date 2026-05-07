@@ -20,14 +20,15 @@ const BASE = import.meta.env.BASE_URL + 'notes/'
 
 const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
-  { genre: 'ぽいロボ', title: 'ぽいロボの使い方',             url: null, thumb: null, internalAction: 'manual' },
+  { genre: 'ぽいロボ', title: '説明書',                         url: null, thumb: null, internalAction: 'manual' },
+  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能',               url: null, thumb: null },
   { genre: 'ぽいロボ', title: 'プライバシーポリシー・免責事項', url: null, thumb: null, internalAction: 'legal'  },
-  // ── 基本 ──────────────────────────────────────────────────────
-  { genre: '基本',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
-  { genre: '基本',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.png' },
-  { genre: '基本',           title: '時間軸',          url: 'https://note.com/pointlab/n/nd74fce56edcc', thumb: BASE + 'Stock_Trade_Lab_Timeframe.png' },
-  { genre: '基本',           title: 'MTF分析',         url: null,                                         thumb: BASE + 'Stock_Trade_Lab_Mtf_Analysis.png' },
-  { genre: '基本',           title: '分割エントリー',   url: 'https://note.com/pointlab/n/nb16ef04958ae', thumb: BASE + 'Stock_Trade_Lab_SplitEntry.png' },
+  // ── 基礎 ──────────────────────────────────────────────────────
+  { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
+  { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.png' },
+  { genre: '基礎',           title: '時間軸',          url: 'https://note.com/pointlab/n/nd74fce56edcc', thumb: BASE + 'Stock_Trade_Lab_Timeframe.png' },
+  { genre: '基礎',           title: 'MTF分析',         url: null,                                         thumb: BASE + 'Stock_Trade_Lab_Mtf_Analysis.png' },
+  { genre: '基礎',           title: '分割エントリー',   url: 'https://note.com/pointlab/n/nb16ef04958ae', thumb: BASE + 'Stock_Trade_Lab_SplitEntry.png' },
   // ── インジケーター ────────────────────────────────────────────
   { genre: 'インジケーター', title: 'TradingView',    url: 'https://note.com/pointlab/n/n7b69eccb90f3', thumb: BASE + 'Stock_Trade_Lab_TradingView.png' },
   { genre: 'インジケーター', title: 'CVD',             url: 'https://note.com/pointlab/n/ned4eb2264600',  thumb: BASE + 'Stock_Trade_Lab_Cumulative_Volume_Delta.png' },
@@ -46,7 +47,7 @@ const ARTICLES: Article[] = [
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.jpg' },
 ]
 
-const GENRES = ['ぽいロボ', '基本', 'インジケーター', 'イベントドリブン', '未来ガジェット']
+const GENRES = ['ぽいロボ', '基礎', 'インジケーター', 'イベントドリブン', '未来ガジェット']
 
 function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal }: {
   article: Article

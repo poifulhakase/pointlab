@@ -167,7 +167,7 @@ function renderBlock(block: Block, isDark: boolean, key: number) {
 }
 
 // ── メインコンポーネント（フルページビュー）────────────
-export function LegalModal({ theme, isMobile }: { theme: 'dark' | 'light'; isMobile: boolean }) {
+export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }) {
   const [tab, setTab] = useState<Tab>('privacy')
   const isDark = theme === 'dark'
 
@@ -191,7 +191,7 @@ export function LegalModal({ theme, isMobile }: { theme: 'dark' | 'light'; isMob
         {/* ヘッダー */}
         <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
           <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
-          <div>
+          <div style={{ flex: 1 }}>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
               プライバシー・免責事項
             </h1>
@@ -199,6 +199,17 @@ export function LegalModal({ theme, isMobile }: { theme: 'dark' | 'light'; isMob
               ぽいロボ — 最終更新: 2026年4月26日
             </p>
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: 'none', background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: c.logoText, cursor: 'pointer', flexShrink: 0 }}
+              aria-label="閉じる"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* タブ切り替え */}

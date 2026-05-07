@@ -1,7 +1,14 @@
-// VIX（恐怖指数）週次データ
-// データソース: /data/vix.json (scripts/fetch-jpx.mjs で生成) → 失敗時は Yahoo Finance ^VIX にフォールバック
+// VIX（恐怖指数）データ
+// 週次: /data/vix.json → Yahoo Finance ^VIX 週次フォールバック
+// 日次: Yahoo Finance ^VIX 日次（偏差スコア計算用）
 
 import { proxyFetch } from './proxyFetch'
+
+export interface VixDayData {
+  time:      string        // YYYY-MM-DD
+  close:     number
+  changePct: number | null // 前日比（%）
+}
 
 export interface VixWeekData {
   date:       string   // "2026/04/11"
@@ -15,8 +22,16 @@ interface CachedResponse {
   data: VixWeekData[]
 }
 
-const CACHE_KEY = 'poical-vix-data'
-const CACHE_TTL = 24 * 60 * 60 * 1000
+const CACHE_KEY          = 'poical-vix-data'
+const CACHE_TTL          = 24 * 60 * 60 * 1000
+const CACHE_KEY_DAILY    = 'poical-vix-daily-data'
+const CACHE_TTL_OPEN     = 30 * 60 * 1000
+const CACHE_TTL_CLOSED   = 2  * 60 * 60 * 1000
+
+function isMarketOpen(): boolean {
+  const day = new Date().getUTCDay()
+  return day !== 0 && day !== 6
+}
 
 async function fetchVixFromYahoo(): Promise<VixWeekData[]> {
   const sym = '%5EVIX'
@@ -82,4 +97,48 @@ export async function fetchVixData(): Promise<VixWeekData[]> {
     if (stale) return stale
     throw e
   }
+}
+
+// ── VIX 日次データ（偏差スコア計算用） ──────────────────────────────────────
+export async function fetchVixDailyData(force = false): Promise<VixDayData[]> {
+  let stale: VixDayData[] | null = null
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_DAILY)
+    if (raw) {
+      const c = JSON.parse(raw) as { data: VixDayData[]; fetchedAt: number }
+      stale = c.data
+      if (!force) {
+        const ttl = isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED
+        if (Date.now() - c.fetchedAt <= ttl) return c.data
+      }
+    }
+  } catch { /* ignore */ }
+
+  for (const base of ['query1', 'query2']) {
+    try {
+      const target = `https://${base}.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=3mo`
+      const json   = await proxyFetch(target)
+      const r      = (json as any)?.chart?.result?.[0]
+      if (!r) throw new Error('no result')
+      const ts: number[]          = r.timestamp ?? []
+      const cl: (number | null)[] = r.indicators?.quote?.[0]?.close ?? []
+      const pts: VixDayData[]     = []
+      for (let i = 0; i < ts.length; i++) {
+        if (cl[i] == null) continue
+        const time     = new Date(ts[i] * 1000).toISOString().slice(0, 10)
+        const close    = Math.round(cl[i]! * 100) / 100
+        const prev     = pts[pts.length - 1]
+        const changePct = prev
+          ? Math.round((close - prev.close) / prev.close * 10000) / 100
+          : null
+        pts.push({ time, close, changePct })
+      }
+      if (pts.length === 0) throw new Error('データが空')
+      try { localStorage.setItem(CACHE_KEY_DAILY, JSON.stringify({ data: pts, fetchedAt: Date.now() })) } catch { /* ignore */ }
+      return pts
+    } catch { /* 次のベースURLを試みる */ }
+  }
+
+  if (stale) return stale
+  throw new Error('VIX日次データの取得に失敗しました')
 }

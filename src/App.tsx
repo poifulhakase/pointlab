@@ -6,6 +6,7 @@ import { CalendarHeader, GearIcon, MonitorIcon, SunIcon, MoonIcon, BellIcon, Che
 import { AuthModal } from './components/AuthModal'
 import { Sidebar } from './components/Sidebar'
 import { MonthView } from './components/MonthView'
+import { PoiroboAlertModal } from './components/PoiroboAlertModal'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
 import { DayNotePanel } from './components/DayNotePanel'
@@ -15,7 +16,7 @@ import { isMarketClosed, getClosedReason } from './utils/marketHolidays'
 import { getSqDates, getSqMarkersForDate, type SqDate } from './utils/sqCalendar'
 import { getMacroEventsForDate, type MacroFilter } from './utils/macroCalendar'
 import { getAllNoteData, dateKey, type NoteMapEntry, type ScheduleEntry } from './utils/noteStorage'
-import { getSettings, saveSettings } from './utils/settingsStorage'
+import { getSettings, saveSettings, type PoiroboAlertConfig } from './utils/settingsStorage'
 import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 
@@ -198,10 +199,24 @@ export default function App() {
   }, [])
 
   // ── ぽいロボアラート（SQ日ハイライト） ────────────────────────────────
-  const [showPoiroboAlert, setShowPoiroboAlert] = useState<boolean>(() => getSettings().showPoiroboAlert)
+  const [showPoiroboAlert,    setShowPoiroboAlert]    = useState<boolean>(() => getSettings().showPoiroboAlert)
+  const [poiroboAlertConfig,  setPoiroboAlertConfig]  = useState(() => getSettings().poiroboAlertConfig)
+  const [poiroboAlertModalOpen, setPoiroboAlertModalOpen] = useState(false)
+
   const handleShowPoiroboAlertChange = useCallback((v: boolean) => {
     setShowPoiroboAlert(v)
     saveSettings({ ...getSettings(), showPoiroboAlert: v })
+  }, [])
+
+  const handlePoiroboAlertOpen = useCallback(() => {
+    setPoiroboAlertModalOpen(true)
+  }, [])
+
+  const handlePoiroboAlertSave = useCallback((config: PoiroboAlertConfig) => {
+    setPoiroboAlertConfig(config)
+    setShowPoiroboAlert(true)
+    setPoiroboAlertModalOpen(false)
+    saveSettings({ ...getSettings(), showPoiroboAlert: true, poiroboAlertConfig: config })
   }, [])
 
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
@@ -297,6 +312,56 @@ export default function App() {
   const handleMenuClick    = useCallback(() => setSidebarOpen(p => !p), [])
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), [])
 
+  // ── フローティングタブ: ビュー切り替え時にリセット ─────────────────────
+  useEffect(() => {
+    if (cal.view === 'quant')   setQuantTab('kankyou')
+    if (cal.view === 'support') setSupportTab('session')
+  }, [cal.view])
+
+  // ── Android 戻るボタン対応 ────────────────────────────────────────────
+  const backStateRef = useRef({
+    gearOpen: false, settingsOpen: false, authModalOpen: false,
+    noteDate: null as Date | null, poiroboAlertModalOpen: false,
+    quantSettingsOpen: false, chartSettingsOpen: false, view: 'month',
+  })
+  backStateRef.current = {
+    gearOpen, settingsOpen, authModalOpen, noteDate,
+    poiroboAlertModalOpen, quantSettingsOpen, chartSettingsOpen, view: cal.view,
+  }
+  const backActionsRef = useRef({
+    closeGear: () => {}, closeNote: () => {}, setView: (_v: string) => {},
+    setSettingsOpen: (_v: boolean) => {}, setAuthModalOpen: (_v: boolean) => {},
+    setPoiroboAlertModalOpen: (_v: boolean) => {}, setQuantSettingsOpen: (_v: boolean) => {},
+    setChartSettingsOpen: (_v: boolean) => {},
+  })
+  backActionsRef.current = {
+    closeGear, closeNote, setView: cal.setView as (_v: string) => void,
+    setSettingsOpen, setAuthModalOpen, setPoiroboAlertModalOpen,
+    setQuantSettingsOpen, setChartSettingsOpen,
+  }
+  useEffect(() => {
+    history.pushState(null, '')
+    const handlePopState = () => {
+      history.pushState(null, '')
+      const s = backStateRef.current
+      const a = backActionsRef.current
+      if (s.gearOpen)              { a.closeGear();                           return }
+      if (s.settingsOpen)          { a.setSettingsOpen(false);                return }
+      if (s.authModalOpen)         { a.setAuthModalOpen(false);               return }
+      if (s.noteDate)              { a.closeNote();                           return }
+      if (s.poiroboAlertModalOpen) { a.setPoiroboAlertModalOpen(false);       return }
+      if (s.quantSettingsOpen)     { a.setQuantSettingsOpen(false);           return }
+      if (s.chartSettingsOpen)     { a.setChartSettingsOpen(false);           return }
+      const v = s.view
+      if (v === 'spec' || v === 'legal' || v === 'manual') { a.setView('support'); return }
+      if (v === 'support') { a.setView('month'); return }
+      if (v === 'day')     { a.setView('week');  return }
+      if (v === 'week')    { a.setView('month'); return }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── 日/週/月 スワイプ計算 ─────────────────────────────────────────────
   // Panel order: 0=月, 1=週, 2=日
   const calPanelIndex = useMemo(() => {
@@ -377,6 +442,13 @@ export default function App() {
 
   return (
     <div style={styles.app}>
+      <PoiroboAlertModal
+        isOpen={poiroboAlertModalOpen}
+        config={poiroboAlertConfig}
+        theme={theme}
+        onSave={handlePoiroboAlertSave}
+        onClose={() => setPoiroboAlertModalOpen(false)}
+      />
       <div style={styles.body}>
         {isMobile && sidebarOpen && (
           <div style={styles.mobileOverlay} onClick={handleOverlayClick} />
@@ -397,6 +469,7 @@ export default function App() {
             onShowAnomalyChange={handleShowAnomalyChange}
             showPoiroboAlert={showPoiroboAlert}
             onShowPoiroboAlertChange={handleShowPoiroboAlertChange}
+            onPoiroboAlertOpen={handlePoiroboAlertOpen}
             onGoToday={() => cal.goToDate(cal.today)}
             onGoSupport={() => cal.setView('support')}
           />
@@ -416,7 +489,7 @@ export default function App() {
           )}
           {cal.view === 'legal' && (
             <Suspense fallback={<ViewLoader />}>
-              <LegalModal theme={theme} isMobile={isMobile} />
+              <LegalModal theme={theme} isMobile={isMobile} onClose={() => cal.setView('support')} />
             </Suspense>
           )}
 
@@ -486,6 +559,7 @@ export default function App() {
                       isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
                       hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
                       showPoiroboAlert={showPoiroboAlert}
+                      poiroboAlertConfig={poiroboAlertConfig}
                     />
                   </div>
 
@@ -601,7 +675,7 @@ export default function App() {
                   >{QUANT_LABELS[i]}</button>
                 ))}
                 <span style={styles.floatDivider} />
-                <button style={styles.floatIconBtn} onClick={() => setQuantSettingsOpen(true)} aria-label="ぽいロボエンジン">
+                <button style={styles.floatIconBtn} onClick={() => setQuantSettingsOpen(true)} aria-label="ぽいロボ エンジン">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                   </svg>

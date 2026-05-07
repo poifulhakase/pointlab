@@ -2,6 +2,7 @@ import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { type AnomalyEvent } from '../utils/anomalyCalendar'
+import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
 import { getMonthBand } from '../utils/earningsSeason'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
@@ -29,9 +30,10 @@ type Props = {
   isMobile: boolean
   theme?: 'dark' | 'light'
   showPoiroboAlert?: boolean
+  poiroboAlertConfig?: PoiroboAlertConfig
 }
 
-export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false }: Props) {
+export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT }: Props) {
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
   const bandColor = band ? (isLight ? '#92400e' : band.color) : 'transparent'
@@ -62,6 +64,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
           const markers       = getMarkers(d)
           const sqMarkers     = getSqMarkers(d)
           const macroEvts     = getMacroEvents(d)
+          const anomalyEvts   = getAnomalyEvents ? getAnomalyEvents(d) : []
           const closed        = isMarketClosed(d)
           const reason    = getClosedReason(d)
           const showBadge  = closed && !isS && !isSat
@@ -78,7 +81,13 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 opacity: dim ? 0.35 : 1,
                 background: td && !dim
                   ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,210,80,0.18)'
-                  : showPoiroboAlert && sqMarkers.length > 0 && !dim
+                  : showPoiroboAlert && !dim && (
+                      (poiroboAlertConfig.majorSq && sqMarkers.includes('sq-major')) ||
+                      (poiroboAlertConfig.miniSq  && sqMarkers.includes('sq-mini'))  ||
+                      macroEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
+                      anomalyEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
+                      markers.some(m => poiroboAlertConfig[m as keyof typeof poiroboAlertConfig])
+                    )
                     ? 'rgba(248,113,113,0.18)'
                     : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
                 borderTop: td && !dim

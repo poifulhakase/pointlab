@@ -4,7 +4,7 @@ import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
-import { fetchVixData, type VixWeekData } from '../utils/vixData'
+import { fetchVixData, fetchVixDailyData, type VixWeekData, type VixDayData } from '../utils/vixData'
 import { fetchNhkNews, type NhkNewsItem } from '../utils/nhkNews'
 import { getMacroEventsForDate, MACRO_META } from '../utils/macroCalendar'
 import { getSqDates, getSqMarkersForDate, SQ_META } from '../utils/sqCalendar'
@@ -14,6 +14,7 @@ import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, ty
 import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDailyData'
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
+import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
@@ -251,6 +252,19 @@ function getUpcomingEvents(days = 28): { date: string; day: string; events: stri
 
 const EXPORT_WEEKS = 12
 
+// ── 偏差スコア計算ヘルパー ──────────────────────────
+// 最低 MIN_Z 件あれば計算（データ欠損・プロキシ失敗でも動作）
+const MIN_Z = 3
+
+function zScore(values: number[]): number | null {
+  if (values.length < MIN_Z) return null
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  const variance = values.reduce((acc, v) => acc + (v - mean) ** 2, 0) / values.length
+  const std = Math.sqrt(variance)
+  if (std === 0) return 0
+  return r2((values[values.length - 1] - mean) / std)
+}
+
 function findNtForDate(ntMap: Map<string, NtRatioPoint>, weekDate: string): NtRatioPoint | undefined {
   if (ntMap.has(weekDate)) return ntMap.get(weekDate)
   const base = new Date(weekDate)
@@ -291,6 +305,8 @@ function buildExportJson(
   arbDailyData: ArbitrageDayData[],
   usdjpyData: UsdjpyDayData[],
   futuresDailyData: FuturesDayData[],
+  nas100Data: Nas100DayData[],
+  vixDailyData: VixDayData[],
 ) {
   const invMap = new Map(invData.map(d => [toDate(d.date), d]))
   const marMap = new Map(marData.map(d => [toDate(d.date), d]))
@@ -426,17 +442,195 @@ function buildExportJson(
     ma5_dev_pct: fx.ma5dev,
   } : null
 
+  // 信用最新値（兆円換算・total_mass計算用）
+  const mar0 = marData.length > 0 ? marData[0] : null
+  const credit_margin_latest = mar0 ? {
+    date:              toDate(mar0.date),
+    long_bal_trillion: r2(mar0.longBal / 1000000),
+    short_bal_trillion: r2(mar0.shortBal / 1000000),
+    ratio:             mar0.ratio,
+    eval_ratio:        mar0.evalRatio ?? null,
+  } : null
+
   // 裁定日次（直近7件）
   const arbitrage_daily_recent = arbDailyData.slice(0, 7).map(d => ({
     date: d.date, longBal: d.longBal, delta: d.longBalDelta,
   }))
+
+  // NAS100最新値
+  const nas = nas100Data.length > 0 ? nas100Data[nas100Data.length - 1] : null
+  const nas100_latest = nas ? { date: nas.time, close: nas.close, change_pct: nas.changePct } : null
+
+  // ③ 偏差スコア（Zスコア計算・MIN_Z=3 / NAS100→日経フォールバック）
+  const W = 30
+
+  // USDJPY Z
+  const fxSeries = usdjpyData.slice(-W).map(d => d.changePct ?? 0)
+  const z_usdjpy = zScore(fxSeries)
+
+  // NAS100 Z（取得失敗時は日経225のdailyChangePctで代替）
+  let nasSeries: number[]
+  if (nas100Data.length >= MIN_Z) {
+    nasSeries = nas100Data.slice(-W).map(d => d.changePct ?? 0)
+  } else if (ntData.length >= MIN_Z + 1) {
+    const nkSlice = ntData.slice(-Math.min(W + 1, ntData.length))
+    nasSeries = nkSlice.slice(1).map((d, i) =>
+      nkSlice[i].nikkei > 0 ? r2((d.nikkei - nkSlice[i].nikkei) / nkSlice[i].nikkei * 100) : 0
+    )
+  } else {
+    nasSeries = []
+  }
+  const z_nas100 = zScore(nasSeries)
+  const nas100_source = nas100Data.length >= MIN_Z ? 'NAS100(^NDX)' : ntData.length >= MIN_Z + 1 ? '日経225(^N225)フォールバック' : null
+
+  // VIX⁻¹ Z
+  const vixInvSeries = vixDailyData.slice(-W).map(d => d.close > 0 ? 1 / d.close : 0)
+  const z_vix_inv = zScore(vixInvSeries)
+
+  // OI変化率 Z（futuresDailyDataは降順）
+  const oiDeltas: number[] = []
+  for (let i = 0; i < Math.min(W, futuresDailyData.length - 1); i++) {
+    const cur = futuresDailyData[i], prev = futuresDailyData[i + 1]
+    if (prev.oi > 0) oiDeltas.push((cur.oi - prev.oi) / prev.oi * 100)
+  }
+  const z_oi = zScore(oiDeltas)
+
+  // スコア計算ヘルパー（offsetDays=0で本日、3で3日前のzを使う）
+  function scoreAtOffset(offsetDays: number): number | null {
+    function zAt(series: number[], offset: number): number | null {
+      const end = series.length - offset
+      if (end < MIN_Z) return null
+      return zScore(series.slice(0, end))
+    }
+    const zFx  = zAt(fxSeries,    offsetDays)
+    const zNas = zAt(nasSeries,   offsetDays)
+    const zVi  = zAt(vixInvSeries, offsetDays)
+    const zOi  = zAt(oiDeltas,    offsetDays)
+    const components: [number | null, number][] = [
+      [zFx,  0.30], [zNas, 0.25], [zVi,  0.20], [zOi,  0.15],
+    ]
+    const [sum, wt] = components.reduce<[number, number]>(([s, w], [v, ww]) =>
+      v != null ? [s + v * ww, w + ww] : [s, w], [0, 0])
+    return wt >= 0.30 ? r2(sum / wt * wt) : null
+  }
+  const score_today = scoreAtOffset(0)
+  const score_3d    = scoreAtOffset(3)
+
+  const deviation_score = {
+    z_usdjpy,
+    z_nas100,
+    z_vix_inv,
+    z_oi,
+    nas100_source,
+    score:       score_today,
+    acc:         score_today != null && score_3d != null ? r2(score_today - score_3d) : null,
+    window_days: W,
+    note: 'Score=0.30×Z_USDJPY+0.25×Z_NAS100+0.20×Z_VIX⁻¹+0.15×Z_OI / Acc=本日Score-3日前Score / 最低3件以上あれば計算',
+  }
+
+  // ⑤ 観測限界（Tier比率）
+  const now_ms = Date.now()
+  const freshDays = (isoDate: string | null, maxDays: number) =>
+    isoDate ? (now_ms - new Date(isoDate).getTime()) / 86400000 < maxDays : false
+  const tier1_available = [
+    nas100_latest?.date, fx?.time, vixDailyData[vixDailyData.length - 1]?.time,
+    futuresDailyData[0]?.date, nk?.time,
+  ].filter(d => freshDays(d ?? null, 5)).length
+  const tier2_available = [
+    futuresDailyData.find(d => d.pcr != null)?.date,
+    adData[0] ? toDate(adData[0].date) : null,
+  ].filter(d => freshDays(d ?? null, 10)).length
+  const tier3_available = [
+    invData[0] ? toDate(invData[0].date) : null,
+    marData[0] ? toDate(marData[0].date) : null,
+    arbData[0] ? toDate(arbData[0].date) : null,
+  ].filter(d => freshDays(d ?? null, 14)).length
+  const stale_fields = [
+    !freshDays(nas100_latest?.date ?? null, 5) && 'NAS100',
+    !freshDays(fx?.time ?? null, 5)            && 'USDJPY',
+    !freshDays(vixDailyData[vixDailyData.length - 1]?.time ?? null, 5) && 'VIX日次',
+    !freshDays(futuresDailyData[0]?.date ?? null, 5) && '先物OI',
+  ].filter(Boolean)
+  const observation_quality = {
+    tier1: { available: tier1_available, total: 5, weight: 'W1.0' },
+    tier2: { available: tier2_available, total: 2, weight: 'W0.6' },
+    tier3: { available: tier3_available, total: 3, weight: 'W0.3' },
+    stale_fields,
+    note: 'available=鮮度OK件数、total=該当指標数（5営業日以内=W1.0、10日以内=W0.6、14日以内=W0.3）',
+  }
+
+  // ⑥ SQ残日数・TPI（IV proxyにVIX日次changePctを使用）
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const sqThisYear  = getSqDates(today.getFullYear())
+  const sqNextYear  = getSqDates(today.getFullYear() + 1)
+  const allSq = [...sqThisYear, ...sqNextYear].sort((a, b) => a.date.getTime() - b.date.getTime())
+  const nextSq = allSq.find(sq => sq.date > today)
+  const days_to_sq = nextSq ? Math.ceil((nextSq.date.getTime() - today.getTime()) / 86400000) : null
+  const vix_iv_proxy = vixDailyData.length > 0 ? vixDailyData[vixDailyData.length - 1].changePct : null
+  const sq_info = {
+    next_sq_date:  nextSq ? nextSq.date.toISOString().slice(0, 10) : null,
+    next_sq_type:  nextSq?.type ?? null,
+    days_to_sq,
+    iv_proxy:        vix_iv_proxy,
+    iv_proxy_source: 'VIX日次変化率(%)',
+    tpi: days_to_sq && days_to_sq > 0 && vix_iv_proxy != null
+      ? r2((1 / days_to_sq) * Math.abs(vix_iv_proxy)) : null,
+    note: 'TPI = (1/SQ残日数) × |VIX日次変化率| / iv_proxyはVIX直近日次changePct',
+  }
+
+  // ④ 価格帯空間情報（MA・高安値・OI集積帯）
+  function ma(arr: number[], n: number): number | null {
+    if (arr.length < n) return null
+    return r2(arr.slice(-n).reduce((a, b) => a + b, 0) / n)
+  }
+  const nkPrices = ntData.map(d => d.nikkei)
+  const nk60 = nkPrices.slice(-60)
+  const nkMa5  = ma(nkPrices, 5)
+  const nkMa20 = ma(nkPrices, 20)
+  const nkMa60 = ma(nkPrices, 60)
+  const nkHigh60 = nk60.length > 0 ? Math.round(Math.max(...nk60)) : null
+  const nkLow60  = nk60.length > 0 ? Math.round(Math.min(...nk60)) : null
+  const nkCur = nk ? nk.nikkei : null
+  const fxPrices = usdjpyData.map(d => d.close)
+  const fx60 = fxPrices.slice(-60)
+  const fxMa5  = ma(fxPrices, 5)
+  const fxMa20 = ma(fxPrices, 20)
+  const fx60High = fx60.length > 0 ? r2(Math.max(...fx60)) : null
+  const fx60Low  = fx60.length > 0 ? r2(Math.min(...fx60)) : null
+  // OI集積日（直近20日でOI変化が大きかった上位3日）
+  const oiHeavy = futuresDailyData.slice(0, 20)
+    .map((d, i) => {
+      const prev = futuresDailyData[i + 1]
+      return { date: d.date, delta: prev ? Math.abs(d.oi - prev.oi) : 0 }
+    })
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, 3)
+  const price_levels = {
+    nikkei225: {
+      current: nkCur ? Math.round(nkCur) : null,
+      ma5: nkMa5, ma20: nkMa20, ma60: nkMa60,
+      ma5_dev_pct:  nkMa5  && nkCur ? r2((nkCur - nkMa5)  / nkMa5  * 100) : null,
+      ma20_dev_pct: nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
+      high_60d: nkHigh60, low_60d: nkLow60,
+    },
+    usdjpy: {
+      current: fx ? fx.close : null,
+      ma5: fxMa5, ma20: fxMa20,
+      ma5_dev_pct: fxMa5 && fx ? r2((fx.close - fxMa5) / fxMa5 * 100) : null,
+      high_60d: fx60High, low_60d: fx60Low,
+    },
+    oi_heavy_dates: oiHeavy,
+    note: 'MA乖離率は現在値のMAからの乖離(%)。oi_heavy_datesは直近20日中OI変化量Top3',
+  }
 
   // 各指標の時間軸を明示（AIが時間軸のズレを誤解しないように）
   const data_freshness = {
     note: '各指標は公表タイミングが異なります。週次指標と日次指標を混同しないでください。',
     nikkei225:          { data_as_of: nk?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
     usdjpy:             { data_as_of: fx?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    vix:                { data_as_of: vix_latest?.date ?? null,                frequency: '週次', lag_note: '週末終値ベース' },
+    nas100:             { data_as_of: nas100_latest?.date ?? null,             frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
+    vix_weekly:         { data_as_of: vix_latest?.date ?? null,                frequency: '週次', lag_note: '週末終値ベース' },
+    vix_daily:          { data_as_of: vixDailyData[vixDailyData.length - 1]?.time ?? null, frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
     futures_hand:       { data_as_of: participantsData[0]?.date ?? null,       frequency: '日次', lag_note: 'JPX翌営業日公表' },
     investor_flows:     { data_as_of: toDate(invData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     credit_ratio:       { data_as_of: toDate(marData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
@@ -448,14 +642,66 @@ function buildExportJson(
     pcr:                { data_as_of: futuresDailyData.find(d => d.pcr != null)?.date ?? null, frequency: '日次', lag_note: 'オプション引け後更新・先物OIと数時間ズレあり' },
   }
 
+  // system_snapshot: OS が直接参照する入力変数
+  const ts = new Date().toISOString().slice(0, 19).replace('T', ' ')
+  const system_snapshot = {
+    timestamp:     ts,
+    price:         nk ? Math.round(nk.nikkei) : null,
+    volume:        futuresDailyData[0]?.volume ?? null,
+    oi:            futuresDailyData[0]?.oi ?? null,
+    tci:           score_today,
+    void_entropy:  vixDailyData.length > 0
+      ? r2(Math.min(1, vixDailyData[vixDailyData.length - 1].close / 40))
+      : null,
+    obs_integrity: r2(tier1_available / 5),
+    margin_status: marData.length > 0 && marData[0].evalRatio != null
+      ? r2(Math.max(0, Math.min(1, (marData[0].evalRatio + 25) / 30)))
+      : null,
+  }
+
+  // 鮮度スコア（AIが時間ズレを定量的に把握できるよう単一スコア化）
+  const data_freshness_score = {
+    core: r2(
+      (tier1_available / 5) * 0.5 +
+      (tier2_available / 2) * 0.3 +
+      (tier3_available / 3) * 0.2
+    ),
+    note: '0〜1。core<0.5は高鮮度データ不足・判断精度低下。tier1=日次(5営業日以内) tier2=週次(10日以内) tier3=週次(14日以内)',
+  }
+
+  // 優先ウェイト（AIが全指標を等価扱いしないよう重み付けを明示）
+  const priority_weights = {
+    flow:      0.40,
+    oi_volume: 0.25,
+    macro:     0.20,
+    technical: 0.15,
+    note: 'flow=外国人・機関フロー / oi_volume=先物OI・出来高 / macro=VIX・SQ・NAS100 / technical=MA・乖離率',
+  }
+
+  // SQルール（days_to_sq に基づく参加制限を明示）
+  const sq_rule = {
+    '0':   '原則ノートレ',
+    '1-2': 'ポジション縮小',
+    '3+':  '通常運用',
+    current_days_to_sq: days_to_sq,
+    current_rule: days_to_sq == null ? '通常運用'
+      : days_to_sq === 0 ? '原則ノートレ'
+      : days_to_sq <= 2  ? 'ポジション縮小'
+      : '通常運用',
+  }
+
   return {
     meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
+    system_snapshot,
+    data_freshness_score,
+    priority_weights,
     data_freshness,
     upcoming_events: getUpcomingEvents(28),
     recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     vix_latest,
     nikkei225_latest,
     usdjpy_latest,
+    credit_margin_latest,
     arbitrage_daily_recent,
     futures_oi_recent: futuresDailyData.slice(0, 20).map((d, i) => {
       const prev = futuresDailyData[i + 1]
@@ -467,68 +713,57 @@ function buildExportJson(
       return { date: d.date, oi: d.oi, oi_delta, oi_delta_pct, volume: d.volume, vol_delta, vol_delta_pct, pcr: d.pcr ?? null, pcr_delta }
     }),
     micro_supply_demand,
+    nas100_latest,
+    deviation_score,
+    observation_quality,
+    sq_info,
+    sq_rule,
+    price_levels,
     data: rows,
   }
 }
 
 // ── AI 分析プロンプトテンプレート ─────────────────
-const AI_PROMPT_TEMPLATE = `# 🛡️ 役割定義
-あなたは「シニア・クオンツ・ストラテジスト」です。
-不完全なデータから市場の**「物理的レジーム遷移」**と**「清算エネルギー」**を推定せよ。
-「断定」を避け、常に「推定誤差」と「相関の鮮度」を考慮し、2〜14日の清算シナリオを構築すること。
+const AI_PROMPT_TEMPLATE = `# Role
+あなたは価格変動を「需給の質量（重力）」と「市場の呼吸（循環）」として解析する、スイングトレード（ブル・ベア1倍/2倍）専用の需給物理解析OS「ぽいロボ Engine」です。
+小難しい分析に逃げることを禁じ、市場を「エネルギーの蓄積・限界・放出」という物理現象としてのみ捉え、客観的な【需給物理・執行ログ】をコードブロック内に出力せよ。
 
-# 🚥 Layer 0：Event & Dominant Constraint（動的相関）
-1. **Dominant Constraint Ranking**:
-   - 【FX / Rate / Equity】の順位付け。
-   - **Rolling Correlation**: 直近5日と20日の相関変化から、支配勢力の「交代」を検知せよ。
-2. **Theta Pressure**: SQまでの残日数による時間減衰（Charm）の強制力。
+# 分析の3大原則：需給の物理法則
+1. 質量の法則：信用・裁定買い残は「物理的な負債」であり、浮力が消えた瞬間に自由落下を開始する「質量」である。
+2. 弾性の法則：乖離はラバーバンドである。極限まで伸びた後、元の位置へ戻ろうとする「復元力」は最大化する。
+3. 呼吸の法則：市場は吸気（蓄積）と呼気（清算）を繰り返す。現在の過熱から、いつ「吐き出す」かを射抜け。
 
-# 🌀 ステージ1：市場状態（Regime）と遷移トリガー
-現在のRegimeを特定し、次のフェーズへの**「遷移スイッチ」**が入っているか判定せよ。
+# 執行の確信度と資金配分ルール
+- 30-50% [打診執行]：物理的予兆（乖離限界など）に基づく「先回り」。トレンド転換の確証はないが、有利な位置を確保するための少量エントリー。
+- 60-90% [本命執行]：物理的トレンド（節目割れ・MA突破）の確定。反転の慣性が確認された状態での主力ポジション構築。
+- 91%以上 [確信執行]：需給崩壊（強制決済の連鎖）または爆発的加速の発生。利益を最大化するための追撃・最大保持。
 
-- 【Compression】→ トリガー：Gamma Flip突破 ＋ Signed Delta急増
-- 【Ignition】→ トリガー：乖離率の急拡大 ＋ Proxy Gammaの崩壊
-- 【Expansion】→ トリガー：Liquidity Voidへの突入
-- 【Exhaustion】→ トリガー：OI急減 ＋ IV低下 ＋ Volume Divergence
+# 出力形式：
+必ず以下の構成で、黒背景のコードブロック内に全てを出力すること。
 
-# 🔴 解析レイヤー：流動性と清算の多重検証
-### Layer 1：Constraint & Theta Pressure
-- 支配要因からの乖離限界と、時間経過（Theta）による強制ヘッジ圧力を算出。
+---
+## 需給物理・執行ログ：[日付]
+### 【1. 市場の状態診断】
+- ステータス：[ 限界膨張 / 重力反転中 / 真空落下 / 底打ち反転 ]
+- 質量負荷：(信用・裁定の合算状況と重力評価を物理的に記述)
+- 復元力：(平均回帰の必然性とラバーバンドの伸び状況を記述)
 
-### Layer 2：Liquidity Topology（真空と受容）
-- **Vacuum Zone**: Gamma Density Gradientの急減エリア。
-- **Acceptance Zone**: 過去の出来高が厚く、清算が収束しやすい「居心地の良い価格帯」。
+### 【2. 本質的結論】
+- スイングトレードの視点から、現在の「呼吸（サイクル）」がどこにあるのかを簡潔に総括。
 
-### Layer 3：Liquidation Evidence & Confidence
-- **Signed Delta**: 清算の性質（投げ/利確）を判定。
-- **Confidence Score**: 入力データの鮮度と不透明度から、解析の「推定誤差」を算出せよ。
+### 【3. 最終執行指令】
+- 指令：[ ベア本命執行 / ブル打診買い / 全力待機 等 ]
+- 確信度：(0-100%)
 
-# 💡 出力形式（Markdownコードブロック内）
+#### ■ ブル（1倍・2倍）
+- 判定：(購入禁止 / 打診 / 本命 / 継続保持)
+- 物理的根拠：
 
-■ 市場レジーム分析
-・現在のRegime：【状態】 ＋ 【次フェーズへの遷移期待度 %】
-・支配的拘束(L0)：【FX / Rate / Equity】（Rolling Correlationによる変化を明記）
-- Dealer Regime：【Stabilizing % / Destabilizing %】
-- Theta Pressure：(SQ接近による時間的圧力の強さ)
+#### ■ ベア（1倍・2倍）
+- 判定：(購入禁止 / 打診 / 本命 / 継続保持)
+- 物理的根拠：
 
-■ 戦略バイアス：【強気 / 弱気 / 転換警戒】
-・確信度：[XX%] ＋ (推定誤差：±X%：データの不透明性による)
-
-■ 物理的シミュレーション
-・遷移トリガー監視：(どの数値が動けばフェーズが変わるか)
-・最速走行ルート：(真空地帯から受容帯への物理的パス)
-・清算の証明(L3)：(Signed Deltaによる実弾の符号判定)
-
-■ 磁場マップ（Physical Targets）
-・Upper Barrier (Density High): [価格]
-・Liquidity Void (Vacuum Zone): [価格帯]
-・Acceptance Zone (Target): [価格帯]
-・Lower Barrier (Density High): [価格]
-
-■ 戦術指示（Liquidation Scenario）
-・メインシナリオ：(「支配要因の変化がどの遷移トリガーを引き、どの受容帯へ清算を運ぶか」)
-・目標価格：[価格] (清算エネルギーの収束点)
-・撤退条件：(相関の崩壊、または遷移トリガーの消滅)
+---
 
 # 入力データ（JSON）
 `
@@ -593,7 +828,7 @@ function QuantSettingsModal({
               <path d="M2 14h2"/><path d="M20 14h2"/>
               <path d="M15 13v2"/><path d="M9 13v2"/>
             </svg>
-            ぽいロボエンジン
+            ぽいロボ エンジン
           </div>
           <button style={ms.closeBtn} onClick={onClose}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -623,7 +858,7 @@ function QuantSettingsModal({
                 href="https://gemini.google.com/app"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={ms.aiCard}
+                style={{ ...ms.aiCard, flex: '2 1 180px' }}
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
@@ -652,7 +887,7 @@ function QuantSettingsModal({
                 href="https://claude.ai/projects"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={ms.aiCard}
+                style={{ ...ms.aiCard, flex: '1 1 120px' }}
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
@@ -680,7 +915,7 @@ function QuantSettingsModal({
                 href="https://chatgpt.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={ms.aiCard}
+                style={{ ...ms.aiCard, flex: '1 1 120px' }}
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
@@ -819,6 +1054,12 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   const [usdjpyError,   setUsdjpyError]   = useState('')
   const [usdjpyLoaded,  setUsdjpyLoaded]  = useState(false)
 
+  const [nas100Data,   setNas100Data]   = useState<Nas100DayData[]>([])
+  const [nas100Loaded, setNas100Loaded] = useState(false)
+
+  const [vixDailyData,   setVixDailyData]   = useState<VixDayData[]>([])
+  const [vixDailyLoaded, setVixDailyLoaded] = useState(false)
+
   const [futuresDailyData,   setFuturesDailyData]   = useState<FuturesDayData[]>([])
   const [futuresDailyLoaded, setFuturesDailyLoaded] = useState(false)
   const [futuresDailyLoading, setFuturesDailyLoading] = useState(false)
@@ -907,6 +1148,16 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     finally { setUsdjpyLoading(false) }
   }, [])
 
+  const loadNas100 = useCallback(async () => {
+    try { setNas100Data(await fetchNas100Data()); setNas100Loaded(true) }
+    catch { /* エラー時は空配列のまま */ }
+  }, [])
+
+  const loadVixDaily = useCallback(async () => {
+    try { setVixDailyData(await fetchVixDailyData()); setVixDailyLoaded(true) }
+    catch { /* エラー時は空配列のまま */ }
+  }, [])
+
   const loadParticipants = useCallback(async (force = false) => {
     setParticipantsLoading(true); setParticipantsError('')
     try { setParticipantsData(await fetchFuturesParticipantsData(force)); setParticipantsLoaded(true) }
@@ -937,6 +1188,8 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
   useEffect(() => { if (!arbDailyLoaded)  loadArbDaily()     }, [arbDailyLoaded,  loadArbDaily])
   useEffect(() => { if (!usdjpyLoaded)    loadUsdjpy()       }, [usdjpyLoaded,    loadUsdjpy])
+  useEffect(() => { if (!nas100Loaded)    loadNas100()       }, [nas100Loaded,    loadNas100])
+  useEffect(() => { if (!vixDailyLoaded)  loadVixDaily()     }, [vixDailyLoaded,  loadVixDaily])
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
 
   useEffect(() => {
@@ -944,11 +1197,11 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   }, [])
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData])
+  }, [invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 

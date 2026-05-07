@@ -47,7 +47,7 @@ export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) 
                 setPopup(prev => prev?.key === m ? null : { key: m, x: rect.left, y: rect.bottom + 6 })
               }}
             >
-              {isSm ? meta.short : meta.label}
+              {meta.label}
             </span>
           )
         })}
