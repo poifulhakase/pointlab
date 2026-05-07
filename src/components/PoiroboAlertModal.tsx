@@ -160,9 +160,10 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18h6"/>
-              <path d="M10 22h4"/>
-              <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6H8.3C6.3 13.7 5 11.5 5 9a7 7 0 0 1 7-7z"/>
+              <circle cx="12" cy="12" r="2" fill="#f87171" stroke="none"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="12" x2="19.07" y2="4.93"/>
             </svg>
             ぽいロボ レーダー
           </div>
