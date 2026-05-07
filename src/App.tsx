@@ -312,15 +312,15 @@ export default function App() {
   const handleMenuClick    = useCallback(() => setSidebarOpen(p => !p), [])
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), [])
 
-  // ── フローティングタブ: ビュー切り替え時にリセット ─────────────────────
+  // ── フローティングタブ: ページを離れるタイミングでリセット（戻った瞬間に正しい状態で表示）
   const prevViewRef2 = useRef(cal.view)
   useEffect(() => {
     const prev = prevViewRef2.current
     prevViewRef2.current = cal.view
-    if (cal.view === 'chart')  setChartSymbol('INDEX:NKY')
-    if (cal.view === 'quant')  setQuantTab('kankyou')
-    // legal/manual/spec から戻る場合はタブを保持（資料タブに留まる）
-    if (cal.view === 'support' && prev !== 'legal' && prev !== 'manual' && prev !== 'spec') {
+    if (prev === 'chart') setChartSymbol('INDEX:NKY')
+    if (prev === 'quant') setQuantTab('kankyou')
+    // support から legal/manual/spec 以外へ遷移した場合のみリセット（資料タブを保持）
+    if (prev === 'support' && cal.view !== 'legal' && cal.view !== 'manual' && cal.view !== 'spec') {
       setSupportTab('session')
     }
   }, [cal.view])
