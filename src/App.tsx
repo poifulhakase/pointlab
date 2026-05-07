@@ -313,9 +313,15 @@ export default function App() {
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), [])
 
   // ── フローティングタブ: ビュー切り替え時にリセット ─────────────────────
+  const prevViewRef2 = useRef(cal.view)
   useEffect(() => {
-    if (cal.view === 'quant')   setQuantTab('kankyou')
-    if (cal.view === 'support') setSupportTab('session')
+    const prev = prevViewRef2.current
+    prevViewRef2.current = cal.view
+    if (cal.view === 'quant') setQuantTab('kankyou')
+    // legal/manual/spec から戻る場合はタブを保持（資料タブに留まる）
+    if (cal.view === 'support' && prev !== 'legal' && prev !== 'manual' && prev !== 'spec') {
+      setSupportTab('session')
+    }
   }, [cal.view])
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
@@ -484,7 +490,7 @@ export default function App() {
           )}
           {cal.view === 'manual' && (
             <Suspense fallback={<ViewLoader />}>
-              <ManualView theme={theme} isMobile={isMobile} />
+              <ManualView theme={theme} isMobile={isMobile} onClose={() => cal.setView('support')} />
             </Suspense>
           )}
           {cal.view === 'legal' && (
