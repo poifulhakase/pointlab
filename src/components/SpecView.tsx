@@ -227,6 +227,7 @@ const SPEC_SECTIONS = [
           ['騰落レシオ・空売り比率', '毎日', '当日', '毎週金曜19:00 JST 自動取得（52週分）'],
           ['裁定買い残', '毎週金曜日', '翌週金曜日', '毎週金曜19:00 JST 自動取得（52週分）'],
           ['先物投資部門別手口', '毎週金曜日', '翌週木曜日', '毎週金曜19:00 JST 自動取得'],
+          ['PCR（プット・コール・レシオ）', '毎日', '当日（オプション引け後）', '毎週金曜19:00 JST 自動取得（日次60件）'],
         ],
       },
       {
@@ -278,9 +279,12 @@ const SPEC_SECTIONS = [
         heading: '先物タブ ─ 建玉残高・取引高統合テーブル（右1/3・日次）',
         items: [
           'データソース: JPX 先物日次データ → public/data/futures_daily.json',
-          '表示列: 日付 | 建玉残高（万枚）＋前日比Δ | 取引高（枚）＋前日比Δ',
+          '表示列: 日付 | 建玉残高（万枚）＋前日比Δ | 取引高（枚）＋前日比Δ | PCR＋前日比Δ',
+          'PCR（プット・コール・レシオ）: nikkei225jp.com daily2year.json col[16] から取得',
+          'PCR セル背景色: ≥1.2=赤（プット優勢・弱気）/ ≤0.8=緑（コール優勢・強気）/ その他=なし',
+          'PCR テキスト色: ≥1.2=赤 / ≤0.8=緑 / その他=デフォルト（前日比Δ付き）',
           '日経225先物 全限月（大証）の日次集計。直近20件表示（スマートフォンでは全件）',
-          'Δボタン押下で建玉残高の前日比チャートモーダルを表示',
+          'Δボタン: 建玉残高・取引高・PCR それぞれ個別チャートモーダル表示',
           'キャッシュ: localStorage 24時間（`poical-futures-daily-data`）',
         ],
       },
@@ -289,13 +293,14 @@ const SPEC_SECTIONS = [
         heading: 'AI分析プロンプト',
         items: [
           '直近12週分のデータをJSON形式でエクスポート（buildExportJson）',
-          '含まれるフィールド: VIX・NS倍率・投資主体別フロー・信用倍率・空売り比率・騰落レシオ・裁定買い残・先物ミクロベクター',
+          '含まれるフィールド: VIX・NS倍率・投資主体別フロー・信用倍率・空売り比率・騰落レシオ・裁定買い残・先物ミクロベクター・PCR',
+          'futures_oi_recent: 日付/OI/OI前日比Δ/OI前日比%/取引高/取引高Δ/PCR/PCR前日比Δ（直近20件）',
           '今後28日のSQ・FOMC等のイベント一覧も含む',
           'AIプロンプトテンプレート名: 需給解析エンジン（スイング特化）Ver.99',
           'Gravity条件: 生命保険+投資信託のネット枚数が絶対値6,000枚超かつ加速で強シグナル',
           'プロンプト基準: 確信度59%以下=静観 / 60〜69%=打診 / 70%超=勝負圏',
-          '設定モーダルからGemini（gemini.google.com/app）をワンクリックで開くショートカットパネルあり',
-          '設定ボタンアイコン: CPUチップ形状（ぽいロボエンジンを表す）',
+          'ぽいロボエンジンモーダル: Gemini / Claude のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
+          'ぽいロボエンジンボタンアイコン: レンチ（スパナ）形状',
         ],
       },
     ],
@@ -324,7 +329,8 @@ const SPEC_SECTIONS = [
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
           ['poical-futures-participants-v2', '24時間', '先物投資部門別ネット枚数データ（先物タブ・週次）'],
-          ['poical-futures-daily-data', '24時間', '先物建玉残高・取引高データ（先物タブ・日次）'],
+          ['poical-futures-daily-data', '24時間', '先物建玉残高・取引高・PCRデータ（先物タブ・日次）'],
+          ['poical-usdjpy-data', '30分（平日）/ 2時間（土日）', 'USD/JPY 日次データ（現物タブ）'],
         ],
       },
       {
@@ -335,8 +341,10 @@ const SPEC_SECTIONS = [
           '実行: `npm run fetch-data`',
           'GitHub Actions: `.github/workflows/update-data.yml`（毎週金曜19:00 JST + 土曜09:00 JST 自動実行）',
           '出力先: `public/data/margin.json` / `public/data/investor.json` / `public/data/vix.json` / `public/data/advance_decline.json` / `public/data/short_sell.json` / `public/data/arbitrage.json`',
-          '騰落レシオ・空売り比率: nikkei225jp.com daily2year.json（col[7]/col[11]）を週次変換（52週）',
+          '騰落レシオ・空売り比率・PCR: nikkei225jp.com daily2year.json（col[7]/col[11]/col[16]）を一括取得・キャッシュ共有',
+          'PCR = プット/コールOI比（日次・値域0.75〜2.52）。オプション市場引け後更新のためOIより数時間遅れる場合あり',
           '裁定買い残: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json（col[8]、Refererヘッダー必要）を週次52件',
+          'USD/JPY: Yahoo Finance USDJPY=X（日次・3ヶ月・終値/前日比/MA5/MA5乖離）→ public/data/usdjpy.json',
         ],
       },
     ],
@@ -476,7 +484,7 @@ export function SpecView({ theme, isMobile }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいロボ — 最終更新: 2026-05-06
+              ぽいロボ — 最終更新: 2026-05-07
             </p>
           </div>
         </div>

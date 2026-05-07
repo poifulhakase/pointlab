@@ -51,6 +51,10 @@ type Props = {
 export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, theme = 'dark' }: Props) {
   const now = new Date()
   const td = isToday(date)
+  const isLight = theme === 'light'
+  const bandColor = isLight ? '#92400e' : undefined
+  const bandBg    = isLight ? 'rgba(180,83,9,0.12)' : undefined
+  const bandBorder = isLight ? 'rgba(180,83,9,0.35)' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -95,9 +99,9 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
           </span>
           <span style={{
             ...styles.dateNum,
-            background: td ? 'var(--accent-glass)' : 'transparent',
-            color: td ? 'rgba(255,255,255,0.95)' : 'var(--text)',
-            boxShadow: td ? '0 2px 10px rgba(96,165,250,0.4)' : 'none',
+            background: td ? (isLight ? 'rgba(37,99,235,0.12)' : 'var(--accent-glass)') : 'transparent',
+            color: td ? (isLight ? '#1d4ed8' : 'rgba(255,255,255,0.95)') : 'var(--text)',
+            boxShadow: td ? (isLight ? '0 2px 10px rgba(37,99,235,0.2)' : '0 2px 10px rgba(96,165,250,0.4)') : 'none',
           }}>
             {date.getDate()}
           </span>
@@ -107,12 +111,12 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {band ? band.items.map((item, i) => (
               item.url ? (
                 <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  style={{ fontSize: 11, fontWeight: 700, color: bandColor ?? band.color, background: bandBg ?? band.bg, border: `1px solid ${bandBorder ?? band.color + '40'}`, borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   {item.label}
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span key={i} style={{ fontSize: 11, fontWeight: 700, color: band.color, background: band.bg, border: `1px solid ${band.color}40`, borderRadius: 5, padding: '2px 8px' }}>
+                <span key={i} style={{ fontSize: 11, fontWeight: 700, color: bandColor ?? band.color, background: bandBg ?? band.bg, border: `1px solid ${bandBorder ?? band.color + '40'}`, borderRadius: 5, padding: '2px 8px' }}>
                   {item.label}
                 </span>
               )
@@ -158,15 +162,22 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {evtBlocks.map(evtBlock => (
               <div
                 key={evtBlock.id}
-                style={{ ...styles.eventBlock, top: evtBlock.topPx, height: evtBlock.heightPx }}
+                style={{
+                  ...styles.eventBlock,
+                  top: evtBlock.topPx, height: evtBlock.heightPx,
+                  ...(isLight ? { background: 'rgba(37,99,235,0.10)', borderLeft: '4px solid #2563eb' } : {}),
+                }}
                 onClick={() => onOpenNote(date)}
                 title={evtBlock.title}
               >
                 {evtBlock.heightPx < 36
-                  ? <div style={styles.eventTitleInline}>{evtBlock.title || '（無題）'}<span style={styles.eventTimeInline}>{evtBlock.timeLabel}</span></div>
+                  ? <div style={{ ...styles.eventTitleInline, color: isLight ? '#1e3a8a' : 'rgba(255,255,255,0.97)' }}>
+                      {evtBlock.title || '（無題）'}
+                      <span style={{ ...styles.eventTimeInline, color: isLight ? '#2563eb' : 'rgba(255,255,255,0.80)' }}>{evtBlock.timeLabel}</span>
+                    </div>
                   : <>
-                      <div style={styles.eventTitle}>{evtBlock.title || '（無題）'}</div>
-                      <div style={styles.eventTime}>{evtBlock.timeLabel}</div>
+                      <div style={{ ...styles.eventTitle, color: isLight ? '#1e3a8a' : 'rgba(255,255,255,0.97)' }}>{evtBlock.title || '（無題）'}</div>
+                      <div style={{ ...styles.eventTime, color: isLight ? '#2563eb' : 'rgba(255,255,255,0.85)' }}>{evtBlock.timeLabel}</div>
                     </>
                 }
               </div>

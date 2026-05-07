@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 
 export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'note' | 'spec' | 'legal' | 'manual' | 'support'
 
@@ -24,9 +24,10 @@ export function useCalendar() {
     localStorage.setItem(VIEW_STORAGE_KEY, v)
   }, [])
 
-  const goToday = () => setCurrent(new Date(today))
+  const goToday   = useCallback(() => setCurrent(new Date(today)), [today])
+  const goToDate  = useCallback((date: Date) => setCurrent(new Date(date)), [])
 
-  const go = (delta: number) => {
+  const go = useCallback((delta: number) => {
     setCurrent(prev => {
       const d = new Date(prev)
       if (view === 'month') d.setMonth(d.getMonth() + delta)
@@ -34,12 +35,10 @@ export function useCalendar() {
       else d.setDate(d.getDate() + delta)
       return d
     })
-  }
-
-  const goToDate = (date: Date) => setCurrent(new Date(date))
+  }, [view])
 
   /** 月ビュー用：その月のカレンダーグリッド（前後月を含む6週×7日） */
-  const getMonthGrid = (): Date[] => {
+  const getMonthGrid = useCallback((): Date[] => {
     const year = current.getFullYear()
     const month = current.getMonth()
     const first = new Date(year, month, 1)
@@ -52,10 +51,10 @@ export function useCalendar() {
       days.push(d)
     }
     return days
-  }
+  }, [current])
 
   /** 週ビュー用：その週の日曜〜土曜 */
-  const getWeekDays = (): Date[] => {
+  const getWeekDays = useCallback((): Date[] => {
     const d = new Date(current)
     d.setDate(d.getDate() - d.getDay()) // 日曜に戻す
     return Array.from({ length: 7 }, (_, i) => {
@@ -63,17 +62,18 @@ export function useCalendar() {
       day.setDate(d.getDate() + i)
       return day
     })
-  }
+  }, [current])
 
-  const isSameDay = (a: Date, b: Date) =>
+  const isSameDay = useCallback((a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
+  , [])
 
-  const isToday = (d: Date) => isSameDay(d, today)
-  const isCurrentMonth = (d: Date) => d.getMonth() === current.getMonth()
+  const isToday        = useCallback((d: Date) => isSameDay(d, today), [isSameDay, today])
+  const isCurrentMonth = useCallback((d: Date) => d.getMonth() === current.getMonth(), [current])
 
-  const label = () => {
+  const label = useMemo(() => {
     const y = current.getFullYear()
     const m = current.toLocaleDateString('ja-JP', { month: 'long' })
     if (view === 'chart')   return 'チャート'
@@ -92,7 +92,7 @@ export function useCalendar() {
       return `${s.getFullYear()}年 ${s.toLocaleDateString('ja-JP', { month: 'short' })} – ${e.toLocaleDateString('ja-JP', { month: 'short' })}`
     }
     return current.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
-  }
+  }, [view, current, getWeekDays])
 
-  return { current, today, view, setView, go, goToday, goToDate, getMonthGrid, getWeekDays, isSameDay, isToday, isCurrentMonth, label }
+  return { current, today, view, setView, go, goToday, goToDate, getMonthGrid, getWeekDays, isSameDay, isToday, isCurrentMonth, label } as const
 }

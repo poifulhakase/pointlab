@@ -114,6 +114,16 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
 }
 
 // ── エクスポートアイコン（他コンポーネントが使用） ──────
+export function MonitorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <line x1="8" y1="21" x2="16" y2="21"/>
+      <line x1="12" y1="17" x2="12" y2="21"/>
+    </svg>
+  )
+}
+
 export function GearIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -175,7 +185,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 12px',
     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
-    flexShrink: 0, position: 'relative', zIndex: 10, gap: 8,
+    flexShrink: 0, position: 'relative', zIndex: 160, gap: 8,
     userSelect: 'none',
   },
   left: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
@@ -213,7 +223,7 @@ const styles: Record<string, React.CSSProperties> = {
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 100,
+    zIndex: 200,
   },
   todayBtn:  { padding: '5px 12px', borderRadius: 20, fontSize: 13, fontWeight: 500, color: 'var(--text)', flexShrink: 0 },
   navGroup:  { display: 'flex', gap: 2, flexShrink: 0 },

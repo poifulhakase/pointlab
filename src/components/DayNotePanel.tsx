@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { type CheckItem, type DayNote, type ScheduleEntry, getNote, saveNote } from '../utils/noteStorage'
 import { TimeField } from './TimeField'
 import { CustomSelect } from './CustomSelect'
@@ -65,12 +65,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     setIsDirty(prefillTime ? true : false)
     setTimeout(() => titleInputRef.current?.focus(), 20)
   }, [date?.toDateString(), prefillTime])
-
-  useEffect(() => {
-    const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', fn)
-    return () => document.removeEventListener('keydown', fn)
-  }, [onClose])
 
   const persist = (t: string, m: string, cl: CheckItem[], schs: ScheduleEntry[]) => {
     if (!date) return
@@ -155,6 +149,20 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     setChecklist(next); persist(title, memo, next, schedules)
   }
 
+  const handleClose = useCallback(() => {
+    const cleaned = schedules.filter(s => s.title.trim())
+    if (cleaned.length !== schedules.length) {
+      persist(title, memo, checklist, cleaned)
+    }
+    onClose()
+  }, [schedules, title, memo, checklist, onClose])
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
+    document.addEventListener('keydown', fn)
+    return () => document.removeEventListener('keydown', fn)
+  }, [handleClose])
+
   const handleDelete = () => {
     if (!date) return
     if (!window.confirm('このメモ・スケジュールを削除してよろしいですか？')) return
@@ -211,7 +219,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
           pointerEvents: isOpen ? 'auto' : 'none',
           transition: 'opacity 0.15s',
         }}
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       <div
@@ -255,7 +263,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
         {/* ── ヘッダー ── */}
         <div style={styles.modalHeader}>
           <span style={styles.dateChip}>{dateLabel}</span>
-          <button style={styles.closeBtn} onClick={onClose} aria-label="閉じる">
+          <button style={styles.closeBtn} onClick={handleClose} aria-label="閉じる">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
@@ -557,7 +565,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 6,
     padding: '7px 14px', borderRadius: 8,
     background: 'rgba(96,165,250,0.08)', border: '1px dashed rgba(96,165,250,0.30)',
-    color: 'rgba(96,165,250,0.75)', fontSize: 12, fontWeight: 600,
+    color: 'var(--accent)', fontSize: 12, fontWeight: 600,
     alignSelf: 'flex-start',
     cursor: 'pointer',
   },
@@ -622,12 +630,12 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 6,
     padding: '7px 14px', borderRadius: 8,
     background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.28)',
-    color: 'rgba(252,165,165,0.90)', fontSize: 12, fontWeight: 600,
+    color: 'var(--delete-btn-color, rgba(252,165,165,0.90))', fontSize: 12, fontWeight: 600,
   },
   saveFooterBtn: {
     padding: '7px 24px', borderRadius: 8,
     background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.45)',
-    color: 'rgba(96,165,250,1)', fontSize: 12, fontWeight: 700,
+    color: 'var(--accent)', fontSize: 12, fontWeight: 700,
     cursor: 'pointer', transition: 'opacity 0.15s',
   },
   saveFooterBtnDisabled: {

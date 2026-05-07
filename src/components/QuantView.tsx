@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -300,7 +300,7 @@ function buildExportJson(
   const ssMap  = new Map(ssData.map(d => [toDate(d.date), d]))
   const arbMap = new Map(arbData.map(d => [toDate(d.date), d]))
 
-  const allDates = new Set([...invMap.keys(), ...marMap.keys(), ...vixMap.keys()])
+  const allDates = new Set([...invMap.keys(), ...marMap.keys(), ...vixMap.keys(), ...adMap.keys(), ...ssMap.keys(), ...arbMap.keys()])
 
   const sortedDates = Array.from(allDates).sort((a, b) => b.localeCompare(a)).slice(0, EXPORT_WEEKS)
 
@@ -360,7 +360,7 @@ function buildExportJson(
         },
       }
     })
-    .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0)
+    .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0 || r.advance_decline_ratio !== null || r.short_sell_ratio !== null)
 
   // ミクロ需給ベクター
   const mv = computeMicroVectors(participantsData)
@@ -445,6 +445,7 @@ function buildExportJson(
     arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     arbitrage_daily:    { data_as_of: arbDailyData[0]?.date ?? null,           frequency: '日次', lag_note: 'nikkei225jp.com' },
     futures_oi:         { data_as_of: futuresDailyData[0]?.date ?? null,        frequency: '日次', lag_note: 'JPX日報PDF・毎営業日16:31更新' },
+    pcr:                { data_as_of: futuresDailyData.find(d => d.pcr != null)?.date ?? null, frequency: '日次', lag_note: 'オプション引け後更新・先物OIと数時間ズレあり' },
   }
 
   return {
@@ -462,7 +463,8 @@ function buildExportJson(
       const oi_delta_pct  = prev && prev.oi > 0 ? r2((d.oi - prev.oi) / prev.oi * 100) : null
       const vol_delta     = prev ? d.volume - prev.volume : null
       const vol_delta_pct = prev && prev.volume > 0 ? r2((d.volume - prev.volume) / prev.volume * 100) : null
-      return { date: d.date, oi: d.oi, oi_delta, oi_delta_pct, volume: d.volume, vol_delta, vol_delta_pct }
+      const pcr_delta     = d.pcr != null && prev?.pcr != null ? r2(d.pcr - prev.pcr) : null
+      return { date: d.date, oi: d.oi, oi_delta, oi_delta_pct, volume: d.volume, vol_delta, vol_delta_pct, pcr: d.pcr ?? null, pcr_delta }
     }),
     micro_supply_demand,
     data: rows,
@@ -470,114 +472,63 @@ function buildExportJson(
 }
 
 // ── AI 分析プロンプトテンプレート ─────────────────
-const AI_PROMPT_TEMPLATE = `# 🛡️ シニア・クオンツ・ストラテジスト：需給解析エンジン (Ver. 99)
+const AI_PROMPT_TEMPLATE = `# 🛡️ 役割定義
+あなたは「シニア・クオンツ・ストラテジスト」です。
+不完全なデータから市場の**「物理的レジーム遷移」**と**「清算エネルギー」**を推定せよ。
+「断定」を避け、常に「推定誤差」と「相関の鮮度」を考慮し、2〜14日の清算シナリオを構築すること。
 
-# 役割定義
-あなたは、機関投資家向けレポートを作成する「シニア・クオンツ・ストラテジスト」です。
-目的は、市場の「物理的な重力（需給）」を可視化し、ユーザーがテクニカル指標でエントリーするための戦略的バイアスを提供することです。
-チャートの形状よりも、「2日〜14日程度のスイングトレード」期間内に発生する、売買の質量（強制決済）の波及に特化して分析せよ。
+# 🚥 Layer 0：Event & Dominant Constraint（動的相関）
+1. **Dominant Constraint Ranking**:
+   - 【FX / Rate / Equity】の順位付け。
+   - **Rolling Correlation**: 直近5日と20日の相関変化から、支配勢力の「交代」を検知せよ。
+2. **Theta Pressure**: SQまでの残日数による時間減衰（Charm）の強制力。
 
-# 🔴 最重要判定：加速フェーズ検知ロジック（高精度・最終形態）
+# 🌀 ステージ1：市場状態（Regime）と遷移トリガー
+現在のRegimeを特定し、次のフェーズへの**「遷移スイッチ」**が入っているか判定せよ。
 
-以下の3条件を厳密に評価し、**2条件以上の成立、または①が「極大かつ加速」の場合に「加速フェーズ発動」**と断定せよ。
+- 【Compression】→ トリガー：Gamma Flip突破 ＋ Signed Delta急増
+- 【Ignition】→ トリガー：乖離率の急拡大 ＋ Proxy Gammaの崩壊
+- 【Expansion】→ トリガー：Liquidity Voidへの突入
+- 【Exhaustion】→ トリガー：OI急減 ＋ IV低下 ＋ Volume Divergence
 
-■ 判定条件
-① 【ミクロ需給の極大・加速（実弾の加速度）】
-   - Gravity (生命保険+投資信託) のネット枚数が絶対値で 6,000枚を超過
-   - かつ、その絶対値が前日比で「増加」していること（＝投げ/踏みの加速）
-   - ※上記成立で「強シグナル」
+# 🔴 解析レイヤー：流動性と清算の多重検証
+### Layer 1：Constraint & Theta Pressure
+- 支配要因からの乖離限界と、時間経過（Theta）による強制ヘッジ圧力を算出。
 
-② 【先物OIのエネルギー解析（ポジションの歪み）】
-   - 価格と逆方向にOI（建玉）が前日比 3.0%以上増加 → 「強シグナル」
-   - 価格と同方向にOI（建玉）が前日比 3.0%以上増加 かつ ①が同一方向 → 「弱シグナル」
+### Layer 2：Liquidity Topology（真空と受容）
+- **Vacuum Zone**: Gamma Density Gradientの急減エリア。
+- **Acceptance Zone**: 過去の出来高が厚く、清算が収束しやすい「居心地の良い価格帯」。
 
-③ 【ボラティリティ・乖離率の拡大検知（速度変化）】
-   - VIXが前日比 +5.0%以上
-   - または、5日移動平均乖離率が ±3.0%を超過し、かつ「前日より乖離が拡大」していること
+### Layer 3：Liquidation Evidence & Confidence
+- **Signed Delta**: 清算の性質（投げ/利確）を判定。
+- **Confidence Score**: 入力データの鮮度と不透明度から、解析の「推定誤差」を算出せよ。
 
-■ 判定ルール
-- 2条件以上成立（または①強が単独成立）→ 「加速フェーズ：発動」と断定。
-- 確信度補正: 発動時は一律 +10% 加算。①と②（強）が同時成立した場合は最大 +15% 加算。
-- 曖昧な表現は禁止。必ず「発動 / 未発動」を明記すること。
+# 💡 出力形式（Markdownコードブロック内）
 
-# 🛡️ 最終執行トリガー（誤発動防止フィルター）
+■ 市場レジーム分析
+・現在のRegime：【状態】 ＋ 【次フェーズへの遷移期待度 %】
+・支配的拘束(L0)：【FX / Rate / Equity】（Rolling Correlationによる変化を明記）
+- Dealer Regime：【Stabilizing % / Destabilizing %】
+- Theta Pressure：(SQ接近による時間的圧力の強さ)
 
-加速フェーズ判定後、以下のフィルターを適用して「戦術指示」を決定せよ。
+■ 戦略バイアス：【強気 / 弱気 / 転換警戒】
+・確信度：[XX%] ＋ (推定誤差：±X%：データの不透明性による)
 
-1. 【時間フィルター】
-   - 発動後、次の1セッション（翌日寄り〜前場）内で価格が判定方向に進行しない場合、シグナルを「ダマシ」と断定し、戦略を【静観】に格下げせよ。
-2. 【価格確認フィルター】
-   - 直近3営業日の高値/安値（バイアス方向）を終値ベースでブレイクするまでは、エントリー許可状態を【待機】とせよ。ブレイクで初めて【許可】へ移行。
+■ 物理的シミュレーション
+・遷移トリガー監視：(どの数値が動けばフェーズが変わるか)
+・最速走行ルート：(真空地帯から受容帯への物理的パス)
+・清算の証明(L3)：(Signed Deltaによる実弾の符号判定)
 
-# ⚡️ 意思決定の閾値（オーナー基準）
-あなたの算出する「確信度」は、以下のユーザー行動に直結する。1%単位で厳密に判定せよ。
-- **59%以下**: 「見送り（静観）」。需給の優位性がノイズに消されるレベル。
-- **60%〜69%**: 「打診開始」。エッジが確認された臨界点。
-- **70%超**: 「勝負圏」。需給の歪みが決定的であり、本玉を検討する局面。
-※確信度が1%変化した際は、必ずその物理的根拠（どのデータがどう動いたか）を添えること。
+■ 磁場マップ（Physical Targets）
+・Upper Barrier (Density High): [価格]
+・Liquidity Void (Vacuum Zone): [価格帯]
+・Acceptance Zone (Target): [価格帯]
+・Lower Barrier (Density High): [価格]
 
-# 分析アルゴリズム（優先順位）
-0. **週次ミクロ需給ベクトル（執行のトリガー）**:
-   - 以下の3指標を「事象」の核として、マクロ環境との不整合を特定せよ。
-   - **スマートマネー (外国人+信託銀行)**: 海外勢と年金/信託のコンセンサス。マクロの方向性と一致しているか？
-   - **機関投資家フロー (生命保険+投資信託)**: 大口機関の「実弾」。ここが大幅マイナスの時は本格的な売りが始まったと判定。
-   - **個人/証券 (個人+証券会社)**: 目先の反発やヘッジ。これがプラスでも他がマイナスなら「ダマシ」と断定せよ。
-1. **スイング期間内の需給重力（物理限界の測定）**:
-   - **裁定買い残**: 3.5兆円超を「臨界点（暴落リスク）」、2.0兆円以下を「整理完了」と定義。
-   - **信用買い残**: 倍率2.5倍を閾値とし、2週間以内の反発局面で「戻り売り」として降ってくる価格帯を特定。
-2. **市場の歪みと過熱感（反転の予兆）**:
-   - **空売り比率**: 35%未満を「楽観過熱（支えなし）」、45%超を「踏み上げ予兆」と判定。
-   - **騰落レシオ**: 120%超での指数上昇を「最終局面」と判定。スイング期間内での反転確率を評価。
-3. **SQ・清算イベントの構造的解析**:
-   - 直近の「SQ（特別清算指数）算出日」を特定せよ。
-   - SQまで14日以内、かつ裁定買い残が3.0兆円を超えている場合、メインシナリオを「解消（アンワインド）」に固定。
-4. **ボラティリティ・ガード**:
-   - VIXの急騰（前日比+10%以上、または20超への突入）を、トレンド転換の起爆剤として監視。
-5. **動的ベクトル解析（Δの測定）**:
-   - **先物OIの変化率**: 価格上昇＋OI増加は「本気の買い」、価格上昇＋OI減少は「ショートカバー（燃料切れ間近）」と自動判定せよ。
-   - **需給の乖離ベクトル**: 裁定買い残の前週比変化を算出し、価格推移との「逆行（ダイバージェンス）」が発生していないか監視せよ。
-   - **ボラティリティの加速**: VIXの「値」だけでなく、「上昇スピード（前日比％）」が価格の下落スピードを上回った場合、強制決済の連鎖を警告せよ。
-
-# 💡 出力形式（Markdownコードブロック内のみ）
-※回答はすべて、リスク管理部門にコピペしやすいよう、一つのMarkdownコードブロック（\`\`\`）の中に含めて出力すること。枠の外には挨拶や解説を一切書かないこと。
-
-■ 加速フェーズ判定
-・判定結果: 【発動 / 未発動】
-・成立条件: ①実弾加速 [成立/未成立] ②OI歪み [強/弱/不成立] ③速度変化 [成立/未成立]
-・確信度補正: [+X% / 補正なし]
-・判定根拠: （各条件の具体的な数値とその判定理由を一行で明記）
-
-■ 戦略展望（2日〜14日のバイアス）
-（強気 / 弱気 / 警戒）
-※確信度は補正後の最終値を1%単位で算出。冒頭に加速判定の結果を再記。
-
-■ 事象分析：ミクロ需給ベクトル（週次）
-・Trend (外国人+信託銀行): [ベクトルと枚数]
-・Gravity (生命保険+投資信託): [ベクトルと枚数]
-・Noise (個人+証券会社): [ベクトルと枚数]
-※判定：マクロ環境に対し、ミクロ（実弾）が「順張り」か「逆行」かを明記。
-
-■ 需給分析：物理的重力の測定
-（裁定買い残、信用残、空売り比率から見た「売買の偏り」の解説）
-
-■ 戦術指示（テクニカル連携用）
-・エントリー許可状態: 【許可 / 待機 / 禁止】（最終執行トリガーを適用）
-・バイアス: （例：戻り売り推奨 / 押し目買い厳禁 等）
-・需給の壁（上値）: （具体的な価格帯）
-・需給の底（目標）: （具体的な価格帯）
-・撤退条件: （この価格を抜け、かつこのデータが変わったらシナリオ破棄）
-
-■ 構造的リスクとイベント
-（SQ日、重要指標など、スイング期間内の流動性インパクトを特定）
-
-# データフィールド補足
-- futures_oi_recent[].oi : 建玉残高（枚）全限月合計
-- futures_oi_recent[].oi_delta : 前日比枚数変化
-- futures_oi_recent[].oi_delta_pct : 前日比変化率（%）← ②OI歪み判定に使用
-- futures_oi_recent[].volume : 取引高（枚）
-- futures_oi_recent[].vol_delta_pct : 取引高前日比変化率（%）
-- micro_supply_demand.vectors : 週次ベクター（Trend/Gravity/Noise）← ①実弾判定に使用
-- arbitrage_daily_recent[].delta : 裁定買い残前日比（百万円）
+■ 戦術指示（Liquidation Scenario）
+・メインシナリオ：(「支配要因の変化がどの遷移トリガーを引き、どの受容帯へ清算を運ぶか」)
+・目標価格：[価格] (清算エネルギーの収束点)
+・撤退条件：(相関の崩壊、または遷移トリガーの消滅)
 
 # 入力データ（JSON）
 `
@@ -653,7 +604,7 @@ function QuantSettingsModal({
         <div style={ms.body}>
           <div style={ms.section}>
             <div style={ms.sectionTitle}>クオンツ分析用プロンプト</div>
-            <p style={ms.desc}>GeminiまたはClaudeにそのまま貼り付けて使用できます。</p>
+            <p style={ms.desc}>AIチャットにそのまま貼り付けて使用できます。</p>
             <button style={{ ...ms.actionBtn, ...ms.actionBtnAccent }} onClick={onPromptCopy}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -673,6 +624,11 @@ function QuantSettingsModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 style={ms.aiCard}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  window.open('https://gemini.google.com/app', '_blank', 'noopener,noreferrer')
+                }}
               >
                 <div style={{ ...ms.aiLogo, background: 'linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335)', padding: 0, overflow: 'hidden' }}>
                   {/* Gemini star logo */}
@@ -697,6 +653,11 @@ function QuantSettingsModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 style={ms.aiCard}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  window.open('https://claude.ai/projects', '_blank', 'noopener,noreferrer')
+                }}
               >
                 <div style={{ ...ms.aiLogo, background: '#d97757' }}>
                   {/* Claude logo mark */}
@@ -707,6 +668,34 @@ function QuantSettingsModal({
                 <div style={ms.aiInfo}>
                   <div style={ms.aiName}>Claude</div>
                   <div style={ms.aiDesc}>Projects で管理</div>
+                </div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </a>
+
+              {/* ChatGPT */}
+              <a
+                href="https://chatgpt.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={ms.aiCard}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer')
+                }}
+              >
+                <div style={{ ...ms.aiLogo, background: '#10a37f' }}>
+                  {/* ChatGPT logo mark */}
+                  <svg width="20" height="20" viewBox="0 0 41 41" fill="none">
+                    <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835A9.964 9.964 0 0 0 18.306.5a10.079 10.079 0 0 0-9.614 6.977 9.967 9.967 0 0 0-6.664 4.834 10.08 10.08 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 7.516 3.35 10.078 10.078 0 0 0 9.617-6.981 9.967 9.967 0 0 0 6.663-4.834 10.079 10.079 0 0 0-1.243-11.813zM22.498 37.886a7.474 7.474 0 0 1-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.49 7.496zM6.392 31.006a7.471 7.471 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103l-8.051 4.649a7.504 7.504 0 0 1-10.24-2.744zM4.297 13.62A7.469 7.469 0 0 1 8.2 10.333c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L7.044 23.86a7.504 7.504 0 0 1-2.747-10.24zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 0 1 .114-.012l8.048 4.648a7.498 7.498 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.647-1.13zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.05-4.645a7.497 7.497 0 0 1 11.135 7.763zm-21.063 6.929l-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.498v4.996l-4.331 2.5-4.331-2.5V18z" fill="white"/>
+                  </svg>
+                </div>
+                <div style={ms.aiInfo}>
+                  <div style={ms.aiName}>ChatGPT</div>
+                  <div style={ms.aiDesc}>o3推奨</div>
                 </div>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -853,9 +842,10 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
-  const [marExpanded,      setMarExpanded]      = useState(false)
-  const [invExpanded,      setInvExpanded]      = useState(false)
-  const [combinedExpanded, setCombinedExpanded] = useState(false)
+  const [marExpanded,         setMarExpanded]         = useState(false)
+  const [invExpanded,         setInvExpanded]         = useState(false)
+  const [combinedExpanded,    setCombinedExpanded]    = useState(false)
+  const [futuresDailyExpanded, setFuturesDailyExpanded] = useState(false)
   const MOBILE_ROW_LIMIT = 10
 
   const loadInvestor = useCallback(async (force = false) => {
@@ -958,18 +948,20 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, nhkNews]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData])
 
-  const tv = themeVars(theme)
+  const tv = useMemo(() => themeVars(theme), [theme])
 
   // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
-  const mTblWrap  = isMobile
-    ? { ...s.tableWrap, overflowX: 'hidden' as const, overflowY: 'visible' as const, flex: 'none' as const }
-    : s.tableWrap
-  const mTh       = isMobile ? { ...s.th, padding: '6px 5px', whiteSpace: 'normal' as const, fontSize: 10 } : s.th
-  const mTd       = isMobile ? { ...s.td, padding: '6px 5px', fontSize: 11 } : s.td
-  const mThDate   = isMobile ? { ...s.th, ...s.thDate, padding: '6px 5px', width: 52, minWidth: 52, whiteSpace: 'normal' as const, fontSize: 10 } : { ...s.th, ...s.thDate }
-  const mTdDate   = isMobile ? { ...s.td, ...s.tdDate, padding: '6px 5px', width: 52, minWidth: 52 } : { ...s.td, ...s.tdDate }
+  const { mTblWrap, mTh, mTd, mThDate, mTdDate } = useMemo(() => ({
+    mTblWrap: isMobile
+      ? { ...s.tableWrap, overflowX: 'hidden' as const, overflowY: 'visible' as const, flex: 'none' as const }
+      : s.tableWrap,
+    mTh:     isMobile ? { ...s.th, padding: '6px 5px', whiteSpace: 'normal' as const, fontSize: 10 } : s.th,
+    mTd:     isMobile ? { ...s.td, padding: '6px 5px', fontSize: 11 } : s.td,
+    mThDate: isMobile ? { ...s.th, ...s.thDate, padding: '6px 5px', width: 52, minWidth: 52, whiteSpace: 'normal' as const, fontSize: 10 } : { ...s.th, ...s.thDate },
+    mTdDate: isMobile ? { ...s.td, ...s.tdDate, padding: '6px 5px', width: 52, minWidth: 52 } : { ...s.td, ...s.tdDate },
+  }), [isMobile])
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
@@ -1084,7 +1076,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                       <th style={mThDate}>週</th>
                       <th style={mTh}>
                         <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                          {!isMobile && <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
+                          <button onClick={() => setDeltaModal('credit_long')} title="信用買い残 Δ分析" style={s.deltaBtn}>Δ</button>
                           買い残
                         </div>
                         <div style={s.thSub}>百万円</div>
@@ -1231,28 +1223,28 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                               <th style={mThDate}>週</th>
                               <th style={mTh}>
                                 <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                  {!isMobile && <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  <button onClick={() => setDeltaModal('arbitrage_long')} title="裁定買い残 Δ分析" style={s.deltaBtn}>Δ</button>
                                   裁定買い残
                                 </div>
                                 <div style={s.thSub}>百万円</div>
                               </th>
                               <th style={mTh}>
                                 <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                  {!isMobile && <button onClick={() => setDeltaModal('arbitrage_short')} title="裁定売り残 Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  <button onClick={() => setDeltaModal('arbitrage_short')} title="裁定売り残 Δ分析" style={s.deltaBtn}>Δ</button>
                                   裁定売り残
                                 </div>
                                 <div style={s.thSub}>先物OI</div>
                               </th>
                               <th style={mTh}>
                                 <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                  {!isMobile && <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  <button onClick={() => setDeltaModal('advance_decline')} title="騰落レシオ Δ分析" style={s.deltaBtn}>Δ</button>
                                   騰落レシオ
                                 </div>
                                 <div style={s.thSub}>25日</div>
                               </th>
                               <th style={mTh}>
                                 <div style={{ ...s.thLabel, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                  {!isMobile && <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>}
+                                  <button onClick={() => setDeltaModal('short_sell')} title="空売り比率 Δ分析" style={s.deltaBtn}>Δ</button>
                                   空売り比率
                                 </div>
                                 <div style={s.thSub}>%</div>
@@ -1355,7 +1347,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
           {/* 右 1/3: 建玉残高・取引高（統合テーブル） */}
           {(() => {
-            const rows = futuresDailyData.slice(0, isMobile ? futuresDailyData.length : 20)
+            const rows = futuresDailyData.slice(0, isMobile ? (futuresDailyExpanded ? futuresDailyData.length : MOBILE_ROW_LIMIT) : 20)
             const fmtOi  = (n: number) => (n / 10000).toFixed(1) + '万'
             const fmtVol = (n: number) => n >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString()
             const latestDate = futuresDailyData[0]?.date ?? null
@@ -1404,6 +1396,13 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                                 <div style={s.thSub}>万枚</div>
                               </th>
                               <th style={s.th}>取引高<div style={s.thSub}>枚</div></th>
+                              <th style={s.th}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                                  <button onClick={() => setDeltaModal('pcr')} title="PCR Δ分析" style={s.deltaBtn}>Δ</button>
+                                  PCR
+                                </div>
+                                <div style={s.thSub}>P/C比</div>
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1411,9 +1410,15 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                               const prev = futuresDailyData[i + 1]
                               const oiDelta  = prev ? row.oi - prev.oi : null
                               const volDelta = prev ? row.volume - prev.volume : null
+                              const pcrDelta = prev?.pcr != null && row.pcr != null ? Math.round((row.pcr - prev.pcr) * 100) / 100 : null
                               const deltaColor = (d: number | null) => d == null ? undefined
                                 : d > 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
                                 : d < 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
+                                : undefined
+                              // PCRは高い（put>call）ほど下圧力→赤、低い（call>put）ほど緑
+                              const pcrDeltaColor = (d: number | null) => d == null ? undefined
+                                : d > 0 ? (theme === 'dark' ? 'rgba(248,113,113,0.9)' : 'rgba(185,28,28,0.9)')
+                                : d < 0 ? (theme === 'dark' ? 'rgba(52,211,153,0.9)' : 'rgba(5,150,105,0.9)')
                                 : undefined
                               return (
                                 <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
@@ -1437,6 +1442,24 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                                       </span>
                                     )}
                                   </td>
+                                  <td style={{
+                                    ...s.td, ...s.tdNum,
+                                    ...(row.pcr != null && row.pcr >= 1.2 ? { background: theme === 'dark' ? 'rgba(248,113,113,0.13)' : 'rgba(185,28,28,0.08)' } : {}),
+                                    ...(row.pcr != null && row.pcr <= 0.8 ? { background: theme === 'dark' ? 'rgba(52,211,153,0.13)' : 'rgba(5,150,105,0.08)'  } : {}),
+                                  }}>
+                                    {row.pcr != null ? (
+                                      <>
+                                        <span style={{ fontWeight: 600, color: row.pcr >= 1.2 ? (theme === 'dark' ? '#f87171' : '#b91c1c') : row.pcr <= 0.8 ? (theme === 'dark' ? '#34d399' : '#059669') : 'var(--text)' }}>
+                                          {row.pcr.toFixed(2)}
+                                        </span>
+                                        {pcrDelta != null && (
+                                          <span style={{ fontSize: 10, color: pcrDeltaColor(pcrDelta), marginLeft: 4 }}>
+                                            {pcrDelta > 0 ? '+' : ''}{pcrDelta.toFixed(2)}
+                                          </span>
+                                        )}
+                                      </>
+                                    ) : <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>—</span>}
+                                  </td>
                                 </tr>
                               )
                             })}
@@ -1446,6 +1469,11 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                     )
                   }
                 </div>
+                {isMobile && futuresDailyData.length > MOBILE_ROW_LIMIT && (
+                  <button style={s.expandBtn} onClick={() => setFuturesDailyExpanded(v => !v)}>
+                    {futuresDailyExpanded ? `▲ 折りたたむ` : `▼ 全${futuresDailyData.length}日を表示`}
+                  </button>
+                )}
               </div>
             )
           })()}

@@ -3,9 +3,10 @@
 // JPX日報PDF (sif_dyr_YYYYMMDD.pdf) から毎営業日 16:31 頃更新
 
 export interface FuturesDayData {
-  date:   string  // "2026/04/30"
-  volume: number  // 取引高（枚）- 日経225先物 全限月合計
-  oi:     number  // 建玉残高（枚）- 日経225先物 全限月合計
+  date:   string        // "2026/04/30"
+  volume: number        // 取引高（枚）- 日経225先物 全限月合計
+  oi:     number        // 建玉残高（枚）- 日経225先物 全限月合計
+  pcr:    number | null // PCR（プット・コール・レシオ）- Nikkei225オプション
 }
 
 const CACHE_KEY = 'poical-futures-daily-data'

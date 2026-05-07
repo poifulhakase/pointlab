@@ -311,12 +311,13 @@ async function fetchEvalRatioMap() {
 let _daily2yearCache = null
 
 /**
- * nikkei225jp.com daily2year.json から騰落レシオ・空売り比率を一括取得
+ * nikkei225jp.com daily2year.json から騰落レシオ・空売り比率・PCRを一括取得
  * 確認済み列構成:
  *   col[0]:  タイムスタンプ(ms)
  *   col[7]:  騰落レシオ(25日) - 範囲 76〜155
  *   col[11]: 空売り比率(%)    - 範囲 16〜71
- * Returns: { touhiMap, shortSellMap }
+ *   col[16]: PCR（プット/コールOI比） - 範囲 0.75〜2.52
+ * Returns: { touhiMap, shortSellMap, pcrMap }
  */
 async function fetchDaily2YearMetrics() {
   if (_daily2yearCache) return _daily2yearCache
@@ -339,11 +340,12 @@ async function fetchDaily2YearMetrics() {
 
   if (rows.length > 0) {
     const first = rows[rows.length - 1]
-    console.log('  [列確認] 最新行:', first.slice(0, 14).map((v, i) => `[${i}]=${v}`).join(', '))
+    console.log('  [列確認] 最新行:', first.slice(0, 17).map((v, i) => `[${i}]=${v}`).join(', '))
   }
 
   const touhiMap    = new Map()  // col[7]: 騰落レシオ(25日)
   const shortSellMap = new Map() // col[11]: 空売り比率(%)
+  const pcrMap       = new Map() // col[16]: PCR
 
   for (const row of rows) {
     if (typeof row[0] !== 'number') continue
@@ -352,10 +354,12 @@ async function fetchDaily2YearMetrics() {
       touhiMap.set(dateStr, Math.round(row[7] * 100) / 100)
     if (typeof row[11] === 'number')
       shortSellMap.set(dateStr, Math.round(row[11] * 100) / 100)
+    if (typeof row[16] === 'number' && row[16] > 0)
+      pcrMap.set(dateStr, Math.round(row[16] * 1000) / 1000)
   }
 
-  console.log(`  騰落レシオ: ${touhiMap.size}件, 空売り比率: ${shortSellMap.size}件`)
-  _daily2yearCache = { touhiMap, shortSellMap }
+  console.log(`  騰落レシオ: ${touhiMap.size}件, 空売り比率: ${shortSellMap.size}件, PCR: ${pcrMap.size}件`)
+  _daily2yearCache = { touhiMap, shortSellMap, pcrMap }
   return _daily2yearCache
 }
 
@@ -576,6 +580,70 @@ async function fetchVixData() {
     const changePct = prev != null ? Math.round(((r.close - prev) / prev) * 10000) / 100 : null
     return { ...r, change, changePct }
   })
+}
+
+// ── ドル円（Yahoo Finance） ────────────────────────
+
+async function fetchUsdjpyData() {
+  console.log('\n[usdjpy] Yahoo Finance から日次データ取得...')
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/USDJPY%3DX?interval=1d&range=3mo'
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
+      'Accept': 'application/json',
+    },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error('レスポンス形式が不正')
+
+  const timestamps = result.timestamp ?? []
+  const closes     = result.indicators?.quote?.[0]?.close ?? []
+
+  const rows = []
+  for (let i = 0; i < timestamps.length; i++) {
+    const close = closes[i]
+    if (close == null || isNaN(close)) continue
+    const d = new Date(timestamps[i] * 1000)
+    const time = d.toISOString().slice(0, 10)  // YYYY-MM-DD
+    rows.push({ time, close: Math.round(close * 100) / 100 })
+  }
+
+  // 昇順ソート（MA計算）
+  rows.sort((a, b) => a.time.localeCompare(b.time))
+
+  // 前日比・MA5・MA5乖離率を付与
+  const enriched = rows.map((r, i) => {
+    const prev     = i > 0 ? rows[i - 1].close : null
+    const change   = prev != null ? Math.round((r.close - prev) * 100) / 100 : null
+    const changePct = prev != null ? Math.round((r.close - prev) / prev * 10000) / 100 : null
+    let ma5 = null
+    if (i >= 4) {
+      const sum = rows.slice(i - 4, i + 1).reduce((acc, d) => acc + d.close, 0)
+      ma5 = Math.round(sum / 5 * 100) / 100
+    }
+    const ma5dev = ma5 != null ? Math.round((r.close - ma5) / ma5 * 10000) / 100 : null
+    return { time: r.time, close: r.close, change, changePct, ma5, ma5dev }
+  })
+
+  // 降順ソート・最新90件
+  enriched.sort((a, b) => b.time.localeCompare(a.time))
+  return enriched.slice(0, 90)
+}
+
+// ── PCR（プット・コール・レシオ）─────────────────────
+// データソース: nikkei225jp.com/_data/_nfsWEB/DAY/daily2year.json col[16]
+// PCR = プットOI / コールOI  通常値域: 0.75〜2.52（日経225オプション）
+// fetchDaily2YearMetrics() と同一ファイルをキャッシュ共有
+
+async function fetchPcrDailyMap() {
+  console.log('\n[pcr] daily2year.json col[16] から PCRデータ取得（キャッシュ共有）...')
+  const { pcrMap } = await fetchDaily2YearMetrics()
+  console.log(`  → ${pcrMap.size}件`)
+  return pcrMap
 }
 
 // ── 裁定買い残 ────────────────────────────────────
@@ -968,6 +1036,22 @@ async function buildFuturesDailyData() {
 
   if (existingMap.size === 0) throw new Error('先物日次データが取得できませんでした')
 
+  // PCRを取得してマージ
+  let pcrMap = new Map()
+  try {
+    pcrMap = await fetchPcrDailyMap()
+  } catch (e) {
+    console.warn('  ⚠ PCR取得失敗（スキップ）:', e.message)
+  }
+
+  // PCRをマージし、既存データのPCRが未設定のものも更新
+  for (const [date, entry] of existingMap) {
+    const pcr = pcrMap.get(date) ?? null
+    if (pcr !== null || entry.pcr === undefined) {
+      existingMap.set(date, { ...entry, pcr })
+    }
+  }
+
   const data = [...existingMap.values()]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 252)
@@ -984,6 +1068,7 @@ async function main() {
   let investorOk            = false
   let marginOk              = false
   let vixOk                 = false
+  let usdjpyOk              = false
   let advanceDeclineOk      = false
   let shortSellOk           = false
   let arbitrageOk           = false
@@ -1020,6 +1105,16 @@ async function main() {
     vixOk = true
   } catch (e) {
     console.error('\n✗ vix:', e.message)
+  }
+
+  try {
+    const data = await fetchUsdjpyData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'usdjpy.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ usdjpy.json 保存 (${data.length}件)`)
+    usdjpyOk = true
+  } catch (e) {
+    console.error('\n✗ usdjpy:', e.message)
   }
 
   try {
@@ -1098,6 +1193,7 @@ async function main() {
   console.log('\n=== 完了 ===')
   if (!investorOk || !marginOk) process.exit(1)
   if (!vixOk)                   console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
+  if (!usdjpyOk)                console.warn('⚠ usdjpy.json は更新されませんでした（Yahoo Finance 接続要確認）')
   if (!advanceDeclineOk)        console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')
   if (!shortSellOk)             console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
   if (!arbitrageOk)             console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')

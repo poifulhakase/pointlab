@@ -17,19 +17,19 @@ export const darkVars: React.CSSProperties = {
 }
 
 export const lightVars: React.CSSProperties = {
-  background: '#ffffff',
-  ['--text'                as string]: '#111111',
-  ['--text-sub'            as string]: '#555555',
-  ['--text-dim'            as string]: '#999999',
-  ['--glass-bg'            as string]: 'rgba(0,0,0,0.03)',
-  ['--glass-border'        as string]: 'rgba(0,0,0,0.1)',
-  ['--border-dim'          as string]: 'rgba(0,0,0,0.1)',
+  background: '#f0f4f8',
+  ['--text'                as string]: '#111827',
+  ['--text-sub'            as string]: '#4b5563',
+  ['--text-dim'            as string]: '#6b7280',
+  ['--glass-bg'            as string]: 'rgba(255,255,255,0.96)',
+  ['--glass-border'        as string]: 'rgba(0,0,0,0.10)',
+  ['--border-dim'          as string]: 'rgba(0,0,0,0.09)',
   ['--bg-subtle'           as string]: 'rgba(0,0,0,0.04)',
-  ['--bg-item'             as string]: 'rgba(0,0,0,0.03)',
-  ['--modal-bg'            as string]: '#f5f5f5',
-  ['--accent'              as string]: '#1a73e8',
-  ['--view-btn-active-bg'  as string]: 'rgba(26,115,232,0.12)',
-  ['--view-btn-active-color' as string]: '#1a73e8',
+  ['--bg-item'             as string]: 'rgba(0,0,0,0.04)',
+  ['--modal-bg'            as string]: '#ffffff',
+  ['--accent'              as string]: '#2563eb',
+  ['--view-btn-active-bg'  as string]: 'rgba(37,99,235,0.12)',
+  ['--view-btn-active-color' as string]: '#1d4ed8',
 }
 
 export const themeVars = (theme: 'dark' | 'light') =>

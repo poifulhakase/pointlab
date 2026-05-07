@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createChart, LineSeries, HistogramSeries, ColorType, CrosshairMode, type ISeriesApi } from 'lightweight-charts'
 import { fetchVixData, type VixWeekData } from '../utils/vixData'
+import { proxyFetch } from '../utils/proxyFetch'
 
 type Props = { theme: 'dark' | 'light'; vixWeekData?: VixWeekData[]; isMobile?: boolean }
 type Point = { time: string; value: number }
@@ -14,13 +15,13 @@ function isUsMarketOpen(): boolean {
   return mins >= 13 * 60 + 30 && mins <= 21 * 60 + 15
 }
 
-// ── VIX データ取得（複数プロキシにフォールバック） ──
+// ── VIX 日次データ取得（proxyFetch 共通ユーティリティを利用） ──
 const TARGET_Q1 = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1y'
 const TARGET_Q2 = 'https://query2.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1y'
 
 const VIX_CACHE_KEY = 'poical-vix-daily'
-const VIX_CACHE_TTL_OPEN   = 30 * 60 * 1000      // 30分（市場オープン中）
-const VIX_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000  // 2時間（市場クローズ中）
+const VIX_CACHE_TTL_OPEN   = 30 * 60 * 1000
+const VIX_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000
 
 function readVixCache(): { data: Point[]; fetchedAt: number } | null {
   try {
@@ -37,12 +38,6 @@ function writeVixCache(data: Point[]) {
   try {
     localStorage.setItem(VIX_CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
   } catch { /* ignore */ }
-}
-
-function timeoutSignal(ms: number): AbortSignal {
-  const ac = new AbortController()
-  setTimeout(() => ac.abort(), ms)
-  return ac.signal
 }
 
 function parseYahooVix(json: unknown): Point[] {
@@ -62,51 +57,10 @@ function parseYahooVix(json: unknown): Point[] {
   return pts.sort((a, b) => a.time.localeCompare(b.time))
 }
 
-// 各プロキシは { url, parse } 形式で定義
-type ProxyDef = { url: (u: string) => string; parse: (res: Response) => Promise<unknown> }
-
-const parseRaw = async (res: Response) => {
-  const text = await res.text()
-  try {
-    return JSON.parse(text)
-  } catch {
-    throw new Error(`プロキシ応答エラー: ${text.slice(0, 80)}`)
-  }
-}
-const parseAlloriginsGet = async (res: Response) => {
-  const w = await res.json() as { contents?: string }
-  if (!w.contents) throw new Error('empty contents')
-  try {
-    return JSON.parse(w.contents)
-  } catch {
-    throw new Error(`プロキシ応答エラー: ${w.contents.slice(0, 80)}`)
-  }
-}
-
-const PROXY_DEFS: ProxyDef[] = [
-  // allorigins /get（JSONラッパー形式・最も安定）
-  { url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: parseAlloriginsGet },
-  // allorigins /raw
-  { url: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, parse: parseRaw },
-  // codetabs（corsproxy.ioはレート制限のため除外）
-  { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, parse: parseRaw },
-]
-
-async function tryFetchVix(target: string): Promise<Point[]> {
-  let lastErr = ''
-  for (let i = 0; i < PROXY_DEFS.length; i++) {
-    if (i > 0) await new Promise(r => setTimeout(r, 500 * i))
-    const def = PROXY_DEFS[i]
-    try {
-      const res = await fetch(def.url(target), { signal: timeoutSignal(12000) })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const json = await def.parse(res)
-      return parseYahooVix(json)
-    } catch (e) {
-      lastErr = e instanceof Error ? e.message : String(e)
-    }
-  }
-  throw new Error(lastErr)
+// proxyFetch.ts の共通ユーティリティを利用してプロキシ経由で取得
+async function fetchVixPoints(target: string): Promise<Point[]> {
+  const json = await proxyFetch(target)
+  return parseYahooVix(json)
 }
 
 async function fetchVix(force = false): Promise<Point[]> {
@@ -116,10 +70,9 @@ async function fetchVix(force = false): Promise<Point[]> {
   }
   let data: Point[]
   try {
-    data = await tryFetchVix(TARGET_Q1)
+    data = await fetchVixPoints(TARGET_Q1)
   } catch {
-    // query1 が全滅なら query2 で再試行
-    data = await tryFetchVix(TARGET_Q2)
+    data = await fetchVixPoints(TARGET_Q2)
   }
   writeVixCache(data)
   return data

@@ -2,15 +2,13 @@ import { lazy, Suspense, memo, useMemo, useState, useEffect, useCallback, useRef
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
-import { CalendarHeader, GearIcon, SunIcon, MoonIcon, BellIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
+import { CalendarHeader, GearIcon, MonitorIcon, SunIcon, MoonIcon, BellIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
 import { AuthModal } from './components/AuthModal'
 import { Sidebar } from './components/Sidebar'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
 import { DayNotePanel } from './components/DayNotePanel'
-import { LegalModal } from './components/LegalModal'
-import { SettingsPanel } from './components/SettingsPanel'
 import { useNotifications } from './hooks/useNotifications'
 import { getDividendDates, getMarkersForDate, type DividendDateSet } from './utils/dividendCalendar'
 import { isMarketClosed, getClosedReason } from './utils/marketHolidays'
@@ -22,12 +20,14 @@ import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
-const ChartView   = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
-const QuantView   = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
-const SpecView    = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
-const NoteView    = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
-const ManualView  = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
-const SupportView = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
+const ChartView    = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
+const QuantView    = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
+const SpecView     = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
+const NoteView     = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
+const ManualView   = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
+const SupportView  = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
+const LegalModal   = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
+const SettingsPanel = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
 
 // ── ローディングスピナー（Suspense フォールバック） ───────────────────
 function ViewLoader() {
@@ -171,7 +171,7 @@ export default function App() {
   const calTouchStartYRef  = useRef(0)
   const calIsDraggingRef   = useRef(false)
   const calDragOffsetRef   = useRef(0)
-  const [calDragOffset, setCalDragOffset] = useState(0)
+  const carouselRef        = useRef<HTMLDivElement>(null)
 
   const [sidebarOpen, setSidebarOpen] = useState(isDesktop)
   useEffect(() => { setSidebarOpen(isDesktop) }, [isDesktop])
@@ -278,7 +278,7 @@ export default function App() {
   const getScheduledEvents = useCallback((d: Date): ScheduleEntry[] =>
     showPrivate ? (noteMap.get(dateKey(d))?.schedules ?? []) : [], [noteMap, showPrivate])
 
-  const openNote  = useCallback((d: Date, time?: string) => { setNoteDate(d); setNotePrefillTime(time) }, [])
+  const openNote  = useCallback((d: Date, time?: string) => { if (!showPrivate) return; setNoteDate(d); setNotePrefillTime(time) }, [showPrivate])
   const closeNote = useCallback(() => { setNoteDate(null); setNotePrefillTime(undefined) }, [])
 
   // ── アノマリー ────────────────────────────────────────────────────────
@@ -326,7 +326,11 @@ export default function App() {
         : calPanelIndex === 2 && dx < 0 ? Math.max(dx, -60)
         : dx
       calDragOffsetRef.current = clamped
-      setCalDragOffset(clamped)
+      // setState を使わず DOM を直接更新 → リレンダリングゼロ
+      if (carouselRef.current) {
+        carouselRef.current.style.transition = 'none'
+        carouselRef.current.style.transform  = `translateX(calc(-${calPanelIndex * 33.333}% + ${clamped}px))`
+      }
     }
   }, [calPanelIndex])
 
@@ -335,13 +339,21 @@ export default function App() {
     const dx = calDragOffsetRef.current
     calDragOffsetRef.current = 0
     calIsDraggingRef.current = false
-    setCalDragOffset(0)
-    if (Math.abs(dx) < 50) return
-    const CAL_VIEWS = ['month', 'week', 'day'] as const
-    if (dx < 0 && calPanelIndex < 2) {
-      cal.setView(CAL_VIEWS[calPanelIndex + 1])
-    } else if (dx > 0 && calPanelIndex > 0) {
-      cal.setView(CAL_VIEWS[calPanelIndex - 1])
+
+    let newPanelIdx = calPanelIndex
+    if (Math.abs(dx) >= 50) {
+      if (dx < 0 && calPanelIndex < 2) newPanelIdx = calPanelIndex + 1
+      else if (dx > 0 && calPanelIndex > 0) newPanelIdx = calPanelIndex - 1
+    }
+
+    // トランジション付きで最終位置へスナップ（setState なし）
+    if (carouselRef.current) {
+      carouselRef.current.style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1)'
+      carouselRef.current.style.transform  = `translateX(-${newPanelIdx * 33.333}%)`
+    }
+    if (newPanelIdx !== calPanelIndex) {
+      const CAL_VIEWS = ['month', 'week', 'day'] as const
+      cal.setView(CAL_VIEWS[newPanelIdx])
     }
   }, [calPanelIndex, cal])
 
@@ -403,7 +415,9 @@ export default function App() {
             </Suspense>
           )}
           {cal.view === 'legal' && (
-            <LegalModal theme={theme} isMobile={isMobile} />
+            <Suspense fallback={<ViewLoader />}>
+              <LegalModal theme={theme} isMobile={isMobile} />
+            </Suspense>
           )}
 
           {/* 研究員サポート室 */}
@@ -441,32 +455,27 @@ export default function App() {
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
           {isCalView && (
-            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div style={carouselOuterStyle}>
               {/* カレンダーサブバー */}
               <div style={styles.calSubBar}>
                 <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-                <h1 style={styles.subLabel}>{cal.label()}</h1>
+                <h1 style={styles.subLabel}>{cal.label}</h1>
                 <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
               </div>
 
               {/* 日/週/月 スワイプカルーセル */}
               <div
-                style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}
+                style={carouselWrapStyle}
                 onTouchStart={handleCalTouchStart}
                 onTouchMove={handleCalTouchMove}
                 onTouchEnd={handleCalTouchEnd}
               >
-                <div style={{
-                  position: 'absolute',
-                  top: 0, left: 0, bottom: 0,
-                  width: '300%',
-                  display: 'flex',
-                  transform: `translateX(calc(-${calPanelIndex * 33.333}% + ${calDragOffset}px))`,
-                  transition: calDragOffset !== 0 ? 'none' : 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
-                  willChange: 'transform',
+                <div ref={carouselRef} style={{
+                  ...carouselTrackStyle,
+                  transform: `translateX(-${calPanelIndex * 33.333}%)`,
                 }}>
                   {/* Panel 0: 月 */}
-                  <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={calPanelStyle}>
                     <MonthView
                       days={cal.getMonthGrid()} today={cal.today} current={cal.current}
                       isToday={cal.isToday} isCurrentMonth={cal.isCurrentMonth}
@@ -481,7 +490,7 @@ export default function App() {
                   </div>
 
                   {/* Panel 1: 週 */}
-                  <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={calPanelStyle}>
                     <WeekView
                       days={cal.getWeekDays()} current={cal.current} isToday={cal.isToday}
                       getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
@@ -492,7 +501,7 @@ export default function App() {
                   </div>
 
                   {/* Panel 2: 日 */}
-                  <div style={{ width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={calPanelStyle}>
                     <DayView
                       date={cal.current} isToday={cal.isToday}
                       getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
@@ -521,7 +530,9 @@ export default function App() {
       )}
 
       {/* モーダル類 */}
-      <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <Suspense fallback={null}>
+        <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      </Suspense>
 
       <AuthModal
         isOpen={!isUnlocked && !showLoading} isRequired
@@ -574,7 +585,7 @@ export default function App() {
                   <>
                     <span style={styles.floatDivider} />
                     <button style={styles.floatIconBtn} onClick={() => setChartSettingsOpen(true)} aria-label="チャートレイアウト">
-                      <GearIcon />
+                      <MonitorIcon />
                     </button>
                   </>
                 )}
@@ -582,12 +593,12 @@ export default function App() {
             )}
             {cal.view === 'quant' && (
               <>
-                {(['kankyou', 'genbutsu', 'micro'] as const).map((tab, i) => (
+                {QUANT_TABS.map((tab, i) => (
                   <button
                     key={tab}
                     style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
                     onClick={() => setQuantTab(tab)}
-                  >{['環境', '現物', '先物'][i]}</button>
+                  >{QUANT_LABELS[i]}</button>
                 ))}
                 <span style={styles.floatDivider} />
                 <button style={styles.floatIconBtn} onClick={() => setQuantSettingsOpen(true)} aria-label="ぽいロボエンジン">
@@ -598,12 +609,12 @@ export default function App() {
               </>
             )}
             {cal.view === 'support' && (
-              (['session', 'note'] as const).map((tab, i) => (
+              SUPPORT_TABS.map((tab, i) => (
                 <button
                   key={tab}
                   style={{ ...styles.floatTab, ...(supportTab === tab ? styles.floatTabActive : {}) }}
                   onClick={() => setSupportTab(tab)}
-                >{['研究室', '資料'][i]}</button>
+                >{SUPPORT_LABELS[i]}</button>
               ))
             )}
           </div>
@@ -626,6 +637,22 @@ export default function App() {
 
 // ── 定数 ──────────────────────────────────────────────────────────────────
 const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
+
+const QUANT_TABS    = ['kankyou', 'genbutsu', 'micro'] as const
+const QUANT_LABELS  = ['環境', '現物', '先物'] as const
+const SUPPORT_TABS  = ['session', 'note'] as const
+const SUPPORT_LABELS = ['研究室', '資料'] as const
+
+// カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
+const carouselOuterStyle: React.CSSProperties = { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }
+const carouselWrapStyle:  React.CSSProperties = { flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }
+const carouselTrackStyle: React.CSSProperties = {
+  position: 'absolute', top: 0, left: 0, bottom: 0,
+  width: '300%', display: 'flex',
+  transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+  willChange: 'transform',
+}
+const calPanelStyle: React.CSSProperties = { width: '33.333%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
 
 const CHART_SYMBOLS = [
   { label: '日経225', symbol: 'INDEX:NKY'  },

@@ -9,7 +9,7 @@ import { type FuturesDayData } from '../utils/futuresDailyData'
 import { type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
 import { themeVars } from '../utils/themeVars'
 
-export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'arbitrage_short' | 'short_sell' | 'advance_decline' | 'futures_oi' | 'futures_net_weekly'
+export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'arbitrage_short' | 'short_sell' | 'advance_decline' | 'futures_oi' | 'futures_net_weekly' | 'pcr'
 
 type Props = {
   type: DeltaModalType
@@ -31,6 +31,7 @@ const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBa
   advance_decline:    { title: '騰落レシオ Δ',          unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
   futures_oi:         { title: '先物OI前日比 Δ',        unit: '枚',  positiveIsBad: false, accent: '#34d399' },
   futures_net_weekly: { title: 'ネット合計 週次Δ',      unit: '枚',  positiveIsBad: false, accent: '#34d399' },
+  pcr:                { title: 'PCR 前日比 Δ',          unit: '',    positiveIsBad: true,  accent: '#f87171' },
 }
 
 const SUB_LABEL: Record<DeltaModalType, string> = {
@@ -41,6 +42,7 @@ const SUB_LABEL: Record<DeltaModalType, string> = {
   advance_decline:    '変化率 pp',
   futures_oi:         '前日比 枚（日経225先物 全限月）',
   futures_net_weekly: '週次変化 枚（全部門ネット合計）',
+  pcr:                '前日比（プット・コール・レシオ）',
 }
 
 function toIso(d: string) { return d.replace(/\//g, '-') }
@@ -69,6 +71,13 @@ function computeDeltas(
     return arr.slice(1).map((row, i) => ({
       time: toIso(row.date),
       value: row.oi - arr[i].oi,
+    }))
+  }
+  if (type === 'pcr') {
+    const arr = [...futuresDailyData].filter(d => d.pcr != null).sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
+    return arr.slice(1).map((row, i) => ({
+      time: toIso(row.date),
+      value: Math.round(((row.pcr ?? 0) - (arr[i].pcr ?? 0)) * 100) / 100,
     }))
   }
   if (type === 'credit_long') {
@@ -251,7 +260,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
               {cfg.title}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
-              {SUB_LABEL[type]}　直近{type === 'futures_oi' ? '13営業日' : '13週'}
+              {SUB_LABEL[type]}　直近{(type === 'futures_oi' || type === 'pcr') ? '13営業日' : '13週'}
             </div>
           </div>
           <button

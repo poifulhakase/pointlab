@@ -53,6 +53,9 @@ function timeToMinutes(t: string): number {
 
 export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark' }: Props) {
   const now = new Date()
+  const isLight = theme === 'light'
+  const bandColor = isLight ? '#92400e' : undefined
+  const bandBg    = isLight ? 'rgba(180,83,9,0.12)' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -105,8 +108,8 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               style={{
                 ...styles.dayHeader,
                 cursor: 'pointer',
-                background: td ? 'rgba(255,210,80,0.18)' : undefined,
-                borderTop: td ? '3px solid rgba(255,200,60,0.85)' : undefined,
+                background: td ? (theme === 'light' ? 'rgba(37,99,235,0.09)' : 'rgba(255,210,80,0.18)') : undefined,
+                borderTop: td ? (theme === 'light' ? '3px solid #3b82f6' : '3px solid rgba(255,200,60,0.85)') : undefined,
               }}
               onClick={() => onOpenNote(d)}
               title="クリックでメモ・タスクを開く"
@@ -117,7 +120,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               <span style={{
                 ...styles.dateNum,
                 background: 'transparent',
-                color: td ? 'rgba(255,200,60,0.95)' : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
+                color: td ? (theme === 'light' ? '#1d4ed8' : 'rgba(255,200,60,0.95)') : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
                 boxShadow: 'none',
                 fontWeight: td ? 700 : undefined,
               }}>
@@ -184,13 +187,17 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 {evtBlocks.map(evtBlock => (
                   <div
                     key={evtBlock.id}
-                    style={{ ...styles.eventBlock, top: evtBlock.topPx, height: evtBlock.heightPx }}
+                    style={{
+                      ...styles.eventBlock,
+                      top: evtBlock.topPx, height: evtBlock.heightPx,
+                      ...(isLight ? { background: 'rgba(37,99,235,0.10)', borderLeft: '3px solid #2563eb' } : {}),
+                    }}
                     onClick={() => onOpenNote(d)}
                     title={evtBlock.title}
                   >
-                    <div style={styles.eventTitle}>{evtBlock.title || '（無題）'}</div>
+                    <div style={{ ...styles.eventTitle, color: isLight ? '#1e3a8a' : 'rgba(255,255,255,0.97)' }}>{evtBlock.title || '（無題）'}</div>
                     {evtBlock.heightPx >= 34 && (
-                      <div style={styles.eventTime}>{evtBlock.timeLabel}</div>
+                      <div style={{ ...styles.eventTime, color: isLight ? '#2563eb' : 'rgba(255,255,255,0.80)' }}>{evtBlock.timeLabel}</div>
                     )}
                   </div>
                 ))}
@@ -207,19 +214,19 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
       </div>
 
       {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? band.color : 'transparent'}`, background: band ? band.bg : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: band?.color ?? 'transparent', flexShrink: 0 }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? (bandColor ?? band.color) : 'transparent'}`, background: band ? (bandBg ?? band.bg) : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: band ? (bandColor ?? band.color) : 'transparent', flexShrink: 0 }} />
         {band ? band.items.map((item, i) => (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>／</span>}
             {item.url ? (
               <a href={item.url} target="_blank" rel="noopener noreferrer"
-                style={{ color: band.color, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                style={{ color: bandColor ?? band.color, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 {item.label}
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
             ) : (
-              <span style={{ color: band.color, fontWeight: 700 }}>{item.label}</span>
+              <span style={{ color: bandColor ?? band.color, fontWeight: 700 }}>{item.label}</span>
             )}
           </span>
         )) : <span>&nbsp;</span>}

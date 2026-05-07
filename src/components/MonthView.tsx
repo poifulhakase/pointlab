@@ -77,11 +77,13 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 padding: isMobile ? '3px' : '6px',
                 opacity: dim ? 0.35 : 1,
                 background: td && !dim
-                  ? 'rgba(255,210,80,0.18)'
+                  ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,210,80,0.18)'
                   : showPoiroboAlert && sqMarkers.length > 0 && !dim
                     ? 'rgba(248,113,113,0.18)'
                     : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
-                borderTop: td && !dim ? '3px solid rgba(255,200,60,0.85)' : undefined,
+                borderTop: td && !dim
+                  ? isLight ? '3px solid #3b82f6' : '3px solid rgba(255,200,60,0.85)'
+                  : undefined,
                 cursor: 'pointer',
                 position: 'relative',
                 isolation: 'isolate',
@@ -95,7 +97,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                     ...styles.dateNum,
                     width: isMobile ? 22 : 26, height: isMobile ? 22 : 26,
                     fontSize: isMobile ? 11 : 13,
-                    color: td ? 'rgba(255,200,60,0.95)' : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
+                    color: td ? (isLight ? '#1d4ed8' : 'rgba(255,200,60,0.95)') : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
                     background: 'transparent',
                     boxShadow: 'none',
                     fontWeight: td ? 700 : undefined,

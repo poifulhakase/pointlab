@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -212,6 +212,12 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
 }
 
 // ── テーブル列定義 ────────────────────────────────────
+// rows[ci] が合計列かどうか（モジュール定数 → ループ内で毎回 new Set しない）
+const TOTAL_IDX = new Set([2, 5, 8, 9])
+
+// タンクグループの表示順
+const TANK_GROUPS = ['trend', 'gravity', 'noise'] as const
+
 const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
   { label: '日付' },
   { label: '外国人' },
@@ -323,7 +329,7 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
           onChange={e => setQuantMemo(e.target.value)}
           placeholder="AI分析レポート・トレードメモを入力…"
           style={{
-            flex: 1, minHeight: isMobile ? 'max(280px, calc(100svh - 440px))' : 280,
+            flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
             resize: 'none', background: 'transparent',
             color: 'var(--text)', border: 'none', outline: 'none',
             padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
@@ -336,9 +342,15 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
 }
 
 // ── メインコンポーネント ──────────────────────────────
+const PARTICIPANTS_MOBILE_LIMIT = 10
+
 export function MicroQuantView({ theme, isMobile, data, loading, error, onReload, onOpenNetDelta }: Props) {
-  const tv = themeVars(theme)
+  const tv = useMemo(() => themeVars(theme), [theme])
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
+  const [participantsExpanded, setParticipantsExpanded] = useState(false)
+
+  // buildTankFirms は O(data.length × sectors) → data 変化時のみ再計算
+  const tankFirms = useMemo(() => buildTankFirms(data), [data])
 
   return (
     <div style={{ ...tv, flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}>
@@ -405,8 +417,8 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                   flexDirection: isMobile ? 'column' : 'row',
                   gap: 8,
                 }}>
-                  {(['trend', 'gravity', 'noise'] as const).map(group => {
-                    const firms = buildTankFirms(data).filter(t => t.group === group)
+                  {TANK_GROUPS.map(group => {
+                    const firms = tankFirms.filter(t => t.group === group)
                     const meta  = GROUP_META[group]
                     return (
                       <div key={group} style={{
@@ -441,7 +453,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                     <span>週次ネット枚数テーブル</span>
                     <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>買越し=+ / 売越し=−</span>
                   </div>
-                  <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' }}>
+                  <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: isMobile ? 'visible' : 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                       <thead>
                         <tr>
@@ -473,7 +485,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                         </tr>
                       </thead>
                       <tbody>
-                        {data.map((row, i) => {
+                        {(isMobile && !participantsExpanded ? data.slice(0, PARTICIPANTS_MOBILE_LIMIT) : data).map((row, i) => {
                           const trendT   = (row.foreign    ?? 0) + (row.trustBank  ?? 0)
                           const gravityT = (row.lifeIns    ?? 0) + (row.invTrust   ?? 0)
                           const noiseT   = (row.individual ?? 0) + (row.securities ?? 0)
@@ -484,7 +496,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                             row.individual ?? null, row.securities ?? null, noiseT,
                             totalNets,
                           ] as (number | null)[]
-                          const isTotalIdx = new Set([2, 5, 8, 9])
+                          // TOTAL_IDX はモジュール定数を使用
                           return (
                             <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
                               <td style={{ ...s.td, minWidth: 68 }}>
@@ -495,8 +507,8 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                                 <td key={ci} style={{
                                   ...s.td, ...s.tdNum,
                                   background: cellBg(v, theme),
-                                  fontWeight: isTotalIdx.has(ci) ? 700 : 500,
-                                  borderLeft: isTotalIdx.has(ci) ? '2px solid var(--border-dim)' : undefined,
+                                  fontWeight: TOTAL_IDX.has(ci) ? 700 : 500,
+                                  borderLeft: TOTAL_IDX.has(ci) ? '2px solid var(--border-dim)' : undefined,
                                 }}>
                                   <span style={{ color: cellColor(v, theme) }}>{fmt(v)}</span>
                                 </td>
@@ -508,6 +520,12 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                     </table>
                   </div>
                 </div>
+
+                {isMobile && data.length > PARTICIPANTS_MOBILE_LIMIT && (
+                  <button style={s.expandBtn} onClick={() => setParticipantsExpanded(v => !v)}>
+                    {participantsExpanded ? `▲ 折りたたむ` : `▼ 全${data.length}週を表示`}
+                  </button>
+                )}
 
                 {/* 注記 */}
                 <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
@@ -561,4 +579,12 @@ const s: Record<string, React.CSSProperties> = {
   },
   td:    { padding: '6px 10px', borderBottom: '1px solid var(--border-dim)', fontSize: 12 },
   tdNum: { textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' },
+  expandBtn: {
+    display: 'block', width: '100%',
+    padding: '9px 14px', textAlign: 'center' as const,
+    fontSize: 11, fontWeight: 600, color: 'var(--text-sub)',
+    background: 'var(--glass-bg)', border: 'none',
+    borderTop: '1px solid var(--border-dim)',
+    cursor: 'pointer', letterSpacing: '0.03em',
+  },
 }

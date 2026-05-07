@@ -1,4 +1,4 @@
-// ドル円日次データ（Yahoo Finance プロキシ経由）
+// ドル円日次データ（静的JSON → Yahoo Finance プロキシ経由のフォールバック）
 
 import { proxyFetch } from './proxyFetch'
 
@@ -14,6 +14,8 @@ export interface UsdjpyDayData {
 const CACHE_KEY          = 'poical-usdjpy-data'
 const CACHE_TTL_OPEN     = 30 * 60 * 1000
 const CACHE_TTL_CLOSED   = 2  * 60 * 60 * 1000
+const STATIC_JSON_URL    = '/data/usdjpy.json'
+const STATIC_MAX_AGE_MS  = 36 * 60 * 60 * 1000  // 36時間以内なら静的JSONを使用
 
 function isForexOpen(): boolean {
   const now = new Date()
@@ -65,6 +67,20 @@ export async function fetchUsdjpyData(force = false): Promise<UsdjpyDayData[]> {
     }
   } catch { /* ignore */ }
 
+  // 静的JSONを優先使用（fetch-data スクリプトで生成・常に新鮮）
+  try {
+    const res = await fetch(STATIC_JSON_URL)
+    if (res.ok) {
+      const json = await res.json() as { updatedAt: string; data: UsdjpyDayData[] }
+      const age = Date.now() - new Date(json.updatedAt).getTime()
+      if (age < STATIC_MAX_AGE_MS && json.data?.length > 0) {
+        writeCache(json.data)
+        return json.data
+      }
+    }
+  } catch { /* fall through to live fetch */ }
+
+  // フォールバック: Yahoo Finance プロキシ経由でライブ取得
   try {
     const closeMap = await fetchSymbol('USDJPY=X')
     const dates    = Array.from(closeMap.keys()).sort()
