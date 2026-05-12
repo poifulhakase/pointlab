@@ -966,20 +966,37 @@ async function parseSifDyrPdf(pdfBytes) {
   }
   for (const items of byY.values()) items.sort((a, b) => a.x - b.x)
 
-  let totalVolume = 0
-  let totalOI = 0
+  const now = new Date()
+  const currentYYYYMM = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
+
+  let totalVolume  = 0
+  let totalOI      = 0
+  let nearClose    = null
+  let nearContract = null
 
   for (const [y, items] of byY.entries()) {
     if (!items.length || !/^\d{6}$/.test(items[0].str)) continue
+    const contractCode = items[0].str
     // 数値はヘッダー行と同じY, またはy-1に出現する場合がある
     const dataItems = [...items, ...(byY.get(y - 1) ?? [])]
     const volItem = dataItems.find(i => i.x >= 800 && i.x <= 875 && /^[\d,]+$/.test(i.str))
     const oiItem  = dataItems.find(i => i.x >= 1130 && i.x <= 1210 && /^[\d,]+$/.test(i.str))
     if (volItem) totalVolume += parseNum(volItem.str)
     if (oiItem)  totalOI    += parseNum(oiItem.str)
+    // 近限月清算値: 最小YYYYMM >= currentYYYYMM
+    if (contractCode >= currentYYYYMM && (nearContract === null || contractCode < nearContract)) {
+      const closeItem = dataItems.find(i => i.x >= 520 && i.x <= 700 && /^[\d,]+$/.test(i.str))
+      if (closeItem) {
+        const price = parseNum(closeItem.str)
+        if (price > 10000 && price < 80000) {
+          nearContract = contractCode
+          nearClose    = price
+        }
+      }
+    }
   }
 
-  return { volume: totalVolume, oi: totalOI }
+  return { volume: totalVolume, oi: totalOI, close: nearClose }
 }
 
 async function buildFuturesDailyData() {
@@ -1031,10 +1048,10 @@ async function buildFuturesDailyData() {
           const zipEntry = zip.getEntry(`sif_dyr_${td}.pdf`)
           if (!zipEntry) { console.warn(`  ✗ ${dateStr}: sif_dyr_${td}.pdf が見つかりません`); continue }
 
-          const { volume, oi } = await parseSifDyrPdf(zipEntry.getData())
+          const { volume, oi, close } = await parseSifDyrPdf(zipEntry.getData())
           if (oi > 0) {
-            existingMap.set(dateStr, { date: dateStr, volume, oi })
-            console.log(`  ✓ ${dateStr}: volume=${volume.toLocaleString()}, oi=${oi.toLocaleString()}`)
+            existingMap.set(dateStr, { date: dateStr, volume, oi, close: close ?? null })
+            console.log(`  ✓ ${dateStr}: volume=${volume.toLocaleString()}, oi=${oi.toLocaleString()}${close ? `, close=${close.toLocaleString()}` : ''}`)
           } else {
             console.warn(`  ✗ ${dateStr}: OI取得失敗 (volume=${volume})`)
           }

@@ -44,9 +44,9 @@ type CotTank = {
 }
 
 const GROUP_META: Record<string, { label: string; color: string; desc: string }> = {
-  nonComm: { label: 'Non-Commercial', color: '#60a5fa', desc: '投機筋' },
-  comm:    { label: 'Commercial',     color: '#fb923c', desc: 'ヘッジャー' },
-  nonRept: { label: 'Non-Reportable', color: '#a78bfa', desc: '小口' },
+  nonComm: { label: 'ヘッジファンド（投機筋）', color: '#60a5fa', desc: '' },
+  comm:    { label: '機関投資家（実需）',       color: '#fb923c', desc: '' },
+  nonRept: { label: '個人投資家（小口）',       color: '#a78bfa', desc: '' },
 }
 
 function buildCotTanks(data: CotNikkeiWeekData[]): CotTank[] {
@@ -56,9 +56,9 @@ function buildCotTanks(data: CotNikkeiWeekData[]): CotTank[] {
   const maxAbs = (key: 'nonCommNet' | 'commNet' | 'nonReptNet') =>
     Math.max(...data.map(d => Math.abs(d[key])), 1000)
   return [
-    { display: 'Non-Commercial', group: 'nonComm', net: cur.nonCommNet, wow: prev ? cur.nonCommNet - prev.nonCommNet : 0, maxAbsNet: maxAbs('nonCommNet') * 1.2 },
-    { display: 'Commercial',     group: 'comm',    net: cur.commNet,    wow: prev ? cur.commNet    - prev.commNet    : 0, maxAbsNet: maxAbs('commNet')    * 1.2 },
-    { display: 'Non-Reportable', group: 'nonRept', net: cur.nonReptNet, wow: prev ? cur.nonReptNet - prev.nonReptNet : 0, maxAbsNet: maxAbs('nonReptNet') * 1.2 },
+    { display: 'ヘッジファンド\n（投機筋）', group: 'nonComm', net: cur.nonCommNet, wow: prev ? cur.nonCommNet - prev.nonCommNet : 0, maxAbsNet: maxAbs('nonCommNet') * 1.2 },
+    { display: '機関投資家\n（実需）',       group: 'comm',    net: cur.commNet,    wow: prev ? cur.commNet    - prev.commNet    : 0, maxAbsNet: maxAbs('commNet')    * 1.2 },
+    { display: '個人投資家\n（小口）',       group: 'nonRept', net: cur.nonReptNet, wow: prev ? cur.nonReptNet - prev.nonReptNet : 0, maxAbsNet: maxAbs('nonReptNet') * 1.2 },
   ]
 }
 
@@ -397,16 +397,16 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                           <th style={{ ...s.th, borderLeft: '2px solid var(--border-dim)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
                               {onOpenNetDelta && !isMobile && (
-                                <button onClick={onOpenNetDelta} title="NC Net 週次Δ" style={s.deltaBtn}>Δ</button>
+                                <button onClick={onOpenNetDelta} title="HF純計 週次Δ" style={s.deltaBtn}>Δ</button>
                               )}
-                              NC Net
+                              HF純計
                             </div>
                           </th>
-                          <th style={s.th}>NC Long</th>
-                          <th style={s.th}>NC Short</th>
-                          <th style={{ ...s.th, borderLeft: '2px solid var(--border-dim)' }}>Comm Net</th>
-                          <th style={s.th}>Comm Long</th>
-                          <th style={s.th}>Comm Short</th>
+                          <th style={s.th}>HF買い</th>
+                          <th style={s.th}>HF売り</th>
+                          <th style={{ ...s.th, borderLeft: '2px solid var(--border-dim)' }}>機関純計</th>
+                          <th style={s.th}>機関買い</th>
+                          <th style={s.th}>機関売り</th>
                           <th style={s.th}>OI</th>
                         </tr>
                       </thead>
@@ -450,7 +450,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                 )}
 
                 <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
-                  ※ タンク水位 = |NC/Comm/NRネット枚数| ÷ 過去最大値×1.2。緑=買越し・赤=売越し。データはCFTC毎週金曜公表（火曜基準・約3〜4日遅延）。
+                  ※ タンク水位 = |HF/機関/個人ネット枚数| ÷ 過去最大値×1.2。緑=買越し・赤=売越し。データはCFTC毎週金曜公表（火曜基準・約3〜4日遅延）。
                 </div>
               </>
             )}

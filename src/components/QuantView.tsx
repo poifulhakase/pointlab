@@ -10,7 +10,7 @@ import { getSqDates, getSqMarkersForDate, SQ_META } from '../utils/sqCalendar'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
-import { fetchCotNikkeiData, computeCotVectors, type CotNikkeiWeekData } from '../utils/cotNikkeiData'
+import { fetchCotNikkeiData, type CotNikkeiWeekData } from '../utils/cotNikkeiData'
 import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDailyData'
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
@@ -249,7 +249,7 @@ function getUpcomingEvents(days = 28): { date: string; day: string; events: stri
   return result
 }
 
-const EXPORT_WEEKS = 12
+const EXPORT_WEEKS = 26
 
 // ── 偏差スコア計算ヘルパー ──────────────────────────
 // 最低 MIN_Z 件あれば計算（データ欠損・プロキシ失敗でも動作）
@@ -306,208 +306,151 @@ function buildExportJson(
   nas100Data: Nas100DayData[],
   vixDailyData: VixDayData[],
 ) {
-  const invMap = new Map(invData.map(d => [toDate(d.date), d]))
-  const marMap = new Map(marData.map(d => [toDate(d.date), d]))
-  const vixMap = new Map(vixData.map(d => [toDate(d.date), d]))
-  const ntMap  = new Map(ntData.map(d => [d.time, d]))
-  const adMap  = new Map(adData.map(d => [toDate(d.date), d]))
-  const ssMap  = new Map(ssData.map(d => [toDate(d.date), d]))
-  const arbMap = new Map(arbData.map(d => [toDate(d.date), d]))
-
-  const allDates = new Set([...invMap.keys(), ...marMap.keys(), ...vixMap.keys(), ...adMap.keys(), ...ssMap.keys(), ...arbMap.keys()])
-
-  const sortedDates = Array.from(allDates).sort((a, b) => b.localeCompare(a)).slice(0, EXPORT_WEEKS)
-
-  const rows = sortedDates
-    .map((date, i) => {
-      const inv     = invMap.get(date)
-      const invPrev = i < sortedDates.length - 1 ? invMap.get(sortedDates[i + 1]) : undefined
-      const mar     = marMap.get(date)
-      const marPrev = i < sortedDates.length - 1 ? marMap.get(sortedDates[i + 1]) : undefined
-      const vix     = findVixForDate(vixMap, date)
-      const nt      = findNtForDate(ntMap, date)
-      const ad      = adMap.get(date)
-      const adPrev  = i < sortedDates.length - 1 ? adMap.get(sortedDates[i + 1])  : undefined
-      const ss      = ssMap.get(date)
-      const ssPrev  = i < sortedDates.length - 1 ? ssMap.get(sortedDates[i + 1])  : undefined
-      const arb     = arbMap.get(date)
-      const arbPrev = i < sortedDates.length - 1 ? arbMap.get(sortedDates[i + 1]) : undefined
-      return {
-        date,
-        vix: { value: vix?.close ?? 0, change: vix?.change ?? 0, change_pct: vix?.changePct ?? null },
-        ns_ratio: nt ? {
-          value:  r2(nt.ratio),
-          nikkei: Math.round(nt.nikkei),
-          sp500:  r2(nt.sp500),
-          change: nt.change != null ? r2(nt.change) : null,
-        } : null,
-        flows: {
-          foreign:     r2(inv?.foreigner  ?? 0),
-          institution: r2((inv?.trustBank ?? 0) + (inv?.securities ?? 0)),
-          trust_bank:  inv?.trustBank  != null ? r2(inv.trustBank)  : null,
-          securities:  inv?.securities != null ? r2(inv.securities) : null,
-          retail:      r2(inv?.individual ?? 0),
-        },
-        credit_ratio:               mar?.ratio ?? 0,
-        credit_eval_ratio:          mar?.evalRatio ?? null,
-        advance_decline_ratio:      ad?.ratio25 ?? null,
-        short_sell_ratio:           ss?.ratio ?? null,
-        arbitrage_long_bal_trillion:  arb ? r2(arb.longBal / 1000000) : null,
-        arbitrage_short_bal_trillion: arb && arb.shortBal > 0 ? r2(arb.shortBal / 1000000) : null,
-        delta: {
-          foreign_flows_delta:     inv && invPrev
-            ? r2(inv.foreigner - invPrev.foreigner) : null,
-          credit_long_pct:         mar && marPrev && marPrev.longBal > 0
-            ? r2((mar.longBal - marPrev.longBal) / marPrev.longBal * 100) : null,
-          credit_eval_ratio_pp:    mar?.evalRatio != null && marPrev?.evalRatio != null
-            ? r2(mar.evalRatio - marPrev.evalRatio) : null,
-          arbitrage_long_100m:     arb && arbPrev
-            ? Math.round((arb.longBal - arbPrev.longBal) / 100) : null,
-          arbitrage_short_100m:    arb && arbPrev && arb.shortBal > 0 && arbPrev.shortBal > 0
-            ? Math.round((arb.shortBal - arbPrev.shortBal) / 100) : null,
-          short_sell_pp:           ss && ssPrev
-            ? r2(ss.ratio - ssPrev.ratio) : null,
-          advance_decline_pp:      ad && adPrev
-            ? r2(ad.ratio25 - adPrev.ratio25) : null,
-          vix_pct:                 vix?.changePct ?? null,
-          ns_ratio_change:         nt?.change ?? null,
-        },
+  // ── ローカルヘルパー ──────────────────────────────
+  function pctRank(series: number[], val: number): number {
+    if (series.length === 0) return 50
+    return Math.round(series.filter(v => v < val).length / series.length * 100)
+  }
+  function sig(bullPct: number): 'BULL' | 'NEUTRAL' | 'BEAR' {
+    return bullPct >= 65 ? 'BULL' : bullPct <= 35 ? 'BEAR' : 'NEUTRAL'
+  }
+  function hvol(prices: number[], window: number): number | null {
+    if (prices.length < window + 1) return null
+    const sl   = prices.slice(-(window + 1))
+    const rets = sl.slice(1).map((p, i) => Math.log(p / sl[i]))
+    const mean = rets.reduce((a, b) => a + b, 0) / rets.length
+    const variance = rets.reduce((a, r) => a + (r - mean) ** 2, 0) / rets.length
+    return r2(Math.sqrt(variance * 252) * 100)
+  }
+  function maL(arr: number[], n: number): number | null {
+    if (arr.length < n) return null
+    return r2(arr.slice(-n).reduce((a, b) => a + b, 0) / n)
+  }
+  function nearKey<T>(map: Map<string, T>, date: string, maxDays = 7): T | undefined {
+    if (map.has(date)) return map.get(date)
+    const base = new Date(date)
+    for (let delta = 1; delta <= maxDays; delta++) {
+      for (const sign of [1, -1]) {
+        const t = new Date(base); t.setDate(base.getDate() + sign * delta)
+        const k = t.toISOString().slice(0, 10)
+        if (map.has(k)) return map.get(k)
       }
-    })
-    .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0 || r.advance_decline_ratio !== null || r.short_sell_ratio !== null)
+    }
+    return undefined
+  }
 
-  // CFTC COT ポジション（ミクロ需給）
-  const cv = computeCotVectors(cotData)
-  const micro_supply_demand = cv && cotData.length > 0 ? {
-    data_as_of: cotData[0].date,
-    frequency: '週次',
-    lag_note: 'CFTC公表（火曜基準→金曜公開）約3〜4日遅延',
-    open_interest: cotData[0].openInterest,
-    non_commercial: {
-      label: '投機筋（スマートマネー）',
-      long: cotData[0].nonCommLong, short: cotData[0].nonCommShort, net: cotData[0].nonCommNet,
-      direction: cv.nonComm.direction, week_over_week: cv.nonComm.wow,
-    },
-    commercial: {
-      label: 'ヘッジャー',
-      long: cotData[0].commLong, short: cotData[0].commShort, net: cotData[0].commNet,
-      direction: cv.comm.direction, week_over_week: cv.comm.wow,
-    },
-    non_reportable: {
-      label: '小口',
-      long: cotData[0].nonReptLong, short: cotData[0].nonReptShort, net: cotData[0].nonReptNet,
-      direction: cv.nonRept.direction, week_over_week: cv.nonRept.wow,
-    },
-    sell_pressure_score: cv.sellPressureScore,
-    score_percentile:    cv.scorePercentile,
-    score_top_pct:       100 - cv.scorePercentile,
-    score_median:        cv.scoreMedian,
-    score_history_weeks: cv.historyWeeks,
-    alert_level: cv.alertLevel,
-    recent: cotData.slice(0, 5).map(d => ({
-      date: d.date, nonCommNet: d.nonCommNet, commNet: d.commNet,
-      nonReptNet: d.nonReptNet, openInterest: d.openInterest,
-    })),
-  } : null
+  // ── データ整列とマップ ────────────────────────────
+  const invS  = [...invData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const marS  = [...marData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const vixS  = [...vixData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const adS   = [...adData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const ssS   = [...ssData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const arbS  = [...arbData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
+  const cotS  = [...cotData].sort((a, b) => b.date.localeCompare(a.date))
 
-  // 直近VIXサマリー（AIがdata配列を掘らずに即参照できるよう最新値をトップレベルに展開）
-  const vixSorted = [...vixData].sort((a, b) => toDate(b.date).localeCompare(toDate(a.date)))
-  const vix_latest = vixSorted[0] ? {
-    date:              toDate(vixSorted[0].date),
-    close:             vixSorted[0].close,
-    weekly_change_pt:  vixSorted[0].change,
-    weekly_change_pct: vixSorted[0].changePct,
-  } : null
+  const invMap  = new Map(invS.map(d => [toDate(d.date), d]))
+  const marMap  = new Map(marS.map(d => [toDate(d.date), d]))
+  const vixMapW = new Map(vixS.map(d => [toDate(d.date), d]))
+  const adMap   = new Map(adS.map(d => [toDate(d.date), d]))
+  const ssMap   = new Map(ssS.map(d => [toDate(d.date), d]))
+  const arbMap  = new Map(arbS.map(d => [toDate(d.date), d]))
+  const cotMap  = new Map(cotS.map(d => [d.date, d]))
+  const ntMap   = new Map(ntData.map(d => [d.time, d]))
 
-  // 日経225現在値（ntDataはascending順・最新が末尾）
-  const nk = ntData.length > 0 ? ntData[ntData.length - 1] : null
-  const nk1w = ntData.length > 5  ? ntData[ntData.length - 6]  : null
-  const nk1m = ntData.length > 21 ? ntData[ntData.length - 22] : null
-  const nikkei225_latest = nk ? {
-    date:         nk.time,
-    close:        Math.round(nk.nikkei),
-    change_1w_pt:  nk1w ? Math.round(nk.nikkei - nk1w.nikkei) : null,
-    change_1w_pct: nk1w ? r2((nk.nikkei - nk1w.nikkei) / nk1w.nikkei * 100) : null,
-    change_1m_pct: nk1m ? r2((nk.nikkei - nk1m.nikkei) / nk1m.nikkei * 100) : null,
-  } : null
+  // Daily refs (ascending → latest at tail; futuresDailyData is descending)
+  const nk         = ntData.length > 0 ? ntData[ntData.length - 1] : null
+  const fx         = usdjpyData.length > 0 ? usdjpyData[usdjpyData.length - 1] : null
+  const nas        = nas100Data.length > 0 ? nas100Data[nas100Data.length - 1] : null
+  const latestFut  = futuresDailyData[0] ?? null
+  const latestVixD = vixDailyData.length > 0 ? vixDailyData[vixDailyData.length - 1] : null
+  const nkCur      = nk ? nk.nikkei : null
+  const nkPrices   = ntData.map(d => d.nikkei)
 
-  // ドル円最新値
-  const fx = usdjpyData.length > 0 ? usdjpyData[usdjpyData.length - 1] : null
-  const usdjpy_latest = fx ? {
-    date:        fx.time,
-    close:       fx.close,
-    change:      fx.change,
-    change_pct:  fx.changePct,
-    ma5:         fx.ma5,
-    ma5_dev_pct: fx.ma5dev,
-  } : null
+  // ── 外国人フロー累計 ─────────────────────────────
+  const invT = (d: InvestorWeekData) => d.foreigner / 1_000_000
+  const foreign4w  = r2(invS.slice(0, 4).reduce((s, d) => s + invT(d), 0))
+  const foreign13w = r2(invS.slice(0, 13).reduce((s, d) => s + invT(d), 0))
+  const foreign26w = r2(invS.slice(0, 26).reduce((s, d) => s + invT(d), 0))
+  const rolling4w: number[] = []
+  for (let i = 0; i + 3 < invS.length && i < 26; i++) {
+    rolling4w.push(invS.slice(i, i + 4).reduce((s, d) => s + invT(d), 0))
+  }
+  const foreign4wPct = rolling4w.length > 1 ? pctRank(rolling4w.slice(1), rolling4w[0]) : 50
 
-  // 信用最新値（兆円換算・total_mass計算用）
-  const mar0 = marData.length > 0 ? marData[0] : null
-  const credit_margin_latest = mar0 ? {
-    date:              toDate(mar0.date),
-    long_bal_trillion: r2(mar0.longBal / 1000000),
-    short_bal_trillion: r2(mar0.shortBal / 1000000),
-    ratio:             mar0.ratio,
-    eval_ratio:        mar0.evalRatio ?? null,
-  } : null
+  // ── パーセンタイル ───────────────────────────────
+  const creditRatios   = marS.slice(0, 26).map(d => d.ratio)
+  const creditRatioPct = creditRatios.length > 1 ? pctRank(creditRatios.slice(1), creditRatios[0]) : 50
 
-  // 裁定日次（直近7件）
-  const arbitrage_daily_recent = arbDailyData.slice(0, 7).map(d => ({
-    date: d.date, longBal: d.longBal, delta: d.longBalDelta,
-  }))
+  const arbLongs   = arbS.slice(0, 26).map(d => d.longBal / 1_000_000)
+  const arbLongPct = arbLongs.length > 1 ? pctRank(arbLongs.slice(1), arbLongs[0]) : 50
 
-  // NAS100最新値
-  const nas = nas100Data.length > 0 ? nas100Data[nas100Data.length - 1] : null
-  const nas100_latest = nas ? { date: nas.time, close: nas.close, change_pct: nas.changePct } : null
+  const adRatios = adS.slice(0, 26).map(d => d.ratio25)
+  const adPct    = adRatios.length > 1 ? pctRank(adRatios.slice(1), adRatios[0]) : 50
 
-  // ③ 偏差スコア（Zスコア計算・MIN_Z=3 / NAS100→日経フォールバック）
+  const ssRatios = ssS.slice(0, 26).map(d => d.ratio)
+  const ssPct    = ssRatios.length > 1 ? pctRank(ssRatios.slice(1), ssRatios[0]) : 50
+
+  const cotLfNets = cotS.slice(0, 52).map(d => d.nonCommNet)
+  const cotLfPct  = cotLfNets.length > 1 ? pctRank(cotLfNets.slice(1), cotLfNets[0]) : 50
+  const cotAmNets = cotS.slice(0, 52).map(d => d.commNet)
+  const cotAmPct  = cotAmNets.length > 1 ? pctRank(cotAmNets.slice(1), cotAmNets[0]) : 50
+
+  const vixCloses52 = vixS.slice(0, 52).map(d => d.close)
+  const vixPct52w   = vixCloses52.length > 1 ? pctRank(vixCloses52.slice(1), vixCloses52[0]) : 50
+
+  const oiVals20  = futuresDailyData.slice(0, 20).map(d => d.oi)
+  const oiPct20   = oiVals20.length > 1 ? pctRank(oiVals20.slice(1), oiVals20[0]) : 50
+  const volVals20 = futuresDailyData.slice(0, 20).map(d => d.volume)
+  const volPct20  = volVals20.length > 1 ? pctRank(volVals20.slice(1), volVals20[0]) : 50
+
+  const latestPcrEntry = futuresDailyData.find(d => d.pcr != null)
+  const latestPcr      = latestPcrEntry?.pcr ?? null
+  const pcrVals20      = futuresDailyData.slice(0, 20).filter(d => d.pcr != null).map(d => d.pcr!)
+  const pcrPct20       = pcrVals20.length > 1 ? pctRank(pcrVals20.slice(1), pcrVals20[0]) : 50
+  const pcrSignal: 'BULL' | 'NEUTRAL' | 'BEAR' = latestPcr != null
+    ? latestPcr > 0.90 ? 'BULL' : latestPcr < 0.65 ? 'BEAR' : 'NEUTRAL'
+    : 'NEUTRAL'
+
+  // ── 偏差スコア ───────────────────────────────────
   const W = 30
-
-  // USDJPY Z
-  const fxSeries = usdjpyData.slice(-W).map(d => d.changePct ?? 0)
-  const z_usdjpy = zScore(fxSeries)
-
-  // NAS100 Z（取得失敗時は日経225のdailyChangePctで代替）
+  const fxSeries     = usdjpyData.slice(-W).map(d => d.changePct ?? 0)
   let nasSeries: number[]
   if (nas100Data.length >= MIN_Z) {
     nasSeries = nas100Data.slice(-W).map(d => d.changePct ?? 0)
   } else if (ntData.length >= MIN_Z + 1) {
-    const nkSlice = ntData.slice(-Math.min(W + 1, ntData.length))
-    nasSeries = nkSlice.slice(1).map((d, i) =>
-      nkSlice[i].nikkei > 0 ? r2((d.nikkei - nkSlice[i].nikkei) / nkSlice[i].nikkei * 100) : 0
+    const sl = ntData.slice(-Math.min(W + 1, ntData.length))
+    nasSeries = sl.slice(1).map((d, i) =>
+      sl[i].nikkei > 0 ? r2((d.nikkei - sl[i].nikkei) / sl[i].nikkei * 100) : 0
     )
   } else {
     nasSeries = []
   }
-  const z_nas100 = zScore(nasSeries)
-  const nas100_source = nas100Data.length >= MIN_Z ? 'NAS100(^NDX)' : ntData.length >= MIN_Z + 1 ? '日経225(^N225)フォールバック' : null
-
-  // VIX⁻¹ Z
   const vixInvSeries = vixDailyData.slice(-W).map(d => d.close > 0 ? 1 / d.close : 0)
-  const z_vix_inv = zScore(vixInvSeries)
-
-  // OI変化率 Z（futuresDailyDataは降順）
   const oiDeltas: number[] = []
   for (let i = 0; i < Math.min(W, futuresDailyData.length - 1); i++) {
     const cur = futuresDailyData[i], prev = futuresDailyData[i + 1]
     if (prev.oi > 0) oiDeltas.push((cur.oi - prev.oi) / prev.oi * 100)
   }
-  const z_oi = zScore(oiDeltas)
+  const z_usdjpy  = zScore(fxSeries)
+  const z_nas100  = zScore(nasSeries)
+  const z_vix_inv = zScore(vixInvSeries)
+  const z_oi      = zScore(oiDeltas)
+  const nas100_source = nas100Data.length >= MIN_Z
+    ? 'NAS100(^NDX)'
+    : ntData.length >= MIN_Z + 1 ? '日経225(^N225)フォールバック' : null
 
-  // スコア計算ヘルパー（offsetDays=0で本日、3で3日前のzを使う）
   function scoreAtOffset(offsetDays: number): number | null {
     function zAt(series: number[], offset: number): number | null {
       const end = series.length - offset
       if (end < MIN_Z) return null
       return zScore(series.slice(0, end))
     }
-    const zFx  = zAt(fxSeries,    offsetDays)
-    const zNas = zAt(nasSeries,   offsetDays)
+    const zFx  = zAt(fxSeries,     offsetDays)
+    const zNas = zAt(nasSeries,    offsetDays)
     const zVi  = zAt(vixInvSeries, offsetDays)
-    const zOi  = zAt(oiDeltas,    offsetDays)
+    const zOi  = zAt(oiDeltas,     offsetDays)
     const components: [number | null, number][] = [
-      [zFx,  0.30], [zNas, 0.25], [zVi,  0.20], [zOi,  0.15],
+      [zFx, 0.30], [zNas, 0.25], [zVi, 0.20], [zOi, 0.15],
     ]
     const [sum, wt] = components.reduce<[number, number]>(([s, w], [v, ww]) =>
       v != null ? [s + v * ww, w + ww] : [s, w], [0, 0])
@@ -516,209 +459,415 @@ function buildExportJson(
   const score_today = scoreAtOffset(0)
   const score_3d    = scoreAtOffset(3)
 
-  const deviation_score = {
-    z_usdjpy,
-    z_nas100,
-    z_vix_inv,
-    z_oi,
-    nas100_source,
-    score:       score_today,
-    acc:         score_today != null && score_3d != null ? r2(score_today - score_3d) : null,
-    window_days: W,
-    note: 'Score=0.30×Z_USDJPY+0.25×Z_NAS100+0.20×Z_VIX⁻¹+0.15×Z_OI / Acc=本日Score-3日前Score / 最低3件以上あれば計算',
-  }
+  // ── HV・MA・価格帯 ───────────────────────────────
+  const hv20          = hvol(nkPrices, 20)
+  const hv60          = hvol(nkPrices, 60)
+  const vixCurClose   = vixS[0]?.close ?? latestVixD?.close ?? null
+  const vixHv20Spread = vixCurClose != null && hv20 != null ? r2(vixCurClose - hv20) : null
 
-  // ⑤ 観測限界（Tier比率）
-  const now_ms = Date.now()
-  const freshDays = (isoDate: string | null, maxDays: number) =>
-    isoDate ? (now_ms - new Date(isoDate).getTime()) / 86400000 < maxDays : false
-  const tier1_available = [
-    nas100_latest?.date, fx?.time, vixDailyData[vixDailyData.length - 1]?.time,
-    futuresDailyData[0]?.date, nk?.time,
-  ].filter(d => freshDays(d ?? null, 5)).length
-  const tier2_available = [
-    futuresDailyData.find(d => d.pcr != null)?.date,
-    adData[0] ? toDate(adData[0].date) : null,
-  ].filter(d => freshDays(d ?? null, 10)).length
-  const tier3_available = [
-    invData[0] ? toDate(invData[0].date) : null,
-    marData[0] ? toDate(marData[0].date) : null,
-    arbData[0] ? toDate(arbData[0].date) : null,
-  ].filter(d => freshDays(d ?? null, 14)).length
-  const stale_fields = [
-    !freshDays(nas100_latest?.date ?? null, 5) && 'NAS100',
-    !freshDays(fx?.time ?? null, 5)            && 'USDJPY',
-    !freshDays(vixDailyData[vixDailyData.length - 1]?.time ?? null, 5) && 'VIX日次',
-    !freshDays(futuresDailyData[0]?.date ?? null, 5) && '先物OI',
-  ].filter(Boolean)
-  const observation_quality = {
-    tier1: { available: tier1_available, total: 5, weight: 'W1.0' },
-    tier2: { available: tier2_available, total: 2, weight: 'W0.6' },
-    tier3: { available: tier3_available, total: 3, weight: 'W0.3' },
-    stale_fields,
-    note: 'available=鮮度OK件数、total=該当指標数（5営業日以内=W1.0、10日以内=W0.6、14日以内=W0.3）',
-  }
+  const nkMa5        = maL(nkPrices, 5)
+  const nkMa20       = maL(nkPrices, 20)
+  const nkMa60       = maL(nkPrices, 60)
+  const nkMa200      = maL(nkPrices, 200)
+  const nkPrices260  = nkPrices.slice(-260)
+  const nkHigh52w    = nkPrices260.length > 0 ? Math.round(Math.max(...nkPrices260)) : null
+  const nkLow52w     = nkPrices260.length > 0 ? Math.round(Math.min(...nkPrices260)) : null
+  const nkPos52w     = nkCur != null && nkHigh52w != null && nkLow52w != null && nkHigh52w > nkLow52w
+    ? r2((nkCur - nkLow52w) / (nkHigh52w - nkLow52w) * 100) : null
 
-  // ⑥ SQ残日数・TPI（IV proxyにVIX日次changePctを使用）
+  const fxPrices     = usdjpyData.map(d => d.close)
+  const fxMa5        = maL(fxPrices, 5)
+  const fxMa20       = maL(fxPrices, 20)
+  const fxPrices260  = fxPrices.slice(-260)
+  const fxHigh52w    = fxPrices260.length > 0 ? r2(Math.max(...fxPrices260)) : null
+  const fxLow52w     = fxPrices260.length > 0 ? r2(Math.min(...fxPrices260)) : null
+
+  // ── 先物ベーシス ─────────────────────────────────
+  const futClose  = latestFut?.close ?? null
+  const basis     = futClose != null && nkCur != null ? r2(futClose - nkCur) : null
+  const basisPct  = basis != null && nkCur != null && nkCur > 0 ? r2(basis / nkCur * 100) : null
+  const basisNote = basis != null
+    ? (basis > 0 ? 'コンタンゴ（先物プレミアム）' : '逆ざや（先物ディスカウント）')
+    : '先物清算値データなし'
+
+  // ── シグナルスコアボード ─────────────────────────
+  type SigItem = {
+    id: string; name: string; category: string; weight: number
+    value: number | null; unit: string
+    signal: 'BULL' | 'NEUTRAL' | 'BEAR'
+    percentile?: number; note?: string
+  }
+  const usdjpySig: 'BULL' | 'NEUTRAL' | 'BEAR' = z_usdjpy != null
+    ? (z_usdjpy > 0.8 ? 'BULL' : z_usdjpy < -0.8 ? 'BEAR' : 'NEUTRAL') : 'NEUTRAL'
+  const nasSig: 'BULL' | 'NEUTRAL' | 'BEAR' = z_nas100 != null
+    ? (z_nas100 > 0.8 ? 'BULL' : z_nas100 < -0.8 ? 'BEAR' : 'NEUTRAL') : 'NEUTRAL'
+
+  const sigItems: SigItem[] = [
+    { id: 'foreign_4w',   name: '外国人4週累計',   category: 'フロー',         weight: 0.25, value: foreign4w,                                         unit: '兆円', signal: sig(foreign4wPct),       percentile: foreign4wPct },
+    { id: 'cot_lf_net',   name: 'HF純計(LF)',     category: 'ポジション',     weight: 0.15, value: cotS[0]?.nonCommNet ?? null,                       unit: '枚',   signal: sig(cotLfPct),            percentile: cotLfPct },
+    { id: 'credit_ratio', name: '信用倍率',         category: 'ポジション',     weight: 0.15, value: marS[0]?.ratio ?? null,                           unit: '倍',   signal: sig(100 - creditRatioPct), percentile: creditRatioPct, note: '高倍率=BEAR' },
+    { id: 'arb_long',     name: '裁定買い残',       category: 'ポジション',     weight: 0.10, value: arbS[0] ? r2(arbS[0].longBal / 1_000_000) : null, unit: '兆円', signal: sig(100 - arbLongPct),    percentile: arbLongPct,   note: '高残高=BEAR' },
+    { id: 'ad_25d',       name: '騰落レシオ25日',   category: '市場強度',       weight: 0.08, value: adS[0]?.ratio25 ?? null,                          unit: '',     signal: sig(adPct),               percentile: adPct },
+    { id: 'vix',          name: 'VIX',             category: 'ボラティリティ', weight: 0.08, value: vixCurClose,                                       unit: '',     signal: sig(100 - vixPct52w),     percentile: vixPct52w,    note: '高VIX=BEAR' },
+    { id: 'short_sell',   name: '空売り比率',       category: '市場強度',       weight: 0.07, value: ssS[0]?.ratio ?? null,                            unit: '%',    signal: sig(100 - ssPct),         percentile: ssPct,        note: '高比率=BEAR' },
+    { id: 'pcr',          name: 'PCR',             category: 'オプション',     weight: 0.07, value: latestPcr,                                         unit: '',     signal: pcrSignal,                percentile: pcrPct20 },
+    { id: 'usdjpy_z',     name: 'USD/JPY Zスコア', category: 'マクロ',         weight: 0.05, value: z_usdjpy,                                          unit: '',     signal: usdjpySig },
+  ]
+  const totalW = sigItems.reduce((s, i) => s + i.weight, 0)
+  let rawScore = 0
+  for (const item of sigItems) rawScore += (item.signal === 'BULL' ? 1 : item.signal === 'BEAR' ? -1 : 0) * item.weight
+  const compositeScore  = r2(rawScore / totalW * 100)
+  const netSignal: 'BULL' | 'NEUTRAL' | 'BEAR' = compositeScore >= 20 ? 'BULL' : compositeScore <= -20 ? 'BEAR' : 'NEUTRAL'
+  const bullIds    = sigItems.filter(i => i.signal === 'BULL').map(i => i.id)
+  const bearIds    = sigItems.filter(i => i.signal === 'BEAR').map(i => i.id)
+  const neutralIds = sigItems.filter(i => i.signal === 'NEUTRAL').map(i => i.id)
+
+  // ── マーケットレジーム ───────────────────────────
+  const vixCur = vixCurClose ?? 0
+  const market_regime =
+    vixCur > 30          ? '高ボラティリティ（VIX>30）' :
+    vixCur > 20          ? '警戒モード（VIX 20-30）' :
+    compositeScore >= 20  ? '強気相場' :
+    compositeScore <= -20 ? '弱気相場' : '中立・膠着'
+
+  // ── SQ ──────────────────────────────────────────
   const today = new Date(); today.setHours(0, 0, 0, 0)
-  const sqThisYear  = getSqDates(today.getFullYear())
-  const sqNextYear  = getSqDates(today.getFullYear() + 1)
-  const allSq = [...sqThisYear, ...sqNextYear].sort((a, b) => a.date.getTime() - b.date.getTime())
-  const nextSq = allSq.find(sq => sq.date > today)
-  const days_to_sq = nextSq ? Math.ceil((nextSq.date.getTime() - today.getTime()) / 86400000) : null
-  const vix_iv_proxy = vixDailyData.length > 0 ? vixDailyData[vixDailyData.length - 1].changePct : null
-  const sq_info = {
-    next_sq_date:  nextSq ? nextSq.date.toISOString().slice(0, 10) : null,
-    next_sq_type:  nextSq?.type ?? null,
-    days_to_sq,
-    iv_proxy:        vix_iv_proxy,
-    iv_proxy_source: 'VIX日次変化率(%)',
-    tpi: days_to_sq && days_to_sq > 0 && vix_iv_proxy != null
-      ? r2((1 / days_to_sq) * Math.abs(vix_iv_proxy)) : null,
-    note: 'TPI = (1/SQ残日数) × |VIX日次変化率| / iv_proxyはVIX直近日次changePct',
-  }
+  const allSq = [...getSqDates(today.getFullYear()), ...getSqDates(today.getFullYear() + 1)]
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+  const nextSq         = allSq.find(sq => sq.date > today)
+  const days_to_sq     = nextSq ? Math.ceil((nextSq.date.getTime() - today.getTime()) / 86400000) : null
+  const vix_iv_proxy   = vixDailyData.length > 0 ? vixDailyData[vixDailyData.length - 1].changePct : null
+  const tpi            = days_to_sq && days_to_sq > 0 && vix_iv_proxy != null
+    ? r2((1 / days_to_sq) * Math.abs(vix_iv_proxy)) : null
+  const sq_rule_current =
+    days_to_sq == null ? '通常運用' :
+    days_to_sq === 0   ? '原則ノートレ' :
+    days_to_sq <= 2    ? 'ポジション縮小' : '通常運用'
 
-  // ④ 価格帯空間情報（MA・高安値・OI集積帯）
-  function ma(arr: number[], n: number): number | null {
-    if (arr.length < n) return null
-    return r2(arr.slice(-n).reduce((a, b) => a + b, 0) / n)
-  }
-  const nkPrices = ntData.map(d => d.nikkei)
-  const nk60 = nkPrices.slice(-60)
-  const nkMa5  = ma(nkPrices, 5)
-  const nkMa20 = ma(nkPrices, 20)
-  const nkMa60 = ma(nkPrices, 60)
-  const nkHigh60 = nk60.length > 0 ? Math.round(Math.max(...nk60)) : null
-  const nkLow60  = nk60.length > 0 ? Math.round(Math.min(...nk60)) : null
-  const nkCur = nk ? nk.nikkei : null
-  const fxPrices = usdjpyData.map(d => d.close)
-  const fx60 = fxPrices.slice(-60)
-  const fxMa5  = ma(fxPrices, 5)
-  const fxMa20 = ma(fxPrices, 20)
-  const fx60High = fx60.length > 0 ? r2(Math.max(...fx60)) : null
-  const fx60Low  = fx60.length > 0 ? r2(Math.min(...fx60)) : null
-  // OI集積日（直近20日でOI変化が大きかった上位3日）
-  const oiHeavy = futuresDailyData.slice(0, 20)
-    .map((d, i) => {
-      const prev = futuresDailyData[i + 1]
-      return { date: d.date, delta: prev ? Math.abs(d.oi - prev.oi) : 0 }
-    })
-    .sort((a, b) => b.delta - a.delta)
+  // ── データ品質 ───────────────────────────────────
+  const now_ms = Date.now()
+  const freshDays = (d: string | null | undefined, maxD: number) =>
+    d ? (now_ms - new Date(d).getTime()) / 86400000 < maxD : false
+  const tier1 = [
+    { name: '日経225',  date: nk?.time ?? null },
+    { name: 'USD/JPY', date: fx?.time ?? null },
+    { name: 'VIX日次', date: latestVixD?.time ?? null },
+    { name: '先物OI',  date: latestFut?.date?.replace(/\//g, '-') ?? null },
+    { name: 'NAS100',  date: nas?.time ?? null },
+  ]
+  const tier2 = [
+    { name: 'PCR',       date: latestPcrEntry?.date?.replace(/\//g, '-') ?? null },
+    { name: '騰落レシオ', date: adS[0] ? toDate(adS[0].date) : null },
+  ]
+  const tier3 = [
+    { name: '投資主体別', date: invS[0] ? toDate(invS[0].date) : null },
+    { name: '信用残高',   date: marS[0] ? toDate(marS[0].date) : null },
+    { name: '裁定残高',   date: arbS[0] ? toDate(arbS[0].date) : null },
+  ]
+  const t1ok = tier1.filter(t => freshDays(t.date, 5)).length
+  const t2ok = tier2.filter(t => freshDays(t.date, 10)).length
+  const t3ok = tier3.filter(t => freshDays(t.date, 14)).length
+  const dqScore = r2((t1ok / tier1.length) * 0.5 + (t2ok / tier2.length) * 0.3 + (t3ok / tier3.length) * 0.2)
+  const staleFields = [
+    ...tier1.filter(t => !freshDays(t.date, 5)).map(t => t.name),
+    ...tier2.filter(t => !freshDays(t.date, 10)).map(t => t.name),
+  ]
+
+  // ── OI集積上位3日 ───────────────────────────────
+  const oiHeavy3d = futuresDailyData.slice(0, 20)
+    .map((d, i) => ({ date: d.date, oi: d.oi, oi_delta: futuresDailyData[i + 1] ? d.oi - futuresDailyData[i + 1].oi : 0 }))
+    .sort((a, b) => Math.abs(b.oi_delta) - Math.abs(a.oi_delta))
     .slice(0, 3)
-  const price_levels = {
-    nikkei225: {
-      current: nkCur ? Math.round(nkCur) : null,
-      ma5: nkMa5, ma20: nkMa20, ma60: nkMa60,
-      ma5_dev_pct:  nkMa5  && nkCur ? r2((nkCur - nkMa5)  / nkMa5  * 100) : null,
-      ma20_dev_pct: nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
-      high_60d: nkHigh60, low_60d: nkLow60,
-    },
-    usdjpy: {
-      current: fx ? fx.close : null,
-      ma5: fxMa5, ma20: fxMa20,
-      ma5_dev_pct: fxMa5 && fx ? r2((fx.close - fxMa5) / fxMa5 * 100) : null,
-      high_60d: fx60High, low_60d: fx60Low,
-    },
-    oi_heavy_dates: oiHeavy,
-    note: 'MA乖離率は現在値のMAからの乖離(%)。oi_heavy_datesは直近20日中OI変化量Top3',
-  }
 
-  // 各指標の時間軸を明示（AIが時間軸のズレを誤解しないように）
-  const data_freshness = {
-    note: '各指標は公表タイミングが異なります。週次指標と日次指標を混同しないでください。',
-    nikkei225:          { data_as_of: nk?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    usdjpy:             { data_as_of: fx?.time ?? null,                        frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    nas100:             { data_as_of: nas100_latest?.date ?? null,             frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    vix_weekly:         { data_as_of: vix_latest?.date ?? null,                frequency: '週次', lag_note: '週末終値ベース' },
-    vix_daily:          { data_as_of: vixDailyData[vixDailyData.length - 1]?.time ?? null, frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    cot_nikkei:         { data_as_of: cotData[0]?.date ?? null,                frequency: '週次', lag_note: 'CFTC公表（火曜基準→金曜公開）約3〜4日遅延' },
-    investor_flows:     { data_as_of: toDate(invData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
-    credit_ratio:       { data_as_of: toDate(marData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
-    short_sell_ratio:   { data_as_of: toDate(ssData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
-    advance_decline:    { data_as_of: toDate(adData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
-    arbitrage_balance:  { data_as_of: toDate(arbData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
-    arbitrage_daily:    { data_as_of: arbDailyData[0]?.date ?? null,           frequency: '日次', lag_note: 'nikkei225jp.com' },
-    futures_oi:         { data_as_of: futuresDailyData[0]?.date ?? null,        frequency: '日次', lag_note: 'JPX日報PDF・毎営業日16:31更新' },
-    pcr:                { data_as_of: futuresDailyData.find(d => d.pcr != null)?.date ?? null, frequency: '日次', lag_note: 'オプション引け後更新・先物OIと数時間ズレあり' },
-  }
+  // ── 週次ヒストリー（26週） ───────────────────────
+  const allWeeklyDates = new Set([
+    ...invS.map(d => toDate(d.date)),
+    ...marS.map(d => toDate(d.date)),
+    ...adS.map(d => toDate(d.date)),
+    ...ssS.map(d => toDate(d.date)),
+    ...arbS.map(d => toDate(d.date)),
+  ])
+  const weeklyDates = Array.from(allWeeklyDates).sort((a, b) => b.localeCompare(a)).slice(0, EXPORT_WEEKS)
+  const weekly_history = weeklyDates.map(date => {
+    const inv  = nearKey(invMap, date)
+    const mar  = nearKey(marMap, date)
+    const ad   = nearKey(adMap,  date)
+    const ss   = nearKey(ssMap,  date)
+    const arb  = nearKey(arbMap, date)
+    const vixW = findVixForDate(vixMapW, date)
+    const cot  = nearKey(cotMap, date, 7)
+    const nt   = findNtForDate(ntMap, date)
+    return {
+      date,
+      nk_close:        nt   ? Math.round(nt.nikkei)        : null,
+      vix:             vixW ? vixW.close                    : null,
+      foreign_net_t:   inv  ? r2(inv.foreigner / 1_000_000) : null,
+      credit_ratio:    mar  ? mar.ratio                     : null,
+      credit_eval_pct: mar  ? mar.evalRatio                 : null,
+      credit_long_t:   mar  ? r2(mar.longBal  / 1_000_000) : null,
+      arb_long_t:      arb  ? r2(arb.longBal  / 1_000_000) : null,
+      cot_lf_net:      cot  ? cot.nonCommNet                : null,
+      cot_am_net:      cot  ? cot.commNet                   : null,
+      cot_oi:          cot  ? cot.openInterest              : null,
+      ad_25d:          ad   ? ad.ratio25                    : null,
+      ss_ratio:        ss   ? ss.ratio                      : null,
+    }
+  })
 
-  // system_snapshot: OS が直接参照する入力変数
-  const ts = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  const system_snapshot = {
-    timestamp:     ts,
-    price:         nk ? Math.round(nk.nikkei) : null,
-    volume:        futuresDailyData[0]?.volume ?? null,
-    oi:            futuresDailyData[0]?.oi ?? null,
-    tci:           score_today,
-    void_entropy:  vixDailyData.length > 0
-      ? r2(Math.min(1, vixDailyData[vixDailyData.length - 1].close / 40))
-      : null,
-    obs_integrity: r2(tier1_available / 5),
-    margin_status: marData.length > 0 && marData[0].evalRatio != null
-      ? r2(Math.max(0, Math.min(1, (marData[0].evalRatio + 25) / 30)))
-      : null,
-  }
-
-  // 鮮度スコア（AIが時間ズレを定量的に把握できるよう単一スコア化）
-  const data_freshness_score = {
-    core: r2(
-      (tier1_available / 5) * 0.5 +
-      (tier2_available / 2) * 0.3 +
-      (tier3_available / 3) * 0.2
-    ),
-    note: '0〜1。core<0.5は高鮮度データ不足・判断精度低下。tier1=日次(5営業日以内) tier2=週次(10日以内) tier3=週次(14日以内)',
-  }
-
-  // 優先ウェイト（AIが全指標を等価扱いしないよう重み付けを明示）
-  const priority_weights = {
-    flow:      0.40,
-    oi_volume: 0.25,
-    macro:     0.20,
-    technical: 0.15,
-    note: 'flow=外国人・機関フロー / oi_volume=先物OI・出来高 / macro=VIX・SQ・NAS100 / technical=MA・乖離率',
-  }
-
-  // SQルール（days_to_sq に基づく参加制限を明示）
-  const sq_rule = {
-    '0':   '原則ノートレ',
-    '1-2': 'ポジション縮小',
-    '3+':  '通常運用',
-    current_days_to_sq: days_to_sq,
-    current_rule: days_to_sq == null ? '通常運用'
-      : days_to_sq === 0 ? '原則ノートレ'
-      : days_to_sq <= 2  ? 'ポジション縮小'
-      : '通常運用',
-  }
+  // ── 組立 ─────────────────────────────────────────
+  const generated_at = new Date().toISOString().slice(0, 19).replace('T', ' ')
 
   return {
-    meta: { market: 'JP', index: 'Nikkei225', type: 'swing' },
-    system_snapshot,
-    data_freshness_score,
-    priority_weights,
-    data_freshness,
-    upcoming_events: getUpcomingEvents(28),
-    vix_latest,
-    nikkei225_latest,
-    usdjpy_latest,
-    credit_margin_latest,
-    arbitrage_daily_recent,
-    futures_oi_recent: futuresDailyData.slice(0, 20).map((d, i) => {
-      const prev = futuresDailyData[i + 1]
-      const oi_delta      = prev ? d.oi - prev.oi : null
-      const oi_delta_pct  = prev && prev.oi > 0 ? r2((d.oi - prev.oi) / prev.oi * 100) : null
-      const vol_delta     = prev ? d.volume - prev.volume : null
-      const vol_delta_pct = prev && prev.volume > 0 ? r2((d.volume - prev.volume) / prev.volume * 100) : null
-      const pcr_delta     = d.pcr != null && prev?.pcr != null ? r2(d.pcr - prev.pcr) : null
-      return { date: d.date, oi: d.oi, oi_delta, oi_delta_pct, volume: d.volume, vol_delta, vol_delta_pct, pcr: d.pcr ?? null, pcr_delta }
-    }),
-    micro_supply_demand,
-    nas100_latest,
-    deviation_score,
-    observation_quality,
-    sq_info,
-    sq_rule,
-    price_levels,
-    data: rows,
+    generated_at,
+    market:   { exchange: 'JPX', index: '日経225', type: 'swing_trade' },
+    strategy: { timeframe: '週次スイング', direction: 'long/short', leverage: '1x/2x' },
+
+    instant_briefing: {
+      date:            nk?.time ?? generated_at.slice(0, 10),
+      nikkei225:       nkCur ? Math.round(nkCur) : null,
+      usdjpy:          fx?.close ?? null,
+      vix:             vixCurClose,
+      market_regime,
+      bull_signals:    bullIds,
+      bear_signals:    bearIds,
+      neutral_signals: neutralIds,
+      net_signal:      netSignal,
+      composite_score: compositeScore,
+      data_quality:    dqScore,
+      sq_rule:         sq_rule_current,
+      days_to_sq,
+    },
+
+    signal_scoreboard: {
+      items:           sigItems,
+      composite_score: compositeScore,
+      net_signal:      netSignal,
+      regime:          market_regime,
+    },
+
+    flows: {
+      foreign: {
+        latest_week_t:       invS[0] ? r2(invT(invS[0]))    : null,
+        cumulative_trillion: { w4: foreign4w, w13: foreign13w, w26: foreign26w },
+        percentile_4w_vs26w: foreign4wPct,
+        signal:              sig(foreign4wPct),
+        as_of:               invS[0] ? toDate(invS[0].date) : null,
+      },
+      institution: {
+        trust_bank_t: invS[0] ? r2(invS[0].trustBank  / 1_000_000) : null,
+        securities_t: invS[0] ? r2(invS[0].securities / 1_000_000) : null,
+        combined_t:   invS[0] ? r2((invS[0].trustBank + invS[0].securities) / 1_000_000) : null,
+        as_of:        invS[0] ? toDate(invS[0].date) : null,
+      },
+      retail: {
+        latest_week_t: invS[0] ? r2(invS[0].individual / 1_000_000) : null,
+        as_of:         invS[0] ? toDate(invS[0].date) : null,
+      },
+      cot: {
+        as_of:          cotS[0]?.date ?? null,
+        open_interest:  cotS[0]?.openInterest ?? null,
+        leveraged_funds: {
+          label: 'ヘッジファンド（投機筋）',
+          net:   cotS[0]?.nonCommNet   ?? null,
+          long:  cotS[0]?.nonCommLong  ?? null,
+          short: cotS[0]?.nonCommShort ?? null,
+          percentile_52w: cotLfPct,
+          signal: sig(cotLfPct),
+        },
+        asset_manager: {
+          label: '機関投資家（実需）',
+          net:   cotS[0]?.commNet   ?? null,
+          long:  cotS[0]?.commLong  ?? null,
+          short: cotS[0]?.commShort ?? null,
+          percentile_52w: cotAmPct,
+          signal: sig(cotAmPct),
+        },
+        non_reportable: {
+          label: '個人投資家（小口）',
+          net:   cotS[0]?.nonReptNet   ?? null,
+          long:  cotS[0]?.nonReptLong  ?? null,
+          short: cotS[0]?.nonReptShort ?? null,
+        },
+        lag_note: 'CFTC公表（火曜基準→金曜公開）約3〜4日遅延',
+      },
+    },
+
+    positioning: {
+      credit_margin: {
+        ratio:               marS[0]?.ratio     ?? null,
+        eval_ratio_pct:      marS[0]?.evalRatio ?? null,
+        long_bal_t:          marS[0] ? r2(marS[0].longBal  / 1_000_000) : null,
+        short_bal_t:         marS[0] ? r2(marS[0].shortBal / 1_000_000) : null,
+        ratio_percentile_26w: creditRatioPct,
+        signal:              sig(100 - creditRatioPct),
+        as_of:               marS[0] ? toDate(marS[0].date) : null,
+      },
+      arbitrage: {
+        long_bal_t:     arbS[0] ? r2(arbS[0].longBal  / 1_000_000) : null,
+        short_bal_t:    arbS[0] ? r2(arbS[0].shortBal / 1_000_000) : null,
+        percentile_26w: arbLongPct,
+        signal:         sig(100 - arbLongPct),
+        as_of:          arbS[0] ? toDate(arbS[0].date) : null,
+        daily_recent:   arbDailyData.slice(0, 7).map(d => ({
+          date:       d.date,
+          long_bal_t: r2(d.longBal / 1_000_000),
+          delta_100m: d.longBalDelta != null ? Math.round(d.longBalDelta / 100) : null,
+        })),
+      },
+    },
+
+    futures: {
+      oi:                    latestFut?.oi     ?? null,
+      oi_percentile_20d:     oiPct20,
+      volume:                latestFut?.volume ?? null,
+      volume_percentile_20d: volPct20,
+      pcr:                   latestPcr,
+      pcr_percentile_20d:    pcrPct20,
+      pcr_signal:            pcrSignal,
+      close:                 futClose,
+      basis,
+      basis_pct:             basisPct,
+      basis_note:            basisNote,
+      as_of:                 latestFut?.date ?? null,
+      oi_heavy_3d:           oiHeavy3d,
+      recent_20d:            futuresDailyData.slice(0, 20).map((d, i) => {
+        const prev = futuresDailyData[i + 1]
+        return {
+          date:     d.date,
+          oi:       d.oi,
+          oi_delta: prev ? d.oi - prev.oi : null,
+          volume:   d.volume,
+          pcr:      d.pcr ?? null,
+          close:    d.close ?? null,
+        }
+      }),
+    },
+
+    breadth: {
+      advance_decline_25d: {
+        value:          adS[0]?.ratio25 ?? null,
+        percentile_26w: adPct,
+        signal:         sig(adPct),
+        as_of:          adS[0] ? toDate(adS[0].date) : null,
+        note:           '120以上=過熱・80以下=売られすぎ',
+      },
+      short_sell: {
+        value:          ssS[0]?.ratio ?? null,
+        percentile_26w: ssPct,
+        signal:         sig(100 - ssPct),
+        as_of:          ssS[0] ? toDate(ssS[0].date) : null,
+        note:           '高比率=ベア（逆転シグナル）',
+      },
+      nt_ratio: {
+        value:      nk ? r2(nk.ratio) : null,
+        wow_change: nk?.change ?? null,
+        as_of:      nk?.time  ?? null,
+      },
+    },
+
+    volatility: {
+      vix: {
+        daily:  latestVixD ? { date: latestVixD.time, close: latestVixD.close, change_pct: latestVixD.changePct } : null,
+        weekly: vixS[0] ? {
+          date:           toDate(vixS[0].date),
+          close:          vixS[0].close,
+          change:         vixS[0].change,
+          change_pct:     vixS[0].changePct,
+          percentile_52w: vixPct52w,
+          signal:         sig(100 - vixPct52w),
+          regime:         vixCur > 30 ? '恐慌' : vixCur > 20 ? '警戒' : '平常',
+        } : null,
+      },
+      hv: {
+        hv20_annualized_pct: hv20,
+        hv60_annualized_pct: hv60,
+        vix_hv20_spread:     vixHv20Spread,
+        interpretation:      vixHv20Spread != null
+          ? vixHv20Spread > 5  ? 'VIXプレミアム高・オプション割高'
+          : vixHv20Spread < -2 ? 'リアライズドVol高・市場不安定'
+          : '適正レンジ'
+          : null,
+      },
+    },
+
+    macro: {
+      usdjpy: {
+        date:        fx?.time  ?? null,
+        close:       fx?.close ?? null,
+        ma5:         fx?.ma5   ?? null,
+        ma5_dev_pct: fx?.ma5dev ?? null,
+        z_score_30d: z_usdjpy,
+        signal:      usdjpySig,
+      },
+      nas100: {
+        date:        nas?.time      ?? null,
+        close:       nas?.close     ?? null,
+        change_pct:  nas?.changePct ?? null,
+        z_score_30d: z_nas100,
+        source:      nas100_source,
+        signal:      nasSig,
+      },
+      sp500_nikkei_ratio: nk ? r2(nk.sp500 / nk.nikkei) : null,
+    },
+
+    price_structure: {
+      nikkei225: {
+        current:      nkCur ? Math.round(nkCur) : null,
+        ma5:          nkMa5,
+        ma20:         nkMa20,
+        ma60:         nkMa60,
+        ma200:        nkMa200,
+        ma5_dev_pct:  nkMa5  && nkCur ? r2((nkCur - nkMa5)  / nkMa5  * 100) : null,
+        ma20_dev_pct: nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
+        ma60_dev_pct: nkMa60 && nkCur ? r2((nkCur - nkMa60) / nkMa60 * 100) : null,
+        high_52w:     nkHigh52w,
+        low_52w:      nkLow52w,
+        pos_in_52w_pct: nkPos52w,
+      },
+      usdjpy: {
+        current:      fx?.close ?? null,
+        ma5:          fxMa5,
+        ma20:         fxMa20,
+        ma5_dev_pct:  fxMa5 && fx ? r2((fx.close - fxMa5)  / fxMa5  * 100) : null,
+        ma20_dev_pct: fxMa20 && fx ? r2((fx.close - fxMa20) / fxMa20 * 100) : null,
+        high_52w:     fxHigh52w,
+        low_52w:      fxLow52w,
+      },
+    },
+
+    deviation_score: {
+      z_usdjpy,
+      z_nas100,
+      z_vix_inv,
+      z_oi,
+      nas100_source,
+      score:       score_today,
+      acc:         score_today != null && score_3d != null ? r2(score_today - score_3d) : null,
+      window_days: W,
+    },
+
+    events: {
+      sq: {
+        next_date:      nextSq ? nextSq.date.toISOString().slice(0, 10) : null,
+        next_type:      nextSq?.type ?? null,
+        days_remaining: days_to_sq,
+        rule:           sq_rule_current,
+        tpi,
+        tpi_note:       'TPI=(1/SQ残日数)×|VIX日次変化率|',
+        iv_proxy:       vix_iv_proxy,
+      },
+      scheduled_28d: getUpcomingEvents(28),
+    },
+
+    data_quality: {
+      score:        dqScore,
+      tier1_daily:  { items: tier1, ok: t1ok, total: tier1.length, max_age_days: 5 },
+      tier2_semi:   { items: tier2, ok: t2ok, total: tier2.length, max_age_days: 10 },
+      tier3_weekly: { items: tier3, ok: t3ok, total: tier3.length, max_age_days: 14 },
+      stale_fields: staleFields,
+    },
+
+    weekly_history,
   }
 }
 
