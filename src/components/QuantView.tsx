@@ -10,7 +10,7 @@ import { getSqDates, getSqMarkersForDate, SQ_META } from '../utils/sqCalendar'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
 import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
-import { fetchFuturesParticipantsData, computeMicroVectors, type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+import { fetchCotNikkeiData, computeCotVectors, type CotNikkeiWeekData } from '../utils/cotNikkeiData'
 import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDailyData'
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
@@ -299,7 +299,7 @@ function buildExportJson(
   adData: AdvanceDeclineWeekData[],
   ssData: ShortSellWeekData[],
   arbData: ArbitrageWeekData[],
-  participantsData: FuturesParticipantDayData[],
+  cotData: CotNikkeiWeekData[],
   arbDailyData: ArbitrageDayData[],
   usdjpyData: UsdjpyDayData[],
   futuresDailyData: FuturesDayData[],
@@ -376,35 +376,37 @@ function buildExportJson(
     })
     .filter(r => r.vix.value !== 0 || r.flows.foreign !== 0 || r.credit_ratio !== 0 || r.advance_decline_ratio !== null || r.short_sell_ratio !== null)
 
-  // ミクロ需給ベクター
-  const mv = computeMicroVectors(participantsData)
-  const micro_supply_demand = mv && participantsData.length > 0 ? {
-    data_as_of: participantsData[0].date,
+  // CFTC COT ポジション（ミクロ需給）
+  const cv = computeCotVectors(cotData)
+  const micro_supply_demand = cv && cotData.length > 0 ? {
+    data_as_of: cotData[0].date,
     frequency: '週次',
-    lag_note: 'JPX毎週公表',
-    vectors: {
-      trend_vector: {
-        label: 'スマートマネー', sectors: ['外国人(code60)', '信託銀行(code23)'],
-        net_lots: mv.trend.netLots, direction: mv.trend.direction, week_over_week: mv.trend.dayOverDay,
-      },
-      gravity_vector: {
-        label: '機関投資家フロー', sectors: ['生命保険(code11)', '投資信託(code31)'],
-        net_lots: mv.gravity.netLots, direction: mv.gravity.direction, week_over_week: mv.gravity.dayOverDay,
-      },
-      noise_filter: {
-        label: '個人/証券', sectors: ['個人(code51)', '証券会社(code41)'],
-        net_lots: mv.noise.netLots, direction: mv.noise.direction, week_over_week: mv.noise.dayOverDay,
-      },
+    lag_note: 'CFTC公表（火曜基準→金曜公開）約3〜4日遅延',
+    open_interest: cotData[0].openInterest,
+    non_commercial: {
+      label: '投機筋（スマートマネー）',
+      long: cotData[0].nonCommLong, short: cotData[0].nonCommShort, net: cotData[0].nonCommNet,
+      direction: cv.nonComm.direction, week_over_week: cv.nonComm.wow,
     },
-    sell_pressure_score: mv.sellPressureScore,
-    score_percentile:    mv.scorePercentile,
-    score_top_pct:       100 - mv.scorePercentile,
-    score_median:        mv.scoreMedian,
-    score_history_weeks: mv.historyDays,
-    alert_level: mv.alertLevel,
-    recent: participantsData.slice(0, 5).map(d => ({
-      date: d.date, foreign: d.foreign, trustBank: d.trustBank, lifeIns: d.lifeIns,
-      invTrust: d.invTrust, individual: d.individual, securities: d.securities,
+    commercial: {
+      label: 'ヘッジャー',
+      long: cotData[0].commLong, short: cotData[0].commShort, net: cotData[0].commNet,
+      direction: cv.comm.direction, week_over_week: cv.comm.wow,
+    },
+    non_reportable: {
+      label: '小口',
+      long: cotData[0].nonReptLong, short: cotData[0].nonReptShort, net: cotData[0].nonReptNet,
+      direction: cv.nonRept.direction, week_over_week: cv.nonRept.wow,
+    },
+    sell_pressure_score: cv.sellPressureScore,
+    score_percentile:    cv.scorePercentile,
+    score_top_pct:       100 - cv.scorePercentile,
+    score_median:        cv.scoreMedian,
+    score_history_weeks: cv.historyWeeks,
+    alert_level: cv.alertLevel,
+    recent: cotData.slice(0, 5).map(d => ({
+      date: d.date, nonCommNet: d.nonCommNet, commNet: d.commNet,
+      nonReptNet: d.nonReptNet, openInterest: d.openInterest,
     })),
   } : null
 
@@ -629,7 +631,7 @@ function buildExportJson(
     nas100:             { data_as_of: nas100_latest?.date ?? null,             frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
     vix_weekly:         { data_as_of: vix_latest?.date ?? null,                frequency: '週次', lag_note: '週末終値ベース' },
     vix_daily:          { data_as_of: vixDailyData[vixDailyData.length - 1]?.time ?? null, frequency: '日次', lag_note: 'Yahoo Finance・約15分遅延' },
-    futures_hand:       { data_as_of: participantsData[0]?.date ?? null,       frequency: '日次', lag_note: 'JPX翌営業日公表' },
+    cot_nikkei:         { data_as_of: cotData[0]?.date ?? null,                frequency: '週次', lag_note: 'CFTC公表（火曜基準→金曜公開）約3〜4日遅延' },
     investor_flows:     { data_as_of: toDate(invData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     credit_ratio:       { data_as_of: toDate(marData[0]?.date ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
     short_sell_ratio:   { data_as_of: toDate(ssData[0]?.date  ?? '') || null,  frequency: '週次', lag_note: '約1週間遅延' },
@@ -1062,10 +1064,10 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   const [futuresDailyLoading, setFuturesDailyLoading] = useState(false)
   const [futuresDailyError,   setFuturesDailyError]   = useState('')
 
-  const [participantsData,    setParticipantsData]    = useState<FuturesParticipantDayData[]>([])
-  const [participantsLoading, setParticipantsLoading] = useState(false)
-  const [participantsError,   setParticipantsError]   = useState('')
-  const [participantsLoaded,  setParticipantsLoaded]  = useState(false)
+  const [cotData,          setCotData]          = useState<CotNikkeiWeekData[]>([])
+  const [cotLoading,       setCotLoading]       = useState(false)
+  const [cotError,         setCotError]         = useState('')
+  const [cotLoaded,        setCotLoaded]        = useState(false)
 
   const [ntData, setNtData] = useState<NtRatioPoint[]>([])
   const handleNtDataLoaded = useCallback((d: NtRatioPoint[]) => {
@@ -1153,29 +1155,15 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     catch { /* エラー時は空配列のまま */ }
   }, [])
 
-  const loadParticipants = useCallback(async (force = false) => {
-    setParticipantsLoading(true); setParticipantsError('')
-    try { setParticipantsData(await fetchFuturesParticipantsData(force)); setParticipantsLoaded(true) }
-    catch (e) { setParticipantsError(e instanceof Error ? e.message : 'データ取得エラー') }
-    finally { setParticipantsLoading(false) }
+  const loadCot = useCallback(async (force = false) => {
+    setCotLoading(true); setCotError('')
+    try { setCotData(await fetchCotNikkeiData(force)); setCotLoaded(true) }
+    catch (e) { setCotError(e instanceof Error ? e.message : 'データ取得エラー') }
+    finally { setCotLoading(false) }
   }, [])
 
-  useEffect(() => { if (!invLoaded)          loadInvestor()      }, [invLoaded,          loadInvestor])
-  useEffect(() => { if (!participantsLoaded) loadParticipants()  }, [participantsLoaded, loadParticipants])
-
-  // JST 18:30 daily auto-refresh for participants (futures_participants.json is updated daily around this time)
-  useEffect(() => {
-    function scheduleNextRefresh() {
-      const now = new Date()
-      const next = new Date(now)
-      next.setUTCHours(9, 30, 0, 0)  // UTC 09:30 = JST 18:30
-      if (next <= now) next.setUTCDate(next.getUTCDate() + 1)
-      const id = setTimeout(() => { loadParticipants(true); scheduleNextRefresh() }, next.getTime() - now.getTime())
-      return id
-    }
-    const id = scheduleNextRefresh()
-    return () => clearTimeout(id)
-  }, [loadParticipants])
+  useEffect(() => { if (!invLoaded)  loadInvestor() }, [invLoaded,  loadInvestor])
+  useEffect(() => { if (!cotLoaded)  loadCot()      }, [cotLoaded,  loadCot])
   useEffect(() => { if (!marLoaded)     loadMargin()        }, [marLoaded,     loadMargin])
   useEffect(() => { if (!vixWeekLoaded) loadVixWeek()       }, [vixWeekLoaded, loadVixWeek])
   useEffect(() => { if (!adLoaded)      loadAdvanceDecline()}, [adLoaded,      loadAdvanceDecline])
@@ -1188,11 +1176,11 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData])
+  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 
@@ -1218,7 +1206,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
           ssData={ssData}
           adData={adData}
           futuresDailyData={futuresDailyData}
-          participantsData={participantsData}
+          cotData={cotData}
           theme={theme}
           onClose={() => setDeltaModal(null)}
         />
@@ -1579,10 +1567,10 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             <MicroQuantView
               theme={theme}
               isMobile={isMobile}
-              data={participantsData}
-              loading={participantsLoading}
-              error={participantsError}
-              onReload={() => loadParticipants(true)}
+              data={cotData}
+              loading={cotLoading}
+              error={cotError}
+              onReload={() => loadCot(true)}
               onOpenNetDelta={() => setDeltaModal('futures_net_weekly')}
             />
           </div>

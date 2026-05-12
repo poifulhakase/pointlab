@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// JPXデータ取得スクリプト
+// 市場データ取得スクリプト
 // 使い方: npm run fetch-data
-// 出力:   public/data/investor.json
-//         public/data/margin.json
+// 出力:   public/data/investor.json, public/data/margin.json, public/data/cot_nikkei.json 他
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
@@ -40,6 +39,20 @@ function parseNum(s) {
   if (typeof s === 'number') return s
   const n = parseFloat(String(s).replace(/[,\s\r\n，]/g, ''))
   return isNaN(n) ? 0 : n
+}
+
+function parseCSVLine(line) {
+  const result = []
+  let field = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i]
+    if (c === '"') { inQuotes = !inQuotes }
+    else if (c === ',' && !inQuotes) { result.push(field); field = '' }
+    else { field += c }
+  }
+  result.push(field)
+  return result
 }
 
 function serialToDateStr(serial) {
@@ -802,91 +815,64 @@ async function buildFuturesOIData() {
   return weekly.map(({ date, label, val }) => ({ date, label, oi: val }))
 }
 
-// ── 投資主体別先物手口（ミクロ需給エンジン用） ────────────────────
-// JPX公表「投資部門別売買高」日経225先物（product=301）週次 CSV
-// ソース: https://www.jpx.co.jp/markets/statistics-derivatives/sector/
-// 新形式(p[1]='1'): コード 60=外国人 / 23=信託銀行 / 11=生命保険 / 31=投資信託 / 51=個人 / 41=証券会社
-//                   net = p[9]-p[7]  (unit=1行のみ)
-// 旧形式(p[1]='0'): コード 60=外国人 / 23=信託銀行 / 31=投資信託 / 41=証券会社 (11/51は非対応)
-//                   net = p[14]-p[8] (vol・yen混在の1行)
-async function buildFuturesParticipantsData() {
-  const SECTOR_PAGE = `${BASE}/markets/statistics-derivatives/sector/index.html`
-  const html = await fetchHtml(SECTOR_PAGE)
-
-  // 週次CSVリンクを収集
-  const csvLinks = [...html.matchAll(/href="(\/[^"]*Tousi_DV_W[^"]*\.csv)"/gi)]
-    .map(m => m[1])
-
-  if (csvLinks.length === 0) throw new Error('週次CSVリンクが見つかりません')
-
-  // 対象コード → フィールド名マッピング
-  const CODE_MAP = { '60': 'foreign', '23': 'trustBank', '11': 'lifeIns', '31': 'invTrust', '51': 'individual', '41': 'securities' }
-  // 旧形式では 11(生命保険)/51(個人) の詳細区分が存在しないため部分的にのみ取得可
+// ── CFTC COT 日経225先物（Non-Commercial / Commercial / Non-Reportable） ─────
+// データソース: CFTC Legacy Financial Futures Only Report (週次・火曜基準・金曜公表)
+// URL: https://www.cftc.gov/dea/newcot/f_natcot.txt
+// 列構成(0-indexed): [0]=Market Name, [1]=As_of_Date(YYMMDD), [7]=OI,
+//   [8]=NC Long, [9]=NC Short, [10]=NC Spread, [11]=Comm Long, [12]=Comm Short,
+//   [15]=NR Long, [16]=NR Short
+// NIKKEI複数契約（MINI + 標準）を日付ごとに合算して取得
+async function buildCotNikkeiData() {
+  console.log('\n[cotNikkei] CFTC COT Legacy Financial Futures取得中...')
 
   // 既存JSONを読み込んで履歴を維持
-  const existingPath = join(OUT_DIR, 'futures_participants.json')
+  const existingPath = join(OUT_DIR, 'cot_nikkei.json')
   const existingMap = new Map()
   try {
     const raw = readFileSync(existingPath, 'utf-8')
     const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed.data)) {
-      parsed.data.forEach(e => {
-        // 旧スキーマ（GS/JPM等）のエントリは無視
-        if ('foreign' in e || 'trustBank' in e) existingMap.set(e.date, e)
-      })
-    }
+    if (Array.isArray(parsed.data)) parsed.data.forEach(e => existingMap.set(e.date, e))
   } catch { /* 初回は空 */ }
 
-  const newMap = new Map()
+  const url = 'https://www.cftc.gov/dea/newcot/f_natcot.txt'
+  const text = await fetchHtml(url)
+  const lines = text.split('\n')
 
-  for (const link of csvLinks) {
-    try {
-      const buf  = await fetchBinary(BASE + link)
-      const text = new TextDecoder('shift_jis').decode(buf)
-      const lines = text.split('\n').filter(l => l.trim())
+  // 日付ごとに複数NIKKEI契約を合算
+  const dateMap = new Map()
+  for (const line of lines.slice(1)) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    const fields = parseCSVLine(trimmed)
+    if (!(fields[0] ?? '').toUpperCase().includes('NIKKEI')) continue
 
-      for (const line of lines.slice(1)) {
-        const p = line.split(',').map(v => v.replace(/"/g, '').trim())
-        if (p[0] !== '301') continue
+    const yymmdd = (fields[1] ?? '').trim()
+    if (!/^\d{6}$/.test(yymmdd)) continue
+    const dateStr = `20${yymmdd.slice(0,2)}-${yymmdd.slice(2,4)}-${yymmdd.slice(4,6)}`
 
-        let field, dateStr, net
-
-        if (p[1] === '1' && p[6] === '1') {
-          // ── 新形式: "301","1",yww,startYMD,endYMD,code,"1",sell,...,buy,net,total
-          field = CODE_MAP[p[5]]
-          if (!field) continue
-          dateStr = `${p[4].slice(0,4)}-${p[4].slice(4,6)}-${p[4].slice(6,8)}`
-          net = parseInt(p[9]) - parseInt(p[7])
-        } else if (p[1] === '0') {
-          // ── 旧形式: 301,0,3,cycle,yww,startYMD,endYMD,code,sell_vol,sell_ratio,...,buy_vol,...
-          field = CODE_MAP[p[7]]
-          if (!field) continue
-          // 集計行（70=委託合計/80=総合計/50=国内委託/20=国内機関投資家合計/30=自己等）は除外
-          if (['70','80','50','20','30'].includes(p[7])) continue
-          dateStr = `${p[6].slice(0,4)}-${p[6].slice(4,6)}-${p[6].slice(6,8)}`
-          net = parseInt(p[14]) - parseInt(p[8])  // 買vol - 売vol
-        } else {
-          continue
-        }
-
-        if (!newMap.has(dateStr)) {
-          newMap.set(dateStr, { date: dateStr, label: dateToLabel(dateStr.replace(/-/g, '/')) })
-        }
-        const entry = newMap.get(dateStr)
-        // 商品取引所CSVが全ゼロで上書きするケース対策: ゼロ以外が既にある場合は上書きしない
-        if (entry[field] === undefined || entry[field] === null || (entry[field] === 0 && net !== 0)) {
-          entry[field] = net
-        }
-      }
-    } catch (e) {
-      console.warn(`  ✗ ${link}: ${e.message}`)
-    }
+    if (!dateMap.has(dateStr)) dateMap.set(dateStr, { oi: 0, ncL: 0, ncS: 0, cL: 0, cS: 0, nrL: 0, nrS: 0 })
+    const e = dateMap.get(dateStr)
+    e.oi  += parseNum(fields[7]);  e.ncL += parseNum(fields[8]);  e.ncS += parseNum(fields[9])
+    e.cL  += parseNum(fields[11]); e.cS  += parseNum(fields[12])
+    e.nrL += parseNum(fields[15]); e.nrS += parseNum(fields[16])
   }
 
-  if (newMap.size === 0) throw new Error('パース結果が0件（CSVフォーマット変更の可能性）')
+  let fetched = 0
+  for (const [dateStr, n] of dateMap) {
+    existingMap.set(dateStr, {
+      date:         dateStr,
+      label:        dateToLabel(dateStr),
+      openInterest: n.oi,
+      nonCommLong:  n.ncL, nonCommShort: n.ncS, nonCommNet: n.ncL - n.ncS,
+      commLong:     n.cL,  commShort:    n.cS,  commNet:    n.cL  - n.cS,
+      nonReptLong:  n.nrL, nonReptShort: n.nrS, nonReptNet: n.nrL - n.nrS,
+    })
+    fetched++
+  }
 
-  // 新データで既存を上書きマージし、最大52週保持
-  newMap.forEach((v, k) => existingMap.set(k, v))
+  if (existingMap.size === 0) throw new Error('NIKKEIデータが見つかりません（CFTC CSV形式変更の可能性）')
+  console.log(`  → ${fetched}件新規/更新, 合計${existingMap.size}件`)
+
   return [...existingMap.values()]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 52)
@@ -1074,7 +1060,7 @@ async function main() {
   let arbitrageOk           = false
   let futuresOIOk           = false
   let futuresDailyOk        = false
-  let futuresParticipantsOk = false
+  let cotNikkeiOk           = false
   let topixOk               = false
 
   try {
@@ -1171,13 +1157,13 @@ async function main() {
   }
 
   try {
-    const data = await buildFuturesParticipantsData()
+    const data = await buildCotNikkeiData()
     const out  = { updatedAt: new Date().toISOString(), data }
-    writeFileSync(join(OUT_DIR, 'futures_participants.json'), JSON.stringify(out, null, 2))
-    console.log(`\n✓ futures_participants.json 保存 (${data.length}件)`)
-    futuresParticipantsOk = true
+    writeFileSync(join(OUT_DIR, 'cot_nikkei.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ cot_nikkei.json 保存 (${data.length}件)`)
+    cotNikkeiOk = true
   } catch (e) {
-    console.warn('\n⚠ futures_participants:', e.message)
+    console.warn('\n⚠ cotNikkei:', e.message)
   }
 
   try {
@@ -1199,7 +1185,7 @@ async function main() {
   if (!arbitrageOk)             console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')
   if (!futuresOIOk)             console.warn('⚠ futures_oi.json は更新されませんでした（月次データ未公開の可能性）')
   if (!futuresDailyOk)          console.warn('⚠ futures_daily.json は更新されませんでした（JPX日次PDF取得要確認）')
-  if (!futuresParticipantsOk)   console.warn('⚠ futures_participants.json は更新されませんでした（JPX URL設定要確認）')
+  if (!cotNikkeiOk)             console.warn('⚠ cot_nikkei.json は更新されませんでした（CFTC URL・CSV形式要確認）')
   if (!topixOk)                 console.warn('⚠ topix.json は更新されませんでした（stooq 接続要確認）')
 }
 

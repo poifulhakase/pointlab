@@ -6,7 +6,7 @@ import { type ArbitrageWeekData } from '../utils/arbitrageData'
 import { type ShortSellWeekData } from '../utils/shortSellData'
 import { type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { type FuturesDayData } from '../utils/futuresDailyData'
-import { type FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+import { type CotNikkeiWeekData } from '../utils/cotNikkeiData'
 import { themeVars } from '../utils/themeVars'
 
 export type DeltaModalType = 'credit_long' | 'arbitrage_long' | 'arbitrage_short' | 'short_sell' | 'advance_decline' | 'futures_oi' | 'futures_net_weekly' | 'pcr'
@@ -18,7 +18,7 @@ type Props = {
   ssData: ShortSellWeekData[]
   adData: AdvanceDeclineWeekData[]
   futuresDailyData: FuturesDayData[]
-  participantsData?: FuturesParticipantDayData[]
+  cotData?: CotNikkeiWeekData[]
   theme: 'dark' | 'light'
   onClose: () => void
 }
@@ -30,7 +30,7 @@ const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBa
   short_sell:         { title: '空売り比率 変化率',        unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
   advance_decline:    { title: '騰落レシオ 変化率',        unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
   futures_oi:         { title: '先物OI 変化率',            unit: '枚',  positiveIsBad: false, accent: '#34d399' },
-  futures_net_weekly: { title: 'ネット合計 週次変化率',    unit: '枚',  positiveIsBad: false, accent: '#34d399' },
+  futures_net_weekly: { title: 'Non-Commercial ネット 週次変化', unit: '枚', positiveIsBad: false, accent: '#34d399' },
   pcr:                { title: 'PCR 変化率',               unit: '',    positiveIsBad: true,  accent: '#f87171' },
 }
 
@@ -41,7 +41,7 @@ const SUB_LABEL: Record<DeltaModalType, string> = {
   short_sell:         '週次変化 pp',
   advance_decline:    '変化率 pp',
   futures_oi:         '前日比 枚（日経225先物 全限月）',
-  futures_net_weekly: '週次変化 枚（全部門ネット合計）',
+  futures_net_weekly: '週次変化 枚（CFTC Non-Commercial Net）',
   pcr:                '前日比（プット・コール・レシオ）',
 }
 
@@ -54,17 +54,15 @@ function computeDeltas(
   ssData: ShortSellWeekData[],
   adData: AdvanceDeclineWeekData[],
   futuresDailyData: FuturesDayData[],
-  participantsData: FuturesParticipantDayData[] = [],
+  cotData: CotNikkeiWeekData[] = [],
 ): { time: string; value: number }[] {
   const N = 14
   if (type === 'futures_net_weekly') {
-    const arr = [...participantsData].sort((a, b) => a.date.localeCompare(b.date)).slice(-N)
-    return arr.slice(1).map((row, i) => {
-      const prev = arr[i]
-      const total     = (row.foreign  ?? 0) + (row.trustBank ?? 0) + (row.lifeIns ?? 0) + (row.invTrust ?? 0) + (row.individual ?? 0) + (row.securities ?? 0)
-      const prevTotal = (prev.foreign ?? 0) + (prev.trustBank ?? 0) + (prev.lifeIns ?? 0) + (prev.invTrust ?? 0) + (prev.individual ?? 0) + (prev.securities ?? 0)
-      return { time: toIso(row.date), value: total - prevTotal }
-    })
+    const arr = [...cotData].sort((a, b) => a.date.localeCompare(b.date)).slice(-N)
+    return arr.slice(1).map((row, i) => ({
+      time: toIso(row.date),
+      value: row.nonCommNet - arr[i].nonCommNet,
+    }))
   }
   if (type === 'futures_oi') {
     const arr = [...futuresDailyData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, N).reverse()
@@ -180,10 +178,10 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
   return <div ref={ref} style={{ height: 440, width: '100%' }} />
 }
 
-export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDailyData, participantsData = [], theme, onClose }: Props) {
+export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDailyData, cotData = [], theme, onClose }: Props) {
   const tv = themeVars(theme)
   const cfg = CONFIG[type]
-  const deltas = computeDeltas(type, marData, arbData, ssData, adData, futuresDailyData, participantsData)
+  const deltas = computeDeltas(type, marData, arbData, ssData, adData, futuresDailyData, cotData)
   const isDark = theme === 'dark'
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 600)
 

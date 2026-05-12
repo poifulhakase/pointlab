@@ -3,12 +3,12 @@ import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
-import type { FuturesParticipantDayData } from '../utils/futuresParticipantsData'
+import type { CotNikkeiWeekData } from '../utils/cotNikkeiData'
 
 type Props = {
   theme:           'dark' | 'light'
   isMobile:        boolean
-  data:            FuturesParticipantDayData[]
+  data:            CotNikkeiWeekData[]
   loading:         boolean
   error:           string
   onReload:        () => void
@@ -35,66 +35,45 @@ function cellColor(v: number | null | undefined, theme: 'dark' | 'light'): strin
 }
 
 // ── タンク定義 ──────────────────────────────────────
-type TankGroup = 'trend' | 'gravity' | 'noise'
-
-type TankFirm = {
-  firmDisplay:    string    // 表示名（\n で改行可）
-  group:          TankGroup
-  cumulativeLots: number    // 限月累積ネット建玉（枚）
-  delta:          number    // 前日比
-  maxCapacity:    number    // 過去1年最大 × 1.2
+type CotTank = {
+  display:    string
+  group:      string
+  net:        number
+  wow:        number
+  maxAbsNet:  number
 }
 
-const GROUP_META: Record<TankGroup, { label: string; color: string; desc: string }> = {
-  trend:   { label: 'Trend',   color: '#60a5fa', desc: 'スマートマネー' },
-  gravity: { label: 'Gravity', color: '#fb923c', desc: '機関投資家フロー' },
-  noise:   { label: 'Noise',   color: '#a78bfa', desc: '個人/証券' },
+const GROUP_META: Record<string, { label: string; color: string; desc: string }> = {
+  nonComm: { label: 'Non-Commercial', color: '#60a5fa', desc: '投機筋' },
+  comm:    { label: 'Commercial',     color: '#fb923c', desc: 'ヘッジャー' },
+  nonRept: { label: 'Non-Reportable', color: '#a78bfa', desc: '小口' },
 }
 
-// タンク定義: 投資主体別セクター（JPX「投資部門別売買高」日経225先物 週次）
-// Trend群: 外国人(code 60) + 信託銀行(code 23)
-// Gravity群: 生命保険(code 11) + 投資信託(code 31)
-// Noise群: 個人(code 51) + 証券会社(code 41)
-const TANK_SECTOR_DEFS: { key: keyof import('../utils/futuresParticipantsData').FuturesParticipantDayData; display: string; group: TankGroup }[] = [
-  { key: 'foreign',    display: '外国人',    group: 'trend'   },
-  { key: 'trustBank',  display: '信託銀行',  group: 'trend'   },
-  { key: 'lifeIns',    display: '生命保険',  group: 'gravity' },
-  { key: 'invTrust',   display: '投資信託',  group: 'gravity' },
-  { key: 'individual', display: '個人',      group: 'noise'   },
-  { key: 'securities', display: '証券会社',  group: 'noise'   },
-]
-
-function buildTankFirms(data: import('../utils/futuresParticipantsData').FuturesParticipantDayData[]): TankFirm[] {
+function buildCotTanks(data: CotNikkeiWeekData[]): CotTank[] {
   if (data.length === 0) return []
   const cur  = data[0]
   const prev = data[1] ?? null
-  return TANK_SECTOR_DEFS.map(def => {
-    const lots  = (cur[def.key] as number | null) ?? 0
-    const pLots = prev ? ((prev[def.key] as number | null) ?? 0) : 0
-    const delta = prev ? lots - pLots : 0
-    const maxAbs = Math.max(...data.map(d => Math.abs((d[def.key] as number | null) ?? 0)), 1000)
-    return {
-      firmDisplay:    def.display,
-      group:          def.group,
-      cumulativeLots: lots,
-      delta,
-      maxCapacity:    maxAbs * 1.2,
-    }
-  })
+  const maxAbs = (key: 'nonCommNet' | 'commNet' | 'nonReptNet') =>
+    Math.max(...data.map(d => Math.abs(d[key])), 1000)
+  return [
+    { display: 'Non-Commercial', group: 'nonComm', net: cur.nonCommNet, wow: prev ? cur.nonCommNet - prev.nonCommNet : 0, maxAbsNet: maxAbs('nonCommNet') * 1.2 },
+    { display: 'Commercial',     group: 'comm',    net: cur.commNet,    wow: prev ? cur.commNet    - prev.commNet    : 0, maxAbsNet: maxAbs('commNet')    * 1.2 },
+    { display: 'Non-Reportable', group: 'nonRept', net: cur.nonReptNet, wow: prev ? cur.nonReptNet - prev.nonReptNet : 0, maxAbsNet: maxAbs('nonReptNet') * 1.2 },
+  ]
 }
 
 const BUBBLES = [
-  { size: 5, left: '22%', delay: '0s',    dur: '2.8s' },
-  { size: 4, left: '58%', delay: '1.1s',  dur: '3.2s' },
-  { size: 3, left: '40%', delay: '2.0s',  dur: '2.4s' },
+  { size: 5, left: '22%', delay: '0s',   dur: '2.8s' },
+  { size: 4, left: '58%', delay: '1.1s', dur: '3.2s' },
+  { size: 3, left: '40%', delay: '2.0s', dur: '2.4s' },
 ]
 
 // ── タンクカード ──────────────────────────────────────
-function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, theme }: TankFirm & { theme: 'dark' | 'light' }) {
+function TankCard({ display, group, net, wow, maxAbsNet, theme }: CotTank & { theme: 'dark' | 'light' }) {
   const isLight    = theme === 'light'
-  const waterLevel = Math.min(Math.abs(cumulativeLots) / maxCapacity * 100, 105)
-  const isShort    = cumulativeLots <= 0
-  const groupColor = GROUP_META[group].color
+  const waterLevel = Math.min(Math.abs(net) / maxAbsNet * 100, 105)
+  const isShort    = net <= 0
+  const groupColor = GROUP_META[group]?.color ?? '#888'
   const isOverflow = waterLevel >= 100
 
   const liquidTop    = isShort ? 'rgba(239,68,68,0.22)' : 'rgba(52,211,153,0.22)'
@@ -107,17 +86,13 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
-
-      {/* 社名 */}
       <div style={{
         fontSize: 10, fontWeight: 700, color: groupColor,
         textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.35,
         minHeight: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {firmDisplay}
+        {display}
       </div>
-
-      {/* タンク本体 */}
       <div style={{
         width: '100%', maxWidth: 72, height: 120,
         position: 'relative',
@@ -127,7 +102,6 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
         overflow: 'hidden',
         boxShadow: `0 4px 12px rgba(0,0,0,0.18), inset 0 0 0 1px ${groupColor}18`,
       }}>
-        {/* 液体（グラデーション） */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           height: `${Math.min(waterLevel, 100)}%`,
@@ -135,13 +109,11 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
           borderTop: `2px solid ${liquidBorder}`,
           transition: 'height 0.9s cubic-bezier(0.4,0,0.2,1)',
         }}>
-          {/* 水面シマー */}
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: 4,
             background: `linear-gradient(90deg, transparent 0%, ${liquidBorder} 50%, transparent 100%)`,
             animation: 'tankShimmer 3s ease-in-out infinite',
           }} />
-          {/* 気泡 */}
           {BUBBLES.map((b, i) => (
             <div key={i} style={{
               position: 'absolute', bottom: '8%', left: b.left,
@@ -152,8 +124,6 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
             }} />
           ))}
         </div>
-
-        {/* ガラスハイライト */}
         <div style={{
           position: 'absolute', top: '6%', left: '9%',
           width: '16%', height: '32%',
@@ -161,8 +131,6 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
           background: 'rgba(255,255,255,0.11)',
           pointerEvents: 'none',
         }} />
-
-        {/* オーバーフロー警告 */}
         {isOverflow && (
           <div style={{
             position: 'absolute', top: 3, left: 0, right: 0,
@@ -170,8 +138,6 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
             color: liquidBorder, letterSpacing: 1,
           }}>MAX!</div>
         )}
-
-        {/* % ラベル */}
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -184,8 +150,6 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
         }}>
           {waterLevel.toFixed(1)}%
         </div>
-
-        {/* 目盛り（両側） */}
         {[25, 50, 75].map(pct => (
           <div key={pct}>
             <div style={{ position: 'absolute', right: 0, bottom: `${pct}%`, width: 5, height: 1, background: isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.18)' }} />
@@ -193,44 +157,19 @@ function TankCard({ firmDisplay, group, cumulativeLots, delta, maxCapacity, them
           </div>
         ))}
       </div>
-
-      {/* 累積枚数 */}
       <div style={{ fontSize: 13, fontWeight: 800, color: numColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-        {cumulativeLots > 0 ? '+' : ''}{cumulativeLots.toLocaleString()}
+        {net > 0 ? '+' : ''}{net.toLocaleString()}
       </div>
       <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: -2 }}>枚</div>
-
-      {/* 前日比 */}
       <div style={{
         fontSize: 10, fontVariantNumeric: 'tabular-nums',
-        color: delta < 0 ? 'rgba(255,120,100,0.75)' : 'rgba(96,200,140,0.75)',
+        color: wow < 0 ? 'rgba(255,120,100,0.75)' : 'rgba(96,200,140,0.75)',
       }}>
-        {delta > 0 ? '+' : ''}{delta.toLocaleString()}枚
+        {wow > 0 ? '+' : ''}{wow.toLocaleString()}枚
       </div>
     </div>
   )
 }
-
-// ── テーブル列定義 ────────────────────────────────────
-// rows[ci] が合計列かどうか（モジュール定数 → ループ内で毎回 new Set しない）
-const TOTAL_IDX = new Set([2, 5, 8, 9])
-
-// タンクグループの表示順
-const TANK_GROUPS = ['trend', 'gravity', 'noise'] as const
-
-const TABLE_COLS: { label: string; sub?: string; isTotal?: boolean }[] = [
-  { label: '日付' },
-  { label: '外国人' },
-  { label: '信託銀行' },
-  { label: 'スマートマネー', sub: '合計', isTotal: true },
-  { label: '生命保険' },
-  { label: '投資信託' },
-  { label: '機関投資家', sub: '合計', isTotal: true },
-  { label: '個人' },
-  { label: '証券会社' },
-  { label: '個人/証券', sub: '合計', isTotal: true },
-  { label: 'ネット合計', sub: '全体', isTotal: true },
-]
 
 // ── クオンツ分析メモパネル ────────────────────────────
 const QUANT_MEMO_KEY = 'poical-quant-memo'
@@ -344,13 +283,15 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
 // ── メインコンポーネント ──────────────────────────────
 const PARTICIPANTS_MOBILE_LIMIT = 10
 
+// 合計列インデックス（太字・左ボーダー付き）
+const TOTAL_IDX = new Set([1, 4])
+
 export function MicroQuantView({ theme, isMobile, data, loading, error, onReload, onOpenNetDelta }: Props) {
   const tv = useMemo(() => themeVars(theme), [theme])
   const dateLabel = data.length > 0 ? `最終: ${data[0].date}` : ''
-  const [participantsExpanded, setParticipantsExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
-  // buildTankFirms は O(data.length × sectors) → data 変化時のみ再計算
-  const tankFirms = useMemo(() => buildTankFirms(data), [data])
+  const tanks = useMemo(() => buildCotTanks(data), [data])
 
   return (
     <div style={{ ...tv, flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}>
@@ -373,8 +314,8 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
           </svg>
-          投資主体別先物手口
-          <span style={s.titleSub}>週次 · JPX</span>
+          CFTC COT
+          <span style={s.titleSub}>週次 · 日経225先物 · 火曜基準</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {dateLabel && <span style={s.dateLabel}>{dateLabel}</span>}
@@ -386,8 +327,6 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
         flex: 1, overflow: isMobile ? 'visible' : 'hidden', minHeight: 0,
         display: 'flex', flexDirection: 'column',
       }}>
-
-        {/* ━━ テーブルエリア（全幅）━━ */}
         <div style={isMobile
           ? { flexShrink: 0, display: 'flex', flexDirection: 'column' }
           : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
@@ -411,17 +350,16 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
               </div>
             ) : (
               <>
-                {/* ── 6連タンク ── */}
+                {/* ── 3連タンク（NC / Comm / NR） ── */}
                 <div style={{
                   display: 'flex',
                   flexDirection: isMobile ? 'column' : 'row',
                   gap: 8,
                 }}>
-                  {TANK_GROUPS.map(group => {
-                    const firms = tankFirms.filter(t => t.group === group)
-                    const meta  = GROUP_META[group]
+                  {tanks.map(tank => {
+                    const meta = GROUP_META[tank.group]
                     return (
-                      <div key={group} style={{
+                      <div key={tank.group} style={{
                         flex: 1,
                         display: 'flex', flexDirection: 'column', gap: 10,
                         padding: '10px 12px',
@@ -429,7 +367,6 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                         border: `1px solid ${meta.color}28`,
                         background: theme === 'dark' ? `${meta.color}07` : `${meta.color}04`,
                       }}>
-                        {/* グループヘッダー */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <div style={{ flex: 1, height: 1, background: `${meta.color}35` }} />
                           <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, letterSpacing: 0.5 }}>
@@ -438,65 +375,48 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                           <span style={{ fontSize: 9, color: 'var(--text-dim)' }}>{meta.desc}</span>
                           <div style={{ flex: 1, height: 1, background: `${meta.color}35` }} />
                         </div>
-                        {/* タンク2本 */}
-                        <div style={{ display: 'flex', gap: 10 }}>
-                          {firms.map(f => <TankCard key={f.firmDisplay} {...f} theme={theme} />)}
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <TankCard {...tank} theme={theme} />
                         </div>
                       </div>
                     )
                   })}
                 </div>
 
-                {/* ── 日次手口テーブル ── */}
+                {/* ── 週次テーブル ── */}
                 <div style={{ ...s.tableCard, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                   <div style={s.tableHead}>
-                    <span>週次ネット枚数テーブル</span>
-                    <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>買越し=+ / 売越し=−</span>
+                    <span>週次ポジション</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 400 }}>買越し=+ / 売越し=−（枚）</span>
                   </div>
                   <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: isMobile ? 'visible' : 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
                       <thead>
                         <tr>
-                          {TABLE_COLS.map((col, i) => {
-                            const isNetDeltaCol = col.label === 'ネット合計'
-                            return (
-                              <th key={i} style={{
-                                ...s.th,
-                                textAlign: i === 0 ? 'left' : 'right',
-                                borderLeft: col.isTotal ? '2px solid var(--border-dim)' : undefined,
-                                background: col.isTotal ? (theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') : 'var(--modal-bg)',
-                              }}>
-                                {isNetDeltaCol && onOpenNetDelta && !isMobile ? (
-                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                    <button
-                                      onClick={onOpenNetDelta}
-                                      title="ネット合計 週次Δ 分析"
-                                      style={{ background: 'none', border: '1px solid var(--border-dim)', borderRadius: 3, cursor: 'pointer', color: 'var(--accent)', fontSize: 10, fontWeight: 700, padding: '0px 3px', lineHeight: 1.4, letterSpacing: '0.02em', flexShrink: 0 }}
-                                    >Δ</button>
-                                    <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
-                                  </div>
-                                ) : (
-                                  <div style={{ fontSize: 11, fontWeight: 700 }}>{col.label}</div>
-                                )}
-                                {col.sub && <div style={{ fontSize: 9, fontWeight: 400, color: 'var(--text-dim)', marginTop: 1 }}>{col.sub}</div>}
-                              </th>
-                            )
-                          })}
+                          <th style={{ ...s.th, textAlign: 'left' }}>日付</th>
+                          <th style={{ ...s.th, borderLeft: '2px solid var(--border-dim)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                              {onOpenNetDelta && !isMobile && (
+                                <button onClick={onOpenNetDelta} title="NC Net 週次Δ" style={s.deltaBtn}>Δ</button>
+                              )}
+                              NC Net
+                            </div>
+                          </th>
+                          <th style={s.th}>NC Long</th>
+                          <th style={s.th}>NC Short</th>
+                          <th style={{ ...s.th, borderLeft: '2px solid var(--border-dim)' }}>Comm Net</th>
+                          <th style={s.th}>Comm Long</th>
+                          <th style={s.th}>Comm Short</th>
+                          <th style={s.th}>OI</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(isMobile && !participantsExpanded ? data.slice(0, PARTICIPANTS_MOBILE_LIMIT) : data).map((row, i) => {
-                          const trendT   = (row.foreign    ?? 0) + (row.trustBank  ?? 0)
-                          const gravityT = (row.lifeIns    ?? 0) + (row.invTrust   ?? 0)
-                          const noiseT   = (row.individual ?? 0) + (row.securities ?? 0)
-                          const totalNets = trendT + gravityT + noiseT
-                          const cells = [
-                            row.foreign ?? null, row.trustBank ?? null, trendT,
-                            row.lifeIns ?? null, row.invTrust  ?? null, gravityT,
-                            row.individual ?? null, row.securities ?? null, noiseT,
-                            totalNets,
-                          ] as (number | null)[]
-                          // TOTAL_IDX はモジュール定数を使用
+                        {(isMobile && !expanded ? data.slice(0, PARTICIPANTS_MOBILE_LIMIT) : data).map((row, i) => {
+                          const cells: (number | null)[] = [
+                            row.nonCommNet, row.nonCommLong, row.nonCommShort,
+                            row.commNet, row.commLong, row.commShort,
+                            row.openInterest,
+                          ]
                           return (
                             <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
                               <td style={{ ...s.td, minWidth: 68 }}>
@@ -506,11 +426,13 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                               {cells.map((v, ci) => (
                                 <td key={ci} style={{
                                   ...s.td, ...s.tdNum,
-                                  background: cellBg(v, theme),
+                                  background: ci < 6 ? cellBg(v, theme) : 'transparent',
                                   fontWeight: TOTAL_IDX.has(ci) ? 700 : 500,
                                   borderLeft: TOTAL_IDX.has(ci) ? '2px solid var(--border-dim)' : undefined,
                                 }}>
-                                  <span style={{ color: cellColor(v, theme) }}>{fmt(v)}</span>
+                                  <span style={{ color: ci < 6 ? cellColor(v, theme) : 'var(--text-sub)' }}>
+                                    {ci < 6 ? fmt(v) : (v != null ? v.toLocaleString() : '—')}
+                                  </span>
                                 </td>
                               ))}
                             </tr>
@@ -522,20 +444,18 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                 </div>
 
                 {isMobile && data.length > PARTICIPANTS_MOBILE_LIMIT && (
-                  <button style={s.expandBtn} onClick={() => setParticipantsExpanded(v => !v)}>
-                    {participantsExpanded ? `▲ 折りたたむ` : `▼ 全${data.length}週を表示`}
+                  <button style={s.expandBtn} onClick={() => setExpanded(v => !v)}>
+                    {expanded ? `▲ 折りたたむ` : `▼ 全${data.length}週を表示`}
                   </button>
                 )}
 
-                {/* 注記 */}
                 <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
-                  ※ タンク水位 = |週次ネット枚数| ÷ 過去最大値×1.2。赤=売越し・緑=買越し。生命保険・個人は新形式のみ収録。
+                  ※ タンク水位 = |NC/Comm/NRネット枚数| ÷ 過去最大値×1.2。緑=買越し・赤=売越し。データはCFTC毎週金曜公表（火曜基準・約3〜4日遅延）。
                 </div>
               </>
             )}
           </div>
         </div>
-
       </div>
     </div>
   )
@@ -552,12 +472,6 @@ const s: Record<string, React.CSSProperties> = {
   titleArea: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' },
   titleSub:  { fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 },
   dateLabel: { fontSize: 10, color: 'var(--text-dim)' },
-  reloadBtn: {
-    display: 'flex', alignItems: 'center', gap: 5,
-    padding: '4px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600,
-    color: 'var(--text-sub)', background: 'var(--glass-bg)',
-    border: '1px solid var(--glass-border)', cursor: 'pointer',
-  },
   center:   { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 },
   spinner:  { width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--border-dim)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' },
   retryBtn: { padding: '6px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'var(--accent-glass)', border: '1px solid var(--accent)', color: '#fff', cursor: 'pointer' },
@@ -575,10 +489,17 @@ const s: Record<string, React.CSSProperties> = {
     padding: '8px 10px',
     background: 'var(--modal-bg)', backdropFilter: 'blur(16px)',
     borderBottom: '2px solid var(--border-dim)',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'nowrap' as const,
+    textAlign: 'right' as const,
+    fontSize: 11, fontWeight: 700,
   },
   td:    { padding: '6px 10px', borderBottom: '1px solid var(--border-dim)', fontSize: 12 },
-  tdNum: { textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' },
+  tdNum: { textAlign: 'right' as const, fontVariantNumeric: 'tabular-nums' as const, whiteSpace: 'nowrap' as const },
+  deltaBtn: {
+    background: 'none', border: '1px solid var(--border-dim)', borderRadius: 3,
+    cursor: 'pointer', color: 'var(--accent)', fontSize: 10, fontWeight: 700,
+    padding: '0px 3px', lineHeight: 1.4, letterSpacing: '0.02em', flexShrink: 0,
+  },
   expandBtn: {
     display: 'block', width: '100%',
     padding: '9px 14px', textAlign: 'center' as const,

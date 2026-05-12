@@ -264,14 +264,14 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: '先物タブ ─ 先物参加者別ネット枚数・ベクター分析（MicroQuantView・左2/3）',
+        heading: '先物タブ ─ CFTC COT 日経225先物ポジション（MicroQuantView・左2/3）',
         items: [
-          'データソース: JPX 投資部門別売買高（日経225先物）週次CSV → public/data/futures_participants.json',
-          '部門コード: 外国人(60)・信託銀行(23)・生命保険(11)・投資信託(31)・個人(51)・証券会社(41)',
-          '週次テーブル列: 外国人・信託・生保・投信・個人・証券・ネット合計・週次Δ（増減）',
-          'ベクター分析: スマートマネー（外国人+信託）/ 機関フロー（生保+投信）/ ノイズ（個人+証券）の3ベクター',
-          '売り圧力スコア: 0〜100点・直近26週の百分位を算出しalertLevel（green/yellow/orange/red）判定',
-          'キャッシュ: localStorage 24時間（`poical-futures-participants-v2`）',
+          'データソース: CFTC Legacy Financial Futures Only Report → public/data/cot_nikkei.json',
+          '3区分: Non-Commercial（投機筋）/ Commercial（ヘッジャー）/ Non-Reportable（小口）',
+          '週次テーブル列: NC Net / NC Long / NC Short / Comm Net / Comm Long / Comm Short / OI',
+          '売り圧力スコア: NC Netの直近26週百分位を逆転してalertLevel（green/yellow/orange/red）判定',
+          '遅延: 火曜基準データを毎週金曜公表（約3〜4日遅延）',
+          'キャッシュ: localStorage 24時間（`poical-cot-nikkei-v1`）',
         ],
       },
       {

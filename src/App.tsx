@@ -503,7 +503,7 @@ export default function App() {
           {/* 研究員サポート室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} onNavigate={(v) => cal.setView(v)} />
             </Suspense>
           )}
 
