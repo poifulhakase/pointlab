@@ -26,7 +26,6 @@ type Props = {
   onShowPoiroboAlertChange: (v: boolean) => void
   onPoiroboAlertOpen: () => void
   onGoToday?: () => void
-  onGoSupport?: () => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
@@ -34,7 +33,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
   { key: 'jp', label: '日本' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, onGoToday, onGoSupport }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, onGoToday }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -123,13 +122,6 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 
         {/* マーケットイベント・スティッキーメモ（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
-
-        {/* ──── アドバイザーボタン ──── */}
-        <div style={styles.advisorRow}>
-          <button style={styles.advisorBtn} onClick={onGoSupport}>
-            <img src={`${import.meta.env.BASE_URL}support.png`} alt="研究員サポート室" style={styles.advisorImg} />
-          </button>
-        </div>
 
         {/* ──── スティッキーメモ ──── */}
         <div style={styles.memoWrap}>
@@ -335,18 +327,6 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  advisorRow: {
-    display: 'flex', justifyContent: 'center', padding: '10px 14px 16px',
-  },
-  advisorBtn: {
-    width: '80%', padding: 0, borderRadius: 16, overflow: 'hidden',
-    border: 'none', background: 'none',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.20)', cursor: 'pointer',
-    display: 'block',
-  },
-  advisorImg: {
-    width: '100%', height: 'auto', display: 'block', objectFit: 'cover' as const,
-  },
   memoWrap: {
     padding: '10px 14px 12px',
     borderBottom: '1px solid var(--border-dim)',

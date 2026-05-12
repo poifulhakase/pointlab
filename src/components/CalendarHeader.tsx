@@ -45,11 +45,22 @@ function RobotIcon() {
   )
 }
 
+function LabIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 3v8L5.5 16.5A2 2 0 0 0 7.3 20h9.4a2 2 0 0 0 1.8-3.5L15 11V3"/>
+      <line x1="6" y1="3" x2="18" y2="3"/>
+      <path d="M9 12h6"/>
+    </svg>
+  )
+}
+
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
-  { label: 'カレンダー', targetView: 'month' as ViewMode, isActive: isCalendarView,                icon: <CalendarIcon /> },
-  { label: 'チャート',   targetView: 'chart' as ViewMode, isActive: (v: ViewMode) => v === 'chart', icon: <ChartWaveIcon /> },
-  { label: 'ぽいロボ',   targetView: 'quant' as ViewMode, isActive: (v: ViewMode) => v === 'quant', icon: <RobotIcon /> },
+  { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                   icon: <CalendarIcon /> },
+  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',   icon: <ChartWaveIcon /> },
+  { label: 'ぽいロボ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',   icon: <RobotIcon /> },
+  { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support', icon: <LabIcon /> },
 ]
 
 // ── コンポーネント ────────────────────────────────────

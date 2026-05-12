@@ -252,6 +252,16 @@ export default function App() {
     return () => clearTimeout(t)
   }, [loginToast, clearLoginToast])
 
+  // 初回ログイン時は研究室へ遷移
+  useEffect(() => {
+    if (!loginToast) return
+    const KEY = 'poical-first-login-done'
+    if (!localStorage.getItem(KEY)) {
+      localStorage.setItem(KEY, '1')
+      cal.setView('support')
+    }
+  }, [loginToast]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!saveToast) return
     const t = setTimeout(() => setSaveToast(false), 2500)
@@ -478,7 +488,6 @@ export default function App() {
             onShowPoiroboAlertChange={handleShowPoiroboAlertChange}
             onPoiroboAlertOpen={handlePoiroboAlertOpen}
             onGoToday={() => cal.goToDate(cal.today)}
-            onGoSupport={() => cal.setView('support')}
           />
         )}
 
@@ -500,7 +509,7 @@ export default function App() {
             </Suspense>
           )}
 
-          {/* 研究員サポート室 */}
+          {/* 研究室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
               <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} onNavigate={(v) => cal.setView(v)} />
@@ -634,7 +643,7 @@ export default function App() {
       />
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'support') && (
+      {(isCalView || cal.view === 'chart' || cal.view === 'quant') && (
         <div style={styles.floatSubBarBase}>
           <div style={styles.floatSubBar} className="glass">
           <div style={styles.floatPill} className="glass">
@@ -689,25 +698,18 @@ export default function App() {
                 </button>
               </>
             )}
-            {cal.view === 'support' && (
-              SUPPORT_TABS.map((tab, i) => (
-                <button
-                  key={tab}
-                  style={{ ...styles.floatTab, ...(supportTab === tab ? styles.floatTabActive : {}) }}
-                  onClick={() => setSupportTab(tab)}
-                >{SUPPORT_LABELS[i]}</button>
-              ))
-            )}
           </div>
           </div>
         </div>
       )}
 
-      <CalendarHeader
-        view={cal.view} setView={cal.setView}
-        isMobile={isMobile} isTablet={isTablet}
-        sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
-      />
+      {cal.view !== 'support' && (
+        <CalendarHeader
+          view={cal.view} setView={cal.setView}
+          isMobile={isMobile} isTablet={isTablet}
+          sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
+        />
+      )}
 
       {/* トースト */}
       {loginToast && <Toast message="ログインしました" />}
@@ -721,9 +723,6 @@ const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
 const QUANT_TABS    = ['kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['環境', '現物', '先物'] as const
-const SUPPORT_TABS  = ['session', 'note'] as const
-const SUPPORT_LABELS = ['研究室', '資料'] as const
-
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
 const carouselOuterStyle: React.CSSProperties = { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }
 const carouselWrapStyle:  React.CSSProperties = { flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }

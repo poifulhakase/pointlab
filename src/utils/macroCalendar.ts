@@ -1,4 +1,4 @@
-export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'cpi' | 'pce' | 'gdp' | 'tankan'
+export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'cpi' | 'pce' | 'gdp' | 'tankan' | 'nyse'
 
 export type MacroFilter = { us: boolean; jp: boolean }
 
@@ -47,6 +47,9 @@ export const MACRO_META: Record<MacroEventType, {
   tankan: { color: MACRO_COLOR, bg: MACRO_BG, colorLight: MACRO_COLOR_LIGHT, bgLight: MACRO_BG_LIGHT,
     short: '短観',    label: '日銀短観',                 category: 'jp',
     desc: '日本銀行が四半期ごとに発表する企業短期経済観測調査。大企業・中小企業の景況感（DI）を数値化。日本経済の体温計として機関投資家が注目する。' },
+  nyse:   { color: '#fb923c', bg: 'rgba(251,146,60,0.15)', colorLight: '#ea580c', bgLight: 'rgba(234,88,12,0.10)',
+    short: 'NYSE休場', label: 'NYSE休場',                category: 'jp',
+    desc: 'ニューヨーク証券取引所（NYSE）の休場日。米国株式市場が休みとなり、取引は行われない。' },
 }
 
 // FOMC声明発表日（会合2日目）
@@ -83,7 +86,7 @@ const CPI_DATES: [number, number, number][] = [
   [2024, 8, 11], [2024, 9, 10], [2024, 10, 13], [2024, 11, 11],
   // 2025
   [2025, 0, 15], [2025, 1, 12], [2025, 2, 12], [2025, 3, 10],
-  [2025, 4, 13], [2025, 5, 11], [2025, 6, 15], [2025, 7, 12],
+  [2025, 4, 12], [2025, 5, 11], [2025, 6, 15], [2025, 7, 12],
   [2025, 8, 10], [2025, 9, 15], [2025, 10, 12], [2025, 11, 10],
   // 2026
   [2026, 0, 14], [2026, 1, 11], [2026, 2, 11], [2026, 3, 10],
@@ -146,6 +149,22 @@ const NFP_DATES: [number, number, number][] = [
 const _fixNFP2026Jul = NFP_DATES.find(d => d[0] === 2026 && d[1] === 6)
 if (_fixNFP2026Jul) _fixNFP2026Jul[2] = 3
 
+// NYSE（ニューヨーク証券取引所）休場日
+const NYSE_HOLIDAY_DATES: [number, number, number][] = [
+  // 2024
+  [2024, 0,  1], [2024, 0, 15], [2024, 1, 19], [2024, 2, 29],
+  [2024, 4, 27], [2024, 5, 19], [2024, 6,  4], [2024, 8,  2],
+  [2024, 10, 28], [2024, 11, 25],
+  // 2025
+  [2025, 0,  1], [2025, 0,  9], [2025, 0, 20], [2025, 1, 17],
+  [2025, 3, 18], [2025, 4, 26], [2025, 5, 19], [2025, 6,  4],
+  [2025, 8,  1], [2025, 10, 27], [2025, 11, 25],
+  // 2026
+  [2026, 0,  1], [2026, 0, 19], [2026, 1, 16], [2026, 3,  3],
+  [2026, 4, 25], [2026, 5, 19], [2026, 6,  3], [2026, 8,  7],
+  [2026, 10, 26], [2026, 11, 25],
+]
+
 export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEvent[] {
   const y = date.getFullYear()
   const m = date.getMonth()
@@ -168,6 +187,7 @@ export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEve
   if (filter.jp) {
     check(BOJ_DATES, 'boj')
     check(TANKAN_DATES, 'tankan')
+    check(NYSE_HOLIDAY_DATES, 'nyse')
   }
 
   return events

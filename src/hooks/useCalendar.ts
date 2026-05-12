@@ -90,7 +90,7 @@ export function useCalendar() {
     if (view === 'quant')   return '需給'
     if (view === 'note')    return 'ノート'
     if (view === 'spec')    return 'システム仕様'
-    if (view === 'support') return '研究員サポート室'
+    if (view === 'support') return '研究室'
     if (view === 'manual')  return '説明書'
     if (view === 'legal')   return 'プライバシー・免責事項'
     if (view === 'month') return `${y}年 ${m}`

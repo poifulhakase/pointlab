@@ -11,7 +11,7 @@ type Props = {
   supportTab: SupportTab
   onOpenManual?: () => void
   onOpenLegal?: () => void
-  onNavigate?: (view: 'month' | 'chart' | 'quant') => void
+  onNavigate?: (view: 'month' | 'chart' | 'quant' | 'note') => void
 }
 
 function ViewLoader() {
@@ -64,15 +64,24 @@ function GearIcon() {
     </svg>
   )
 }
+function DataIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 0 3-3h7z"/>
+    </svg>
+  )
+}
 
 // ── Menu data ──────────────────────────────────────────────────────────────
-type MenuView = 'month' | 'chart' | 'quant' | null
+type MenuView = 'month' | 'chart' | 'quant' | 'note' | null
 type MenuItem = { id: string; label: string; sub: string; accent: string; glow: string; view: MenuView; icon: React.ReactNode }
 
 const MENU_ITEMS: MenuItem[] = [
   { id: 'calendar', label: 'Calendar', sub: 'カレンダー', accent: '#67e8f9', glow: 'rgba(103,232,249,0.45)', view: 'month',  icon: <CalendarIcon /> },
   { id: 'chart',    label: 'Chart',    sub: 'チャート',   accent: '#c084fc', glow: 'rgba(192,132,252,0.45)', view: 'chart',  icon: <ChartIcon />    },
   { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボ',   accent: '#4ade80', glow: 'rgba(74,222,128,0.45)',  view: 'quant',  icon: <RobotIcon />    },
+  { id: 'data',     label: 'Data',     sub: '資料',       accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: 'note',   icon: <DataIcon />     },
   { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
 ]
 
