@@ -12,6 +12,7 @@ type Props = {
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant' | 'note') => void
+  onOpenSettings?: () => void
 }
 
 function ViewLoader() {
@@ -85,7 +86,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
 ]
 
-export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenLegal, onNavigate }: Props) {
+export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenLegal, onNavigate, onOpenSettings }: Props) {
   const [visible,  setVisible]  = useState(false)
   const [ripples,  setRipples]  = useState<{ id: number; x: number; y: number }[]>([])
   const [rot,      setRot]      = useState({ x: -14, y: 5 })
@@ -505,7 +506,10 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
                 >
                   <button
                     className="menu3d-btn"
-                    onClick={() => { if (item.view) onNavigate?.(item.view) }}
+                    onClick={() => {
+                      if (item.id === 'settings') { onOpenSettings?.(); return }
+                      if (item.view) onNavigate?.(item.view)
+                    }}
                   >
                     <span className="menu3d-tl" />
                     <span className="menu3d-br" />

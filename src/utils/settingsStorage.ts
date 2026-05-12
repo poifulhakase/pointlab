@@ -47,7 +47,6 @@ export const POIROBO_ALERT_CONFIG_DEFAULT: PoiroboAlertConfig = {
 }
 
 export type AppSettings = {
-  browserNotifEnabled: boolean
   theme: 'dark' | 'light'
   showPrivate: boolean
   showAnomaly: boolean
@@ -58,7 +57,6 @@ export type AppSettings = {
 const KEY = 'poical-settings'
 
 const DEFAULTS: AppSettings = {
-  browserNotifEnabled: false,
   theme: 'dark',
   showPrivate: true,
   showAnomaly: false,

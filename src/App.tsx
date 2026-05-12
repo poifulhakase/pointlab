@@ -2,7 +2,7 @@ import { lazy, Suspense, memo, useMemo, useState, useEffect, useCallback, useRef
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
-import { CalendarHeader, GearIcon, MonitorIcon, SunIcon, MoonIcon, BellIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
+import { CalendarHeader, MonitorIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
 import { AuthModal } from './components/AuthModal'
 import { Sidebar } from './components/Sidebar'
 import { MonthView } from './components/MonthView'
@@ -10,7 +10,6 @@ import { PoiroboAlertModal } from './components/PoiroboAlertModal'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
 import { DayNotePanel } from './components/DayNotePanel'
-import { useNotifications } from './hooks/useNotifications'
 import { getDividendDates, getMarkersForDate, type DividendDateSet } from './utils/dividendCalendar'
 import { isMarketClosed, getClosedReason } from './utils/marketHolidays'
 import { getSqDates, getSqMarkersForDate, type SqDate } from './utils/sqCalendar'
@@ -50,70 +49,7 @@ const Toast = memo(({ message }: { message: string }) => (
   </div>
 ))
 
-// ── 歯車ドロップダウン（メモ化） ──────────────────────────────────────
-interface GearDropdownProps {
-  dropRef: React.RefObject<HTMLDivElement | null>
-  pos: { bottom: number; right: number }
-  theme: 'dark' | 'light'
-  user: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null
-  syncStatus: string
-  onToggleTheme: () => void
-  onOpenNotifications: () => void
-  onOpenAccount: () => void
-  onOpenSpec: () => void
-}
-const GearDropdown = memo(({
-  dropRef, pos, theme, user, syncStatus,
-  onToggleTheme, onOpenNotifications, onOpenAccount,
-  onOpenSpec,
-}: GearDropdownProps) => (
-  <div ref={dropRef} style={{ ...styles.gearDropdown, bottom: pos.bottom, right: pos.right }} className="glass">
-    <GearItem icon={<BellIcon />} onClick={onOpenNotifications}>カレンダー通知</GearItem>
-    <GearItem icon={theme === 'dark' ? <SunIcon /> : <MoonIcon />} onClick={onToggleTheme}>
-      {theme === 'dark' ? 'ライトモード' : 'ダークモード'}
-    </GearItem>
-    {user?.email === 'sushi.ramen.unajyu@gmail.com' && (
-      <GearItem icon={<DocIcon />} onClick={onOpenSpec}>システム仕様</GearItem>
-    )}
-    <GearItem
-      icon={
-        user?.photoURL
-          ? <img src={user.photoURL} alt="" style={{ width: 15, height: 15, borderRadius: '50%' }} referrerPolicy="no-referrer" />
-          : <UserIcon />
-      }
-      onClick={onOpenAccount}
-      suffix={
-        user && syncStatus === 'synced' ? <span style={{ fontSize: 10, color: 'rgba(96,200,140,0.9)' }}>✓</span>
-        : user && syncStatus === 'syncing' ? <span style={{ fontSize: 10, color: 'var(--accent)' }}>...</span>
-        : null
-      }
-    >
-      {user ? (user.displayName ?? user.email ?? 'アカウント') : 'Googleでログイン'}
-    </GearItem>
-  </div>
-))
-
-function GearItem({ icon, children, onClick, suffix }: {
-  icon: React.ReactNode; children: React.ReactNode
-  onClick: () => void; suffix?: React.ReactNode
-}) {
-  return (
-    <button style={styles.gearItem} onClick={onClick}>
-      <span style={styles.gearItemIcon}>{icon}</span>
-      <span style={{ flex: 1 }}>{children}</span>
-      {suffix}
-    </button>
-  )
-}
 // ── 小さいアイコン群 ───────────────────────────────────────────────────
-function UserIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
-    </svg>
-  )
-}
 function DocIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -138,34 +74,6 @@ export default function App() {
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
   const cal = useCalendar()
   const { isMobile, isTablet, isDesktop } = useBreakpoint()
-
-  // ── 歯車ドロップダウン ───────────────────────────────────────────────
-  const [gearOpen, setGearOpen]     = useState(false)
-  const [gearPos, setGearPos]       = useState({ bottom: 0, right: 0 })
-  const gearBtnRef  = useRef<HTMLButtonElement>(null)
-  const gearDropRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!gearOpen) return
-    const handler = (e: MouseEvent) => {
-      if (!gearBtnRef.current?.contains(e.target as Node) &&
-          !gearDropRef.current?.contains(e.target as Node)) {
-        setGearOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [gearOpen])
-
-  const openGear = useCallback(() => {
-    if (gearBtnRef.current) {
-      const r = gearBtnRef.current.getBoundingClientRect()
-      setGearPos({ bottom: window.innerHeight - r.top + 6, right: window.innerWidth - r.right })
-    }
-    setGearOpen(o => !o)
-  }, [])
-
-  const closeGear = useCallback(() => setGearOpen(false), [])
 
   // ── 日/週/月 スワイプ ─────────────────────────────────────────────────
   const calTouchStartXRef  = useRef(0)
@@ -239,8 +147,6 @@ export default function App() {
     authLoading, stickyNotes, handleStickyNotesSaved,
     loginToast, clearLoginToast,
   } = useFirebaseSync(refreshNoteMap)
-
-  useNotifications()
 
   // ── トースト ──────────────────────────────────────────────────────────
   const [saveToast,  setSaveToast]  = useState(false)
@@ -337,22 +243,22 @@ export default function App() {
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
   const backStateRef = useRef({
-    gearOpen: false, settingsOpen: false, authModalOpen: false,
+    settingsOpen: false, authModalOpen: false,
     noteDate: null as Date | null, poiroboAlertModalOpen: false,
     quantSettingsOpen: false, chartSettingsOpen: false, view: 'month',
   })
   backStateRef.current = {
-    gearOpen, settingsOpen, authModalOpen, noteDate,
+    settingsOpen, authModalOpen, noteDate,
     poiroboAlertModalOpen, quantSettingsOpen, chartSettingsOpen, view: cal.view,
   }
   const backActionsRef = useRef({
-    closeGear: () => {}, closeNote: () => {}, setView: (_v: string) => {},
+    closeNote: () => {}, setView: (_v: string) => {},
     setSettingsOpen: (_v: boolean) => {}, setAuthModalOpen: (_v: boolean) => {},
     setPoiroboAlertModalOpen: (_v: boolean) => {}, setQuantSettingsOpen: (_v: boolean) => {},
     setChartSettingsOpen: (_v: boolean) => {},
   })
   backActionsRef.current = {
-    closeGear, closeNote, setView: cal.setView as (_v: string) => void,
+    closeNote, setView: cal.setView as (_v: string) => void,
     setSettingsOpen, setAuthModalOpen, setPoiroboAlertModalOpen,
     setQuantSettingsOpen, setChartSettingsOpen,
   }
@@ -362,7 +268,6 @@ export default function App() {
       history.pushState(null, '')
       const s = backStateRef.current
       const a = backActionsRef.current
-      if (s.gearOpen)              { a.closeGear();                           return }
       if (s.settingsOpen)          { a.setSettingsOpen(false);                return }
       if (s.authModalOpen)         { a.setAuthModalOpen(false);               return }
       if (s.noteDate)              { a.closeNote();                           return }
@@ -439,14 +344,6 @@ export default function App() {
     }
   }, [calPanelIndex, cal])
 
-  // ── 歯車アクション ────────────────────────────────────────────────────
-  const gearActions = useMemo(() => ({
-    onToggleTheme:       () => { toggleTheme(); closeGear() },
-    onOpenNotifications: () => { setSettingsOpen(true); closeGear() },
-    onOpenAccount:       () => { setAuthModalOpen(true); closeGear() },
-    onOpenSpec:          () => { cal.setView('spec'); closeGear() },
-  }), [toggleTheme, closeGear, cal])
-
   const isCalView = cal.view === 'day' || cal.view === 'week' || cal.view === 'month'
 
   if (showLoading) {
@@ -512,7 +409,7 @@ export default function App() {
           {/* 研究室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} onNavigate={(v) => cal.setView(v)} />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} onNavigate={(v) => cal.setView(v)} onOpenSettings={() => setSettingsOpen(true)} />
             </Suspense>
           )}
 
@@ -608,21 +505,19 @@ export default function App() {
         </main>
       </div>
 
-      {/* 歯車ドロップダウン */}
-      {gearOpen && (
-        <GearDropdown
-          dropRef={gearDropRef}
-          pos={gearPos}
-          theme={theme}
-          user={user}
-          syncStatus={syncStatus}
-          {...gearActions}
-        />
-      )}
-
       {/* モーダル類 */}
       <Suspense fallback={null}>
-        <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        <SettingsPanel
+          isOpen={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          user={user}
+          syncStatus={syncStatus}
+          onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
+          isAdmin={user?.email === 'sushi.ramen.unajyu@gmail.com'}
+          onOpenSpec={() => { setSettingsOpen(false); cal.setView('spec') }}
+        />
       </Suspense>
 
       <AuthModal
@@ -657,10 +552,6 @@ export default function App() {
                     onClick={() => cal.setView(key)}
                   >{label}</button>
                 ))}
-                <span style={styles.floatDivider} />
-                <button ref={gearBtnRef} style={styles.floatIconBtn} onClick={openGear} aria-label="設定">
-                  <GearIcon />
-                </button>
               </>
             )}
             {cal.view === 'chart' && (
@@ -769,12 +660,6 @@ const styles: Record<string, React.CSSProperties> = {
   mobileCalNav: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0, padding: '16px 12px 12px' },
   subNavBtn:    { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 7, color: 'var(--text-sub)', flexShrink: 0 },
   subLabel:     { fontWeight: 500, fontSize: 16, letterSpacing: '-0.3px', color: 'var(--text)', whiteSpace: 'nowrap', margin: '0 2px', flexShrink: 0 },
-
-  gearBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: 'var(--text-sub)', cursor: 'pointer' },
-  gearDropdown: { position: 'fixed', minWidth: 184, borderRadius: 10, overflow: 'hidden', zIndex: 500, display: 'flex', flexDirection: 'column', background: 'var(--modal-bg)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' },
-  gearItem:     { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', fontSize: 13, fontWeight: 500, color: 'var(--text)', cursor: 'pointer', textAlign: 'left', background: 'transparent', transition: 'background 0.1s' },
-  gearItemIcon: { display: 'flex', alignItems: 'center', color: 'var(--text-sub)', flexShrink: 0 },
-  gearDivider:  { height: 1, background: 'var(--border-dim)', margin: '0 12px' },
 
   toast: { position: 'fixed', bottom: 130, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
 

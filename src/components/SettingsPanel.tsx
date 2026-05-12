@@ -1,41 +1,25 @@
-import { useState, useEffect } from 'react'
-import { getSettings, saveSettings, type AppSettings } from '../utils/settingsStorage'
+import { useEffect } from 'react'
+
+type User = { displayName?: string | null; email?: string | null; photoURL?: string | null } | null
 
 type Props = {
   isOpen: boolean
   onClose: () => void
+  theme: 'dark' | 'light'
+  onToggleTheme: () => void
+  user: User
+  syncStatus: string
+  onOpenAccount: () => void
+  isAdmin: boolean
+  onOpenSpec: () => void
 }
 
-export function SettingsPanel({ isOpen, onClose }: Props) {
-  const [s, setS] = useState<AppSettings>(getSettings)
-  const [notifStatus, setNotifStatus] = useState<NotificationPermission>('default')
-
-  useEffect(() => {
-    if ('Notification' in window) setNotifStatus(Notification.permission)
-  }, [isOpen])
-
+export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, user, syncStatus, onOpenAccount, isAdmin, onOpenSpec }: Props) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)
     return () => document.removeEventListener('keydown', fn)
   }, [onClose])
-
-  const update = (patch: Partial<AppSettings>) => {
-    const next = { ...s, ...patch }
-    setS(next)
-    saveSettings(next)
-  }
-
-  const requestBrowserPermission = async () => {
-    const result = await Notification.requestPermission()
-    setNotifStatus(result)
-    if (result === 'granted') update({ browserNotifEnabled: true })
-  }
-
-  const testBrowserNotif = () => {
-    if (notifStatus !== 'granted') return
-    new Notification('🔔 テスト通知', { body: 'ぽいロボからのアラートテストです', icon: '/favicon.png' })
-  }
 
   return (
     <>
@@ -52,8 +36,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
         style={{
           position: 'fixed', top: '50%', left: '50%',
           transform: isOpen ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-50%) scale(0.95)',
-          width: 'min(480px, calc(100vw - 32px))',
-          maxHeight: 'calc(100vh - 80px)',
+          width: 'min(420px, calc(100vw - 32px))',
           zIndex: 400,
           opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
           transition: 'opacity 0.22s, transform 0.22s cubic-bezier(0.4,0,0.2,1)',
@@ -69,13 +52,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
       >
         {/* ヘッダー */}
         <div style={st.header}>
-          <span style={st.title}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-            </svg>
-            カレンダー通知
-          </span>
+          <span style={st.title}>設定</span>
           <button style={st.closeBtn} onClick={onClose}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -85,68 +62,113 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
 
         {/* ボディ */}
         <div style={st.body}>
+
+          {/* テーマ */}
           <section style={st.section}>
-            <div style={st.sectionTitle}>ブラウザ通知</div>
-            <div style={st.row}>
-              <Toggle
-                checked={s.browserNotifEnabled && notifStatus === 'granted'}
-                disabled={notifStatus === 'denied'}
-                onChange={v => update({ browserNotifEnabled: v })}
-                label="ブラウザ通知を有効にする"
-              />
+            <div style={st.sectionTitle}>表示</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                style={{ ...st.themeBtn, ...(theme === 'light' ? st.themeBtnActive : {}) }}
+                onClick={() => { if (theme !== 'light') onToggleTheme() }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                ライト
+              </button>
+              <button
+                style={{ ...st.themeBtn, ...(theme === 'dark' ? st.themeBtnActive : {}) }}
+                onClick={() => { if (theme !== 'dark') onToggleTheme() }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                ダーク
+              </button>
             </div>
-            {notifStatus === 'default' && (
-              <button style={st.actionBtn} onClick={requestBrowserPermission}>
-                通知を許可する（ブラウザに確認）
-              </button>
-            )}
-            {notifStatus === 'denied' && (
-              <p style={st.hint}>ブラウザ設定から通知を許可してください。</p>
-            )}
-            {notifStatus === 'granted' && (
-              <button style={{ ...st.actionBtn, marginTop: 4 }} onClick={testBrowserNotif}>
-                テスト通知を送る
-              </button>
-            )}
           </section>
+
+          {/* アカウント */}
+          <section style={st.section}>
+            <div style={st.sectionTitle}>アカウント</div>
+            <button style={st.accountRow} onClick={() => { onClose(); onOpenAccount() }}>
+              <span style={st.accountLeft}>
+                {user?.photoURL
+                  ? <img src={user.photoURL} alt="" style={st.avatar} referrerPolicy="no-referrer" />
+                  : <span style={st.avatarPlaceholder}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </span>
+                }
+                <span style={st.accountInfo}>
+                  <span style={st.accountName}>
+                    {user ? (user.displayName ?? user.email ?? 'アカウント') : 'Googleでログイン'}
+                  </span>
+                  {user && (
+                    <span style={st.accountSub}>
+                      {syncStatus === 'synced' ? '同期済み' : syncStatus === 'syncing' ? '同期中...' : user.email ?? ''}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </section>
+
+          {/* システム仕様（管理者のみ） */}
+          {isAdmin && (
+            <section style={st.section}>
+              <div style={st.sectionTitle}>開発者</div>
+              <button style={st.actionBtn} onClick={() => { onClose(); onOpenSpec() }}>
+                システム仕様を開く
+              </button>
+            </section>
+          )}
+
         </div>
       </div>
     </>
   )
 }
 
-function Toggle({ checked, disabled = false, onChange, label }: { checked: boolean; disabled?: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1 }}>
-      <span
-        style={{
-          width: 36, height: 20, borderRadius: 10, flexShrink: 0,
-          background: checked && !disabled ? 'var(--accent-glass)' : 'var(--toggle-track)',
-          position: 'relative', transition: 'background 0.18s',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-        }}
-        onClick={() => !disabled && onChange(!checked)}
-      >
-        <span style={{
-          position: 'absolute', top: 2, left: checked ? 18 : 2,
-          width: 16, height: 16, borderRadius: '50%', background: 'white',
-          transition: 'left 0.18s',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-        }} />
-      </span>
-      <span style={{ fontSize: 13, color: 'var(--text-sub)' }}>{label}</span>
-    </label>
-  )
-}
-
 const st: Record<string, React.CSSProperties> = {
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-dim)', flexShrink: 0 },
-  title:  { display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' },
-  closeBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-sub)' },
-  body:   { flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 24 },
-  section: { display: 'flex', flexDirection: 'column', gap: 10 },
-  sectionTitle: { fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--text-dim)', marginBottom: 2 },
-  row: { display: 'flex', alignItems: 'center' },
-  actionBtn: { padding: '7px 14px', borderRadius: 8, background: 'rgba(96,165,250,0.14)', border: '1px solid rgba(96,165,250,0.30)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, width: 'fit-content' },
-  hint: { fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.7, marginTop: 4 },
+  header:    { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border-dim)', flexShrink: 0 },
+  title:     { fontSize: 15, fontWeight: 700, color: 'var(--text)' },
+  closeBtn:  { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-sub)' },
+  body:      { padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 },
+  section:   { display: 'flex', flexDirection: 'column', gap: 10 },
+  sectionTitle: { fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--text-dim)' },
+
+  themeBtn: {
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+    color: 'var(--text-sub)', border: '1px solid var(--glass-border)',
+    background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+  },
+  themeBtnActive: {
+    background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)',
+    borderColor: 'transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)',
+  },
+
+  accountRow: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+    background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+    transition: 'background 0.15s', textAlign: 'left',
+  },
+  accountLeft:  { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
+  accountInfo:  { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 },
+  accountName:  { fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  accountSub:   { fontSize: 11, color: 'var(--text-dim)' },
+  avatar:       { width: 32, height: 32, borderRadius: '50%', flexShrink: 0 },
+  avatarPlaceholder: { width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' },
+
+  actionBtn: { padding: '8px 14px', borderRadius: 8, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-sub)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' as const },
 }
