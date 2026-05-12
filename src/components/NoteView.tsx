@@ -5,6 +5,7 @@ type Props = {
   isMobile: boolean
   onOpenManual?: () => void
   onOpenLegal?: () => void
+  onGoBack?: () => void
 }
 
 type Article = {
@@ -105,9 +106,24 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal }: {
   )
 }
 
-export function NoteView({ isMobile, onOpenManual, onOpenLegal }: Props) {
+export function NoteView({ isMobile, onOpenManual, onOpenLegal, onGoBack }: Props) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+      {/* 戻るボタン */}
+      {onGoBack && (
+        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)' }}>
+          <button
+            onClick={onGoBack}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-sub)', cursor: 'pointer', background: 'transparent', border: 'none' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            研究室
+          </button>
+        </div>
+      )}
 
       {/* コンテンツ */}
       <div style={s.wrap}>

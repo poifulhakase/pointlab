@@ -538,6 +538,7 @@ export default function App() {
                 isMobile={isMobile}
                 onOpenManual={() => cal.setView('manual')}
                 onOpenLegal={() => cal.setView('legal')}
+                onGoBack={() => cal.setView('support')}
               />
             </Suspense>
           )}
