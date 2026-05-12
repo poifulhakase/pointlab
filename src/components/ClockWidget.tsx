@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getMacroEventsForDate, MACRO_META } from '../utils/macroCalendar'
 import { getSqDates, getSqMarkersForDate } from '../utils/sqCalendar'
-import { isMarketClosed as isMarketClosedDay } from '../utils/marketHolidays'
+import { isMarketClosed as isMarketClosedDay, isNYSEWeekdayHoliday } from '../utils/marketHolidays'
 
 // JST の各コンポーネントを取得（トリックを使わず UTC で正確に計算）
 function getJST(date: Date) {
@@ -122,6 +122,7 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
   const meta  = PHASE_META[phase]
   const countdowns = getCountdowns(now)
   const timeStr = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
+  const nyseHoliday = isNYSEWeekdayHoliday(jst.dateObj)
 
   const sz = isMobile
     ? { time: 28, status: 11, cdLabel: 10, cdVal: 11, pad: '14px 16px 12px', gap: 4, ptop: 8 }
@@ -141,17 +142,30 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
 
       {/* 市場ステータス */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
+        display: 'flex', flexDirection: 'column', gap: 4,
         marginBottom: countdowns.length > 0 ? sz.ptop : 0,
       }}>
-        <span style={{
-          width: isMobile ? 7 : 8, height: isMobile ? 7 : 8, borderRadius: '50%', flexShrink: 0,
-          background: meta.dot,
-          boxShadow: meta.glow ? `0 0 6px ${meta.dot}` : 'none',
-        }} />
-        <span style={{ fontSize: sz.status, fontWeight: 600, color: meta.color, letterSpacing: '0.05em' }}>
-          JP　{meta.label}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            width: isMobile ? 7 : 8, height: isMobile ? 7 : 8, borderRadius: '50%', flexShrink: 0,
+            background: meta.dot,
+            boxShadow: meta.glow ? `0 0 6px ${meta.dot}` : 'none',
+          }} />
+          <span style={{ fontSize: sz.status, fontWeight: 600, color: meta.color, letterSpacing: '0.05em' }}>
+            JP　{meta.label}
+          </span>
+        </div>
+        {nyseHoliday && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              width: isMobile ? 7 : 8, height: isMobile ? 7 : 8, borderRadius: '50%', flexShrink: 0,
+              background: 'rgba(251,146,60,0.7)',
+            }} />
+            <span style={{ fontSize: sz.status, fontWeight: 600, color: 'rgba(251,146,60,0.9)', letterSpacing: '0.05em' }}>
+              US　NYSE休場
+            </span>
+          </div>
+        )}
       </div>
 
       {/* カウントダウン（24h以内のみ） */}

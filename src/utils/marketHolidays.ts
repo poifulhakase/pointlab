@@ -131,6 +131,30 @@ export function isMarketClosed(date: Date): boolean {
   return false
 }
 
+// NYSE（ニューヨーク証券取引所）平日休場日
+const NYSE_HOLIDAYS: [number, number, number][] = [
+  // 2024
+  [2024, 0,  1], [2024, 0, 15], [2024, 1, 19], [2024, 2, 29],
+  [2024, 4, 27], [2024, 5, 19], [2024, 6,  4], [2024, 8,  2],
+  [2024, 10, 28], [2024, 11, 25],
+  // 2025
+  [2025, 0,  1], [2025, 0,  9], [2025, 0, 20], [2025, 1, 17],
+  [2025, 3, 18], [2025, 4, 26], [2025, 5, 19], [2025, 6,  4],
+  [2025, 8,  1], [2025, 10, 27], [2025, 11, 25],
+  // 2026
+  [2026, 0,  1], [2026, 0, 19], [2026, 1, 16], [2026, 3,  3],
+  [2026, 4, 25], [2026, 5, 19], [2026, 6,  3], [2026, 8,  7],
+  [2026, 10, 26], [2026, 11, 25],
+]
+
+/** NYSE が平日休場かどうか（土日は false、平日祝日は true） */
+export function isNYSEWeekdayHoliday(date: Date): boolean {
+  const day = date.getDay()
+  if (day === 0 || day === 6) return false
+  const y = date.getFullYear(), m = date.getMonth(), d = date.getDate()
+  return NYSE_HOLIDAYS.some(([hy, hm, hd]) => hy === y && hm === m && hd === d)
+}
+
 /** 休場の理由ラベルを返す（土日は null） */
 export function getClosedReason(date: Date): string | null {
   const day = date.getDay()
