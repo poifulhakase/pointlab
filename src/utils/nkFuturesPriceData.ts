@@ -82,9 +82,7 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
   return result
 }
 
-async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
-  // NK=F: CME 日経225先物（円建て連続限月）
-  const sym  = 'NK=F'
+async function fetchSymbolOhlcv(sym: string): Promise<NkFuturesDayData[]> {
   const q    = `interval=1d&range=1mo`
   const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
   const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
@@ -92,6 +90,15 @@ async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
     return parseYahooOhlcv(await proxyFetch(url1))
   } catch {
     return parseYahooOhlcv(await proxyFetch(url2))
+  }
+}
+
+async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
+  // NK=F: CME 日経225先物（円建て連続限月）→ 取得失敗時は ^N225（日経225指数）で代替
+  try {
+    return await fetchSymbolOhlcv('NK=F')
+  } catch {
+    return fetchSymbolOhlcv('^N225')
   }
 }
 
