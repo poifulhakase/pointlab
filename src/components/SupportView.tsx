@@ -151,7 +151,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
         }
         .menu3d-item {
           transform-style: preserve-3d;
@@ -172,7 +172,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           display: flex;
           align-items: center;
           width: 270px;
-          height: 68px;
+          height: 76px;
           padding: 0;
           border: 2px solid rgba(0,205,255,0.82);
           border-radius: 6px 20px 6px 20px;
@@ -258,7 +258,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           align-items: center;
           justify-content: center;
           width: 58px;
-          height: 68px;
+          height: 76px;
           flex-shrink: 0;
           color: var(--accent);
           filter: drop-shadow(0 0 5px var(--glow));
