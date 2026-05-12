@@ -25,11 +25,10 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: '主要機能',
         items: [
-          'ホーム：カレンダー（月/週/日ビュー）＋ メモ・スケジュール管理',
+          'カレンダー（ホーム）：月/週/日ビュー＋ メモ・スケジュール管理',
           'チャート：TradingView チャート（日経225・ドル円・米国債）',
-          'データ：需給分析（環境 / 現物 / 先物 の3タブ構成）',
-          'ノート：記事一覧（基本・インジケーター・イベントドリブン・未来ガジェット）',
-          'AI分析プロンプト自動生成・クリップボードコピー',
+          'ぽいロボ（データ）：需給分析（環境 / 現物 / 先物 の3タブ構成）＋ AI分析プロンプト自動生成',
+          '研究室：資料閲覧 / 設定（テーマ切替・アカウント）/ 使い方ガイド / ぽいロボ コネクト',
           'Firebase Auth（Googleログイン）によるメモ・設定のクロスデバイス同期',
         ],
       },
@@ -312,6 +311,59 @@ const SPEC_SECTIONS = [
     ],
   },
   {
+    id: 'support',
+    icon: '🧪',
+    title: '研究室（SupportView）',
+    content: [
+      {
+        type: 'para' as const,
+        text: '研究室は、資料閲覧・設定・ぽいロボ コネクトへのアクセスを統合したハブビューです。ヘッダーのフラスコアイコンをタップして表示します。',
+      },
+      {
+        type: 'table' as const,
+        headers: ['パネル', '内容'],
+        rows: [
+          ['研究室（左）', 'メニュー（6ボタン）: DATA / REPORT / MANUAL / SETTINGS / HOME / CHART'],
+          ['資料（中央）', 'NoteView — 記事一覧（基本・インジケーター・イベントドリブン・未来ガジェット）。「← 研究室」ボタンで研究室パネルへ戻れる'],
+          ['使い方（右）', 'ManualView — アプリ説明書'],
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'メニューボタン（6項目）',
+        items: [
+          'DATA → QuantView（需給分析ビュー）へ遷移。NoteView 内「← 研究室」ボタンで研究室へ戻れる',
+          'REPORT → 研究室パネルの資料タブ（NoteView）へ切り替え',
+          'MANUAL → 研究室パネルの使い方タブ（ManualView）へ切り替え',
+          'SETTINGS → 設定モーダルを開く（ヘッダー歯車アイコンは廃止）',
+          'HOME → カレンダービュー（月ビュー）へ遷移',
+          'CHART → チャートビューへ遷移',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: '設定モーダル（SettingsPanel）',
+        items: [
+          '研究室 > SETTINGS ボタンからのみ開く（ヘッダー歯車アイコンは削除済み）',
+          '表示セクション: ライト / ダーク テーマ切り替え（segmented buttons）',
+          'アカウントセクション: Googleログイン / ログアウト（AuthModal を開く）・同期ステータス表示',
+          '開発者セクション: システム仕様を開く（管理者アカウントのみ表示）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'ぽいロボ コネクト（右下ボタン）',
+        items: [
+          '研究室ビュー右下に配置（position: absolute, bottom: 20-28px, right: 16-28px, zIndex: 20）',
+          '博士画像（hakase.png）＋「ぽいロボ コネクト」テキスト＋「ぽいふる博士と接続」サブテキスト',
+          'ホバー時: POIROBO_CONNECT_v2.0 HUDパネルを表示',
+          'スキャナーリング（slow-rotate 8s）・ダスト粒子8個（digital-dust 4-8s シアン浮上）・スキャンライン（support-scanline 3s 縦スクロール）',
+          'ダスト・スキャンラインは背景（support-room.jpg）の前面（zIndex: 3）に描画',
+        ],
+      },
+    ],
+  },
+  {
     id: 'data',
     icon: '🗄️',
     title: 'データ仕様',
@@ -321,7 +373,7 @@ const SPEC_SECTIONS = [
         headers: ['localStorageキー', 'TTL', '用途'],
         rows: [
           ['stock-cal-notes', '永続', 'カレンダーメモ全データ'],
-          ['poical-settings', '永続', 'アプリ設定（テーマ・通知等）'],
+          ['poical-settings', '永続', 'アプリ設定（テーマ・ぽいロボアラート設定）'],
           ['poical-vix-data', '30分（市場オープン）/ 2時間（クローズ）', 'VIX日足チャートデータ'],
           ['poical-ns-ratio-data', '30分（市場オープン）/ 2時間（クローズ）', 'NS倍率日足データ'],
           ['poical-margin-data', '24時間', '信用倍率JSONキャッシュ'],
@@ -486,13 +538,13 @@ export function SpecView({ theme, isMobile }: Props) {
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいロボ — 最終更新: 2026-05-08
+              ぽいロボ — 最終更新: 2026-05-12
             </p>
           </div>
         </div>

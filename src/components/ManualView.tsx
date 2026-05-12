@@ -53,10 +53,21 @@ const SECTIONS = [
     ],
   },
   {
+    icon: '🧪',
+    title: '研究室',
+    items: [
+      'ヘッダーのフラスコアイコンをタップすると研究室が表示されます。',
+      '左パネルのメニューから「DATA（需給分析）」「REPORT（資料）」「MANUAL（使い方）」「SETTINGS（設定）」「HOME（カレンダー）」「CHART（チャート）」へ移動できます。',
+      '「SETTINGS」では、テーマ（ライト/ダーク）の切り替えや、Google アカウントでのログイン/ログアウトができます。',
+      '「REPORT」で記事・解説資料を閲覧できます。「← 研究室」ボタンでメニューに戻れます。',
+      '右下の「ぽいロボ コネクト」ボタンをホバーすると、ぽいふる博士が接続モードになります。',
+    ],
+  },
+  {
     icon: '🔄',
     title: 'クロスデバイス同期',
     items: [
-      '歯車メニュー →「Googleでログイン」で複数デバイス間でメモを自動同期します。',
+      '研究室 > SETTINGS →「アカウント」をタップすると Google ログイン画面が開きます。ログイン後、複数デバイス間でメモが自動同期されます。',
       'ログアウト中でも、メモはデバイス内の localStorage に保存されます。',
       'ログイン後、自動でサーバーのデータとマージされます。',
     ],
@@ -65,8 +76,7 @@ const SECTIONS = [
     icon: '🌙',
     title: 'その他の設定',
     items: [
-      '歯車メニュー →「ダークモード / ライトモード」でテーマを切り替えられます。',
-      '歯車メニュー →「通知設定」でスケジュールのブラウザ通知を有効にできます。',
+      '研究室 > SETTINGS →「ライト / ダーク」でテーマを切り替えられます。',
       'このアプリは PWA 対応です。スマートフォンのホーム画面に追加するとアプリのように使えます。',
     ],
   },
@@ -93,7 +103,7 @@ export function ManualView({ theme, isMobile, onClose }: Props) {
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 28, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div style={{ flex: 1 }}>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.title, letterSpacing: '-0.5px' }}>
               説明書
