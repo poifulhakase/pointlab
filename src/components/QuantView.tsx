@@ -5,7 +5,6 @@ import { themeVars } from '../utils/themeVars'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
 import { fetchVixData, fetchVixDailyData, type VixWeekData, type VixDayData } from '../utils/vixData'
-import { fetchNhkNews, type NhkNewsItem } from '../utils/nhkNews'
 import { getMacroEventsForDate, MACRO_META } from '../utils/macroCalendar'
 import { getSqDates, getSqMarkersForDate, SQ_META } from '../utils/sqCalendar'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
@@ -296,7 +295,6 @@ function buildExportJson(
   invData: InvestorWeekData[],
   marData: MarginWeekData[],
   vixData: VixWeekData[],
-  newsData: NhkNewsItem[],
   ntData: NtRatioPoint[],
   adData: AdvanceDeclineWeekData[],
   ssData: ShortSellWeekData[],
@@ -697,7 +695,6 @@ function buildExportJson(
     priority_weights,
     data_freshness,
     upcoming_events: getUpcomingEvents(28),
-    recent_news: newsData.map(n => ({ title: n.title, pubDate: n.pubDate, description: n.description })),
     vix_latest,
     nikkei225_latest,
     usdjpy_latest,
@@ -1075,8 +1072,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     setNtData(d)
   }, [])
 
-  const [nhkNews, setNhkNews] = useState<NhkNewsItem[]>([])
-
   // settingsOpen / onCloseSettings は props から受け取る（App.tsx でリフト済み）
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
   // quantTab / setQuantTab は props から受け取る（App.tsx でリフト済み）
@@ -1192,16 +1187,12 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   useEffect(() => { if (!vixDailyLoaded)  loadVixDaily()     }, [vixDailyLoaded,  loadVixDaily])
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
 
-  useEffect(() => {
-    fetchNhkNews().then(setNhkNews).catch(() => {})
-  }, [])
-
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, nhkNews, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData])
+  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, participantsData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 

@@ -51,7 +51,7 @@ export function MarketDailyPanel({
 
   const tblWrap = isMobile
     ? { overflowX: 'hidden' as const, overflowY: 'visible' as const }
-    : { flex: 1, overflowY: 'auto' as const, overflowX: 'auto' as const, padding: '0 0 8px' }
+    : { flex: 1, display: 'flex' as const, flexDirection: 'column' as const, overflowY: 'auto' as const, overflowX: 'auto' as const, padding: '0 0 8px' }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
