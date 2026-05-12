@@ -250,7 +250,7 @@ function getUpcomingEvents(days = 28): { date: string; day: string; events: stri
   return result
 }
 
-const EXPORT_WEEKS = 26
+const EXPORT_WEEKS = 13
 
 // ── 偏差スコア計算ヘルパー ──────────────────────────
 // 最低 MIN_Z 件あれば計算（データ欠損・プロキシ失敗でも動作）
@@ -629,6 +629,7 @@ function buildExportJson(
       nikkei225:       nkCur ? Math.round(nkCur) : null,
       usdjpy:          fx?.close ?? null,
       vix:             vixCurClose,
+      nas100:          nas ? { close: nas.close, change_pct: nas.changePct, signal: nasSig } : null,
       market_regime,
       bull_signals:    bullIds,
       bear_signals:    bearIds,
@@ -767,6 +768,7 @@ function buildExportJson(
         wow_change: nk?.change ?? null,
         as_of:      nk?.time  ?? null,
       },
+      sp500_nikkei_ratio: nk ? r2(nk.sp500 / nk.nikkei) : null,
     },
 
     volatility: {
@@ -794,48 +796,33 @@ function buildExportJson(
       },
     },
 
-    macro: {
-      usdjpy: {
-        date:        fx?.time  ?? null,
-        close:       fx?.close ?? null,
-        ma5:         fx?.ma5   ?? null,
-        ma5_dev_pct: fx?.ma5dev ?? null,
-        z_score_30d: z_usdjpy,
-        signal:      usdjpySig,
-      },
-      nas100: {
-        date:        nas?.time      ?? null,
-        close:       nas?.close     ?? null,
-        change_pct:  nas?.changePct ?? null,
-        z_score_30d: z_nas100,
-        source:      nas100_source,
-        signal:      nasSig,
-      },
-      sp500_nikkei_ratio: nk ? r2(nk.sp500 / nk.nikkei) : null,
-    },
-
     price_structure: {
       nikkei225: {
-        current:      nkCur ? Math.round(nkCur) : null,
-        ma5:          nkMa5,
-        ma20:         nkMa20,
-        ma60:         nkMa60,
-        ma200:        nkMa200,
-        ma5_dev_pct:  nkMa5  && nkCur ? r2((nkCur - nkMa5)  / nkMa5  * 100) : null,
-        ma20_dev_pct: nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
-        ma60_dev_pct: nkMa60 && nkCur ? r2((nkCur - nkMa60) / nkMa60 * 100) : null,
-        high_52w:     nkHigh52w,
-        low_52w:      nkLow52w,
+        ma5:           nkMa5,
+        ma20:          nkMa20,
+        ma60:          nkMa60,
+        ma200:         nkMa200,
+        ma5_dev_pct:   nkMa5  && nkCur ? r2((nkCur - nkMa5)  / nkMa5  * 100) : null,
+        ma20_dev_pct:  nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
+        ma60_dev_pct:  nkMa60 && nkCur ? r2((nkCur - nkMa60) / nkMa60 * 100) : null,
+        high_52w:      nkHigh52w,
+        low_52w:       nkLow52w,
         pos_in_52w_pct: nkPos52w,
       },
       usdjpy: {
-        current:      fx?.close ?? null,
-        ma5:          fxMa5,
-        ma20:         fxMa20,
-        ma5_dev_pct:  fxMa5 && fx ? r2((fx.close - fxMa5)  / fxMa5  * 100) : null,
-        ma20_dev_pct: fxMa20 && fx ? r2((fx.close - fxMa20) / fxMa20 * 100) : null,
-        high_52w:     fxHigh52w,
-        low_52w:      fxLow52w,
+        ma5:           fxMa5,
+        ma20:          fxMa20,
+        ma5_dev_pct:   fxMa5 && fx ? r2((fx.close - fxMa5)  / fxMa5  * 100) : null,
+        ma20_dev_pct:  fxMa20 && fx ? r2((fx.close - fxMa20) / fxMa20 * 100) : null,
+        high_52w:      fxHigh52w,
+        low_52w:       fxLow52w,
+        z_score_30d:   z_usdjpy,
+        signal:        usdjpySig,
+      },
+      nas100: {
+        z_score_30d:   z_nas100,
+        source:        nas100_source,
+        signal:        nasSig,
       },
     },
 
@@ -844,7 +831,6 @@ function buildExportJson(
       z_nas100,
       z_vix_inv,
       z_oi,
-      nas100_source,
       score:       score_today,
       acc:         score_today != null && score_3d != null ? r2(score_today - score_3d) : null,
       window_days: W,
@@ -890,28 +876,57 @@ const AI_PROMPT_TEMPLATE = `# Role
 - 解析射程：週足・日足の慣性を主軸とし、2日から2週間程度のスイング波動を物理的射程とする。
 - 事象の地平線：SQ（特別清算指数）は、蓄積された全エネルギーが強制放出される「事象の地平線」である。残日数に応じたロールオーバー（乗り換え）圧力を重力計算に含めよ。
 
+# データ → 物理法則 変換ガイド
+以下のJSONフィールドを各法則の計算根拠として必ず使用すること。
+
+【質量負荷（重力）の計算根拠】
+- positioning.credit_margin.long_bal_t + positioning.arbitrage.long_bal_t → 信用・裁定の合算買い残（兆円）
+- 百分位（ratio_percentile_26w / percentile_26w）が 80%+ で「過剰質量・崩壊リスク」
+- positioning.credit_margin.eval_ratio_pct が -10% 以下なら「含み損臨界・強制決済リスク」
+
+【復元力（弾性）の計算根拠】
+- price_structure.nikkei225（ma20_dev_pct / ma60_dev_pct）→ MA乖離が大きいほど復元力大
+- deviation_score.score（= 0.30×Z_USDJPY + 0.25×Z_NAS100 + 0.20×Z_VIX⁻¹ + 0.15×Z_OI の合成済みスコア）→ 正値=過熱・負値=売られすぎ
+- futures.nk_futures_ohlcv_10d → 直近10日の高値・安値レンジで支持・抵抗を把握
+
+【推進力（慣性）の計算根拠】
+- flows.cot.leveraged_funds.net → ヘッジファンドのネットポジション（正=ロング偏重）
+- deviation_score.acc → 偏差スコアの3日加速度（正=慣性加速中）
+- flows.foreign.cumulative_trillion.w4 → 外国人4週累計フロー（慣性の方向）
+
+⚠ データ遅延注意
+- flows.cot は火曜基準・金曜公開で約3〜4日遅延。最新の慣性判定は deviation_score.acc で補完すること。
+- breadth / positioning の週次データは公表タイミングにより1〜2週遅延あり。data_quality.stale_fields を必ず確認すること。
+
+# 確信度の算出基準（必ずこの手順で計算すること）
+1. ベース: |signal_scoreboard.composite_score| × 0.5 + 50（スコアの絶対値を確信の強さに変換）
+2. 方向補正: flows.cot.leveraged_funds.signal と flows.foreign.signal が net_signal と同方向 → +8%
+3. 加速補正: deviation_score.acc が net_signal と同方向に 0.2 超 → +5%
+4. データ品質上限: data_quality.score < 0.6 の場合は最大 70% に制限
+5. 出力時は「確信度 XX%（根拠: ○○補正適用）」の形式で1行明示すること。
+
 # 執行の確信度と資金配分ルール
 - 30-50% [打診執行]：物理的予兆（乖離限界など）に基づく「先回り」。トレンド転換の確証はないが、有利な位置を確保するための少量エントリー。
 - 60-90% [本命執行]：物理的トレンド（節目割れ・MA突破）の確定。または「慣性の法則」に基づくトレンド継続の追随。
 - 91%以上 [確信執行]：需給崩壊（強制決済の連鎖）または「慣性の加速」が発生。ファンドの純計と需給バランスが同一方向に共振した時のみ許される。
 
 # 出力形式：
-必ず以下の構成で、黒背景のコードブロック内に全てを出力すること。
+必ず以下の構成で、マークダウンのコードブロック内に全てを出力すること。
 
 ---
 ## 需給物理・執行ログ：[日付]
 ### 【1. 市場の状態診断】
 - ステータス：[ 限界膨張 / 重力反転中 / 真空落下 / 底打ち反転 / 慣性航行中 ]
-- 質量負荷：(信用・裁定の合算状況と重力評価を物理的に記述)
-- 復元力：(平均回帰の必然性とラバーバンドの伸び状況を記述)
-- 推進力（慣性）：(ファンド純計やHVを元に、バンドウォークの継続性を物理的に記述)
+- 質量負荷：(positioning フィールドの数値を引用しつつ物理的に記述)
+- 復元力：(MA乖離・deviation_score.score の数値を引用しつつ記述)
+- 推進力（慣性）：(COT純計・deviation_score.acc の数値を引用しつつ記述)
 
 ### 【2. 本質的結論】
 - スイングトレードの視点から、現在の「呼吸（サイクル）」がどこにあるのかを簡潔に総括。
 
 ### 【3. 最終執行指令】
 - 指令：[ ベア本命執行 / ブル打診買い / 全力待機 / 利益最大化保持 等 ]
-- 確信度：(0-100%)
+- 確信度：XX%（根拠: ○○補正適用）
 
 #### ■ ブル（1倍・2倍）
 - 判定：(購入禁止 / 打診 / 本命 / 継続保持)
