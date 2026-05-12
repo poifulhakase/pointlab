@@ -21,9 +21,8 @@ const BASE = import.meta.env.BASE_URL + 'notes/'
 
 const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
-  { genre: 'ぽいロボ', title: '説明書',                         url: null, thumb: null, internalAction: 'manual' },
-  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能',               url: null, thumb: null },
-  { genre: 'ぽいロボ', title: 'プライバシーポリシー・免責事項', url: null, thumb: null, internalAction: 'legal'  },
+  { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: null, internalAction: 'manual' },
+  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: null },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.png' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.png' },
@@ -143,6 +142,13 @@ export function NoteView({ isMobile, onOpenManual, onOpenLegal, onGoBack }: Prop
           })}
         </div>
       </div>
+
+      {/* フッター */}
+      <div style={s.footer}>
+        <button onClick={onOpenLegal} style={s.footerLink}>
+          プライバシーポリシー・免責事項
+        </button>
+      </div>
     </div>
   )
 }
@@ -255,5 +261,25 @@ const s: Record<string, React.CSSProperties> = {
     color: 'var(--text)',
     lineHeight: 1.4,
     margin: 0,
+  },
+  footer: {
+    flexShrink: 0,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '10px 16px',
+    borderTop: '1px solid var(--glass-border)',
+  },
+  footerLink: {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 12,
+    color: 'var(--text-dim)',
+    textDecoration: 'underline',
+    textDecorationColor: 'var(--text-dim)',
+    textUnderlineOffset: 3,
+    padding: '4px 8px',
+    borderRadius: 4,
   },
 }

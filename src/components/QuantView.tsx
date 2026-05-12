@@ -14,6 +14,7 @@ import { fetchCotNikkeiData, type CotNikkeiWeekData } from '../utils/cotNikkeiDa
 import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDailyData'
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
+import { fetchNkFuturesPriceData, type NkFuturesDayData } from '../utils/nkFuturesPriceData'
 import { VixPanel } from './VixPanel'
 import { NtRatioPanel } from './NtRatioPanel'
 import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
@@ -305,6 +306,7 @@ function buildExportJson(
   futuresDailyData: FuturesDayData[],
   nas100Data: Nas100DayData[],
   vixDailyData: VixDayData[],
+  nkFuturesPriceData: NkFuturesDayData[],
 ) {
   // ── ローカルヘルパー ──────────────────────────────
   function pctRank(series: number[], val: number): number {
@@ -741,6 +743,8 @@ function buildExportJson(
           close:    d.close ?? null,
         }
       }),
+      // NK=F (CME 日経225先物・円建て連続限月) 直近10取引日 OHLCV
+      nk_futures_ohlcv_10d:  [...nkFuturesPriceData].reverse(),
     },
 
     breadth: {
@@ -1211,6 +1215,9 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   const [nas100Data,   setNas100Data]   = useState<Nas100DayData[]>([])
   const [nas100Loaded, setNas100Loaded] = useState(false)
 
+  const [nkFuturesPriceData,   setNkFuturesPriceData]   = useState<NkFuturesDayData[]>([])
+  const [nkFuturesPriceLoaded, setNkFuturesPriceLoaded] = useState(false)
+
   const [vixDailyData,   setVixDailyData]   = useState<VixDayData[]>([])
   const [vixDailyLoaded, setVixDailyLoaded] = useState(false)
 
@@ -1305,6 +1312,11 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     catch { /* エラー時は空配列のまま */ }
   }, [])
 
+  const loadNkFuturesPrice = useCallback(async () => {
+    try { setNkFuturesPriceData(await fetchNkFuturesPriceData()); setNkFuturesPriceLoaded(true) }
+    catch { /* エラー時は空配列のまま */ }
+  }, [])
+
   const loadVixDaily = useCallback(async () => {
     try { setVixDailyData(await fetchVixDailyData()); setVixDailyLoaded(true) }
     catch { /* エラー時は空配列のまま */ }
@@ -1326,16 +1338,17 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   useEffect(() => { if (!arbLoaded)     loadArbitrage()     }, [arbLoaded,     loadArbitrage])
   useEffect(() => { if (!arbDailyLoaded)  loadArbDaily()     }, [arbDailyLoaded,  loadArbDaily])
   useEffect(() => { if (!usdjpyLoaded)    loadUsdjpy()       }, [usdjpyLoaded,    loadUsdjpy])
-  useEffect(() => { if (!nas100Loaded)    loadNas100()       }, [nas100Loaded,    loadNas100])
-  useEffect(() => { if (!vixDailyLoaded)  loadVixDaily()     }, [vixDailyLoaded,  loadVixDaily])
+  useEffect(() => { if (!nas100Loaded)         loadNas100()          }, [nas100Loaded,         loadNas100])
+  useEffect(() => { if (!nkFuturesPriceLoaded) loadNkFuturesPrice()  }, [nkFuturesPriceLoaded, loadNkFuturesPrice])
+  useEffect(() => { if (!vixDailyLoaded)       loadVixDaily()        }, [vixDailyLoaded,        loadVixDaily])
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
 
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData), null, 2)
+    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData), null, 2)
     await copyText(AI_PROMPT_TEMPLATE + json)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData])
+  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 

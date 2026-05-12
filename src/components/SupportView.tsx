@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, lazy, Suspense, useCallback } from 'react'
+import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 
 const NoteView   = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const ManualView = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
@@ -81,19 +81,17 @@ type MenuItem = { id: string; label: string; sub: string; accent: string; glow: 
 const MENU_ITEMS: MenuItem[] = [
   { id: 'calendar', label: 'Calendar', sub: 'カレンダー', accent: '#67e8f9', glow: 'rgba(103,232,249,0.45)', view: 'month',  icon: <CalendarIcon /> },
   { id: 'chart',    label: 'Chart',    sub: 'チャート',   accent: '#c084fc', glow: 'rgba(192,132,252,0.45)', view: 'chart',  icon: <ChartIcon />    },
-  { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボ',   accent: '#4ade80', glow: 'rgba(74,222,128,0.45)',  view: 'quant',  icon: <RobotIcon />    },
+  { id: 'poirobo',  label: 'Poirobo Engine',  sub: 'ぽいロボ エンジン',   accent: '#4ade80', glow: 'rgba(74,222,128,0.45)',  view: 'quant',  icon: <RobotIcon />    },
   { id: 'data',     label: 'Data',     sub: '資料',       accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: 'note',   icon: <DataIcon />     },
   { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
 ]
 
 export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenLegal, onNavigate, onOpenSettings }: Props) {
-  const [visible,  setVisible]  = useState(false)
-  const [ripples,  setRipples]  = useState<{ id: number; x: number; y: number }[]>([])
-  const [rot,      setRot]      = useState({ x: -14, y: 5 })
-  const [leaving,  setLeaving]  = useState(false)
+  const [visible,    setVisible]    = useState(false)
+  const [ripples,    setRipples]    = useState<{ id: number; x: number; y: number }[]>([])
   const [btnHovered, setBtnHovered] = useState(false)
   const rippleIdRef = useRef(0)
-  const menuRef     = useRef<HTMLDivElement>(null)  // menu ラッパーのみ追尾（session全体ではない）
+  const menuRef     = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -111,23 +109,6 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
     setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 1000)
   }
 
-  const handleMenuMouse = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const el = menuRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const cx = rect.left + rect.width  / 2
-    const cy = rect.top  + rect.height / 2
-    const dx = (e.clientX - cx) / (rect.width  / 2)
-    const dy = (e.clientY - cy) / (rect.height / 2)
-    setLeaving(false)
-    setRot({ x: -14 + dy * -6, y: 5 + dx * 7 })
-  }, [])
-
-  const handleMenuLeave = useCallback(() => {
-    setLeaving(true)
-    setRot({ x: -14, y: 5 })
-  }, [])
-
   const tabIndex = supportTab === 'session' ? 0 : supportTab === 'note' ? 1 : 2
   const overlayBg = 'rgba(8,16,36,0.82)'
 
@@ -144,9 +125,8 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
         }
 
-        /* ── 3D Menu ── */
+        /* ── Menu ── */
         .menu3d-list {
-          transform-style: preserve-3d;
           list-style: none;
           padding: 0;
           margin: 0;
@@ -155,19 +135,14 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           gap: 12px;
         }
         .menu3d-item {
-          transform-style: preserve-3d;
           opacity: 0;
           animation: menu3dEnter 0.50s cubic-bezier(0.2,0,0.1,1) forwards;
         }
         @keyframes menu3dEnter {
-          from { opacity: 0; transform: translateX(-52px) translateZ(0); }
-          to   { opacity: 1; transform: translateX(0)     translateZ(0); }
+          from { opacity: 0; transform: translateX(-52px); }
+          to   { opacity: 1; transform: translateX(0); }
         }
 
-
-        /* ── Button base ──
-           outline + outline-offset で外枠との間にすき間を作る（参考画像の形状）。
-           backdrop-filter は Chrome の preserve-3d 合成バグで文字が消えるため不使用。 */
         .menu3d-btn {
           position: relative;
           display: flex;
@@ -179,12 +154,10 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           border-radius: 6px 20px 6px 20px;
           background: rgba(225,240,255,0.22);
           cursor: pointer;
-          transform-style: preserve-3d;
-          transform: translateZ(0px) scale(1.00);
-          transition: transform 0.38s cubic-bezier(0.2,0.8,0.2,1),
-                      box-shadow 0.28s ease,
-                      border-color 0.28s ease,
-                      outline-color 0.28s ease;
+          transform: scale(1.00);
+          transition: transform 0.20s ease,
+                      box-shadow 0.20s ease,
+                      border-color 0.20s ease;
           overflow: visible;
           box-shadow:
             0 0 22px rgba(0,205,255,0.40),
@@ -193,21 +166,8 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
             0 4px 20px rgba(0,0,0,0.35);
         }
 
-        /* Back depth face - pointer-events:none で hover 誤反応を防ぐ */
-        .menu3d-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 6px 20px 6px 20px;
-          background: rgba(0,8,45,0.88);
-          border: 2px solid rgba(0,150,200,0.18);
-          transform: translateZ(-14px);
-          box-shadow: 0 8px 28px rgba(0,0,0,0.70);
-          pointer-events: none;
-        }
-
         .menu3d-btn:hover {
-          transform: translateZ(32px) scale(1.07);
+          transform: scale(1.03);
           border-color: rgba(0,235,255,0.96);
           box-shadow:
             0 0 30px rgba(0,225,255,0.72),
@@ -217,7 +177,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
         }
 
         .menu3d-btn:active {
-          transform: translateZ(14px) scale(1.03);
+          transform: scale(0.98);
         }
 
         /* Corner brackets */
@@ -474,9 +434,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
         <div style={{ width: '33.333%', height: '100%', flexShrink: 0, position: 'relative' }}>
           <div
             ref={menuRef}
-            style={{ position: 'absolute', top: 36, left: 32, perspective: '900px', perspectiveOrigin: '50% 50%' }}
-            onMouseMove={handleMenuMouse}
-            onMouseLeave={handleMenuLeave}
+            style={{ position: 'absolute', top: 36, left: 32 }}
           >
             {/* ヘッダー */}
             <div className="menu3d-header">
@@ -487,12 +445,6 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
             {/* メニューリスト */}
             <ul
               className="menu3d-list"
-              style={{
-                transform: `rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,
-                transition: leaving
-                  ? 'transform 0.55s cubic-bezier(0.2,0,0.1,1)'
-                  : 'transform 0.10s ease',
-              }}
             >
               {MENU_ITEMS.map((item, i) => (
                 <li
