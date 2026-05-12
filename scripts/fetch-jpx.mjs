@@ -815,15 +815,16 @@ async function buildFuturesOIData() {
   return weekly.map(({ date, label, val }) => ({ date, label, oi: val }))
 }
 
-// ── CFTC COT 日経225先物（Non-Commercial / Commercial / Non-Reportable） ─────
-// データソース: CFTC Legacy Financial Futures Only Report (週次・火曜基準・金曜公表)
-// URL: https://www.cftc.gov/dea/newcot/f_natcot.txt
-// 列構成(0-indexed): [0]=Market Name, [1]=As_of_Date(YYMMDD), [7]=OI,
-//   [8]=NC Long, [9]=NC Short, [10]=NC Spread, [11]=Comm Long, [12]=Comm Short,
-//   [15]=NR Long, [16]=NR Short
-// NIKKEI複数契約（MINI + 標準）を日付ごとに合算して取得
+// ── CFTC COT 日経225先物（TFF形式: Leveraged Funds / Asset Mgr+Dealer / Non-Reportable） ─
+// データソース: CFTC Traders in Financial Futures; Futures-Only Report (週次・火曜基準・金曜公表)
+// 最新週: https://www.cftc.gov/dea/newcot/FinFutWk.txt
+// 年次ZIP: https://www.cftc.gov/files/dea/history/fut_fin_txt_YYYY.zip
+// 列構成(0-indexed, TFF形式): [1]=YYMMDD, [7]=OI,
+//   [8]=Dealer Long, [9]=Dealer Short, [11]=AM Long, [12]=AM Short,
+//   [14]=LevFunds Long, [15]=LevFunds Short, [20]=NonRept Long, [21]=NonRept Short
+// nonComm = Leveraged Funds, comm = Dealer + Asset Manager
 async function buildCotNikkeiData() {
-  console.log('\n[cotNikkei] CFTC COT Legacy Financial Futures取得中...')
+  console.log('\n[cotNikkei] CFTC COT Traders in Financial Futures取得中...')
 
   // 既存JSONを読み込んで履歴を維持
   const existingPath = join(OUT_DIR, 'cot_nikkei.json')
@@ -834,44 +835,70 @@ async function buildCotNikkeiData() {
     if (Array.isArray(parsed.data)) parsed.data.forEach(e => existingMap.set(e.date, e))
   } catch { /* 初回は空 */ }
 
-  const url = 'https://www.cftc.gov/dea/newcot/f_natcot.txt'
-  const text = await fetchHtml(url)
-  const lines = text.split('\n')
+  // TFF形式テキストをパースしてexistingMapに追記
+  function parseTffText(text) {
+    let added = 0
+    for (const line of text.split('\n')) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      const fields = parseCSVLine(trimmed)
+      if (!(fields[0] ?? '').toUpperCase().includes('NIKKEI')) continue
+      const yymmdd = (fields[1] ?? '').trim()
+      if (!/^\d{6}$/.test(yymmdd)) continue
+      const oi = parseNum(fields[7])
+      if (!oi) continue  // ヘッダー行スキップ
 
-  // 日付ごとに複数NIKKEI契約を合算
-  const dateMap = new Map()
-  for (const line of lines.slice(1)) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    const fields = parseCSVLine(trimmed)
-    if (!(fields[0] ?? '').toUpperCase().includes('NIKKEI')) continue
+      const dateStr = `20${yymmdd.slice(0,2)}-${yymmdd.slice(2,4)}-${yymmdd.slice(4,6)}`
+      const ncL = parseNum(fields[14])  // Leveraged Funds Long
+      const ncS = parseNum(fields[15])  // Leveraged Funds Short
+      const cL  = parseNum(fields[8]) + parseNum(fields[11])  // Dealer Long + AM Long
+      const cS  = parseNum(fields[9]) + parseNum(fields[12])  // Dealer Short + AM Short
+      const nrL = parseNum(fields[20])  // NonRept Long
+      const nrS = parseNum(fields[21])  // NonRept Short
 
-    const yymmdd = (fields[1] ?? '').trim()
-    if (!/^\d{6}$/.test(yymmdd)) continue
-    const dateStr = `20${yymmdd.slice(0,2)}-${yymmdd.slice(2,4)}-${yymmdd.slice(4,6)}`
-
-    if (!dateMap.has(dateStr)) dateMap.set(dateStr, { oi: 0, ncL: 0, ncS: 0, cL: 0, cS: 0, nrL: 0, nrS: 0 })
-    const e = dateMap.get(dateStr)
-    e.oi  += parseNum(fields[7]);  e.ncL += parseNum(fields[8]);  e.ncS += parseNum(fields[9])
-    e.cL  += parseNum(fields[11]); e.cS  += parseNum(fields[12])
-    e.nrL += parseNum(fields[15]); e.nrS += parseNum(fields[16])
+      existingMap.set(dateStr, {
+        date:         dateStr,
+        label:        dateToLabel(dateStr),
+        openInterest: oi,
+        nonCommLong:  ncL, nonCommShort: ncS, nonCommNet: ncL - ncS,
+        commLong:     cL,  commShort:    cS,  commNet:    cL  - cS,
+        nonReptLong:  nrL, nonReptShort: nrS, nonReptNet: nrL - nrS,
+      })
+      added++
+    }
+    return added
   }
 
-  let fetched = 0
-  for (const [dateStr, n] of dateMap) {
-    existingMap.set(dateStr, {
-      date:         dateStr,
-      label:        dateToLabel(dateStr),
-      openInterest: n.oi,
-      nonCommLong:  n.ncL, nonCommShort: n.ncS, nonCommNet: n.ncL - n.ncS,
-      commLong:     n.cL,  commShort:    n.cS,  commNet:    n.cL  - n.cS,
-      nonReptLong:  n.nrL, nonReptShort: n.nrS, nonReptNet: n.nrL - n.nrS,
-    })
-    fetched++
+  // 最新週ファイル取得
+  const weeklyText = await fetchHtml('https://www.cftc.gov/dea/newcot/FinFutWk.txt')
+  const weeklyAdded = parseTffText(weeklyText)
+  console.log(`  → 週次ファイル: ${weeklyAdded}件`)
+
+  // 履歴が少ない場合は年次ZIPから補完（初回起動時）
+  if (existingMap.size < 8) {
+    const currentYear = new Date().getFullYear()
+    for (const year of [currentYear, currentYear - 1]) {
+      try {
+        const zipUrl = `https://www.cftc.gov/files/dea/history/fut_fin_txt_${year}.zip`
+        console.log(`  GET ${zipUrl}`)
+        const res = await fetch(zipUrl, { signal: AbortSignal.timeout(30000) })
+        if (!res.ok) { console.warn(`  ⚠ ${year} zip: HTTP ${res.status}`); continue }
+        const buf = Buffer.from(await res.arrayBuffer())
+        const zip = new AdmZip(buf)
+        for (const entry of zip.getEntries()) {
+          if (entry.entryName.toLowerCase().endsWith('.txt')) {
+            const cnt = parseTffText(entry.getData().toString('utf-8'))
+            console.log(`  → ${year} zip (${entry.entryName}): ${cnt}件`)
+          }
+        }
+      } catch (e) {
+        console.warn(`  ⚠ ${year} zip取得失敗: ${e.message}`)
+      }
+    }
   }
 
-  if (existingMap.size === 0) throw new Error('NIKKEIデータが見つかりません（CFTC CSV形式変更の可能性）')
-  console.log(`  → ${fetched}件新規/更新, 合計${existingMap.size}件`)
+  if (existingMap.size === 0) throw new Error('NIKKEIデータが見つかりません')
+  console.log(`  → 合計${existingMap.size}件`)
 
   return [...existingMap.values()]
     .sort((a, b) => b.date.localeCompare(a.date))
