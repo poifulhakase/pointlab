@@ -90,6 +90,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
   const [ripples,  setRipples]  = useState<{ id: number; x: number; y: number }[]>([])
   const [rot,      setRot]      = useState({ x: -14, y: 5 })
   const [leaving,  setLeaving]  = useState(false)
+  const [btnHovered, setBtnHovered] = useState(false)
   const rippleIdRef = useRef(0)
   const menuRef     = useRef<HTMLDivElement>(null)  // menu ラッパーのみ追尾（session全体ではない）
 
@@ -324,6 +325,94 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           background: linear-gradient(to right, rgba(50,180,255,0.55) 0%, transparent 75%);
           max-width: 130px;
         }
+
+        /* ── Dust particles ── */
+        @keyframes digital-dust {
+          0%   { transform: translateY(0); opacity: 0; }
+          20%  { opacity: 0.4; }
+          100% { transform: translateY(-160px); opacity: 0; }
+        }
+        .poyon-dust {
+          position: absolute;
+          width: 2px; height: 2px;
+          background: #00f2ff;
+          border-radius: 50%;
+          opacity: 0;
+          animation: digital-dust 10s linear infinite;
+          pointer-events: none;
+        }
+
+        /* ── Scanline ── */
+        @keyframes support-scanline {
+          0%   { top: -20px; }
+          100% { top: 110%; }
+        }
+        .poyon-scanline {
+          position: absolute; left: 0; width: 100%; height: 15px;
+          background: linear-gradient(to bottom, transparent, rgba(0,242,255,0.05), transparent);
+          pointer-events: none;
+          animation: support-scanline 8s linear infinite;
+        }
+
+        /* ── Connect button ── */
+        @keyframes slow-rotate { to { transform: rotate(360deg); } }
+        @keyframes text-subtle-poyon {
+          0%   { transform: translateY(0) scale(1); }
+          40%  { transform: translateY(-4px) scale(1.03); }
+          70%  { transform: translateY(1px) scale(0.99); }
+          100% { transform: translateY(0) scale(1); }
+        }
+        .poyon-connect-area {
+          position: relative;
+          width: clamp(130px, 30vw, 180px); height: clamp(130px, 30vw, 180px);
+          display: flex; justify-content: center; align-items: center;
+          cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .poyon-scanner-ring {
+          position: absolute; width: 110%; height: 110%;
+          border: 1px solid rgba(0,242,255,0.2); border-radius: 50%;
+          animation: slow-rotate 15s linear infinite; pointer-events: none;
+        }
+        .poyon-main-core {
+          position: relative; width: 90%; height: 90%;
+          background: rgba(8,12,16,0.92);
+          border: 1px solid rgba(0,242,255,0.45); border-radius: 50%;
+          display: flex; flex-direction: column; justify-content: center; align-items: center;
+          box-shadow: inset 0 0 25px rgba(0,242,255,0.3);
+          transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+          backdrop-filter: blur(8px); overflow: hidden;
+        }
+        .poyon-connect-area:hover .poyon-main-core {
+          transform: scale(1.05); border-color: #00f2ff;
+          box-shadow: 0 0 30px rgba(0,242,255,0.4), inset 0 0 20px rgba(0,242,255,0.3);
+        }
+        .poyon-connect-area:active .poyon-main-core {
+          transform: scale(0.92) translateY(3px); filter: brightness(1.2); transition: 0.1s;
+        }
+        .poyon-image-mask {
+          width: 40%; height: 40%; border-radius: 50%; overflow: hidden;
+          margin-bottom: 5px; transform: translateY(-4px); background-color: #080c10;
+        }
+        .poyon-doctor-image {
+          width: auto; height: 110%;
+          filter: sepia(1) hue-rotate(150deg) saturate(1.2) brightness(0.7) contrast(1.1);
+          transition: 0.4s ease; opacity: 0.8;
+        }
+        .poyon-connect-area:hover .poyon-doctor-image {
+          filter: sepia(1) hue-rotate(150deg) saturate(1.6) brightness(0.9) contrast(1.1);
+          opacity: 1; transform: scale(1.05);
+        }
+        .poyon-text-main {
+          font-size: clamp(9px,2.5vw,12px); font-weight: 900;
+          color: #f0f8ff; text-shadow: 0 0 10px #00f2ff; text-align: center;
+        }
+        .poyon-text-sub {
+          font-size: clamp(6px,1.5vw,8px); color: #00f2ff;
+          font-weight: bold; margin-top: 3px; text-align: center;
+        }
+        .poyon-connect-area:hover .poyon-text-wrap {
+          animation: text-subtle-poyon 0.5s cubic-bezier(0.25,1,0.5,1) forwards;
+        }
       `}</style>
 
       {/* 背景画像 */}
@@ -344,6 +433,19 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
         background: 'linear-gradient(to bottom, transparent 0%, rgba(8,20,40,0.75) 100%)',
         pointerEvents: 'none', zIndex: 1,
       }} />
+
+      {/* ダストパーティクル + スキャンライン */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
+        <div className="poyon-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
+        <div className="poyon-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
+        <div className="poyon-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
+        <div className="poyon-dust" style={{ top: '20%', left: '30%', animationDelay: '3s' }} />
+        <div className="poyon-dust" style={{ top: '60%', left: '50%', animationDelay: '4.5s' }} />
+        <div className="poyon-dust" style={{ top: '35%', left: '10%', animationDelay: '6s' }} />
+        <div className="poyon-dust" style={{ top: '85%', left: '45%', animationDelay: '1.5s' }} />
+        <div className="poyon-dust" style={{ top: '15%', left: '70%', animationDelay: '5s' }} />
+      </div>
+      <div className="poyon-scanline" style={{ zIndex: 3 }} />
 
       {/* 波紋 */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
@@ -445,6 +547,52 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           </Suspense>
         </div>
 
+      </div>
+
+      {/* コネクトボタン（右下） */}
+      <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20 }}>
+        {btnHovered && (
+          <div style={{
+            position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
+            padding: '14px 16px',
+            background: 'rgba(0,25,35,0.95)',
+            border: '1px solid rgba(0,242,255,0.3)',
+            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            pointerEvents: 'none',
+          }}>
+            <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
+              borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
+            <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
+              background: '#081015', border: '2px solid #00f2ff', borderRadius: '50%' }} />
+            <span style={{ display: 'block', fontSize: 9, color: '#00f2ff', fontWeight: 700,
+              letterSpacing: '0.15em', marginBottom: 8,
+              borderBottom: '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
+              POIROBO_CONNECT_v2.0
+            </span>
+            <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
+              博士と音声通話・画面共有ができます。
+              <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
+                接続プロトコル：SECURE_SYNC
+              </span>
+            </div>
+          </div>
+        )}
+        <div
+          className="poyon-connect-area"
+          onMouseEnter={() => setBtnHovered(true)}
+          onMouseLeave={() => setBtnHovered(false)}
+        >
+          <div className="poyon-scanner-ring" />
+          <div className="poyon-main-core">
+            <div className="poyon-image-mask">
+              <img src={`${import.meta.env.BASE_URL}hakase.png`} className="poyon-doctor-image" alt="博士" draggable={false} />
+            </div>
+            <div className="poyon-text-wrap">
+              <div className="poyon-text-main">ぽいロボ コネクト</div>
+              <div className="poyon-text-sub">ぽいふる博士と接続</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
