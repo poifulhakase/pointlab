@@ -46,7 +46,7 @@ const ARTICLES: Article[] = [
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.jpg' },
 ]
 
-const GENRES = ['ぽいロボ', '基礎', 'インジケーター', 'イベントドリブン', '未来ガジェット']
+const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン']
 
 function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal }: {
   article: Article
