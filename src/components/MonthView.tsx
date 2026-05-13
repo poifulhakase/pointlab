@@ -36,8 +36,8 @@ type Props = {
 export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT }: Props) {
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
-  const bandColor = band ? (isLight ? '#92400e' : band.color) : 'transparent'
-  const bandBg    = band ? (isLight ? 'rgba(180,83,9,0.18)' : band.bg) : 'transparent'
+  const bandColor = band ? (isLight ? '#1d4ed8' : band.color) : 'transparent'
+  const bandBg    = band ? (isLight ? 'rgba(37,99,235,0.12)' : band.bg) : 'transparent'
 
   return (
     <div style={styles.wrap}>
