@@ -542,6 +542,24 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           animation: support-scanline 8s linear infinite;
         }
 
+        /* ── Mobile menu overrides ── */
+        .menu3d-mobile .menu3d-list { gap: 9px; }
+        .menu3d-mobile .menu3d-btn {
+          width: 100%;
+          height: 62px;
+          background: rgba(2,12,28,0.82);
+          box-shadow:
+            0 0 14px rgba(0,205,255,0.22),
+            0 0 32px rgba(0,205,255,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.06),
+            0 4px 20px rgba(0,0,0,0.65);
+        }
+        .menu3d-mobile .menu3d-icon-wrap { width: 48px; height: 62px; }
+        .menu3d-mobile .menu3d-labels { padding: 0 14px; gap: 4px; }
+        .menu3d-mobile .menu3d-label { font-size: 13px; }
+        .menu3d-mobile .menu3d-sub { font-size: 10px; }
+        .menu3d-mobile .menu3d-header { margin-bottom: 16px; }
+
         /* ── Connect button ── */
         @keyframes slow-rotate { to { transform: rotate(360deg); } }
         @keyframes cyberTooltipFlicker {
@@ -672,7 +690,11 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         <div style={{ width: '33.333%', height: '100%', flexShrink: 0, position: 'relative' }}>
           <div
             ref={menuRef}
-            style={{ position: 'absolute', top: 36, left: 32 }}
+            className={isMobile ? 'menu3d-mobile' : undefined}
+            style={isMobile
+              ? { position: 'absolute', top: 28, left: 16, right: 16 }
+              : { position: 'absolute', top: 36, left: 32 }
+            }
           >
             {/* ヘッダー */}
             <div className="menu3d-header">
@@ -835,7 +857,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       {/* コネクトボタン（コネクト中は非表示） */}
       {!connectMode && (
         <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }}>
-          <div style={{
+          {!isMobile && <div style={{
             position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
             padding: '14px 16px',
             background: 'rgba(0,25,35,0.95)',
@@ -859,7 +881,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
                 接続プロトコル：SECURE_SYNC
               </span>
             </div>
-          </div>
+          </div>}
           <div
             className="poyon-connect-area"
             onClick={() => { if (user) setConfirmOpen(true) }}

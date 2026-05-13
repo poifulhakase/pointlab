@@ -11,7 +11,7 @@ type Props = {
 }
 
 // ── 単一チャートパネル ─────────────────────────────────────
-function ChartPanel({ symbol, interval, theme, isMobile, height }: { symbol: string; interval: string; theme: 'dark' | 'light'; isMobile?: boolean; height: number }) {
+function ChartPanel({ symbol, interval, theme, isMobile, height, hideSideToolbar }: { symbol: string; interval: string; theme: 'dark' | 'light'; isMobile?: boolean; height: number; hideSideToolbar?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -34,7 +34,7 @@ function ChartPanel({ symbol, interval, theme, isMobile, height }: { symbol: str
       interval, timezone: 'Asia/Tokyo', theme,
       style: '1', locale: 'ja',
       allow_symbol_change: true, withdateranges: true,
-      hide_side_toolbar: false, calendar: false,
+      hide_side_toolbar: !!hideSideToolbar, calendar: false,
       support_host: 'https://www.tradingview.com',
       studies: [
         'BB@tv-basicstudies',
@@ -278,11 +278,11 @@ export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolCh
   return (
     <div style={{ ...styles.wrap, ...themeVars(theme) }}>
       <div ref={panelsRef} style={{ ...styles.panels, ...(isMobile ? { padding: '0' } : {}) }}>
-        <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} height={panelsHeight} />
+        <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar={isMobile || effectiveSplit === 2} />
         {effectiveSplit === 2 && (
           <>
             <div style={{ width: 10, flexShrink: 0 }} />
-            <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} height={panelsHeight} />
+            <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar />
           </>
         )}
       </div>

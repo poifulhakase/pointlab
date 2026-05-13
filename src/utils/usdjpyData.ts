@@ -14,7 +14,7 @@ export interface UsdjpyDayData {
 const CACHE_KEY          = 'poical-usdjpy-data'
 const CACHE_TTL_OPEN     = 30 * 60 * 1000
 const CACHE_TTL_CLOSED   = 2  * 60 * 60 * 1000
-const STATIC_JSON_URL    = '/data/usdjpy.json'
+const STATIC_JSON_URL    = `${import.meta.env.BASE_URL}data/usdjpy.json`
 const STATIC_MAX_AGE_MS  = 36 * 60 * 60 * 1000  // 36時間以内なら静的JSONを使用
 
 function isForexOpen(): boolean {

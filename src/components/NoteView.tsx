@@ -140,13 +140,13 @@ export function NoteView({ isMobile, onOpenManual, onOpenLegal, onGoBack }: Prop
             )
           })}
         </div>
-      </div>
 
-      {/* フッター */}
-      <div style={s.footer}>
-        <button onClick={onOpenLegal} style={s.footerLink}>
-          プライバシーポリシー・免責事項
-        </button>
+        {/* フッター：スクロール末尾に配置 */}
+        <div style={s.footer}>
+          <button onClick={onOpenLegal} style={s.footerLink}>
+            プライバシーポリシー・免責事項
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -262,12 +262,10 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0,
   },
   footer: {
-    flexShrink: 0,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '10px 16px',
-    borderTop: '1px solid var(--glass-border)',
+    padding: '16px 16px 8px',
   },
   footerLink: {
     background: 'transparent',

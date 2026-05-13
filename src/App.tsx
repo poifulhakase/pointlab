@@ -90,6 +90,23 @@ export default function App() {
   const [settingsOpen,  setSettingsOpen]  = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
+  // ── フッター開閉 ──────────────────────────────────────────────────────
+  const [footerCollapsed, setFooterCollapsed] = useState(() => {
+    try { return localStorage.getItem('poical-footer-collapsed') === 'true' } catch { return false }
+  })
+  const [footerAnimating, setFooterAnimating] = useState(false)
+  const footerAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const toggleFooter = useCallback(() => {
+    setFooterAnimating(true)
+    if (footerAnimTimerRef.current) clearTimeout(footerAnimTimerRef.current)
+    footerAnimTimerRef.current = setTimeout(() => setFooterAnimating(false), 320)
+    setFooterCollapsed(c => {
+      const next = !c
+      try { localStorage.setItem('poical-footer-collapsed', String(next)) } catch {}
+      return next
+    })
+  }, [])
+
   // ── マクロフィルター ──────────────────────────────────────────────────
   const [macroFilter, setMacroFilter] = useState<MacroFilter>({ us: true, jp: true })
 
@@ -541,7 +558,7 @@ export default function App() {
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {(isCalView || cal.view === 'chart' || cal.view === 'quant') && (
-        <div style={styles.floatSubBarBase}>
+        <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)' }}>
           <div style={styles.floatSubBar} className="glass">
           <div style={styles.floatPill} className="glass">
             {isCalView && (
@@ -597,11 +614,38 @@ export default function App() {
       )}
 
       {cal.view !== 'support' && (
-        <CalendarHeader
-          view={cal.view} setView={setViewWithTransition}
-          isMobile={isMobile} isTablet={isTablet}
-          sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
-        />
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          {/* つまみ（フッター開閉） */}
+          <button
+            onClick={toggleFooter}
+            aria-label={footerCollapsed ? 'ナビを開く' : 'ナビを閉じる'}
+            style={styles.footerTsumami}
+          >
+            <svg
+              width="12" height="7" viewBox="0 0 10 6" fill="none"
+              style={{
+                transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+                transform: footerCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+                color: 'var(--text-sub)',
+                opacity: 0.55,
+              }}
+            >
+              <path d="M1 5L5 1L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          {/* フッター本体（折りたたみ） */}
+          <div style={{
+            height: footerCollapsed ? 0 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px))',
+            overflow: footerCollapsed || footerAnimating ? 'hidden' : 'visible',
+            transition: 'height 0.3s cubic-bezier(0.4,0,0.2,1)',
+          }}>
+            <CalendarHeader
+              view={cal.view} setView={setViewWithTransition}
+              isMobile={isMobile} isTablet={isTablet}
+              sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
+            />
+          </div>
+        </div>
       )}
 
       {/* トースト */}
@@ -664,7 +708,18 @@ const styles: Record<string, React.CSSProperties> = {
 
   toast: { position: 'fixed', bottom: 130, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
 
-  floatSubBarBase: { position: 'fixed', bottom: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', right: 12, zIndex: 150, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform' },
+  floatSubBarBase: { position: 'fixed', right: 12, zIndex: 150, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform', transition: 'bottom 0.3s cubic-bezier(0.4,0,0.2,1)' },
+  footerTsumami: {
+    position: 'absolute', top: -24, left: '50%', transform: 'translateX(-50%)',
+    width: 56, height: 24,
+    borderRadius: '10px 10px 0 0',
+    background: 'var(--glass-bg)',
+    backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)',
+    border: '1px solid var(--glass-border)', borderBottom: 'none',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', zIndex: 161,
+    transition: 'opacity 0.15s',
+  } as React.CSSProperties,
   floatSubBar:  { borderRadius: 14, padding: 4 },
   floatPill:    { display: 'flex', alignItems: 'center', borderRadius: 10, padding: 2, gap: 2 },
   floatDivider:    { width: 1, height: 16, background: 'var(--border-dim)', alignSelf: 'center', flexShrink: 0, margin: '0 1px' },

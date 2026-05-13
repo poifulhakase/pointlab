@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 
 export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'note' | 'spec' | 'legal' | 'manual' | 'support'
 
-const VIEW_STORAGE_KEY = 'poical-view'
+const VIEW_SESSION_KEY = 'poical-view-session'
 const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'note', 'spec', 'legal', 'manual', 'support']
 const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
@@ -16,7 +16,9 @@ function loadView(): ViewMode {
     }
     return 'month'
   }
-  const v = localStorage.getItem(VIEW_STORAGE_KEY)
+  // sessionStorage に値があればセッション内の最後のビューを復元
+  // なければ新規ブラウザ起動 → カレンダー（月ビュー）をデフォルト表示
+  const v = sessionStorage.getItem(VIEW_SESSION_KEY)
   return VALID_VIEWS.includes(v as ViewMode) ? (v as ViewMode) : 'month'
 }
 
@@ -31,7 +33,7 @@ export function useCalendar() {
 
   const setView = useCallback((v: ViewMode) => {
     setViewState(v)
-    localStorage.setItem(VIEW_STORAGE_KEY, v)
+    sessionStorage.setItem(VIEW_SESSION_KEY, v)
   }, [])
 
   const goToday   = useCallback(() => setCurrent(new Date(today)), [today])
