@@ -109,6 +109,12 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
   const shortRoom   = `poirobo-${user.uid.substring(0, 12)}`
   const isAdmin     = user.email === 'sushi.ramen.unajyu@gmail.com'
   const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
+  // iPad (新型) は userAgent が MacIntel になるため maxTouchPoints で補完
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const toolbarButtons = isIOS
+    ? ['microphone', 'hangup']
+    : ['microphone', 'desktop', 'hangup']
 
   useEffect(() => {
     let api: JitsiAPI | null = null
@@ -156,7 +162,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
           prejoinConfig: { enabled: false },
           disableDeepLinking: true,
           enableWelcomePage: false,
-          toolbarButtons: ['microphone', 'desktop', 'hangup'],
+          toolbarButtons,
         },
         interfaceConfigOverwrite: {
           SHOW_JITSI_WATERMARK: false,
@@ -164,7 +170,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
           DISPLAY_WELCOME_FOOTER: false,
           MOBILE_APP_PROMO: false,
           HIDE_INVITE_MORE_HEADER: true,
-          TOOLBAR_BUTTONS: ['microphone', 'desktop', 'hangup'],
+          TOOLBAR_BUTTONS: toolbarButtons,
         },
       })
 
