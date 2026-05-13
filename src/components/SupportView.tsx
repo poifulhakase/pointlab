@@ -313,7 +313,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
   const [connectMode,  setConnectMode]  = useState(false)
   const [confirmOpen,  setConfirmOpen]  = useState(false)
   const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
-  const [btnHovered,   setBtnHovered]   = useState(false)
+
   const rippleIdRef = useRef(0)
   const menuRef     = useRef<HTMLDivElement>(null)
 
@@ -544,6 +544,12 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
 
         /* ── Connect button ── */
         @keyframes slow-rotate { to { transform: rotate(360deg); } }
+        @keyframes cyberTooltipFlicker {
+          0%,  17%,  19%,  21%,  68%,  70%,  72%,  100% { opacity: 1; }
+          18%,  20%                                       { opacity: 0; }
+          69%                                            { opacity: 0.15; }
+          71%                                            { opacity: 0; }
+        }
         @keyframes text-subtle-poyon {
           0%   { transform: translateY(0) scale(1); }
           40%  { transform: translateY(-4px) scale(1.03); }
@@ -825,36 +831,33 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       {/* コネクトボタン（コネクト中は非表示） */}
       {!connectMode && (
         <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }}>
-          {btnHovered && (
-            <div style={{
-              position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
-              padding: '14px 16px',
-              background: 'rgba(0,25,35,0.95)',
-              border: '1px solid rgba(0,242,255,0.3)',
-              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-              pointerEvents: 'none',
-            }}>
-              <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
-                borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
-              <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
-                background: '#081015', border: '2px solid #00f2ff', borderRadius: '50%' }} />
-              <span style={{ display: 'block', fontSize: 9, color: '#00f2ff', fontWeight: 700,
-                letterSpacing: '0.15em', marginBottom: 8,
-                borderBottom: '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
-                POIROBO_CONNECT_v2.0
+          <div style={{
+            position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
+            padding: '14px 16px',
+            background: 'rgba(0,25,35,0.95)',
+            border: '1px solid rgba(0,242,255,0.3)',
+            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            pointerEvents: 'none',
+            animation: 'cyberTooltipFlicker 9s ease-in-out infinite',
+          }}>
+            <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
+              borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
+            <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
+              background: '#081015', border: '2px solid #00f2ff', borderRadius: '50%' }} />
+            <span style={{ display: 'block', fontSize: 9, color: '#00f2ff', fontWeight: 700,
+              letterSpacing: '0.15em', marginBottom: 8,
+              borderBottom: '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
+              POIROBO_CONNECT_v2.0
+            </span>
+            <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
+              ぽいふる博士と音声通話・画面共有ができます。
+              <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
+                接続プロトコル：SECURE_SYNC
               </span>
-              <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
-                ぽいふる博士と音声通話・画面共有ができます。
-                <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
-                  接続プロトコル：SECURE_SYNC
-                </span>
-              </div>
             </div>
-          )}
+          </div>
           <div
             className="poyon-connect-area"
-            onMouseEnter={() => setBtnHovered(true)}
-            onMouseLeave={() => setBtnHovered(false)}
             onClick={() => { if (user) setConfirmOpen(true) }}
           >
             <div className="poyon-scanner-ring" />
