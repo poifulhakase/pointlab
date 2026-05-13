@@ -102,8 +102,9 @@ const MENU_ITEMS: MenuItem[] = [
 
 // ── Jitsi コネクトパネル（JaaS） ───────────────────────────────────────────
 function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: boolean; onClose: () => void }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const containerRef   = useRef<HTMLDivElement>(null)
+  const participantRef = useRef(1) // 自分を含む参加人数
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'full'>('loading')
 
   const shortRoom   = `poirobo-${user.uid.substring(0, 12)}`
   const isAdmin     = user.email === 'sushi.ramen.unajyu@gmail.com'
@@ -170,6 +171,19 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
       api.addListener('videoConferenceJoined', () => {
         api?.executeCommand('avatarUrl', avatarUrl)
       })
+      api.addListener('participantJoined', (...args: unknown[]) => {
+        participantRef.current++
+        if (participantRef.current > 3) {
+          const p = args[0] as { id: string }
+          if (isAdmin) {
+            api?.executeCommand('kickParticipant', p.id)
+          } else {
+            setStatus('full')
+            api?.executeCommand('hangup')
+          }
+        }
+      })
+      api.addListener('participantLeft', () => { participantRef.current-- })
       api.addListener('readyToClose', onClose)
 
       if (!cancelled) setStatus('ready')
@@ -263,6 +277,19 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
                 padding: '6px 18px', borderRadius: 8, cursor: 'pointer',
                 background: 'rgba(200,40,40,0.15)', border: '1px solid rgba(200,40,40,0.4)',
                 color: '#ff8888', fontSize: 12, fontWeight: 600,
+              }}>閉じる</button>
+            </div>
+          )}
+          {status === 'full' && (
+            <div style={{
+              position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+            }}>
+              <span style={{ color: '#fbbf24', fontSize: 13 }}>現在満員です（最大3名）</span>
+              <button onClick={onClose} style={{
+                padding: '6px 18px', borderRadius: 8, cursor: 'pointer',
+                background: 'rgba(200,140,20,0.15)', border: '1px solid rgba(200,140,20,0.4)',
+                color: '#fbbf24', fontSize: 12, fontWeight: 600,
               }}>閉じる</button>
             </div>
           )}
