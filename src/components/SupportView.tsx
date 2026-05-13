@@ -152,7 +152,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           padding: 0;
           border: 2px solid rgba(0,205,255,0.82);
           border-radius: 6px 20px 6px 20px;
-          background: rgba(2,12,28,0.62);
+          background: rgba(2,12,28,0.42);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
           cursor: pointer;
