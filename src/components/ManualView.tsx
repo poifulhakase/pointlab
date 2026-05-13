@@ -1,8 +1,41 @@
+import React from 'react'
+
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }
 
-const SECTIONS = [
+type Section = { icon: React.ReactNode; title: string; items: string[] }
+
+const IconCalendar = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+)
+const IconChart = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+  </svg>
+)
+const IconRobot = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/><path d="M20 14h2"/>
+    <path d="M15 13v2"/><path d="M9 13v2"/>
+  </svg>
+)
+const IconLab = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 3v8L5.5 16.5A2 2 0 0 0 7.3 20h9.4a2 2 0 0 0 1.8-3.5L15 11V3"/>
+    <line x1="6" y1="3" x2="18" y2="3"/>
+    <path d="M9 12h6"/>
+  </svg>
+)
+
+const SECTIONS: Section[] = [
   {
-    icon: '🏠',
+    icon: <IconCalendar />,
     title: 'ホーム（カレンダー）',
     items: [
       '画面下のナビバーの「カレンダー」アイコンをタップすると表示されます。',
@@ -14,7 +47,7 @@ const SECTIONS = [
     ],
   },
   {
-    icon: '📈',
+    icon: <IconChart />,
     title: 'チャート',
     items: [
       '画面下のナビバーの「チャート」アイコンをタップすると表示されます。',
@@ -23,7 +56,7 @@ const SECTIONS = [
     ],
   },
   {
-    icon: '🤖',
+    icon: <IconRobot />,
     title: 'ぽいロボ（需給分析）',
     items: [
       '画面下のナビバーの「ぽいロボ」アイコンをタップすると表示されます。',
@@ -36,7 +69,7 @@ const SECTIONS = [
     ],
   },
   {
-    icon: '🧪',
+    icon: <IconLab />,
     title: '研究室',
     items: [
       '画面下のナビバーの「研究室」アイコンをタップすると表示されます。研究室に入るとナビバーは非表示になります。',
@@ -110,7 +143,7 @@ export function ManualView({ theme, isMobile, onClose }: Props) {
               borderRadius: 14, padding: isMobile ? '16px 16px' : '18px 22px',
             }}>
               <h2 style={{ margin: '0 0 12px', fontSize: isMobile ? 15 : 16, fontWeight: 700, color: c.title, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 17 }}>{sec.icon}</span>
+                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: c.bullet }}>{sec.icon}</span>
                 {sec.title}
               </h2>
               <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
