@@ -173,7 +173,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
       })
       api.addListener('participantJoined', (...args: unknown[]) => {
         participantRef.current++
-        if (participantRef.current > 3) {
+        if (participantRef.current > 2) {
           const p = args[0] as { id: string }
           if (isAdmin) {
             api?.executeCommand('kickParticipant', p.id)
@@ -285,7 +285,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
               position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
             }}>
-              <span style={{ color: '#fbbf24', fontSize: 13 }}>現在満員です（最大3名）</span>
+              <span style={{ color: '#fbbf24', fontSize: 13 }}>現在満員です（最大2名）</span>
               <button onClick={onClose} style={{
                 padding: '6px 18px', borderRadius: 8, cursor: 'pointer',
                 background: 'rgba(200,140,20,0.15)', border: '1px solid rgba(200,140,20,0.4)',
