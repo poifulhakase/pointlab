@@ -337,7 +337,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
   const overlayBg = 'rgba(8,16,36,0.82)'
 
   return (
-    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }} onPointerDown={handleRipple}>
+    <div style={{ flex: 1, position: 'relative', overflow: 'hidden', userSelect: 'none' }} onPointerDown={handleRipple}>
       <style>{`
         @keyframes supportKenBurns {
           0%   { transform: scale(1.08); }
