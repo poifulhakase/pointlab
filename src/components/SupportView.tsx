@@ -150,7 +150,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           width: 270px;
           height: 76px;
           padding: 0;
-          border: 2px solid rgba(0,205,255,0.82);
+          border: 2px solid rgba(0,205,255,0.45);
           border-radius: 6px 20px 6px 20px;
           background: rgba(2,12,28,0.42);
           backdrop-filter: blur(10px);
@@ -162,15 +162,15 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
                       border-color 0.20s ease;
           overflow: visible;
           box-shadow:
-            0 0 22px rgba(0,205,255,0.40),
-            0 0 50px rgba(0,205,255,0.14),
-            inset 0 1px 0 rgba(255,255,255,0.08),
-            0 4px 20px rgba(0,0,0,0.55);
+            0 0 14px rgba(0,205,255,0.22),
+            0 0 32px rgba(0,205,255,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.06),
+            0 4px 20px rgba(0,0,0,0.45);
         }
 
         .menu3d-btn:hover {
           transform: scale(1.03);
-          border-color: rgba(0,235,255,0.96);
+          border-color: rgba(0,235,255,0.70);
           box-shadow:
             0 0 30px rgba(0,225,255,0.72),
             0 0 65px rgba(0,225,255,0.26),
