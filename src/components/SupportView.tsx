@@ -208,6 +208,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
       position: 'absolute', inset: 0, zIndex: 15,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: isMobile ? 0 : '18px 22px',
+      userSelect: 'none',
     }}>
       <div style={{
         width: '100%', height: '100%',
