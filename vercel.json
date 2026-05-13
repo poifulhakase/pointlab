@@ -23,7 +23,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(self \"https://meet.jit.si\"), geolocation=(), payment=()"
+          "value": "camera=(), microphone=(self \"https://8x8.vc\"), geolocation=(), payment=()"
         },
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -31,7 +31,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://apis.google.com https://meet.jit.si; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tradingview.com https://lh3.googleusercontent.com; frame-src 'self' https://*.tradingview.com https://www.tradingview-widget.com https://pointlab-96310.firebaseapp.com https://accounts.google.com https://meet.jit.si; connect-src 'self' https://api.allorigins.win https://api.codetabs.com https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://www3.nhk.or.jp https://*.googleapis.com wss://*.googleapis.com https://apis.google.com https://*.jit.si wss://*.jit.si; font-src 'self'; object-src 'none'; base-uri 'self'; worker-src 'self' blob:; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://apis.google.com https://8x8.vc; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tradingview.com https://lh3.googleusercontent.com https://*.8x8.vc; frame-src 'self' https://*.tradingview.com https://www.tradingview-widget.com https://pointlab-96310.firebaseapp.com https://accounts.google.com https://8x8.vc https://*.8x8.vc; connect-src 'self' https://api.allorigins.win https://api.codetabs.com https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://www3.nhk.or.jp https://*.googleapis.com wss://*.googleapis.com https://apis.google.com https://*.8x8.vc wss://*.8x8.vc; font-src 'self'; object-src 'none'; base-uri 'self'; worker-src 'self' blob:; form-action 'self'; upgrade-insecure-requests;"
         }
       ]
     }

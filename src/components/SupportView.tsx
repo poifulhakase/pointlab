@@ -100,22 +100,52 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
 ]
 
-// ── Jitsi コネクトパネル ────────────────────────────────────────────────────
+// ── Jitsi コネクトパネル（JaaS） ───────────────────────────────────────────
 function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: boolean; onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [loading, setLoading] = useState(true)
-  const roomName = `poirobo-${user.uid.substring(0, 12)}`
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+
+  const shortRoom   = `poirobo-${user.uid.substring(0, 12)}`
+  const isAdmin     = user.email === 'sushi.ramen.unajyu@gmail.com'
+  const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
 
   useEffect(() => {
     let api: JitsiAPI | null = null
+    let cancelled = false
 
-    const startJitsi = () => {
-      if (!containerRef.current || !window.JitsiMeetExternalAPI) return
+    const init = async () => {
+      // JaaS スクリプトをロード
+      if (!window.JitsiMeetExternalAPI) {
+        await new Promise<void>((resolve, reject) => {
+          const s = document.createElement('script')
+          s.src = 'https://8x8.vc/external_api.js'
+          s.async = true
+          s.onload  = () => resolve()
+          s.onerror = () => reject(new Error('Script load failed'))
+          document.head.appendChild(s)
+        })
+      }
+      if (cancelled || !containerRef.current) return
+
+      // Vercel API Route で JWT 取得
+      const params = new URLSearchParams({
+        room:  shortRoom,
+        name:  displayName,
+        email: user.email ?? '',
+        uid:   user.uid,
+      })
+      const res = await fetch(`/api/jitsi-token?${params}`)
+      if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`)
+      const { token } = await res.json() as { token: string }
+      if (cancelled || !containerRef.current) return
+
+      const appId     = import.meta.env.VITE_JAAS_APP_ID as string
+      const roomName  = `${appId}/${shortRoom}`
       const avatarUrl = `${window.location.origin}${import.meta.env.BASE_URL}hakase.png`
-      const isAdmin   = user.email === 'sushi.ramen.unajyu@gmail.com'
-      const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
-      api = new window.JitsiMeetExternalAPI('meet.jit.si', {
+
+      api = new window.JitsiMeetExternalAPI('8x8.vc', {
         roomName,
+        jwt: token,
         parentNode: containerRef.current,
         userInfo: { displayName, avatarUrl },
         configOverwrite: {
@@ -136,26 +166,21 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
           TOOLBAR_BUTTONS: ['microphone', 'desktop', 'hangup'],
         },
       })
-      // 参加完了後にアバターを強制設定（userInfo.avatarUrl が反映されない場合の対策）
+
       api.addListener('videoConferenceJoined', () => {
         api?.executeCommand('avatarUrl', avatarUrl)
       })
-      // Jitsi 内の切断ボタン押下時にパネルを閉じる（マーケティングページ表示を防止）
       api.addListener('readyToClose', onClose)
-      setLoading(false)
+
+      if (!cancelled) setStatus('ready')
     }
 
-    if (window.JitsiMeetExternalAPI) {
-      startJitsi()
-    } else {
-      const s = document.createElement('script')
-      s.src = 'https://meet.jit.si/external_api.js'
-      s.async = true
-      s.onload = startJitsi
-      document.head.appendChild(s)
-    }
+    init().catch(() => { if (!cancelled) setStatus('error') })
 
-    return () => { api?.dispose() }
+    return () => {
+      cancelled = true
+      api?.dispose()
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -183,19 +208,17 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
           background: 'rgba(0,10,22,0.97)',
           borderBottom: '1px solid rgba(0,242,255,0.10)',
         }}>
-          {/* ステータスドット（接続中は点滅） */}
           <span style={{
             width: 7, height: 7, borderRadius: '50%',
-            background: loading ? 'rgba(0,242,255,0.35)' : '#00f2ff',
-            boxShadow: loading ? 'none' : '0 0 8px #00f2ff',
-            flexShrink: 0,
-            transition: 'all 0.4s',
+            background: status === 'ready' ? '#00f2ff' : status === 'error' ? '#ff4444' : 'rgba(0,242,255,0.35)',
+            boxShadow: status === 'ready' ? '0 0 8px #00f2ff' : 'none',
+            flexShrink: 0, transition: 'all 0.4s',
           }} />
           <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: 'rgba(80,190,255,0.80)', letterSpacing: '0.18em' }}>
             POIROBO CONNECT
           </span>
           <code style={{ fontSize: 9, color: 'rgba(0,242,255,0.35)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-            {roomName}
+            {shortRoom}
           </code>
           <button
             onClick={onClose}
@@ -216,7 +239,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
 
         {/* Jitsi エリア */}
         <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-          {loading && (
+          {status === 'loading' && (
             <div style={{
               position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
@@ -228,6 +251,19 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
                 animation: 'spin 0.8s linear infinite',
               }} />
               <span style={{ color: 'rgba(0,242,255,0.5)', fontSize: 10, letterSpacing: '0.15em' }}>接続中...</span>
+            </div>
+          )}
+          {status === 'error' && (
+            <div style={{
+              position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+            }}>
+              <span style={{ color: '#ff6666', fontSize: 13 }}>接続に失敗しました</span>
+              <button onClick={onClose} style={{
+                padding: '6px 18px', borderRadius: 8, cursor: 'pointer',
+                background: 'rgba(200,40,40,0.15)', border: '1px solid rgba(200,40,40,0.4)',
+                color: '#ff8888', fontSize: 12, fontWeight: 600,
+              }}>閉じる</button>
             </div>
           )}
           <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
