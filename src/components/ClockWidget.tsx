@@ -20,6 +20,7 @@ function jstTs(y: number, mo: number, d: number, h: number, mi: number): number 
 }
 
 type Phase = 'before' | 'zenba' | 'lunch' | 'goba' | 'closed' | 'holiday'
+type USPhase = 'open' | 'closed' | 'holiday'
 
 const PHASE_META: Record<Phase, { label: string; color: string; dot: string; glow: boolean }> = {
   before:  { label: '開場前',   color: 'var(--text-sub)', dot: 'rgba(148,163,184,0.5)', glow: false },
@@ -30,6 +31,12 @@ const PHASE_META: Record<Phase, { label: string; color: string; dot: string; glo
   holiday: { label: '休場',     color: 'var(--text-dim)', dot: 'rgba(148,163,184,0.35)', glow: false },
 }
 
+const US_PHASE_META: Record<USPhase, { label: string; color: string; dot: string; glow: boolean }> = {
+  open:    { label: '取引中',   color: 'rgba(96,200,140,0.95)', dot: 'rgba(96,200,140,0.9)', glow: true },
+  closed:  { label: '取引終了', color: 'var(--text-dim)', dot: 'rgba(148,163,184,0.35)', glow: false },
+  holiday: { label: '休場',     color: 'rgba(251,146,60,0.85)', dot: 'rgba(251,146,60,0.7)', glow: false },
+}
+
 function getPhase(h: number, mi: number, dateObj: Date): Phase {
   if (isMarketClosedDay(dateObj)) return 'holiday'
   const t = h * 60 + mi
@@ -37,6 +44,16 @@ function getPhase(h: number, mi: number, dateObj: Date): Phase {
   if (t < 690) return 'zenba'
   if (t < 750) return 'lunch'
   if (t < 930) return 'goba'
+  return 'closed'
+}
+
+// NYSE: 9:30-16:00 ET ≒ UTC 13:30-20:00（EDT基準、冬時間は約1h後ろにずれる）
+function getUSPhase(now: Date, jstDateObj: Date): USPhase {
+  const utcDay = now.getUTCDay()
+  if (utcDay === 0 || utcDay === 6) return 'holiday'
+  if (isNYSEWeekdayHoliday(jstDateObj)) return 'holiday'
+  const utcMins = now.getUTCHours() * 60 + now.getUTCMinutes()
+  if (utcMins >= 13 * 60 + 30 && utcMins < 20 * 60) return 'open'
   return 'closed'
 }
 
@@ -117,12 +134,13 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
     return () => clearInterval(id)
   }, [])
 
-  const jst  = getJST(now)
-  const phase = getPhase(jst.h, jst.mi, jst.dateObj)
-  const meta  = PHASE_META[phase]
+  const jst      = getJST(now)
+  const phase    = getPhase(jst.h, jst.mi, jst.dateObj)
+  const meta     = PHASE_META[phase]
+  const usPhase  = getUSPhase(now, jst.dateObj)
+  const usMeta   = US_PHASE_META[usPhase]
   const countdowns = getCountdowns(now)
-  const timeStr = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
-  const nyseHoliday = isNYSEWeekdayHoliday(jst.dateObj)
+  const timeStr  = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
 
   const sz = isMobile
     ? { time: 28, status: 11, cdLabel: 10, cdVal: 11, pad: '14px 16px 12px', gap: 4, ptop: 8 }
@@ -155,17 +173,16 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
             JP　{meta.label}
           </span>
         </div>
-        {nyseHoliday && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{
-              width: isMobile ? 7 : 8, height: isMobile ? 7 : 8, borderRadius: '50%', flexShrink: 0,
-              background: 'rgba(251,146,60,0.7)',
-            }} />
-            <span style={{ fontSize: sz.status, fontWeight: 600, color: 'rgba(251,146,60,0.9)', letterSpacing: '0.05em' }}>
-              US　NYSE休場
-            </span>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            width: isMobile ? 7 : 8, height: isMobile ? 7 : 8, borderRadius: '50%', flexShrink: 0,
+            background: usMeta.dot,
+            boxShadow: usMeta.glow ? `0 0 6px ${usMeta.dot}` : 'none',
+          }} />
+          <span style={{ fontSize: sz.status, fontWeight: 600, color: usMeta.color, letterSpacing: '0.05em' }}>
+            US　{usMeta.label}
+          </span>
+        </div>
       </div>
 
       {/* カウントダウン（24h以内のみ） */}
