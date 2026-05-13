@@ -387,12 +387,12 @@ export default function App() {
           )}
           {cal.view === 'manual' && (
             <Suspense fallback={<ViewLoader />}>
-              <ManualView theme={theme} isMobile={isMobile} onClose={() => cal.setView('support')} />
+              <ManualView theme={theme} isMobile={isMobile} onClose={() => cal.setView('note')} />
             </Suspense>
           )}
           {cal.view === 'legal' && (
             <Suspense fallback={<ViewLoader />}>
-              <LegalModal theme={theme} isMobile={isMobile} onClose={() => cal.setView('support')} />
+              <LegalModal theme={theme} isMobile={isMobile} onClose={() => cal.setView('note')} />
             </Suspense>
           )}
 
