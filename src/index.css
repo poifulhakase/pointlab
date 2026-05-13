@@ -16,12 +16,16 @@
 @keyframes vt-fade-in {
   from { opacity: 0; }
 }
+/* plus-lighter による加算合成（白飛び）を防ぐ */
+::view-transition-image-pair(root) {
+  isolation: isolate;
+}
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root) {
-    animation: 110ms ease-out both vt-fade-out;
+    animation: 120ms ease-out both vt-fade-out;
   }
   ::view-transition-new(root) {
-    animation: 190ms ease-in both vt-fade-in;
+    animation: 200ms ease-in both vt-fade-in;
   }
 }
 @media (prefers-reduced-motion: reduce) {
