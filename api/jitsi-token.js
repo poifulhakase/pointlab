@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         },
       },
     })
-      .setProtectedHeader({ alg: 'RS256', kid: String(keyId) })
+      .setProtectedHeader({ alg: 'RS256', kid: String(keyId), typ: 'JWT' })
       .setIssuedAt()
       .setExpirationTime('2h')
       .setNotBefore('-10s')
