@@ -23,34 +23,39 @@ export default async function handler(req, res) {
   try {
     const pem = rawKey.replace(/\\n/g, '\n')
 
-    // createPrivateKey は PKCS1・PKCS8 両形式を受け付ける
     const nodeKey    = createPrivateKey({ key: pem, format: 'pem' })
     const privateKey = await importPKCS8(
       nodeKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
       'RS256'
     )
 
+    // kid は JaaS ダッシュボードの Key ID と完全一致が必要
+    // 形式: "vpaas-magic-cookie-xxx/uuid" — appId プレフィックスがなければ補完
+    const kid = keyId.includes('/') ? keyId : `${appId}/${keyId}`
+
+    const isModerator = email === ADMIN_EMAIL
+
     const token = await new SignJWT({
       aud: 'jitsi',
       iss: 'chat',
       sub: appId,
-      room: String(room),
+      room: '*',
       context: {
         user: {
-          moderator: email === ADMIN_EMAIL ? 'true' : 'false',
+          moderator: isModerator,
           name:  name  ?? 'ユーザー',
           email: email ?? '',
           id:    uid,
         },
         features: {
-          livestreaming:     'false',
-          recording:         'false',
-          transcription:     'false',
-          'outbound-call':   'false',
+          livestreaming:   false,
+          recording:       false,
+          transcription:   false,
+          'outbound-call': false,
         },
       },
     })
-      .setProtectedHeader({ alg: 'RS256', kid: String(keyId), typ: 'JWT' })
+      .setProtectedHeader({ alg: 'RS256', kid, typ: 'JWT' })
       .setIssuedAt()
       .setExpirationTime('2h')
       .setNotBefore('-10s')
