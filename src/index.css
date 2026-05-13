@@ -16,20 +16,17 @@
 @keyframes vt-fade-in {
   from { opacity: 0; }
 }
-/* plus-lighter による加算合成（白飛び）を防ぐ */
-::view-transition-image-pair(root) {
-  isolation: isolate;
+/* 旧画面はそのまま保持し、新画面だけフェードインさせる
+   → 両レイヤーが同時に半透明にならないため白飛びが起きない */
+::view-transition-old(root) {
+  animation: none;
 }
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(root) {
-    animation: 120ms ease-out both vt-fade-out;
-  }
   ::view-transition-new(root) {
-    animation: 200ms ease-in both vt-fade-in;
+    animation: 220ms ease-out both vt-fade-in;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;
   }
