@@ -163,7 +163,7 @@ function ChartSettingsModal({ isOpen, onClose, split, isMobile, onApply }: Modal
       >
         {/* ヘッダー */}
         <div style={ms.header}>
-          <span style={ms.title}>チャート設定</span>
+          <span style={ms.title}>レイアウト</span>
           <button style={ms.closeBtn} onClick={onClose}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -175,7 +175,6 @@ function ChartSettingsModal({ isOpen, onClose, split, isMobile, onApply }: Modal
 
           {/* ── レイアウト選択 ── */}
           <section style={ms.section}>
-            <div style={ms.sectionTitle}>レイアウト</div>
             <div style={{ display: 'flex', gap: 14 }}>
 
               {/* 1分割カード */}
