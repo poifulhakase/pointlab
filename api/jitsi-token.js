@@ -1,11 +1,9 @@
-/**
- * JaaS (Jitsi as a Service) JWT トークン発行エンドポイント
- * 環境変数: JAAS_APP_ID / JAAS_KEY_ID / JAAS_PRIVATE_KEY
- */
+import { SignJWT, importPKCS8 } from 'jose'
+import { createPrivateKey } from 'crypto'
 
 const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
@@ -23,11 +21,14 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Vercel 環境変数の \n リテラルを実際の改行に復元
-    const privateKeyPem = rawKey.replace(/\\n/g, '\n')
+    const pem = rawKey.replace(/\\n/g, '\n')
 
-    const { SignJWT, importPKCS8 } = await import('jose')
-    const privateKey = await importPKCS8(privateKeyPem, 'RS256')
+    // createPrivateKey は PKCS1・PKCS8 両形式を受け付ける
+    const nodeKey    = createPrivateKey({ key: pem, format: 'pem' })
+    const privateKey = await importPKCS8(
+      nodeKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
+      'RS256'
+    )
 
     const token = await new SignJWT({
       aud: 'jitsi',
