@@ -17,7 +17,11 @@ type Props = {
 type SupportTab = 'session' | 'note' | 'manual'
 
 type ConnectUser = { uid: string; displayName: string | null; email: string | null }
-type JitsiAPI    = { dispose(): void }
+type JitsiAPI = {
+  dispose(): void
+  addListener(event: string, fn: (...args: unknown[]) => void): void
+  executeCommand(command: string, ...args: unknown[]): void
+}
 
 declare global {
   interface Window {
@@ -108,10 +112,12 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
     const startJitsi = () => {
       if (!containerRef.current || !window.JitsiMeetExternalAPI) return
       const avatarUrl = `${window.location.origin}${import.meta.env.BASE_URL}hakase.png`
+      const isAdmin   = user.email === 'sushi.ramen.unajyu@gmail.com'
+      const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
       api = new window.JitsiMeetExternalAPI('meet.jit.si', {
         roomName,
         parentNode: containerRef.current,
-        userInfo: { displayName: user.displayName ?? 'ユーザー', avatarUrl },
+        userInfo: { displayName, avatarUrl },
         configOverwrite: {
           startWithVideoMuted: true,
           startWithAudioMuted: false,
@@ -129,6 +135,10 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
           HIDE_INVITE_MORE_HEADER: true,
           TOOLBAR_BUTTONS: ['microphone', 'desktop', 'hangup'],
         },
+      })
+      // 参加完了後にアバターを強制設定（userInfo.avatarUrl が反映されない場合の対策）
+      api.addListener('videoConferenceJoined', () => {
+        api?.executeCommand('avatarUrl', avatarUrl)
       })
       setLoading(false)
     }
