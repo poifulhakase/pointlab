@@ -633,7 +633,7 @@ export default function App() {
           <button
             onClick={toggleFooter}
             aria-label={footerCollapsed ? 'ナビを開く' : 'ナビを閉じる'}
-            style={styles.footerTsumami}
+            style={{ ...styles.footerTsumami, ...(isMobile ? { left: 16, transform: 'none' } : {}) }}
           >
             <svg
               width="12" height="7" viewBox="0 0 10 6" fill="none"
