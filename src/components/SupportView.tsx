@@ -311,6 +311,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
 export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onNavigate, onOpenSettings }: Props) {
   const [visible,      setVisible]      = useState(false)
   const [connectMode,  setConnectMode]  = useState(false)
+  const [confirmOpen,  setConfirmOpen]  = useState(false)
   const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
   const [btnHovered,   setBtnHovered]   = useState(false)
   const rippleIdRef = useRef(0)
@@ -730,6 +731,92 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
 
       </div>
 
+      {/* 接続確認モーダル */}
+      {confirmOpen && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 50,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,4,16,0.75)', backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+        }}>
+          <div style={{
+            width: isMobile ? 'calc(100% - 48px)' : 360,
+            background: 'linear-gradient(160deg, rgba(0,12,32,0.98) 0%, rgba(0,6,20,0.98) 100%)',
+            border: '1px solid rgba(0,242,255,0.35)',
+            borderRadius: 16,
+            boxShadow: '0 0 40px rgba(0,180,255,0.12), 0 24px 60px rgba(0,0,0,0.7)',
+            overflow: 'hidden',
+          }}>
+            {/* ヘッダー */}
+            <div style={{
+              padding: '14px 18px 12px',
+              borderBottom: '1px solid rgba(0,242,255,0.12)',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{
+                width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                background: 'rgba(0,242,255,0.6)',
+                boxShadow: '0 0 8px rgba(0,242,255,0.8)',
+              }} />
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(0,220,255,0.80)', letterSpacing: '0.2em' }}>
+                CONNECTION REQUEST
+              </span>
+            </div>
+
+            {/* ボディ */}
+            <div style={{ padding: '20px 20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+              <img
+                src={`${import.meta.env.BASE_URL}hakase.webp`}
+                alt="博士"
+                style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(0,200,255,0.5))' }}
+              />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'rgba(0,230,255,0.95)', letterSpacing: '0.04em' }}>
+                  ぽいふる博士
+                </p>
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(180,220,255,0.65)', lineHeight: 1.6 }}>
+                  音声通話・画面共有セッションを<br />開始しますか？
+                </p>
+              </div>
+              <div style={{
+                fontSize: 10, color: 'rgba(0,200,255,0.45)', letterSpacing: '0.12em',
+                fontFamily: 'monospace', padding: '6px 14px',
+                border: '1px solid rgba(0,200,255,0.12)', borderRadius: 6,
+              }}>
+                PROTOCOL: SECURE_SYNC v2.0
+              </div>
+            </div>
+
+            {/* ボタン */}
+            <div style={{ display: 'flex', gap: 10, padding: '16px 20px 20px' }}>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 9, cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'rgba(180,200,220,0.7)', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => { setConfirmOpen(false); setConnectMode(true) }}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 9, cursor: 'pointer',
+                  background: 'linear-gradient(135deg, rgba(0,160,255,0.25) 0%, rgba(0,100,200,0.18) 100%)',
+                  border: '1px solid rgba(0,200,255,0.5)',
+                  color: 'rgba(0,230,255,0.95)', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em',
+                  boxShadow: '0 0 16px rgba(0,180,255,0.15)',
+                }}
+              >
+                接続する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Jitsi コネクトパネル（コネクト中のみ表示） */}
       {connectMode && user && (
         <JitsiPanel user={user} isMobile={isMobile} onClose={() => setConnectMode(false)} />
@@ -768,7 +855,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
             className="poyon-connect-area"
             onMouseEnter={() => setBtnHovered(true)}
             onMouseLeave={() => setBtnHovered(false)}
-            onClick={() => { if (user) setConnectMode(true) }}
+            onClick={() => { if (user) setConfirmOpen(true) }}
           >
             <div className="poyon-scanner-ring" />
             <div className="poyon-main-core">
