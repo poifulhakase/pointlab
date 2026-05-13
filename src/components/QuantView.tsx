@@ -1329,7 +1329,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
   const loadNkFuturesPrice = useCallback(async () => {
     try { setNkFuturesPriceData(await fetchNkFuturesPriceData()); setNkFuturesPriceLoaded(true) }
-    catch { /* エラー時は空配列のまま */ }
+    catch (e) { console.error('[nkFutures] fetch failed:', e) }
   }, [])
 
   const loadVixDaily = useCallback(async () => {

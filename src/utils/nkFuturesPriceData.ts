@@ -12,7 +12,7 @@ export interface NkFuturesDayData {
   change_pct: number | null // 前日比（%）
 }
 
-const CACHE_KEY        = 'poical-nk-futures-price'
+const CACHE_KEY        = 'poical-nk-futures-price-v2'
 const CACHE_TTL_OPEN   = 30 * 60 * 1000
 const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
 const NK_FUTURES_DAYS  = 10
@@ -23,6 +23,7 @@ function isMarketOpen(): boolean {
 }
 
 function writeCache(data: NkFuturesDayData[]) {
+  if (data.length === 0) return
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
   } catch { /* ignore */ }
@@ -96,8 +97,11 @@ async function fetchSymbolOhlcv(sym: string): Promise<NkFuturesDayData[]> {
 async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
   // NK=F: CME 日経225先物（円建て連続限月）→ 取得失敗時は ^N225（日経225指数）で代替
   try {
-    return await fetchSymbolOhlcv('NK=F')
-  } catch {
+    const data = await fetchSymbolOhlcv('NK=F')
+    if (data.length > 0) return data
+    throw new Error('NK=F: empty result')
+  } catch (e) {
+    console.warn('[nkFutures] NK=F failed, falling back to ^N225:', e)
     return fetchSymbolOhlcv('^N225')
   }
 }
