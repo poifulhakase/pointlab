@@ -58,6 +58,6 @@ module.exports = async (req, res) => {
     return res.json({ token })
   } catch (e) {
     console.error('[jitsi-token] error:', e)
-    return res.status(500).json({ error: 'Token generation failed' })
+    return res.status(500).json({ error: 'Token generation failed', detail: String(e) })
   }
 }
