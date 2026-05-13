@@ -44,13 +44,15 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
 
   const valid: OhlcvRaw[] = []
   for (let i = 0; i < ts.length; i++) {
-    if (opens[i] == null || highs[i] == null || lows[i] == null || closes[i] == null) continue
+    const c = closes[i]
+    if (c == null) continue
+    // open/high/low が null の場合（指数など）は close で代替
     valid.push({
       date:   new Date(ts[i] * 1000).toISOString().slice(0, 10),
-      open:   Math.round(opens[i]!),
-      high:   Math.round(highs[i]!),
-      low:    Math.round(lows[i]!),
-      close:  Math.round(closes[i]!),
+      open:   Math.round(opens[i]  ?? c),
+      high:   Math.round(highs[i]  ?? c),
+      low:    Math.round(lows[i]   ?? c),
+      close:  Math.round(c),
       volume: volumes[i] != null ? Math.round(volumes[i]!) : null,
     })
   }
@@ -87,15 +89,11 @@ async function fetchSymbolOhlcv(sym: string): Promise<NkFuturesDayData[]> {
   const q    = `interval=1d&range=3mo`
   const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
   const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
-  let raw: unknown
   try {
-    raw = await proxyFetch(url1)
+    return parseYahooOhlcv(await proxyFetch(url1))
   } catch {
-    raw = await proxyFetch(url2)
+    return parseYahooOhlcv(await proxyFetch(url2))
   }
-  const r = (raw as any)?.chart?.result?.[0]
-  console.log(`[nkFutures] ${sym} ts=${r?.timestamp?.length ?? 'none'} err=${JSON.stringify((raw as any)?.chart?.error)} sample=${JSON.stringify(raw).slice(0, 120)}`)
-  return parseYahooOhlcv(raw)
 }
 
 async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
