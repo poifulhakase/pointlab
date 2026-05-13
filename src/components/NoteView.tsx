@@ -186,7 +186,7 @@ const s: Record<string, React.CSSProperties> = {
     margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: 36,
+    gap: 54,
   },
   section: {
     display: 'flex',
