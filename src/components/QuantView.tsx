@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -15,10 +15,11 @@ import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDail
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
 import { fetchNkFuturesPriceData, type NkFuturesDayData } from '../utils/nkFuturesPriceData'
-import { VixPanel } from './VixPanel'
-import { NtRatioPanel } from './NtRatioPanel'
+const VixPanel    = lazy(() => import('./VixPanel').then(m => ({ default: m.VixPanel })))
+const NtRatioPanel = lazy(() => import('./NtRatioPanel').then(m => ({ default: m.NtRatioPanel })))
+const DeltaModal  = lazy(() => import('./DeltaModal').then(m => ({ default: m.DeltaModal })))
+import type { DeltaModalType } from './DeltaModal'
 import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
-import { DeltaModal, type DeltaModalType } from './DeltaModal'
 import { MarketDailyPanel } from './MarketDailyPanel'
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
@@ -1399,17 +1400,19 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
     <div style={{ ...s.wrap, ...tv }}>
       {/* ── Δ分析モーダル ── */}
       {deltaModal && (
-        <DeltaModal
-          type={deltaModal}
-          marData={marData}
-          arbData={arbData}
-          ssData={ssData}
-          adData={adData}
-          futuresDailyData={futuresDailyData}
-          cotData={cotData}
-          theme={theme}
-          onClose={() => setDeltaModal(null)}
-        />
+        <Suspense fallback={null}>
+          <DeltaModal
+            type={deltaModal}
+            marData={marData}
+            arbData={arbData}
+            ssData={ssData}
+            adData={adData}
+            futuresDailyData={futuresDailyData}
+            cotData={cotData}
+            theme={theme}
+            onClose={() => setDeltaModal(null)}
+          />
+        </Suspense>
       )}
       {/* ── ボディ ── */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -1445,7 +1448,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
               <span style={s.panelSub}>恐怖指数（CBOE・日足・約15分遅延）</span>
             </div>
           </div>
-          <VixPanel theme={theme} vixWeekData={vixWeekData} isMobile={isMobile} />
+          <Suspense fallback={null}><VixPanel theme={theme} vixWeekData={vixWeekData} isMobile={isMobile} /></Suspense>
         </div>
 
         <div style={isMobile ? s.dividerH : s.divider} />
@@ -1463,7 +1466,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
               <span style={s.panelSub}>日経225 ÷ S&amp;P500（日足・約15分遅延）</span>
             </div>
           </div>
-          <NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} />
+          <Suspense fallback={null}><NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} /></Suspense>
         </div>
 
         <div style={isMobile ? s.dividerH : s.divider} />
