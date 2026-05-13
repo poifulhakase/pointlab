@@ -3,16 +3,26 @@ import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 const NoteView   = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const ManualView = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
 
-type SupportTab = 'session' | 'note' | 'manual'
-
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   supportTab: SupportTab
+  user?: ConnectUser | null
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant' | 'note') => void
   onOpenSettings?: () => void
+}
+
+type SupportTab = 'session' | 'note' | 'manual'
+
+type ConnectUser = { uid: string; displayName: string | null; email: string | null }
+type JitsiAPI    = { dispose(): void }
+
+declare global {
+  interface Window {
+    JitsiMeetExternalAPI?: new (domain: string, opts: Record<string, unknown>) => JitsiAPI
+  }
 }
 
 function ViewLoader() {
@@ -86,10 +96,139 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
 ]
 
-export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenLegal, onNavigate, onOpenSettings }: Props) {
-  const [visible,    setVisible]    = useState(false)
-  const [ripples,    setRipples]    = useState<{ id: number; x: number; y: number }[]>([])
-  const [btnHovered, setBtnHovered] = useState(false)
+// ── Jitsi コネクトパネル ────────────────────────────────────────────────────
+function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: boolean; onClose: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [loading, setLoading] = useState(true)
+  const roomName = `poirobo-${user.uid.substring(0, 12)}`
+
+  useEffect(() => {
+    let api: JitsiAPI | null = null
+
+    const startJitsi = () => {
+      if (!containerRef.current || !window.JitsiMeetExternalAPI) return
+      api = new window.JitsiMeetExternalAPI('meet.jit.si', {
+        roomName,
+        parentNode: containerRef.current,
+        userInfo: { displayName: user.displayName ?? 'ユーザー' },
+        configOverwrite: {
+          startWithVideoMuted: true,
+          startWithAudioMuted: false,
+          prejoinPageEnabled: false,
+          disableDeepLinking: true,
+          enableWelcomePage: false,
+          toolbarButtons: ['microphone', 'desktop', 'hangup'],
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_BRAND_WATERMARK: false,
+          DISPLAY_WELCOME_FOOTER: false,
+          MOBILE_APP_PROMO: false,
+          HIDE_INVITE_MORE_HEADER: true,
+          TOOLBAR_BUTTONS: ['microphone', 'desktop', 'hangup'],
+        },
+      })
+      setLoading(false)
+    }
+
+    if (window.JitsiMeetExternalAPI) {
+      startJitsi()
+    } else {
+      const s = document.createElement('script')
+      s.src = 'https://meet.jit.si/external_api.js'
+      s.async = true
+      s.onload = startJitsi
+      document.head.appendChild(s)
+    }
+
+    return () => { api?.dispose() }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 15,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: isMobile ? 0 : '18px 22px',
+    }}>
+      <div style={{
+        width: '100%', height: '100%',
+        maxWidth: isMobile ? undefined : 980,
+        maxHeight: isMobile ? undefined : 700,
+        background: '#050810',
+        border: isMobile ? 'none' : '1px solid rgba(0,242,255,0.18)',
+        borderRadius: isMobile ? 0 : 14,
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+        boxShadow: isMobile ? 'none' : '0 0 70px rgba(0,60,200,0.18), 0 24px 80px rgba(0,0,0,0.75)',
+      }}>
+
+        {/* ヘッダーバー */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '9px 14px', flexShrink: 0,
+          background: 'rgba(0,10,22,0.97)',
+          borderBottom: '1px solid rgba(0,242,255,0.10)',
+        }}>
+          {/* ステータスドット（接続中は点滅） */}
+          <span style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: loading ? 'rgba(0,242,255,0.35)' : '#00f2ff',
+            boxShadow: loading ? 'none' : '0 0 8px #00f2ff',
+            flexShrink: 0,
+            transition: 'all 0.4s',
+          }} />
+          <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: 'rgba(80,190,255,0.80)', letterSpacing: '0.18em' }}>
+            POIROBO CONNECT
+          </span>
+          <code style={{ fontSize: 9, color: 'rgba(0,242,255,0.35)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+            {roomName}
+          </code>
+          <button
+            onClick={onClose}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '4px 11px', borderRadius: 6, cursor: 'pointer',
+              background: 'rgba(200,40,40,0.12)',
+              border: '1px solid rgba(200,40,40,0.35)',
+              color: '#ff6666', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            切断
+          </button>
+        </div>
+
+        {/* Jitsi エリア */}
+        <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+          {loading && (
+            <div style={{
+              position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                border: '2.5px solid rgba(0,242,255,0.15)',
+                borderTopColor: '#00f2ff',
+                animation: 'spin 0.8s linear infinite',
+              }} />
+              <span style={{ color: 'rgba(0,242,255,0.5)', fontSize: 10, letterSpacing: '0.15em' }}>接続中...</span>
+            </div>
+          )}
+          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── メインビュー ────────────────────────────────────────────────────────────
+export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onNavigate, onOpenSettings }: Props) {
+  const [visible,      setVisible]      = useState(false)
+  const [connectMode,  setConnectMode]  = useState(false)
+  const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
+  const [btnHovered,   setBtnHovered]   = useState(false)
   const rippleIdRef = useRef(0)
   const menuRef     = useRef<HTMLDivElement>(null)
 
@@ -101,6 +240,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
   }, [])
 
   const handleRipple = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (connectMode) return
     const rect = e.currentTarget.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
@@ -423,10 +563,11 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
         ))}
       </div>
 
-      {/* コンテンツカルーセル */}
+      {/* コンテンツカルーセル（コネクト中は非表示） */}
       <div style={{
         position: 'absolute', inset: 0,
-        display: 'flex', width: '300%',
+        display: connectMode ? 'none' : 'flex',
+        width: '300%',
         transform: `translateX(${-tabIndex * 33.333}%)`,
         transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
         zIndex: 2,
@@ -445,9 +586,7 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
             </div>
 
             {/* メニューリスト */}
-            <ul
-              className="menu3d-list"
-            >
+            <ul className="menu3d-list">
               {MENU_ITEMS.map((item, i) => (
                 <li
                   key={item.id}
@@ -507,51 +646,59 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
 
       </div>
 
-      {/* コネクトボタン（右下） */}
-      <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20 }}>
-        {btnHovered && (
-          <div style={{
-            position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
-            padding: '14px 16px',
-            background: 'rgba(0,25,35,0.95)',
-            border: '1px solid rgba(0,242,255,0.3)',
-            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-            pointerEvents: 'none',
-          }}>
-            <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
-              borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
-            <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
-              background: '#081015', border: '2px solid #00f2ff', borderRadius: '50%' }} />
-            <span style={{ display: 'block', fontSize: 9, color: '#00f2ff', fontWeight: 700,
-              letterSpacing: '0.15em', marginBottom: 8,
-              borderBottom: '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
-              POIROBO_CONNECT_v2.0
-            </span>
-            <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
-              博士と音声通話・画面共有ができます。
-              <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
-                接続プロトコル：SECURE_SYNC
+      {/* Jitsi コネクトパネル（コネクト中のみ表示） */}
+      {connectMode && user && (
+        <JitsiPanel user={user} isMobile={isMobile} onClose={() => setConnectMode(false)} />
+      )}
+
+      {/* コネクトボタン（コネクト中は非表示） */}
+      {!connectMode && (
+        <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20 }}>
+          {btnHovered && (
+            <div style={{
+              position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
+              padding: '14px 16px',
+              background: 'rgba(0,25,35,0.95)',
+              border: '1px solid rgba(0,242,255,0.3)',
+              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+              pointerEvents: 'none',
+            }}>
+              <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
+                borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
+              <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
+                background: '#081015', border: '2px solid #00f2ff', borderRadius: '50%' }} />
+              <span style={{ display: 'block', fontSize: 9, color: '#00f2ff', fontWeight: 700,
+                letterSpacing: '0.15em', marginBottom: 8,
+                borderBottom: '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
+                POIROBO_CONNECT_v2.0
               </span>
+              <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
+                博士と音声通話・画面共有ができます。
+                <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
+                  接続プロトコル：SECURE_SYNC
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-        <div
-          className="poyon-connect-area"
-          onMouseEnter={() => setBtnHovered(true)}
-          onMouseLeave={() => setBtnHovered(false)}
-        >
-          <div className="poyon-scanner-ring" />
-          <div className="poyon-main-core">
-            <div className="poyon-image-mask">
-              <img src={`${import.meta.env.BASE_URL}hakase.png`} className="poyon-doctor-image" alt="博士" draggable={false} />
-            </div>
-            <div className="poyon-text-wrap">
-              <div className="poyon-text-main">ぽいロボ コネクト</div>
-              <div className="poyon-text-sub">ぽいふる博士と接続</div>
+          )}
+          <div
+            className="poyon-connect-area"
+            onMouseEnter={() => setBtnHovered(true)}
+            onMouseLeave={() => setBtnHovered(false)}
+            onClick={() => { if (user) setConnectMode(true) }}
+          >
+            <div className="poyon-scanner-ring" />
+            <div className="poyon-main-core">
+              <div className="poyon-image-mask">
+                <img src={`${import.meta.env.BASE_URL}hakase.png`} className="poyon-doctor-image" alt="博士" draggable={false} />
+              </div>
+              <div className="poyon-text-wrap">
+                <div className="poyon-text-main">ぽいロボ コネクト</div>
+                <div className="poyon-text-sub">ぽいふる博士と接続</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -410,7 +410,7 @@ export default function App() {
           {/* 研究室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} />
             </Suspense>
           )}
 
