@@ -84,14 +84,18 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
 }
 
 async function fetchSymbolOhlcv(sym: string): Promise<NkFuturesDayData[]> {
-  const q    = `interval=1d&range=1mo`
+  const q    = `interval=1d&range=3mo`
   const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
   const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
+  let raw: unknown
   try {
-    return parseYahooOhlcv(await proxyFetch(url1))
+    raw = await proxyFetch(url1)
   } catch {
-    return parseYahooOhlcv(await proxyFetch(url2))
+    raw = await proxyFetch(url2)
   }
+  const r = (raw as any)?.chart?.result?.[0]
+  console.log(`[nkFutures] ${sym} ts=${r?.timestamp?.length ?? 'none'} err=${JSON.stringify((raw as any)?.chart?.error)} sample=${JSON.stringify(raw).slice(0, 120)}`)
+  return parseYahooOhlcv(raw)
 }
 
 async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
