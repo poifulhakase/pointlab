@@ -140,6 +140,8 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
       api.addListener('videoConferenceJoined', () => {
         api?.executeCommand('avatarUrl', avatarUrl)
       })
+      // Jitsi 内の切断ボタン押下時にパネルを閉じる（マーケティングページ表示を防止）
+      api.addListener('readyToClose', onClose)
       setLoading(false)
     }
 
