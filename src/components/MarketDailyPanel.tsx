@@ -20,8 +20,8 @@ function fxColor(val: number | null, theme: 'dark' | 'light'): string {
 
 function fxBg(val: number | null, theme: 'dark' | 'light'): string {
   if (val == null || val === 0) return 'transparent'
-  if (val > 0) return theme === 'dark' ? 'rgba(255,120,100,0.10)' : 'rgba(200,50,30,0.07)'
-  return theme === 'dark' ? 'rgba(96,200,140,0.10)' : 'rgba(22,130,80,0.07)'
+  if (val > 0) return theme === 'dark' ? 'rgba(255,120,100,0.18)' : 'rgba(200,50,30,0.12)'
+  return theme === 'dark' ? 'rgba(96,200,140,0.18)' : 'rgba(22,130,80,0.12)'
 }
 
 export function MarketDailyPanel({
@@ -112,10 +112,10 @@ export function MarketDailyPanel({
                     <td style={{ ...td, background: fxBg(row.change, theme), color: fxColor(row.change, theme), fontWeight: row.change != null && row.change !== 0 ? 600 : 400 }}>
                       {row.change != null ? (row.change > 0 ? '+' : '') + row.change.toFixed(2) : '—'}
                     </td>
-                    <td style={{ ...td, color: fxColor(row.changePct, theme) }}>
+                    <td style={{ ...td, background: fxBg(row.changePct, theme), color: fxColor(row.changePct, theme) }}>
                       {row.changePct != null ? (row.changePct > 0 ? '+' : '') + row.changePct.toFixed(2) + '%' : '—'}
                     </td>
-                    <td style={{ ...td, color: fxColor(row.ma5dev, theme) }}>
+                    <td style={{ ...td, background: fxBg(row.ma5dev, theme), color: fxColor(row.ma5dev, theme) }}>
                       {row.ma5dev != null ? (row.ma5dev > 0 ? '+' : '') + row.ma5dev.toFixed(2) + '%' : '—'}
                     </td>
                   </tr>
