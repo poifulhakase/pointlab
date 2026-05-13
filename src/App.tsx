@@ -550,7 +550,7 @@ export default function App() {
                   <button
                     key={key}
                     style={{ ...styles.floatTab, ...(cal.view === key ? styles.floatTabActive : {}) }}
-                    onClick={() => setViewWithTransition(key)}
+                    onClick={() => cal.setView(key)}
                   >{label}</button>
                 ))}
               </>
