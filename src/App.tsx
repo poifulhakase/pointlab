@@ -464,8 +464,20 @@ export default function App() {
               {/* カレンダーサブバー */}
               <div style={styles.calSubBar}>
                 <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-                <h1 style={styles.subLabel}>{cal.label}</h1>
+                <h1 style={{ ...styles.subLabel, ...(isMobile ? { flex: 1, textAlign: 'center' as const } : {}) }}>{cal.label}</h1>
                 <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
+                {/* スマホ時のみ右端にフッター開閉ボタン */}
+                {isMobile && (
+                  <button
+                    onClick={toggleFooter}
+                    aria-label={footerCollapsed ? 'ナビを開く' : 'ナビを閉じる'}
+                    style={{ ...styles.subNavBtn, marginLeft: 4, opacity: 0.7 }}
+                  >
+                    <svg width="14" height="8" viewBox="0 0 10 6" fill="none" style={{ transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)', transform: footerCollapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                      <path d="M1 5L5 1L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                )}
               </div>
 
               {/* 日/週/月 スワイプカルーセル */}
@@ -615,11 +627,11 @@ export default function App() {
 
       {cal.view !== 'support' && (
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          {/* つまみ（フッター開閉） */}
+          {/* つまみ（フッター開閉）: スマホ×カレンダーは calSubBar 側に移動したため非表示 */}
           <button
             onClick={toggleFooter}
             aria-label={footerCollapsed ? 'ナビを開く' : 'ナビを閉じる'}
-            style={styles.footerTsumami}
+            style={{ ...styles.footerTsumami, ...(isMobile && isCalView ? { display: 'none' } : {}) }}
           >
             <svg
               width="12" height="7" viewBox="0 0 10 6" fill="none"

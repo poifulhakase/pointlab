@@ -68,11 +68,56 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
   const showMenu = isMobile || isTablet
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
+  // モバイル: 4分割フル幅レイアウト
+  if (isMobile) {
+    return (
+      <header
+        style={{
+          height: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px))',
+          display: 'flex', alignItems: 'stretch',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
+          flexShrink: 0, position: 'relative', zIndex: 160,
+          userSelect: 'none', padding: '0 4px',
+        }}
+        className="glass"
+      >
+        {MAIN_VIEWS.map(v => {
+          const active = v.isActive(view)
+          return (
+            <button
+              key={v.label}
+              style={{
+                flex: 1,
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: 4, padding: '6px 4px',
+                borderRadius: 10, cursor: 'pointer',
+                color: active ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
+                background: active ? 'var(--view-btn-active-bg)' : 'transparent',
+                transition: 'color 0.15s, background 0.15s',
+                boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
+              }}
+              onClick={() => setView(v.targetView)}
+              aria-label={v.label}
+            >
+              {v.icon}
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1 }}>
+                {v.label}
+              </span>
+            </button>
+          )
+        })}
+      </header>
+    )
+  }
+
+  // デスクトップ / タブレット: 既存レイアウト
   return (
     <header style={styles.header} className="glass">
       <div style={styles.left}>
         {/* ハンバーガーボタン */}
-        {showMenu && !(isMobile && !isCalendarView(view)) && (
+        {showMenu && (
           <button style={styles.menuBtn} onClick={onMenuClick} aria-label="メニュー">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="3" y1="6"  x2="21" y2="6"  />
@@ -82,16 +127,14 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
           </button>
         )}
 
-        {/* ロゴ（デスクトップのみ）→ カレンダーホームへ */}
-        {!isMobile && (
-          <button
-            style={{ ...styles.logo, cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-            onClick={() => setView('month')}
-            title="カレンダーへ戻る"
-          >
-            <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 28, objectFit: 'contain', opacity: isCalendarView(view) ? 1 : 0.85, transition: 'opacity 0.15s' }} />
-          </button>
-        )}
+        {/* ロゴ → カレンダーホームへ */}
+        <button
+          style={{ ...styles.logo, cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+          onClick={() => setView('month')}
+          title="カレンダーへ戻る"
+        >
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 28, objectFit: 'contain', opacity: isCalendarView(view) ? 1 : 0.85, transition: 'opacity 0.15s' }} />
+        </button>
       </div>
 
       {/* ビュー切替アイコン */}
