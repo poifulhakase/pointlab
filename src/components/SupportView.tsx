@@ -773,7 +773,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
             <div className="poyon-scanner-ring" />
             <div className="poyon-main-core">
               <div className="poyon-image-mask">
-                <img src={`${import.meta.env.BASE_URL}hakase.png`} className="poyon-doctor-image" alt="博士" draggable={false} />
+                <img src={`${import.meta.env.BASE_URL}hakase.webp`} className="poyon-doctor-image" alt="博士" draggable={false} />
               </div>
               <div className="poyon-text-wrap">
                 <div className="poyon-text-main">ぽいロボ コネクト</div>
