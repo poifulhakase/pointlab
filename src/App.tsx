@@ -1,4 +1,5 @@
 import { lazy, Suspense, memo, useMemo, useState, useEffect, useCallback, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
@@ -63,6 +64,16 @@ export default function App() {
 
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
   const cal = useCalendar()
+
+  const setViewWithTransition = useCallback((view: Parameters<typeof cal.setView>[0]) => {
+    if ('startViewTransition' in document) {
+      (document as Document & { startViewTransition: (cb: () => void) => void })
+        .startViewTransition(() => { flushSync(() => cal.setView(view)) })
+    } else {
+      cal.setView(view)
+    }
+  }, [cal])
+
   const { isMobile, isTablet, isDesktop } = useBreakpoint()
 
   // ── 日/週/月 スワイプ ─────────────────────────────────────────────────
@@ -154,7 +165,7 @@ export default function App() {
     const KEY = 'poical-first-login-done'
     if (!localStorage.getItem(KEY)) {
       localStorage.setItem(KEY, '1')
-      cal.setView('support')
+      setViewWithTransition('support')
     }
   }, [loginToast]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -387,19 +398,19 @@ export default function App() {
           )}
           {cal.view === 'manual' && (
             <Suspense fallback={<ViewLoader />}>
-              <ManualView theme={theme} isMobile={isMobile} onClose={() => cal.setView('note')} />
+              <ManualView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('note')} />
             </Suspense>
           )}
           {cal.view === 'legal' && (
             <Suspense fallback={<ViewLoader />}>
-              <LegalModal theme={theme} isMobile={isMobile} onClose={() => cal.setView('note')} />
+              <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('note')} />
             </Suspense>
           )}
 
           {/* 研究室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => cal.setView('manual')} onOpenLegal={() => cal.setView('legal')} onNavigate={(v) => cal.setView(v)} onOpenSettings={() => setSettingsOpen(true)} />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} />
             </Suspense>
           )}
 
@@ -423,9 +434,9 @@ export default function App() {
               <NoteView
                 theme={theme}
                 isMobile={isMobile}
-                onOpenManual={() => cal.setView('manual')}
-                onOpenLegal={() => cal.setView('legal')}
-                onGoBack={() => cal.setView('support')}
+                onOpenManual={() => setViewWithTransition('manual')}
+                onOpenLegal={() => setViewWithTransition('legal')}
+                onGoBack={() => setViewWithTransition('support')}
               />
             </Suspense>
           )}
@@ -506,7 +517,7 @@ export default function App() {
           syncStatus={syncStatus}
           onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
           isAdmin={user?.email === 'sushi.ramen.unajyu@gmail.com'}
-          onOpenSpec={() => { setSettingsOpen(false); cal.setView('spec') }}
+          onOpenSpec={() => { setSettingsOpen(false); setViewWithTransition('spec') }}
         />
       </Suspense>
 
@@ -539,7 +550,7 @@ export default function App() {
                   <button
                     key={key}
                     style={{ ...styles.floatTab, ...(cal.view === key ? styles.floatTabActive : {}) }}
-                    onClick={() => cal.setView(key)}
+                    onClick={() => setViewWithTransition(key)}
                   >{label}</button>
                 ))}
               </>
@@ -587,7 +598,7 @@ export default function App() {
 
       {cal.view !== 'support' && (
         <CalendarHeader
-          view={cal.view} setView={cal.setView}
+          view={cal.view} setView={setViewWithTransition}
           isMobile={isMobile} isTablet={isTablet}
           sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
         />

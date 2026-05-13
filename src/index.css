@@ -9,6 +9,28 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── View Transitions API ─────────────────────────────── */
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: 110ms ease-out both vt-fade-out;
+  }
+  ::view-transition-new(root) {
+    animation: 190ms ease-in both vt-fade-in;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
