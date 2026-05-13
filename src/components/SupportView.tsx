@@ -750,7 +750,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
                 POIROBO_CONNECT_v2.0
               </span>
               <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
-                博士と音声通話・画面共有ができます。
+                ぽいふる博士と音声通話・画面共有ができます。
                 <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
                   接続プロトコル：SECURE_SYNC
                 </span>
