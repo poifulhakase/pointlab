@@ -143,7 +143,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
       const roomName  = `${appId}/${shortRoom}`
       const avatarUrl = `${window.location.origin}${import.meta.env.BASE_URL}hakase.png`
 
-      api = new window.JitsiMeetExternalAPI('8x8.vc', {
+      api = new window.JitsiMeetExternalAPI!('8x8.vc', {
         roomName,
         jwt: token,
         parentNode: containerRef.current,
