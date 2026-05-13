@@ -36,7 +36,6 @@ function cellColor(v: number | null | undefined, theme: 'dark' | 'light'): strin
 
 // ── タンク定義 ──────────────────────────────────────
 type CotTank = {
-  display:    string
   group:      string
   net:        number
   wow:        number
@@ -56,9 +55,9 @@ function buildCotTanks(data: CotNikkeiWeekData[]): CotTank[] {
   const maxAbs = (key: 'nonCommNet' | 'commNet' | 'nonReptNet') =>
     Math.max(...data.map(d => Math.abs(d[key])), 1000)
   return [
-    { display: 'ヘッジファンド\n（投機筋）', group: 'nonComm', net: cur.nonCommNet, wow: prev ? cur.nonCommNet - prev.nonCommNet : 0, maxAbsNet: maxAbs('nonCommNet') * 1.2 },
-    { display: '機関投資家\n（実需）',       group: 'comm',    net: cur.commNet,    wow: prev ? cur.commNet    - prev.commNet    : 0, maxAbsNet: maxAbs('commNet')    * 1.2 },
-    { display: '個人投資家\n（小口）',       group: 'nonRept', net: cur.nonReptNet, wow: prev ? cur.nonReptNet - prev.nonReptNet : 0, maxAbsNet: maxAbs('nonReptNet') * 1.2 },
+    { group: 'nonComm', net: cur.nonCommNet, wow: prev ? cur.nonCommNet - prev.nonCommNet : 0, maxAbsNet: maxAbs('nonCommNet') * 1.2 },
+    { group: 'comm',    net: cur.commNet,    wow: prev ? cur.commNet    - prev.commNet    : 0, maxAbsNet: maxAbs('commNet')    * 1.2 },
+    { group: 'nonRept', net: cur.nonReptNet, wow: prev ? cur.nonReptNet - prev.nonReptNet : 0, maxAbsNet: maxAbs('nonReptNet') * 1.2 },
   ]
 }
 
@@ -69,7 +68,7 @@ const BUBBLES = [
 ]
 
 // ── タンクカード ──────────────────────────────────────
-function TankCard({ display, group, net, wow, maxAbsNet, theme }: CotTank & { theme: 'dark' | 'light' }) {
+function TankCard({ group, net, wow, maxAbsNet, theme }: CotTank & { theme: 'dark' | 'light' }) {
   const isLight    = theme === 'light'
   const waterLevel = Math.min(Math.abs(net) / maxAbsNet * 100, 105)
   const isShort    = net <= 0
@@ -86,13 +85,6 @@ function TankCard({ display, group, net, wow, maxAbsNet, theme }: CotTank & { th
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
-      <div style={{
-        fontSize: 10, fontWeight: 700, color: groupColor,
-        textAlign: 'center', whiteSpace: 'pre-line', lineHeight: 1.35,
-        minHeight: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {display}
-      </div>
       <div style={{
         width: '100%', maxWidth: 72, height: 120,
         position: 'relative',
