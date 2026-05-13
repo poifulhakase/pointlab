@@ -703,7 +703,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
 
       {/* コネクトボタン（コネクト中は非表示） */}
       {!connectMode && (
-        <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20 }}>
+        <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }}>
           {btnHovered && (
             <div style={{
               position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
