@@ -306,6 +306,7 @@ const SPEC_SECTIONS = [
           'Signal Density: [Price急変/OI減少/IV急騰/VIX急騰/USDJPY急変/出来高急増] の同時点灯数/6',
           'ぽいロボエンジンモーダル: Gemini / Claude / ChatGPT のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
           'ぽいロボエンジンボタンアイコン: レンチ（スパナ）形状',
+          'シグナルコンフリクト解決ルール（優先順位: 慣性 ＞ 質量 ＞ 弾性）: 慣性優勢→方向維持/質量確認、慣性停止反転→反転シグナル発行、弾性極限→反転優先/慣性は従属、全シグナル拮抗→全力待機強制',
         ],
       },
     ],
@@ -373,7 +374,7 @@ const SPEC_SECTIONS = [
         headers: ['localStorageキー', 'TTL', '用途'],
         rows: [
           ['stock-cal-notes', '永続', 'カレンダーメモ全データ'],
-          ['poical-settings', '永続', 'アプリ設定（テーマ・ぽいロボアラート設定）'],
+          ['poical-settings', '永続', 'アプリ設定（テーマ設定）'],
           ['poical-vix-data', '30分（市場オープン）/ 2時間（クローズ）', 'VIX日足チャートデータ'],
           ['poical-ns-ratio-data', '30分（市場オープン）/ 2時間（クローズ）', 'NS倍率日足データ'],
           ['poical-margin-data', '24時間', '信用倍率JSONキャッシュ'],
@@ -391,6 +392,7 @@ const SPEC_SECTIONS = [
           ['poical-usdjpy-data', '30分（平日）/ 2時間（土日）', 'USD/JPY 日次データ（現物タブ）'],
           ['poical-nas100-data', '30分（平日）/ 2時間（土日）', 'NAS100(^NDX) 日次データ（偏差スコア計算用）'],
           ['poical-vix-daily-data', '30分（平日）/ 2時間（土日）', 'VIX 日次データ（偏差スコア・TPI計算用）'],
+          ['poical-nk-futures-price-v2', '1時間（平日）/ 3時間（土日）', '日経先物 OHLCV データ（^N225 fallback、AI プロンプト用）'],
         ],
       },
       {
