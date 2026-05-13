@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { type CheckItem, type DayNote, type ScheduleEntry, getNote, saveNote } from '../utils/noteStorage'
 import { TimeField } from './TimeField'
-import { CustomSelect } from './CustomSelect'
 
 type Props = {
   date: Date | null
@@ -12,15 +11,6 @@ type Props = {
   onSaved?: () => void
   isMobile?: boolean
 }
-
-const ALERT_OPTIONS = [
-  { value: 0,  label: 'アラートなし' },
-  { value: 5,  label: '5分前' },
-  { value: 10, label: '10分前' },
-  { value: 15, label: '15分前' },
-  { value: 30, label: '30分前' },
-  { value: 60, label: '1時間前' },
-]
 
 function calcDefaultEnd(start: string): string {
   const [h, m] = start.split(':').map(Number)
@@ -94,10 +84,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   }
   const handleSchEnd = (id: string, v: string) => {
     const next = schedules.map(s => s.id === id ? { ...s, endTime: v } : s)
-    setSchedules(next); persist(title, memo, checklist, next)
-  }
-  const handleSchAlert = (id: string, v: number) => {
-    const next = schedules.map(s => s.id === id ? { ...s, alertMinutes: v } : s)
     setSchedules(next); persist(title, memo, checklist, next)
   }
   const handleSchDelete = (id: string) => {
@@ -324,16 +310,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
                     <TimeField value={sch.startTime} onChange={v => handleSchStart(sch.id, v)} placeholder="開始" />
                     <span style={styles.timeSep}>—</span>
                     <TimeField value={sch.endTime} onChange={v => handleSchEnd(sch.id, v)} placeholder="終了" />
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: sch.alertMinutes ? 'var(--accent)' : 'var(--text-dim)', flexShrink: 0, marginLeft: 4 }}>
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                    </svg>
-                    <CustomSelect
-                      value={sch.alertMinutes}
-                      onChange={v => handleSchAlert(sch.id, v)}
-                      options={ALERT_OPTIONS}
-                      icon={null}
-                    />
                   </div>
                 </div>
               ))}
