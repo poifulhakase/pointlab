@@ -11,7 +11,7 @@ type Props = {
 }
 
 // ── 単一チャートパネル ─────────────────────────────────────
-function ChartPanel({ symbol, interval, theme, isMobile, height, hideSideToolbar }: { symbol: string; interval: string; theme: 'dark' | 'light'; isMobile?: boolean; height: number; hideSideToolbar?: boolean }) {
+function ChartPanel({ symbol, interval, theme, height, hideSideToolbar }: { symbol: string; interval: string; theme: 'dark' | 'light'; height: number; hideSideToolbar?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -50,7 +50,7 @@ function ChartPanel({ symbol, interval, theme, isMobile, height, hideSideToolbar
     <div
       ref={containerRef}
       className="tradingview-widget-container"
-      style={{ flex: 1, height, minWidth: 0, borderRadius: isMobile ? 0 : 12, overflow: 'hidden', border: isMobile ? 'none' : '1px solid var(--glass-border)' }}
+      style={{ flex: 1, height, minWidth: 0, overflow: 'hidden' }}
     />
   )
 }
@@ -277,10 +277,10 @@ export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolCh
 
   return (
     <div style={{ ...styles.wrap, ...themeVars(theme) }}>
-      <div ref={panelsRef} style={{ ...styles.panels, ...(isMobile ? { padding: '0' } : {}) }}>
-        <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar={isMobile || effectiveSplit === 2} />
+      <div ref={panelsRef} style={styles.panels}>
+        <ChartPanel symbol={symbol} interval="D" theme={theme} height={panelsHeight} hideSideToolbar={isMobile || effectiveSplit === 2} />
         {effectiveSplit === 2 && (
-          <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar />
+          <ChartPanel symbol={symbol} interval="W" theme={theme} height={panelsHeight} hideSideToolbar />
         )}
       </div>
 
@@ -297,5 +297,5 @@ export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolCh
 
 const styles: Record<string, React.CSSProperties> = {
   wrap:    { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 },
-  panels:  { flex: 1, display: 'flex', minHeight: 0, padding: '10px 14px 14px' },
+  panels:  { flex: 1, display: 'flex', minHeight: 0 },
 }
