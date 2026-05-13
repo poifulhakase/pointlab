@@ -107,14 +107,16 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
 
     const startJitsi = () => {
       if (!containerRef.current || !window.JitsiMeetExternalAPI) return
+      const avatarUrl = `${window.location.origin}${import.meta.env.BASE_URL}hakase.png`
       api = new window.JitsiMeetExternalAPI('meet.jit.si', {
         roomName,
         parentNode: containerRef.current,
-        userInfo: { displayName: user.displayName ?? 'ユーザー' },
+        userInfo: { displayName: user.displayName ?? 'ユーザー', avatarUrl },
         configOverwrite: {
           startWithVideoMuted: true,
           startWithAudioMuted: false,
           prejoinPageEnabled: false,
+          prejoinConfig: { enabled: false },
           disableDeepLinking: true,
           enableWelcomePage: false,
           toolbarButtons: ['microphone', 'desktop', 'hangup'],
