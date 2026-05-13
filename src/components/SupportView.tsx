@@ -152,7 +152,9 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           padding: 0;
           border: 2px solid rgba(0,205,255,0.82);
           border-radius: 6px 20px 6px 20px;
-          background: rgba(225,240,255,0.22);
+          background: rgba(2,12,28,0.82);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
           cursor: pointer;
           transform: scale(1.00);
           transition: transform 0.20s ease,
@@ -162,8 +164,8 @@ export function SupportView({ theme, isMobile, supportTab, onOpenManual, onOpenL
           box-shadow:
             0 0 22px rgba(0,205,255,0.40),
             0 0 50px rgba(0,205,255,0.14),
-            inset 0 1px 0 rgba(255,255,255,0.12),
-            0 4px 20px rgba(0,0,0,0.35);
+            inset 0 1px 0 rgba(255,255,255,0.08),
+            0 4px 20px rgba(0,0,0,0.55);
         }
 
         .menu3d-btn:hover {
