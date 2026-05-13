@@ -169,8 +169,8 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
             background: meta.dot,
             boxShadow: meta.glow ? `0 0 6px ${meta.dot}` : 'none',
           }} />
-          <span style={{ fontSize: sz.status, fontWeight: 600, color: meta.color, letterSpacing: '0.05em' }}>
-            JP　{meta.label}
+          <span style={{ fontSize: sz.status, fontWeight: 600, color: meta.color, letterSpacing: '0.05em', display: 'flex', gap: '0.5em' }}>
+            <span style={{ display: 'inline-block', width: '2em' }}>JP</span>{meta.label}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -179,8 +179,8 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
             background: usMeta.dot,
             boxShadow: usMeta.glow ? `0 0 6px ${usMeta.dot}` : 'none',
           }} />
-          <span style={{ fontSize: sz.status, fontWeight: 600, color: usMeta.color, letterSpacing: '0.05em' }}>
-            US　{usMeta.label}
+          <span style={{ fontSize: sz.status, fontWeight: 600, color: usMeta.color, letterSpacing: '0.05em', display: 'flex', gap: '0.5em' }}>
+            <span style={{ display: 'inline-block', width: '2em' }}>US</span>{usMeta.label}
           </span>
         </div>
       </div>
