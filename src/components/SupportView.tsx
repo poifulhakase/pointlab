@@ -545,13 +545,13 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         /* ── Connect button ── */
         @keyframes slow-rotate { to { transform: rotate(360deg); } }
         @keyframes cyberTooltipFlicker {
-          0%, 65%       { opacity: 0; }
-          66%           { opacity: 0.6; }
-          67%           { opacity: 0;   }
-          68%, 93%      { opacity: 1;   }
-          94%           { opacity: 0.2; }
-          95%           { opacity: 1;   }
-          96%           { opacity: 0;   }
+          0%, 60%       { opacity: 0; }
+          61%           { opacity: 0.6; }
+          62%           { opacity: 0;   }
+          63%, 95%      { opacity: 1;   }
+          96%           { opacity: 0.2; }
+          97%           { opacity: 1;   }
+          98%           { opacity: 0;   }
           100%          { opacity: 0;   }
         }
         @keyframes text-subtle-poyon {
