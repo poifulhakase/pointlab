@@ -280,10 +280,7 @@ export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolCh
       <div ref={panelsRef} style={{ ...styles.panels, ...(isMobile ? { padding: '0' } : {}) }}>
         <ChartPanel symbol={symbol} interval="D" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar={isMobile || effectiveSplit === 2} />
         {effectiveSplit === 2 && (
-          <>
-            <div style={{ width: 10, flexShrink: 0 }} />
-            <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar />
-          </>
+          <ChartPanel symbol={symbol} interval="W" theme={theme} isMobile={isMobile} height={panelsHeight} hideSideToolbar />
         )}
       </div>
 
@@ -300,5 +297,5 @@ export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolCh
 
 const styles: Record<string, React.CSSProperties> = {
   wrap:    { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 },
-  panels:  { flex: 1, display: 'flex', minHeight: 0, padding: '10px 14px 14px', gap: 8 },
+  panels:  { flex: 1, display: 'flex', minHeight: 0, padding: '10px 14px 14px' },
 }
