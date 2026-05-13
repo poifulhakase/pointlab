@@ -545,10 +545,14 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         /* ── Connect button ── */
         @keyframes slow-rotate { to { transform: rotate(360deg); } }
         @keyframes cyberTooltipFlicker {
-          0%,  17%,  19%,  21%,  68%,  70%,  72%,  100% { opacity: 1; }
-          18%,  20%                                       { opacity: 0; }
-          69%                                            { opacity: 0.15; }
-          71%                                            { opacity: 0; }
+          0%, 70%       { opacity: 0; }
+          71%           { opacity: 0.6; }
+          72%           { opacity: 0;   }
+          73%, 91%      { opacity: 1;   }
+          92%           { opacity: 0.2; }
+          93%           { opacity: 1;   }
+          94%           { opacity: 0;   }
+          100%          { opacity: 0;   }
         }
         @keyframes text-subtle-poyon {
           0%   { transform: translateY(0) scale(1); }
@@ -838,7 +842,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
             border: '1px solid rgba(0,242,255,0.3)',
             backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
             pointerEvents: 'none',
-            animation: 'cyberTooltipFlicker 9s ease-in-out infinite',
+            animation: 'cyberTooltipFlicker 11s linear infinite',
           }}>
             <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
               borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
