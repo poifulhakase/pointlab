@@ -315,8 +315,17 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
   const [confirmOpen,  setConfirmOpen]  = useState(false)
   const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
 
-  const rippleIdRef = useRef(0)
-  const menuRef     = useRef<HTMLDivElement>(null)
+  const rippleIdRef      = useRef(0)
+  const menuRef          = useRef<HTMLDivElement>(null)
+  const pendingConnectRef = useRef(false)
+
+  // ログイン成功後に自動で confirm モーダルを開く
+  useEffect(() => {
+    if (user && pendingConnectRef.current) {
+      pendingConnectRef.current = false
+      setConfirmOpen(true)
+    }
+  }, [user])
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -885,7 +894,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           </div>}
           <div
             className="poyon-connect-area"
-            onClick={() => { if (user) setConfirmOpen(true); else onOpenAccount?.() }}
+            onClick={() => { if (user) setConfirmOpen(true); else { pendingConnectRef.current = true; onOpenAccount?.() } }}
           >
             <div className="poyon-scanner-ring" />
             <div className="poyon-main-core">
