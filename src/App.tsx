@@ -627,7 +627,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: 1, flexShrink: 0 }}>
+      <div style={{ position: 'relative', zIndex: 161, flexShrink: 0 }}>
           {/* つまみ（フッター開閉） */}
           <button
             onClick={toggleFooter}

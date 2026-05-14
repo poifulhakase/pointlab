@@ -747,7 +747,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       {/* 接続確認モーダル */}
       {confirmOpen && (
         <div style={{
-          position: 'absolute', inset: 0, zIndex: 50,
+          position: 'fixed', inset: 0, zIndex: 170,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'rgba(0,4,16,0.75)', backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',
