@@ -20,7 +20,7 @@ const DATA_CACHE_KEYS = [
   'poical-vix-data',
   'poical-vix-daily-data',
   'poical-nk-futures-price-v2',
-  'poical-ns-ratio-data',
+  'poical-ns-ratio-v2',
   'poical-nhk-news',
 ] as const
 

@@ -11,7 +11,7 @@ export interface NtRatioPoint {
   change:    number | null // 前日比（倍率）
 }
 
-const NT_CACHE_KEY        = 'poical-ns-ratio-data'
+const NT_CACHE_KEY        = 'poical-ns-ratio-v2'
 const NT_CACHE_TTL_OPEN   = 30 * 60 * 1000
 const NT_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000
 
