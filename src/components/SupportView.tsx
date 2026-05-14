@@ -315,14 +315,15 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
   const [confirmOpen,  setConfirmOpen]  = useState(false)
   const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
 
-  const rippleIdRef      = useRef(0)
-  const menuRef          = useRef<HTMLDivElement>(null)
-  const pendingConnectRef = useRef(false)
+  const rippleIdRef = useRef(0)
+  const menuRef     = useRef<HTMLDivElement>(null)
 
-  // ログイン成功後に自動で confirm モーダルを開く
+  const PENDING_KEY = 'poical-pending-connect'
+
+  // ログイン成功後に自動で confirm モーダルを開く（リダイレクト方式でも機能するよう sessionStorage で永続化）
   useEffect(() => {
-    if (user && pendingConnectRef.current) {
-      pendingConnectRef.current = false
+    if (user && sessionStorage.getItem(PENDING_KEY)) {
+      sessionStorage.removeItem(PENDING_KEY)
       setConfirmOpen(true)
     }
   }, [user])
@@ -894,7 +895,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           </div>}
           <div
             className="poyon-connect-area"
-            onClick={() => { if (user) setConfirmOpen(true); else { pendingConnectRef.current = true; onOpenAccount?.() } }}
+            onClick={() => { if (user) setConfirmOpen(true); else { sessionStorage.setItem(PENDING_KEY, '1'); onOpenAccount?.() } }}
           >
             <div className="poyon-scanner-ring" />
             <div className="poyon-main-core">
