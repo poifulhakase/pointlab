@@ -91,19 +91,28 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
                 flex: 1,
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                gap: 4, padding: '6px 4px',
-                borderRadius: 10, cursor: 'pointer',
+                cursor: 'pointer',
                 color: active ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
-                background: active ? 'var(--view-btn-active-bg)' : 'transparent',
-                transition: 'color 0.15s, background 0.15s',
-                boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
+                transition: 'color 0.15s',
+                padding: '4px 2px',
               }}
               onClick={() => setView(v.targetView)}
               aria-label={v.label}
             >
-              {v.icon}
-              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1 }}>
-                {v.label}
+              <span style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: 4,
+                padding: active ? '6px 5px' : '6px 8px',
+                borderRadius: 10,
+                background: active ? 'var(--view-btn-active-bg)' : 'transparent',
+                boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
+                transition: 'background 0.15s, box-shadow 0.15s',
+              }}>
+                {v.icon}
+                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1 }}>
+                  {v.label}
+                </span>
               </span>
             </button>
           )

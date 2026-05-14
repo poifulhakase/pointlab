@@ -1053,7 +1053,7 @@ function QuantSettingsModal({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  window.open('https://gemini.google.com/app', '_blank', 'noopener,noreferrer')
+                  window.open('https://gemini.google.com/app', '_blank')
                 }}
               >
                 <div style={{ ...ms.aiLogo, background: 'linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335)', padding: 0, overflow: 'hidden' }}>
@@ -1082,7 +1082,7 @@ function QuantSettingsModal({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  window.open('https://claude.ai/projects', '_blank', 'noopener,noreferrer')
+                  window.open('https://claude.ai/projects', '_blank')
                 }}
               >
                 <div style={{ ...ms.aiLogo, background: '#d97757' }}>
@@ -1110,7 +1110,7 @@ function QuantSettingsModal({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer')
+                  window.open('https://chatgpt.com/', '_blank')
                 }}
               >
                 <div style={{ ...ms.aiLogo, background: '#10a37f' }}>
