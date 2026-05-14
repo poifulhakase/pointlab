@@ -103,7 +103,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
                 gap: 4,
-                padding: active ? '6px 5px' : '6px 8px',
+                padding: active ? '6px 12px' : '6px 8px',
                 borderRadius: 10,
                 background: active ? 'var(--view-btn-active-bg)' : 'transparent',
                 boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
