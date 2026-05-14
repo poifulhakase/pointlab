@@ -12,6 +12,7 @@ type Props = {
   onOpenLegal?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant' | 'note') => void
   onOpenSettings?: () => void
+  onOpenAccount?: () => void
 }
 
 type SupportTab = 'session' | 'note' | 'manual'
@@ -308,7 +309,7 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
 }
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onNavigate, onOpenSettings }: Props) {
+export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onNavigate, onOpenSettings, onOpenAccount }: Props) {
   const [visible,      setVisible]      = useState(false)
   const [connectMode,  setConnectMode]  = useState(false)
   const [confirmOpen,  setConfirmOpen]  = useState(false)
@@ -884,7 +885,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           </div>}
           <div
             className="poyon-connect-area"
-            onClick={() => { if (user) setConfirmOpen(true) }}
+            onClick={() => { if (user) setConfirmOpen(true); else onOpenAccount?.() }}
           >
             <div className="poyon-scanner-ring" />
             <div className="poyon-main-core">

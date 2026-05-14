@@ -427,7 +427,7 @@ export default function App() {
           {/* 研究室 */}
           {cal.view === 'support' && (
             <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} />
+              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} />
             </Suspense>
           )}
 
@@ -462,16 +462,16 @@ export default function App() {
           {isCalView && (
             <div style={carouselOuterStyle}>
               {/* カレンダーサブバー */}
-              <div style={styles.calSubBar}>
+              <div style={{ ...styles.calSubBar, ...(isMobile && { padding: '2px 4px' }) }}>
                 <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
-                <h1 style={{ ...styles.subLabel, ...(isMobile ? { flex: 1, textAlign: 'center' as const } : {}) }}>{cal.label}</h1>
+                <h1 style={styles.subLabel}>{cal.label}</h1>
                 <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
                 {/* スマホ時のみ右端にサイドバー開閉ハンバーガーボタン */}
                 {isMobile && (
                   <button
                     onClick={handleMenuClick}
                     aria-label="メニュー"
-                    style={{ ...styles.subNavBtn, marginLeft: 4 }}
+                    style={{ ...styles.subNavBtn, marginLeft: 'auto' }}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <line x1="3" y1="6"  x2="21" y2="6"  />
@@ -628,7 +628,7 @@ export default function App() {
       )}
 
       {cal.view !== 'support' && (
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative', zIndex: 1, flexShrink: 0 }}>
           {/* つまみ（フッター開閉） */}
           <button
             onClick={toggleFooter}
