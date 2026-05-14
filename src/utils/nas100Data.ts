@@ -1,3 +1,4 @@
+import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
 
 export interface Nas100DayData {
@@ -13,12 +14,6 @@ const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
 function isMarketOpen(): boolean {
   const day = new Date().getUTCDay()
   return day !== 0 && day !== 6
-}
-
-function writeCache(data: Nas100DayData[]) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
-  } catch { /* ignore */ }
 }
 
 function parseYahooClose(json: unknown): Map<string, number> {
@@ -46,34 +41,20 @@ async function fetchSymbol(sym: string): Promise<Map<string, number>> {
 }
 
 export async function fetchNas100Data(force = false): Promise<Nas100DayData[]> {
-  let stale: Nas100DayData[] | null = null
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (raw) {
-      const c = JSON.parse(raw) as { data: Nas100DayData[]; fetchedAt: number }
-      stale = c.data
-      if (!force) {
-        const ttl = isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED
-        if (Date.now() - c.fetchedAt <= ttl) return c.data
-      }
-    }
-  } catch { /* ignore */ }
-
-  try {
-    const closeMap = await fetchSymbol('^NDX')
-    const dates    = Array.from(closeMap.keys()).sort()
-
-    const pts: Nas100DayData[] = dates.map((time, i) => {
-      const close     = closeMap.get(time)!
-      const prev      = i > 0 ? closeMap.get(dates[i - 1])! : null
-      const changePct = prev != null ? Math.round((close - prev) / prev * 10000) / 100 : null
-      return { time, close, changePct }
-    })
-
-    writeCache(pts)
-    return pts
-  } catch (e) {
-    if (stale) return stale
-    throw e
-  }
+  return fetchWithCache({
+    key: CACHE_KEY,
+    ttl: () => isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
+    force,
+    fetcher: async () => {
+      const closeMap = await fetchSymbol('^NDX')
+      const dates    = Array.from(closeMap.keys()).sort()
+      const data: Nas100DayData[] = dates.map((time, i) => {
+        const close    = closeMap.get(time)!
+        const prev     = i > 0 ? closeMap.get(dates[i - 1])! : null
+        const changePct = prev != null ? Math.round((close - prev) / prev * 10000) / 100 : null
+        return { time, close, changePct }
+      })
+      return { data }
+    },
+  })
 }

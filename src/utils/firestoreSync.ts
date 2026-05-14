@@ -1,8 +1,4 @@
-import {
-  collection, doc,
-  onSnapshot, query, where,
-} from 'firebase/firestore'
-import { db } from './firebase'
+import { getDb } from './firebase'
 import { restGetDoc, restListDocs, restSetDoc, restDeleteDoc } from './firestoreRest'
 import type { DayNote } from './noteStorage'
 import { isPendingDelete, removePendingDelete } from './noteStorage'
@@ -22,14 +18,6 @@ function loadLocal(): RawNotes {
 
 function saveLocal(notes: RawNotes): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(notes))
-}
-
-function notesCol(uid: string) {
-  return collection(db, 'users', uid, 'notes')
-}
-
-function stickyNotesDocRef(uid: string) {
-  return doc(db, 'users', uid, 'data', 'stickyNotes')
 }
 
 /** dateKey (YYYY-MM-DD) から月キー (YYYY-MM) を取得 */
@@ -177,12 +165,18 @@ export async function saveNoteToFirestore(uid: string, key: string, note: DayNot
  * 他デバイスからの変更を localStorage に反映するリアルタイムリスナー。
  * 直近24ヶ月のドキュメントのみ監視。hasPendingWrites はスキップ。
  */
-export function subscribeToNotes(uid: string, onRemoteChange: () => void): () => void {
+export async function subscribeToNotes(uid: string, onRemoteChange: () => void): Promise<() => void> {
+  const [db, { collection, query, where, onSnapshot }] = await Promise.all([
+    getDb(),
+    import('firebase/firestore'),
+  ])
+
   const validMonths = getValidMonthKeys()
   const monthList = [...validMonths]
-
-  // Firestore の `in` クエリは最大30件まで
-  const q = query(notesCol(uid), where('__name__', 'in', monthList.slice(0, 30)))
+  const q = query(
+    collection(db, 'users', uid, 'notes'),
+    where('__name__', 'in', monthList.slice(0, 30)),
+  )
 
   return onSnapshot(
     q,
@@ -192,7 +186,6 @@ export function subscribeToNotes(uid: string, onRemoteChange: () => void): () =>
 
       snapshot.docChanges().forEach(change => {
         if (change.doc.metadata.hasPendingWrites) return
-
         if (change.type === 'removed') return
 
         const { _updatedAt, ...notes } = change.doc.data()
@@ -204,12 +197,9 @@ export function subscribeToNotes(uid: string, onRemoteChange: () => void): () =>
         }
       })
 
-      if (changed) {
-        saveLocal(local)
-        onRemoteChange()
-      }
+      if (changed) { saveLocal(local); onRemoteChange() }
     },
-    (error) => console.error('[Firestore] snapshot error:', error)
+    (error) => console.error('[Firestore] snapshot error:', error),
   )
 }
 
@@ -252,15 +242,20 @@ export async function saveStickyNotesToFirestore(uid: string, notes: StickyNote[
 }
 
 /** 他デバイスからのスティッキーメモ変更を購読 */
-export function subscribeToStickyNotes(uid: string, onChange: (notes: StickyNote[]) => void): () => void {
+export async function subscribeToStickyNotes(uid: string, onChange: (notes: StickyNote[]) => void): Promise<() => void> {
+  const [db, { doc, onSnapshot }] = await Promise.all([
+    getDb(),
+    import('firebase/firestore'),
+  ])
+
   return onSnapshot(
-    stickyNotesDocRef(uid),
+    doc(db, 'users', uid, 'data', 'stickyNotes'),
     (snap) => {
       if (!snap.exists() || snap.metadata.hasPendingWrites) return
       const notes: StickyNote[] = (snap.data().notes ?? []).slice(0, 1)
       saveStickyNotes(notes)
       onChange(notes)
     },
-    (err) => console.error('[Firestore] sticky notes error:', err)
+    (err) => console.error('[Firestore] sticky notes error:', err),
   )
 }

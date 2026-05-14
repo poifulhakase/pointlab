@@ -1,43 +1,55 @@
-name: Fetch market data
+name: データ自動更新
 
 on:
   schedule:
-    # 毎週月曜〜金曜 08:30 JST (23:30 UTC) に実行
-    # JPXは前週データを週後半〜翌週初に公開するため月曜朝が最適
-    - cron: '30 23 * * 0-4'
-  workflow_dispatch:  # 手動実行も可能
+    # 水曜 09:00 JST (00:00 UTC): JPX投資主体別・信用データ
+    - cron: '0 0 * * 3'
+    # 土曜 09:00 JST (00:00 UTC): COT・週次データ締め後
+    - cron: '0 0 * * 6'
+  workflow_dispatch:
 
 jobs:
-  fetch:
+  fetch-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout
+      - name: チェックアウト
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Node.js セットアップ
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: 依存関係インストール
         run: npm ci
 
-      - name: Fetch JPX data
+      - name: データ取得
         run: npm run fetch-data
-        continue-on-error: true  # 一部失敗しても続行
+        continue-on-error: true
 
-      - name: Commit updated data files
+      - name: 変更チェック & コミット
+        id: commit
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/*.json
+          git add public/data/
           if git diff --cached --quiet; then
-            echo "データ変更なし（スキップ）"
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "データに変更なし。スキップします。"
           else
-            git commit -m "chore: auto-update market data [skip ci]"
+            git commit -m "chore: データ自動更新 $(date '+%Y-%m-%d')"
             git push
+            echo "changed=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Vercel デプロイ
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: npx vercel --prod --token "$VERCEL_TOKEN"

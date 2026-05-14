@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { initializeFirestore } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,6 +13,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
-export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
-})
+
+// Firestore は認証後にのみ必要なため遅延初期化
+let _db: Firestore | null = null
+
+export async function getDb(): Promise<Firestore> {
+  if (!_db) {
+    const { initializeFirestore } = await import('firebase/firestore')
+    _db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true })
+  }
+  return _db
+}

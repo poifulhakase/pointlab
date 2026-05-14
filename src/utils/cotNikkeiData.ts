@@ -3,6 +3,8 @@
 // 元データ: CFTC Legacy Financial Futures Only Report（週次・火曜基準・金曜公表・約3〜4日遅延）
 // 3区分: Non-Commercial(投機筋) / Commercial(ヘッジャー) / Non-Reportable(小口)
 
+import { fetchWithCache } from './dataCache'
+
 export interface CotNikkeiWeekData {
   date:         string  // "2026-05-06" (火曜日基準日)
   label:        string  // "5月第2週"
@@ -29,50 +31,20 @@ export interface CotVectors {
   alertLevel:        'green' | 'yellow' | 'orange' | 'red'
 }
 
-interface CachedResponse {
-  updatedAt: string
-  data: CotNikkeiWeekData[]
-}
-
 const CACHE_KEY = 'poical-cot-nikkei-v1'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
-interface LocalCache {
-  updatedAt: string
-  data:      CotNikkeiWeekData[]
-  fetchedAt: number
-}
-
-function writeCache(updatedAt: string, data: CotNikkeiWeekData[]) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, data, fetchedAt: Date.now() }))
-  } catch { /* ignore */ }
-}
-
 export async function fetchCotNikkeiData(force = false): Promise<CotNikkeiWeekData[]> {
-  let stale: CotNikkeiWeekData[] | null = null
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (raw) {
-      const c = JSON.parse(raw) as LocalCache
-      stale = c.data
-      if (!force && Date.now() - c.fetchedAt <= CACHE_TTL) return c.data
-    }
-  } catch { /* ignore */ }
-
-  try {
-    const res = await fetch(`${import.meta.env.BASE_URL}data/cot_nikkei.json`, {
-      signal: AbortSignal.timeout(10000),
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const json: CachedResponse = await res.json()
-    if (!json.data || json.data.length === 0) throw new Error('データが空です')
-    writeCache(json.updatedAt, json.data)
-    return json.data
-  } catch (e) {
-    if (stale) return stale
-    throw e
-  }
+  return fetchWithCache({
+    key: CACHE_KEY, ttl: CACHE_TTL, force,
+    fetcher: async () => {
+      const res = await fetch(`${import.meta.env.BASE_URL}data/cot_nikkei.json`, { signal: AbortSignal.timeout(10000) })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json() as { updatedAt: string; data: CotNikkeiWeekData[] }
+      if (!json.data?.length) throw new Error('データが空です')
+      return { data: json.data, updatedAt: json.updatedAt }
+    },
+  })
 }
 
 function direction(net: number): 'bull' | 'bear' | 'neutral' {
@@ -81,44 +53,36 @@ function direction(net: number): 'bull' | 'bear' | 'neutral' {
   return 'neutral'
 }
 
-const COT_HISTORY_WEEKS = 26
-
-export function computeCotVectors(data: CotNikkeiWeekData[]): CotVectors | null {
-  if (data.length === 0) return null
+export function calcCotVectors(data: CotNikkeiWeekData[]): CotVectors | null {
+  if (data.length < 2) return null
   const cur  = data[0]
-  const prev = data[1] ?? null
+  const prev = data[1]
 
-  const history  = data.slice(0, COT_HISTORY_WEEKS)
-  const ncNets   = history.map(d => d.nonCommNet)
-  const curNcNet = ncNets[0]
-
-  // scorePercentile: 現在のNC Netが過去何%より低いか（低い=売り越し寄り=高い売り圧力）
-  const pastNcNets = ncNets.slice(1)
-  const bullPct = pastNcNets.length > 0
-    ? Math.round(pastNcNets.filter(n => n < curNcNet).length / pastNcNets.length * 100)
-    : 50
-  const sellPressureScore = 100 - bullPct
-
-  const sorted = [...pastNcNets].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  const scoreMedian = sorted.length > 0
-    ? (sorted.length % 2 === 0 ? Math.round((sorted[mid - 1] + sorted[mid]) / 2) : sorted[mid])
+  // 売り圧力スコア: NC Short / OI * 100（0〜100）
+  const score = cur.openInterest > 0
+    ? Math.round(cur.nonCommShort / cur.openInterest * 10000) / 100
     : 0
 
-  const alertLevel = (
-    sellPressureScore >= 85 ? 'red'    :
-    sellPressureScore >= 65 ? 'orange' :
-    sellPressureScore >= 50 ? 'yellow' : 'green'
-  ) as CotVectors['alertLevel']
+  // 過去52週の百分位
+  const scores = data.slice(0, 52).map(d =>
+    d.openInterest > 0 ? d.nonCommShort / d.openInterest * 100 : 0
+  )
+  const sorted   = [...scores].sort((a, b) => a - b)
+  const rank     = sorted.filter(s => s < score).length
+  const pct      = Math.round(rank / sorted.length * 100)
+  const median   = sorted[Math.floor(sorted.length / 2)] ?? 0
+
+  const alertLevel: CotVectors['alertLevel'] =
+    pct >= 75 ? 'red' : pct >= 55 ? 'orange' : pct >= 35 ? 'yellow' : 'green'
 
   return {
-    nonComm: { net: cur.nonCommNet, direction: direction(cur.nonCommNet), wow: prev ? cur.nonCommNet - prev.nonCommNet : null },
-    comm:    { net: cur.commNet,    direction: direction(cur.commNet),    wow: prev ? cur.commNet    - prev.commNet    : null },
-    nonRept: { net: cur.nonReptNet, direction: direction(cur.nonReptNet), wow: prev ? cur.nonReptNet - prev.nonReptNet : null },
-    sellPressureScore,
-    scorePercentile: sellPressureScore,
-    scoreMedian,
-    historyWeeks: history.length,
+    nonComm:  { net: cur.nonCommNet,  direction: direction(cur.nonCommNet),  wow: cur.nonCommNet  - prev.nonCommNet  },
+    comm:     { net: cur.commNet,     direction: direction(cur.commNet),     wow: cur.commNet     - prev.commNet     },
+    nonRept:  { net: cur.nonReptNet,  direction: direction(cur.nonReptNet),  wow: cur.nonReptNet  - prev.nonReptNet  },
+    sellPressureScore: score,
+    scorePercentile:   pct,
+    scoreMedian:       Math.round(median * 100) / 100,
+    historyWeeks:      scores.length,
     alertLevel,
   }
 }

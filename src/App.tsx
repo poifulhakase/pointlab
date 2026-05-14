@@ -19,6 +19,10 @@ import { getAllNoteData, dateKey, type NoteMapEntry, type ScheduleEntry } from '
 import { getSettings, saveSettings, type PoiroboAlertConfig } from './utils/settingsStorage'
 import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
+import { Z } from './utils/zIndex'
+import { purgeStaleDataCaches } from './utils/dataCache'
+import { PWAUpdateBanner } from './components/PWAUpdateBanner'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
 const ChartView    = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
@@ -56,6 +60,8 @@ const Toast = memo(({ message }: { message: string }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => getSettings().theme)
+
+  useEffect(() => { purgeStaleDataCaches() }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -374,6 +380,7 @@ export default function App() {
 
   return (
     <div style={styles.app}>
+      <PWAUpdateBanner />
       <PoiroboAlertModal
         isOpen={poiroboAlertModalOpen}
         config={poiroboAlertConfig}
@@ -426,23 +433,29 @@ export default function App() {
 
           {/* 研究室 */}
           {cal.view === 'support' && (
-            <Suspense fallback={<ViewLoader />}>
-              <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} />
-            </Suspense>
+            <ErrorBoundary label="研究室">
+              <Suspense fallback={<ViewLoader />}>
+                <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* チャート */}
           {cal.view === 'chart' && (
-            <Suspense fallback={<ViewLoader />}>
-              <ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} />
-            </Suspense>
+            <ErrorBoundary label="チャート">
+              <Suspense fallback={<ViewLoader />}>
+                <ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* データ（需給） */}
           {cal.view === 'quant' && (
-            <Suspense fallback={<ViewLoader />}>
-              <QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} settingsOpen={quantSettingsOpen} onCloseSettings={() => setQuantSettingsOpen(false)} />
-            </Suspense>
+            <ErrorBoundary label="ぽいロボ">
+              <Suspense fallback={<ViewLoader />}>
+                <QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} settingsOpen={quantSettingsOpen} onCloseSettings={() => setQuantSettingsOpen(false)} />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* ノート */}
@@ -627,7 +640,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: 161, flexShrink: 0 }}>
+      <div style={{ position: 'relative', zIndex: Z.footer, flexShrink: 0 }}>
           {/* つまみ（フッター開閉） */}
           <button
             onClick={toggleFooter}
@@ -702,7 +715,7 @@ const styles: Record<string, React.CSSProperties> = {
   app:         { height: '100%', display: 'flex', flexDirection: 'column' },
   body:        { flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' },
   main:        { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
-  mobileOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', zIndex: 199 },
+  mobileOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', zIndex: Z.sidebarOverlay },
 
   calSubBar:    { display: 'flex', alignItems: 'center', padding: '6px 12px', flexShrink: 0, background: 'transparent', border: 'none', userSelect: 'none' },
   calSubLeft:   { flex: 1, display: 'flex', alignItems: 'center', gap: 6 },
@@ -718,9 +731,9 @@ const styles: Record<string, React.CSSProperties> = {
   subNavBtn:    { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 7, color: 'var(--text-sub)', flexShrink: 0 },
   subLabel:     { fontWeight: 500, fontSize: 16, letterSpacing: '-0.3px', color: 'var(--text)', whiteSpace: 'nowrap', margin: '0 2px', flexShrink: 0 },
 
-  toast: { position: 'fixed', bottom: 130, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
+  toast: { position: 'fixed', bottom: 130, right: 24, zIndex: Z.popover, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
 
-  floatSubBarBase: { position: 'fixed', right: 12, zIndex: 150, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform', transition: 'bottom 0.3s cubic-bezier(0.4,0,0.2,1)' },
+  floatSubBarBase: { position: 'fixed', right: 12, zIndex: Z.floatSubBar, borderRadius: 14, userSelect: 'none', background: 'var(--body-bg)', backgroundAttachment: 'fixed', transform: 'translateZ(0)', willChange: 'transform', transition: 'bottom 0.3s cubic-bezier(0.4,0,0.2,1)' },
   footerTsumami: {
     position: 'absolute', top: -24, left: '50%', transform: 'translateX(-50%)',
     width: 56, height: 24,
@@ -729,7 +742,7 @@ const styles: Record<string, React.CSSProperties> = {
     backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)',
     border: '1px solid var(--glass-border)', borderBottom: 'none',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: 'pointer', zIndex: 161,
+    cursor: 'pointer', zIndex: Z.footer,
     transition: 'opacity 0.15s',
   } as React.CSSProperties,
   floatSubBar:  { borderRadius: 14, padding: 4 },

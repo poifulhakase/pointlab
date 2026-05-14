@@ -318,27 +318,34 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: '研究室は、資料閲覧・設定・ぽいロボ コネクトへのアクセスを統合したハブビューです。ヘッダーのフラスコアイコンをタップして表示します。',
+        text: '研究室は、資料閲覧・設定・ぽいロボ コネクトへのアクセスを統合したハブビューです。フッターのフラスコアイコンをタップして表示します。',
       },
       {
         type: 'table' as const,
         headers: ['パネル', '内容'],
         rows: [
-          ['研究室（左）', 'メニュー（6ボタン）: DATA / REPORT / MANUAL / SETTINGS / HOME / CHART'],
-          ['資料（中央）', 'NoteView — 記事一覧（基本・インジケーター・イベントドリブン・未来ガジェット）。「← 研究室」ボタンで研究室パネルへ戻れる'],
-          ['使い方（右）', 'ManualView — アプリ説明書'],
+          ['研究室', 'メニュー（2ボタン）: 資料（DATA）/ 設定（SETTINGS）'],
+          ['資料', 'NoteView — 記事一覧（基礎・インジケーター・イベントドリブン・未来ガジェット）。「← 研究室」ボタンで研究室へ戻れる'],
+          ['使い方', 'ManualView — アプリ説明書（研究室 > 資料 > 使い方ガイドカードからアクセス）'],
         ],
       },
       {
         type: 'list' as const,
-        heading: 'メニューボタン（6項目）',
+        heading: 'メニューボタン（2項目）★2026-05-14 簡略化',
         items: [
-          'DATA → QuantView（需給分析ビュー）へ遷移。NoteView 内「← 研究室」ボタンで研究室へ戻れる',
-          'REPORT → 研究室パネルの資料タブ（NoteView）へ切り替え',
-          'MANUAL → 研究室パネルの使い方タブ（ManualView）へ切り替え',
-          'SETTINGS → 設定モーダルを開く（ヘッダー歯車アイコンは廃止）',
-          'HOME → カレンダービュー（月ビュー）へ遷移',
-          'CHART → チャートビューへ遷移',
+          '資料（DATA）→ NoteView（記事一覧）へ切り替え',
+          '設定（SETTINGS）→ 設定モーダルを開く（SettingsPanel）',
+          'カレンダー・チャート・ぽいロボエンジンはフッターの共通メニューから切り替え（研究室固有メニューから削除）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'フッターメニュー（全ビュー共通）★2026-05-14 研究室にも追加',
+        items: [
+          '全ビュー共通の CalendarHeader をフッターに表示（研究室も含む）',
+          'つまみボタン（footer wrapper zIndex: 161）でフッター開閉可能',
+          'タブ: カレンダー / チャート / ぽいロボ / 研究室（4タブ・アイコンのみ表示）',
+          '選択中タブの左右 padding: 14px（非選択: 8px）',
         ],
       },
       {
@@ -353,13 +360,15 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: 'ぽいロボ コネクト（右下ボタン）',
+        heading: 'ぽいロボ コネクト（右下ボタン）★2026-05-14 未ログイン対応',
         items: [
           '研究室ビュー右下に配置（position: absolute, bottom: 20-28px, right: 16-28px, zIndex: 20）・transform: scale(1.2) で 1.2 倍表示',
-          '博士画像（hakase.png）＋「ぽいロボ コネクト」テキスト＋「ぽいふる博士と接続」サブテキスト',
-          'ホバー時: POIROBO_CONNECT_v2.0 HUDパネル（「ぽいふる博士と音声通話・画面共有ができます。」）を表示',
+          '博士画像（hakase.webp）＋「ぽいロボ コネクト」テキスト＋「ぽいふる博士と接続」サブテキスト',
+          '未ログイン時: サブテキスト下に「Googleログインが必要です」を表示',
+          'ホバー時（PC）: POIROBO_CONNECT_v2.0 HUDパネル（「ぽいふる博士と音声通話・画面共有ができます。」）を表示',
           'スキャナーリング（slow-rotate 8s）・ダスト粒子8個（digital-dust 4-8s シアン浮上）・スキャンライン（support-scanline 3s 縦スクロール）',
-          'Googleログイン必須（未ログイン時はボタン押下不可）',
+          'Googleログイン必須 — 未ログイン時: ボタン押下で AuthModal を表示（onOpenAccount 経由）',
+          'ログイン成功後: sessionStorage（poical-pending-connect）でフラグ保持 → 自動で接続確認モーダルを表示（リダイレクト方式のリロードにも対応）',
         ],
       },
       {
@@ -370,6 +379,7 @@ const SPEC_SECTIONS = [
           'JWT 認証: Vercel API Route `api/jitsi-token.js` で RS256 署名（jose ライブラリ）',
           '必要環境変数: JAAS_APP_ID / JAAS_KEY_ID / JAAS_PRIVATE_KEY（サーバー）/ VITE_JAAS_APP_ID（クライアント）',
           'ルーム名: `{VITE_JAAS_APP_ID}/poirobo-{uid先頭12文字}`（ユーザー UID ベースで固有）',
+          '接続確認モーダル: position:fixed / zIndex:170（フッターを含む全画面を覆う）',
           '最大参加人数: 2名（3人目が入ろうとした場合: 管理者がいれば即キック、ユーザーは「満員」表示で切断）',
           'ツールバー: マイク・画面共有・切断のみ（iOS は画面共有非対応のため2ボタン）',
           '管理者アカウント（sushi.ramen.unajyu@gmail.com）は表示名「ぽいふる博士」・moderator: true',
@@ -562,7 +572,7 @@ export function SpecView({ theme, isMobile }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいロボ — 最終更新: 2026-05-12
+              ぽいロボ — 最終更新: 2026-05-14
             </p>
           </div>
         </div>

@@ -265,7 +265,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '16px 16px 8px',
+    padding: '64px 16px 16px',
   },
   footerLink: {
     background: 'transparent',

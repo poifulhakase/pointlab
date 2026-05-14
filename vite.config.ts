@@ -6,12 +6,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base: '/calendar/',
   build: {
+    target: 'es2020',
     outDir: 'dist/calendar',
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react-vendor'
-          if (id.includes('node_modules/firebase')) return 'firebase'
+          // firebase/firestore は動的インポートのため自動分割される
+          // firebase/auth と firebase/app のみ eager chunk に含める
+          if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+            if (id.includes('@firebase/firestore') || id.includes('/firestore/')) return undefined
+            return 'firebase'
+          }
         },
       },
     },
@@ -51,7 +57,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,webp,woff2}'],
         runtimeCaching: [
           {
             // Yahoo Finance / プロキシ経由のデータはネットワーク優先
@@ -60,6 +66,21 @@ export default defineConfig({
             options: {
               cacheName: 'external-api',
               expiration: { maxEntries: 20, maxAgeSeconds: 60 * 30 },
+            },
+          },
+          {
+            // Firebase Firestore REST API
+            urlPattern: /^https:\/\/firestore\.googleapis\.com/,
+            handler: 'NetworkOnly',
+          },
+          {
+            // NHK ニュース等の外部コンテンツ
+            urlPattern: /^https:\/\/(www3\.nhk\.or\.jp|www\.nhk\.or\.jp)/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'news-api',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 10 },
+              networkTimeoutSeconds: 5,
             },
           },
         ],

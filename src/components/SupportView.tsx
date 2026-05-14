@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
+import { Z } from '../utils/zIndex'
 
 const NoteView   = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const ManualView = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
@@ -747,7 +748,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       {/* 接続確認モーダル */}
       {confirmOpen && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 170,
+          position: 'fixed', inset: 0, zIndex: Z.connectConfirm,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'rgba(0,4,16,0.75)', backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',

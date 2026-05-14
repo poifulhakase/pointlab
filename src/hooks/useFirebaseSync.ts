@@ -4,8 +4,7 @@ import {
   signInWithPopup, signOut as firebaseSignOut,
 } from 'firebase/auth'
 import type { User } from 'firebase/auth'
-import { auth, db } from '../utils/firebase'
-import { enableNetwork } from 'firebase/firestore'
+import { auth, getDb } from '../utils/firebase'
 import {
   initialSync, saveNoteToFirestore, subscribeToNotes,
   syncStickyNotesOnLogin, saveStickyNotesToFirestore, subscribeToStickyNotes,
@@ -41,8 +40,13 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
 
     setSyncStatus('syncing')
     try {
-      // Firestore SDK が offline 状態になっている場合に強制再接続
+      // Firestore SDK が offline 状態になっている場合に強制再接続（遅延ロード）
+      const [{ enableNetwork }, db] = await Promise.all([
+        import('firebase/firestore'),
+        getDb(),
+      ])
       await enableNetwork(db).catch(() => {})
+
       const [, syncedSticky] = await Promise.all([
         initialSync(u.uid),
         syncStickyNotesOnLogin(u.uid),
@@ -52,8 +56,8 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
       setSyncStatus('synced')
       if (newLoginRef.current) { newLoginRef.current = false; setLoginToast(true) }
 
-      unsubNotesRef.current = subscribeToNotes(u.uid, () => { refreshNoteMap() })
-      unsubStickyRef.current = subscribeToStickyNotes(u.uid, (notes) => { setStickyNotes(notes) })
+      unsubNotesRef.current = await subscribeToNotes(u.uid, () => { refreshNoteMap() })
+      unsubStickyRef.current = await subscribeToStickyNotes(u.uid, (notes) => { setStickyNotes(notes) })
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? ''
       const isOffline = code === 'unavailable' || (err instanceof Error && err.message.includes('offline'))

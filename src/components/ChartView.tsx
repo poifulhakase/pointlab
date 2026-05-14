@@ -13,9 +13,13 @@ type Props = {
 // ── 単一チャートパネル ─────────────────────────────────────
 function ChartPanel({ symbol, interval, theme, height, hideSideToolbar }: { symbol: string; interval: string; theme: 'dark' | 'light'; height: number; hideSideToolbar?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // height > 0 になった瞬間だけ true に切り替わる bool。
+  // フッター開閉で height 数値が変わっても boolean は変わらないため
+  // widget を再生成しない（autosize: true がコンテナ変化を吸収する）
+  const hasHeight = height > 0
 
   useEffect(() => {
-    if (height === 0) return
+    if (!hasHeight) return
     const el = containerRef.current
     if (!el) return
     el.innerHTML = ''
@@ -44,7 +48,7 @@ function ChartPanel({ symbol, interval, theme, height, hideSideToolbar }: { symb
     el.appendChild(script)
 
     return () => { el.innerHTML = '' }
-  }, [symbol, interval, theme, height])
+  }, [symbol, interval, theme, hideSideToolbar, hasHeight])
 
   return (
     <div
@@ -278,7 +282,7 @@ export function ChartView({ theme, isMobile, symbol, onSymbolChange: _onSymbolCh
   return (
     <div style={{ ...styles.wrap, ...themeVars(theme) }}>
       <div ref={panelsRef} style={styles.panels}>
-        <ChartPanel symbol={symbol} interval="D" theme={theme} height={panelsHeight} hideSideToolbar={isMobile || effectiveSplit === 2} />
+        <ChartPanel key={`panel1-${effectiveSplit}`} symbol={symbol} interval="D" theme={theme} height={panelsHeight} hideSideToolbar={isMobile || effectiveSplit === 2} />
         {effectiveSplit === 2 && (
           <ChartPanel symbol={symbol} interval="W" theme={theme} height={panelsHeight} hideSideToolbar />
         )}

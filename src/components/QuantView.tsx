@@ -1164,14 +1164,37 @@ const ms: Record<string, React.CSSProperties> = {
   aiDesc:  { fontSize: 10, color: 'var(--text-dim)', whiteSpace: 'nowrap' as const },
 }
 
+// ── データ鮮度ヘルパー ──────────────────────────────
+function freshnessColor(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'var(--text-dim)'
+  const d = new Date(dateStr.replace(/\//g, '-'))
+  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000)
+  if (days <= 7)  return 'rgba(74,222,128,0.9)'
+  if (days <= 14) return 'rgba(251,191,36,0.9)'
+  return 'rgba(255,107,107,0.9)'
+}
+
+function FreshnessTag({ dateStr }: { dateStr: string | null | undefined }) {
+  if (!dateStr) return null
+  const d = new Date(dateStr.replace(/\//g, '-'))
+  const label = `${d.getMonth() + 1}/${d.getDate()}現在`
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: 'var(--text-dim)' }}>
+      <span style={{ color: freshnessColor(dateStr), fontSize: 8, lineHeight: 1 }}>●</span>
+      {label}
+    </span>
+  )
+}
+
 // ── パネルヘッダー ─────────────────────────────────
 function PanelHeader({
-  icon, title, sub, dateRange,
+  icon, title, sub, dateRange, latestDate,
 }: {
   icon: React.ReactNode
   title: string
   sub: string
   dateRange?: string
+  latestDate?: string | null
 }) {
   return (
     <div style={s.panelHead}>
@@ -1181,7 +1204,10 @@ function PanelHeader({
         <span style={s.panelSub}>{sub}</span>
       </div>
       <div style={s.panelRight}>
-        {dateRange && <span style={s.dataRange}>{dateRange}</span>}
+        {latestDate
+          ? <FreshnessTag dateStr={latestDate} />
+          : dateRange && <span style={s.dataRange}>{dateRange}</span>
+        }
       </div>
     </div>
   )
@@ -1499,7 +1525,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>}
             title="信用倍率"
             sub="2市場計（週次）"
-            dateRange={marData.length > 0 ? `${marData[marData.length - 1]?.date} 〜 ${marData[0]?.date}` : undefined}
+            latestDate={marData[0]?.date}
           />
           <div style={mTblWrap}>
             {(marLoading && marData.length === 0) || marError
@@ -1578,7 +1604,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="17" cy="8" r="3"/><circle cx="7" cy="16" r="3"/><path d="M14 8H7M17 11v5"/></svg>}
             title="投資主体別売買動向"
             sub="差引金額（百万円）"
-            dateRange={invData.length > 0 ? `${invData[invData.length - 1]?.date} 〜 ${invData[0]?.date}` : undefined}
+            latestDate={invData[0]?.date}
           />
           <div style={mTblWrap}>
             {(invLoading && invData.length === 0) || invError
@@ -1644,7 +1670,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                   icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
                   title="需給指標"
                   sub="空売り比率・騰落レシオ・裁定残高（週次）"
-                  dateRange={latestDate ? `最新: ${latestDate}` : undefined}
+                  latestDate={latestDate}
                 />
                 <div style={mTblWrap}>
                   {combinedLoading || combinedError
@@ -1804,7 +1830,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                       <span style={s.panelSub}>日経225先物 全限月 (日次)</span>
                     </div>
                     <div style={s.panelRight}>
-                      {latestDate && <span style={s.dataRange}>{latestDate}</span>}
+                      <FreshnessTag dateStr={latestDate} />
                       <button onClick={() => loadFuturesDaily(true)} style={s.reloadBtn} title="再読み込み">↺</button>
                     </div>
                   </div>

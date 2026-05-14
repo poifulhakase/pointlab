@@ -1,5 +1,6 @@
 // ドル円日次データ（静的JSON → Yahoo Finance プロキシ経由のフォールバック）
 
+import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
 
 export interface UsdjpyDayData {
@@ -11,22 +12,16 @@ export interface UsdjpyDayData {
   ma5dev:    number | null // MA5乖離率（%）
 }
 
-const CACHE_KEY          = 'poical-usdjpy-data'
-const CACHE_TTL_OPEN     = 30 * 60 * 1000
-const CACHE_TTL_CLOSED   = 2  * 60 * 60 * 1000
-const STATIC_JSON_URL    = `${import.meta.env.BASE_URL}data/usdjpy.json`
-const STATIC_MAX_AGE_MS  = 36 * 60 * 60 * 1000  // 36時間以内なら静的JSONを使用
+const CACHE_KEY         = 'poical-usdjpy-data'
+const CACHE_TTL_OPEN    = 30 * 60 * 1000
+const CACHE_TTL_CLOSED  = 2  * 60 * 60 * 1000
+const STATIC_JSON_URL   = `${import.meta.env.BASE_URL}data/usdjpy.json`
+const STATIC_MAX_AGE_MS = 36 * 60 * 60 * 1000  // 36時間以内なら静的JSONを使用
 
 function isForexOpen(): boolean {
   const now = new Date()
   const day = now.getUTCDay()
   return day !== 0 && day !== 6
-}
-
-function writeCache(data: UsdjpyDayData[]) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
-  } catch { /* ignore */ }
 }
 
 function parseYahooClose(json: unknown): Map<string, number> {
@@ -44,7 +39,7 @@ function parseYahooClose(json: unknown): Map<string, number> {
 }
 
 async function fetchSymbol(sym: string): Promise<Map<string, number>> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=3mo`
+  const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=3mo`
   const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=3mo`
   try {
     return parseYahooClose(await proxyFetch(url))
@@ -53,58 +48,44 @@ async function fetchSymbol(sym: string): Promise<Map<string, number>> {
   }
 }
 
+function buildPoints(closeMap: Map<string, number>): UsdjpyDayData[] {
+  const dates = Array.from(closeMap.keys()).sort()
+  return dates.map((time, i) => {
+    const close     = closeMap.get(time)!
+    const prev      = i > 0 ? closeMap.get(dates[i - 1])! : null
+    const change    = prev != null ? Math.round((close - prev) * 100) / 100 : null
+    const changePct = prev != null ? Math.round((close - prev) / prev * 10000) / 100 : null
+    let ma5: number | null = null
+    if (i >= 4) {
+      const sum = dates.slice(i - 4, i + 1).reduce((acc, d) => acc + closeMap.get(d)!, 0)
+      ma5 = Math.round(sum / 5 * 100) / 100
+    }
+    const ma5dev = ma5 != null ? Math.round((close - ma5) / ma5 * 10000) / 100 : null
+    return { time, close, change, changePct, ma5, ma5dev }
+  })
+}
+
 export async function fetchUsdjpyData(force = false): Promise<UsdjpyDayData[]> {
-  let stale: UsdjpyDayData[] | null = null
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (raw) {
-      const c = JSON.parse(raw) as { data: UsdjpyDayData[]; fetchedAt: number }
-      stale = c.data
-      if (!force) {
-        const ttl = isForexOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED
-        if (Date.now() - c.fetchedAt <= ttl) return c.data
-      }
-    }
-  } catch { /* ignore */ }
+  return fetchWithCache({
+    key: CACHE_KEY,
+    ttl: () => isForexOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
+    force,
+    fetcher: async () => {
+      // 静的JSONを優先使用（fetch-data スクリプトで生成・常に新鮮）
+      try {
+        const res = await fetch(STATIC_JSON_URL)
+        if (res.ok) {
+          const json = await res.json() as { updatedAt: string; data: UsdjpyDayData[] }
+          const age = Date.now() - new Date(json.updatedAt).getTime()
+          if (age < STATIC_MAX_AGE_MS && json.data?.length > 0) {
+            return { data: json.data }
+          }
+        }
+      } catch { /* fall through to live fetch */ }
 
-  // 静的JSONを優先使用（fetch-data スクリプトで生成・常に新鮮）
-  try {
-    const res = await fetch(STATIC_JSON_URL)
-    if (res.ok) {
-      const json = await res.json() as { updatedAt: string; data: UsdjpyDayData[] }
-      const age = Date.now() - new Date(json.updatedAt).getTime()
-      if (age < STATIC_MAX_AGE_MS && json.data?.length > 0) {
-        writeCache(json.data)
-        return json.data
-      }
-    }
-  } catch { /* fall through to live fetch */ }
-
-  // フォールバック: Yahoo Finance プロキシ経由でライブ取得
-  try {
-    const closeMap = await fetchSymbol('USDJPY=X')
-    const dates    = Array.from(closeMap.keys()).sort()
-
-    const pts: UsdjpyDayData[] = dates.map((time, i) => {
-      const close    = closeMap.get(time)!
-      const prev     = i > 0 ? closeMap.get(dates[i - 1])! : null
-      const change   = prev != null ? Math.round((close - prev) * 100) / 100 : null
-      const changePct = prev != null ? Math.round((close - prev) / prev * 10000) / 100 : null
-
-      let ma5: number | null = null
-      if (i >= 4) {
-        const sum = dates.slice(i - 4, i + 1).reduce((acc, d) => acc + closeMap.get(d)!, 0)
-        ma5 = Math.round(sum / 5 * 100) / 100
-      }
-      const ma5dev = ma5 != null ? Math.round((close - ma5) / ma5 * 10000) / 100 : null
-
-      return { time, close, change, changePct, ma5, ma5dev }
-    })
-
-    writeCache(pts)
-    return pts
-  } catch (e) {
-    if (stale) return stale
-    throw e
-  }
+      // フォールバック: Yahoo Finance プロキシ経由でライブ取得
+      const closeMap = await fetchSymbol('USDJPY=X')
+      return { data: buildPoints(closeMap) }
+    },
+  })
 }

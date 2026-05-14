@@ -73,7 +73,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
         position: 'fixed',
         top: 0,
         left: 0,
-        height: 'calc(100% - var(--header-height))',
+        height: '100%',
         width: 'var(--sidebar-width)',
         zIndex: 200,
         transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
@@ -200,7 +200,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
         </div>
 
         {/* ──── マーケット情報フィルター ──── */}
-        <div style={{ ...styles.filterWrap, marginTop: 0, borderTop: 'none', borderBottom: '1px solid var(--border-dim)' }}>
+        <div style={{ ...styles.filterWrap, marginTop: 0, borderTop: 'none', borderBottom: 'none' }}>
           <div style={styles.filterHeading}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/>

@@ -1,3 +1,4 @@
+import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
 
 export interface NkFuturesDayData {
@@ -22,12 +23,6 @@ function isMarketOpen(): boolean {
   return day !== 0 && day !== 6
 }
 
-function writeCache(data: NkFuturesDayData[]) {
-  if (data.length === 0) return
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, fetchedAt: Date.now() }))
-  } catch { /* ignore */ }
-}
 
 type OhlcvRaw = { date: string; open: number; high: number; low: number; close: number; volume: number | null }
 
@@ -109,25 +104,10 @@ async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
 }
 
 export async function fetchNkFuturesPriceData(force = false): Promise<NkFuturesDayData[]> {
-  let stale: NkFuturesDayData[] | null = null
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (raw) {
-      const c = JSON.parse(raw) as { data: NkFuturesDayData[]; fetchedAt: number }
-      stale = c.data
-      if (!force) {
-        const ttl = isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED
-        if (Date.now() - c.fetchedAt <= ttl) return c.data
-      }
-    }
-  } catch { /* ignore */ }
-
-  try {
-    const data = await fetchFromYahoo()
-    writeCache(data)
-    return data
-  } catch (e) {
-    if (stale) return stale
-    throw e
-  }
+  return fetchWithCache({
+    key: CACHE_KEY,
+    ttl: () => isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
+    force,
+    fetcher: async () => ({ data: await fetchFromYahoo() }),
+  })
 }

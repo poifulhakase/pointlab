@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ViewMode } from '../hooks/useCalendar'
+import { Z } from '../utils/zIndex'
 
 type Props = {
   view: ViewMode
@@ -77,7 +78,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
           display: 'flex', alignItems: 'stretch',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
-          flexShrink: 0, position: 'relative', zIndex: 160,
+          flexShrink: 0, position: 'relative', zIndex: Z.calendarHeader,
           userSelect: 'none', padding: '0 4px',
         }}
         className="glass"
@@ -248,7 +249,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 12px',
     paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
-    flexShrink: 0, position: 'relative', zIndex: 160, gap: 8,
+    flexShrink: 0, position: 'relative', zIndex: Z.calendarHeader, gap: 8,
     userSelect: 'none',
   },
   left: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
@@ -286,7 +287,7 @@ const styles: Record<string, React.CSSProperties> = {
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 200,
+    zIndex: Z.headerTooltip,
   },
   todayBtn:  { padding: '5px 12px', borderRadius: 20, fontSize: 13, fontWeight: 500, color: 'var(--text)', flexShrink: 0 },
   navGroup:  { display: 'flex', gap: 2, flexShrink: 0 },
