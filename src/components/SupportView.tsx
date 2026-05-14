@@ -875,6 +875,11 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
               <div className="poyon-text-wrap">
                 <div className="poyon-text-main">ぽいロボ コネクト</div>
                 <div className="poyon-text-sub">ぽいふる博士と接続</div>
+                {!user && (
+                  <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
+                    Googleログインが必要です
+                  </div>
+                )}
               </div>
             </div>
           </div>
