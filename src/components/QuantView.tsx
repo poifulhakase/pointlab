@@ -19,8 +19,9 @@ const VixPanel    = lazy(() => import('./VixPanel').then(m => ({ default: m.VixP
 const NtRatioPanel = lazy(() => import('./NtRatioPanel').then(m => ({ default: m.NtRatioPanel })))
 const DeltaModal  = lazy(() => import('./DeltaModal').then(m => ({ default: m.DeltaModal })))
 import type { DeltaModalType } from './DeltaModal'
-import { MicroQuantView, QuantMemoPanel } from './MicroQuantView'
-import { MarketDailyPanel } from './MarketDailyPanel'
+const MicroQuantView = lazy(() => import('./MicroQuantView').then(m => ({ default: m.MicroQuantView })))
+const QuantMemoPanel = lazy(() => import('./MicroQuantView').then(m => ({ default: m.QuantMemoPanel })))
+const MarketDailyPanel = lazy(() => import('./MarketDailyPanel').then(m => ({ default: m.MarketDailyPanel })))
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
 type QuantTabKey = 'kankyou' | 'genbutsu' | 'micro'
@@ -769,7 +770,7 @@ function buildExportJson(
         wow_change: nk?.change ?? null,
         as_of:      nk?.time  ?? null,
       },
-      sp500_nikkei_ratio: nk ? r2(nk.sp500 / nk.nikkei) : null,
+      sp500_nikkei_ratio: nk ? r2(nk.benchmark / nk.nikkei) : null,
     },
 
     volatility: {
@@ -1300,6 +1301,10 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
   // quantTab / setQuantTab は props から受け取る（App.tsx でリフト済み）
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
+  // micro タブは初回訪問時にマウント（以降は維持）
+  const [microMounted, setMicroMounted] = useState(() => quantTab === 'micro')
+  useEffect(() => { if (quantTab === 'micro') setMicroMounted(true) }, [quantTab])
+
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
   const [marExpanded,         setMarExpanded]         = useState(false)
   const [invExpanded,         setInvExpanded]         = useState(false)
@@ -1499,7 +1504,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         {/* クオンツ分析レポート */}
         <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-          <QuantMemoPanel theme={theme} user={user} isMobile={isMobile} />
+          <Suspense fallback={null}><QuantMemoPanel theme={theme} user={user} isMobile={isMobile} /></Suspense>
         </div>
 
 
@@ -1764,14 +1769,16 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         {/* BR: USD/JPY 日次 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-          <MarketDailyPanel
-            theme={theme}
-            isMobile={isMobile}
-            usdjpyData={usdjpyData}
-            usdjpyLoading={usdjpyLoading}
-            usdjpyError={usdjpyError}
-            onUsdjpyReload={() => loadUsdjpy(true)}
-          />
+          <Suspense fallback={null}>
+            <MarketDailyPanel
+              theme={theme}
+              isMobile={isMobile}
+              usdjpyData={usdjpyData}
+              usdjpyLoading={usdjpyLoading}
+              usdjpyError={usdjpyError}
+              onUsdjpyReload={() => loadUsdjpy(true)}
+            />
+          </Suspense>
         </div>
 
 
@@ -1793,15 +1800,19 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             ? { display: 'flex', flexDirection: 'column' }
             : { flex: 2, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-dim)', overflow: 'hidden', minWidth: 0 }
           }>
-            <MicroQuantView
-              theme={theme}
-              isMobile={isMobile}
-              data={cotData}
-              loading={cotLoading}
-              error={cotError}
-              onReload={() => loadCot(true)}
-              onOpenNetDelta={() => setDeltaModal('futures_net_weekly')}
-            />
+            {microMounted && (
+              <Suspense fallback={null}>
+                <MicroQuantView
+                  theme={theme}
+                  isMobile={isMobile}
+                  data={cotData}
+                  loading={cotLoading}
+                  error={cotError}
+                  onReload={() => loadCot(true)}
+                  onOpenNetDelta={() => setDeltaModal('futures_net_weekly')}
+                />
+              </Suspense>
+            )}
           </div>
 
           {isMobile && <div style={s.dividerH} />}

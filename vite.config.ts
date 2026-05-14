@@ -18,6 +18,7 @@ export default defineConfig({
             if (id.includes('@firebase/firestore') || id.includes('/firestore/')) return undefined
             return 'firebase'
           }
+          if (id.includes('node_modules/@sentry')) return 'sentry'
         },
       },
     },

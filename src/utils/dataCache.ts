@@ -21,7 +21,6 @@ const DATA_CACHE_KEYS = [
   'poical-vix-daily-data',
   'poical-nk-futures-price-v2',
   'poical-ns-ratio-data',
-  'poical-nt-topix-data',
   'poical-nhk-news',
 ] as const
 

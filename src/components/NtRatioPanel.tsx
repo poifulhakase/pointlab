@@ -162,7 +162,7 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
                 日経 {fmtNum(latest.nikkei)}
               </span>
               <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
-                S&P {fmtNum(latest.sp500)}
+                S&P {fmtNum(latest.benchmark)}
               </span>
               {updatedAt && (
                 <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 'auto' }}>
