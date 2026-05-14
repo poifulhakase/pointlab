@@ -627,8 +627,7 @@ export default function App() {
         </div>
       )}
 
-      {cal.view !== 'support' && (
-        <div style={{ position: 'relative', zIndex: 1, flexShrink: 0 }}>
+      <div style={{ position: 'relative', zIndex: 1, flexShrink: 0 }}>
           {/* つまみ（フッター開閉） */}
           <button
             onClick={toggleFooter}
@@ -659,8 +658,7 @@ export default function App() {
               sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
             />
           </div>
-        </div>
-      )}
+      </div>
 
       {/* トースト */}
       {loginToast && <Toast message="ログインしました" />}

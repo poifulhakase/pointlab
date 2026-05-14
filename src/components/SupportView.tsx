@@ -44,34 +44,7 @@ function ViewLoader() {
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/>
-      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  )
-}
-function ChartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/>
-    </svg>
-  )
-}
-function RobotIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2"/>
-      <path d="M9 11V8a3 3 0 0 1 6 0v3"/>
-      <circle cx="9" cy="16.5" r="1.3" fill="currentColor" stroke="none"/>
-      <circle cx="15" cy="16.5" r="1.3" fill="currentColor" stroke="none"/>
-      <line x1="12" y1="2" x2="12" y2="5"/>
-      <circle cx="12" cy="5" r="1" fill="currentColor" stroke="none"/>
-    </svg>
-  )
-}
+
 function GearIcon() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -94,9 +67,6 @@ type MenuView = 'month' | 'chart' | 'quant' | 'note' | null
 type MenuItem = { id: string; label: string; sub: string; accent: string; glow: string; view: MenuView; icon: React.ReactNode }
 
 const MENU_ITEMS: MenuItem[] = [
-  { id: 'calendar', label: 'Calendar', sub: 'カレンダー', accent: '#67e8f9', glow: 'rgba(103,232,249,0.45)', view: 'month',  icon: <CalendarIcon /> },
-  { id: 'chart',    label: 'Chart',    sub: 'チャート',   accent: '#c084fc', glow: 'rgba(192,132,252,0.45)', view: 'chart',  icon: <ChartIcon />    },
-  { id: 'poirobo',  label: 'Poirobo Engine',  sub: 'ぽいロボ エンジン',   accent: '#4ade80', glow: 'rgba(74,222,128,0.45)',  view: 'quant',  icon: <RobotIcon />    },
   { id: 'data',     label: 'Data',     sub: '資料',       accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: 'note',   icon: <DataIcon />     },
   { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
 ]
