@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-05-14T15:32:13.697Z",
+  "updatedAt": "2026-05-15T11:11:19.360Z",
   "data": [
     {
-      "date": "2026/05/14",
-      "close": 17.88,
-      "change": 0.01,
-      "changePct": 0.06
+      "date": "2026/05/15",
+      "close": 18.59,
+      "change": 1.33,
+      "changePct": 7.71
     },
     {
       "date": "2026/05/11",
-      "close": 17.87,
-      "change": 0.68,
-      "changePct": 3.96
+      "close": 17.26,
+      "change": 0.07,
+      "changePct": 0.41
     },
     {
       "date": "2026/05/04",
