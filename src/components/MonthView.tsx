@@ -88,7 +88,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                       anomalyEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
                       markers.some(m => poiroboAlertConfig[m as keyof typeof poiroboAlertConfig])
                     )
-                    ? 'rgba(0,229,160,0.14)'
+                    ? 'rgba(248,113,113,0.18)'
                     : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
                 borderTop: td && !dim
                   ? isLight ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.65)'
