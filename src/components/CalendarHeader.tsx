@@ -58,10 +58,10 @@ function LabIcon() {
 
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
-  { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                   icon: <CalendarIcon /> },
-  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',   icon: <ChartWaveIcon /> },
-  { label: 'ぽいロボ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',   icon: <RobotIcon /> },
-  { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support', icon: <LabIcon /> },
+  { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
+  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
+  { label: 'ぽいロボ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <RobotIcon /> },
+  { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 
 // ── コンポーネント ────────────────────────────────────
@@ -111,7 +111,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
                 transition: 'background 0.15s, box-shadow 0.15s',
               }}>
                 {v.icon}
-                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
                   {v.label}
                 </span>
               </span>
