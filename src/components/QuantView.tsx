@@ -1351,7 +1351,7 @@ const ms: Record<string, React.CSSProperties> = {
   headerTitle:     { display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' },
   closeBtn:        { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-sub)', cursor: 'pointer' },
   body:            { padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 18 },
-  section:         { display: 'flex', flexDirection: 'column', gap: 10 },
+  section:         { display: 'flex', flexDirection: 'column', gap: 18 },
   sectionTitle:    { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: 'var(--text-dim)' },
   desc:            { fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.6, margin: 0 },
   promptPreview:   { fontSize: 11, lineHeight: 1.7, padding: '8px 12px', borderRadius: 8, background: 'var(--bg-subtle)', border: '1px solid var(--border-dim)' },
