@@ -46,23 +46,31 @@ const GROUPS: GroupDef[] = [
   {
     label: 'アノマリー',
     items: [
-      { key: 'january_effect',   label: '1月効果',     sub: '年初1〜5営業日' },
-      { key: 'setsubun_top',     label: '節分天井',     sub: '節分（2/3）前後2営業日' },
-      { key: 'nisa_day',         label: 'NISAの日',     sub: '2月13日 前後1営業日' },
-      { key: 'higan_bottom',     label: '彼岸底',       sub: '春分の日の前5営業日' },
-      { key: 'new_fiscal_year',  label: '新年度入り',   sub: '4月第1〜3営業日' },
-      { key: 'sell_in_may',      label: 'セルインメイ', sub: '5月第1〜第2金曜日' },
-      { key: 'investment_day',   label: '投資の日',     sub: '10月4日 前後1営業日' },
+      { key: 'january_effect',   label: '1月効果',         sub: '年初1〜5営業日' },
+      { key: 'setsubun_top',     label: '節分天井',         sub: '節分（2/3）前後2営業日' },
+      { key: 'nisa_day',         label: 'NISAの日',         sub: '2月13日 前後1営業日' },
+      { key: 'higan_bottom',     label: '彼岸底',           sub: '春分の日の前5営業日' },
+      { key: 'new_fiscal_year',  label: '新年度入り',       sub: '4月第1〜3営業日' },
+      { key: 'sell_in_may',      label: 'セルインメイ',     sub: '5月第1〜第2金曜日' },
+      { key: 'investment_day',   label: '投資の日',         sub: '10月4日 前後1営業日' },
       { key: 'xmas_rally',       label: 'クリスマスラリー', sub: '12月25日〜年内受渡最終日' },
       { key: 'tax_loss_selling', label: 'タックスロスセリング', sub: '12月25日〜年内受渡最終日' },
     ],
   },
 ]
 
-export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Props) {
+const CY_BG     = '#050e1a'
+const CY_GREEN  = '#00e5a0'
+const CY_DIM    = 'rgba(0,229,160,0.60)'
+const CY_FAINT  = 'rgba(0,229,160,0.30)'
+const CY_BORDER = 'rgba(0,229,160,0.28)'
+const CY_BORDBR = 'rgba(0,229,160,0.50)'
+const CY_SCAN   = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,160,0.018) 3px, rgba(0,229,160,0.018) 4px)'
+const CY_FONT   = "'Courier New', Courier, monospace" as const
+
+export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
   const [local, setLocal] = useState<PoiroboAlertConfig>(config)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 600)
-  const isLight = theme === 'light'
 
   useEffect(() => {
     if (isOpen) setLocal(config)
@@ -86,33 +94,32 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
   const toggle = (key: keyof PoiroboAlertConfig) =>
     setLocal(prev => ({ ...prev, [key]: !prev[key] }))
 
-  const bgColor = isLight ? '#fff' : 'rgba(22,22,26,0.97)'
-
   const renderGroupItems = (group: GroupDef) =>
     group.items.map(({ key, label, sub }) => {
       const checked = local[key]
       return (
         <label
           key={key}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none', padding: '5px 0' }}
           onClick={() => toggle(key)}
         >
           <span style={{
-            width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-            border: `2px solid ${checked ? '#f87171' : 'var(--text-dim)'}`,
-            background: checked ? '#f87171' : 'transparent',
+            width: 15, height: 15, borderRadius: 2, flexShrink: 0, marginTop: 2,
+            border: `1.5px solid ${checked ? CY_GREEN : CY_FAINT}`,
+            background: checked ? 'rgba(0,229,160,0.15)' : 'transparent',
+            boxShadow: checked ? `0 0 8px rgba(0,229,160,0.4), inset 0 0 4px rgba(0,229,160,0.1)` : 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 0.15s, border-color 0.15s',
+            transition: 'all 0.15s',
           }}>
             {checked && (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={CY_GREEN} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             )}
           </span>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: checked ? 'var(--text)' : 'var(--text-sub)' }}>{label}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>{sub}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: checked ? CY_GREEN : CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.03em', lineHeight: 1.3 }}>{label}</div>
+            <div style={{ fontSize: 10, color: CY_FAINT, marginTop: 2, fontFamily: CY_FONT, letterSpacing: '0.02em' }}>{sub}</div>
           </div>
         </label>
       )
@@ -120,85 +127,102 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
 
   const renderGroup = (group: GroupDef, showDivider: boolean) => (
     <div key={group.label}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 2 }}>
-        {group.label}
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', color: CY_DIM, fontFamily: CY_FONT, marginBottom: 8, paddingLeft: 2 }}>
+        ▌ {group.label.toUpperCase()}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {renderGroupItems(group)}
       </div>
-      {showDivider && <div style={{ height: 1, background: 'var(--border-dim)', margin: '14px 0' }} />}
+      {showDivider && <div style={{ height: 1, background: CY_BORDER, margin: '14px 0' }} />}
     </div>
   )
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, zIndex: 900,
-    background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)',
-  }
-  const panel: React.CSSProperties = {
-    position: 'fixed', top: '50%', left: '50%', zIndex: 901,
-    transform: 'translate(-50%,-50%)',
-    width: isDesktop ? 'min(680px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))',
-    maxHeight: 'calc(100vh - 48px)',
-    display: 'flex',
-    flexDirection: 'column',
-    background: bgColor,
-    border: '1px solid var(--glass-border)',
-    borderRadius: 16,
-    boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
-  }
-
   return createPortal(
     <>
-      <div style={overlay} onClick={onClose} />
-      <div style={panel} onClick={e => e.stopPropagation()}>
+      {/* オーバーレイ */}
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,5,14,0.75)', backdropFilter: 'blur(6px)' }}
+        onClick={onClose}
+      />
+
+      {/* パネル */}
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%', zIndex: 901,
+          transform: 'translate(-50%,-50%)',
+          width: isDesktop ? 'min(680px, calc(100vw - 32px))' : 'min(380px, calc(100vw - 32px))',
+          maxHeight: 'calc(100vh - 48px)',
+          display: 'flex', flexDirection: 'column',
+          background: CY_BG,
+          backgroundImage: CY_SCAN,
+          border: `1px solid ${CY_BORDER}`,
+          borderRadius: 6,
+          boxShadow: `0 0 40px rgba(0,229,160,0.12), 0 20px 60px rgba(0,0,0,0.8)`,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* コーナーブラケット */}
+        <span style={{ position: 'absolute', top: -1, left: -1, width: 16, height: 16, borderTop: `2px solid ${CY_GREEN}`, borderLeft: `2px solid ${CY_GREEN}`, borderRadius: '4px 0 0 0' }} />
+        <span style={{ position: 'absolute', top: -1, right: -1, width: 16, height: 16, borderTop: `2px solid ${CY_GREEN}`, borderRight: `2px solid ${CY_GREEN}`, borderRadius: '0 4px 0 0' }} />
+        <span style={{ position: 'absolute', bottom: -1, left: -1, width: 16, height: 16, borderBottom: `2px solid ${CY_GREEN}`, borderLeft: `2px solid ${CY_GREEN}`, borderRadius: '0 0 0 4px' }} />
+        <span style={{ position: 'absolute', bottom: -1, right: -1, width: 16, height: 16, borderBottom: `2px solid ${CY_GREEN}`, borderRight: `2px solid ${CY_GREEN}`, borderRadius: '0 0 4px 0' }} />
 
         {/* ヘッダー */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 18px', borderBottom: '1px solid var(--border-dim)',
-          flexShrink: 0, background: bgColor, borderRadius: '16px 16px 0 0',
+          padding: '12px 16px', borderBottom: `1px solid ${CY_BORDER}`,
+          flexShrink: 0, background: 'rgba(0,229,160,0.05)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="2" fill="#f87171" stroke="none"/>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={CY_GREEN} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="2" fill={CY_GREEN} stroke="none"/>
               <circle cx="12" cy="12" r="6"/>
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="12" x2="19.07" y2="4.93"/>
             </svg>
-            ぽいロボ レーダー
+            <span style={{ fontFamily: CY_FONT, fontSize: 13, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }}>
+              POI-ROBO RADAR
+            </span>
           </div>
-          <button
-            onClick={onClose}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-sub)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
+              <span style={{ fontFamily: CY_FONT, fontSize: 9, color: CY_DIM, letterSpacing: '0.12em' }}>ACTIVE</span>
+            </div>
+            <button
+              onClick={onClose}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 4, color: CY_DIM, cursor: 'pointer', background: 'none', border: `1px solid ${CY_FAINT}`, padding: 0 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* 説明文 */}
-        <div style={{ padding: '12px 18px 10px', fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.65, borderBottom: '1px solid var(--border-dim)', flexShrink: 0 }}>
-          ハイライトしたいイベントを選択してください。
-          チェックした種類のイベントがある日付パネルを<span style={{ color: '#f87171', fontWeight: 600 }}>薄い赤</span>でハイライト表示します。
+        <div style={{ padding: '10px 16px 10px', borderBottom: `1px solid ${CY_BORDER}`, flexShrink: 0 }}>
+          <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.7 }}>
+            監視するイベントを選択してください。対象日付パネルを
+            <span style={{ color: CY_GREEN, fontWeight: 700 }}>グリーン</span>
+            でハイライト表示します。
+          </span>
         </div>
 
-        {/* グループ別チェックボックス */}
-        <div style={{ padding: '14px 18px', overflowY: 'auto', flex: 1 }}>
+        {/* チェックボックス */}
+        <div style={{ padding: '14px 16px', overflowY: 'auto', flex: 1 }}>
           {isDesktop ? (
-            /* PC: 2列レイアウト（左: SQ日+アノマリー / 右: 米国+日本） */
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 0', alignItems: 'start' }}>
-              <div style={{ paddingRight: 22, borderRight: '1px solid var(--border-dim)' }}>
+              <div style={{ paddingRight: 20, borderRight: `1px solid ${CY_BORDER}` }}>
                 {renderGroup(GROUPS[0], true)}
                 {renderGroup(GROUPS[3], false)}
               </div>
-              <div style={{ paddingLeft: 22 }}>
+              <div style={{ paddingLeft: 20 }}>
                 {renderGroup(GROUPS[1], true)}
                 {renderGroup(GROUPS[2], false)}
               </div>
             </div>
           ) : (
-            /* スマホ: 1列 */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {GROUPS.map((group, gi) => renderGroup(group, gi < GROUPS.length - 1))}
             </div>
@@ -206,18 +230,30 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         </div>
 
         {/* ボタン */}
-        <div style={{ padding: '10px 18px 18px', display: 'flex', gap: 8, flexShrink: 0, background: bgColor, borderRadius: '0 0 16px 16px', borderTop: '1px solid var(--border-dim)' }}>
+        <div style={{ padding: '10px 16px 16px', display: 'flex', gap: 8, flexShrink: 0, borderTop: `1px solid ${CY_BORDER}` }}>
           <button
             onClick={onClose}
-            style={{ flex: 1, padding: '9px 0', borderRadius: 9, fontSize: 13, fontWeight: 600, color: 'var(--text-sub)', background: 'var(--bg-medium)', border: '1px solid var(--glass-border)', cursor: 'pointer' }}
+            style={{
+              flex: 1, padding: '10px 0', borderRadius: 4,
+              fontFamily: CY_FONT, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em',
+              color: CY_DIM, background: 'rgba(0,229,160,0.05)',
+              border: `1px solid ${CY_FAINT}`, cursor: 'pointer',
+            }}
           >
-            キャンセル
+            CANCEL
           </button>
           <button
             onClick={() => onSave(local)}
-            style={{ flex: 1, padding: '9px 0', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#fff', background: '#f87171', border: 'none', cursor: 'pointer' }}
+            style={{
+              flex: 1, padding: '10px 0', borderRadius: 4,
+              fontFamily: CY_FONT, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em',
+              color: CY_BG, background: CY_GREEN,
+              border: `1px solid ${CY_BORDBR}`,
+              boxShadow: `0 0 16px rgba(0,229,160,0.4)`,
+              cursor: 'pointer',
+            }}
           >
-            保存して反映
+            SAVE &amp; APPLY
           </button>
         </div>
 

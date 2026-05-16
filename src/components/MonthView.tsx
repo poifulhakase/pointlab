@@ -80,7 +80,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 padding: isMobile ? '3px' : '6px',
                 opacity: dim ? 0.35 : 1,
                 background: td && !dim
-                  ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,210,80,0.18)'
+                  ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.10)'
                   : showPoiroboAlert && !dim && (
                       (poiroboAlertConfig.majorSq && sqMarkers.includes('sq-major')) ||
                       (poiroboAlertConfig.miniSq  && sqMarkers.includes('sq-mini'))  ||
@@ -88,10 +88,10 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                       anomalyEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
                       markers.some(m => poiroboAlertConfig[m as keyof typeof poiroboAlertConfig])
                     )
-                    ? 'rgba(248,113,113,0.18)'
+                    ? 'rgba(0,229,160,0.14)'
                     : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
                 borderTop: td && !dim
-                  ? isLight ? '3px solid #3b82f6' : '3px solid rgba(255,200,60,0.85)'
+                  ? isLight ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.65)'
                   : undefined,
                 cursor: 'pointer',
                 position: 'relative',
