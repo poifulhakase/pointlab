@@ -1039,7 +1039,7 @@ function EnginePanel({
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
           ...(CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}) }
-      : { width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      : { width: 440, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
           ...(CYBER_MODE
             ? { borderRight: `1px solid ${CY_BORDBR}`, background: CY_BG, backgroundImage: CY_SCAN }
             : { borderRight: '1px solid var(--border-dim)' }) }
@@ -1077,7 +1077,7 @@ function EnginePanel({
       </div>
 
       {/* ── スクロール可能コンテンツ ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42 }}>
 
         <div style={ms.section}>
           <div style={CYBER_MODE
