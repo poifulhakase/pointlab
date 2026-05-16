@@ -1041,17 +1041,64 @@ function EnginePanel({
           ...(CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}) }
       : { width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
           ...(CYBER_MODE
-            ? { borderRight: `1px solid ${CY_BORDBR}`, background: CY_BG, backgroundImage: CY_SCAN }
+            ? { borderRight: `1px solid ${CY_BORDBR}` }
             : { borderRight: '1px solid var(--border-dim)' }) }
     }>
 
+      {CYBER_MODE && <style>{`
+        @keyframes engine-dust {
+          0%   { transform: translateY(0); opacity: 0; }
+          20%  { opacity: 0.35; }
+          100% { transform: translateY(-160px); opacity: 0; }
+        }
+        .engine-dust {
+          position: absolute;
+          width: 2px; height: 2px;
+          background: #00e5a0;
+          border-radius: 50%;
+          opacity: 0;
+          animation: engine-dust 10s linear infinite;
+          pointer-events: none;
+        }
+        @keyframes engine-scanline {
+          0%   { top: -20px; }
+          100% { top: 110%; }
+        }
+        .engine-scanline {
+          position: absolute; left: 0; width: 100%; height: 15px;
+          background: linear-gradient(to bottom, transparent, rgba(0,229,160,0.04), transparent);
+          pointer-events: none;
+          animation: engine-scanline 8s linear infinite;
+        }
+      `}</style>}
+
+      {/* ── ヘッダー＋コンテンツ ラッパー（パーティクル領域）── */}
+      <div style={{
+        ...(!isMobile ? { flex: 1 } : {}),
+        position: 'relative', display: 'flex', flexDirection: 'column',
+        overflow: isMobile ? 'visible' : 'hidden',
+        ...(!isMobile && CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}),
+      }}>
+
+        {CYBER_MODE && !isMobile && <>
+          <div className="engine-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
+          <div className="engine-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
+          <div className="engine-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
+          <div className="engine-dust" style={{ top: '20%', left: '30%', animationDelay: '3s' }} />
+          <div className="engine-dust" style={{ top: '60%', left: '50%', animationDelay: '4.5s' }} />
+          <div className="engine-dust" style={{ top: '35%', left: '10%', animationDelay: '6s' }} />
+          <div className="engine-dust" style={{ top: '85%', left: '45%', animationDelay: '1.5s' }} />
+          <div className="engine-dust" style={{ top: '15%', left: '70%', animationDelay: '5s' }} />
+          <div className="engine-scanline" />
+        </>}
+
       {/* ── ヘッダー ── */}
-      <div style={CYBER_MODE ? {
+      <div style={{ position: 'relative', zIndex: 1, ...(CYBER_MODE ? {
         padding: '10px 14px 9px', flexShrink: 0,
         borderBottom: `1px solid ${CY_BORDER}`,
         background: 'rgba(0,229,160,0.06)',
         display: 'flex', alignItems: 'center', gap: 8,
-      } : s.panelHead}>
+      } : s.panelHead) }}>
         <div style={CYBER_MODE ? { display: 'flex', alignItems: 'center', gap: 8, flex: 1 } : s.panelTitle}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
@@ -1077,7 +1124,7 @@ function EnginePanel({
       </div>
 
       {/* ── スクロール可能コンテンツ ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42 }}>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, overflowY: 'auto', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42 }}>
 
         <div style={ms.section}>
           <div style={CYBER_MODE
@@ -1305,6 +1352,8 @@ function EnginePanel({
           )}
         </div>
       </div>
+
+      </div>{/* /パーティクルラッパー */}
 
       {/* ── システムログ (CYBER_MODE のみ) ── */}
       {CYBER_MODE && (

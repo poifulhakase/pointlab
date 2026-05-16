@@ -496,39 +496,20 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           max-width: 130px;
         }
 
-        /* ── Dust particles ── */
-        @keyframes digital-dust {
-          0%   { transform: translateY(0); opacity: 0; }
-          20%  { opacity: 0.4; }
-          100% { transform: translateY(-160px); opacity: 0; }
-        }
-        .poyon-dust {
-          position: absolute;
-          width: 2px; height: 2px;
-          background: #00f2ff;
-          border-radius: 50%;
-          opacity: 0;
-          animation: digital-dust 10s linear infinite;
-          pointer-events: none;
-        }
 
-        /* ── Scanline ── */
-        @keyframes support-scanline {
-          0%   { top: -20px; }
-          100% { top: 110%; }
+        /* ── Mobile menu overrides（2カラムグリッド） ── */
+        .menu3d-mobile .menu3d-list {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
         }
-        .poyon-scanline {
-          position: absolute; left: 0; width: 100%; height: 15px;
-          background: linear-gradient(to bottom, transparent, rgba(0,242,255,0.05), transparent);
-          pointer-events: none;
-          animation: support-scanline 8s linear infinite;
-        }
-
-        /* ── Mobile menu overrides ── */
-        .menu3d-mobile .menu3d-list { gap: 9px; }
         .menu3d-mobile .menu3d-btn {
           width: 100%;
-          height: 62px;
+          height: 88px;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding: 10px 8px;
           background: rgba(2,12,28,0.82);
           box-shadow:
             0 0 14px rgba(0,205,255,0.22),
@@ -536,9 +517,19 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
             inset 0 1px 0 rgba(255,255,255,0.06),
             0 4px 20px rgba(0,0,0,0.65);
         }
-        .menu3d-mobile .menu3d-icon-wrap { width: 48px; height: 62px; }
-        .menu3d-mobile .menu3d-labels { padding: 0 14px; gap: 4px; }
-        .menu3d-mobile .menu3d-label { font-size: 13px; }
+        .menu3d-mobile .menu3d-divider { display: none; }
+        .menu3d-mobile .menu3d-icon-wrap {
+          width: auto;
+          height: auto;
+          margin-bottom: 8px;
+        }
+        .menu3d-mobile .menu3d-labels {
+          flex: none;
+          align-items: center;
+          padding: 0;
+          gap: 3px;
+        }
+        .menu3d-mobile .menu3d-label { font-size: 12px; letter-spacing: 0.14em; }
         .menu3d-mobile .menu3d-sub { font-size: 10px; }
         .menu3d-mobile .menu3d-header { margin-bottom: 16px; }
 
@@ -632,18 +623,6 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         pointerEvents: 'none', zIndex: 1,
       }} />
 
-      {/* ダストパーティクル + スキャンライン */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3 }}>
-        <div className="poyon-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
-        <div className="poyon-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
-        <div className="poyon-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
-        <div className="poyon-dust" style={{ top: '20%', left: '30%', animationDelay: '3s' }} />
-        <div className="poyon-dust" style={{ top: '60%', left: '50%', animationDelay: '4.5s' }} />
-        <div className="poyon-dust" style={{ top: '35%', left: '10%', animationDelay: '6s' }} />
-        <div className="poyon-dust" style={{ top: '85%', left: '45%', animationDelay: '1.5s' }} />
-        <div className="poyon-dust" style={{ top: '15%', left: '70%', animationDelay: '5s' }} />
-      </div>
-      <div className="poyon-scanline" style={{ zIndex: 3 }} />
 
       {/* 波紋 */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
