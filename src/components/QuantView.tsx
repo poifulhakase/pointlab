@@ -1039,7 +1039,7 @@ function EnginePanel({
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
           ...(CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}) }
-      : { width: 440, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      : { width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
           ...(CYBER_MODE
             ? { borderRight: `1px solid ${CY_BORDBR}`, background: CY_BG, backgroundImage: CY_SCAN }
             : { borderRight: '1px solid var(--border-dim)' }) }
