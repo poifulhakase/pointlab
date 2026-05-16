@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -22,17 +22,16 @@ import type { DeltaModalType } from './DeltaModal'
 const MicroQuantView = lazy(() => import('./MicroQuantView').then(m => ({ default: m.MicroQuantView })))
 const QuantMemoPanel = lazy(() => import('./MicroQuantView').then(m => ({ default: m.QuantMemoPanel })))
 const MarketDailyPanel = lazy(() => import('./MarketDailyPanel').then(m => ({ default: m.MarketDailyPanel })))
+const ContribSectorPanel = lazy(() => import('./StocksView').then(m => ({ default: m.ContribSectorPanel })))
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
-type QuantTabKey = 'kankyou' | 'genbutsu' | 'micro'
+type QuantTabKey = 'bunseki' | 'kankyou' | 'genbutsu' | 'micro'
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
   quantTab: QuantTabKey
   onQuantTabChange: (t: QuantTabKey) => void
-  settingsOpen: boolean
-  onCloseSettings: () => void
 }
 
 // ── 投資主体別 列定義 ──────────────────────────────
@@ -978,72 +977,262 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-// ── 設定モーダル ──────────────────────────────────
-function QuantSettingsModal({
-  isOpen, onClose, onPromptCopy, copyStatus,
+// ── サイバーデザイン設定 ──────────────────────────────────────────
+// false に変更するとサイバーデザインをリセット
+const CYBER_MODE = true
+
+const STATUS_LINES = [
+  'POI-ROBO OS v3.1  ▶ ONLINE',
+  'クオンツ演算回路 ........... 起動完了',
+  '日経225データ .............. 受信完了',
+  'VIX指数モニター ............ 作動中',
+  'COT先物ポジション .......... 解析中',
+  '外国人売買動向 ............. 監視中',
+  '信用倍率チェック ........... 完了',
+  'ファクター分析 ............. スタンバイ',
+  'リスクセンサー ............. アイドル',
+  'プロンプト生成 ............. 待機中',
+  '相場地合いスキャン ......... 実行中',
+  'アービトラージ残 ........... 解析完了',
+]
+
+// ── エンジンパネル（インライン）────────────────────
+function EnginePanel({
+  onPromptCopy, copyStatus, isMobile,
 }: {
-  isOpen: boolean
-  onClose: () => void
   onPromptCopy: () => void
   copyStatus: '' | 'prompt'
+  isMobile: boolean
 }) {
+  const logIdxRef = useRef(4)
+  const [logLines, setLogLines] = useState<string[]>(() => STATUS_LINES.slice(0, 4))
+  const [cursorVisible, setCursorVisible] = useState(true)
+
   useEffect(() => {
-    if (!isOpen) return
-    const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', fn)
-    return () => document.removeEventListener('keydown', fn)
-  }, [isOpen, onClose])
+    if (!CYBER_MODE) return
+    const id = setInterval(() => {
+      setLogLines(prev => {
+        const next = [...prev.slice(1), STATUS_LINES[logIdxRef.current % STATUS_LINES.length]]
+        logIdxRef.current++
+        return next
+      })
+    }, 2400)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    if (!CYBER_MODE) return
+    const id = setInterval(() => setCursorVisible(v => !v), 530)
+    return () => clearInterval(id)
+  }, [])
+
+  const CY_BG     = '#050e1a'
+  const CY_GREEN  = '#00e5a0'
+  const CY_DIM    = 'rgba(0,229,160,0.55)'
+  const CY_FAINT  = 'rgba(0,229,160,0.22)'
+  const CY_BORDER = 'rgba(0,229,160,0.22)'
+  const CY_BORDBR = 'rgba(0,229,160,0.45)'
+  const CY_SCAN   = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,160,0.022) 3px, rgba(0,229,160,0.022) 4px)'
+  const CY_FONT   = "'Courier New', Courier, monospace" as const
 
   return (
-    <>
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 600,
-        background: 'rgba(0,0,0,0.50)', backdropFilter: 'blur(4px)',
-        opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
-        transition: 'opacity 0.18s',
-      }} onClick={onClose} />
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%', zIndex: 601,
-        transform: isOpen ? 'translate(-50%,-50%) scale(1)' : 'translate(-50%,-50%) scale(0.96)',
-        opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
-        transition: 'opacity 0.18s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
-        width: 'min(440px, calc(100vw - 32px))',
-        background: 'var(--modal-bg)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)',
-        borderRadius: 18, border: '1px solid var(--glass-border)',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.40)', overflow: 'hidden',
-      }} onClick={e => e.stopPropagation()}>
-        <div style={ms.header}>
-          <div style={ms.headerTitle}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 8V4H8"/>
-              <rect width="16" height="12" x="4" y="8" rx="2"/>
-              <path d="M2 14h2"/><path d="M20 14h2"/>
-              <path d="M15 13v2"/><path d="M9 13v2"/>
-            </svg>
-            ぽいロボ エンジン
-          </div>
-          <button style={ms.closeBtn} onClick={onClose}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+    <div style={isMobile
+      ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
+          ...(CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}) }
+      : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0,
+          ...(CYBER_MODE
+            ? { borderRight: `1px solid ${CY_BORDBR}`, background: CY_BG, backgroundImage: CY_SCAN }
+            : { borderRight: '1px solid var(--border-dim)' }) }
+    }>
+
+      {/* ── ヘッダー ── */}
+      <div style={CYBER_MODE ? {
+        padding: '10px 14px 9px', flexShrink: 0,
+        borderBottom: `1px solid ${CY_BORDER}`,
+        background: 'rgba(0,229,160,0.06)',
+        display: 'flex', alignItems: 'center', gap: 8,
+      } : s.panelHead}>
+        <div style={CYBER_MODE ? { display: 'flex', alignItems: 'center', gap: 8, flex: 1 } : s.panelTitle}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 8V4H8"/>
+            <rect width="16" height="12" x="4" y="8" rx="2"/>
+            <path d="M2 14h2"/>
+            <path d="M20 14h2"/>
+            <path d="M15 13v2"/>
+            <path d="M9 13v2"/>
+          </svg>
+          <span style={CYBER_MODE
+            ? { fontFamily: CY_FONT, fontSize: 12, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
+            : {}
+          }>ぽいロボ エンジン</span>
         </div>
-        <div style={ms.body}>
-          <div style={ms.section}>
-            <div style={ms.sectionTitle}>クオンツ分析用プロンプト</div>
-            <p style={ms.desc}>AIチャットにそのまま貼り付けて使用できます。</p>
-            <button style={{ ...ms.actionBtn, ...ms.actionBtnAccent }} onClick={onPromptCopy}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        {CYBER_MODE && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
+            <span style={{ fontFamily: CY_FONT, fontSize: 9, color: CY_DIM, letterSpacing: '0.12em' }}>ONLINE</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── スクロール可能コンテンツ ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+        <div style={ms.section}>
+          <div style={CYBER_MODE
+            ? { ...ms.sectionTitle, color: CY_DIM, fontFamily: CY_FONT, fontSize: 13, letterSpacing: '0.08em' }
+            : ms.sectionTitle
+          }>{CYBER_MODE ? '▌ クオンツ分析用プロンプト' : 'クオンツ分析用プロンプト'}</div>
+          <p style={CYBER_MODE ? { ...ms.desc, color: 'rgba(0,229,160,0.45)', fontSize: 14, lineHeight: 1.75 } : ms.desc}>
+            AIチャットにそのまま貼り付けて使用できます。
+          </p>
+          {CYBER_MODE ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <button
+                style={{
+                  width: 84, height: 84, borderRadius: '50%',
+                  background: copyStatus === 'prompt' ? 'rgba(0,229,160,0.18)' : 'rgba(0,229,160,0.07)',
+                  border: `2px solid ${copyStatus === 'prompt' ? CY_GREEN : CY_BORDBR}`,
+                  boxShadow: copyStatus === 'prompt'
+                    ? `0 0 24px rgba(0,229,160,0.6), inset 0 0 14px rgba(0,229,160,0.18)`
+                    : `0 0 16px rgba(0,229,160,0.22), inset 0 0 10px rgba(0,229,160,0.06)`,
+                  color: CY_GREEN,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 7, cursor: 'pointer',
+                  transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
+                }}
+                onClick={onPromptCopy}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 8V4H8"/>
+                  <rect width="16" height="12" x="4" y="8" rx="2"/>
+                  <path d="M2 14h2"/>
+                  <path d="M20 14h2"/>
+                  <path d="M15 13v2"/>
+                  <path d="M9 13v2"/>
+                </svg>
+                <span style={{ fontFamily: CY_FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>
+                  {copyStatus === 'prompt' ? 'DONE' : 'COPY'}
+                </span>
+              </button>
+              <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_DIM, letterSpacing: '0.04em', textAlign: 'center' as const }}>
+                {copyStatus === 'prompt' ? '▶ コピー完了' : 'プロンプト＋データをコピー'}
+              </span>
+            </div>
+          ) : (
+            <button
+              style={{ ...ms.actionBtn, ...ms.actionBtnAccent }}
+              onClick={onPromptCopy}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
               {copyStatus === 'prompt' ? 'コピーしました！' : 'プロンプト＋データをコピー'}
             </button>
-          </div>
+          )}
+        </div>
 
-          {/* AI チャットへのリンク */}
-          <div style={ms.section}>
-            <div style={ms.sectionTitle}>AI チャットで開く</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* AI チャットへのリンク */}
+        <div style={ms.section}>
+          <div style={CYBER_MODE
+            ? { ...ms.sectionTitle, color: CY_DIM, fontFamily: CY_FONT, fontSize: 13, letterSpacing: '0.08em' }
+            : ms.sectionTitle
+          }>{CYBER_MODE ? '▌ AI チャットで開く' : 'AI チャットで開く'}</div>
+          {CYBER_MODE ? (
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 28 }}>
+
+              {/* Gemini */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <a
+                  href="https://gemini.google.com/app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 70, height: 70, borderRadius: '50%',
+                    background: 'rgba(0,229,160,0.06)',
+                    border: `2px solid ${CY_BORDER}`,
+                    boxShadow: `0 0 16px rgba(0,229,160,0.22), inset 0 0 10px rgba(0,229,160,0.06)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', textDecoration: 'none',
+                    transition: 'box-shadow 0.2s, background 0.2s',
+                  }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://gemini.google.com/app', '_blank') }}
+                >
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+                      <path d="M14 2 C14 2 15.6 9.4 20 14 C15.6 18.6 14 26 14 26 C14 26 12.4 18.6 8 14 C12.4 9.4 14 2 14 2Z" fill="white"/>
+                      <path d="M2 14 C2 14 9.4 12.4 14 8 C18.6 12.4 26 14 26 14 C26 14 18.6 15.6 14 20 C9.4 15.6 2 14 2 14Z" fill="white" opacity="0.85"/>
+                    </svg>
+                  </div>
+                </a>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Gemini</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>思考モード推奨</span>
+                </div>
+              </div>
+
+              {/* Claude */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <a
+                  href="https://claude.ai/projects"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 70, height: 70, borderRadius: '50%',
+                    background: 'rgba(0,229,160,0.06)',
+                    border: `2px solid ${CY_BORDER}`,
+                    boxShadow: `0 0 16px rgba(0,229,160,0.22), inset 0 0 10px rgba(0,229,160,0.06)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', textDecoration: 'none',
+                    transition: 'box-shadow 0.2s, background 0.2s',
+                  }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/projects', '_blank') }}
+                >
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: '#d97757', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3 C8 3 5 6 5 10 C5 12.5 6.2 14.7 8 16 L7 21 L12 18.5 L17 21 L16 16 C17.8 14.7 19 12.5 19 10 C19 6 16 3 12 3Z" fill="white" opacity="0.95"/>
+                    </svg>
+                  </div>
+                </a>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Claude</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>Projects で管理</span>
+                </div>
+              </div>
+
+              {/* ChatGPT */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <a
+                  href="https://chatgpt.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 70, height: 70, borderRadius: '50%',
+                    background: 'rgba(0,229,160,0.06)',
+                    border: `2px solid ${CY_BORDER}`,
+                    boxShadow: `0 0 16px rgba(0,229,160,0.22), inset 0 0 10px rgba(0,229,160,0.06)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', textDecoration: 'none',
+                    transition: 'box-shadow 0.2s, background 0.2s',
+                  }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://chatgpt.com/', '_blank') }}
+                >
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: '#10a37f', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <svg width="24" height="24" viewBox="0 0 41 41" fill="none">
+                      <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835A9.964 9.964 0 0 0 18.306.5a10.079 10.079 0 0 0-9.614 6.977 9.967 9.967 0 0 0-6.664 4.834 10.08 10.08 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 7.516 3.35 10.078 10.078 0 0 0 9.617-6.981 9.967 9.967 0 0 0 6.663-4.834 10.079 10.079 0 0 0-1.243-11.813zM22.498 37.886a7.474 7.474 0 0 1-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.49 7.496zM6.392 31.006a7.471 7.471 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103l-8.051 4.649a7.504 7.504 0 0 1-10.24-2.744zM4.297 13.62A7.469 7.469 0 0 1 8.2 10.333c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L7.044 23.86a7.504 7.504 0 0 1-2.747-10.24zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 0 1 .114-.012l8.048 4.648a7.498 7.498 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.647-1.13zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.05-4.645a7.497 7.497 0 0 1 11.135 7.763zm-21.063 6.929l-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.498v4.996l-4.331 2.5-4.331-2.5V18z" fill="white"/>
+                    </svg>
+                  </div>
+                </a>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>ChatGPT</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>o3推奨</span>
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
               {/* Gemini */}
               <a
@@ -1051,15 +1240,10 @@ function QuantSettingsModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ ...ms.aiCard, flex: 'none', width: '100%' }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  window.open('https://gemini.google.com/app', '_blank')
-                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://gemini.google.com/app', '_blank') }}
               >
                 <div style={{ ...ms.aiLogo, background: 'linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335)', padding: 0, overflow: 'hidden' }}>
-                  {/* Gemini star logo */}
-                  <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+                  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
                     <path d="M14 2 C14 2 15.6 9.4 20 14 C15.6 18.6 14 26 14 26 C14 26 12.4 18.6 8 14 C12.4 9.4 14 2 14 2Z" fill="white"/>
                     <path d="M2 14 C2 14 9.4 12.4 14 8 C18.6 12.4 26 14 26 14 C26 14 18.6 15.6 14 20 C9.4 15.6 2 14 2 14Z" fill="white" opacity="0.85"/>
                   </svg>
@@ -1068,7 +1252,7 @@ function QuantSettingsModal({
                   <div style={ms.aiName}>Gemini</div>
                   <div style={ms.aiDesc}>思考モード推奨</div>
                 </div>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                   <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                 </svg>
@@ -1080,15 +1264,10 @@ function QuantSettingsModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ ...ms.aiCard, flex: 'none', width: '100%' }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  window.open('https://claude.ai/projects', '_blank')
-                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/projects', '_blank') }}
               >
                 <div style={{ ...ms.aiLogo, background: '#d97757' }}>
-                  {/* Claude logo mark */}
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M12 3 C8 3 5 6 5 10 C5 12.5 6.2 14.7 8 16 L7 21 L12 18.5 L17 21 L16 16 C17.8 14.7 19 12.5 19 10 C19 6 16 3 12 3Z" fill="white" opacity="0.95"/>
                   </svg>
                 </div>
@@ -1096,7 +1275,7 @@ function QuantSettingsModal({
                   <div style={ms.aiName}>Claude</div>
                   <div style={ms.aiDesc}>Projects で管理</div>
                 </div>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                   <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                 </svg>
@@ -1108,15 +1287,10 @@ function QuantSettingsModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ ...ms.aiCard, flex: 'none', width: '100%' }}
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  window.open('https://chatgpt.com/', '_blank')
-                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://chatgpt.com/', '_blank') }}
               >
                 <div style={{ ...ms.aiLogo, background: '#10a37f' }}>
-                  {/* ChatGPT logo mark */}
-                  <svg width="20" height="20" viewBox="0 0 41 41" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 41 41" fill="none">
                     <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835A9.964 9.964 0 0 0 18.306.5a10.079 10.079 0 0 0-9.614 6.977 9.967 9.967 0 0 0-6.664 4.834 10.08 10.08 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 7.516 3.35 10.078 10.078 0 0 0 9.617-6.981 9.967 9.967 0 0 0 6.663-4.834 10.079 10.079 0 0 0-1.243-11.813zM22.498 37.886a7.474 7.474 0 0 1-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.49 7.496zM6.392 31.006a7.471 7.471 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103l-8.051 4.649a7.504 7.504 0 0 1-10.24-2.744zM4.297 13.62A7.469 7.469 0 0 1 8.2 10.333c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L7.044 23.86a7.504 7.504 0 0 1-2.747-10.24zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 0 1 .114-.012l8.048 4.648a7.498 7.498 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.647-1.13zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.05-4.645a7.497 7.497 0 0 1 11.135 7.763zm-21.063 6.929l-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.498v4.996l-4.331 2.5-4.331-2.5V18z" fill="white"/>
                   </svg>
                 </div>
@@ -1124,17 +1298,51 @@ function QuantSettingsModal({
                   <div style={ms.aiName}>ChatGPT</div>
                   <div style={ms.aiDesc}>o3推奨</div>
                 </div>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                   <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                 </svg>
               </a>
 
             </div>
-          </div>
+          )}
         </div>
       </div>
-    </>
+
+      {/* ── システムログ (CYBER_MODE のみ) ── */}
+      {CYBER_MODE && (
+        <div style={{
+          borderTop: `1px solid ${CY_BORDER}`,
+          background: 'rgba(0,0,0,0.45)',
+          padding: '14px 20px 16px',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
+            <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.12em' }}>
+              SYSTEM LOG ▶ LIVE
+            </span>
+          </div>
+          {logLines.map((line, i) => (
+            <div key={i} style={{
+              fontFamily: CY_FONT,
+              fontSize: 13,
+              color: i === logLines.length - 1 ? CY_GREEN : CY_FAINT,
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: 1.8,
+            }}>
+              {i === logLines.length - 1 ? '> ' : '  '}{line}
+              {i === logLines.length - 1 && (
+                <span style={{ opacity: cursorVisible ? 1 : 0 }}>█</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1235,7 +1443,7 @@ function PanelCenter({ loading, error, onRetry }: { loading: boolean; error: str
 }
 
 // ── メインコンポーネント ───────────────────────────
-export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onCloseSettings }: Props) {
+export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   const [invData,    setInvData]    = useState<InvestorWeekData[]>([])
   const [invLoading, setInvLoading] = useState(false)
   const [invError,   setInvError]   = useState('')
@@ -1450,15 +1658,33 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '300%',
+          width: '400%',
           height: '100%',
-          transform: quantTab === 'kankyou' ? 'translateX(0)' : quantTab === 'genbutsu' ? 'translateX(-33.333%)' : 'translateX(-66.667%)',
+          transform: quantTab === 'bunseki' ? 'translateX(0)' : quantTab === 'kankyou' ? 'translateX(-25%)' : quantTab === 'genbutsu' ? 'translateX(-50%)' : 'translateX(-75%)',
           transition: 'transform 0.25s ease',
         }}>
 
+        {/* ━━ 分析 ━━ */}
+        <div style={{
+          width: '25%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          height: '100%',
+          overflowX: 'hidden',
+          overflowY: isMobile ? 'auto' : 'hidden',
+          paddingBottom: isMobile ? 130 : 0,
+        }}>
+          <EnginePanel onPromptCopy={handlePromptCopy} copyStatus={copyStatus} isMobile={isMobile} />
+          <div style={isMobile ? s.dividerH : s.divider} />
+          <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
+            <Suspense fallback={null}><QuantMemoPanel theme={theme} user={user} isMobile={isMobile} /></Suspense>
+          </div>
+        </div>{/* /分析 */}
+
         {/* ━━ 環境 ━━ */}
         <div style={{
-          width: '33.333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1502,9 +1728,18 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         <div style={isMobile ? s.dividerH : s.divider} />
 
-        {/* クオンツ分析レポート */}
-        <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-          <Suspense fallback={null}><QuantMemoPanel theme={theme} user={user} isMobile={isMobile} /></Suspense>
+        {/* USD/JPY */}
+        <div style={isMobile ? s.panelMobile : s.panel}>
+          <Suspense fallback={null}>
+            <MarketDailyPanel
+              theme={theme}
+              isMobile={isMobile}
+              usdjpyData={usdjpyData}
+              usdjpyLoading={usdjpyLoading}
+              usdjpyError={usdjpyError}
+              onUsdjpyReload={() => loadUsdjpy(true)}
+            />
+          </Suspense>
         </div>
 
 
@@ -1512,12 +1747,12 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         {/* ━━ 現物需給 ━━ */}
         <div style={isMobile ? {
-          width: '33.333%', flexShrink: 0,
+          width: '25%', flexShrink: 0,
           display: 'flex', flexDirection: 'column',
           height: '100%', overflowX: 'hidden', overflowY: 'auto',
           paddingBottom: 130,
         } : {
-          width: '33.333%', flexShrink: 0,
+          width: '25%', flexShrink: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gridTemplateRows: '1fr 1fr',
@@ -1767,18 +2002,9 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         {isMobile && <div style={s.dividerH} />}
 
-        {/* BR: USD/JPY 日次 */}
+        {/* BR: 銘柄別寄与度 / 業種別騰落率 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
-          <Suspense fallback={null}>
-            <MarketDailyPanel
-              theme={theme}
-              isMobile={isMobile}
-              usdjpyData={usdjpyData}
-              usdjpyLoading={usdjpyLoading}
-              usdjpyError={usdjpyError}
-              onUsdjpyReload={() => loadUsdjpy(true)}
-            />
-          </Suspense>
+          <Suspense fallback={null}><ContribSectorPanel theme={theme} isMobile={isMobile} /></Suspense>
         </div>
 
 
@@ -1786,7 +2012,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
         {/* ━━ 先物需給 ━━ */}
         <div style={{
-          width: '33.333%',
+          width: '25%',
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1817,7 +2043,7 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
 
           {isMobile && <div style={s.dividerH} />}
 
-          {/* 右 1/3: 建玉残高・取引高（統合テーブル） */}
+          {/* 右 1/3: 建玉残高・取引高 + 日経平均先物 */}
           {(() => {
             const rows = futuresDailyData.slice(0, isMobile ? (futuresDailyExpanded ? futuresDailyData.length : MOBILE_ROW_LIMIT) : 20)
             const fmtOi  = (n: number) => (n / 10000).toFixed(1) + '万'
@@ -1825,13 +2051,21 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
             const latestDate = futuresDailyData[0]?.date ?? null
             const loadingEmpty = futuresDailyLoading && futuresDailyData.length === 0
             const errorEmpty   = futuresDailyError   && futuresDailyData.length === 0
+            const nkRows = [...nkFuturesPriceData].reverse()
+            const changePctColor = (pct: number | null) => {
+              if (pct == null) return 'var(--text)'
+              if (pct > 0) return theme === 'dark' ? 'rgba(52,211,153,0.95)' : 'rgba(5,150,105,0.95)'
+              if (pct < 0) return theme === 'dark' ? 'rgba(248,113,113,0.95)' : 'rgba(185,28,28,0.95)'
+              return 'var(--text)'
+            }
 
             return (
               <div style={isMobile
                 ? { display: 'flex', flexDirection: 'column' }
                 : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }
               }>
-                <div style={isMobile ? s.halfPanelMobile : { ...s.halfPanel, flex: 1 }}>
+                {/* 上段: 建玉残高・取引高・PCR */}
+                <div style={isMobile ? s.halfPanelMobile : s.halfPanel}>
                   <div style={{ ...s.panelHead, minHeight: 36 }}>
                     <div style={s.panelTitle}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1946,6 +2180,71 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
                     {futuresDailyExpanded ? `▲ 折りたたむ` : `▼ 全${futuresDailyData.length}日を表示`}
                   </button>
                 )}
+
+                <div style={s.dividerH} />
+
+                {/* 下段: 日経平均先物 (NK=F) */}
+                <div style={isMobile ? s.halfPanelMobile : s.halfPanel}>
+                  <div style={{ ...s.panelHead, minHeight: 36 }}>
+                    <div style={s.panelTitle}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                        <polyline points="16 7 22 7 22 13"/>
+                      </svg>
+                      日経平均先物
+                      <span style={s.panelSub}>NK=F / CME 円建て (日足)</span>
+                    </div>
+                    <div style={s.panelRight}>
+                      <FreshnessTag dateStr={nkRows[0]?.date ?? null} />
+                    </div>
+                  </div>
+                  {!nkFuturesPriceLoaded
+                    ? <div style={s.center}><div style={s.spinner} /></div>
+                    : nkRows.length === 0
+                    ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12 }}>データなし</span></div>
+                    : (
+                      <div style={s.tableWrap}>
+                        <table style={{ ...s.table, minWidth: 240 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ ...s.th, ...s.thDate }}>日付</th>
+                              <th style={s.th}><div style={s.thLabel}>高値</div><div style={s.thSub}>円</div></th>
+                              <th style={s.th}><div style={s.thLabel}>安値</div><div style={s.thSub}>円</div></th>
+                              <th style={s.th}><div style={s.thLabel}>終値</div><div style={s.thSub}>円</div></th>
+                              <th style={s.th}><div style={s.thLabel}>前日比</div><div style={s.thSub}>%</div></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {nkRows.map((row, i) => (
+                              <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
+                                <td style={{ ...s.td, ...s.tdDate }}>
+                                  <div style={s.dateMain}>{row.date.slice(5).replace('-', '/')}</div>
+                                  <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  <span style={{ fontSize: 11 }}>{row.high.toLocaleString()}</span>
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  <span style={{ fontSize: 11 }}>{row.low.toLocaleString()}</span>
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  <span style={{ fontWeight: 600 }}>{row.close.toLocaleString()}</span>
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  {row.change_pct != null ? (
+                                    <span style={{ fontWeight: 600, color: changePctColor(row.change_pct) }}>
+                                      {row.change_pct > 0 ? '+' : ''}{row.change_pct.toFixed(2)}%
+                                    </span>
+                                  ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  }
+                </div>
               </div>
             )
           })()}
@@ -1955,13 +2254,6 @@ export function QuantView({ theme, isMobile, user, quantTab, settingsOpen, onClo
         </div>{/* /スライダートラック */}
 
       </div>{/* /ボディ */}
-
-      <QuantSettingsModal
-        isOpen={settingsOpen}
-        onClose={onCloseSettings}
-        onPromptCopy={handlePromptCopy}
-        copyStatus={copyStatus}
-      />
     </div>
   )
 }
