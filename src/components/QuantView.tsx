@@ -1157,7 +1157,6 @@ function EnginePanel({
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
                   }}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://gemini.google.com/app', '_blank') }}
                 >
                   <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                     <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
@@ -1187,7 +1186,6 @@ function EnginePanel({
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
                   }}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/projects', '_blank') }}
                 >
                   <div style={{ width: 46, height: 46, borderRadius: '50%', background: '#d97757', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -1216,7 +1214,6 @@ function EnginePanel({
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
                   }}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://chatgpt.com/', '_blank') }}
                 >
                   <div style={{ width: 46, height: 46, borderRadius: '50%', background: '#10a37f', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                     <svg width="24" height="24" viewBox="0 0 41 41" fill="none">
