@@ -80,7 +80,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 padding: isMobile ? '3px' : '6px',
                 opacity: dim ? 0.35 : 1,
                 background: td && !dim
-                  ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.10)'
+                  ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.18)'
                   : showPoiroboAlert && !dim && (
                       (poiroboAlertConfig.majorSq && sqMarkers.includes('sq-major')) ||
                       (poiroboAlertConfig.miniSq  && sqMarkers.includes('sq-mini'))  ||
