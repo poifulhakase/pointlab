@@ -272,7 +272,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
 
             {/* コピーボタン（未実装・押しても何もしない） */}
             {CYBER_MODE ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
                 <button
                   style={{
                     width: 84, height: 84, borderRadius: '50%',
@@ -281,7 +281,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
                     boxShadow: `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
                     color: CY_GREEN,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 7, cursor: 'pointer',
+                    gap: 7, cursor: 'pointer', flexShrink: 0,
                     transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
                   }}
                   onClick={() => {}}
@@ -291,9 +291,14 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
                   </svg>
                   <span style={{ fontFamily: CY_FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>COPY</span>
                 </button>
-                <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_DIM, letterSpacing: '0.04em', textAlign: 'center' as const, display: 'block', lineHeight: 1.65 }}>
-                  ポジション分析用プロンプト<br />＋チャートデータをコピー
-                </span>
+                {/* 吹き出し */}
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: -10, top: '50%', transform: 'translateY(-50%)', width: 0, height: 0, borderTop: '9px solid transparent', borderBottom: '9px solid transparent', borderRight: `10px solid ${CY_BORDBR}` }} />
+                  <div style={{ position: 'absolute', left: -8, top: '50%', transform: 'translateY(-50%)', width: 0, height: 0, borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderRight: `9px solid ${CY_BG}` }} />
+                  <div style={{ background: 'rgba(0,229,255,0.05)', border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '10px 14px', fontFamily: CY_FONT, fontSize: 12, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.65 }}>
+                    ポジション分析用プロンプト<br />＋チャートデータをコピー
+                  </div>
+                </div>
               </div>
             ) : (
               <button
