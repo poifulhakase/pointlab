@@ -31,6 +31,7 @@ const SpecView     = lazy(() => import('./components/SpecView').then(m => ({ def
 const NoteView     = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
 const ManualView   = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
 const SupportView  = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
+const ShieldView   = lazy(() => import('./components/ShieldView').then(m => ({ default: m.ShieldView })))
 const LegalModal   = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
 const SettingsPanel = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
 
@@ -98,6 +99,7 @@ export default function App() {
 
   // ── フッター開閉 ──────────────────────────────────────────────────────
   const [footerCollapsed, setFooterCollapsed] = useState(() => {
+    if (isMobile) return false  // スマホは常時表示
     try { return localStorage.getItem('poical-footer-collapsed') === 'true' } catch { return false }
   })
   const [footerAnimating, setFooterAnimating] = useState(false)
@@ -153,9 +155,8 @@ export default function App() {
 
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
-  const [quantTab,          setQuantTab]          = useState<'kankyou' | 'genbutsu' | 'micro'>('kankyou')
-  const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('session')
-  const [quantSettingsOpen, setQuantSettingsOpen] = useState(false)
+  const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro'>('bunseki')
+const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('session')
   const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── ノートパネル ──────────────────────────────────────────────────────
@@ -257,9 +258,9 @@ export default function App() {
   useEffect(() => {
     const prev = prevViewRef2.current
     prevViewRef2.current = cal.view
-    if (prev === 'chart') setChartSymbol('INDEX:NKY')
-    if (prev === 'quant') setQuantTab('kankyou')
-    // support から legal/manual/spec 以外へ遷移した場合のみリセット（資料タブを保持）
+    if (prev === 'chart')  setChartSymbol('INDEX:NKY')
+    if (prev === 'quant')  setQuantTab('bunseki')
+  // support から legal/manual/spec 以外へ遷移した場合のみリセット（資料タブを保持）
     if (prev === 'support' && cal.view !== 'legal' && cal.view !== 'manual' && cal.view !== 'spec') {
       setSupportTab('session')
     }
@@ -269,22 +270,22 @@ export default function App() {
   const backStateRef = useRef({
     settingsOpen: false, authModalOpen: false,
     noteDate: null as Date | null, poiroboAlertModalOpen: false,
-    quantSettingsOpen: false, chartSettingsOpen: false, view: 'month',
+    chartSettingsOpen: false, view: 'month',
   })
   backStateRef.current = {
     settingsOpen, authModalOpen, noteDate,
-    poiroboAlertModalOpen, quantSettingsOpen, chartSettingsOpen, view: cal.view,
+    poiroboAlertModalOpen, chartSettingsOpen, view: cal.view,
   }
   const backActionsRef = useRef({
     closeNote: () => {}, setView: (_v: string) => {},
     setSettingsOpen: (_v: boolean) => {}, setAuthModalOpen: (_v: boolean) => {},
-    setPoiroboAlertModalOpen: (_v: boolean) => {}, setQuantSettingsOpen: (_v: boolean) => {},
+    setPoiroboAlertModalOpen: (_v: boolean) => {},
     setChartSettingsOpen: (_v: boolean) => {},
   })
   backActionsRef.current = {
     closeNote, setView: cal.setView as (_v: string) => void,
     setSettingsOpen, setAuthModalOpen, setPoiroboAlertModalOpen,
-    setQuantSettingsOpen, setChartSettingsOpen,
+    setChartSettingsOpen,
   }
   useEffect(() => {
     history.pushState(null, '')
@@ -296,11 +297,12 @@ export default function App() {
       if (s.authModalOpen)         { a.setAuthModalOpen(false);               return }
       if (s.noteDate)              { a.closeNote();                           return }
       if (s.poiroboAlertModalOpen) { a.setPoiroboAlertModalOpen(false);       return }
-      if (s.quantSettingsOpen)     { a.setQuantSettingsOpen(false);           return }
       if (s.chartSettingsOpen)     { a.setChartSettingsOpen(false);           return }
       const v = s.view
       if (v === 'spec' || v === 'legal' || v === 'manual') { a.setView('support'); return }
       if (v === 'support') { a.setView('month'); return }
+      if (v === 'shield')  { a.setView('month'); return }
+
       if (v === 'day')     { a.setView('week');  return }
       if (v === 'week')    { a.setView('month'); return }
     }
@@ -449,11 +451,21 @@ export default function App() {
             </ErrorBoundary>
           )}
 
+
           {/* データ（需給） */}
           {cal.view === 'quant' && (
-            <ErrorBoundary label="ぽいロボ">
+            <ErrorBoundary label="エンジン">
               <Suspense fallback={<ViewLoader />}>
-                <QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} settingsOpen={quantSettingsOpen} onCloseSettings={() => setQuantSettingsOpen(false)} />
+                <QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+
+          {/* シールド */}
+          {cal.view === 'shield' && (
+            <ErrorBoundary label="シールド">
+              <Suspense fallback={<ViewLoader />}>
+                <ShieldView theme={theme} isMobile={isMobile} user={user} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -475,17 +487,13 @@ export default function App() {
           {isCalView && (
             <div style={carouselOuterStyle}>
               {/* カレンダーサブバー */}
-              <div style={{ ...styles.calSubBar, ...(isMobile && { padding: '2px 4px' }) }}>
-                <button style={styles.subNavBtn} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
+              <div style={{ ...styles.calSubBar, ...(isMobile && { padding: '10px 8px' }) }}>
                 <h1 style={styles.subLabel}>{cal.label}</h1>
-                <button style={styles.subNavBtn} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
+                <button style={{ ...styles.subNavBtn, marginLeft: 6 }} onClick={() => cal.go(-1)} aria-label="前へ"><ChevronLeft /></button>
+                <button style={{ ...styles.subNavBtn, marginLeft: 4 }} onClick={() => cal.go(1)} aria-label="次へ"><ChevronRight /></button>
                 {/* スマホ時のみ右端にサイドバー開閉ハンバーガーボタン */}
                 {isMobile && (
-                  <button
-                    onClick={handleMenuClick}
-                    aria-label="メニュー"
-                    style={{ ...styles.subNavBtn, marginLeft: 'auto' }}
-                  >
+                  <button onClick={handleMenuClick} aria-label="メニュー" style={{ ...styles.subNavBtn, marginLeft: 'auto' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <line x1="3" y1="6"  x2="21" y2="6"  />
                       <line x1="3" y1="12" x2="21" y2="12" />
@@ -627,12 +635,6 @@ export default function App() {
                     onClick={() => setQuantTab(tab)}
                   >{QUANT_LABELS[i]}</button>
                 ))}
-                <span style={styles.floatDivider} />
-                <button style={styles.floatIconBtn} onClick={() => setQuantSettingsOpen(true)} aria-label="ぽいロボ エンジン">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                  </svg>
-                </button>
               </>
             )}
           </div>
@@ -641,11 +643,11 @@ export default function App() {
       )}
 
       <div style={{ position: 'relative', zIndex: Z.footer, flexShrink: 0 }}>
-          {/* つまみ（フッター開閉） */}
-          <button
+          {/* つまみ（フッター開閉）— PC のみ表示 */}
+          {!isMobile && <button
             onClick={toggleFooter}
             aria-label={footerCollapsed ? 'ナビを開く' : 'ナビを閉じる'}
-            style={{ ...styles.footerTsumami, ...(isMobile ? { left: 16, transform: 'none' } : {}) }}
+            style={styles.footerTsumami}
           >
             <svg
               width="12" height="7" viewBox="0 0 10 6" fill="none"
@@ -658,7 +660,7 @@ export default function App() {
             >
               <path d="M1 5L5 1L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </button>
+          </button>}
           {/* フッター本体（折りたたみ） */}
           <div style={{
             height: footerCollapsed ? 0 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px))',
@@ -683,8 +685,8 @@ export default function App() {
 // ── 定数 ──────────────────────────────────────────────────────────────────
 const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
-const QUANT_TABS    = ['kankyou', 'genbutsu', 'micro'] as const
-const QUANT_LABELS  = ['環境', '現物', '先物'] as const
+const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
+const QUANT_LABELS  = ['分析', '環境', '現物', '先物'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
 const carouselOuterStyle: React.CSSProperties = { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }
 const carouselWrapStyle:  React.CSSProperties = { flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }

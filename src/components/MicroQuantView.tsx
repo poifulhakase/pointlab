@@ -22,11 +22,6 @@ function fmt(v: number | null | undefined): string {
   return (v > 0 ? '+' : '') + v.toLocaleString()
 }
 
-function cellBg(v: number | null | undefined, theme: 'dark' | 'light'): string {
-  if (!v) return 'transparent'
-  if (v > 0) return theme === 'dark' ? 'rgba(96,200,140,0.10)' : 'rgba(22,130,80,0.07)'
-  return theme === 'dark' ? 'rgba(255,120,100,0.10)' : 'rgba(200,50,30,0.07)'
-}
 
 function cellColor(v: number | null | undefined, theme: 'dark' | 'light'): string {
   if (!v) return 'var(--text-dim)'
@@ -165,12 +160,86 @@ function TankCard({ group, net, wow, maxAbsNet, theme }: CotTank & { theme: 'dar
 
 // ── クオンツ分析メモパネル ────────────────────────────
 const QUANT_MEMO_KEY = 'poical-quant-memo'
+const QUANT_MEMO_HISTORY_KEY = 'poical-quant-memo-history'
+const QUANT_MEMO_MAX = 10
 const QUANT_MEMO_FS_PATH = (uid: string) => `users/${uid}/data/quantMemo`
 
+type MemoSnapshot = { date: string; text: string }
+
+function loadHistoryLocal(): MemoSnapshot[] {
+  try { return JSON.parse(localStorage.getItem(QUANT_MEMO_HISTORY_KEY) ?? '[]') } catch { return [] }
+}
+function saveHistoryLocal(h: MemoSnapshot[]): void {
+  localStorage.setItem(QUANT_MEMO_HISTORY_KEY, JSON.stringify(h))
+}
+function todayStr(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const HIGHLIGHT_PATTERNS = [
+  /確信度：[\d.]+%/g,
+  /判定：.+/g,
+]
+
+function renderHighlighted(text: string): React.ReactNode[] {
+  return text.split('\n').map((line, lineIdx) => {
+    const spans: { start: number; end: number }[] = []
+    for (const pat of HIGHLIGHT_PATTERNS) {
+      pat.lastIndex = 0
+      let m: RegExpExecArray | null
+      while ((m = pat.exec(line)) !== null) {
+        spans.push({ start: m.index, end: m.index + m[0].length })
+      }
+    }
+    if (spans.length === 0) {
+      return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{line || ' '}</div>
+    }
+    spans.sort((a, b) => a.start - b.start)
+    const nodes: React.ReactNode[] = []
+    let pos = 0
+    for (const { start, end } of spans) {
+      if (pos < start) nodes.push(line.slice(pos, start))
+      nodes.push(
+        <mark key={`h-${lineIdx}-${start}`} style={{
+          background: 'none', color: 'rgba(0,230,255,0.95)',
+        }}>
+          {line.slice(start, end)}
+        </mark>
+      )
+      pos = end
+    }
+    if (pos < line.length) nodes.push(line.slice(pos))
+    return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{nodes}</div>
+  })
+}
+
+const CY_GREEN  = '#00e5ff'
+const CY_DIM    = 'rgba(0,229,255,0.55)'
+const CY_FAINT  = 'rgba(0,229,255,0.22)'
+const CY_BORDER = 'rgba(0,229,255,0.22)'
+const CY_BORDBR = 'rgba(0,229,255,0.45)'
+const CY_FONT   = "'Courier New', Courier, monospace" as const
+const CY_BG_SUB = 'rgba(0,5,15,0.7)'
+const CY_BG_AREA = 'rgba(0,229,255,0.04)'
+const CY_SCAN   = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
+
+const BTN_STYLE: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 5,
+  padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+  letterSpacing: '0.06em',
+  color: CY_GREEN, background: CY_BG_AREA,
+  border: `1px solid ${CY_BORDBR}`, cursor: 'pointer',
+  fontFamily: CY_FONT,
+}
+
 export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; user: User | null; isMobile?: boolean }) {
-  const [quantMemo,     setQuantMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
-  const [savedMemo,     setSavedMemo]     = useState(() => localStorage.getItem(QUANT_MEMO_KEY) ?? '')
+  const [quantMemo,     setQuantMemo]     = useState('')
+  const [savedMemo,     setSavedMemo]     = useState('')
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
+  const [isPreview,     setIsPreview]     = useState(false)
+  const [history,       setHistory]       = useState<MemoSnapshot[]>([])
+  const [selectedDate,  setSelectedDate]  = useState('')
   const memoIsDirty = quantMemo !== savedMemo
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -187,86 +256,209 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
     return () => vv.removeEventListener('resize', onResize)
   }, [isMobile])
 
+  // ログイン状態・UID変化時の同期
   useEffect(() => {
     if (!user) {
       const local = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
       setQuantMemo(local)
       setSavedMemo(local)
+      setHistory([])
+      setSelectedDate('')
+      setIsPreview(!!local)
       return
     }
+
+    // まずローカルキャッシュで即時表示
+    const cachedHistory = loadHistoryLocal()
+    if (cachedHistory.length > 0) {
+      setHistory(cachedHistory)
+      const latest = cachedHistory[0]
+      setQuantMemo(latest.text)
+      setSavedMemo(latest.text)
+      setSelectedDate(latest.date)
+      setIsPreview(true)
+    } else {
+      const legacy = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
+      if (legacy) { setQuantMemo(legacy); setSavedMemo(legacy); setIsPreview(true) }
+    }
+
+    // Firestoreから最新データを取得
     restGetDoc(QUANT_MEMO_FS_PATH(user.uid))
       .then(snap => {
         if (snap.exists()) {
-          const text = (snap.data().text as string) ?? ''
-          setQuantMemo(text)
-          setSavedMemo(text)
-          localStorage.setItem(QUANT_MEMO_KEY, text)
+          const d = snap.data()
+          const snapshots = (d.snapshots as MemoSnapshot[] | undefined) ?? []
+          if (snapshots.length > 0) {
+            // 新フォーマット: { snapshots: [{date, text}], updatedAt }
+            const sorted = [...snapshots].sort((a, b) => b.date.localeCompare(a.date))
+            setHistory(sorted)
+            saveHistoryLocal(sorted)
+            const latest = sorted[0]
+            setQuantMemo(latest.text)
+            setSavedMemo(latest.text)
+            setSelectedDate(latest.date)
+            setIsPreview(true)
+          } else if (typeof d.text === 'string' && d.text) {
+            // 旧フォーマット移行: { text, updatedAt } → snapshots[]
+            const today = todayStr()
+            const migrated: MemoSnapshot[] = [{ date: today, text: d.text }]
+            setHistory(migrated)
+            saveHistoryLocal(migrated)
+            setQuantMemo(d.text)
+            setSavedMemo(d.text)
+            setSelectedDate(today)
+            setIsPreview(true)
+            restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: migrated, updatedAt: new Date().toISOString() }).catch(() => {})
+          }
         } else {
-          const local = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
-          setQuantMemo(local)
-          setSavedMemo(local)
-          if (local) {
-            restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { text: local, updatedAt: new Date().toISOString() }).catch(() => {})
+          // Firestoreにデータなし → ローカルをアップロード
+          if (cachedHistory.length > 0) {
+            restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: cachedHistory, updatedAt: new Date().toISOString() }).catch(() => {})
+          } else {
+            const legacy = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
+            if (legacy) {
+              const today = todayStr()
+              const migrated: MemoSnapshot[] = [{ date: today, text: legacy }]
+              setHistory(migrated)
+              saveHistoryLocal(migrated)
+              setSelectedDate(today)
+              setIsPreview(true)
+              restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: migrated, updatedAt: new Date().toISOString() }).catch(() => {})
+            }
           }
         }
       })
-      .catch(() => {})
+      .catch(() => { /* オフライン時はローカルキャッシュで対応済み */ })
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // スナップショット保存（ログイン時・今日の日付で保存・同日は上書き）
+  const handleSnapSave = useCallback(() => {
+    if (!user) return
+    const today = todayStr()
+    const newSnap: MemoSnapshot = { date: today, text: quantMemo }
+    const filtered = history.filter(s => s.date !== today)
+    const updated = [newSnap, ...filtered].slice(0, QUANT_MEMO_MAX)
+    setHistory(updated)
+    saveHistoryLocal(updated)
+    restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: updated, updatedAt: new Date().toISOString() }).catch(() => {})
+    setSavedMemo(quantMemo)
+    setSelectedDate(today)
+    localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
+    setMemoSaveFlash(true)
+    setTimeout(() => setMemoSaveFlash(false), 2000)
+    setIsPreview(true)
+  }, [quantMemo, user, history])
+
+  // 保存（ゲスト・1件上書き）
   const handleSave = useCallback(() => {
     localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
     setSavedMemo(quantMemo)
     setMemoSaveFlash(true)
     setTimeout(() => setMemoSaveFlash(false), 2000)
-    if (user) {
-      restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { text: quantMemo, updatedAt: new Date().toISOString() }).catch(() => {})
+    setIsPreview(true)
+  }, [quantMemo])
+
+  // 日付プルダウン選択
+  const handleSelectSnapshot = useCallback((date: string) => {
+    setSelectedDate(date)
+    if (date === '') {
+      setQuantMemo('')
+      setSavedMemo('')
+      setIsPreview(false)
+    } else {
+      const snap = history.find(s => s.date === date)
+      if (snap) {
+        setQuantMemo(snap.text)
+        setSavedMemo(snap.text)
+        setIsPreview(true)
+        localStorage.setItem(QUANT_MEMO_KEY, snap.text)
+      }
     }
-  }, [quantMemo, user])
+  }, [history])
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: CY_BG_SUB, backgroundImage: CY_SCAN }}>
+      {/* ヘッダー */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '7px 14px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)',
-        userSelect: 'none',
+        padding: '10px 14px 9px', flexShrink: 0,
+        borderBottom: `1px solid ${CY_BORDER}`,
+        background: CY_BG_AREA,
+        userSelect: 'none', gap: 8,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={CY_GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
-          クオンツ分析レポート
+          <span style={{ fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }}>
+            エントリー分析レポート
+          </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {memoSaveFlash && <span style={{ fontSize: 11, color: '#34d399' }}>保存しました</span>}
-          <button
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '4px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600,
-              color: 'var(--text-sub)', background: 'var(--glass-bg)',
-              border: '1px solid var(--glass-border)', cursor: memoIsDirty ? 'pointer' : 'default',
-              opacity: memoIsDirty ? 1 : 0.45,
-            }}
-            onClick={handleSave}
-            disabled={!memoIsDirty}
-          >
-            保存
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {memoSaveFlash && <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_GREEN, letterSpacing: '0.06em' }}>保存しました</span>}
+          {user && (
+            <select
+              value={selectedDate}
+              onChange={e => handleSelectSnapshot(e.target.value)}
+              style={{
+                fontFamily: CY_FONT, fontSize: 10, padding: '3px 6px', borderRadius: 5,
+                background: '#050e1a', border: `1px solid ${CY_BORDER}`,
+                color: CY_DIM, cursor: 'pointer', maxWidth: 112,
+              }}
+            >
+              <option value=''>新規</option>
+              {history.map(s => (
+                <option key={s.date} value={s.date}>{s.date}</option>
+              ))}
+            </select>
+          )}
+          {isPreview ? (
+            <button style={BTN_STYLE} onClick={() => setIsPreview(false)}>編集</button>
+          ) : (
+            <button
+              style={{ ...BTN_STYLE, cursor: memoIsDirty ? 'pointer' : 'default', opacity: memoIsDirty ? 1 : 0.45 }}
+              onClick={user ? handleSnapSave : handleSave}
+              disabled={!memoIsDirty}
+            >
+              保存
+            </button>
+          )}
         </div>
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0 }}>
-        <textarea
-          ref={textareaRef}
-          value={quantMemo}
-          onChange={e => setQuantMemo(e.target.value)}
-          placeholder="AI分析レポート・トレードメモを入力…"
-          style={{
-            flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-            resize: 'none', background: 'transparent',
-            color: 'var(--text)', border: 'none', outline: 'none',
-            padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
-            fontFamily: 'inherit', overflowY: 'auto',
-          }}
-        />
+
+      {/* テキストエリア / プレビュー（外パディングで二重枠を表現） */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0, padding: '14px 16px' }}>
+        {isPreview ? (
+          <div
+            onClick={() => setIsPreview(false)}
+            style={{
+              flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+              color: 'rgba(255,255,255,0.88)', overflowY: 'auto', cursor: 'text',
+              whiteSpace: 'pre-wrap', fontFamily: CY_FONT,
+              border: `1px solid ${CY_BORDER}`, borderRadius: 8,
+              background: CY_BG_AREA,
+            }}
+          >
+            {savedMemo ? renderHighlighted(savedMemo) : (
+              <span style={{ color: CY_FAINT }}>▌ AI分析レポート・トレードメモを入力…</span>
+            )}
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            value={quantMemo}
+            onChange={e => setQuantMemo(e.target.value)}
+            placeholder="▌ AI分析レポート・トレードメモを入力…"
+            style={{
+              flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+              resize: 'none', background: CY_BG_AREA,
+              color: 'rgba(255,255,255,0.88)', border: `1px solid ${CY_BORDER}`, outline: 'none', borderRadius: 8,
+              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+              fontFamily: CY_FONT, overflowY: 'auto',
+            }}
+          />
+        )}
       </div>
     </div>
   )
@@ -306,8 +498,8 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
           </svg>
-          CFTC COT
-          <span style={s.titleSub}>週次 · 日経225先物 · 火曜基準</span>
+          先物手口
+          <span style={s.titleSub}>週次 · 日経225先物 · 米CFTC火曜基準</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {dateLabel && <span style={s.dateLabel}>{dateLabel}</span>}
@@ -343,11 +535,10 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
             ) : (
               <>
                 {/* ── 3連タンク（NC / Comm / NR） ── */}
-                <div style={{
-                  display: 'flex',
-                  flexDirection: isMobile ? 'column' : 'row',
-                  gap: 8,
-                }}>
+                <div style={isMobile
+                  ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }
+                  : { display: 'flex', flexDirection: 'row', gap: 8 }
+                }>
                   {tanks.map(tank => {
                     const meta = GROUP_META[tank.group]
                     return (
@@ -409,8 +600,17 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                             row.commNet, row.commLong, row.commShort,
                             row.openInterest,
                           ]
+                          // 行背景: HF純計の正負で統一（最新行は専用色）
+                          const net = row.nonCommNet
+                          const rowBg = i === 0
+                            ? 'var(--latest-row-bg)'
+                            : net > 0
+                              ? (theme === 'dark' ? 'rgba(96,200,140,0.07)' : 'rgba(22,130,80,0.05)')
+                              : net < 0
+                                ? (theme === 'dark' ? 'rgba(255,120,100,0.07)' : 'rgba(200,50,30,0.05)')
+                                : 'transparent'
                           return (
-                            <tr key={row.date} style={{ background: i === 0 ? 'var(--latest-row-bg)' : 'transparent', transition: 'background 0.1s' }}>
+                            <tr key={row.date} style={{ background: rowBg, transition: 'background 0.1s' }}>
                               <td style={{ ...s.td, minWidth: 68 }}>
                                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{row.label}</div>
                                 <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{row.date}</div>
@@ -418,7 +618,6 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                               {cells.map((v, ci) => (
                                 <td key={ci} style={{
                                   ...s.td, ...s.tdNum,
-                                  background: ci < 6 ? cellBg(v, theme) : 'transparent',
                                   fontWeight: TOTAL_IDX.has(ci) ? 700 : 500,
                                   borderLeft: TOTAL_IDX.has(ci) ? '2px solid var(--border-dim)' : undefined,
                                 }}>
@@ -442,7 +641,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                 )}
 
                 <div style={{ fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6, padding: '0 2px 4px' }}>
-                  ※ タンク水位 = |HF/機関/個人ネット枚数| ÷ 過去最大値×1.2。緑=買越し・赤=売越し。データはCFTC毎週金曜公表（火曜基準・約3〜4日遅延）。
+                  ※ タンク水位 = |HF/機関/個人ネット枚数| ÷ 過去最大値×1.2。緑=買越し・赤=売越し。行背景はHF純計の方向を示す。データは米CFTC毎週金曜公表（火曜基準・約3〜4日遅延）。
                 </div>
               </>
             )}

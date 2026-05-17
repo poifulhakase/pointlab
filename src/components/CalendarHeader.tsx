@@ -56,11 +56,20 @@ function LabIcon() {
   )
 }
 
+function ShieldIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  )
+}
+
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
   { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
   { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
-  { label: 'ぽいロボ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <RobotIcon /> },
+  { label: 'エンジン',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <RobotIcon /> },
+  { label: 'シールド',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <ShieldIcon /> },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 
@@ -76,10 +85,11 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
         style={{
           height: 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px))',
           display: 'flex', alignItems: 'stretch',
+          paddingLeft: '4px', paddingRight: '4px',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
           flexShrink: 0, position: 'relative', zIndex: Z.calendarHeader,
-          userSelect: 'none', padding: '0 4px',
+          userSelect: 'none',
         }}
         className="glass"
       >
