@@ -441,7 +441,7 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
             }}
           >
             {savedMemo ? renderHighlighted(savedMemo) : (
-              <span style={{ color: CY_FAINT }}>▌ AI分析レポート・トレードメモを入力…</span>
+              <span style={{ color: CY_FAINT }}>▌ エントリー分析レポートを記録...</span>
             )}
           </div>
         ) : (
@@ -449,7 +449,7 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
             ref={textareaRef}
             value={quantMemo}
             onChange={e => setQuantMemo(e.target.value)}
-            placeholder="▌ AI分析レポート・トレードメモを入力…"
+            placeholder="▌ エントリー分析レポートを記録..."
             style={{
               flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
               resize: 'none', background: CY_BG_AREA,

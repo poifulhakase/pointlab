@@ -107,7 +107,7 @@ function ShieldMemoPanel(_: { user: User | null }) {
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder={CYBER_MODE ? '▌ ポジション分析レポートを入力...' : 'ポジション分析レポートを入力...'}
+          placeholder={CYBER_MODE ? '▌ ポジション分析レポートを記録...' : 'ポジション分析レポートを記録...'}
           style={{
             flex: 1, width: '100%', resize: 'none', borderRadius: 8,
             padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
