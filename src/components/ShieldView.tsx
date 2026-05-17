@@ -307,38 +307,6 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
               </button>
             )}
 
-            {/* 画像貼り付け案内 */}
-            {CYBER_MODE ? (
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                background: 'rgba(0,229,255,0.04)',
-                border: `1px dashed ${CY_BORDER}`,
-                borderRadius: 8, padding: '10px 14px',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={CY_DIM} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.7 }}>
-                  AIチャットを開いたら、ご利用者様のポジションデータ画像も貼り付けてご使用ください
-                </span>
-              </div>
-            ) : (
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                background: 'var(--bg-subtle)',
-                border: '1px dashed var(--border-dim)',
-                borderRadius: 8, padding: '10px 14px',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.7 }}>
-                  AIチャットを開いたら、ご利用者様のポジションデータ画像も貼り付けてご使用ください
-                </span>
-              </div>
-            )}
           </div>
 
           {/* AIチャットリンク */}
@@ -396,6 +364,39 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
                     </svg>
                   </a>
                 ))}
+              </div>
+            )}
+
+            {/* 画像貼り付け案内 */}
+            {CYBER_MODE ? (
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                background: 'rgba(0,229,255,0.04)',
+                border: `1px dashed ${CY_BORDER}`,
+                borderRadius: 8, padding: '10px 14px',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={CY_DIM} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.7 }}>
+                  AIチャットを開いたら、ご利用者様のポジションデータ画像も貼り付けてご使用ください
+                </span>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                background: 'var(--bg-subtle)',
+                border: '1px dashed var(--border-dim)',
+                borderRadius: 8, padding: '10px 14px',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.7 }}>
+                  AIチャットを開いたら、ご利用者様のポジションデータ画像も貼り付けてご使用ください
+                </span>
               </div>
             )}
           </div>
