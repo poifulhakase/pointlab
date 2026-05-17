@@ -314,7 +314,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
             <div style={CYBER_MODE
               ? { ...sh.sectionTitle, color: CY_DIM, fontFamily: CY_FONT, fontSize: 13, letterSpacing: '0.08em' }
               : sh.sectionTitle
-            }>{CYBER_MODE ? '▌ AIチャットで開く' : 'AIチャットで開く'}</div>
+            }>{CYBER_MODE ? '▌ AI起動' : 'AI起動'}</div>
 
             {CYBER_MODE ? (
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 28 }}>
