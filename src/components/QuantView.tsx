@@ -1198,7 +1198,7 @@ function EnginePanel({
                 <div style={{ position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none' }}>
                   <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${CY_BORDBR}`, flexShrink: 0 }} />
                   <div style={{ width: 130, background: 'rgba(0,229,255,0.06)', border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 10, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
-                    {copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用<br />プロンプト<br />＋需給データをコピー</>}
+                    {copyStatus === 'prompt' ? '▶ コピー完了' : <>分析用プロンプト<br />＋需給データ</>}
                   </div>
                 </div>
               </div>
