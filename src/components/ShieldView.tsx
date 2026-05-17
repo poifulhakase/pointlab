@@ -380,7 +380,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
                 <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.7 }}>
-                  AIチャット起動後、ポジション状況のキャプチャも添付
+                  AI起動後、ポジション状況のキャプチャも添付
                 </span>
               </div>
             ) : (
@@ -395,7 +395,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
                 <span style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.7 }}>
-                  AIチャット起動後、ポジション状況のキャプチャも添付
+                  AI起動後、ポジション状況のキャプチャも添付
                 </span>
               </div>
             )}
