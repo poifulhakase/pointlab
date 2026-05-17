@@ -267,7 +267,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
               fontSize: 13, lineHeight: 1.7,
               color: 'var(--text)', fontWeight: 500,
             }}>
-              日経225のチャート構造（前回高値・安値・移動平均）を解析し、ブル／ベアポジションのポジション管理を支援する機能です。
+              日経平均ブル/ベア専用のポジション分析機能。<br /><br />価格構造を解析し、AIチャットでの運用が可能。
             </div>
 
             {/* コピーボタン（未実装・押しても何もしない） */}
