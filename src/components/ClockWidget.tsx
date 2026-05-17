@@ -34,7 +34,7 @@ const PHASE_META: Record<Phase, { label: string; color: string; dot: string; glo
 const US_PHASE_META: Record<USPhase, { label: string; color: string; dot: string; glow: boolean }> = {
   open:    { label: '取引中',   color: 'rgba(96,200,140,0.95)', dot: 'rgba(96,200,140,0.9)', glow: true },
   closed:  { label: '取引終了', color: 'var(--text-dim)', dot: 'rgba(148,163,184,0.35)', glow: false },
-  holiday: { label: '休場',     color: 'rgba(251,146,60,0.85)', dot: 'rgba(251,146,60,0.7)', glow: false },
+  holiday: { label: '休場',     color: 'var(--text-dim)',        dot: 'rgba(148,163,184,0.35)', glow: false },
 }
 
 function getPhase(h: number, mi: number, dateObj: Date): Phase {
