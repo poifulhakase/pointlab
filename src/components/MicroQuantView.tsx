@@ -180,6 +180,7 @@ function todayStr(): string {
 const HIGHLIGHT_PATTERNS = [
   /確信度：[\d.]+%/g,
   /判定：.+/g,
+  /指令：.+/g,
 ]
 
 function renderHighlighted(text: string): React.ReactNode[] {
