@@ -1165,40 +1165,42 @@ function EnginePanel({
             日経平均ブル/ベア専用の需給分析機能。<br />AIでの分析が可能。
           </div>
           {CYBER_MODE ? (
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-              <button
-                style={{
-                  width: 84, height: 84, borderRadius: '50%',
-                  background: copyStatus === 'prompt' ? 'rgba(0,229,255,0.18)' : 'rgba(0,229,255,0.07)',
-                  border: `2px solid ${copyStatus === 'prompt' ? CY_GREEN : CY_BORDBR}`,
-                  boxShadow: copyStatus === 'prompt'
-                    ? `0 0 24px rgba(0,229,255,0.6), inset 0 0 14px rgba(0,229,255,0.18)`
-                    : `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
-                  color: CY_GREEN,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 7, cursor: 'pointer', flexShrink: 0,
-                  transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
-                }}
-                onClick={onPromptCopy}
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 8V4H8"/>
-                  <rect width="16" height="12" x="4" y="8" rx="2"/>
-                  <path d="M2 14h2"/>
-                  <path d="M20 14h2"/>
-                  <path d="M15 13v2"/>
-                  <path d="M9 13v2"/>
-                </svg>
-                <span style={{ fontFamily: CY_FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>
-                  {copyStatus === 'prompt' ? 'DONE' : 'COPY'}
-                </span>
-              </button>
-              {/* 吹き出し */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: -10, top: '50%', transform: 'translateY(-50%)', width: 0, height: 0, borderTop: '9px solid transparent', borderBottom: '9px solid transparent', borderRight: `10px solid ${CY_BORDBR}` }} />
-                <div style={{ position: 'absolute', left: -8, top: '50%', transform: 'translateY(-50%)', width: 0, height: 0, borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderRight: `9px solid ${CY_BG}` }} />
-                <div style={{ background: 'rgba(0,229,255,0.05)', border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '10px 14px', fontFamily: CY_FONT, fontSize: 12, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.65 }}>
-                  {copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用プロンプト<br />＋需給データをコピー</>}
+                <button
+                  style={{
+                    width: 84, height: 84, borderRadius: '50%',
+                    background: copyStatus === 'prompt' ? 'rgba(0,229,255,0.18)' : 'rgba(0,229,255,0.07)',
+                    border: `2px solid ${copyStatus === 'prompt' ? CY_GREEN : CY_BORDBR}`,
+                    boxShadow: copyStatus === 'prompt'
+                      ? `0 0 24px rgba(0,229,255,0.6), inset 0 0 14px rgba(0,229,255,0.18)`
+                      : `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
+                    color: CY_GREEN,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 7, cursor: 'pointer',
+                    transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
+                  }}
+                  onClick={onPromptCopy}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 8V4H8"/>
+                    <rect width="16" height="12" x="4" y="8" rx="2"/>
+                    <path d="M2 14h2"/>
+                    <path d="M20 14h2"/>
+                    <path d="M15 13v2"/>
+                    <path d="M9 13v2"/>
+                  </svg>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>
+                    {copyStatus === 'prompt' ? 'DONE' : 'COPY'}
+                  </span>
+                </button>
+                {/* 吹き出し（フロート・右下） */}
+                <div style={{ position: 'absolute', top: 54, left: 50, zIndex: 10, pointerEvents: 'none' }}>
+                  <div style={{ position: 'absolute', top: -9, left: 8, width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: `9px solid ${CY_BORDBR}` }} />
+                  <div style={{ position: 'absolute', top: -7, left: 9, width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderBottom: `8px solid ${CY_BG}` }} />
+                  <div style={{ background: 'rgba(0,229,255,0.08)', border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '7px 11px', fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, maxWidth: 155 }}>
+                    {copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用プロンプト<br />＋需給データをコピー</>}
+                  </div>
                 </div>
               </div>
             </div>
