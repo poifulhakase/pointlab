@@ -267,7 +267,7 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
               fontSize: 13, lineHeight: 1.7,
               color: 'var(--text)', fontWeight: 500,
             }}>
-              日経平均ブル/ベア専用のポジション分析機能。<br /><br />価格構造を解析し、AIチャットでの運用が可能。
+              日経平均ブル/ベア専用のポジション分析機能。<br />価格構造を解析し、AIチャットでの運用が可能。
             </div>
 
             {/* コピーボタン（未実装・押しても何もしない） */}

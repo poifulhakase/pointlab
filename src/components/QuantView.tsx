@@ -1162,7 +1162,7 @@ function EnginePanel({
             color: 'var(--text)',
             fontWeight: 500,
           }}>
-            日経平均ブル/ベア専用の需給分析機能。<br /><br />データを自動収集し、AIチャットでの分析が可能。
+            日経平均ブル/ベア専用の需給分析機能。<br />データを自動収集し、AIチャットでの分析が可能。
           </div>
           {CYBER_MODE ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
