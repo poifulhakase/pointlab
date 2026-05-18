@@ -11,13 +11,14 @@ import {
 import { getCancelPolicy, isSessionNow, formatBookingLabel, statusLabel } from '../utils/bookingTypes'
 
 type Props = {
-  isOpen:   boolean
-  theme:    'dark' | 'light'
-  userId:   string
-  userName: string
-  userEmail: string
-  onClose:  () => void
-  onConnectNow: () => void  // called when user wants to connect immediately
+  isOpen:       boolean
+  theme:        'dark' | 'light'
+  userId?:      string   // undefined = not logged in
+  userName?:    string
+  userEmail?:   string
+  onClose:      () => void
+  onConnectNow: () => void
+  onOpenLogin?: () => void  // called when login is required
 }
 
 type Screen =
@@ -28,7 +29,7 @@ type Screen =
   | 'booked'       // just booked
   | 'error'
 
-export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClose, onConnectNow }: Props) {
+export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClose, onConnectNow, onOpenLogin }: Props) {
   const L = theme === 'light'
   const [screen,        setScreen]        = useState<Screen>('loading')
   const [slots,         setSlots]         = useState<Slot[]>([])
@@ -73,13 +74,15 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
     setScreen('loading')
     setErrorMsg('')
     try {
-      const [active, avail] = await Promise.all([
-        getUserActiveBooking(userId),
-        getAvailableSlots(),
-      ])
-      setActiveBooking(active)
+      const avail = await getAvailableSlots()
       setSlots(avail)
-      setScreen(active ? 'has_booking' : 'slot_list')
+      if (userId) {
+        const active = await getUserActiveBooking(userId)
+        setActiveBooking(active)
+        setScreen(active ? 'has_booking' : 'slot_list')
+      } else {
+        setScreen('slot_list')
+      }
     } catch (e) {
       setErrorMsg(String(e))
       setScreen('error')
@@ -88,6 +91,12 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
 
   async function handleBook() {
     if (!selectedSlot) return
+    if (!userId || !userName || !userEmail) {
+      sessionStorage.setItem('poical-pending-connect', '1')
+      onOpenLogin?.()
+      onClose()
+      return
+    }
     setBusy(true)
     try {
       const bookId = await requestBooking(
@@ -382,6 +391,11 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
           申請後、ぽいふる博士が内容を確認して承認します。<br />
           承認されるとメールでお知らせします。
         </div>
+        {!userId && (
+          <div style={{ fontSize: 12, color: L ? 'rgba(180,120,0,0.85)' : 'rgba(251,191,36,0.85)', textAlign: 'center', lineHeight: 1.6, padding: '8px 12px', border: `1px solid ${L ? 'rgba(180,120,0,0.20)' : 'rgba(251,191,36,0.20)'}`, borderRadius: 8 }}>
+            ⚠ 申請にはGoogleログインが必要です。<br />次の画面でログインしてください。
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
           <button
             onClick={() => setScreen('slot_list')}

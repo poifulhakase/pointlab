@@ -840,15 +840,16 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       </div>
 
       {/* 予約モーダル */}
-      {bookingOpen && user && !isAdmin && (
+      {bookingOpen && !isAdmin && (
         <BookingModal
           isOpen={bookingOpen}
           theme={theme}
-          userId={user.uid}
-          userName={user.displayName ?? 'ユーザー'}
-          userEmail={user.email ?? ''}
+          userId={user?.uid}
+          userName={user?.displayName ?? 'ユーザー'}
+          userEmail={user?.email ?? ''}
           onClose={() => setBookingOpen(false)}
           onConnectNow={() => setConnectMode(true)}
+          onOpenLogin={() => { setBookingOpen(false); onOpenAccount?.() }}
         />
       )}
 
@@ -986,7 +987,6 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           <div
             className="poyon-connect-area"
             onClick={() => {
-              if (!user) { sessionStorage.setItem(PENDING_KEY, '1'); onOpenAccount?.(); return }
               if (isAdmin) { setAdminOpen(true); return }
               setBookingOpen(true)
             }}
