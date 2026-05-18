@@ -183,7 +183,8 @@ const HIGHLIGHT_PATTERNS = [
   /指令：.+/g,
 ]
 
-function renderHighlighted(text: string): React.ReactNode[] {
+function renderHighlighted(text: string, theme: 'dark' | 'light'): React.ReactNode[] {
+  const hlColor = theme === 'light' ? '#0369a1' : 'rgba(0,230,255,0.95)'
   return text.split('\n').map((line, lineIdx) => {
     const spans: { start: number; end: number }[] = []
     for (const pat of HIGHLIGHT_PATTERNS) {
@@ -203,7 +204,7 @@ function renderHighlighted(text: string): React.ReactNode[] {
       if (pos < start) nodes.push(line.slice(pos, start))
       nodes.push(
         <mark key={`h-${lineIdx}-${start}`} style={{
-          background: 'none', color: 'rgba(0,230,255,0.95)',
+          background: 'none', color: hlColor, fontWeight: 700,
         }}>
           {line.slice(start, end)}
         </mark>
@@ -215,26 +216,36 @@ function renderHighlighted(text: string): React.ReactNode[] {
   })
 }
 
-const CY_GREEN  = '#00e5ff'
-const CY_DIM    = 'rgba(0,229,255,0.55)'
-const CY_FAINT  = 'rgba(0,229,255,0.22)'
-const CY_BORDER = 'rgba(0,229,255,0.22)'
-const CY_BORDBR = 'rgba(0,229,255,0.45)'
-const CY_FONT   = "'Courier New', Courier, monospace" as const
-const CY_BG_SUB = 'rgba(0,5,15,0.7)'
-const CY_BG_AREA = 'rgba(0,229,255,0.04)'
-const CY_SCAN   = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
+const CY_FONT = "'Courier New', Courier, monospace" as const
+const CY_SCAN = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
 
-const BTN_STYLE: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 5,
-  padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
-  letterSpacing: '0.06em',
-  color: CY_GREEN, background: CY_BG_AREA,
-  border: `1px solid ${CY_BORDBR}`, cursor: 'pointer',
-  fontFamily: CY_FONT,
+function cyColors(theme: 'dark' | 'light') {
+  const isLight = theme === 'light'
+  return {
+    GREEN:      isLight ? '#0369a1'                 : '#00e5ff',
+    DIM:        isLight ? 'rgba(3,105,161,0.75)'    : 'rgba(0,229,255,0.55)',
+    FAINT:      isLight ? 'rgba(3,105,161,0.4)'     : 'rgba(0,229,255,0.22)',
+    BORDER:     isLight ? 'rgba(3,105,161,0.25)'    : 'rgba(0,229,255,0.22)',
+    BORDBR:     isLight ? 'rgba(3,105,161,0.5)'     : 'rgba(0,229,255,0.45)',
+    BG_SUB:     isLight ? '#f0f7ff'                 : 'rgba(0,5,15,0.7)',
+    BG_AREA:    isLight ? 'rgba(3,105,161,0.07)'    : 'rgba(0,229,255,0.04)',
+    SELECT_BG:  isLight ? '#f0f9ff'                 : '#050e1a',
+    SCAN:       isLight ? 'none'                    : CY_SCAN,
+    TEXT:       isLight ? 'rgba(17,24,39,0.9)'      : 'rgba(255,255,255,0.88)',
+    FONT:       CY_FONT,
+  }
 }
 
-export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; user: User | null; isMobile?: boolean }) {
+// 本文中の「## 需給物理・執行ログ：YYYY-MM-DD」の日付を指定日付に置換
+function updateLogDate(text: string, date: string): string {
+  return text.replace(
+    /^(## 需給物理・執行ログ：)\d{4}-\d{2}-\d{2}/m,
+    `$1${date}`,
+  )
+}
+
+export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'light'; user: User | null; isMobile?: boolean }) {
+  const c = cyColors(theme)
   const [quantMemo,     setQuantMemo]     = useState('')
   const [savedMemo,     setSavedMemo]     = useState('')
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
@@ -332,19 +343,21 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
       .catch(() => { /* オフライン時はローカルキャッシュで対応済み */ })
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // スナップショット保存（ログイン時・今日の日付で保存・同日は上書き）
+  // スナップショット保存（ログイン時・今日の日付で保存・ログ日付を自動更新）
   const handleSnapSave = useCallback(() => {
     if (!user) return
     const today = todayStr()
-    const newSnap: MemoSnapshot = { date: today, text: quantMemo }
+    const updatedMemo = updateLogDate(quantMemo, today)
+    const newSnap: MemoSnapshot = { date: today, text: updatedMemo }
     const filtered = history.filter(s => s.date !== today)
     const updated = [newSnap, ...filtered].slice(0, QUANT_MEMO_MAX)
     setHistory(updated)
     saveHistoryLocal(updated)
     restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: updated, updatedAt: new Date().toISOString() }).catch(() => {})
-    setSavedMemo(quantMemo)
+    setQuantMemo(updatedMemo)
+    setSavedMemo(updatedMemo)
     setSelectedDate(today)
-    localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
+    localStorage.setItem(QUANT_MEMO_KEY, updatedMemo)
     setMemoSaveFlash(true)
     setTimeout(() => setMemoSaveFlash(false), 2000)
     setIsPreview(true)
@@ -359,7 +372,21 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
     setIsPreview(true)
   }, [quantMemo])
 
-  // 日付プルダウン選択
+  // ⑫ Ctrl+S / Cmd+S で保存
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        if (!memoIsDirty) return
+        if (user) handleSnapSave()
+        else handleSave()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [memoIsDirty, user, handleSnapSave, handleSave])
+
+  // 日付プルダウン選択（ログ日付を選択日に自動更新）
   const handleSelectSnapshot = useCallback((date: string) => {
     setSelectedDate(date)
     if (date === '') {
@@ -369,55 +396,64 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
     } else {
       const snap = history.find(s => s.date === date)
       if (snap) {
-        setQuantMemo(snap.text)
-        setSavedMemo(snap.text)
+        const updated = updateLogDate(snap.text, date)
+        setQuantMemo(updated)
+        setSavedMemo(updated)
         setIsPreview(true)
-        localStorage.setItem(QUANT_MEMO_KEY, snap.text)
+        localStorage.setItem(QUANT_MEMO_KEY, updated)
       }
     }
   }, [history])
 
+  const btnStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 5,
+    padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+    letterSpacing: '0.06em', color: c.GREEN, background: c.BG_AREA,
+    border: `1px solid ${c.BORDBR}`, cursor: 'pointer', fontFamily: c.FONT,
+  }
+
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: CY_BG_SUB, backgroundImage: CY_SCAN }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: c.BG_SUB, backgroundImage: c.SCAN }}>
       {/* ヘッダー */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 14px 9px', flexShrink: 0,
-        borderBottom: `1px solid ${CY_BORDER}`,
-        background: CY_BG_AREA,
+        borderBottom: `1px solid ${c.BORDER}`,
+        background: c.BG_AREA,
         userSelect: 'none', gap: 8,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={CY_GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
-          <span style={{ fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }}>
+          <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
             エントリー分析レポート
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {memoSaveFlash && <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_GREEN, letterSpacing: '0.06em' }}>保存しました</span>}
+          {memoSaveFlash && <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.GREEN, letterSpacing: '0.06em' }}>保存しました</span>}
           {user && (
             <select
               value={selectedDate}
               onChange={e => handleSelectSnapshot(e.target.value)}
               style={{
-                fontFamily: CY_FONT, fontSize: 10, padding: '3px 6px', borderRadius: 5,
-                background: '#050e1a', border: `1px solid ${CY_BORDER}`,
-                color: CY_DIM, cursor: 'pointer', maxWidth: 112,
+                fontFamily: c.FONT, fontSize: 12, padding: '5px 10px', borderRadius: 6,
+                background: c.SELECT_BG, border: `1px solid ${c.BORDBR}`,
+                color: c.DIM, cursor: 'pointer', minWidth: 130,
+                outline: 'none',
               }}
             >
-              <option value=''>新規</option>
+              <option value='' style={{ background: c.SELECT_BG, color: c.DIM }}>新規</option>
               {history.map(s => (
-                <option key={s.date} value={s.date}>{s.date}</option>
+                <option key={s.date} value={s.date} style={{ background: c.SELECT_BG, color: c.DIM }}>{s.date}</option>
               ))}
             </select>
           )}
           {isPreview ? (
-            <button style={BTN_STYLE} onClick={() => setIsPreview(false)}>編集</button>
+            <button style={btnStyle} onClick={() => setIsPreview(false)}>編集</button>
           ) : (
             <button
-              style={{ ...BTN_STYLE, cursor: memoIsDirty ? 'pointer' : 'default', opacity: memoIsDirty ? 1 : 0.45 }}
+              style={{ ...btnStyle, cursor: memoIsDirty ? 'pointer' : 'default', opacity: memoIsDirty ? 1 : 0.45 }}
               onClick={user ? handleSnapSave : handleSave}
               disabled={!memoIsDirty}
             >
@@ -435,14 +471,14 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
             style={{
               flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
               padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
-              color: 'rgba(255,255,255,0.88)', overflowY: 'auto', cursor: 'text',
-              whiteSpace: 'pre-wrap', fontFamily: CY_FONT,
-              border: `1px solid ${CY_BORDER}`, borderRadius: 8,
-              background: CY_BG_AREA,
+              color: c.TEXT, overflowY: 'auto', cursor: 'text',
+              whiteSpace: 'pre-wrap', fontFamily: c.FONT,
+              border: `1px solid ${c.BORDER}`, borderRadius: 8,
+              background: c.BG_AREA,
             }}
           >
-            {savedMemo ? renderHighlighted(savedMemo) : (
-              <span style={{ color: CY_FAINT }}>▌ エントリー分析レポートを記録...</span>
+            {savedMemo ? renderHighlighted(savedMemo, theme) : (
+              <span style={{ color: c.FAINT }}>▌ エントリー分析レポートを記録...</span>
             )}
           </div>
         ) : (
@@ -453,10 +489,10 @@ export function QuantMemoPanel({ user, isMobile }: { theme: 'dark' | 'light'; us
             placeholder="▌ エントリー分析レポートを記録..."
             style={{
               flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-              resize: 'none', background: CY_BG_AREA,
-              color: 'rgba(255,255,255,0.88)', border: `1px solid ${CY_BORDER}`, outline: 'none', borderRadius: 8,
+              resize: 'none', background: c.BG_AREA,
+              color: c.TEXT, border: `1px solid ${c.BORDER}`, outline: 'none', borderRadius: 8,
               padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
-              fontFamily: CY_FONT, overflowY: 'auto',
+              fontFamily: c.FONT, overflowY: 'auto',
             }}
           />
         )}

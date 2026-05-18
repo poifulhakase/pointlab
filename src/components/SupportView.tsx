@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
-import { Z } from '../utils/zIndex'
+import { BookingModal }      from './BookingModal'
+import { AdminBookingPanel } from './AdminBookingPanel'
 
 const NoteView   = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const ManualView = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
@@ -62,14 +63,35 @@ function DataIcon() {
     </svg>
   )
 }
+function MailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+    </svg>
+  )
+}
+function RobotMenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="8" width="18" height="13" rx="2"/>
+      <path d="M12 8V5"/><circle cx="12" cy="4" r="1.2"/>
+      <circle cx="8.5" cy="14" r="1.2" fill="currentColor" stroke="none"/>
+      <circle cx="15.5" cy="14" r="1.2" fill="currentColor" stroke="none"/>
+      <path d="M9 18h6"/>
+    </svg>
+  )
+}
 
 // ── Menu data ──────────────────────────────────────────────────────────────
 type MenuView = 'month' | 'chart' | 'quant' | 'note' | null
 type MenuItem = { id: string; label: string; sub: string; accent: string; glow: string; view: MenuView; icon: React.ReactNode }
 
 const MENU_ITEMS: MenuItem[] = [
-  { id: 'data',     label: 'Data',     sub: '資料',       accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: 'note',   icon: <DataIcon />     },
-  { id: 'settings', label: 'Settings', sub: '設定',       accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null,     icon: <GearIcon />     },
+  { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボとは？', accent: '#34d399', glow: 'rgba(52,211,153,0.45)',  view: null, icon: <RobotMenuIcon /> },
+  { id: 'data',     label: 'Data',     sub: '資料',           accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: null, icon: <DataIcon />      },
+  { id: 'settings', label: 'Settings', sub: '設定',           accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null, icon: <GearIcon />      },
+  { id: 'contact',  label: 'Contact',  sub: 'お問い合わせ',   accent: '#f472b6', glow: 'rgba(244,114,182,0.45)', view: null, icon: <MailIcon />      },
 ]
 
 // ── Jitsi コネクトパネル（JaaS） ───────────────────────────────────────────
@@ -280,22 +302,28 @@ function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: 
 }
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onNavigate, onOpenSettings, onOpenAccount }: Props) {
+export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onOpenSettings, onOpenAccount }: Props) {
+  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
+  const isAdmin     = user?.email === ADMIN_EMAIL
+
   const [visible,      setVisible]      = useState(false)
   const [connectMode,  setConnectMode]  = useState(false)
-  const [confirmOpen,  setConfirmOpen]  = useState(false)
+  const [bookingOpen,  setBookingOpen]  = useState(false)
+  const [adminOpen,    setAdminOpen]    = useState(false)
   const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
+  const [activeDrawer, setActiveDrawer] = useState<'data' | 'contact' | null>(null)
+  const [drawerVisible, setDrawerVisible] = useState(false)
 
   const rippleIdRef = useRef(0)
   const menuRef     = useRef<HTMLDivElement>(null)
 
   const PENDING_KEY = 'poical-pending-connect'
 
-  // ログイン成功後に自動で confirm モーダルを開く（リダイレクト方式でも機能するよう sessionStorage で永続化）
+  // ログイン成功後に自動で予約モーダルを開く（リダイレクト方式でも機能するよう sessionStorage で永続化）
   useEffect(() => {
     if (user && sessionStorage.getItem(PENDING_KEY)) {
       sessionStorage.removeItem(PENDING_KEY)
-      setConfirmOpen(true)
+      setBookingOpen(true)
     }
   }, [user])
 
@@ -305,6 +333,16 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
     })
     return () => cancelAnimationFrame(id)
   }, [])
+
+  const openDrawer = (type: 'data' | 'contact') => {
+    setActiveDrawer(type)
+    requestAnimationFrame(() => requestAnimationFrame(() => setDrawerVisible(true)))
+  }
+
+  const closeDrawer = () => {
+    setDrawerVisible(false)
+    setTimeout(() => setActiveDrawer(null), 320)
+  }
 
   const handleRipple = (e: React.PointerEvent<HTMLDivElement>) => {
     if (connectMode) return
@@ -497,7 +535,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         }
 
 
-        /* ── Mobile menu overrides（2カラムグリッド） ── */
+        /* ── Mobile menu overrides（2カラムグリッド・横並び） ── */
         .menu3d-mobile .menu3d-list {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -505,11 +543,11 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         }
         .menu3d-mobile .menu3d-btn {
           width: 100%;
-          height: 88px;
-          flex-direction: column;
-          justify-content: center;
+          height: 58px;
+          flex-direction: row;
+          justify-content: flex-start;
           align-items: center;
-          padding: 10px 8px;
+          padding: 0;
           background: rgba(2,12,28,0.82);
           box-shadow:
             0 0 14px rgba(0,205,255,0.22),
@@ -517,21 +555,53 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
             inset 0 1px 0 rgba(255,255,255,0.06),
             0 4px 20px rgba(0,0,0,0.65);
         }
-        .menu3d-mobile .menu3d-divider { display: none; }
+        .menu3d-mobile .menu3d-divider {
+          display: flex;
+          height: 26px;
+          flex-shrink: 0;
+        }
         .menu3d-mobile .menu3d-icon-wrap {
-          width: auto;
-          height: auto;
-          margin-bottom: 8px;
+          width: 46px;
+          height: 58px;
+          margin-bottom: 0;
+          flex-shrink: 0;
         }
         .menu3d-mobile .menu3d-labels {
-          flex: none;
-          align-items: center;
-          padding: 0;
-          gap: 3px;
+          flex: 1;
+          align-items: flex-start;
+          padding: 0 8px 0 0;
+          gap: 2px;
+          min-width: 0;
         }
-        .menu3d-mobile .menu3d-label { font-size: 12px; letter-spacing: 0.14em; }
-        .menu3d-mobile .menu3d-sub { font-size: 10px; }
-        .menu3d-mobile .menu3d-header { margin-bottom: 16px; }
+        .menu3d-mobile .menu3d-label { font-size: 11px; letter-spacing: 0.12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .menu3d-mobile .menu3d-sub   { font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .menu3d-mobile .menu3d-header { margin-bottom: 14px; }
+
+        /* ── Light mode overrides ── */
+        .menu3d-light .menu3d-btn {
+          background: rgba(255,255,255,0.72);
+          border-color: rgba(0,120,200,0.40);
+          box-shadow:
+            0 0 14px rgba(0,120,200,0.15),
+            0 0 32px rgba(0,120,200,0.06),
+            inset 0 1px 0 rgba(255,255,255,0.80),
+            0 4px 20px rgba(0,0,0,0.10);
+        }
+        .menu3d-light .menu3d-btn:hover {
+          border-color: rgba(0,140,220,0.65);
+          box-shadow:
+            0 0 24px rgba(0,140,220,0.35),
+            0 0 50px rgba(0,140,220,0.12),
+            inset 0 1px 0 rgba(255,255,255,0.90),
+            0 8px 24px rgba(0,0,0,0.12);
+        }
+        .menu3d-light .menu3d-label { color: rgba(10,20,60,0.90) !important; }
+        .menu3d-light .menu3d-sub   { color: rgba(30,60,120,0.70) !important; }
+        .menu3d-light .menu3d-header-label { color: rgba(0,60,140,0.65); text-shadow: none; }
+        .menu3d-light .menu3d-header-line  { background: linear-gradient(to right, rgba(0,120,200,0.40) 0%, transparent 75%); }
+        .menu3d-light .menu3d-divider      { background: rgba(0,100,180,0.18); }
+        .menu3d-light .menu3d-tl { border-color: rgba(0,140,220,0.80); }
+        .menu3d-light .menu3d-br { border-color: rgba(0,140,220,0.80); }
 
         /* ── Connect button ── */
         @keyframes slow-rotate { to { transform: rotate(360deg); } }
@@ -602,6 +672,38 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         .poyon-connect-area:hover .poyon-text-wrap {
           animation: text-subtle-poyon 0.5s cubic-bezier(0.25,1,0.5,1) forwards;
         }
+
+        /* ── Light mode: poyon button ── */
+        .poyon-light .poyon-scanner-ring {
+          border-color: rgba(0,100,180,0.28);
+        }
+        .poyon-light .poyon-main-core {
+          background: rgba(230,243,255,0.90);
+          border-color: rgba(0,100,180,0.50);
+          box-shadow: inset 0 0 20px rgba(0,100,180,0.12);
+        }
+        .poyon-light .poyon-connect-area:hover .poyon-main-core {
+          border-color: rgba(0,140,220,0.80);
+          box-shadow: 0 0 24px rgba(0,120,200,0.28), inset 0 0 14px rgba(0,100,180,0.14);
+        }
+        .poyon-light .poyon-image-mask {
+          background-color: rgba(210,232,255,0.85);
+        }
+        .poyon-light .poyon-doctor-image {
+          filter: none;
+          opacity: 0.88;
+        }
+        .poyon-light .poyon-connect-area:hover .poyon-doctor-image {
+          filter: none;
+          opacity: 1;
+        }
+        .poyon-light .poyon-text-main {
+          color: rgba(10,30,80,0.90);
+          text-shadow: 0 0 8px rgba(0,120,200,0.20);
+        }
+        .poyon-light .poyon-text-sub {
+          color: rgba(0,100,180,0.80);
+        }
       `}</style>
 
       {/* 背景画像 */}
@@ -616,10 +718,21 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         zIndex: 0,
       }} />
 
+      {/* ライトモード用 白オーバーレイ */}
+      {theme === 'light' && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(240,248,255,0.62)',
+          pointerEvents: 'none', zIndex: 1,
+        }} />
+      )}
+
       {/* 下部グラデーション */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
-        background: 'linear-gradient(to bottom, transparent 0%, rgba(8,20,40,0.75) 100%)',
+        background: theme === 'light'
+          ? 'linear-gradient(to bottom, transparent 0%, rgba(220,235,255,0.80) 100%)'
+          : 'linear-gradient(to bottom, transparent 0%, rgba(8,20,40,0.75) 100%)',
         pointerEvents: 'none', zIndex: 1,
       }} />
 
@@ -651,7 +764,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         <div style={{ width: '33.333%', height: '100%', flexShrink: 0, position: 'relative' }}>
           <div
             ref={menuRef}
-            className={isMobile ? 'menu3d-mobile' : undefined}
+            className={[isMobile ? 'menu3d-mobile' : '', theme === 'light' ? 'menu3d-light' : ''].filter(Boolean).join(' ') || undefined}
             style={isMobile
               ? { position: 'absolute', top: 28, left: 16, right: 16 }
               : { position: 'absolute', top: 36, left: 32 }
@@ -679,7 +792,9 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
                     className="menu3d-btn"
                     onClick={() => {
                       if (item.id === 'settings') { onOpenSettings?.(); return }
-                      if (item.view) onNavigate?.(item.view)
+                      if (item.id === 'data')     { openDrawer('data');   return }
+                      if (item.id === 'contact')  { openDrawer('contact'); return }
+                      // poirobo: 準備中
                     }}
                   >
                     <span className="menu3d-tl" />
@@ -724,87 +839,109 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
 
       </div>
 
-      {/* 接続確認モーダル */}
-      {confirmOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: Z.connectConfirm,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,4,16,0.75)', backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-        }}>
-          <div style={{
-            width: isMobile ? 'calc(100% - 48px)' : 360,
-            background: 'linear-gradient(160deg, rgba(0,12,32,0.98) 0%, rgba(0,6,20,0.98) 100%)',
-            border: '1px solid rgba(0,242,255,0.35)',
-            borderRadius: 16,
-            boxShadow: '0 0 40px rgba(0,180,255,0.12), 0 24px 60px rgba(0,0,0,0.7)',
-            overflow: 'hidden',
-          }}>
-            {/* ヘッダー */}
+      {/* 予約モーダル */}
+      {bookingOpen && user && !isAdmin && (
+        <BookingModal
+          isOpen={bookingOpen}
+          theme={theme}
+          userId={user.uid}
+          userName={user.displayName ?? 'ユーザー'}
+          userEmail={user.email ?? ''}
+          onClose={() => setBookingOpen(false)}
+          onConnectNow={() => setConnectMode(true)}
+        />
+      )}
+
+      {/* 管理者パネル */}
+      {adminOpen && isAdmin && (
+        <AdminBookingPanel
+          isOpen={adminOpen}
+          theme={theme}
+          onClose={() => setAdminOpen(false)}
+          onConnectNow={() => { setAdminOpen(false); setConnectMode(true) }}
+        />
+      )}
+
+      {/* ━━ DATA / CONTACT ドロワー ━━ */}
+      {activeDrawer && (
+        <div
+          style={{
+            position: 'absolute', inset: 0, zIndex: 40,
+            background: drawerVisible ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
+            transition: 'background 0.32s ease',
+            backdropFilter: drawerVisible ? 'blur(2px)' : 'none',
+            WebkitBackdropFilter: drawerVisible ? 'blur(2px)' : 'none',
+          }}
+          onClick={closeDrawer}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0, right: 0, bottom: 0,
+              width: isMobile ? '100%' : 500,
+              background: theme === 'light' ? 'rgba(245,250,255,0.97)' : 'rgba(6,12,26,0.97)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              borderLeft: isMobile ? 'none' : theme === 'light' ? '1px solid rgba(0,100,180,0.18)' : '1px solid rgba(0,200,255,0.15)',
+              boxShadow: theme === 'light' ? '-12px 0 48px rgba(0,0,0,0.12)' : '-12px 0 48px rgba(0,0,0,0.55)',
+              transform: drawerVisible ? 'translateX(0)' : 'translateX(100%)',
+              transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1)',
+              display: 'flex', flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* ドロワーヘッダー */}
             <div style={{
-              padding: '14px 18px 12px',
-              borderBottom: '1px solid rgba(0,242,255,0.12)',
               display: 'flex', alignItems: 'center', gap: 10,
+              padding: '11px 16px',
+              borderBottom: theme === 'light' ? '1px solid rgba(0,100,180,0.15)' : '1px solid rgba(0,200,255,0.12)',
+              background: theme === 'light' ? 'rgba(220,235,255,0.90)' : 'rgba(0,8,20,0.85)',
+              flexShrink: 0,
             }}>
-              <span style={{
-                width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                background: 'rgba(0,242,255,0.6)',
-                boxShadow: '0 0 8px rgba(0,242,255,0.8)',
-              }} />
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(0,220,255,0.80)', letterSpacing: '0.2em' }}>
-                CONNECTION REQUEST
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme === 'light' ? 'rgba(0,100,200,0.7)' : 'rgba(0,220,255,0.7)', boxShadow: theme === 'light' ? '0 0 7px rgba(0,100,200,0.5)' : '0 0 7px rgba(0,220,255,0.9)', flexShrink: 0 }} />
+              <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: theme === 'light' ? 'rgba(0,60,140,0.80)' : 'rgba(80,200,255,0.85)', letterSpacing: '0.22em' }}>
+                {activeDrawer === 'data' ? 'DATA / 資料' : 'CONTACT / お問い合わせ'}
               </span>
+              <button
+                onClick={closeDrawer}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, borderRadius: 7,
+                  border: theme === 'light' ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
+                  background: theme === 'light' ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
+                  color: theme === 'light' ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)', cursor: 'pointer',
+                }}
+                aria-label="閉じる"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
 
-            {/* ボディ */}
-            <div style={{ padding: '20px 20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-              <img
-                src={`${import.meta.env.BASE_URL}hakase.webp`}
-                alt="博士"
-                style={{ width: 72, height: 72, objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(0,200,255,0.5))' }}
-              />
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'rgba(0,230,255,0.95)', letterSpacing: '0.04em' }}>
-                  ぽいふる博士
-                </p>
-                <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(180,220,255,0.65)', lineHeight: 1.6 }}>
-                  音声通話・画面共有セッションを<br />開始しますか？
-                </p>
-              </div>
-              <div style={{
-                fontSize: 10, color: 'rgba(0,200,255,0.45)', letterSpacing: '0.12em',
-                fontFamily: 'monospace', padding: '6px 14px',
-                border: '1px solid rgba(0,200,255,0.12)', borderRadius: 6,
-              }}>
-                PROTOCOL: SECURE_SYNC v2.0
-              </div>
-            </div>
-
-            {/* ボタン */}
-            <div style={{ display: 'flex', gap: 10, padding: '16px 20px 20px' }}>
-              <button
-                onClick={() => setConfirmOpen(false)}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 9, cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  color: 'rgba(180,200,220,0.7)', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
-                }}
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={() => { setConfirmOpen(false); setConnectMode(true) }}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 9, cursor: 'pointer',
-                  background: 'linear-gradient(135deg, rgba(0,160,255,0.25) 0%, rgba(0,100,200,0.18) 100%)',
-                  border: '1px solid rgba(0,200,255,0.5)',
-                  color: 'rgba(0,230,255,0.95)', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em',
-                  boxShadow: '0 0 16px rgba(0,180,255,0.15)',
-                }}
-              >
-                接続する
-              </button>
+            {/* コンテンツ */}
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+              {activeDrawer === 'data' && (
+                <Suspense fallback={<ViewLoader />}>
+                  <NoteView theme={theme} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onGoBack={closeDrawer} />
+                </Suspense>
+              )}
+              {activeDrawer === 'contact' && (
+                <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0 0' }}>
+                  <p style={{ margin: '0 16px 14px', fontSize: 12, color: theme === 'light' ? 'rgba(30,60,120,0.70)' : 'rgba(140,200,255,0.7)', lineHeight: 1.6 }}>
+                    ご要望・ご意見・バグ報告など、お気軽にお送りください。
+                  </p>
+                  <iframe
+                    src="https://docs.google.com/forms/d/e/1FAIpQLSfAwqrLssbR0EKh19J3m634gvJtggSbTrl7wDYjWGc3K4-j0A/viewform?embedded=true"
+                    style={{ width: '100%', minHeight: 680, border: 'none', flex: 1 }}
+                    title="お問い合わせフォーム"
+                    scrolling="yes"
+                  >
+                    読み込んでいます…
+                  </iframe>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -817,35 +954,42 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
 
       {/* コネクトボタン（コネクト中は非表示） */}
       {!connectMode && (
-        <div style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }}>
+        <div className={theme === 'light' ? 'poyon-light' : undefined} style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }}>
           {!isMobile && <div style={{
             position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
             padding: '14px 16px',
-            background: 'rgba(0,25,35,0.95)',
-            border: '1px solid rgba(0,242,255,0.3)',
+            background: theme === 'light' ? 'rgba(235,246,255,0.97)' : 'rgba(0,25,35,0.95)',
+            border: theme === 'light' ? '1px solid rgba(0,120,200,0.35)' : '1px solid rgba(0,242,255,0.3)',
             backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
             pointerEvents: 'none',
             animation: 'cyberTooltipFlicker 11s linear infinite',
           }}>
             <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
-              borderTop: '2px solid #00f2ff', borderLeft: '2px solid #00f2ff' }} />
+              borderTop: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff',
+              borderLeft: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff' }} />
             <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
-              background: '#081015', border: '2px solid #00f2ff', borderRadius: '50%' }} />
-            <span style={{ display: 'block', fontSize: 9, color: '#00f2ff', fontWeight: 700,
+              background: theme === 'light' ? 'rgba(220,240,255,0.95)' : '#081015',
+              border: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff', borderRadius: '50%' }} />
+            <span style={{ display: 'block', fontSize: 9,
+              color: theme === 'light' ? 'rgba(0,80,160,0.85)' : '#00f2ff', fontWeight: 700,
               letterSpacing: '0.15em', marginBottom: 8,
-              borderBottom: '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
+              borderBottom: theme === 'light' ? '1px solid rgba(0,120,200,0.18)' : '1px solid rgba(0,242,255,0.2)', paddingBottom: 4 }}>
               POIROBO_CONNECT_v2.0
             </span>
-            <div style={{ fontSize: 12, color: '#f0f8ff', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 12, color: theme === 'light' ? 'rgba(10,30,80,0.85)' : '#f0f8ff', lineHeight: 1.6 }}>
               ぽいふる博士と音声通話・画面共有ができます。
-              <span style={{ display: 'block', fontSize: 10, color: '#00f2ff', opacity: 0.8, marginTop: 6 }}>
+              <span style={{ display: 'block', fontSize: 10, color: theme === 'light' ? 'rgba(0,100,180,0.80)' : '#00f2ff', opacity: 0.8, marginTop: 6 }}>
                 接続プロトコル：SECURE_SYNC
               </span>
             </div>
           </div>}
           <div
             className="poyon-connect-area"
-            onClick={() => { if (user) setConfirmOpen(true); else { sessionStorage.setItem(PENDING_KEY, '1'); onOpenAccount?.() } }}
+            onClick={() => {
+              if (!user) { sessionStorage.setItem(PENDING_KEY, '1'); onOpenAccount?.(); return }
+              if (isAdmin) { setAdminOpen(true); return }
+              setBookingOpen(true)
+            }}
           >
             <div className="poyon-scanner-ring" />
             <div className="poyon-main-core">
@@ -854,7 +998,9 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
               </div>
               <div className="poyon-text-wrap">
                 <div className="poyon-text-main">ぽいロボ コネクト</div>
-                <div className="poyon-text-sub">ぽいふる博士と接続</div>
+                <div className="poyon-text-sub">
+                  {isAdmin ? '予約管理' : 'ぽいふる博士と接続'}
+                </div>
                 {!user && (
                   <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
                     Googleログインが必要です

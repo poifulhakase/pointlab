@@ -31,7 +31,11 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://apis.google.com https://8x8.vc; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tradingview.com https://lh3.googleusercontent.com https://*.8x8.vc; frame-src 'self' https://*.tradingview.com https://www.tradingview-widget.com https://pointlab-96310.firebaseapp.com https://accounts.google.com https://8x8.vc https://*.8x8.vc; connect-src 'self' https://api.allorigins.win https://api.codetabs.com https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://www3.nhk.or.jp https://*.googleapis.com wss://*.googleapis.com https://apis.google.com https://*.8x8.vc wss://*.8x8.vc; font-src 'self'; object-src 'none'; base-uri 'self'; worker-src 'self' blob:; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://apis.google.com https://8x8.vc; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tradingview.com https://lh3.googleusercontent.com https://*.8x8.vc; frame-src 'self' https://*.tradingview.com https://www.tradingview-widget.com https://pointlab-96310.firebaseapp.com https://accounts.google.com https://docs.google.com https://8x8.vc https://*.8x8.vc; connect-src 'self' https://api.allorigins.win https://api.codetabs.com https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://www3.nhk.or.jp https://*.googleapis.com wss://*.googleapis.com https://apis.google.com https://*.8x8.vc wss://*.8x8.vc https://finnhub.io https://*.sentry.io; font-src 'self'; object-src 'none'; base-uri 'self'; worker-src 'self' blob:; form-action 'self'; upgrade-insecure-requests;"
+        },
+        {
+          "key": "X-Permitted-Cross-Domain-Policies",
+          "value": "none"
         }
       ]
     }
@@ -40,6 +44,10 @@
     { "source": "/hakaseAI", "destination": "https://hakase-ai.vercel.app", "permanent": false },
     { "source": "/hakaseAI/(.*)", "destination": "https://hakase-ai.vercel.app/$1", "permanent": false }
   ],
+  "functions": {
+    "api/send-booking-email.js": { "memory": 128 },
+    "api/booking-ics.js": { "memory": 128 }
+  },
   "rewrites": [
     { "source": "/__/auth/:path*", "destination": "https://pointlab-96310.firebaseapp.com/__/auth/:path*" },
     { "source": "/calendar/:path*", "destination": "/calendar/index.html" },

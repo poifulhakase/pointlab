@@ -4,17 +4,17 @@ export type MacroFilter = { us: boolean; jp: boolean }
 
 export type MacroEvent = { type: MacroEventType }
 
-// 米国イベント色（ダーク / ライト）
-export const MACRO_COLOR        = '#67e8f9'
-export const MACRO_BG           = 'rgba(103,232,249,0.15)'
-export const MACRO_COLOR_LIGHT  = '#0e7490'
-export const MACRO_BG_LIGHT     = 'rgba(14,116,144,0.10)'
+// 米国・日本イベント色（アノマリーと同色統一）
+export const MACRO_COLOR        = '#60a5fa'
+export const MACRO_BG           = 'rgba(96,165,250,0.15)'
+export const MACRO_COLOR_LIGHT  = '#1d4ed8'
+export const MACRO_BG_LIGHT     = 'rgba(29,78,216,0.10)'
 
-// 日本イベント色（ダーク / ライト）
-export const MACRO_JP_COLOR       = '#86efac'
-export const MACRO_JP_BG          = 'rgba(134,239,172,0.15)'
-export const MACRO_JP_COLOR_LIGHT = '#166534'
-export const MACRO_JP_BG_LIGHT    = 'rgba(22,101,52,0.10)'
+// 日本イベント色（アノマリーと同色統一）
+export const MACRO_JP_COLOR       = '#60a5fa'
+export const MACRO_JP_BG          = 'rgba(96,165,250,0.15)'
+export const MACRO_JP_COLOR_LIGHT = '#1d4ed8'
+export const MACRO_JP_BG_LIGHT    = 'rgba(29,78,216,0.10)'
 
 export const MACRO_META: Record<MacroEventType, {
   color: string

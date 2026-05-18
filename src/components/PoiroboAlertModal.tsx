@@ -59,16 +59,16 @@ const GROUPS: GroupDef[] = [
   },
 ]
 
-const CY_ACCENT  = 'rgba(0,230,255,0.95)'
-const CY_DIM     = 'rgba(0,220,255,0.75)'
-const CY_FAINT   = 'rgba(0,200,255,0.40)'
-const CY_BORDER  = 'rgba(0,242,255,0.35)'
-const CY_FAINT2  = 'rgba(0,200,255,0.12)'
-const CY_DOT     = 'rgba(0,242,255,0.7)'
-const CY_BG      = 'linear-gradient(160deg, rgba(0,12,32,0.98) 0%, rgba(0,6,20,0.98) 100%)'
-const CY_FONT    = 'monospace' as const
-
-export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
+export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Props) {
+  const L         = theme === 'light'
+  const CY_ACCENT = L ? 'rgba(3,105,161,0.95)'  : 'rgba(0,230,255,0.95)'
+  const CY_DIM    = L ? 'rgba(0,60,140,0.80)'   : 'rgba(0,220,255,0.80)'
+  const CY_FAINT  = L ? 'rgba(30,80,160,0.65)'  : 'rgba(180,220,255,0.65)'
+  const CY_BORDER = L ? 'rgba(0,100,180,0.35)'  : 'rgba(0,242,255,0.35)'
+  const CY_FAINT2 = L ? 'rgba(0,100,180,0.15)'  : 'rgba(0,200,255,0.12)'
+  const CY_DOT    = L ? 'rgba(0,120,200,0.7)'   : 'rgba(0,242,255,0.7)'
+  const CY_BG     = L ? 'linear-gradient(160deg, rgba(238,248,255,0.99) 0%, rgba(228,242,255,0.99) 100%)' : 'linear-gradient(160deg, rgba(0,12,32,0.98) 0%, rgba(0,6,20,0.98) 100%)'
+  const CY_FONT   = 'monospace' as const
   const [local, setLocal] = useState<PoiroboAlertConfig>(config)
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 600)
 
@@ -100,26 +100,33 @@ export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
       return (
         <label
           key={key}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none', padding: '5px 0' }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none',
+            padding: '7px 9px', borderRadius: 7, marginBottom: 3,
+            background: checked ? (L ? 'rgba(3,105,161,0.10)' : 'rgba(0,200,255,0.10)') : (L ? 'rgba(0,50,100,0.03)' : 'rgba(255,255,255,0.02)'),
+            border: `1px solid ${checked ? (L ? 'rgba(0,100,180,0.35)' : 'rgba(0,220,255,0.35)') : (L ? 'rgba(100,150,200,0.22)' : 'rgba(100,150,200,0.18)')}`,
+            boxShadow: checked ? (L ? '0 0 12px rgba(3,105,161,0.10)' : '0 0 12px rgba(0,200,255,0.12)') : 'none',
+            transition: 'all 0.15s',
+          }}
           onClick={() => toggle(key)}
         >
           <span style={{
-            width: 15, height: 15, borderRadius: 3, flexShrink: 0, marginTop: 2,
-            border: `1.5px solid ${checked ? CY_ACCENT : CY_FAINT}`,
-            background: checked ? 'rgba(0,200,255,0.15)' : 'transparent',
-            boxShadow: checked ? '0 0 8px rgba(0,200,255,0.45), inset 0 0 4px rgba(0,200,255,0.1)' : 'none',
+            width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+            border: `2px solid ${checked ? CY_ACCENT : (L ? 'rgba(100,150,200,0.40)' : 'rgba(100,150,200,0.45)')}`,
+            background: checked ? (L ? 'rgba(3,105,161,0.22)' : 'rgba(0,200,255,0.22)') : (L ? 'rgba(0,50,100,0.04)' : 'rgba(255,255,255,0.03)'),
+            boxShadow: checked ? (L ? '0 0 10px rgba(3,105,161,0.40), inset 0 0 5px rgba(3,105,161,0.12)' : '0 0 10px rgba(0,200,255,0.55), inset 0 0 5px rgba(0,200,255,0.15)') : 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.15s',
           }}>
             {checked && (
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={CY_ACCENT} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={CY_ACCENT} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             )}
           </span>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: checked ? CY_ACCENT : CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.03em', lineHeight: 1.3 }}>{label}</div>
-            <div style={{ fontSize: 10, color: CY_FAINT, marginTop: 2, fontFamily: CY_FONT, letterSpacing: '0.02em' }}>{sub}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: checked ? 700 : 500, color: checked ? CY_ACCENT : (L ? 'rgba(30,60,120,0.75)' : 'rgba(180,210,240,0.80)'), fontFamily: CY_FONT, letterSpacing: '0.03em', lineHeight: 1.3 }}>{label}</div>
+            <div style={{ fontSize: 10, color: checked ? (L ? 'rgba(3,105,161,0.60)' : 'rgba(0,200,255,0.55)') : (L ? 'rgba(60,100,160,0.50)' : 'rgba(120,160,200,0.50)'), marginTop: 2, fontFamily: CY_FONT, letterSpacing: '0.02em' }}>{sub}</div>
           </div>
         </label>
       )
@@ -141,7 +148,7 @@ export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
     <>
       {/* オーバーレイ */}
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,4,16,0.75)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 900, background: L ? 'rgba(180,200,220,0.55)' : 'rgba(0,4,16,0.75)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
         onClick={onClose}
       />
 
@@ -183,7 +190,7 @@ export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 26, height: 26, borderRadius: 6, cursor: 'pointer',
-              background: 'rgba(255,255,255,0.04)', border: `1px solid ${CY_FAINT2}`,
+              background: L ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)', border: `1px solid ${CY_FAINT2}`,
               color: CY_FAINT, padding: 0,
             }}
           >
@@ -197,7 +204,7 @@ export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
         <div style={{ padding: '10px 18px 10px', borderBottom: `1px solid ${CY_FAINT2}`, flexShrink: 0 }}>
           <span style={{ fontSize: 11, color: CY_FAINT, fontFamily: CY_FONT, letterSpacing: '0.04em', lineHeight: 1.7 }}>
             監視するイベントを選択してください。対象日付パネルを
-            <span style={{ color: CY_ACCENT, fontWeight: 700 }}>グリーン</span>
+            <span style={{ color: 'rgba(248,113,113,0.95)', fontWeight: 700 }}>レッド</span>
             でハイライト表示します。
           </span>
         </div>
@@ -228,9 +235,9 @@ export function PoiroboAlertModal({ isOpen, config, onSave, onClose }: Props) {
             onClick={onClose}
             style={{
               flex: 1, padding: '10px 0', borderRadius: 9, cursor: 'pointer',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(180,200,220,0.7)', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
+              background: L ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
+              border: L ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.12)',
+              color: L ? 'rgba(50,80,120,0.75)' : 'rgba(180,200,220,0.7)', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em',
             }}
           >
             キャンセル

@@ -996,42 +996,34 @@ const STATUS_LINES = [
   'アービトラージ残 ........... 解析完了',
 ]
 
-// ── エンジンパネル（インライン）────────────────────
-function EnginePanel({
-  onPromptCopy, copyStatus, isMobile,
-}: {
-  onPromptCopy: () => void
-  copyStatus: '' | 'prompt'
-  isMobile: boolean
-}) {
-  const logIdxRef = useRef(4)
-  const [logLines, setLogLines] = useState<string[]>(() => STATUS_LINES.slice(0, 4))
+// ── useSystemLog（EnginePanel・ShieldView 共通）──────
+type EngineLogState = { logLines: string[]; cursorVisible: boolean; typedText: string }
+
+function useEngineSystemLog(statusLines: string[]): EngineLogState {
+  const logIdxRef   = useRef(4)
+  const [logLines,      setLogLines]      = useState<string[]>(() => statusLines.slice(0, 4))
   const [cursorVisible, setCursorVisible] = useState(true)
-  const [typedText, setTypedText] = useState('')
+  const [typedText,     setTypedText]     = useState('')
   const typeStateRef = useRef({ line: '', idx: 0 })
 
   useEffect(() => {
-    if (!CYBER_MODE) return
     const id = setInterval(() => {
       setLogLines(prev => {
-        const next = [...prev.slice(1), STATUS_LINES[logIdxRef.current % STATUS_LINES.length]]
+        const next = [...prev.slice(1), statusLines[logIdxRef.current % statusLines.length]]
         logIdxRef.current++
         return next
       })
     }, 5000)
     return () => clearInterval(id)
-  }, [])
+  }, []) // eslint-disable-line
 
   useEffect(() => {
-    if (!CYBER_MODE) return
     const id = setInterval(() => setCursorVisible(v => !v), 530)
     return () => clearInterval(id)
   }, [])
 
-  // タイプライター：最終行が変わるたびに1文字ずつ表示
   const lastLine = logLines[logLines.length - 1]
   useEffect(() => {
-    if (!CYBER_MODE) return
     typeStateRef.current = { line: lastLine, idx: 0 }
     setTypedText('')
     const id = setInterval(() => {
@@ -1043,26 +1035,72 @@ function EnginePanel({
     return () => clearInterval(id)
   }, [lastLine])
 
-  const CY_BG     = '#050e1a'
-  const CY_GREEN  = '#00e5ff'
-  const CY_DIM    = 'rgba(0,229,255,0.55)'
-  const CY_FAINT  = 'rgba(0,229,255,0.22)'
-  const CY_BORDER = 'rgba(0,229,255,0.22)'
-  const CY_BORDBR = 'rgba(0,229,255,0.45)'
-  const CY_SCAN   = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
+  return { logLines, cursorVisible, typedText }
+}
+
+// ── EngineSystemLog コンポーネント ───────────────────
+function EngineSystemLog({ logLines, cursorVisible, typedText, theme }: EngineLogState & { theme: 'dark' | 'light' }) {
+  const L = theme === 'light'
+  const CY_GREEN  = L ? '#0369a1' : '#00e5ff'
+  const CY_DIM    = L ? 'rgba(3,105,161,0.75)'  : 'rgba(0,229,255,0.55)'
+  const CY_FAINT  = L ? 'rgba(3,105,161,0.38)'  : 'rgba(0,229,255,0.22)'
+  const CY_BORDER = L ? 'rgba(3,105,161,0.28)'  : 'rgba(0,229,255,0.22)'
   const CY_FONT   = "'Courier New', Courier, monospace" as const
+  return (
+    <div style={{
+      borderTop: `1px solid ${CY_BORDER}`,
+      background: L ? 'rgba(3,105,161,0.06)' : 'rgba(0,0,0,0.45)',
+      padding: '14px 20px 16px', flexShrink: 0,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
+        <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.12em' }}>SYSTEM LOG ▶ LIVE</span>
+      </div>
+      {logLines.map((line, i) => (
+        <div key={i} style={{
+          fontFamily: CY_FONT, fontSize: 13,
+          color: i === logLines.length - 1 ? CY_GREEN : CY_FAINT,
+          letterSpacing: '0.04em', whiteSpace: 'nowrap',
+          overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.8,
+        }}>
+          {i === logLines.length - 1 ? '> ' : '  '}{i === logLines.length - 1 ? typedText : line}
+          {i === logLines.length - 1 && <span style={{ opacity: cursorVisible ? 1 : 0 }}>█</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── エンジンパネル（インライン）────────────────────
+function EnginePanel({
+  onPromptCopy, copyStatus, isMobile, theme, logState,
+}: {
+  onPromptCopy: () => void
+  copyStatus: '' | 'prompt'
+  isMobile: boolean
+  theme: 'dark' | 'light'
+  logState: EngineLogState
+}) {
+  const L         = theme === 'light'
+  const CY_BG     = L ? '#f0f7ff' : '#050e1a'
+  const CY_GREEN  = L ? '#0369a1' : '#00e5ff'
+  const CY_DIM    = L ? 'rgba(3,105,161,0.75)'  : 'rgba(0,229,255,0.55)'
+  const CY_FAINT  = L ? 'rgba(3,105,161,0.38)'  : 'rgba(0,229,255,0.22)'
+  const CY_BORDER = L ? 'rgba(3,105,161,0.28)'  : 'rgba(0,229,255,0.22)'
+  const CY_BORDBR = L ? 'rgba(3,105,161,0.55)'  : 'rgba(0,229,255,0.45)'
+  const CY_SCAN   = L ? 'none' : 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
+  const CY_FONT   = "'Courier New', Courier, monospace" as const
+  const CY_RGB    = L ? '3,105,161' : '0,229,255'
 
   return (
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
-          ...(CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}) }
+          background: CY_BG, backgroundImage: CY_SCAN }
       : { width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          ...(CYBER_MODE
-            ? { borderRight: `1px solid ${CY_BORDBR}` }
-            : { borderRight: '1px solid var(--border-dim)' }) }
+          borderRight: `1px solid ${CY_BORDBR}` }
     }>
 
-      {CYBER_MODE && <style>{`
+      {theme === 'dark' && <style>{`
         @keyframes engine-dust {
           0%   { transform: translateY(0); opacity: 0; }
           20%  { opacity: 0.35; }
@@ -1094,10 +1132,10 @@ function EnginePanel({
         ...(!isMobile ? { flex: 1 } : {}),
         position: 'relative', display: 'flex', flexDirection: 'column',
         overflow: isMobile ? 'visible' : 'hidden',
-        ...(!isMobile && CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}),
+        ...(!isMobile ? { background: CY_BG, backgroundImage: CY_SCAN } : {}),
       }}>
 
-        {CYBER_MODE && !isMobile && <>
+        {theme === 'dark' && !isMobile && <>
           <div className="engine-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
           <div className="engine-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
           <div className="engine-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
@@ -1113,7 +1151,7 @@ function EnginePanel({
       <div style={{ position: 'relative', zIndex: 1, ...(CYBER_MODE ? {
         padding: '10px 14px 9px', flexShrink: 0,
         borderBottom: `1px solid ${CY_BORDER}`,
-        background: 'rgba(0,229,255,0.06)',
+        background: `rgba(${CY_RGB},0.06)`,
         display: 'flex', alignItems: 'center', gap: 8,
       } : s.panelHead) }}>
         <div style={CYBER_MODE ? { display: 'flex', alignItems: 'center', gap: 8, flex: 1 } : s.panelTitle}>
@@ -1146,11 +1184,11 @@ function EnginePanel({
         <div style={ms.section}>
           <div style={CYBER_MODE ? {
             borderLeft: `3px solid ${CY_GREEN}`,
-            background: 'rgba(0,229,255,0.05)',
+            background: `rgba(${CY_RGB},0.05)`,
             borderRadius: '0 8px 8px 0',
             padding: '10px 14px',
             fontSize: 13, lineHeight: 1.75,
-            color: 'rgba(0,229,255,0.75)',
+            color: CY_DIM,
             fontFamily: CY_FONT,
             letterSpacing: '0.04em',
           } : {
@@ -1162,7 +1200,7 @@ function EnginePanel({
             color: 'var(--text)',
             fontWeight: 500,
           }}>
-            日経平均ブル/ベア専用の需給分析機能。<br />AIでの分析が可能。
+            日経平均ブル/ベア専用の需給分析機能。<br />下のボタンでコピーしてAI分析してください。
           </div>
           {CYBER_MODE ? (
             <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -1170,11 +1208,11 @@ function EnginePanel({
                 <button
                   style={{
                     width: 84, height: 84, borderRadius: '50%',
-                    background: copyStatus === 'prompt' ? 'rgba(0,229,255,0.18)' : 'rgba(0,229,255,0.07)',
+                    background: copyStatus === 'prompt' ? `rgba(${CY_RGB},0.18)` : `rgba(${CY_RGB},0.07)`,
                     border: `2px solid ${copyStatus === 'prompt' ? CY_GREEN : CY_BORDBR}`,
                     boxShadow: copyStatus === 'prompt'
-                      ? `0 0 24px rgba(0,229,255,0.6), inset 0 0 14px rgba(0,229,255,0.18)`
-                      : `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
+                      ? `0 0 24px rgba(${CY_RGB},0.6), inset 0 0 14px rgba(${CY_RGB},0.18)`
+                      : `0 0 16px rgba(${CY_RGB},0.22), inset 0 0 10px rgba(${CY_RGB},0.06)`,
                     color: CY_GREEN,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 7, cursor: 'pointer',
@@ -1197,7 +1235,7 @@ function EnginePanel({
                 {/* 吹き出し（右横フロート） */}
                 <div style={{ position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content' }}>
                   <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${CY_BORDBR}`, flexShrink: 0 }} />
-                  <div style={{ background: 'rgba(0,229,255,0.06)', border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 10, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
+                  <div style={{ background: `rgba(${CY_RGB},0.06)`, border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 10, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
                     {copyStatus === 'prompt' ? '▶ コピー完了' : <>分析用プロンプト<br />＋需給データ</>}
                   </div>
                 </div>
@@ -1234,9 +1272,9 @@ function EnginePanel({
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://gemini.google.com/?hl=ja', '_blank', 'noopener,noreferrer') }}
                   style={{
                     width: 70, height: 70, borderRadius: '50%',
-                    background: 'rgba(0,229,255,0.06)',
+                    background: `rgba(${CY_RGB},0.06)`,
                     border: `2px solid ${CY_BORDER}`,
-                    boxShadow: `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
+                    boxShadow: `0 0 16px rgba(${CY_RGB},0.22), inset 0 0 10px rgba(${CY_RGB},0.06)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
@@ -1261,12 +1299,12 @@ function EnginePanel({
                   href="https://claude.ai/projects"
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/projects', '_blank') }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/new', '_blank') }}
                   style={{
                     width: 70, height: 70, borderRadius: '50%',
-                    background: 'rgba(0,229,255,0.06)',
+                    background: `rgba(${L ? '3,105,161' : '0,229,255'},0.06)`,
                     border: `2px solid ${CY_BORDER}`,
-                    boxShadow: `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
+                    boxShadow: `0 0 16px ${CY_FAINT}, inset 0 0 10px ${CY_FAINT}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
@@ -1280,7 +1318,7 @@ function EnginePanel({
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Claude</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>Projectsで管理</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>新規チャット推奨</span>
                 </div>
               </div>
 
@@ -1293,9 +1331,9 @@ function EnginePanel({
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://chatgpt.com/', '_blank') }}
                   style={{
                     width: 70, height: 70, borderRadius: '50%',
-                    background: 'rgba(0,229,255,0.06)',
+                    background: `rgba(${CY_RGB},0.06)`,
                     border: `2px solid ${CY_BORDER}`,
-                    boxShadow: `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
+                    boxShadow: `0 0 16px rgba(${CY_RGB},0.22), inset 0 0 10px rgba(${CY_RGB},0.06)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
@@ -1309,7 +1347,7 @@ function EnginePanel({
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                   <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>ChatGPT</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>o3推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>o3以上推奨</span>
                 </div>
               </div>
 
@@ -1343,11 +1381,11 @@ function EnginePanel({
 
               {/* Claude */}
               <a
-                href="https://claude.ai/projects"
+                href="https://claude.ai/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ ...ms.aiCard, flex: 'none', width: '100%' }}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/projects', '_blank') }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://claude.ai/new', '_blank') }}
               >
                 <div style={{ ...ms.aiLogo, background: '#d97757' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -1356,7 +1394,7 @@ function EnginePanel({
                 </div>
                 <div style={ms.aiInfo}>
                   <div style={ms.aiName}>Claude</div>
-                  <div style={ms.aiDesc}>Projectsで管理</div>
+                  <div style={ms.aiDesc}>新規チャット推奨</div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -1379,7 +1417,7 @@ function EnginePanel({
                 </div>
                 <div style={ms.aiInfo}>
                   <div style={ms.aiName}>ChatGPT</div>
-                  <div style={ms.aiDesc}>o3推奨</div>
+                  <div style={ms.aiDesc}>o3以上推奨</div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -1394,38 +1432,9 @@ function EnginePanel({
 
       </div>{/* /パーティクルラッパー */}
 
-      {/* ── システムログ (CYBER_MODE のみ) ── */}
-      {CYBER_MODE && (
-        <div style={{
-          borderTop: `1px solid ${CY_BORDER}`,
-          background: 'rgba(0,0,0,0.45)',
-          padding: '14px 20px 16px',
-          flexShrink: 0,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
-            <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.12em' }}>
-              SYSTEM LOG ▶ LIVE
-            </span>
-          </div>
-          {logLines.map((line, i) => (
-            <div key={i} style={{
-              fontFamily: CY_FONT,
-              fontSize: 13,
-              color: i === logLines.length - 1 ? CY_GREEN : CY_FAINT,
-              letterSpacing: '0.04em',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              lineHeight: 1.8,
-            }}>
-              {i === logLines.length - 1 ? '> ' : '  '}{i === logLines.length - 1 ? typedText : line}
-              {i === logLines.length - 1 && (
-                <span style={{ opacity: cursorVisible ? 1 : 0 }}>█</span>
-              )}
-            </div>
-          ))}
-        </div>
+      {/* ② デスクトップ: SYSTEM LOG は左パネル最下部に表示。スマホは QuantView が後ろに描画 */}
+      {!isMobile && (
+        <EngineSystemLog {...logState} theme={theme} />
       )}
     </div>
   )
@@ -1591,6 +1600,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
 
   // settingsOpen / onCloseSettings は props から受け取る（App.tsx でリフト済み）
   const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
+  const engineLogState = useEngineSystemLog(STATUS_LINES)
   // quantTab / setQuantTab は props から受け取る（App.tsx でリフト済み）
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
 
@@ -1760,11 +1770,13 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
           overflowY: isMobile ? 'auto' : 'hidden',
           paddingBottom: isMobile ? 130 : 0,
         }}>
-          <EnginePanel onPromptCopy={handlePromptCopy} copyStatus={copyStatus} isMobile={isMobile} />
+          <EnginePanel onPromptCopy={handlePromptCopy} copyStatus={copyStatus} isMobile={isMobile} theme={theme} logState={engineLogState} />
           <div style={isMobile ? s.dividerH : s.divider} />
           <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
             <Suspense fallback={null}><QuantMemoPanel theme={theme} user={user} isMobile={isMobile} /></Suspense>
           </div>
+          {/* ② スマホ: SYSTEM LOG は QuantMemoPanel の下に表示 */}
+          {isMobile && <EngineSystemLog {...engineLogState} theme={theme} />}
         </div>{/* /分析 */}
 
         {/* ━━ 環境 ━━ */}

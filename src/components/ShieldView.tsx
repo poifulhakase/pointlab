@@ -1,7 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
+import { proxyFetch } from '../utils/proxyFetch'
+import { fetchVixData } from '../utils/vixData'
+import { fetchFuturesDailyData } from '../utils/futuresDailyData'
 
 type Props = {
   theme: 'dark' | 'light'
@@ -9,154 +12,296 @@ type Props = {
   user: User | null
 }
 
-// ── CYBER_MODE 定数 ─────────────────────────────────
-const CYBER_MODE = true
-const CY_BG     = '#050e1a'
-const CY_GREEN  = '#00e5ff'
-const CY_DIM    = 'rgba(0,229,255,0.55)'
-const CY_FAINT  = 'rgba(0,229,255,0.22)'
-const CY_BORDER = 'rgba(0,229,255,0.22)'
-const CY_BORDBR = 'rgba(0,229,255,0.45)'
-const CY_SCAN   = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
-const CY_FONT   = "'Courier New', Courier, monospace" as const
+// ── CYBER カラー（テーマ対応） ──────────────────────
+function cy(theme: 'dark' | 'light') {
+  const L = theme === 'light'
+  return {
+    BG:     L ? '#f0f7ff' : '#050e1a',
+    GREEN:  L ? '#0369a1' : '#00e5ff',
+    DIM:    L ? 'rgba(3,105,161,0.75)' : 'rgba(0,229,255,0.55)',
+    FAINT:  L ? 'rgba(3,105,161,0.38)' : 'rgba(0,229,255,0.22)',
+    BORDER: L ? 'rgba(3,105,161,0.28)' : 'rgba(0,229,255,0.22)',
+    BORDBR: L ? 'rgba(3,105,161,0.55)' : 'rgba(0,229,255,0.45)',
+    NOTICE: L ? 'rgba(3,105,161,0.95)' : 'rgba(0,229,255,0.92)',
+    SCAN:   L ? 'none' : 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)',
+    LOGBG:  L ? 'rgba(3,105,161,0.06)' : 'rgba(0,0,0,0.45)',
+    HDBG:   L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)',
+    TAREA:  L ? 'rgba(3,105,161,0.07)' : 'rgba(0,229,255,0.04)',
+    TXTCLR: L ? 'var(--text)' : 'rgba(255,255,255,0.88)',
+    FONT:   "'Courier New', Courier, monospace" as const,
+  } as const
+}
 
+// ── STATUS LINES ─────────────────────────────────────
 const SHIELD_STATUS_LINES = [
   'POI-ROBO SHIELD v1.0  ▶ ONLINE',
-  '日経225チャート構造 ........ 解析中',
-  '前回高値・安値 ............. 算出完了',
-  'MA200 / MA60 / MA20 ....... 計算完了',
+  '日経225先物 OHLC ........... 取得中',
+  'MA20 / MA60 / MA200 ....... 計算中',
+  '直近高値・安値 ............. 算出中',
+  '先物建玉残高・PCR .......... 取得中',
+  'VIX 恐怖指数 ............... 取得中',
   'ポジション管理モード ....... 待機中',
   'イグジット判断支援 ......... スタンバイ',
   'リスク管理センサー ......... 作動中',
-  'サポート・レジスタンス ..... 算出中',
-  'シールドプロンプト生成 ..... 待機中',
   'ポジションデータ受信待ち ... アイドル',
   'イグジットゾーン検知 ....... 監視中',
-  'チャート構造スキャン ....... 実行中',
+  'データパッケージ生成 ....... 待機中',
 ]
 
-// ── シールドメモパネル（1件のみ保存） ───────────────
-const SHIELD_MEMO_KEY = 'poical-shield-memo'
-
-function ShieldMemoPanel(_: { user: User | null }) {
-  const [text, setText] = useState(() => {
-    try { return localStorage.getItem(SHIELD_MEMO_KEY) ?? '' } catch { return '' }
-  })
-  const [saved, setSaved] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleSave = () => {
-    try { localStorage.setItem(SHIELD_MEMO_KEY, text) } catch {}
-    setSaved(true)
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => setSaved(false), 2000)
+// ── 市場データ構造 ───────────────────────────────────
+interface ShieldMktData {
+  built_at:   string
+  nk225: {
+    latest_date:   string
+    latest_close:  number
+    change_1d:     number | null
+    change_1d_pct: number | null
+    ma20:          number | null
+    ma60:          number | null
+    ma200:         number | null
+    high_20d:      number | null
+    low_20d:       number | null
+    ohlcv_recent:  Array<{ date: string; open: number; high: number; low: number; close: number; change_pct: number | null }>
   }
-
-  return (
-    <div style={CYBER_MODE
-      ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'rgba(0,5,15,0.7)' }
-      : { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }
-    }>
-      {/* ヘッダー */}
-      <div style={{ position: 'relative', zIndex: 1, ...(CYBER_MODE ? {
-        padding: '10px 14px 9px', flexShrink: 0,
-        borderBottom: `1px solid ${CY_BORDER}`,
-        background: 'rgba(0,229,255,0.04)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-      } : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)' }) }}>
-        <div style={CYBER_MODE
-          ? { display: 'flex', alignItems: 'center', gap: 8, flex: 1 }
-          : { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)', flex: 1 }
-        }>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-          <span style={CYBER_MODE
-            ? { fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
-            : {}
-          }>ポジション分析レポート</span>
-        </div>
-        {/* 保存ボタン（右上） */}
-        <button
-          onClick={handleSave}
-          style={CYBER_MODE ? {
-            padding: '4px 14px', borderRadius: 6,
-            fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
-            background: saved ? 'rgba(0,229,255,0.18)' : 'rgba(0,229,255,0.08)',
-            border: `1px solid ${saved ? CY_GREEN : CY_BORDBR}`,
-            color: CY_GREEN, cursor: 'pointer',
-            transition: 'background 0.2s, border-color 0.2s',
-            boxShadow: saved ? `0 0 10px rgba(0,229,255,0.3)` : 'none',
-            flexShrink: 0,
-          } : {
-            padding: '4px 14px', borderRadius: 8,
-            fontSize: 12, fontWeight: 600,
-            background: 'var(--accent-glass)', border: '1px solid var(--accent)',
-            color: '#fff', cursor: 'pointer', flexShrink: 0,
-          }}
-        >
-          {saved ? '保存しました' : '保存'}
-        </button>
-      </div>
-
-      {/* テキストエリア */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '14px 16px' }}>
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder={CYBER_MODE ? '▌ ポジション分析レポートを記録...' : 'ポジション分析レポートを記録...'}
-          style={{
-            flex: 1, width: '100%', resize: 'none', borderRadius: 8,
-            padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
-            fontFamily: CYBER_MODE ? CY_FONT : 'inherit',
-            ...(CYBER_MODE ? {
-              background: 'rgba(0,229,255,0.04)',
-              border: `1px solid ${CY_BORDER}`,
-              color: 'rgba(255,255,255,0.88)', outline: 'none',
-            } : {
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text)', outline: 'none',
-            }),
-          }}
-        />
-      </div>
-    </div>
-  )
+  futures: {
+    oi_latest:     number | null
+    oi_delta:      number | null
+    pcr_latest:    number | null
+    volume_latest: number | null
+    data_as_of:    string | null
+  }
+  vix: {
+    latest:     number | null
+    change_pct: number | null
+  }
 }
 
-// ── シールドパネル（左ペイン）──────────────────────
-function ShieldPanel({ isMobile }: { isMobile: boolean }) {
-  const logIdxRef = useRef(4)
-  const [logLines, setLogLines] = useState<string[]>(() => SHIELD_STATUS_LINES.slice(0, 4))
+function calcMA(closes: number[], period: number): number | null {
+  if (closes.length < period) return null
+  const slice = closes.slice(-period)
+  return Math.round(slice.reduce((a, b) => a + b, 0) / period)
+}
+
+async function buildShieldData(): Promise<ShieldMktData> {
+  const builtAt = new Date().toISOString().slice(0, 10)
+
+  // 1. 日経225 1年分OHLCV (MA200計算用)
+  let days: Array<{ date: string; open: number; high: number; low: number; close: number }> = []
+  try {
+    const q    = 'interval=1d&range=1y'
+    const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/NK%3DF?${q}`
+    const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/%5EN225?${q}`
+    let raw: unknown
+    try   { raw = await proxyFetch(url1) }
+    catch { raw = await proxyFetch(url2) }
+
+    const r  = (raw as any)?.chart?.result?.[0]
+    const ts: number[]          = r?.timestamp ?? []
+    const q_ = r?.indicators?.quote?.[0] ?? {}
+    for (let i = 0; i < ts.length; i++) {
+      const c = q_.close?.[i]
+      if (c == null) continue
+      days.push({
+        date:  new Date(ts[i] * 1000).toISOString().slice(0, 10),
+        open:  Math.round(q_.open?.[i]  ?? c),
+        high:  Math.round(q_.high?.[i]  ?? c),
+        low:   Math.round(q_.low?.[i]   ?? c),
+        close: Math.round(c),
+      })
+    }
+    days.sort((a, b) => a.date.localeCompare(b.date))
+  } catch { /* データ取得失敗時は空 */ }
+
+  const closes    = days.map(d => d.close)
+  const latest    = days[days.length - 1]
+  const prev      = days[days.length - 2]
+  const recent10  = days.slice(-10)
+  const recent20  = days.slice(-20)
+  const high20d   = recent20.length > 0 ? Math.max(...recent20.map(d => d.high)) : null
+  const low20d    = recent20.length > 0 ? Math.min(...recent20.map(d => d.low))  : null
+  const ohlcvRecent = recent10.map((d, i) => {
+    const p = recent10[i - 1]
+    return { ...d, change_pct: p ? Math.round((d.close - p.close) / p.close * 10000) / 100 : null }
+  })
+
+  // 2. 先物日次（建玉残高・PCR）
+  let futures: ShieldMktData['futures'] = { oi_latest: null, oi_delta: null, pcr_latest: null, volume_latest: null, data_as_of: null }
+  try {
+    const fd  = await fetchFuturesDailyData()
+    const f0  = fd[0]
+    const f1  = fd[1]
+    if (f0) {
+      futures = {
+        oi_latest:     f0.oi,
+        oi_delta:      f1 != null ? f0.oi - f1.oi : null,
+        pcr_latest:    f0.pcr ?? null,
+        volume_latest: f0.volume,
+        data_as_of:    f0.date,
+      }
+    }
+  } catch { /* noop */ }
+
+  // 3. VIX（週次）
+  let vix: ShieldMktData['vix'] = { latest: null, change_pct: null }
+  try {
+    const vd = await fetchVixData()
+    const vl = vd[vd.length - 1]
+    if (vl) vix = { latest: vl.close, change_pct: vl.changePct ?? null }
+  } catch { /* noop */ }
+
+  return {
+    built_at: builtAt,
+    nk225: {
+      latest_date:   latest?.date        ?? builtAt,
+      latest_close:  latest?.close       ?? 0,
+      change_1d:     latest && prev ? latest.close - prev.close          : null,
+      change_1d_pct: latest && prev ? Math.round((latest.close - prev.close) / prev.close * 10000) / 100 : null,
+      ma20:   calcMA(closes, 20),
+      ma60:   calcMA(closes, 60),
+      ma200:  calcMA(closes, 200),
+      high_20d: high20d,
+      low_20d:  low20d,
+      ohlcv_recent: ohlcvRecent,
+    },
+    futures,
+    vix,
+  }
+}
+
+// ── ポジション分析プロンプト ─────────────────────────
+const SHIELD_PROMPT_TEMPLATE = `# Role
+あなたは保有中ポジション専門アドバイザー「ぽいロボ シールド」です。
+エントリーの可否ではなく、**保有中ポジションの管理・出口戦略のみ**を担当します。
+末尾の市場データ（JSON）と添付のポジション画像を組み合わせて診断・即答してください。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ⚠️ 最初に必ず確認：ポジション画像チェック
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+このプロンプトには2種類の情報が含まれます。
+1. **末尾の JSON** — 日経225先物 OHLC・移動平均線・建玉残高・PCR・VIX 等の市場データ
+2. **添付画像（必須）** — 保有中ポジションのスクリーンショット（証券会社の保有画面）
+
+**添付画像が確認できない場合は、分析を一切行わず以下のエラーのみを出力してください：**
+
+\`\`\`
+⚠️ SHIELD ERROR: ポジション画像が未添付です
+
+保有中のポジション状況（証券会社の保有・残高画面）のスクリーンショットを
+添付してから再送信してください。
+
+必要な情報:
+  - 保有銘柄名（ブル/ベア・1倍/2倍）
+  - 平均取得価格・現在価格
+  - 保有口数・損益金額・損益率
+
+画像なしでは正確な分析ができません。
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# シールドの3原則
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. **防衛（盾）**: 損切りラインを MA・高安値・需給崩壊点から算出する
+2. **最大化（槍）**: 利益が乗っている場合、どの条件まで保持すべきかを判定する
+3. **管理（鎧）**: 現在のポジションサイズが市場リスクに見合っているか評価する
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ポジション画像の読み取り指示
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+添付されたポジション画像から以下を読み取ること：
+- 保有銘柄（ブル1倍／ブル2倍／ベア1倍／ベア2倍）
+- 平均取得価格・現在価格・損益金額・損益率
+- 保有口数（単位: 口）
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 市場データ（JSON）の活用指示
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+末尾の JSON から以下を分析すること：
+
+[価格構造]
+- 現在値と MA20 / MA60 / MA200 の位置関係（上 or 下 or 交差中）
+- MA200 からの乖離率（過熱 / 適正 / 割安）
+
+[サポート・レジスタンス]
+- nk225.high_20d（直近20日高値）→ レジスタンスとして参照
+- nk225.low_20d（直近20日安値）→ サポートとして参照
+
+[需給]
+- futures.oi_delta（建玉前日比）: 正=ポジション積み増し / 負=手仕舞い
+- futures.pcr_latest: ≥1.2=ベア優勢 / ≤0.8=ブル優勢
+
+[市場環境]
+- vix.latest: ≥25=リスクオフ局面 / ≤15=安定局面
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 出力形式（コードブロック内に全て出力）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+\`\`\`
+## シールドログ：[YYYY-MM-DD]
+
+### 【0. ポジション確認（画像より）】
+- 銘柄：(ブル1倍/ブル2倍/ベア1倍/ベア2倍)
+- 取得価格：XX,XXX円  現在価格：XX,XXX円
+- 損益：±XX,XXX円（±XX.X%）
+- 保有口数：XXX口
+
+### 【1. チャート構造診断（JSONデータより）】
+- 日経225現在値：XX,XXX円（前日比 ±X.X%）
+- MA20：XX,XXX円 → 現在値は MA20の (上/下)
+- MA60：XX,XXX円 → 現在値は MA60の (上/下)
+- MA200：XX,XXX円 → 現在値は MA200の (上/下) · 乖離率 ±X.X%
+- 直近20日高値：XX,XXX円（レジスタンス）
+- 直近20日安値：XX,XXX円（サポート）
+- 高安値構造：(高値更新中/安値更新中/レンジ継続)
+
+### 【2. 需給診断（JSONデータより）】
+- OI前日比：±X,XXX枚 → (積み増し/手仕舞い)
+- PCR：X.XX → (ベア優勢/ニュートラル/ブル優勢)
+- VIX：XX.X（前週比 ±X.X%） → (リスクオフ/中立/リスクオン)
+
+### 【3. 撤退ライン】
+- 損切り価格：XX,XXX円
+- 根拠：(MA割れ/高安値割れ/需給崩壊点)
+- 撤退トリガー：(条件を具体的に記述)
+
+### 【4. 出口戦略】
+- 指令：[ ホールド継続 / 一部利確 / 全量利確 / 即時撤退 ]
+- 確信度：XX%（根拠：○○）
+- 利確目標：XX,XXX円（条件：○○）
+
+### 【5. リスク評価】
+- ポジションサイズ：(適正/過大/要縮小)
+- 追加エントリー：(可/不可) — 根拠：○○
+\`\`\`
+`
+
+// ── useSystemLog ─────────────────────────────────────
+type LogState = { logLines: string[]; cursorVisible: boolean; typedText: string }
+
+function useSystemLog(statusLines: string[]): LogState {
+  const logIdxRef   = useRef(4)
+  const [logLines,      setLogLines]      = useState<string[]>(() => statusLines.slice(0, 4))
   const [cursorVisible, setCursorVisible] = useState(true)
-  const [typedText, setTypedText] = useState('')
+  const [typedText,     setTypedText]     = useState('')
   const typeStateRef = useRef({ line: '', idx: 0 })
 
   useEffect(() => {
-    if (!CYBER_MODE) return
     const id = setInterval(() => {
       setLogLines(prev => {
-        const next = [...prev.slice(1), SHIELD_STATUS_LINES[logIdxRef.current % SHIELD_STATUS_LINES.length]]
+        const next = [...prev.slice(1), statusLines[logIdxRef.current % statusLines.length]]
         logIdxRef.current++
         return next
       })
     }, 5000)
     return () => clearInterval(id)
-  }, [])
+  }, []) // eslint-disable-line
 
   useEffect(() => {
-    if (!CYBER_MODE) return
     const id = setInterval(() => setCursorVisible(v => !v), 530)
     return () => clearInterval(id)
   }, [])
 
   const lastLine = logLines[logLines.length - 1]
   useEffect(() => {
-    if (!CYBER_MODE) return
     typeStateRef.current = { line: lastLine, idx: 0 }
     setTypedText('')
     const id = setInterval(() => {
@@ -168,17 +313,147 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
     return () => clearInterval(id)
   }, [lastLine])
 
+  return { logLines, cursorVisible, typedText }
+}
+
+// ── CyberSystemLog ────────────────────────────────────
+function CyberSystemLog({ logLines, cursorVisible, typedText, theme }: LogState & { theme: 'dark' | 'light' }) {
+  const c = cy(theme)
+  return (
+    <div style={{ borderTop: `1px solid ${c.BORDER}`, background: c.LOGBG, padding: '14px 20px 16px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: c.GREEN, boxShadow: `0 0 6px ${c.GREEN}` }} />
+        <span style={{ fontFamily: c.FONT, fontSize: 11, color: c.DIM, letterSpacing: '0.12em' }}>SYSTEM LOG ▶ LIVE</span>
+      </div>
+      {logLines.map((line, i) => (
+        <div key={i} style={{
+          fontFamily: c.FONT, fontSize: 13,
+          color: i === logLines.length - 1 ? c.GREEN : c.FAINT,
+          letterSpacing: '0.04em', whiteSpace: 'nowrap',
+          overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.8,
+        }}>
+          {i === logLines.length - 1 ? '> ' : '  '}{i === logLines.length - 1 ? typedText : line}
+          {i === logLines.length - 1 && <span style={{ opacity: cursorVisible ? 1 : 0 }}>█</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── ⑫ ShieldMemoPanel ────────────────────────────────
+const SHIELD_MEMO_KEY = 'poical-shield-memo'
+
+function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
+  const c = cy(theme)
+  const [text,  setText]  = useState(() => {
+    try { return localStorage.getItem(SHIELD_MEMO_KEY) ?? '' } catch { return '' }
+  })
+  const [saved, setSaved] = useState(false)
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleSave = useCallback(() => {
+    try { localStorage.setItem(SHIELD_MEMO_KEY, text) } catch {}
+    setSaved(true)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => setSaved(false), 2000)
+  }, [text])
+
+  // ⑫ Ctrl+S で保存
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [handleSave])
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      background: theme === 'dark' ? 'rgba(0,5,15,0.7)' : 'var(--glass-bg)' }}>
+      {/* ヘッダー */}
+      <div style={{
+        position: 'relative', zIndex: 1,
+        padding: '10px 14px 9px', flexShrink: 0,
+        borderBottom: `1px solid ${c.BORDER}`,
+        background: c.HDBG,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          {/* ③ 鉛筆アイコン（エンジンと統一） */}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+            stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
+            ポジション分析レポート
+          </span>
+        </div>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: '4px 14px', borderRadius: 6,
+            fontFamily: c.FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+            background: saved ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)` : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
+            border: `1px solid ${saved ? c.GREEN : c.BORDBR}`,
+            color: c.GREEN, cursor: 'pointer',
+            transition: 'background 0.2s, border-color 0.2s',
+            boxShadow: saved ? `0 0 10px ${c.FAINT}` : 'none',
+            flexShrink: 0,
+          }}
+        >
+          {saved ? '保存しました' : '保存'}
+        </button>
+      </div>
+
+      {/* テキストエリア */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', padding: '14px 16px' }}>
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="▌ ポジション分析レポートを記録..."
+          style={{
+            flex: 1, width: '100%', resize: 'none', borderRadius: 8,
+            minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+            padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+            fontFamily: c.FONT,
+            background: c.TAREA,
+            border: `1px solid ${c.BORDER}`,
+            color: c.TXTCLR, outline: 'none',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── ShieldPanel（左ペイン）────────────────────────────
+function ShieldPanel({
+  isMobile, theme, copyStatus, isBuilding, onPromptCopy, logState,
+}: {
+  isMobile: boolean
+  theme: 'dark' | 'light'
+  copyStatus: '' | 'shield'
+  isBuilding: boolean
+  onPromptCopy: () => void
+  logState: LogState
+}) {
+  const c = cy(theme)
+
   return (
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
-          ...(CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}) }
+          background: c.BG, backgroundImage: c.SCAN }
       : { width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          ...(CYBER_MODE
-            ? { borderRight: `1px solid ${CY_BORDBR}` }
-            : { borderRight: '1px solid var(--border-dim)' }) }
+          borderRight: `1px solid ${c.BORDBR}` }
     }>
 
-      {CYBER_MODE && <style>{`
+      {theme === 'dark' && <style>{`
         @keyframes shield-dust {
           0%   { transform: translateY(0); opacity: 0; }
           20%  { opacity: 0.35; }
@@ -203,12 +478,13 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
 
       {/* パーティクル＋スキャンライン領域 */}
       <div style={{
-        ...(!isMobile ? { flex: 1 } : {}),
+        flex: 1,
         position: 'relative', display: 'flex', flexDirection: 'column',
         overflow: isMobile ? 'visible' : 'hidden',
-        ...(!isMobile && CYBER_MODE ? { background: CY_BG, backgroundImage: CY_SCAN } : {}),
+        ...(!isMobile && theme === 'dark' ? { background: c.BG, backgroundImage: c.SCAN } : {}),
+        ...(!isMobile && theme === 'light' ? { background: c.BG } : {}),
       }}>
-        {CYBER_MODE && !isMobile && <>
+        {theme === 'dark' && !isMobile && <>
           <div className="shield-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
           <div className="shield-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
           <div className="shield-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
@@ -220,227 +496,212 @@ function ShieldPanel({ isMobile }: { isMobile: boolean }) {
           <div className="shield-scanline" />
         </>}
 
-        {/* ── ヘッダー ── */}
-        <div style={{ position: 'relative', zIndex: 1, ...(CYBER_MODE ? {
+        {/* ヘッダー */}
+        <div style={{
+          position: 'relative', zIndex: 1,
           padding: '10px 14px 9px', flexShrink: 0,
-          borderBottom: `1px solid ${CY_BORDER}`,
-          background: 'rgba(0,229,255,0.06)',
+          borderBottom: `1px solid ${c.BORDER}`,
+          background: c.HDBG,
           display: 'flex', alignItems: 'center', gap: 8,
-        } : sh.panelHead) }}>
-          <div style={CYBER_MODE ? { display: 'flex', alignItems: 'center', gap: 8, flex: 1 } : sh.panelTitle}>
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span style={CYBER_MODE
-              ? { fontFamily: CY_FONT, fontSize: 12, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
-              : {}
-            }>ぽいロボ シールド</span>
+            <span style={{ fontFamily: c.FONT, fontSize: 12, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
+              ぽいロボ シールド
+            </span>
           </div>
-          {CYBER_MODE && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
-              <span style={{ fontFamily: CY_FONT, fontSize: 9, color: CY_DIM, letterSpacing: '0.12em' }}>ONLINE</span>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.GREEN, boxShadow: `0 0 6px ${c.GREEN}` }} />
+            <span style={{ fontFamily: c.FONT, fontSize: 9, color: c.DIM, letterSpacing: '0.12em' }}>ONLINE</span>
+          </div>
         </div>
 
-        {/* ── スクロール可能コンテンツ ── */}
-        <div style={{ position: 'relative', zIndex: 1, flex: 1, overflowY: 'auto', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42 }}>
+        {/* スクロール可能コンテンツ */}
+        <div style={{
+          position: 'relative', zIndex: 1, flex: 1, overflowY: 'auto',
+          padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42,
+        }}>
 
           {/* 説明 */}
-          <div style={sh.section}>
-            <div style={CYBER_MODE ? {
-              borderLeft: `3px solid ${CY_GREEN}`,
-              background: 'rgba(0,229,255,0.05)',
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{
+              borderLeft: `3px solid ${c.GREEN}`,
+              background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.05)`,
               borderRadius: '0 8px 8px 0',
               padding: '10px 14px',
               fontSize: 13, lineHeight: 1.75,
-              color: 'rgba(0,229,255,0.75)',
-              fontFamily: CY_FONT, letterSpacing: '0.04em',
-            } : {
-              borderLeft: '3px solid var(--accent)',
-              background: 'var(--bg-subtle)',
-              borderRadius: '0 8px 8px 0',
-              padding: '10px 14px',
-              fontSize: 13, lineHeight: 1.7,
-              color: 'var(--text)', fontWeight: 500,
+              color: c.DIM,
+              fontFamily: c.FONT, letterSpacing: '0.04em',
             }}>
-              日経平均ブル/ベア専用のポジション分析機能。<br />価格構造を解析し、AIでの運用が可能。
+              {/* ⑩ テキスト修正 */}
+              日経平均ブル/ベア専用のポジション分析機能。<br />
+              下のボタンでコピーしてAI分析してください。
             </div>
 
-            {/* コピーボタン（未実装・押しても何もしない） */}
-            {CYBER_MODE ? (
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <div style={{ position: 'relative' }}>
-                  <button
-                    style={{
-                      width: 84, height: 84, borderRadius: '50%',
-                      background: 'rgba(0,229,255,0.07)',
-                      border: `2px solid ${CY_BORDBR}`,
-                      boxShadow: `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
-                      color: CY_GREEN,
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                      gap: 7, cursor: 'pointer',
-                      transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
-                    }}
-                    onClick={() => {}}
-                  >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
-                    <span style={{ fontFamily: CY_FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>COPY</span>
-                  </button>
-                  {/* 吹き出し（右横フロート） */}
-                  <div style={{ position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content' }}>
-                    <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${CY_BORDBR}`, flexShrink: 0 }} />
-                    <div style={{ background: 'rgba(0,229,255,0.06)', border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 10, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
-                      分析用プロンプト<br />＋チャートデータ
-                    </div>
+            {/* COPYボタン（データ取得 + コピー） */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  disabled={isBuilding}
+                  style={{
+                    width: 84, height: 84, borderRadius: '50%',
+                    background: copyStatus === 'shield'
+                      ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)`
+                      : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.07)`,
+                    border: `2px solid ${copyStatus === 'shield' ? c.GREEN : c.BORDBR}`,
+                    boxShadow: copyStatus === 'shield'
+                      ? `0 0 24px ${c.FAINT}, inset 0 0 14px ${c.FAINT}`
+                      : `0 0 16px ${c.FAINT}, inset 0 0 10px ${c.FAINT}`,
+                    color: c.GREEN,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 7, cursor: isBuilding ? 'wait' : 'pointer',
+                    opacity: isBuilding ? 0.65 : 1,
+                    transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
+                  }}
+                  onClick={onPromptCopy}
+                >
+                  {isBuilding
+                    ? <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2.5px solid ${c.FAINT}`, borderTopColor: c.GREEN, animation: 'spin 0.7s linear infinite' }} />
+                    : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                  }
+                  <span style={{ fontFamily: c.FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>
+                    {isBuilding ? '取得中' : copyStatus === 'shield' ? 'DONE' : 'COPY'}
+                  </span>
+                </button>
+                {/* 吹き出し */}
+                <div style={{
+                  position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)',
+                  display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content',
+                }}>
+                  <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${c.BORDBR}`, flexShrink: 0 }} />
+                  <div style={{
+                    background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
+                    border: `1px solid ${c.BORDBR}`, borderRadius: 8,
+                    padding: '6px 10px', fontFamily: 'system-ui, sans-serif',
+                    fontSize: 10, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
+                  }}>
+                    {isBuilding ? <>データ取得中…<br />しばらくお待ちください</> : copyStatus === 'shield' ? '▶ コピー完了' : <>ポジション分析用<br />プロンプト＋市場データ</>}
                   </div>
                 </div>
               </div>
-            ) : (
-              <button
-                style={{ ...sh.actionBtn, ...sh.actionBtnAccent, height: 58, flexShrink: 0 }}
-                onClick={() => {}}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                ポジション分析用プロンプト<br />＋チャートデータをコピー
-              </button>
-            )}
-
+            </div>
           </div>
 
-          {/* AIチャットリンク */}
-          <div style={sh.section}>
-            <div style={CYBER_MODE
-              ? { ...sh.sectionTitle, color: CY_DIM, fontFamily: CY_FONT, fontSize: 13, letterSpacing: '0.08em' }
-              : sh.sectionTitle
-            }>{CYBER_MODE ? '▌ AI起動' : 'AI起動'}</div>
+          {/* AI起動 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{ fontFamily: c.FONT, fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: c.DIM }}>
+              ▌ AI起動
+            </div>
 
-            {CYBER_MODE ? (
-              <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 28 }}>
-                {AI_LINKS.map(ai => (
-                  <div key={ai.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                    <a
-                      href={ai.url} target="_blank" rel="noopener noreferrer"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ai.url, '_blank', 'noopener,noreferrer') }}
-                      style={{
-                        width: 70, height: 70, borderRadius: '50%',
-                        background: 'rgba(0,229,255,0.06)',
-                        border: `2px solid ${CY_BORDER}`,
-                        boxShadow: `0 0 16px rgba(0,229,255,0.22), inset 0 0 10px rgba(0,229,255,0.06)`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', textDecoration: 'none',
-                        transition: 'box-shadow 0.2s, background 0.2s',
-                      }}
-                    >
-                      <div style={{ width: 46, height: 46, borderRadius: '50%', background: ai.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        {ai.icon}
-                      </div>
-                    </a>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                      <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>{ai.name}</span>
-                      <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>{ai.hint}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {AI_LINKS.map(ai => (
-                  <a key={ai.name} href={ai.url} target="_blank" rel="noopener noreferrer"
-                    style={{ ...sh.aiCard, flex: 'none', width: '100%' }}
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 28 }}>
+              {SHIELD_AI_LINKS.map(ai => (
+                <div key={ai.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                  <a
+                    href={ai.url} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ai.url, '_blank', 'noopener,noreferrer') }}
+                    style={{
+                      width: 70, height: 70, borderRadius: '50%',
+                      background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
+                      border: `2px solid ${c.BORDER}`,
+                      boxShadow: `0 0 16px ${c.FAINT}, inset 0 0 10px ${c.FAINT}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', textDecoration: 'none',
+                      transition: 'box-shadow 0.2s, background 0.2s',
+                    }}
                   >
-                    <div style={{ ...sh.aiLogo, background: ai.bg, padding: 0, overflow: 'hidden' }}>
+                    <div style={{ width: 46, height: 46, borderRadius: '50%', background: ai.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       {ai.icon}
                     </div>
-                    <div style={sh.aiInfo}>
-                      <div style={sh.aiName}>{ai.name}</div>
-                      <div style={sh.aiDesc}>{ai.hint}</div>
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
                   </a>
-                ))}
-              </div>
-            )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <span style={{ fontFamily: c.FONT, fontSize: 12, color: c.GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>{ai.name}</span>
+                    <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.FAINT, letterSpacing: '0.02em' }}>{ai.hint}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-            {/* 画像貼り付け案内 */}
-            {CYBER_MODE ? (
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                background: 'rgba(0,229,255,0.04)',
-                border: `1px dashed ${CY_BORDER}`,
-                borderRadius: 8, padding: '10px 14px',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={CY_DIM} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.7 }}>
-                  AI起動後、ポジション状況のキャプチャも添付すること
-                </span>
-              </div>
-            ) : (
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                background: 'var(--bg-subtle)',
-                border: '1px dashed var(--border-dim)',
-                borderRadius: 8, padding: '10px 14px',
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.7 }}>
-                  AI起動後、ポジション状況のキャプチャも添付すること
-                </span>
-              </div>
-            )}
+            {/* ポジション画像必須の案内 */}
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10,
+              background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.04)`,
+              border: `1px dashed ${c.BORDER}`,
+              borderRadius: 8, padding: '10px 14px',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ flexShrink: 0, marginTop: 1 }}>
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span style={{ fontFamily: c.FONT, fontSize: 11, color: c.NOTICE, letterSpacing: '0.04em', lineHeight: 1.7 }}>
+                AI起動後、保有ポジション画面のキャプチャを必ず添付すること<br />
+                <span style={{ color: c.DIM, fontSize: 10 }}>（未添付の場合、AIがエラーを出力します）</span>
+              </span>
+            </div>
           </div>
 
         </div>
       </div>{/* /パーティクルラッパー */}
 
-      {/* SYSTEM LOG */}
-      {CYBER_MODE && (
-        <div style={{
-          borderTop: `1px solid ${CY_BORDER}`,
-          background: 'rgba(0,0,0,0.45)',
-          padding: '14px 20px 16px', flexShrink: 0,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
-            <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.12em' }}>SYSTEM LOG ▶ LIVE</span>
-          </div>
-          {logLines.map((line, i) => (
-            <div key={i} style={{
-              fontFamily: CY_FONT, fontSize: 13,
-              color: i === logLines.length - 1 ? CY_GREEN : CY_FAINT,
-              letterSpacing: '0.04em', whiteSpace: 'nowrap',
-              overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.8,
-            }}>
-              {i === logLines.length - 1 ? '> ' : '  '}{i === logLines.length - 1 ? typedText : line}
-              {i === logLines.length - 1 && <span style={{ opacity: cursorVisible ? 1 : 0 }}>█</span>}
-            </div>
-          ))}
-        </div>
+      {/* ② デスクトップ: SYSTEM LOG は左パネル最下部に表示 */}
+      {!isMobile && (
+        <CyberSystemLog {...logState} theme={theme} />
       )}
     </div>
   )
 }
 
-// ── メインコンポーネント ─────────────────────────────
+// ── メインコンポーネント ──────────────────────────────
 export function ShieldView({ theme, isMobile, user }: Props) {
   const tv = themeVars(theme)
+
+  const [copyStatus,  setCopyStatus]  = useState<'' | 'shield'>('')
+  const [isBuilding,  setIsBuilding]  = useState(false)
+
+  const handlePromptCopy = useCallback(async () => {
+    if (isBuilding) return
+    setIsBuilding(true)
+    try {
+      // 市場データを取得してプロンプトに付加（エンジンと同じパターン）
+      const mktData = await buildShieldData()
+      const fullText = SHIELD_PROMPT_TEMPLATE
+        + '\n---\n# 市場データ（自動取得）\n```json\n'
+        + JSON.stringify(mktData, null, 2)
+        + '\n```\n'
+      try {
+        await navigator.clipboard.writeText(fullText)
+      } catch {
+        const el = Object.assign(document.createElement('textarea'), {
+          value: fullText, style: 'position:fixed;opacity:0',
+        })
+        document.body.appendChild(el)
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
+      }
+      setCopyStatus('shield')
+      setTimeout(() => setCopyStatus(''), 2500)
+    } catch {
+      // データ取得失敗時はプロンプトのみコピー
+      try {
+        await navigator.clipboard.writeText(SHIELD_PROMPT_TEMPLATE)
+      } catch { /* noop */ }
+      setCopyStatus('shield')
+      setTimeout(() => setCopyStatus(''), 2500)
+    } finally {
+      setIsBuilding(false)
+    }
+  }, [isBuilding])
+
+  // ② SYSTEM LOG state（親で管理してモバイル時に下部へ移動）
+  const logState = useSystemLog(SHIELD_STATUS_LINES)
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
@@ -451,18 +712,30 @@ export function ShieldView({ theme, isMobile, user }: Props) {
         overflowY: isMobile ? 'auto' : 'hidden',
         paddingBottom: isMobile ? 130 : 0,
       }}>
-        <ShieldPanel isMobile={isMobile} />
+        <ShieldPanel
+          isMobile={isMobile}
+          theme={theme}
+          copyStatus={copyStatus}
+          isBuilding={isBuilding}
+          onPromptCopy={handlePromptCopy}
+          logState={logState}
+        />
         <div style={isMobile ? s.dividerH : s.divider} />
         <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-          <ShieldMemoPanel user={user} />
+          <ShieldMemoPanel user={user} theme={theme} isMobile={isMobile} />
         </div>
+
+        {/* ② スマホ: ポジション分析レポートより下に SYSTEM LOG */}
+        {isMobile && (
+          <CyberSystemLog {...logState} theme={theme} />
+        )}
       </div>
     </div>
   )
 }
 
-// ── AI リンク定義 ────────────────────────────────────
-const AI_LINKS = [
+// ── AI リンク定義 ─────────────────────────────────────
+const SHIELD_AI_LINKS = [
   {
     name: 'Gemini', url: 'https://gemini.google.com/?hl=ja', hint: '思考モード推奨',
     bg: 'linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335)',
@@ -474,7 +747,8 @@ const AI_LINKS = [
     ),
   },
   {
-    name: 'Claude', url: 'https://claude.ai/projects', hint: 'Projectsで管理',
+    // ⑤ URL変更 + hint変更
+    name: 'Claude', url: 'https://claude.ai/new', hint: '新規チャット推奨',
     bg: '#d97757',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -483,7 +757,8 @@ const AI_LINKS = [
     ),
   },
   {
-    name: 'ChatGPT', url: 'https://chatgpt.com/', hint: 'o3推奨',
+    // ④ o3以上推奨
+    name: 'ChatGPT', url: 'https://chatgpt.com/', hint: 'o3以上推奨',
     bg: '#10a37f',
     icon: (
       <svg width="24" height="24" viewBox="0 0 41 41" fill="none">
@@ -499,18 +774,4 @@ const s: Record<string, React.CSSProperties> = {
   panel:    { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
   divider:  { width: 1, background: 'var(--border-dim)', flexShrink: 0 },
   dividerH: { height: 1, background: 'var(--border-dim)', flexShrink: 0 },
-}
-
-const sh: Record<string, React.CSSProperties> = {
-  section:         { display: 'flex', flexDirection: 'column', gap: 18 },
-  sectionTitle:    { fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: 'var(--text-dim)' },
-  actionBtn:       { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '9px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: 'var(--text)', background: 'var(--bg-medium)', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'background 0.15s' },
-  actionBtnAccent: { background: 'var(--accent-glass)', border: '1px solid var(--accent)', color: '#fff' },
-  panelHead:       { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 14px', flexShrink: 0, gap: 8, borderBottom: '1px solid var(--border-dim)', userSelect: 'none' },
-  panelTitle:      { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 },
-  aiCard:          { flex: '1 1 140px', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--bg-subtle)', border: '1px solid var(--glass-border)', textDecoration: 'none', cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s' },
-  aiLogo:          { width: 36, height: 36, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  aiInfo:          { flex: 1, minWidth: 0 },
-  aiName:          { fontSize: 13, fontWeight: 700, color: 'var(--text)' },
-  aiDesc:          { fontSize: 11, color: 'var(--text-sub)', marginTop: 2 },
 }
