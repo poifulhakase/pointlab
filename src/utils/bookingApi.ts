@@ -64,9 +64,12 @@ async function getDoc(path: string): Promise<Record<string, unknown> | null> {
   return fromFields(json.fields ?? {})
 }
 
-async function listDocs(col: string): Promise<Array<{ id: string; data: Record<string, unknown> }>> {
-  const t   = await token()
-  const res = await fetch(`${BASE}/${col}`, { headers: { Authorization: `Bearer ${t}` } })
+async function listDocs(col: string, noAuth = false): Promise<Array<{ id: string; data: Record<string, unknown> }>> {
+  const headers: Record<string, string> = {}
+  if (!noAuth) {
+    headers['Authorization'] = `Bearer ${await token()}`
+  }
+  const res = await fetch(`${BASE}/${col}`, { headers })
   if (!res.ok) throw new Error(`Firestore LIST ${res.status}: ${col}`)
   const json = await res.json() as { documents?: Array<{ name: string; fields?: Record<string, unknown> }> }
   return (json.documents ?? []).map(d => ({
@@ -108,9 +111,9 @@ async function deleteDoc(path: string): Promise<void> {
 
 // ── Slot operations ────────────────────────────────────────────────────────
 
-/** Fetch all available (unbooked) slots within the next 2 weeks */
+/** Fetch all available (unbooked) slots within the next 2 weeks — works without login */
 export async function getAvailableSlots(): Promise<Slot[]> {
-  const docs = await listDocs('slots')
+  const docs = await listDocs('slots', !auth.currentUser)
   const now   = new Date()
   const limit = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
 
