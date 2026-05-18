@@ -43,7 +43,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
   const [errorMsg, setErrorMsg] = useState('')
 
   // new slot form
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local TZ
   const [newDate, setNewDate] = useState(today)
   const [newTime, setNewTime] = useState('10:00')
 
