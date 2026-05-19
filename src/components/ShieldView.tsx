@@ -413,6 +413,14 @@ function renderShieldHighlighted(text: string, theme: 'dark' | 'light'): React.R
 
 function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
   const c = cy(theme)
+  const nd = theme === 'dark' ? {
+    title:  'rgba(255,255,255,0.78)',
+    border: 'rgba(255,255,255,0.10)',
+    bordbr: 'rgba(255,255,255,0.20)',
+    faint:  'rgba(255,255,255,0.06)',
+    btnBg:  (on: boolean) => on ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
+  } : null
+
   const [text,      setText]      = useState(() => {
     try { return localStorage.getItem(SHIELD_MEMO_KEY) ?? '' } catch { return '' }
   })
@@ -447,18 +455,17 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
       <div style={{
         position: 'relative', zIndex: 1,
         padding: '10px 14px 9px', flexShrink: 0,
-        borderBottom: `1px solid ${c.BORDER}`,
+        borderBottom: `1px solid ${nd ? nd.border : c.BORDER}`,
         background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : c.HDBG,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-          {/* ③ 鉛筆アイコン（エンジンと統一） */}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            stroke={nd ? nd.title : c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 20h9"/>
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
-          <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
+          <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 600, color: nd ? nd.title : c.GREEN, letterSpacing: '0.08em' }}>
             ポジション分析レポート
           </span>
         </div>
@@ -467,10 +474,10 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
             onClick={() => setIsPreview(v => !v)}
             style={{
               padding: '4px 14px', borderRadius: 6,
-              fontFamily: c.FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
-              background: isPreview ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)` : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
-              border: `1px solid ${isPreview ? c.GREEN : c.BORDBR}`,
-              color: c.GREEN, cursor: 'pointer',
+              fontFamily: c.FONT, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+              background: nd ? nd.btnBg(isPreview) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${isPreview ? '0.18' : '0.08'})`,
+              border: `1px solid ${nd ? (isPreview ? nd.title : nd.bordbr) : (isPreview ? c.GREEN : c.BORDBR)}`,
+              color: nd ? nd.title : c.GREEN, cursor: 'pointer',
               transition: 'background 0.2s, border-color 0.2s',
             }}
           >
@@ -480,12 +487,12 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
             onClick={handleSave}
             style={{
               padding: '4px 14px', borderRadius: 6,
-              fontFamily: c.FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
-              background: saved ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)` : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
-              border: `1px solid ${saved ? c.GREEN : c.BORDBR}`,
-              color: c.GREEN, cursor: 'pointer',
+              fontFamily: c.FONT, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+              background: nd ? nd.btnBg(saved) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${saved ? '0.18' : '0.08'})`,
+              border: `1px solid ${nd ? (saved ? nd.title : nd.bordbr) : (saved ? c.GREEN : c.BORDBR)}`,
+              color: nd ? nd.title : c.GREEN, cursor: 'pointer',
               transition: 'background 0.2s, border-color 0.2s',
-              boxShadow: saved ? `0 0 10px ${c.FAINT}` : 'none',
+              boxShadow: saved ? `0 0 10px ${nd ? nd.faint : c.FAINT}` : 'none',
             }}
           >
             {saved ? '保存しました' : '保存'}
@@ -504,7 +511,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
               fontFamily: c.FONT,
               background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
-              border: `1px solid ${c.BORDER}`,
+              border: `1px solid ${nd ? nd.border : c.BORDER}`,
               borderRadius: 8, overflowY: 'auto',
               color: c.TXTCLR, cursor: 'text',
               whiteSpace: 'pre-wrap',
@@ -524,7 +531,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
               fontFamily: c.FONT,
               background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
-              border: `1px solid ${c.BORDER}`,
+              border: `1px solid ${nd ? nd.border : c.BORDER}`,
               color: c.TXTCLR, outline: 'none',
             }}
           />

@@ -221,11 +221,11 @@ const CY_FONT = "'Courier New', Courier, monospace" as const
 function cyColors(theme: 'dark' | 'light') {
   const isLight = theme === 'light'
   return {
-    GREEN:      isLight ? '#0369a1'                 : '#00e5ff',
-    DIM:        isLight ? 'rgba(3,105,161,0.75)'    : 'rgba(0,229,255,0.55)',
-    FAINT:      isLight ? 'rgba(3,105,161,0.4)'     : 'rgba(0,229,255,0.22)',
-    BORDER:     isLight ? 'rgba(3,105,161,0.25)'    : 'rgba(0,229,255,0.22)',
-    BORDBR:     isLight ? 'rgba(3,105,161,0.5)'     : 'rgba(0,229,255,0.45)',
+    GREEN:      isLight ? '#0369a1'                 : 'rgba(255,255,255,0.80)',
+    DIM:        isLight ? 'rgba(3,105,161,0.75)'    : 'rgba(255,255,255,0.50)',
+    FAINT:      isLight ? 'rgba(3,105,161,0.4)'     : 'rgba(255,255,255,0.22)',
+    BORDER:     isLight ? 'rgba(3,105,161,0.25)'    : 'rgba(255,255,255,0.10)',
+    BORDBR:     isLight ? 'rgba(3,105,161,0.5)'     : 'rgba(255,255,255,0.20)',
     BG_SUB:     isLight ? '#f0f7ff'                 : '#111113',
     BG_AREA:    isLight ? 'rgba(3,105,161,0.07)'    : 'rgba(255,255,255,0.04)',
     SELECT_BG:  isLight ? '#f0f9ff'                 : '#1c1c1e',
