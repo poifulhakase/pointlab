@@ -3,8 +3,7 @@ import { createPortal } from 'react-dom'
 import { ClockWidget } from './ClockWidget'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
-import { type MacroFilter, MACRO_COLOR } from '../utils/macroCalendar'
-import { ANOMALY_COLOR } from '../utils/anomalyCalendar'
+import { type MacroFilter } from '../utils/macroCalendar'
 
 const POIROBO_ALERT_COLOR = '#f87171'
 
@@ -215,8 +214,8 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span
                 style={{
                   ...styles.customCheckbox,
-                  background: macroFilter[item.key] ? MACRO_COLOR : 'transparent',
-                  borderColor: macroFilter[item.key] ? MACRO_COLOR : 'var(--text-dim)',
+                  background: macroFilter[item.key] ? 'var(--badge-color)' : 'transparent',
+                  borderColor: macroFilter[item.key] ? 'var(--badge-color)' : 'var(--text-dim)',
                 }}
                 onClick={() => onMacroFilterChange({ ...macroFilter, [item.key]: !macroFilter[item.key] })}
               >
@@ -240,8 +239,8 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span
                 style={{
                   ...styles.customCheckbox,
-                  background: showAnomaly ? ANOMALY_COLOR : 'transparent',
-                  borderColor: showAnomaly ? ANOMALY_COLOR : 'var(--text-dim)',
+                  background: showAnomaly ? 'var(--badge-color)' : 'transparent',
+                  borderColor: showAnomaly ? 'var(--badge-color)' : 'var(--text-dim)',
                 }}
                 onClick={() => onShowAnomalyChange(!showAnomaly)}
               >

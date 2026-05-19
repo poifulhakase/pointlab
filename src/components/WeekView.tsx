@@ -155,7 +155,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 {h > 0 && <span>{String(h).padStart(2, '0')}:00</span>}
               </div>
             ))}
-            <SessionTimeMarkers theme={theme} />
+            <SessionTimeMarkers />
           </div>
 
           {visibleDays.map((d, di) => {

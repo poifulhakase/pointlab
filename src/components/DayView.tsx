@@ -145,7 +145,7 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                 {h > 0 && <span>{String(h).padStart(2, '0')}:00</span>}
               </div>
             ))}
-            {!closed && <SessionTimeMarkers theme={theme} />}
+            {!closed && <SessionTimeMarkers />}
           </div>
           <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid var(--grid-line)', background: closed ? 'var(--closed-cell-bg)' : undefined }}>
             {!closed && <SessionBands />}
