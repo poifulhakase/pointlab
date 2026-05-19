@@ -194,7 +194,7 @@ const SPEC_SECTIONS = [
         items: [
           'ぽいロボ エンジンが分析タブにインライン表示（モーダルではなく常時表示）',
           '「クオンツ分析用プロンプト＋需給データをコピー」ボタンでAI分析用データをクリップボードにコピー',
-          'Gemini / Claude / ChatGPT の各AIサービスへのリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
+          'Gemini / Claude / ChatGPT / DeepSeek の各AIサービスへのリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
           'SYSTEM LOG ▶ LIVE: 最終行がタイプライターアニメーション（38ms/文字）で表示',
           'CYBER_MODE: サイバー風UIデザイン（シアン・グリーン配色、ターミナル風ログ）',
         ],
@@ -328,7 +328,7 @@ const SPEC_SECTIONS = [
           '出力: 脆弱性シミュレーション報告書 / Pain Capacity / 清算・流動性マップ（天井・断崖・安住・底） / 観測限界（Tier比率）',
           'Cascade Phase 0〜4: 通常→局所清算→自己増殖→パニック連鎖→投げ切り',
           'Signal Density: [Price急変/OI減少/IV急騰/VIX急騰/USDJPY急変/出来高急増] の同時点灯数/6',
-          'ぽいロボエンジン（分析タブインライン）: Gemini / Claude / ChatGPT のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
+          'ぽいロボエンジン（分析タブインライン）: Gemini / Claude / ChatGPT / DeepSeek のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
           'ぽいロボエンジンボタンアイコン: レンチ（スパナ）形状',
           'シグナルコンフリクト解決ルール（優先順位: 慣性 ＞ 質量 ＞ 弾性）: 慣性優勢→方向維持/質量確認、慣性停止反転→反転シグナル発行、弾性極限→反転優先/慣性は従属、全シグナル拮抗→全力待機強制',
         ],
