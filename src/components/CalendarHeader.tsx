@@ -9,6 +9,7 @@ type Props = {
   isTablet: boolean
   sidebarOpen: boolean
   onMenuClick: () => void
+  theme?: 'dark' | 'light'
 }
 
 const isCalendarView = (v: ViewMode) => v === 'day' || v === 'week' || v === 'month'
@@ -74,9 +75,17 @@ const MAIN_VIEWS = [
 ]
 
 // ── コンポーネント ────────────────────────────────────
-export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick }: Props) {
+export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick, theme = 'dark' }: Props) {
   const showMenu = isMobile || isTablet
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
+
+  const isLab    = view === 'support'
+  const useNeon  = isLab && theme === 'dark'
+  const neonColor      = '#00e5ff'
+  const neonDim        = 'rgba(0,229,255,0.42)'
+  const neonActiveBg   = 'rgba(0,229,255,0.12)'
+  const neonBg         = 'rgba(4,10,22,0.97)'
+  const neonBorder     = 'rgba(0,229,255,0.18)'
 
   // モバイル: 4分割フル幅レイアウト
   if (isMobile) {
@@ -90,8 +99,9 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
           borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none',
           flexShrink: 0, position: 'relative', zIndex: Z.calendarHeader,
           userSelect: 'none',
+          ...(useNeon ? { background: neonBg, borderTop: `1px solid ${neonBorder}` } : {}),
         }}
-        className="glass"
+        className={useNeon ? undefined : 'glass'}
       >
         {MAIN_VIEWS.map(v => {
           const active = v.isActive(view)
@@ -103,7 +113,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
-                color: active ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
+                color: useNeon ? (active ? neonColor : neonDim) : (active ? 'var(--view-btn-active-color)' : 'var(--text-sub)'),
                 transition: 'color 0.15s',
                 padding: '4px 2px',
               }}
@@ -117,8 +127,8 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
                 width: active ? '90%' : 'auto',
                 padding: '6px 8px',
                 borderRadius: 10,
-                background: active ? 'var(--view-btn-active-bg)' : 'transparent',
-                boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
+                background: active ? (useNeon ? neonActiveBg : 'var(--view-btn-active-bg)') : 'transparent',
+                boxShadow: active && useNeon ? `0 0 12px ${neonColor}28` : active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
                 transition: 'background 0.15s, box-shadow 0.15s',
               }}>
                 {v.icon}
@@ -133,9 +143,13 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
     )
   }
 
-  // デスクトップ / タブレット: 既存レイアウト
+  // デスクトップ / タブレット
+  const desktopHeaderStyle: React.CSSProperties = useNeon
+    ? { ...styles.header, background: neonBg, borderTop: `1px solid ${neonBorder}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }
+    : styles.header
+
   return (
-    <header style={styles.header} className="glass">
+    <header style={desktopHeaderStyle} className={useNeon ? undefined : 'glass'}>
       <div style={styles.left}>
         {/* ハンバーガーボタン */}
         {showMenu && (
@@ -160,13 +174,24 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick 
 
       {/* ビュー切替アイコン */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <div style={styles.viewGroup} className="glass">
+        <div
+          style={useNeon
+            ? { ...styles.viewGroup, background: 'rgba(0,229,255,0.06)', border: `1px solid ${neonBorder}` }
+            : styles.viewGroup}
+          className={useNeon ? undefined : 'glass'}
+        >
           {MAIN_VIEWS.map(v => (
             <div key={v.label} style={{ position: 'relative' }}>
               <button
                 style={{
                   ...styles.viewBtn,
-                  ...(v.isActive(view) ? styles.viewBtnActive : {}),
+                  ...(v.isActive(view)
+                    ? useNeon
+                      ? { background: neonActiveBg, color: neonColor, boxShadow: `0 0 14px ${neonColor}30` }
+                      : styles.viewBtnActive
+                    : useNeon
+                      ? { color: neonDim }
+                      : {}),
                 }}
                 onClick={() => setView(v.targetView)}
                 onMouseEnter={() => setHoveredLabel(v.label)}

@@ -31,7 +31,7 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
               style={{
                 display: '-webkit-box' as React.CSSProperties['display'],
                 fontSize: isSm ? 11 : 12,
-                fontWeight: 600,
+                fontWeight: 500,
                 letterSpacing: '0.03em',
                 color: isLight ? color : 'rgba(255,255,255,0.95)',
                 background: bg,

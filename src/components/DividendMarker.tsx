@@ -30,7 +30,7 @@ export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) 
               style={{
                 display: 'inline-block',
                 fontSize: isSm ? 10 : 12,
-                fontWeight: 700,
+                fontWeight: 500,
                 letterSpacing: '0.02em',
                 color: isLight ? color : 'rgba(255,255,255,0.92)',
                 background: bg,

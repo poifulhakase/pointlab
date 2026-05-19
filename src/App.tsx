@@ -705,6 +705,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
               view={cal.view} setView={setViewWithTransition}
               isMobile={isMobile} isTablet={isTablet}
               sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
+              theme={theme}
             />
           </div>
       </div>

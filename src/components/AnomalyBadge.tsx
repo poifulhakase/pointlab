@@ -30,7 +30,7 @@ export function AnomalyBadge({ events, size = 'md', theme = 'dark' }: Props) {
               style={{
                 display: 'inline-block',
                 fontSize: isSm ? 10 : 11,
-                fontWeight: 600,
+                fontWeight: 500,
                 letterSpacing: '0.03em',
                 color: isLight ? badgeColor : 'rgba(255,255,255,0.92)',
                 background: badgeBg,
