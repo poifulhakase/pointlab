@@ -516,7 +516,7 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
         }
         .menu3d-mobile .menu3d-btn {
           width: 100%;
-          height: 58px;
+          height: 64px;
           flex-direction: row;
           justify-content: flex-start;
           align-items: center;
@@ -530,12 +530,12 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
         }
         .menu3d-mobile .menu3d-divider {
           display: flex;
-          height: 26px;
+          height: 29px;
           flex-shrink: 0;
         }
         .menu3d-mobile .menu3d-icon-wrap {
           width: 46px;
-          height: 58px;
+          height: 64px;
           margin-bottom: 0;
           flex-shrink: 0;
         }
@@ -543,7 +543,7 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
           flex: 1;
           align-items: flex-start;
           padding: 0 8px 0 10px;
-          gap: 2px;
+          gap: 5px;
           min-width: 0;
         }
         .menu3d-mobile .menu3d-label { font-size: 11px; letter-spacing: 0.12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
