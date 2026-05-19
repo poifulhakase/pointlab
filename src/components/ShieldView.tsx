@@ -442,13 +442,13 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      background: theme === 'dark' ? 'rgba(0,5,15,0.7)' : 'var(--glass-bg)' }}>
+      background: theme === 'dark' ? '#111113' : 'var(--glass-bg)' }}>
       {/* ヘッダー */}
       <div style={{
         position: 'relative', zIndex: 1,
         padding: '10px 14px 9px', flexShrink: 0,
         borderBottom: `1px solid ${c.BORDER}`,
-        background: c.HDBG,
+        background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : c.HDBG,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
@@ -503,7 +503,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
               padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
               fontFamily: c.FONT,
-              background: c.TAREA,
+              background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
               border: `1px solid ${c.BORDER}`,
               borderRadius: 8, overflowY: 'auto',
               color: c.TXTCLR, cursor: 'text',
@@ -523,7 +523,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
               padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
               fontFamily: c.FONT,
-              background: c.TAREA,
+              background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
               border: `1px solid ${c.BORDER}`,
               color: c.TXTCLR, outline: 'none',
             }}

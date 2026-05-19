@@ -34,7 +34,7 @@ export function BadgePopup({ x, y, color, label, desc, onClose, theme = 'dark' }
       ref={ref}
       style={{
         position: 'fixed', top, left, width: popW, zIndex: 9999,
-        background: isLight ? '#ffffff' : 'rgba(11,14,46,0.97)',
+        background: isLight ? '#ffffff' : 'rgba(20,20,22,0.97)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         border: `1px solid ${color}${isLight ? '30' : '40'}`,

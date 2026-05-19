@@ -217,7 +217,6 @@ function renderHighlighted(text: string, theme: 'dark' | 'light'): React.ReactNo
 }
 
 const CY_FONT = "'Courier New', Courier, monospace" as const
-const CY_SCAN = 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,229,255,0.022) 3px, rgba(0,229,255,0.022) 4px)'
 
 function cyColors(theme: 'dark' | 'light') {
   const isLight = theme === 'light'
@@ -227,10 +226,10 @@ function cyColors(theme: 'dark' | 'light') {
     FAINT:      isLight ? 'rgba(3,105,161,0.4)'     : 'rgba(0,229,255,0.22)',
     BORDER:     isLight ? 'rgba(3,105,161,0.25)'    : 'rgba(0,229,255,0.22)',
     BORDBR:     isLight ? 'rgba(3,105,161,0.5)'     : 'rgba(0,229,255,0.45)',
-    BG_SUB:     isLight ? '#f0f7ff'                 : 'rgba(0,5,15,0.7)',
-    BG_AREA:    isLight ? 'rgba(3,105,161,0.07)'    : 'rgba(0,229,255,0.04)',
-    SELECT_BG:  isLight ? '#f0f9ff'                 : '#050e1a',
-    SCAN:       isLight ? 'none'                    : CY_SCAN,
+    BG_SUB:     isLight ? '#f0f7ff'                 : '#111113',
+    BG_AREA:    isLight ? 'rgba(3,105,161,0.07)'    : 'rgba(255,255,255,0.04)',
+    SELECT_BG:  isLight ? '#f0f9ff'                 : '#1c1c1e',
+    SCAN:       isLight ? 'none'                    : 'none',
     TEXT:       isLight ? 'rgba(17,24,39,0.9)'      : 'rgba(255,255,255,0.88)',
     FONT:       CY_FONT,
   }
