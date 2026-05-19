@@ -497,7 +497,6 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
                 isMobile={isMobile}
                 onOpenManual={() => setViewWithTransition('manual')}
                 onOpenLegal={() => setViewWithTransition('legal')}
-                onGoBack={() => setViewWithTransition('support')}
               />
             </Suspense>
           )}

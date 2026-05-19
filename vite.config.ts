@@ -41,6 +41,7 @@ export default defineConfig({
             },
           }
           try {
+            // @ts-ignore — no type declarations for Vercel serverless handler
             const { default: handler } = await import('./api/stocks-daily.js')
             await handler(req, expRes)
           } catch (e) {

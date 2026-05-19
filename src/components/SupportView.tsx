@@ -898,7 +898,7 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {activeDrawer === 'data' && (
                 <Suspense fallback={<ViewLoader />}>
-                  <NoteView theme={theme} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onGoBack={closeDrawer} />
+                  <NoteView theme={theme} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} />
                 </Suspense>
               )}
               {activeDrawer === 'contact' && (
