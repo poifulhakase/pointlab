@@ -552,7 +552,7 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
 
         /* ── Light mode overrides ── */
         .menu3d-light .menu3d-btn {
-          background: rgba(255,255,255,0.72);
+          background: rgba(214,233,255,0.82);
           border-color: rgba(0,120,200,0.40);
           box-shadow:
             0 0 14px rgba(0,120,200,0.15),

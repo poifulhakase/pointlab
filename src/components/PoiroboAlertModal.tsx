@@ -203,9 +203,7 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         {/* 説明文 */}
         <div style={{ padding: '10px 18px 10px', borderBottom: `1px solid ${CY_FAINT2}`, flexShrink: 0 }}>
           <span style={{ fontSize: 11, color: CY_FAINT, fontFamily: CY_FONT, letterSpacing: '0.04em', lineHeight: 1.7 }}>
-            監視するイベントを選択してください。対象日付パネルを
-            <span style={{ color: 'rgba(248,113,113,0.95)', fontWeight: 700 }}>レッド</span>
-            でハイライト表示します。
+            監視するイベントを選択してください。対象日付パネルを<span style={{ color: 'rgba(248,113,113,0.95)', fontWeight: 700 }}>あか</span>くハイライト表示します。
           </span>
         </div>
 
