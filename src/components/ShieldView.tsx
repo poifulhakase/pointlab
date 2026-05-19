@@ -199,6 +199,23 @@ async function buildShieldData(): Promise<ShieldMktData> {
   })
 }
 
+// ── ぽいロボ エンジン 直近レポート取得 ─────────────────
+function getRecentEngineReport(): { date: string; text: string } | null {
+  try {
+    const raw = localStorage.getItem('poical-quant-memo-history')
+    if (raw) {
+      const history: { date: string; text: string }[] = JSON.parse(raw)
+      if (Array.isArray(history) && history.length > 0) {
+        const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        // history は新→古順。直近2週間以内で最初に見つかったもの（= 最新）を返す
+        const recent = history.find(s => s.date >= twoWeeksAgo && s.text.trim() !== '')
+        if (recent) return recent
+      }
+    }
+  } catch { /* noop */ }
+  return null
+}
+
 // ── ポジション分析プロンプト ─────────────────────────
 const SHIELD_PROMPT_TEMPLATE = `# Role
 あなたは保有中ポジション専門アドバイザー「ぽいロボ シールド」です。
@@ -374,42 +391,7 @@ function CyberSystemLog({ logLines, cursorVisible, typedText, theme }: LogState 
 // ── ⑫ ShieldMemoPanel ────────────────────────────────
 const SHIELD_MEMO_KEY = 'poical-shield-memo'
 
-const SHIELD_HIGHLIGHT_PATTERNS = [
-  /損切り価格：.+/g,
-  /指令：.+/g,
-  /確信度：[\d.]+%.*/g,
-]
 
-function renderShieldHighlighted(text: string, theme: 'dark' | 'light'): React.ReactNode[] {
-  const hlColor = theme === 'light' ? '#0369a1' : 'rgba(0,230,255,0.95)'
-  return text.split('\n').map((line, lineIdx) => {
-    const spans: { start: number; end: number }[] = []
-    for (const pat of SHIELD_HIGHLIGHT_PATTERNS) {
-      pat.lastIndex = 0
-      let m: RegExpExecArray | null
-      while ((m = pat.exec(line)) !== null) {
-        spans.push({ start: m.index, end: m.index + m[0].length })
-      }
-    }
-    if (spans.length === 0) {
-      return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{line || ' '}</div>
-    }
-    spans.sort((a, b) => a.start - b.start)
-    const nodes: React.ReactNode[] = []
-    let pos = 0
-    for (const { start, end } of spans) {
-      if (pos < start) nodes.push(line.slice(pos, start))
-      nodes.push(
-        <mark key={`h-${lineIdx}-${start}`} style={{ background: 'none', color: hlColor, fontWeight: 700 }}>
-          {line.slice(start, end)}
-        </mark>
-      )
-      pos = end
-    }
-    if (pos < line.length) nodes.push(line.slice(pos))
-    return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{nodes}</div>
-  })
-}
 
 function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
   const c = cy(theme)
@@ -469,73 +451,72 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
             ポジション分析レポート
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+          {/* 全選択 */}
           <button
-            onClick={() => setIsPreview(v => !v)}
+            title="全選択"
+            onClick={() => { setIsPreview(false); setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
             style={{
-              padding: '4px 14px', borderRadius: 6,
-              fontFamily: c.FONT, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
-              background: nd ? nd.btnBg(isPreview) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${isPreview ? '0.18' : '0.08'})`,
-              border: `1px solid ${nd ? (isPreview ? nd.title : nd.bordbr) : (isPreview ? c.GREEN : c.BORDBR)}`,
-              color: nd ? nd.title : c.GREEN, cursor: 'pointer',
-              transition: 'background 0.2s, border-color 0.2s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
+              background: nd ? nd.btnBg(false) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
+              border: `1px solid ${nd ? nd.bordbr : c.BORDBR}`,
+              color: nd ? nd.title : c.GREEN,
+              transition: 'background 0.2s',
             }}
           >
-            {isPreview ? '編集' : 'プレビュー'}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeDasharray="3 2"/>
+              <line x1="8" y1="9" x2="16" y2="9"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="13" y2="17"/>
+            </svg>
           </button>
+          {/* 保存 */}
           <button
+            title={saved ? '保存しました' : '保存'}
             onClick={handleSave}
             style={{
-              padding: '4px 14px', borderRadius: 6,
-              fontFamily: c.FONT, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
-              background: nd ? nd.btnBg(saved) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${saved ? '0.18' : '0.08'})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
+              background: nd ? nd.btnBg(saved) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${saved ? '0.18' : '0.06'})`,
               border: `1px solid ${nd ? (saved ? nd.title : nd.bordbr) : (saved ? c.GREEN : c.BORDBR)}`,
-              color: nd ? nd.title : c.GREEN, cursor: 'pointer',
+              color: nd ? nd.title : c.GREEN,
               transition: 'background 0.2s, border-color 0.2s',
-              boxShadow: saved ? `0 0 10px ${nd ? nd.faint : c.FAINT}` : 'none',
+              boxShadow: saved ? `0 0 8px ${nd ? nd.faint : c.FAINT}` : 'none',
             }}
           >
-            {saved ? '保存しました' : '保存'}
+            {saved
+              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+            }
           </button>
         </div>
       </div>
 
-      {/* テキストエリア / プレビュー */}
+      {/* テキストエリア */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', padding: '14px 16px' }}>
-        {isPreview ? (
-          <div
-            onClick={() => setIsPreview(false)}
-            style={{
-              flex: 1,
-              minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
-              fontFamily: c.FONT,
-              background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
-              border: `1px solid ${nd ? nd.border : c.BORDER}`,
-              borderRadius: 8, overflowY: 'auto',
-              color: c.TXTCLR, cursor: 'text',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {renderShieldHighlighted(text, theme)}
-          </div>
-        ) : (
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            placeholder="▌ ポジション分析レポートを記録..."
-            style={{
-              flex: 1, width: '100%', resize: 'none', borderRadius: 8,
-              minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
-              fontFamily: c.FONT,
-              background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
-              border: `1px solid ${nd ? nd.border : c.BORDER}`,
-              color: c.TXTCLR, outline: 'none',
-            }}
-          />
-        )}
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="▌ ポジション分析レポートを記録..."
+          style={{
+            flex: 1, width: '100%', resize: 'none', borderRadius: 8,
+            minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+            padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+            fontFamily: c.FONT,
+            background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
+            border: `1px solid ${nd ? nd.border : c.BORDER}`,
+            color: c.TXTCLR, outline: 'none',
+          }}
+        />
       </div>
     </div>
   )
@@ -780,10 +761,20 @@ export function ShieldView({ theme, isMobile, user }: Props) {
     try {
       // 市場データを取得してプロンプトに付加（エンジンと同じパターン）
       const mktData = await buildShieldData()
+      const engineReport = getRecentEngineReport()
+      const engineSection = engineReport
+        ? `\n---\n# ぽいロボ エンジン 直近レポート（二次参考）\n`
+          + `> ⚠️ このレポートはエントリー可否・相場方向の需給分析用です。\n`
+          + `> シールドの判断は「ポジション画像」と「市場データJSON」を一次情報とし、このレポートは二次参考に留めてください。\n`
+          + `> エンジンの相場観とポジション管理方針が食い違う場合は、ポジション画像の損益状況を優先してください。\n`
+          + `> レポート日付: ${engineReport.date}\n\n`
+          + engineReport.text + '\n'
+        : ''
       const fullText = SHIELD_PROMPT_TEMPLATE
         + '\n---\n# 市場データ（自動取得）\n```json\n'
         + JSON.stringify(mktData, null, 2)
         + '\n```\n'
+        + engineSection
       try {
         await navigator.clipboard.writeText(fullText)
       } catch {

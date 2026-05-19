@@ -38,6 +38,12 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     setMemo(note.memo)
     setChecklist(note.checklist)
     let scheds = note.schedules ?? []
+    // 古いデータにタイトルなしスケジュールが残っている場合は即座に修正
+    const cleaned = scheds.filter(s => s.title.trim())
+    if (cleaned.length !== scheds.length) {
+      saveNote(date, { ...note, schedules: cleaned })
+      scheds = cleaned
+    }
     if (prefillTime) {
       const alreadyExists = scheds.some(s => s.startTime === prefillTime)
       if (!alreadyExists) {

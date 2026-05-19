@@ -177,44 +177,7 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const HIGHLIGHT_PATTERNS = [
-  /確信度：[\d.]+%/g,
-  /判定：.+/g,
-  /指令：.+/g,
-]
 
-function renderHighlighted(text: string, theme: 'dark' | 'light'): React.ReactNode[] {
-  const hlColor = theme === 'light' ? '#0369a1' : 'rgba(0,230,255,0.95)'
-  return text.split('\n').map((line, lineIdx) => {
-    const spans: { start: number; end: number }[] = []
-    for (const pat of HIGHLIGHT_PATTERNS) {
-      pat.lastIndex = 0
-      let m: RegExpExecArray | null
-      while ((m = pat.exec(line)) !== null) {
-        spans.push({ start: m.index, end: m.index + m[0].length })
-      }
-    }
-    if (spans.length === 0) {
-      return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{line || ' '}</div>
-    }
-    spans.sort((a, b) => a.start - b.start)
-    const nodes: React.ReactNode[] = []
-    let pos = 0
-    for (const { start, end } of spans) {
-      if (pos < start) nodes.push(line.slice(pos, start))
-      nodes.push(
-        <mark key={`h-${lineIdx}-${start}`} style={{
-          background: 'none', color: hlColor, fontWeight: 700,
-        }}>
-          {line.slice(start, end)}
-        </mark>
-      )
-      pos = end
-    }
-    if (pos < line.length) nodes.push(line.slice(pos))
-    return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{nodes}</div>
-  })
-}
 
 const CY_FONT = "'Courier New', Courier, monospace" as const
 
@@ -430,7 +393,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {memoSaveFlash && <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.GREEN, letterSpacing: '0.06em' }}>保存しました</span>}
           {user && (
             <select
               value={selectedDate}
@@ -448,53 +410,69 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               ))}
             </select>
           )}
-          {isPreview ? (
-            <button style={btnStyle} onClick={() => setIsPreview(false)}>編集</button>
-          ) : (
-            <button
-              style={{ ...btnStyle, cursor: memoIsDirty ? 'pointer' : 'default', opacity: memoIsDirty ? 1 : 0.45 }}
-              onClick={user ? handleSnapSave : handleSave}
-              disabled={!memoIsDirty}
-            >
-              保存
-            </button>
-          )}
+          {/* 全選択 */}
+          <button
+            title="全選択"
+            onClick={() => { setIsPreview(false); setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
+              background: c.BG_AREA, border: `1px solid ${c.BORDBR}`,
+              color: c.GREEN,
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeDasharray="3 2"/>
+              <line x1="8" y1="9" x2="16" y2="9"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="13" y2="17"/>
+            </svg>
+          </button>
+          {/* 保存 */}
+          <button
+            title={memoSaveFlash ? '保存しました' : '保存'}
+            onClick={user ? handleSnapSave : handleSave}
+            disabled={!memoIsDirty}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 6,
+              cursor: memoIsDirty ? 'pointer' : 'default', opacity: memoIsDirty ? 1 : 0.40,
+              background: memoSaveFlash ? c.FAINT : c.BG_AREA,
+              border: `1px solid ${memoSaveFlash ? c.GREEN : c.BORDBR}`,
+              color: c.GREEN,
+              transition: 'background 0.2s, border-color 0.2s',
+              boxShadow: memoSaveFlash ? `0 0 8px ${c.FAINT}` : 'none',
+            }}
+          >
+            {memoSaveFlash
+              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+            }
+          </button>
         </div>
       </div>
 
-      {/* テキストエリア / プレビュー（外パディングで二重枠を表現） */}
+      {/* テキストエリア */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0, padding: '14px 16px' }}>
-        {isPreview ? (
-          <div
-            onClick={() => setIsPreview(false)}
-            style={{
-              flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
-              color: c.TEXT, overflowY: 'auto', cursor: 'text',
-              whiteSpace: 'pre-wrap', fontFamily: c.FONT,
-              border: `1px solid ${c.BORDER}`, borderRadius: 8,
-              background: c.BG_AREA,
-            }}
-          >
-            {savedMemo ? renderHighlighted(savedMemo, theme) : (
-              <span style={{ color: c.FAINT }}>▌ エントリー分析レポートを記録...</span>
-            )}
-          </div>
-        ) : (
-          <textarea
-            ref={textareaRef}
-            value={quantMemo}
-            onChange={e => setQuantMemo(e.target.value)}
-            placeholder="▌ エントリー分析レポートを記録..."
-            style={{
-              flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-              resize: 'none', background: c.BG_AREA,
-              color: c.TEXT, border: `1px solid ${c.BORDER}`, outline: 'none', borderRadius: 8,
-              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
-              fontFamily: c.FONT, overflowY: 'auto',
-            }}
-          />
-        )}
+        <textarea
+          ref={textareaRef}
+          value={quantMemo}
+          onChange={e => setQuantMemo(e.target.value)}
+          placeholder="▌ エントリー分析レポートを記録..."
+          style={{
+            flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+            resize: 'none', background: c.BG_AREA,
+            color: c.TEXT, border: `1px solid ${c.BORDER}`, outline: 'none', borderRadius: 8,
+            padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+            fontFamily: c.FONT, overflowY: 'auto',
+          }}
+        />
       </div>
     </div>
   )
