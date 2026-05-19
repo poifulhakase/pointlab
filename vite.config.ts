@@ -55,7 +55,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.svg'],
+      includeAssets: ['favicon.png', 'favicon.svg', 'apple-touch-icon.png', 'logo.svg'],
       manifest: {
         name: 'ぽいロボ',
         short_name: 'ぽいロボ',
@@ -78,7 +78,7 @@ export default defineConfig({
             type: 'image/png',
           },
           {
-            src: 'icon-512.png',
+            src: 'icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
