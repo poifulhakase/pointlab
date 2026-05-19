@@ -300,6 +300,12 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
   { left: '10%', top: '28%', size: 2, dur: 34, delay: -22,  op: 0.14, anim: 'labDrift1' },
   { left: '35%', top: '18%', size: 3, dur: 29, delay: -17,  op: 0.14, anim: 'labDrift2' },
   { left: '68%', top: '25%', size: 2, dur: 24, delay: -24,  op: 0.12, anim: 'labDrift1' },
+  { left: '5%',  top: '58%', size: 2, dur: 28, delay: -18,  op: 0.20, anim: 'labDrift2' },
+  { left: '42%', top: '12%', size: 2, dur: 36, delay: -26,  op: 0.12, anim: 'labDrift1' },
+  { left: '85%', top: '30%', size: 3, dur: 23, delay: -21,  op: 0.16, anim: 'labDrift2' },
+  { left: '25%', top: '83%', size: 2, dur: 20, delay: -11,  op: 0.24, anim: 'labDrift1' },
+  { left: '52%', top: '20%', size: 2, dur: 31, delay: -28,  op: 0.13, anim: 'labDrift2' },
+  { left: '96%', top: '80%', size: 3, dur: 25, delay: -5,   op: 0.20, anim: 'labDrift1' },
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
