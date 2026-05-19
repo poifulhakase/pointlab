@@ -475,7 +475,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               overflow: 'hidden', color: c.TEXT,
             }}
           >
-            {renderQuantHL(quantMemo, theme === 'light' ? '#0369a1' : 'rgba(0,230,255,0.95)')}
+            {renderQuantHL(quantMemo, theme === 'light' ? '#db2777' : 'rgba(255,100,180,0.95)')}
           </div>
           <textarea
             ref={textareaRef}

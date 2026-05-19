@@ -531,7 +531,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               overflow: 'hidden', color: c.TXTCLR,
             }}
           >
-            {renderShieldHL(text, theme === 'dark' ? 'rgba(0,230,255,0.95)' : '#0369a1')}
+            {renderShieldHL(text, theme === 'dark' ? 'rgba(255,100,180,0.95)' : '#db2777')}
           </div>
           <textarea
             ref={textareaRef}
