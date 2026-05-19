@@ -1261,7 +1261,7 @@ function EnginePanel({
             : ms.sectionTitle
           }>{CYBER_MODE ? '▌ AI起動' : 'AI起動'}</div>
           {CYBER_MODE ? (
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 28 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
 
               {/* Gemini */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>

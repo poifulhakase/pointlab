@@ -707,7 +707,7 @@ function ShieldPanel({
               ▌ AI起動
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 28 }}>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
               {SHIELD_AI_LINKS.map(ai => (
                 <div key={ai.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                   <a
