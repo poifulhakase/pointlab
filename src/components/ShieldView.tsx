@@ -473,11 +473,10 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
           </button>
           {/* 保存 */}
           <button
-            title={saved ? '保存しました' : '保存'}
             onClick={handleSave}
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
+              padding: '4px 14px', borderRadius: 6, cursor: 'pointer',
+              fontFamily: c.FONT, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
               background: nd ? nd.btnBg(saved) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${saved ? '0.18' : '0.06'})`,
               border: `1px solid ${nd ? (saved ? nd.title : nd.bordbr) : (saved ? c.GREEN : c.BORDBR)}`,
               color: nd ? nd.title : c.GREEN,
@@ -485,16 +484,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               boxShadow: saved ? `0 0 8px ${nd ? nd.faint : c.FAINT}` : 'none',
             }}
           >
-            {saved
-              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/>
-                  <polyline points="7 3 7 8 15 8"/>
-                </svg>
-            }
+            {saved ? '保存しました' : '保存'}
           </button>
         </div>
       </div>
