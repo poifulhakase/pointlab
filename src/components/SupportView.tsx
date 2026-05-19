@@ -23,6 +23,8 @@ type Props = {
   syncStatus?: string
   onOpenSpec?: () => void
   onPoiroboChange?: (open: boolean) => void
+  pushEnabled?: boolean
+  onTogglePush?: () => void
 }
 
 type SupportTab = 'session' | 'note' | 'manual'
@@ -309,7 +311,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, supportTab, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange }: Props) {
+export function SupportView({ theme, isMobile, supportTab, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -999,6 +1001,49 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
                           {t === 'light' ? 'ライト' : 'ダーク'}
                         </button>
                       ))}
+                    </div>
+                  </section>
+
+                  {/* 通知 */}
+                  <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>通知</div>
+                    <div
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: 10,
+                        cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5,
+                        background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                        transition: 'background 0.15s',
+                      }}
+                      onClick={user ? onTogglePush : undefined}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <span style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: pushEnabled && user ? 'rgba(96,165,250,0.15)' : 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={pushEnabled && user ? 'rgba(96,165,250,0.9)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                          </svg>
+                        </span>
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>プッシュ通知</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                            {!user ? 'ログインが必要です' : pushEnabled ? 'ON — 前日 12:30 に通知' : 'OFF'}
+                          </span>
+                        </span>
+                      </span>
+                      <span style={{
+                        width: 40, height: 22, borderRadius: 11, flexShrink: 0,
+                        background: pushEnabled && user ? 'rgba(96,165,250,0.85)' : 'var(--glass-border)',
+                        position: 'relative', transition: 'background 0.2s',
+                        display: 'inline-block',
+                      }}>
+                        <span style={{
+                          position: 'absolute', top: 3, left: pushEnabled && user ? 21 : 3,
+                          width: 16, height: 16, borderRadius: '50%',
+                          background: 'white', transition: 'left 0.2s',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        }} />
+                      </span>
                     </div>
                   </section>
 
