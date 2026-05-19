@@ -1351,6 +1351,35 @@ function EnginePanel({
                 </div>
               </div>
 
+              {/* DeepSeek */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <a
+                  href="https://chat.deepseek.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://chat.deepseek.com/', '_blank') }}
+                  style={{
+                    width: 70, height: 70, borderRadius: '50%',
+                    background: `rgba(${CY_RGB},0.06)`,
+                    border: `2px solid ${CY_BORDER}`,
+                    boxShadow: `0 0 16px ${CY_FAINT}, inset 0 0 10px ${CY_FAINT}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', textDecoration: 'none',
+                    transition: 'box-shadow 0.2s, background 0.2s',
+                  }}
+                >
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'linear-gradient(135deg,#4B6EF5,#1AC4C4)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                      <path d="M6 4h6c5 0 8 3 8 8s-3 8-8 8H6V4zm4 4v8h2c3 0 5-1.8 5-4s-2-4-5-4h-2z"/>
+                    </svg>
+                  </div>
+                </a>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>DeepSeek</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>R1モデル推奨</span>
+                </div>
+              </div>
+
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1418,6 +1447,29 @@ function EnginePanel({
                 <div style={ms.aiInfo}>
                   <div style={ms.aiName}>ChatGPT</div>
                   <div style={ms.aiDesc}>o3以上推奨</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </a>
+
+              {/* DeepSeek */}
+              <a
+                href="https://chat.deepseek.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ ...ms.aiCard, flex: 'none', width: '100%' }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://chat.deepseek.com/', '_blank') }}
+              >
+                <div style={{ ...ms.aiLogo, background: 'linear-gradient(135deg,#4B6EF5,#1AC4C4)', padding: 0, overflow: 'hidden' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                    <path d="M6 4h6c5 0 8 3 8 8s-3 8-8 8H6V4zm4 4v8h2c3 0 5-1.8 5-4s-2-4-5-4h-2z"/>
+                  </svg>
+                </div>
+                <div style={ms.aiInfo}>
+                  <div style={ms.aiName}>DeepSeek</div>
+                  <div style={ms.aiDesc}>R1モデル推奨</div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>

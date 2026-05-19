@@ -38,9 +38,9 @@
 }
 
 @keyframes today-pulse {
-  0%   { box-shadow: 0 0 0 0   rgba(255,210,80,0.45); }
-  70%  { box-shadow: 0 0 0 9px rgba(255,210,80,0); }
-  100% { box-shadow: 0 0 0 0   rgba(255,210,80,0); }
+  0%   { box-shadow: 0 0 0 0   rgba(255,255,255,0.40); }
+  70%  { box-shadow: 0 0 0 9px rgba(255,255,255,0); }
+  100% { box-shadow: 0 0 0 0   rgba(255,255,255,0); }
 }
 @keyframes today-pulse-light {
   0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0.35); }
@@ -79,9 +79,9 @@ img {
   --banner-bg:     rgba(96, 165, 250, 0.14);
   --banner-border: rgba(96, 165, 250, 0.38);
   /* ── Session bands ────────────────────────────────────── */
-  --session-front-bg:     rgba(96, 165, 250, 0.07);
-  --session-front-label:  rgba(96, 165, 250, 0.60);
-  --session-front-border: rgba(96, 165, 250, 0.25);
+  --session-front-bg:     rgba(52, 211, 153, 0.07);
+  --session-front-label:  rgba(52, 211, 153, 0.60);
+  --session-front-border: rgba(52, 211, 153, 0.25);
   --session-back-bg:      rgba(52, 211, 153, 0.07);
   --session-back-label:   rgba(52, 211, 153, 0.60);
   --session-back-border:  rgba(52, 211, 153, 0.15);
@@ -158,8 +158,8 @@ img {
   --banner-bg:     rgba(37, 99, 235, 0.12);
   --banner-border: rgba(29, 78, 216, 0.13);
   /* ── Session bands ────────────────────────────────────── */
-  --session-front-label:  rgba(29, 78, 216, 0.75);
-  --session-front-border: rgba(29, 78, 216, 0.25);
+  --session-front-label:  rgba(4, 120, 87, 0.75);
+  --session-front-border: rgba(4, 120, 87, 0.20);
   --session-back-label:   rgba(4, 120, 87, 0.75);
   --session-back-border:  rgba(4, 120, 87, 0.20);
   --session-marker-bg:    rgba(0, 0, 0, 0.06);

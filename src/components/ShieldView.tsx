@@ -875,6 +875,15 @@ const SHIELD_AI_LINKS = [
       </svg>
     ),
   },
+  {
+    name: 'DeepSeek', url: 'https://chat.deepseek.com/', hint: 'R1モデル推奨',
+    bg: 'linear-gradient(135deg,#4B6EF5,#1AC4C4)',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+        <path d="M6 4h6c5 0 8 3 8 8s-3 8-8 8H6V4zm4 4v8h2c3 0 5-1.8 5-4s-2-4-5-4h-2z"/>
+      </svg>
+    ),
+  },
 ]
 
 // ── スタイル ─────────────────────────────────────────

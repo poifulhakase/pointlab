@@ -53,7 +53,7 @@ export function getSqMarkersForDate(date: Date, sqDates: SqDate[]): SqMarker[] {
 export const SQ_META: Record<SqMarker, { label: string; short: string; desc: string }> = {
   'sq-major': {
     label: 'メジャーSQ',
-    short: 'SQ',
+    short: 'メジャーSQ',
     desc: '日経225先物・オプション特別清算指数算出日',
   },
   'sq-mini': {

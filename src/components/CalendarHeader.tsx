@@ -84,7 +84,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick,
   const neonColor      = '#00e5ff'
   const neonDim        = 'rgba(0,229,255,0.42)'
   const neonActiveBg   = 'rgba(0,229,255,0.12)'
-  const neonBg         = 'rgba(4,10,22,0.97)'
+  const neonBg         = 'rgba(4,10,22,0.55)'
   const neonBorder     = 'rgba(0,229,255,0.18)'
 
   // モバイル: 4分割フル幅レイアウト

@@ -106,8 +106,8 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               style={{
                 ...styles.dayHeader,
                 cursor: 'pointer',
-                background: td ? (theme === 'light' ? 'rgba(37,99,235,0.09)' : 'rgba(255,210,80,0.18)') : undefined,
-                borderTop: td ? (theme === 'light' ? '3px solid #3b82f6' : '3px solid rgba(255,200,60,0.85)') : undefined,
+                background: td ? (theme === 'light' ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.18)') : undefined,
+                borderTop: td ? (theme === 'light' ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.65)') : undefined,
               }}
               onClick={() => onOpenNote(d)}
               title="クリックでメモ・タスクを開く"
@@ -118,7 +118,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               <span style={{
                 ...styles.dateNum,
                 background: 'transparent',
-                color: td ? (theme === 'light' ? '#1d4ed8' : 'rgba(255,200,60,0.95)') : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
+                color: td ? (theme === 'light' ? '#1d4ed8' : 'rgba(255,255,255,0.95)') : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
                 boxShadow: 'none',
                 fontWeight: td ? 700 : undefined,
               }}>
