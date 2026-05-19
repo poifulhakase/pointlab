@@ -203,7 +203,10 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick,
 
               {/* ホバーラベル（上方向に表示） */}
               {hoveredLabel === v.label && (
-                <div style={styles.tooltip}>{v.label}</div>
+                <div style={useNeon
+                  ? { ...styles.tooltip, background: 'rgba(4,10,22,0.92)', border: `1px solid ${neonBorder}`, color: neonColor, boxShadow: `0 0 8px ${neonColor}28` }
+                  : styles.tooltip
+                }>{v.label}</div>
               )}
             </div>
           ))}
