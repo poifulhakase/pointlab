@@ -1264,7 +1264,7 @@ function EnginePanel({
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
 
               {/* Gemini */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 86 }}>
                 <a
                   href="https://gemini.google.com/?hl=ja"
                   target="_blank"
@@ -1294,7 +1294,7 @@ function EnginePanel({
               </div>
 
               {/* Claude */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 86 }}>
                 <a
                   href="https://claude.ai/projects"
                   target="_blank"
@@ -1323,7 +1323,7 @@ function EnginePanel({
               </div>
 
               {/* ChatGPT */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 86 }}>
                 <a
                   href="https://chatgpt.com/"
                   target="_blank"
@@ -1352,7 +1352,7 @@ function EnginePanel({
               </div>
 
               {/* DeepSeek */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 86 }}>
                 <a
                   href="https://chat.deepseek.com/"
                   target="_blank"

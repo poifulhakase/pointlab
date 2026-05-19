@@ -709,7 +709,7 @@ function ShieldPanel({
 
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
               {SHIELD_AI_LINKS.map(ai => (
-                <div key={ai.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <div key={ai.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 86 }}>
                   <a
                     href={ai.url} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ai.url, '_blank', 'noopener,noreferrer') }}
