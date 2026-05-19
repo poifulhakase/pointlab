@@ -769,7 +769,7 @@ const styles: Record<string, React.CSSProperties> = {
 
   mobileCalNav: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0, padding: '16px 12px 12px' },
   subNavBtn:    { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 7, color: 'var(--text-sub)', flexShrink: 0 },
-  subLabel:     { fontWeight: 500, fontSize: 17, letterSpacing: '-0.3px', color: 'var(--text)', whiteSpace: 'nowrap', margin: '0 2px', flexShrink: 0 },
+  subLabel:     { fontWeight: 500, fontSize: 17, letterSpacing: '-0.3px', color: 'var(--text)', whiteSpace: 'nowrap', margin: '0 2px', flexShrink: 0, width: 148, textAlign: 'center' },
 
   toast: { position: 'fixed', bottom: 130, right: 24, zIndex: Z.popover, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
 
