@@ -52,9 +52,6 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
   const now = new Date()
   const td = isToday(date)
   const isLight = theme === 'light'
-  const bandColor  = isLight ? '#1d4ed8' : undefined
-  const bandBg     = isLight ? 'rgba(37,99,235,0.12)' : undefined
-  const bandBorder = isLight ? '#1d4ed820' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -111,20 +108,20 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {band ? band.items.map((item, i) => (
               item.url ? (
                 <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  style={{ fontSize: 11, fontWeight: 700, color: bandColor ?? band.color, background: bandBg ?? band.bg, border: `1px solid ${bandBorder ?? band.color + '40'}`, borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  style={{ fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   {item.label}
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span key={i} style={{ fontSize: 11, fontWeight: 700, color: bandColor ?? band.color, background: bandBg ?? band.bg, border: `1px solid ${bandBorder ?? band.color + '40'}`, borderRadius: 5, padding: '2px 8px' }}>
+                <span key={i} style={{ fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px' }}>
                   {item.label}
                 </span>
               )
             )) : <span style={{ fontSize: 11, padding: '2px 8px' }}>&nbsp;</span>}
           </span>
           <DividendMarker markers={markers} size="md" />
-          <SqMarkerBadge markers={sqMarkers} size="md" theme={theme} />
-          <MacroEventBadge events={macroEvts} size="md" theme={theme} />
+          <SqMarkerBadge markers={sqMarkers} size="md" />
+          <MacroEventBadge events={macroEvts} size="md" />
 
           {/* ノート開くボタン */}
           <button

@@ -54,9 +54,6 @@ function timeToMinutes(t: string): number {
 export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark' }: Props) {
   const now = new Date()
   const isLight = theme === 'light'
-  const bandColor       = isLight ? '#1d4ed8' : undefined
-  const bandBg          = isLight ? 'rgba(37,99,235,0.12)' : undefined
-  const bandBorderColor = isLight ? '#1d4ed820' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -143,8 +140,8 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 </div>
               )}
               <DividendMarker markers={markers} size="md" />
-              <SqMarkerBadge markers={sqMarkers} size="md" theme={theme} />
-              <MacroEventBadge events={macroEvts} size="md" theme={theme} />
+              <SqMarkerBadge markers={sqMarkers} size="md" />
+              <MacroEventBadge events={macroEvts} size="md" />
             </div>
           )
         })}
@@ -215,19 +212,19 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
       </div>
 
       {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? (bandBorderColor ?? band.color + '60') : 'transparent'}`, background: band ? (bandBg ?? band.bg) : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: band ? (bandColor ?? band.color) : 'transparent', flexShrink: 0 }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? 'var(--banner-border)' : 'transparent'}`, background: band ? 'var(--banner-bg)' : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: band ? 'var(--banner-color)' : 'transparent', flexShrink: 0 }} />
         {band ? band.items.map((item, i) => (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>／</span>}
             {item.url ? (
               <a href={item.url} target="_blank" rel="noopener noreferrer"
-                style={{ color: bandColor ?? band.color, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                style={{ color: 'var(--banner-color)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 {item.label}
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
             ) : (
-              <span style={{ color: bandColor ?? band.color, fontWeight: 700 }}>{item.label}</span>
+              <span style={{ color: 'var(--banner-color)', fontWeight: 700 }}>{item.label}</span>
             )}
           </span>
         )) : <span>&nbsp;</span>}

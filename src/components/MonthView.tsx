@@ -36,9 +36,6 @@ type Props = {
 export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT }: Props) {
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
-  const bandColor       = band ? (isLight ? '#1d4ed8' : band.color) : 'transparent'
-  const bandBg          = band ? (isLight ? 'rgba(37,99,235,0.12)' : band.bg) : 'transparent'
-  const bandBorderColor = band ? (isLight ? '#1d4ed820' : band.color + '60') : 'transparent'
 
   return (
     <div style={styles.wrap}>
@@ -137,16 +134,16 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 </div>
               )}
 
-              <DividendMarker markers={markers} size="sm" theme={theme} />
-              <SqMarkerBadge markers={sqMarkers} size="sm" theme={theme} />
-              <MacroEventBadge events={macroEvts} size="sm" theme={theme} />
+              <DividendMarker markers={markers} size="sm" />
+              <SqMarkerBadge markers={sqMarkers} size="sm" />
+              <MacroEventBadge events={macroEvts} size="sm" />
             </div>
           )
         })}
 
         {/* アノマリーガント（PC限定・グリッドオーバーレイ） */}
         {!isMobile && getAnomalyEvents && (
-          <AnomalyGantt days={days} getAnomalyEvents={getAnomalyEvents} theme={theme} />
+          <AnomalyGantt days={days} getAnomalyEvents={getAnomalyEvents} />
         )}
       </div>
 
@@ -155,11 +152,11 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
         ...styles.seasonBanner,
         fontSize: isMobile ? 10 : 12,
         padding: isMobile ? '4px 8px' : '5px 12px',
-        borderColor: bandBorderColor,
-        background: bandBg,
+        borderColor: 'var(--banner-border)',
+        background: band ? 'var(--banner-bg)' : 'transparent',
         visibility: band ? 'visible' : 'hidden',
       }}>
-        <span style={{ ...styles.seasonDot, background: bandColor, flexShrink: 0 }} />
+        <span style={{ ...styles.seasonDot, background: 'var(--banner-color)', flexShrink: 0 }} />
         <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0 6px', minWidth: 0 }}>
           {band && band.items.map((item, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -169,14 +166,14 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: bandColor, fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  style={{ color: 'var(--banner-color)', fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
                   onClick={e => e.stopPropagation()}
                 >
                   {item.label}
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span style={{ color: bandColor, fontWeight: 400, whiteSpace: 'nowrap' }}>{item.label}</span>
+                <span style={{ color: 'var(--banner-color)', fontWeight: 400, whiteSpace: 'nowrap' }}>{item.label}</span>
               )}
             </span>
           ))}

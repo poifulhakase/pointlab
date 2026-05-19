@@ -8,13 +8,13 @@ const HOUR_HEIGHT = 56 // WeekView / DayView と同じ値
 
 type Session = {
   label: string
-  startH: number  // 開始時刻（時）
-  startM: number  // 開始時刻（分）
+  startH: number
+  startM: number
   endH: number
   endM: number
-  color: string
-  labelColor: string
-  labelColorLight: string
+  bgVar: string
+  labelVar: string
+  borderVar: string
 }
 
 const SESSIONS: Session[] = [
@@ -22,17 +22,17 @@ const SESSIONS: Session[] = [
     label: '前場',
     startH: 9, startM: 0,
     endH: 11, endM: 30,
-    color: 'rgba(96, 165, 250, 0.07)',
-    labelColor: 'rgba(96, 165, 250, 0.6)',
-    labelColorLight: 'rgba(29, 78, 216, 0.75)',
+    bgVar:     'var(--session-front-bg)',
+    labelVar:  'var(--session-front-label)',
+    borderVar: 'var(--session-front-border)',
   },
   {
     label: '後場',
     startH: 12, startM: 30,
     endH: 15, endM: 30,
-    color: 'rgba(52, 211, 153, 0.07)',
-    labelColor: 'rgba(52, 211, 153, 0.6)',
-    labelColorLight: 'rgba(4, 120, 87, 0.75)',
+    bgVar:     'var(--session-back-bg)',
+    labelVar:  'var(--session-back-label)',
+    borderVar: 'var(--session-back-border)',
   },
 ]
 
@@ -60,9 +60,9 @@ export function SessionBands() {
               left: 0,
               right: 0,
               height,
-              background: s.color,
-              borderTop: `1px solid ${s.labelColor.replace('0.75', '0.25')}`,
-              borderBottom: `1px solid ${s.labelColor.replace('0.75', '0.15')}`,
+              background: s.bgVar,
+              borderTop:    `1px solid ${s.borderVar}`,
+              borderBottom: `1px solid ${s.borderVar}`,
               pointerEvents: 'none',
               zIndex: 1,
             }}
@@ -72,9 +72,9 @@ export function SessionBands() {
               top: 3,
               right: 6,
               fontSize: 9,
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: '0.06em',
-              color: s.labelColor,
+              color: s.labelVar,
             }}>
               {s.label}
             </span>
@@ -86,8 +86,7 @@ export function SessionBands() {
 }
 
 /** 左の時間ラベル列に前場・後場の時刻マーカーを表示 */
-export function SessionTimeMarkers({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
-  const isLight = theme === 'light'
+export function SessionTimeMarkers() {
   const totalMinutes = 24 * 60
 
   return (
@@ -97,18 +96,16 @@ export function SessionTimeMarkers({ theme = 'dark' }: { theme?: 'dark' | 'light
         const endMin = toMinutes(s.endH, s.endM)
         const topStart = (startMin / totalMinutes) * (HOUR_HEIGHT * 24)
         const topEnd = (endMin / totalMinutes) * (HOUR_HEIGHT * 24)
-        const textColor = isLight ? s.labelColorLight : s.labelColor
-        const badgeBg   = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(11,14,46,0.7)'
 
         return (
           <div key={s.label}>
             <div style={{ position: 'absolute', top: topStart, right: 0, left: 0, display: 'flex', justifyContent: 'flex-end', paddingRight: 6, pointerEvents: 'none', zIndex: 2 }}>
-              <span style={{ fontSize: 9, color: textColor, fontWeight: 700, lineHeight: 1, background: badgeBg, borderRadius: 3, padding: '1px 3px' }}>
+              <span style={{ fontSize: 9, color: s.labelVar, fontWeight: 500, lineHeight: 1, background: 'var(--session-marker-bg)', borderRadius: 3, padding: '1px 3px' }}>
                 {String(s.startH).padStart(2,'0')}:{String(s.startM).padStart(2,'0')}
               </span>
             </div>
             <div style={{ position: 'absolute', top: topEnd, right: 0, left: 0, display: 'flex', justifyContent: 'flex-end', paddingRight: 6, pointerEvents: 'none', zIndex: 2 }}>
-              <span style={{ fontSize: 9, color: textColor, fontWeight: 700, lineHeight: 1, background: badgeBg, borderRadius: 3, padding: '1px 3px' }}>
+              <span style={{ fontSize: 9, color: s.labelVar, fontWeight: 500, lineHeight: 1, background: 'var(--session-marker-bg)', borderRadius: 3, padding: '1px 3px' }}>
                 {String(s.endH).padStart(2,'0')}:{String(s.endM).padStart(2,'0')}
               </span>
             </div>

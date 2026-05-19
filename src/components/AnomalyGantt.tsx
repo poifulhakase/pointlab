@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react'
-import { type AnomalyEvent, type AnomalyType, ANOMALY_META, ANOMALY_COLOR, ANOMALY_COLOR_LIGHT } from '../utils/anomalyCalendar'
+import { type AnomalyEvent, type AnomalyType, ANOMALY_META } from '../utils/anomalyCalendar'
 import { BadgePopup } from './BadgePopup'
 
 type Props = {
   days: Date[]
   getAnomalyEvents: (d: Date) => AnomalyEvent[]
-  theme?: 'dark' | 'light'
 }
 
 type Segment = {
@@ -24,12 +23,7 @@ const COL_COUNT = 7
 const BAR_H    = 17
 const BAR_GAP  = 3
 
-function typeColor(_type: AnomalyType, isLight: boolean): string {
-  return isLight ? ANOMALY_COLOR_LIGHT : ANOMALY_COLOR
-}
-
-export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) {
-  const isLight = theme === 'light'
+export function AnomalyGantt({ days, getAnomalyEvents }: Props) {
   const [popup, setPopup] = useState<PopupState | null>(null)
 
   const segments = useMemo((): Segment[] => {
@@ -95,7 +89,6 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
         zIndex: 5,
       }}>
         {segments.map(seg => {
-          const color = typeColor(seg.type, isLight)
           const isActive = popup?.type === seg.type
           return (
             <div
@@ -106,10 +99,8 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
                 alignSelf:  'end',
                 height:      BAR_H,
                 marginBottom: BAR_GAP + seg.lane * (BAR_H + BAR_GAP),
-                background:  isActive
-                  ? (isLight ? `${color}30` : `${color}38`)
-                  : (isLight ? `${color}14` : `${color}18`),
-                border:      `1px solid ${color}${isLight ? '28' : '48'}`,
+                background:  isActive ? 'var(--gantt-bar-bg-active)' : 'var(--gantt-bar-bg)',
+                border:      '1px solid var(--gantt-bar-border)',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -130,7 +121,7 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
                   fontWeight: 500,
                   letterSpacing: '0.03em',
                   lineHeight: 1,
-                  color: isLight ? color : `${color}ee`,
+                  color: 'var(--badge-color)',
                   whiteSpace: 'nowrap',
                 }}>
                   {ANOMALY_META[seg.type].label}
@@ -145,10 +136,8 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
         <BadgePopup
           x={popup.x}
           y={popup.y}
-          color={typeColor(popup.type, isLight)}
           label={ANOMALY_META[popup.type].label}
           desc={ANOMALY_META[popup.type].desc}
-          theme={theme}
           onClose={() => setPopup(null)}
         />
       )}

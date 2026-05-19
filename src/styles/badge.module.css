@@ -1,0 +1,36 @@
+/* ── Badge list wrapper ───────────────────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+/* ── Base chip ───────────────────────────────────────────── */
+.chip {
+  display: inline-block;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--badge-text);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  border-radius: 4px;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-shadow: var(--badge-shadow);
+  cursor: pointer;
+}
+
+/* ── Size variants ───────────────────────────────────────── */
+.sm { font-size: 11px; padding: 1px 4px; }
+.md { font-size: 12px; padding: 3px 7px; }
+
+/* ── Text clamping (MacroEventBadge) ─────────────────────── */
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+  white-space: normal;
+}

@@ -68,6 +68,33 @@ img {
 .no-spinner { -moz-appearance: textfield; }
 
 :root {
+  /* ── Badge chips ──────────────────────────────────────── */
+  --badge-color:  #60a5fa;
+  --badge-bg:     rgba(96, 165, 250, 0.15);
+  --badge-border: rgba(96, 165, 250, 0.60);
+  --badge-text:   rgba(255, 255, 255, 0.92);
+  --badge-shadow: 0 1px 4px rgba(96, 165, 250, 0.16);
+  /* ── Season banner ────────────────────────────────────── */
+  --banner-color:  #60a5fa;
+  --banner-bg:     rgba(96, 165, 250, 0.14);
+  --banner-border: rgba(96, 165, 250, 0.38);
+  /* ── Session bands ────────────────────────────────────── */
+  --session-front-bg:     rgba(96, 165, 250, 0.07);
+  --session-front-label:  rgba(96, 165, 250, 0.60);
+  --session-front-border: rgba(96, 165, 250, 0.25);
+  --session-back-bg:      rgba(52, 211, 153, 0.07);
+  --session-back-label:   rgba(52, 211, 153, 0.60);
+  --session-back-border:  rgba(52, 211, 153, 0.15);
+  --session-marker-bg:    rgba(11, 14, 46, 0.70);
+  /* ── Anomaly gantt bars ───────────────────────────────── */
+  --gantt-bar-bg:        rgba(96, 165, 250, 0.09);
+  --gantt-bar-bg-active: rgba(96, 165, 250, 0.22);
+  --gantt-bar-border:    rgba(96, 165, 250, 0.28);
+  /* ── Badge popup ──────────────────────────────────────── */
+  --popup-bg:     rgba(20, 20, 22, 0.97);
+  --popup-text:   rgba(255, 255, 255, 0.72);
+  --popup-shadow: 0 8px 32px rgba(0, 0, 0, 0.50), 0 0 0 1px rgba(96, 165, 250, 0.09);
+
   --glass-bg: rgba(255, 255, 255, 0.10);
   --glass-bg-strong: rgba(255, 255, 255, 0.16);
   --glass-bg-hover: rgba(255, 255, 255, 0.20);
@@ -120,6 +147,31 @@ img {
 }
 
 [data-theme="light"] {
+  /* ── Badge chips ──────────────────────────────────────── */
+  --badge-color:  #2563eb;
+  --badge-bg:     rgba(37, 99, 235, 0.08);
+  --badge-border: rgba(37, 99, 235, 0.13);
+  --badge-text:   #2563eb;
+  --badge-shadow: none;
+  /* ── Season banner ────────────────────────────────────── */
+  --banner-color:  #1d4ed8;
+  --banner-bg:     rgba(37, 99, 235, 0.12);
+  --banner-border: rgba(29, 78, 216, 0.13);
+  /* ── Session bands ────────────────────────────────────── */
+  --session-front-label:  rgba(29, 78, 216, 0.75);
+  --session-front-border: rgba(29, 78, 216, 0.25);
+  --session-back-label:   rgba(4, 120, 87, 0.75);
+  --session-back-border:  rgba(4, 120, 87, 0.20);
+  --session-marker-bg:    rgba(0, 0, 0, 0.06);
+  /* ── Anomaly gantt bars ───────────────────────────────── */
+  --gantt-bar-bg:        rgba(37, 99, 235, 0.08);
+  --gantt-bar-bg-active: rgba(37, 99, 235, 0.19);
+  --gantt-bar-border:    rgba(37, 99, 235, 0.16);
+  /* ── Badge popup ──────────────────────────────────────── */
+  --popup-bg:     #ffffff;
+  --popup-text:   #374151;
+  --popup-shadow: 0 4px 20px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+
   /* パネル背景: 不透明な白で背景のブリードスルーを排除 */
   --glass-bg: rgba(255, 255, 255, 0.96);
   --glass-bg-strong: #ffffff;
