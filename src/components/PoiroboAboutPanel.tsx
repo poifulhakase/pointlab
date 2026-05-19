@@ -403,7 +403,7 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
                       alt="ぽいロボ"
                       draggable={false}
                       style={{
-                        width: isMobile ? 148 : 200,
+                        width: isMobile ? 178 : 200,
                         height: 'auto',
                         userSelect: 'none',
                         filter: L
