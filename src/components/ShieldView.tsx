@@ -391,7 +391,32 @@ function CyberSystemLog({ logLines, cursorVisible, typedText, theme }: LogState 
 // ── ⑫ ShieldMemoPanel ────────────────────────────────
 const SHIELD_MEMO_KEY = 'poical-shield-memo'
 
+const SHIELD_HL_PATTERNS = [
+  /損切り価格：.+/g,
+  /指令：.+/g,
+  /確信度：[\d.]+%.*/g,
+]
 
+function renderShieldHL(text: string, hlColor: string): React.ReactNode {
+  if (!text) return null
+  const ranges: { start: number; end: number }[] = []
+  for (const pat of SHIELD_HL_PATTERNS) {
+    pat.lastIndex = 0
+    let m: RegExpExecArray | null
+    while ((m = pat.exec(text)) !== null) ranges.push({ start: m.index, end: m.index + m[0].length })
+  }
+  if (ranges.length === 0) return <span>{text}</span>
+  ranges.sort((a, b) => a.start - b.start)
+  const nodes: React.ReactNode[] = []
+  let pos = 0; let k = 0
+  for (const { start, end } of ranges) {
+    if (pos < start) nodes.push(<span key={k++}>{text.slice(pos, start)}</span>)
+    nodes.push(<span key={k++} style={{ color: hlColor, fontWeight: 700 }}>{text.slice(start, end)}</span>)
+    pos = end
+  }
+  if (pos < text.length) nodes.push(<span key={k++}>{text.slice(pos)}</span>)
+  return <>{nodes}</>
+}
 
 function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
   const c = cy(theme)
@@ -409,6 +434,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
   const [saved,     setSaved]     = useState(false)
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const backdropRef = useRef<HTMLDivElement>(null)
 
   const handleSave = useCallback(() => {
     try { localStorage.setItem(SHIELD_MEMO_KEY, text) } catch {}
@@ -489,23 +515,41 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
         </div>
       </div>
 
-      {/* テキストエリア */}
+      {/* テキストエリア（ハイライトオーバーレイ） */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', padding: '14px 16px' }}>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="▌ ポジション分析レポートを記録..."
-          style={{
-            flex: 1, width: '100%', resize: 'none', borderRadius: 8,
-            minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-            padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
-            fontFamily: c.FONT,
-            background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
-            border: `1px solid ${nd ? nd.border : c.BORDER}`,
-            color: c.TXTCLR, outline: 'none',
-          }}
-        />
+        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280 }}>
+          <div
+            ref={backdropRef}
+            aria-hidden
+            style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+              fontFamily: c.FONT, borderRadius: 8,
+              border: `1px solid ${nd ? nd.border : c.BORDER}`,
+              background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
+              whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              overflow: 'hidden', color: 'transparent',
+            }}
+          >
+            {renderShieldHL(text, theme === 'dark' ? 'rgba(0,230,255,0.95)' : '#0369a1')}
+          </div>
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onScroll={() => { if (backdropRef.current && textareaRef.current) backdropRef.current.scrollTop = textareaRef.current.scrollTop }}
+            placeholder="▌ ポジション分析レポートを記録..."
+            style={{
+              flex: 1, width: '100%', resize: 'none', borderRadius: 8,
+              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+              fontFamily: c.FONT,
+              background: 'transparent',
+              border: '1px solid transparent',
+              color: c.TXTCLR, caretColor: c.TXTCLR, outline: 'none',
+              position: 'relative',
+            }}
+          />
+        </div>
       </div>
     </div>
   )

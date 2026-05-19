@@ -179,6 +179,33 @@ function todayStr(): string {
 
 
 
+const QUANT_HL_PATTERNS = [
+  /確信度：[\d.]+%/g,
+  /判定：.+/g,
+  /指令：.+/g,
+]
+
+function renderQuantHL(text: string, hlColor: string): React.ReactNode {
+  if (!text) return null
+  const ranges: { start: number; end: number }[] = []
+  for (const pat of QUANT_HL_PATTERNS) {
+    pat.lastIndex = 0
+    let m: RegExpExecArray | null
+    while ((m = pat.exec(text)) !== null) ranges.push({ start: m.index, end: m.index + m[0].length })
+  }
+  if (ranges.length === 0) return <span>{text}</span>
+  ranges.sort((a, b) => a.start - b.start)
+  const nodes: React.ReactNode[] = []
+  let pos = 0; let k = 0
+  for (const { start, end } of ranges) {
+    if (pos < start) nodes.push(<span key={k++}>{text.slice(pos, start)}</span>)
+    nodes.push(<span key={k++} style={{ color: hlColor, fontWeight: 700 }}>{text.slice(start, end)}</span>)
+    pos = end
+  }
+  if (pos < text.length) nodes.push(<span key={k++}>{text.slice(pos)}</span>)
+  return <>{nodes}</>
+}
+
 const CY_FONT = "'Courier New', Courier, monospace" as const
 
 function cyColors(theme: 'dark' | 'light') {
@@ -215,6 +242,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
   const [selectedDate,  setSelectedDate]  = useState('')
   const memoIsDirty = quantMemo !== savedMemo
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const backdropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isMobile) return
@@ -431,21 +459,41 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
         </div>
       </div>
 
-      {/* テキストエリア */}
+      {/* テキストエリア（ハイライトオーバーレイ） */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0, padding: '14px 16px' }}>
-        <textarea
-          ref={textareaRef}
-          value={quantMemo}
-          onChange={e => setQuantMemo(e.target.value)}
-          placeholder="▌ エントリー分析レポートを記録..."
-          style={{
-            flex: 1, minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-            resize: 'none', background: c.BG_AREA,
-            color: c.TEXT, border: `1px solid ${c.BORDER}`, outline: 'none', borderRadius: 8,
-            padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
-            fontFamily: c.FONT, overflowY: 'auto',
-          }}
-        />
+        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280 }}>
+          <div
+            ref={backdropRef}
+            aria-hidden
+            style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+              fontFamily: c.FONT, borderRadius: 8,
+              border: `1px solid ${c.BORDER}`,
+              background: c.BG_AREA,
+              whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              overflow: 'hidden', color: 'transparent',
+            }}
+          >
+            {renderQuantHL(quantMemo, c.GREEN)}
+          </div>
+          <textarea
+            ref={textareaRef}
+            value={quantMemo}
+            onChange={e => setQuantMemo(e.target.value)}
+            onScroll={() => { if (backdropRef.current && textareaRef.current) backdropRef.current.scrollTop = textareaRef.current.scrollTop }}
+            placeholder="▌ エントリー分析レポートを記録..."
+            style={{
+              flex: 1, resize: 'none',
+              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+              fontFamily: c.FONT, borderRadius: 8,
+              background: 'transparent',
+              border: '1px solid transparent',
+              color: c.TEXT, caretColor: c.TEXT, outline: 'none',
+              position: 'relative', overflowY: 'auto',
+            }}
+          />
+        </div>
       </div>
     </div>
   )
