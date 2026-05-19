@@ -1014,9 +1014,9 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
             <span style={{ position: 'absolute', top: -1, left: -1, width: 20, height: 20,
               borderTop: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff',
               borderLeft: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff' }} />
-            <span style={{ position: 'absolute', bottom: -5, right: -5, width: 8, height: 8,
-              background: theme === 'light' ? 'rgba(220,240,255,0.95)' : '#081015',
-              border: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff', borderRadius: '50%' }} />
+            <span style={{ position: 'absolute', bottom: -1, right: -1, width: 20, height: 20,
+              borderBottom: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff',
+              borderRight: theme === 'light' ? '2px solid rgba(0,120,200,0.80)' : '2px solid #00f2ff' }} />
             <span style={{ display: 'block', fontSize: 9,
               color: theme === 'light' ? 'rgba(0,80,160,0.85)' : '#00f2ff', fontWeight: 700,
               letterSpacing: '0.15em', marginBottom: 8,
