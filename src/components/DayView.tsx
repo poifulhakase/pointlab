@@ -52,9 +52,9 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
   const now = new Date()
   const td = isToday(date)
   const isLight = theme === 'light'
-  const bandColor = isLight ? '#92400e' : undefined
-  const bandBg    = isLight ? 'rgba(180,83,9,0.12)' : undefined
-  const bandBorder = isLight ? 'rgba(180,83,9,0.35)' : undefined
+  const bandColor  = isLight ? '#1d4ed8' : undefined
+  const bandBg     = isLight ? 'rgba(37,99,235,0.12)' : undefined
+  const bandBorder = isLight ? '#1d4ed820' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -148,7 +148,7 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                 {h > 0 && <span>{String(h).padStart(2, '0')}:00</span>}
               </div>
             ))}
-            {!closed && <SessionTimeMarkers />}
+            {!closed && <SessionTimeMarkers theme={theme} />}
           </div>
           <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid var(--grid-line)', background: closed ? 'var(--closed-cell-bg)' : undefined }}>
             {!closed && <SessionBands />}

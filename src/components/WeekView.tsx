@@ -54,9 +54,9 @@ function timeToMinutes(t: string): number {
 export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark' }: Props) {
   const now = new Date()
   const isLight = theme === 'light'
-  const bandColor       = isLight ? '#92400e' : undefined
-  const bandBg          = isLight ? 'rgba(180,83,9,0.12)' : undefined
-  const bandBorderColor = isLight ? '#92400e20' : undefined
+  const bandColor       = isLight ? '#1d4ed8' : undefined
+  const bandBg          = isLight ? 'rgba(37,99,235,0.12)' : undefined
+  const bandBorderColor = isLight ? '#1d4ed820' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -158,7 +158,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 {h > 0 && <span>{String(h).padStart(2, '0')}:00</span>}
               </div>
             ))}
-            <SessionTimeMarkers />
+            <SessionTimeMarkers theme={theme} />
           </div>
 
           {visibleDays.map((d, di) => {

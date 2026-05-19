@@ -14,6 +14,7 @@ type Session = {
   endM: number
   color: string
   labelColor: string
+  labelColorLight: string
 }
 
 const SESSIONS: Session[] = [
@@ -23,6 +24,7 @@ const SESSIONS: Session[] = [
     endH: 11, endM: 30,
     color: 'rgba(96, 165, 250, 0.07)',
     labelColor: 'rgba(96, 165, 250, 0.6)',
+    labelColorLight: 'rgba(29, 78, 216, 0.75)',
   },
   {
     label: '後場',
@@ -30,6 +32,7 @@ const SESSIONS: Session[] = [
     endH: 15, endM: 30,
     color: 'rgba(52, 211, 153, 0.07)',
     labelColor: 'rgba(52, 211, 153, 0.6)',
+    labelColorLight: 'rgba(4, 120, 87, 0.75)',
   },
 ]
 
@@ -83,7 +86,8 @@ export function SessionBands() {
 }
 
 /** 左の時間ラベル列に前場・後場の時刻マーカーを表示 */
-export function SessionTimeMarkers() {
+export function SessionTimeMarkers({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
+  const isLight = theme === 'light'
   const totalMinutes = 24 * 60
 
   return (
@@ -93,16 +97,18 @@ export function SessionTimeMarkers() {
         const endMin = toMinutes(s.endH, s.endM)
         const topStart = (startMin / totalMinutes) * (HOUR_HEIGHT * 24)
         const topEnd = (endMin / totalMinutes) * (HOUR_HEIGHT * 24)
+        const textColor = isLight ? s.labelColorLight : s.labelColor
+        const badgeBg   = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(11,14,46,0.7)'
 
         return (
           <div key={s.label}>
             <div style={{ position: 'absolute', top: topStart, right: 0, left: 0, display: 'flex', justifyContent: 'flex-end', paddingRight: 6, pointerEvents: 'none', zIndex: 2 }}>
-              <span style={{ fontSize: 9, color: s.labelColor, fontWeight: 700, lineHeight: 1, background: 'rgba(11,14,46,0.7)', borderRadius: 3, padding: '1px 3px' }}>
+              <span style={{ fontSize: 9, color: textColor, fontWeight: 700, lineHeight: 1, background: badgeBg, borderRadius: 3, padding: '1px 3px' }}>
                 {String(s.startH).padStart(2,'0')}:{String(s.startM).padStart(2,'0')}
               </span>
             </div>
             <div style={{ position: 'absolute', top: topEnd, right: 0, left: 0, display: 'flex', justifyContent: 'flex-end', paddingRight: 6, pointerEvents: 'none', zIndex: 2 }}>
-              <span style={{ fontSize: 9, color: s.labelColor, fontWeight: 700, lineHeight: 1, background: 'rgba(11,14,46,0.7)', borderRadius: 3, padding: '1px 3px' }}>
+              <span style={{ fontSize: 9, color: textColor, fontWeight: 700, lineHeight: 1, background: badgeBg, borderRadius: 3, padding: '1px 3px' }}>
                 {String(s.endH).padStart(2,'0')}:{String(s.endM).padStart(2,'0')}
               </span>
             </div>
