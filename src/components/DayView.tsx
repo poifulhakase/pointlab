@@ -59,7 +59,7 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
     if (!el) return
     const minutes = td
       ? now.getHours() * 60 + now.getMinutes()
-      : 9 * 60
+      : 12 * 60
     const timePx = (minutes / (24 * 60)) * HOUR_HEIGHT * 24
     el.scrollTop = timePx - el.clientHeight / 2
   }, [date])

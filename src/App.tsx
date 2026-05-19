@@ -21,6 +21,7 @@ import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 import { Z } from './utils/zIndex'
 import { purgeStaleDataCaches } from './utils/dataCache'
+import { enablePush, disablePush, syncPushAlertConfig } from './utils/fcmNotifications'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -191,6 +192,30 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
     authLoading, stickyNotes, handleStickyNotesSaved,
     loginToast, clearLoginToast,
   } = useFirebaseSync(refreshNoteMap)
+
+  // ── プッシュ通知 ──────────────────────────────────────────────────────
+  const [pushEnabled, setPushEnabled] = useState<boolean>(() => localStorage.getItem('poical-push-enabled') === 'true')
+
+  const handleTogglePush = useCallback(async () => {
+    if (!user) return
+    if (pushEnabled) {
+      await disablePush(user.uid)
+      setPushEnabled(false)
+      localStorage.setItem('poical-push-enabled', 'false')
+    } else {
+      const ok = await enablePush(user.uid, showPoiroboAlert, getSettings().poiroboAlertConfig)
+      if (ok) {
+        setPushEnabled(true)
+        localStorage.setItem('poical-push-enabled', 'true')
+      }
+    }
+  }, [user, pushEnabled, showPoiroboAlert])
+
+  useEffect(() => {
+    if (pushEnabled && user) {
+      syncPushAlertConfig(user.uid, showPoiroboAlert, poiroboAlertConfig).catch(() => {})
+    }
+  }, [pushEnabled, user, showPoiroboAlert, poiroboAlertConfig])
 
   // ── トースト ──────────────────────────────────────────────────────────
   const [saveToast,  setSaveToast]  = useState(false)
@@ -607,6 +632,8 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
           onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
           isAdmin={user?.email === 'sushi.ramen.unajyu@gmail.com'}
           onOpenSpec={() => { setSettingsOpen(false); setViewWithTransition('spec') }}
+          pushEnabled={pushEnabled}
+          onTogglePush={handleTogglePush}
         />
       </Suspense>
 

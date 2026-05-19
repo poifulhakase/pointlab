@@ -201,9 +201,16 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
         </div>
 
         {/* 説明文 */}
-        <div style={{ padding: '10px 18px 10px', borderBottom: `1px solid ${CY_FAINT2}`, flexShrink: 0 }}>
+        <div style={{ padding: '10px 18px 10px', borderBottom: `1px solid ${CY_FAINT2}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ fontSize: 11, color: CY_FAINT, fontFamily: CY_FONT, letterSpacing: '0.04em', lineHeight: 1.7 }}>
-            監視するイベントを選択してください。対象日付パネルを<span style={{ color: 'rgba(248,113,113,0.95)', fontWeight: 700 }}>あか</span>くハイライト表示します。
+            監視するイベントを選択してください。対象日付パネルを<span style={{ color: 'rgba(248,113,113,0.95)', fontWeight: 700 }}>赤</span>でハイライト表示します。
+          </span>
+          <span style={{ fontSize: 11, color: CY_FAINT, fontFamily: CY_FONT, letterSpacing: '0.04em', lineHeight: 1.7, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={CY_ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            端末の通知をONにして、研究室の設定でプッシュ通知をONにすると、ONのイベントを前日12:30にお知らせします。
           </span>
         </div>
 

@@ -214,8 +214,8 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span
                 style={{
                   ...styles.customCheckbox,
-                  background: macroFilter[item.key] ? 'var(--badge-color)' : 'transparent',
-                  borderColor: macroFilter[item.key] ? 'var(--badge-color)' : 'var(--text-dim)',
+                  background: macroFilter[item.key] ? 'rgba(96,165,250,0.85)' : 'transparent',
+                  borderColor: macroFilter[item.key] ? 'rgba(96,165,250,0.85)' : 'var(--text-dim)',
                 }}
                 onClick={() => onMacroFilterChange({ ...macroFilter, [item.key]: !macroFilter[item.key] })}
               >
@@ -239,8 +239,8 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
               <span
                 style={{
                   ...styles.customCheckbox,
-                  background: showAnomaly ? 'var(--badge-color)' : 'transparent',
-                  borderColor: showAnomaly ? 'var(--badge-color)' : 'var(--text-dim)',
+                  background: showAnomaly ? 'rgba(96,165,250,0.85)' : 'transparent',
+                  borderColor: showAnomaly ? 'rgba(96,165,250,0.85)' : 'var(--text-dim)',
                 }}
                 onClick={() => onShowAnomalyChange(!showAnomaly)}
               >

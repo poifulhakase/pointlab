@@ -14,9 +14,11 @@ type Props = {
   onOpenAccount: () => void
   isAdmin: boolean
   onOpenSpec: () => void
+  pushEnabled: boolean
+  onTogglePush: () => void
 }
 
-export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, isAdmin, onOpenSpec }: Props) {
+export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, isAdmin, onOpenSpec, pushEnabled, onTogglePush }: Props) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)
@@ -112,6 +114,42 @@ export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle
             )}
           </section>
 
+          {/* 通知 */}
+          <section style={st.section}>
+            <div style={st.sectionTitle}>通知</div>
+            <div style={{ ...st.accountRow, cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}
+              onClick={user ? onTogglePush : undefined}>
+              <span style={st.accountLeft}>
+                <span style={{ ...st.avatarPlaceholder, background: pushEnabled && user ? 'rgba(96,165,250,0.15)' : 'var(--glass-border)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={pushEnabled && user ? 'rgba(96,165,250,0.9)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                </span>
+                <span style={st.accountInfo}>
+                  <span style={st.accountName}>プッシュ通知</span>
+                  <span style={st.accountSub}>
+                    {!user ? 'ログインが必要です' : pushEnabled ? 'ON — 前日 12:30 に通知' : 'OFF'}
+                  </span>
+                </span>
+              </span>
+              {/* トグルスイッチ */}
+              <span style={{
+                width: 40, height: 22, borderRadius: 11, flexShrink: 0,
+                background: pushEnabled && user ? 'rgba(96,165,250,0.85)' : 'var(--glass-border)',
+                position: 'relative', transition: 'background 0.2s',
+                display: 'inline-block',
+              }}>
+                <span style={{
+                  position: 'absolute', top: 3, left: pushEnabled && user ? 21 : 3,
+                  width: 16, height: 16, borderRadius: '50%',
+                  background: 'white', transition: 'left 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }} />
+              </span>
+            </div>
+          </section>
+
           {/* アカウント */}
           <section style={st.section}>
             <div style={st.sectionTitle}>アカウント</div>
@@ -164,7 +202,7 @@ const st: Record<string, React.CSSProperties> = {
   closeBtn:  { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-sub)' },
   body:      { padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 },
   section:   { display: 'flex', flexDirection: 'column', gap: 10 },
-  sectionTitle: { fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--text-dim)' },
+  sectionTitle: { fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' as const, color: 'var(--text-dim)', display: 'block' },
 
   themeBtn: {
     display: 'flex', alignItems: 'center', gap: 6,

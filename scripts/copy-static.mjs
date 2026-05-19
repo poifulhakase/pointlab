@@ -32,7 +32,7 @@ for (const dir of dirs) {
 
 // コピーするルートファイル一覧
 const files = [
-  'index-en.html', 'apple-touch-icon.png', 'DEVELOPMENT.md',
+  'index-en.html', 'apple-touch-icon.png', 'DEVELOPMENT.md', 'firebase-messaging-sw.js',
   '_en-translations.json', '_note-articles.json', '_note-articles-content.json',
   'apply-updates.js', 'hakase_full_check.png',
   // ロゴ・favicon・マニフェスト（元サイトのヘッダーが参照）

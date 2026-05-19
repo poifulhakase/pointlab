@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
-const app = initializeApp(firebaseConfig)
+export const app  = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 
 // Firestore は認証後にのみ必要なため遅延初期化

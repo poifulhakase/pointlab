@@ -46,8 +46,15 @@
   ],
   "functions": {
     "api/send-booking-email.js": { "memory": 128 },
-    "api/booking-ics.js": { "memory": 128 }
+    "api/booking-ics.js": { "memory": 128 },
+    "api/cron-push-notifications.js": { "memory": 256 }
   },
+  "crons": [
+    {
+      "path": "/api/cron-push-notifications",
+      "schedule": "30 3 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/__/auth/:path*", "destination": "https://pointlab-96310.firebaseapp.com/__/auth/:path*" },
     { "source": "/calendar/:path*", "destination": "/calendar/index.html" },
