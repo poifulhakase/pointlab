@@ -274,6 +274,22 @@ function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
+// ── Floating particles ────────────────────────────────────────────────────
+const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; delay: number; op: number; anim: string }[] = [
+  { left: '7%',  top: '88%', size: 3, dur: 24, delay: 0,    op: 0.34, anim: 'labDrift1' },
+  { left: '21%', top: '70%', size: 2, dur: 30, delay: -6,   op: 0.24, anim: 'labDrift2' },
+  { left: '38%', top: '92%', size: 4, dur: 21, delay: -12,  op: 0.28, anim: 'labDrift1' },
+  { left: '55%', top: '78%', size: 2, dur: 33, delay: -8,   op: 0.20, anim: 'labDrift2' },
+  { left: '64%', top: '60%', size: 3, dur: 26, delay: -17,  op: 0.28, anim: 'labDrift1' },
+  { left: '79%', top: '85%', size: 2, dur: 19, delay: -3,   op: 0.22, anim: 'labDrift2' },
+  { left: '14%', top: '45%', size: 3, dur: 28, delay: -10,  op: 0.18, anim: 'labDrift1' },
+  { left: '47%', top: '35%', size: 2, dur: 22, delay: -20,  op: 0.20, anim: 'labDrift2' },
+  { left: '72%', top: '65%', size: 3, dur: 27, delay: -14,  op: 0.24, anim: 'labDrift1' },
+  { left: '89%', top: '50%', size: 2, dur: 23, delay: -7,   op: 0.18, anim: 'labDrift2' },
+  { left: '30%', top: '95%', size: 2, dur: 31, delay: -4,   op: 0.26, anim: 'labDrift1' },
+  { left: '58%', top: '42%', size: 3, dur: 25, delay: -16,  op: 0.15, anim: 'labDrift2' },
+]
+
 // ── メインビュー ────────────────────────────────────────────────────────────
 export function SupportView({ theme, isMobile, supportTab, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
@@ -677,6 +693,24 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
         .poyon-light .poyon-text-sub {
           color: rgba(0,100,180,0.80);
         }
+
+        /* ── Lab floating particles ── */
+        @keyframes labDrift1 {
+          0%   { transform: translate(0px, 0px);     opacity: 0; }
+          8%   { opacity: 1; }
+          30%  { transform: translate(13px, -24vh);  }
+          65%  { transform: translate(-8px, -51vh);  }
+          92%  { opacity: 0.7; }
+          100% { transform: translate(5px, -72vh);   opacity: 0; }
+        }
+        @keyframes labDrift2 {
+          0%   { transform: translate(0px, 0px);     opacity: 0; }
+          8%   { opacity: 1; }
+          35%  { transform: translate(-15px, -27vh); }
+          60%  { transform: translate(9px, -47vh);   }
+          92%  { opacity: 0.6; }
+          100% { transform: translate(-4px, -70vh);  opacity: 0; }
+        }
       `}</style>
 
       {/* 背景画像 */}
@@ -735,6 +769,22 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
 
         {/* ━━ 研究室 ━━ */}
         <div style={{ width: '33.333%', height: '100%', flexShrink: 0, position: 'relative' }}>
+
+          {/* 浮遊粒子 */}
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+            {LAB_PARTICLES.map((p, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                left: p.left, top: p.top,
+                width: p.size, height: p.size,
+                borderRadius: '50%',
+                background: theme === 'dark' ? 'rgba(180,225,255,0.88)' : 'rgba(20,60,140,0.72)',
+                opacity: p.op,
+                animation: `${p.anim} ${p.dur}s linear ${p.delay}s infinite`,
+              }} />
+            ))}
+          </div>
+
           <div
             ref={menuRef}
             className={[isMobile ? 'menu3d-mobile' : '', theme === 'light' ? 'menu3d-light' : ''].filter(Boolean).join(' ') || undefined}
