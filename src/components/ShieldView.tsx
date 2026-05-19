@@ -528,7 +528,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               border: `1px solid ${nd ? nd.border : c.BORDER}`,
               background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
               whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-              overflow: 'hidden', color: 'transparent',
+              overflow: 'hidden', color: c.TXTCLR,
             }}
           >
             {renderShieldHL(text, theme === 'dark' ? 'rgba(0,230,255,0.95)' : '#0369a1')}
@@ -545,7 +545,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
               fontFamily: c.FONT,
               background: 'transparent',
               border: '1px solid transparent',
-              color: c.TXTCLR, caretColor: c.TXTCLR, outline: 'none',
+              color: 'transparent', caretColor: c.TXTCLR, outline: 'none',
               position: 'relative',
             }}
           />

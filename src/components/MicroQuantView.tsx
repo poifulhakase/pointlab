@@ -472,7 +472,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               border: `1px solid ${c.BORDER}`,
               background: c.BG_AREA,
               whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-              overflow: 'hidden', color: 'transparent',
+              overflow: 'hidden', color: c.TEXT,
             }}
           >
             {renderQuantHL(quantMemo, c.GREEN)}
@@ -489,7 +489,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               fontFamily: c.FONT, borderRadius: 8,
               background: 'transparent',
               border: '1px solid transparent',
-              color: c.TEXT, caretColor: c.TEXT, outline: 'none',
+              color: 'transparent', caretColor: c.TEXT, outline: 'none',
               position: 'relative', overflowY: 'auto',
             }}
           />
