@@ -109,7 +109,7 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
                 background:  isActive
                   ? (isLight ? `${color}30` : `${color}38`)
                   : (isLight ? `${color}14` : `${color}18`),
-                border:      `1px solid ${color}${isLight ? '70' : '48'}`,
+                border:      `1px solid ${color}${isLight ? '28' : '48'}`,
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -127,7 +127,7 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
               {seg.isFirst && (
                 <span style={{
                   fontSize: 10,
-                  fontWeight: 700,
+                  fontWeight: 500,
                   letterSpacing: '0.03em',
                   lineHeight: 1,
                   color: isLight ? color : `${color}ee`,
@@ -148,6 +148,7 @@ export function AnomalyGantt({ days, getAnomalyEvents, theme = 'dark' }: Props) 
           color={typeColor(popup.type, isLight)}
           label={ANOMALY_META[popup.type].label}
           desc={ANOMALY_META[popup.type].desc}
+          theme={theme}
           onClose={() => setPopup(null)}
         />
       )}
