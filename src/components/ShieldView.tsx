@@ -450,7 +450,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      background: theme === 'dark' ? '#111113' : 'var(--glass-bg)' }}>
+      background: theme === 'dark' ? '#111113' : 'rgba(255,255,255,0.96)' }}>
       {/* ヘッダー */}
       <div style={{
         position: 'relative', zIndex: 1,
