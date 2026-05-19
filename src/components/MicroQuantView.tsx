@@ -127,15 +127,15 @@ function TankCard({ group, net, wow, maxAbsNet, theme }: CotTank & { theme: 'dar
         )}
         <div style={{
           position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 13, fontWeight: 800, letterSpacing: '-0.5px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
           color: waterLevel > 52
             ? 'rgba(255,255,255,0.93)'
             : (isLight ? 'rgba(0,0,0,0.60)' : 'rgba(255,255,255,0.60)'),
           textShadow: waterLevel > 52 ? '0 1px 4px rgba(0,0,0,0.5)' : 'none',
-          pointerEvents: 'none',
         }}>
-          {waterLevel.toFixed(1)}%
+          <div style={{ fontSize: 9, fontWeight: 500, letterSpacing: '0.03em', opacity: 0.75, marginBottom: 1 }}>対過去最大</div>
+          <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.5px' }}>{waterLevel.toFixed(1)}%</div>
         </div>
         {[25, 50, 75].map(pct => (
           <div key={pct}>
@@ -147,12 +147,15 @@ function TankCard({ group, net, wow, maxAbsNet, theme }: CotTank & { theme: 'dar
       <div style={{ fontSize: 13, fontWeight: 800, color: numColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
         {net > 0 ? '+' : ''}{net.toLocaleString()}
       </div>
-      <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: -2 }}>枚</div>
+      <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: -2 }}>枚（ネット）</div>
       <div style={{
         fontSize: 10, fontVariantNumeric: 'tabular-nums',
         color: wow < 0 ? 'rgba(255,120,100,0.75)' : 'rgba(96,200,140,0.75)',
       }}>
-        {wow > 0 ? '+' : ''}{wow.toLocaleString()}枚
+        前週比 {wow > 0 ? '+' : ''}{wow.toLocaleString()}枚
+      </div>
+      <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: 1, fontVariantNumeric: 'tabular-nums' }}>
+        基準 {Math.round(maxAbsNet).toLocaleString()}枚
       </div>
     </div>
   )
