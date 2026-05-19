@@ -154,7 +154,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
         <div style={styles.grid}>
           <div style={{ ...styles.timeGutter, position: 'relative' }}>
             {HOURS.map(h => (
-              <div key={h} style={styles.hourLabel}>
+              <div key={h} style={{ ...styles.hourLabel, color: isLight ? 'rgba(0,0,0,0.50)' : 'var(--text-sub)' }}>
                 {h > 0 && <span>{String(h).padStart(2, '0')}:00</span>}
               </div>
             ))}
