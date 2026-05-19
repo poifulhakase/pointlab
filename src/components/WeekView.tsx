@@ -6,6 +6,8 @@ import { MacroEventBadge } from './MacroEventBadge'
 import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
+import { type AnomalyEvent } from '../utils/anomalyCalendar'
+import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
 
@@ -40,8 +42,11 @@ type Props = {
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
   getScheduledEvents: (d: Date) => ScheduleEntry[]
+  getAnomalyEvents?: (d: Date) => AnomalyEvent[]
   isMobile: boolean
   theme?: 'dark' | 'light'
+  showPoiroboAlert?: boolean
+  poiroboAlertConfig?: PoiroboAlertConfig
 }
 
 const TOTAL_MINUTES = 24 * 60
@@ -51,7 +56,7 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
-export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark' }: Props) {
+export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT }: Props) {
   const now = new Date()
   const isLight = theme === 'light'
 
@@ -62,7 +67,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
     const todayInWeek = days.some(d => isToday(d))
     const minutes = todayInWeek
       ? now.getHours() * 60 + now.getMinutes()
-      : 9 * 60
+      : 12 * 60
     const timePx = (minutes / (24 * 60)) * HOUR_HEIGHT * 24
     el.scrollTop = timePx - el.clientHeight / 2
   }, [current])
@@ -81,6 +86,24 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
     : days
 
   const band = getMonthBand(visibleDays[0].getMonth() + 1)
+
+  const alertDateSet = new Set(
+    showPoiroboAlert
+      ? visibleDays.filter(d => {
+          const ms  = getMarkers(d)
+          const sqs = getSqMarkers(d)
+          const mes = getMacroEvents(d)
+          const aes = getAnomalyEvents ? getAnomalyEvents(d) : []
+          return (
+            (poiroboAlertConfig.majorSq && sqs.includes('sq-major')) ||
+            (poiroboAlertConfig.miniSq  && sqs.includes('sq-mini'))  ||
+            mes.some(e => poiroboAlertConfig[e.type as keyof PoiroboAlertConfig]) ||
+            aes.some(e => poiroboAlertConfig[e.type as keyof PoiroboAlertConfig]) ||
+            ms.some(m => poiroboAlertConfig[m as keyof PoiroboAlertConfig])
+          )
+        }).map(d => d.toDateString())
+      : []
+  )
 
   return (
     <div style={styles.wrap}>
@@ -106,8 +129,12 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               style={{
                 ...styles.dayHeader,
                 cursor: 'pointer',
-                background: td ? (theme === 'light' ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.18)') : undefined,
-                borderTop: td ? (theme === 'light' ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.65)') : undefined,
+                background: td
+                  ? (theme === 'light' ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.26)')
+                  : alertDateSet.has(d.toDateString())
+                  ? 'rgba(248,113,113,0.18)'
+                  : undefined,
+                borderTop: td ? (theme === 'light' ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.82)') : undefined,
               }}
               onClick={() => onOpenNote(d)}
               title="クリックでメモ・タスクを開く"
@@ -173,7 +200,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
               })
             return (
-              <div key={di} style={{ ...styles.dayCol, position: 'relative', background: closed ? 'var(--closed-cell-bg)' : undefined }}>
+              <div key={di} style={{ ...styles.dayCol, position: 'relative', background: closed && !td ? 'var(--closed-cell-bg)' : !td && alertDateSet.has(d.toDateString()) ? 'rgba(248,113,113,0.08)' : undefined }}>
                 {!closed && <SessionBands />}
                 {HOURS.map(h => (
                   <div
