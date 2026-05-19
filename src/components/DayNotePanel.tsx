@@ -59,7 +59,8 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   const persist = (t: string, m: string, cl: CheckItem[], schs: ScheduleEntry[]) => {
     if (!date) return
     setIsDirty(true)
-    const note: DayNote = { title: t, memo: m, checklist: cl, schedules: schs }
+    const savedSchs = schs.filter(s => s.title.trim())
+    const note: DayNote = { title: t, memo: m, checklist: cl, schedules: savedSchs }
     saveNote(date, note)
     onSave()
     onAfterSave?.(date, note)
@@ -610,7 +611,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   saveFooterBtn: {
     padding: '7px 24px', borderRadius: 8,
-    background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.45)',
+    background: 'var(--glass-bg)', border: '1px solid var(--accent)',
     color: 'var(--accent)', fontSize: 12, fontWeight: 700,
     cursor: 'pointer', transition: 'opacity 0.15s',
   },
