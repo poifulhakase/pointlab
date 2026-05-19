@@ -34,7 +34,7 @@ export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) 
                 letterSpacing: '0.02em',
                 color: isLight ? color : 'rgba(255,255,255,0.92)',
                 background: bg,
-                border: `1px solid ${color}${isLight ? '38' : '40'}`,
+                border: `1px solid ${color}${isLight ? '20' : '40'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,

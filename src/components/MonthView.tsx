@@ -38,7 +38,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
   const band = getMonthBand(current.getMonth() + 1)
   const bandColor       = band ? (isLight ? '#1d4ed8' : band.color) : 'transparent'
   const bandBg          = band ? (isLight ? 'rgba(37,99,235,0.12)' : band.bg) : 'transparent'
-  const bandBorderColor = band ? (isLight ? '#1d4ed838' : band.color + '60') : 'transparent'
+  const bandBorderColor = band ? (isLight ? '#1d4ed820' : band.color + '60') : 'transparent'
 
   return (
     <div style={styles.wrap}>

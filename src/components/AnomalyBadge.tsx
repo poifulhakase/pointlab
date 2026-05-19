@@ -34,7 +34,7 @@ export function AnomalyBadge({ events, size = 'md', theme = 'dark' }: Props) {
                 letterSpacing: '0.03em',
                 color: isLight ? badgeColor : 'rgba(255,255,255,0.92)',
                 background: badgeBg,
-                border: `1px solid ${badgeColor}${isLight ? '38' : '88'}`,
+                border: `1px solid ${badgeColor}${isLight ? '20' : '88'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '2px 6px',
                 lineHeight: 1.5,

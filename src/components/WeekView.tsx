@@ -56,7 +56,7 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
   const isLight = theme === 'light'
   const bandColor       = isLight ? '#92400e' : undefined
   const bandBg          = isLight ? 'rgba(180,83,9,0.12)' : undefined
-  const bandBorderColor = isLight ? '#92400e38' : undefined
+  const bandBorderColor = isLight ? '#92400e20' : undefined
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {

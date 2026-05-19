@@ -35,7 +35,7 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
                 letterSpacing: '0.03em',
                 color: isLight ? color : 'rgba(255,255,255,0.95)',
                 background: bg,
-                border: `1px solid ${color}${isLight ? '38' : '99'}`,
+                border: `1px solid ${color}${isLight ? '20' : '99'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
