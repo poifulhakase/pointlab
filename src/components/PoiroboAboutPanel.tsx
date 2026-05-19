@@ -165,38 +165,36 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
         <div style={{
           position:'sticky', top:0, zIndex:5,
           display:'flex', alignItems:'center', gap:10,
-          padding: isMobile ? '10px 16px' : '12px 28px',
+          padding: isMobile ? '11px 16px' : '12px 28px',
           background: c.HDRBG,
           backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
           borderBottom:`1px solid ${c.RULE}`,
         }}>
-          <button
-            onClick={onBack}
-            style={{
-              display:'flex', alignItems:'center', gap:5,
-              padding:'5px 12px', borderRadius:5,
-              border:`1px solid ${c.TAGBDR}`, background:c.TAGBG,
-              color:c.ACCENT, fontSize:10, fontWeight:700,
-              letterSpacing:'0.15em', cursor:'pointer',
-              fontFamily: mono, textShadow: c.GLOW,
-              flexShrink:0,
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-            BACK
-          </button>
-          <div style={{ width:1, height:18, background:c.RULE, flexShrink:0 }} />
+          <span style={{ width:6, height:6, borderRadius:'50%', background:c.ACCENT, boxShadow: L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink:0 }} />
           <span style={{
-            fontSize:10, fontWeight:700, letterSpacing:'0.24em',
+            flex:1, fontSize:10, fontWeight:700, letterSpacing:'0.22em',
             color:c.DIM, fontFamily: mono, whiteSpace:'nowrap',
             textShadow: L ? 'none' : '0 0 10px rgba(0,229,255,0.28)',
           }}>
             POIROBO_OS ▸ ABOUT
           </span>
-          <div style={{ flex:1, height:1, background:`linear-gradient(to right,${c.RULE},transparent)` }} />
           <span style={{ fontSize:9, color:c.SUB, fontFamily: mono, flexShrink:0, letterSpacing:'0.06em' }}>v2.0</span>
+          <button
+            onClick={onBack}
+            style={{
+              display:'flex', alignItems:'center', justifyContent:'center',
+              width:28, height:28, borderRadius:7,
+              border: L ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
+              background: L ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
+              color: L ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)',
+              cursor:'pointer', flexShrink:0,
+            }}
+            aria-label="閉じる"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         {/* ── Content ── */}
