@@ -977,31 +977,38 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
               {activeDrawer === 'settings' && (
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-                  {/* テーマ */}
+                  {/* アカウント */}
                   <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>表示</div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {(['light', 'dark'] as const).map(t => (
-                        <button
-                          key={t}
-                          onClick={() => { if (theme !== t) onToggleTheme?.() }}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                            cursor: 'pointer', transition: 'all 0.15s',
-                            ...(theme === t
-                              ? { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', border: '1px solid transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' }
-                              : { background: 'transparent', color: 'var(--text-sub)', border: '1px solid var(--glass-border)' }),
-                          }}
-                        >
-                          {t === 'light'
-                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                          }
-                          {t === 'light' ? 'ライト' : 'ダーク'}
-                        </button>
-                      ))}
-                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>アカウント</div>
+                    <button
+                      onClick={() => { closeDrawer(); onOpenAccount?.() }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                        background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                        transition: 'background 0.15s', textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        {user?.photoURL
+                          ? <img src={user.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} referrerPolicy="no-referrer" />
+                          : <span style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </span>
+                        }
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user ? (user.displayName ?? user.email ?? 'アカウント') : 'Googleでログイン'}
+                          </span>
+                          {user && (
+                            <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                              {syncStatus === 'synced' ? '同期済み' : syncStatus === 'syncing' ? '同期中...' : (user.email ?? '')}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
                   </section>
 
                   {/* 通知 */}
@@ -1047,38 +1054,31 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
                     </div>
                   </section>
 
-                  {/* アカウント */}
+                  {/* 表示 */}
                   <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>アカウント</div>
-                    <button
-                      onClick={() => { closeDrawer(); onOpenAccount?.() }}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                        background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
-                        transition: 'background 0.15s', textAlign: 'left',
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                        {user?.photoURL
-                          ? <img src={user.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} referrerPolicy="no-referrer" />
-                          : <span style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </span>
-                        }
-                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {user ? (user.displayName ?? user.email ?? 'アカウント') : 'Googleでログイン'}
-                          </span>
-                          {user && (
-                            <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                              {syncStatus === 'synced' ? '同期済み' : syncStatus === 'syncing' ? '同期中...' : (user.email ?? '')}
-                            </span>
-                          )}
-                        </span>
-                      </span>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>表示</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {(['light', 'dark'] as const).map(t => (
+                        <button
+                          key={t}
+                          onClick={() => { if (theme !== t) onToggleTheme?.() }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.15s',
+                            ...(theme === t
+                              ? { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', border: '1px solid transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' }
+                              : { background: 'transparent', color: 'var(--text-sub)', border: '1px solid var(--glass-border)' }),
+                          }}
+                        >
+                          {t === 'light'
+                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                          }
+                          {t === 'light' ? 'ライト' : 'ダーク'}
+                        </button>
+                      ))}
+                    </div>
                   </section>
 
                   {/* 開発者（管理者のみ） */}
