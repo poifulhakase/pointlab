@@ -105,7 +105,7 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal }: {
 
 export function NoteView({ theme, isMobile, onOpenManual, onOpenLegal }: Props) {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? 'transparent' : '#f4f6f9' }}>
 
       {/* コンテンツ */}
       <div style={s.wrap}>
