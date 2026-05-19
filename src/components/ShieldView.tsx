@@ -558,7 +558,7 @@ function ShieldPanel({
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
           background: c.BG, backgroundImage: c.SCAN }
-      : { width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      : { width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
           borderRight: `1px solid ${c.BORDBR}` }
     }>
 
