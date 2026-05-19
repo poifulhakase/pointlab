@@ -387,6 +387,35 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
                   </div>
                 )}
               </div>
+
+              {/* ── ぽいロボ画像（セクション01直後） ── */}
+              {i === 0 && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: isMobile ? '40px 0 8px' : '52px 0 8px',
+                }}>
+                  <picture>
+                    <source srcSet={`${import.meta.env.BASE_URL}poirobo.webp`} type="image/webp" />
+                    <img
+                      src={`${import.meta.env.BASE_URL}poirobo.png`}
+                      alt="ぽいロボ"
+                      draggable={false}
+                      style={{
+                        width: isMobile ? 148 : 200,
+                        height: 'auto',
+                        userSelect: 'none',
+                        filter: L
+                          ? 'drop-shadow(0 4px 12px rgba(3,105,161,0.18))'
+                          : isMobile
+                            ? 'drop-shadow(0 0 20px rgba(0,229,255,0.35))'
+                            : 'drop-shadow(0 0 28px rgba(0,229,255,0.38)) drop-shadow(0 4px 16px rgba(0,0,0,0.55))',
+                      }}
+                    />
+                  </picture>
+                </div>
+              )}
             </div>
           ))}
         </div>
