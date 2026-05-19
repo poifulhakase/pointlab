@@ -288,6 +288,18 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
   { left: '89%', top: '50%', size: 2, dur: 23, delay: -7,   op: 0.18, anim: 'labDrift2' },
   { left: '30%', top: '95%', size: 2, dur: 31, delay: -4,   op: 0.26, anim: 'labDrift1' },
   { left: '58%', top: '42%', size: 3, dur: 25, delay: -16,  op: 0.15, anim: 'labDrift2' },
+  { left: '3%',  top: '75%', size: 2, dur: 29, delay: -2,   op: 0.22, anim: 'labDrift2' },
+  { left: '16%', top: '97%', size: 3, dur: 20, delay: -9,   op: 0.30, anim: 'labDrift1' },
+  { left: '27%', top: '55%', size: 2, dur: 35, delay: -13,  op: 0.18, anim: 'labDrift2' },
+  { left: '43%', top: '82%', size: 3, dur: 23, delay: -5,   op: 0.26, anim: 'labDrift1' },
+  { left: '50%', top: '48%', size: 2, dur: 27, delay: -19,  op: 0.16, anim: 'labDrift2' },
+  { left: '61%', top: '90%', size: 4, dur: 22, delay: -11,  op: 0.28, anim: 'labDrift1' },
+  { left: '75%', top: '38%', size: 2, dur: 32, delay: -15,  op: 0.16, anim: 'labDrift2' },
+  { left: '83%', top: '72%', size: 3, dur: 21, delay: -1,   op: 0.24, anim: 'labDrift1' },
+  { left: '93%', top: '62%', size: 2, dur: 26, delay: -8,   op: 0.18, anim: 'labDrift2' },
+  { left: '10%', top: '28%', size: 2, dur: 34, delay: -22,  op: 0.14, anim: 'labDrift1' },
+  { left: '35%', top: '18%', size: 3, dur: 29, delay: -17,  op: 0.14, anim: 'labDrift2' },
+  { left: '68%', top: '25%', size: 2, dur: 24, delay: -24,  op: 0.12, anim: 'labDrift1' },
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
