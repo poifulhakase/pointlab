@@ -5,6 +5,20 @@ import { themeVars } from '../utils/themeVars'
 import { proxyFetch } from '../utils/proxyFetch'
 import { fetchVixData } from '../utils/vixData'
 import { fetchFuturesDailyData } from '../utils/futuresDailyData'
+import { fetchWithCache } from '../utils/dataCache'
+
+const SHIELD_CACHE_KEY        = 'poical-shield-mkt-data'
+const SHIELD_CACHE_TTL_OPEN   = 30 * 60 * 1000   // 市場時間中: 30分
+const SHIELD_CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000  // 閉場後: 2時間
+
+function isJpMarketOpen(): boolean {
+  const now  = new Date()
+  const day  = now.getUTCDay()
+  if (day === 0 || day === 6) return false
+  const mins = now.getUTCHours() * 60 + now.getUTCMinutes()
+  // 前場 09:00–11:30 JST = UTC 00:00–02:30 / 後場 12:30–15:30 JST = UTC 03:30–06:30
+  return (mins < 150) || (mins >= 210 && mins < 390)
+}
 
 type Props = {
   theme: 'dark' | 'light'
@@ -82,90 +96,107 @@ function calcMA(closes: number[], period: number): number | null {
   return Math.round(slice.reduce((a, b) => a + b, 0) / period)
 }
 
-async function buildShieldData(): Promise<ShieldMktData> {
-  const builtAt = new Date().toISOString().slice(0, 10)
-
-  // 1. 日経225 1年分OHLCV (MA200計算用)
-  let days: Array<{ date: string; open: number; high: number; low: number; close: number }> = []
-  try {
-    const q    = 'interval=1d&range=1y'
-    const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/NK%3DF?${q}`
-    const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/%5EN225?${q}`
-    let raw: unknown
-    try   { raw = await proxyFetch(url1) }
-    catch { raw = await proxyFetch(url2) }
-
-    const r  = (raw as any)?.chart?.result?.[0]
-    const ts: number[]          = r?.timestamp ?? []
-    const q_ = r?.indicators?.quote?.[0] ?? {}
-    for (let i = 0; i < ts.length; i++) {
-      const c = q_.close?.[i]
-      if (c == null) continue
-      days.push({
-        date:  new Date(ts[i] * 1000).toISOString().slice(0, 10),
-        open:  Math.round(q_.open?.[i]  ?? c),
-        high:  Math.round(q_.high?.[i]  ?? c),
-        low:   Math.round(q_.low?.[i]   ?? c),
-        close: Math.round(c),
-      })
-    }
-    days.sort((a, b) => a.date.localeCompare(b.date))
-  } catch { /* データ取得失敗時は空 */ }
-
-  const closes    = days.map(d => d.close)
-  const latest    = days[days.length - 1]
-  const prev      = days[days.length - 2]
-  const recent10  = days.slice(-10)
-  const recent20  = days.slice(-20)
-  const high20d   = recent20.length > 0 ? Math.max(...recent20.map(d => d.high)) : null
-  const low20d    = recent20.length > 0 ? Math.min(...recent20.map(d => d.low))  : null
-  const ohlcvRecent = recent10.map((d, i) => {
-    const p = recent10[i - 1]
-    return { ...d, change_pct: p ? Math.round((d.close - p.close) / p.close * 10000) / 100 : null }
-  })
-
-  // 2. 先物日次（建玉残高・PCR）
-  let futures: ShieldMktData['futures'] = { oi_latest: null, oi_delta: null, pcr_latest: null, volume_latest: null, data_as_of: null }
-  try {
-    const fd  = await fetchFuturesDailyData()
-    const f0  = fd[0]
-    const f1  = fd[1]
-    if (f0) {
-      futures = {
-        oi_latest:     f0.oi,
-        oi_delta:      f1 != null ? f0.oi - f1.oi : null,
-        pcr_latest:    f0.pcr ?? null,
-        volume_latest: f0.volume,
-        data_as_of:    f0.date,
-      }
-    }
-  } catch { /* noop */ }
-
-  // 3. VIX（週次）
-  let vix: ShieldMktData['vix'] = { latest: null, change_pct: null }
-  try {
-    const vd = await fetchVixData()
-    const vl = vd[vd.length - 1]
-    if (vl) vix = { latest: vl.close, change_pct: vl.changePct ?? null }
-  } catch { /* noop */ }
-
-  return {
-    built_at: builtAt,
-    nk225: {
-      latest_date:   latest?.date        ?? builtAt,
-      latest_close:  latest?.close       ?? 0,
-      change_1d:     latest && prev ? latest.close - prev.close          : null,
-      change_1d_pct: latest && prev ? Math.round((latest.close - prev.close) / prev.close * 10000) / 100 : null,
-      ma20:   calcMA(closes, 20),
-      ma60:   calcMA(closes, 60),
-      ma200:  calcMA(closes, 200),
-      high_20d: high20d,
-      low_20d:  low20d,
-      ohlcv_recent: ohlcvRecent,
-    },
-    futures,
-    vix,
+async function fetchNk225Ohlcv(): Promise<unknown> {
+  const sym = encodeURIComponent('^N225')
+  const q   = 'interval=1d&range=1y'
+  for (const base of ['query1', 'query2'] as const) {
+    try {
+      const fetched = await proxyFetch(`https://${base}.finance.yahoo.com/v8/finance/chart/${sym}?${q}`)
+      if ((fetched as any)?.chart?.result?.[0]?.timestamp?.length) return fetched
+    } catch { /* 次のベースURLを試みる */ }
   }
+  return null
+}
+
+async function buildShieldData(): Promise<ShieldMktData> {
+  return fetchWithCache({
+    key: SHIELD_CACHE_KEY,
+    ttl: () => isJpMarketOpen() ? SHIELD_CACHE_TTL_OPEN : SHIELD_CACHE_TTL_CLOSED,
+    fetcher: async () => {
+      const builtAt = new Date().toISOString().slice(0, 10)
+
+      // 3ソース並列取得（^N225 OHLCV・先物日次・VIX）
+      const [ohlcvRes, futuresRes, vixRes] = await Promise.allSettled([
+        fetchNk225Ohlcv(),
+        fetchFuturesDailyData(),
+        fetchVixData(),
+      ])
+
+      // 1. ^N225 OHLCV 解析
+      let days: Array<{ date: string; open: number; high: number; low: number; close: number }> = []
+      if (ohlcvRes.status === 'fulfilled' && ohlcvRes.value) {
+        try {
+          const r  = (ohlcvRes.value as any)?.chart?.result?.[0]
+          const ts: number[]          = r?.timestamp ?? []
+          const q_ = r?.indicators?.quote?.[0] ?? {}
+          for (let i = 0; i < ts.length; i++) {
+            const c = q_.close?.[i]
+            if (c == null) continue
+            days.push({
+              date:  new Date(ts[i] * 1000).toISOString().slice(0, 10),
+              open:  Math.round(q_.open?.[i]  ?? c),
+              high:  Math.round(q_.high?.[i]  ?? c),
+              low:   Math.round(q_.low?.[i]   ?? c),
+              close: Math.round(c),
+            })
+          }
+          days.sort((a, b) => a.date.localeCompare(b.date))
+        } catch { /* 解析失敗時は空 */ }
+      }
+
+      const closes      = days.map(d => d.close)
+      const latest      = days[days.length - 1]
+      const prev        = days[days.length - 2]
+      const recent10    = days.slice(-10)
+      const recent20    = days.slice(-20)
+      const high20d     = recent20.length > 0 ? Math.max(...recent20.map(d => d.high)) : null
+      const low20d      = recent20.length > 0 ? Math.min(...recent20.map(d => d.low))  : null
+      const ohlcvRecent = recent10.map((d, i) => {
+        const p = recent10[i - 1]
+        return { ...d, change_pct: p ? Math.round((d.close - p.close) / p.close * 10000) / 100 : null }
+      })
+
+      // 2. 先物日次（建玉残高・PCR）
+      let futures: ShieldMktData['futures'] = { oi_latest: null, oi_delta: null, pcr_latest: null, volume_latest: null, data_as_of: null }
+      if (futuresRes.status === 'fulfilled') {
+        const fd = futuresRes.value
+        const f0 = fd[0], f1 = fd[1]
+        if (f0) futures = {
+          oi_latest:     f0.oi,
+          oi_delta:      f1 != null ? f0.oi - f1.oi : null,
+          pcr_latest:    f0.pcr ?? null,
+          volume_latest: f0.volume,
+          data_as_of:    f0.date,
+        }
+      }
+
+      // 3. VIX（週次）
+      let vix: ShieldMktData['vix'] = { latest: null, change_pct: null }
+      if (vixRes.status === 'fulfilled') {
+        const vl = vixRes.value[0]  // newest-first
+        if (vl) vix = { latest: vl.close, change_pct: vl.changePct ?? null }
+      }
+
+      const data: ShieldMktData = {
+        built_at: builtAt,
+        nk225: {
+          latest_date:   latest?.date        ?? builtAt,
+          latest_close:  latest?.close       ?? 0,
+          change_1d:     latest && prev ? latest.close - prev.close : null,
+          change_1d_pct: latest && prev ? Math.round((latest.close - prev.close) / prev.close * 10000) / 100 : null,
+          ma20:          calcMA(closes, 20),
+          ma60:          calcMA(closes, 60),
+          ma200:         calcMA(closes, 200),
+          high_20d:      high20d,
+          low_20d:       low20d,
+          ohlcv_recent:  ohlcvRecent,
+        },
+        futures,
+        vix,
+      }
+      return { data }
+    },
+  })
 }
 
 // ── ポジション分析プロンプト ─────────────────────────
@@ -343,12 +374,50 @@ function CyberSystemLog({ logLines, cursorVisible, typedText, theme }: LogState 
 // ── ⑫ ShieldMemoPanel ────────────────────────────────
 const SHIELD_MEMO_KEY = 'poical-shield-memo'
 
+const SHIELD_HIGHLIGHT_PATTERNS = [
+  /損切り価格：.+/g,
+  /指令：.+/g,
+  /確信度：[\d.]+%.*/g,
+]
+
+function renderShieldHighlighted(text: string, theme: 'dark' | 'light'): React.ReactNode[] {
+  const hlColor = theme === 'light' ? '#0369a1' : 'rgba(0,230,255,0.95)'
+  return text.split('\n').map((line, lineIdx) => {
+    const spans: { start: number; end: number }[] = []
+    for (const pat of SHIELD_HIGHLIGHT_PATTERNS) {
+      pat.lastIndex = 0
+      let m: RegExpExecArray | null
+      while ((m = pat.exec(line)) !== null) {
+        spans.push({ start: m.index, end: m.index + m[0].length })
+      }
+    }
+    if (spans.length === 0) {
+      return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{line || ' '}</div>
+    }
+    spans.sort((a, b) => a.start - b.start)
+    const nodes: React.ReactNode[] = []
+    let pos = 0
+    for (const { start, end } of spans) {
+      if (pos < start) nodes.push(line.slice(pos, start))
+      nodes.push(
+        <mark key={`h-${lineIdx}-${start}`} style={{ background: 'none', color: hlColor, fontWeight: 700 }}>
+          {line.slice(start, end)}
+        </mark>
+      )
+      pos = end
+    }
+    if (pos < line.length) nodes.push(line.slice(pos))
+    return <div key={lineIdx} style={{ minHeight: '1.8em', wordBreak: 'break-all' }}>{nodes}</div>
+  })
+}
+
 function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
   const c = cy(theme)
-  const [text,  setText]  = useState(() => {
+  const [text,      setText]      = useState(() => {
     try { return localStorage.getItem(SHIELD_MEMO_KEY) ?? '' } catch { return '' }
   })
-  const [saved, setSaved] = useState(false)
+  const [saved,     setSaved]     = useState(false)
+  const [isPreview, setIsPreview] = useState(false)
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -393,40 +462,73 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
             ポジション分析レポート
           </span>
         </div>
-        <button
-          onClick={handleSave}
-          style={{
-            padding: '4px 14px', borderRadius: 6,
-            fontFamily: c.FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
-            background: saved ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)` : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
-            border: `1px solid ${saved ? c.GREEN : c.BORDBR}`,
-            color: c.GREEN, cursor: 'pointer',
-            transition: 'background 0.2s, border-color 0.2s',
-            boxShadow: saved ? `0 0 10px ${c.FAINT}` : 'none',
-            flexShrink: 0,
-          }}
-        >
-          {saved ? '保存しました' : '保存'}
-        </button>
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          <button
+            onClick={() => setIsPreview(v => !v)}
+            style={{
+              padding: '4px 14px', borderRadius: 6,
+              fontFamily: c.FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+              background: isPreview ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)` : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
+              border: `1px solid ${isPreview ? c.GREEN : c.BORDBR}`,
+              color: c.GREEN, cursor: 'pointer',
+              transition: 'background 0.2s, border-color 0.2s',
+            }}
+          >
+            {isPreview ? '編集' : 'プレビュー'}
+          </button>
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '4px 14px', borderRadius: 6,
+              fontFamily: c.FONT, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+              background: saved ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)` : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
+              border: `1px solid ${saved ? c.GREEN : c.BORDBR}`,
+              color: c.GREEN, cursor: 'pointer',
+              transition: 'background 0.2s, border-color 0.2s',
+              boxShadow: saved ? `0 0 10px ${c.FAINT}` : 'none',
+            }}
+          >
+            {saved ? '保存しました' : '保存'}
+          </button>
+        </div>
       </div>
 
-      {/* テキストエリア */}
+      {/* テキストエリア / プレビュー */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', padding: '14px 16px' }}>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="▌ ポジション分析レポートを記録..."
-          style={{
-            flex: 1, width: '100%', resize: 'none', borderRadius: 8,
-            minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
-            padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
-            fontFamily: c.FONT,
-            background: c.TAREA,
-            border: `1px solid ${c.BORDER}`,
-            color: c.TXTCLR, outline: 'none',
-          }}
-        />
+        {isPreview ? (
+          <div
+            onClick={() => setIsPreview(false)}
+            style={{
+              flex: 1,
+              minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+              fontFamily: c.FONT,
+              background: c.TAREA,
+              border: `1px solid ${c.BORDER}`,
+              borderRadius: 8, overflowY: 'auto',
+              color: c.TXTCLR, cursor: 'text',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {renderShieldHighlighted(text, theme)}
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="▌ ポジション分析レポートを記録..."
+            style={{
+              flex: 1, width: '100%', resize: 'none', borderRadius: 8,
+              minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280,
+              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+              fontFamily: c.FONT,
+              background: c.TAREA,
+              border: `1px solid ${c.BORDER}`,
+              color: c.TXTCLR, outline: 'none',
+            }}
+          />
+        )}
       </div>
     </div>
   )

@@ -31,6 +31,7 @@ const SpecView     = lazy(() => import('./components/SpecView').then(m => ({ def
 const NoteView     = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
 const ManualView   = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
 const SupportView  = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
+const JitsiPanel   = lazy(() => import('./components/JitsiPanel').then(m => ({ default: m.JitsiPanel })))
 const ShieldView   = lazy(() => import('./components/ShieldView').then(m => ({ default: m.ShieldView })))
 const LegalModal   = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
 const SettingsPanel = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
@@ -61,6 +62,7 @@ const Toast = memo(({ message }: { message: string }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => getSettings().theme)
+  const [darkStyle, setDarkStyle] = useState<'neutral' | 'blue'>(() => getSettings().darkStyle ?? 'neutral')
 
   useEffect(() => { purgeStaleDataCaches() }, [])
 
@@ -69,7 +71,13 @@ export default function App() {
     saveSettings({ ...getSettings(), theme })
   }, [theme])
 
+  useEffect(() => {
+    document.documentElement.dataset.darkStyle = (theme === 'dark' && darkStyle === 'blue') ? 'blue' : ''
+    saveSettings({ ...getSettings(), darkStyle })
+  }, [theme, darkStyle])
+
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
+  const handleDarkStyleChange = useCallback((s: 'neutral' | 'blue') => setDarkStyle(s), [])
   const cal = useCalendar()
 
   const setViewWithTransition = useCallback((view: Parameters<typeof cal.setView>[0]) => {
@@ -94,8 +102,19 @@ export default function App() {
   useEffect(() => { setSidebarOpen(isDesktop) }, [isDesktop])
 
   // ── モーダル類 ────────────────────────────────────────────────────────
-  const [settingsOpen,  setSettingsOpen]  = useState(false)
-  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [settingsOpen,    setSettingsOpen]    = useState(false)
+  const [authModalOpen,   setAuthModalOpen]   = useState(false)
+  const [connectMode,     setConnectMode]     = useState(false)
+  const [connectMinimized, setConnectMinimized] = useState(false)
+
+  // 通話中に研究室以外へ遷移したら自動最小化
+  useEffect(() => {
+    if (connectMode && cal.view !== 'support') setConnectMinimized(true)
+    if (connectMode && cal.view === 'support') setConnectMinimized(false)
+  }, [cal.view, connectMode])
+
+  // ── ぽいロボとは？ページ表示中フラグ ─────────────────────────────────
+  const [poiroboPageOpen, setPoiroboPageOpen] = useState(false)
 
   // ── フッター開閉 ──────────────────────────────────────────────────────
   const [footerCollapsed, setFooterCollapsed] = useState(() => {
@@ -437,7 +456,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} />
+                <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onPoiroboChange={setPoiroboPageOpen} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -558,6 +577,20 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
         </main>
       </div>
 
+      {/* ぽいロボコネクト（常時マウント・画面遷移しても接続維持） */}
+      {connectMode && user && (
+        <Suspense fallback={null}>
+          <JitsiPanel
+            user={{ uid: user.uid, displayName: user.displayName, email: user.email }}
+            isMobile={isMobile}
+            minimized={connectMinimized}
+            onMinimize={() => setConnectMinimized(true)}
+            onExpand={() => { setConnectMinimized(false); setViewWithTransition('support') }}
+            onClose={() => { setConnectMode(false); setConnectMinimized(false) }}
+          />
+        </Suspense>
+      )}
+
       {/* モーダル類 */}
       <Suspense fallback={null}>
         <SettingsPanel
@@ -565,6 +598,8 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
           onClose={() => setSettingsOpen(false)}
           theme={theme}
           onToggleTheme={toggleTheme}
+          darkStyle={darkStyle}
+          onChangeDarkStyle={handleDarkStyleChange}
           user={user}
           syncStatus={syncStatus}
           onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
@@ -574,12 +609,12 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
       </Suspense>
 
       <AuthModal
-        isOpen={!isUnlocked && !showLoading} isRequired
+        isOpen={!isUnlocked && !showLoading} isRequired theme={theme}
         onClose={() => {}} onUnlock={() => setIsUnlocked(true)}
         user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
       />
       <AuthModal
-        isOpen={authModalOpen && isUnlocked}
+        isOpen={authModalOpen && isUnlocked} theme={theme}
         onClose={() => setAuthModalOpen(false)} onUnlock={() => {}}
         user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
       />
@@ -642,7 +677,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: Z.footer, flexShrink: 0 }}>
+      <div style={{ position: 'relative', zIndex: Z.footer, flexShrink: 0, display: poiroboPageOpen ? 'none' : undefined }}>
           {/* つまみ（フッター開閉）— PC のみ表示 */}
           {!isMobile && <button
             onClick={toggleFooter}

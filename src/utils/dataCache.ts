@@ -23,6 +23,7 @@ const DATA_CACHE_KEYS = [
   'poical-ns-ratio-v2',
   'poical-nhk-news',
   'poical-stocks-daily-v3',
+  'poical-shield-mkt-data',
 ] as const
 
 // 最終 fetch から EVICT_AFTER ms 経過したエントリを削除（7日）

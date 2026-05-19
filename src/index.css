@@ -85,19 +85,32 @@ img {
   --closed-cell-bg: rgba(255, 255, 255, 0.04);
   --sidebar-width: 256px;
   --header-height: 64px;
-  /* structural tokens */
-  --modal-bg: rgba(11, 14, 46, 0.97);
-  --sidebar-fixed-bg: rgba(15, 18, 60, 0.92);
+  /* structural tokens — ニュートラルダーク（デフォルト） */
+  --modal-bg: #1c1c1e;
+  --sidebar-fixed-bg: rgba(20, 20, 22, 0.94);
   --border-dim: rgba(255, 255, 255, 0.07);
   --bg-subtle: rgba(255, 255, 255, 0.05);
   --bg-item: rgba(255, 255, 255, 0.04);
   --bg-medium: rgba(255, 255, 255, 0.08);
-  --latest-row-bg: rgba(96, 165, 250, 0.10);
+  --latest-row-bg: rgba(255, 255, 255, 0.07);
   --toggle-track: rgba(255, 255, 255, 0.15);
   --view-btn-active-bg: rgba(255, 255, 255, 0.70);
-  --view-btn-active-color: rgba(15, 20, 50, 0.90);
+  --view-btn-active-color: rgba(15, 15, 17, 0.90);
   --event-bg: rgba(96, 165, 250, 0.15);
   --event-border: rgba(96, 165, 250, 0.40);
+  --float-bar-bg: rgba(14, 14, 16, 0.97);
+  --body-bg:
+    radial-gradient(ellipse at 25% 15%, rgba(255, 255, 255, 0.025) 0%, transparent 55%),
+    radial-gradient(ellipse at 78% 82%, rgba(255, 255, 255, 0.018) 0%, transparent 55%),
+    linear-gradient(160deg, #111113 0%, #161618 45%, #0e0e10 100%);
+}
+
+/* ── ブルーダーク（オリジナル）: data-dark-style="blue" で復元 ── */
+[data-dark-style="blue"] {
+  --modal-bg: rgba(11, 14, 46, 0.97);
+  --sidebar-fixed-bg: rgba(15, 18, 60, 0.92);
+  --latest-row-bg: rgba(96, 165, 250, 0.10);
+  --view-btn-active-color: rgba(15, 20, 50, 0.90);
   --float-bar-bg: rgba(8, 20, 40, 0.97);
   --body-bg:
     radial-gradient(ellipse at 20% 10%, rgba(99, 102, 241, 0.35) 0%, transparent 50%),

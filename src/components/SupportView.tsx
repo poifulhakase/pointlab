@@ -1,36 +1,31 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import { BookingModal }      from './BookingModal'
 import { AdminBookingPanel } from './AdminBookingPanel'
+import type { ConnectUser }  from './JitsiPanel'
 
-const NoteView   = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
-const ManualView = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
+const NoteView            = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
+const ManualView          = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
+const PoiroboAboutPanel   = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
 
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   supportTab: SupportTab
   user?: ConnectUser | null
+  isConnected?: boolean
+  onStartConnect?: () => void
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant' | 'note') => void
   onOpenSettings?: () => void
   onOpenAccount?: () => void
+  onToggleTheme?: () => void
+  syncStatus?: string
+  onOpenSpec?: () => void
+  onPoiroboChange?: (open: boolean) => void
 }
 
 type SupportTab = 'session' | 'note' | 'manual'
-
-type ConnectUser = { uid: string; displayName: string | null; email: string | null }
-type JitsiAPI = {
-  dispose(): void
-  addListener(event: string, fn: (...args: unknown[]) => void): void
-  executeCommand(command: string, ...args: unknown[]): void
-}
-
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI?: new (domain: string, opts: Record<string, unknown>) => JitsiAPI
-  }
-}
 
 function ViewLoader() {
   return (
@@ -94,225 +89,203 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'contact',  label: 'Contact',  sub: 'お問い合わせ',   accent: '#f472b6', glow: 'rgba(244,114,182,0.45)', view: null, icon: <MailIcon />      },
 ]
 
-// ── Jitsi コネクトパネル（JaaS） ───────────────────────────────────────────
-function JitsiPanel({ user, isMobile, onClose }: { user: ConnectUser; isMobile: boolean; onClose: () => void }) {
-  const containerRef   = useRef<HTMLDivElement>(null)
-  const participantRef = useRef(1) // 自分を含む参加人数
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'full'>('loading')
+// ── Contact Form ──────────────────────────────────────────────────────────
+const FORM_ACTION   = 'https://docs.google.com/forms/d/e/1FAIpQLSfAwqrLssbR0EKh19J3m634gvJtggSbTrl7wDYjWGc3K4-j0A/formResponse'
+const ENTRY_TYPE    = 'entry.557781178'
+const ENTRY_CONTENT = 'entry.1905599788'
 
-  const shortRoom   = `poirobo-${user.uid.substring(0, 12)}`
-  const isAdmin     = user.email === 'sushi.ramen.unajyu@gmail.com'
-  const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
-  // iPad (新型) は userAgent が MacIntel になるため maxTouchPoints で補完
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  const toolbarButtons = isIOS
-    ? ['microphone', 'hangup']
-    : ['microphone', 'desktop', 'hangup']
+const RADIO_OPTIONS = [
+  { value: 'individual', label: '個人のお客様', formValue: '個人のお客様' },
+  { value: 'corporate',  label: '法人のお客様', formValue: '法人のお客様' },
+  { value: 'other',      label: 'その他',       formValue: 'その他'       },
+] as const
 
-  useEffect(() => {
-    let api: JitsiAPI | null = null
-    let cancelled = false
+type RadioValue = typeof RADIO_OPTIONS[number]['value'] | ''
 
-    const init = async () => {
-      // JaaS スクリプトをロード
-      if (!window.JitsiMeetExternalAPI) {
-        await new Promise<void>((resolve, reject) => {
-          const s = document.createElement('script')
-          s.src = 'https://8x8.vc/external_api.js'
-          s.async = true
-          s.onload  = () => resolve()
-          s.onerror = () => reject(new Error('Script load failed'))
-          document.head.appendChild(s)
-        })
-      }
-      if (cancelled || !containerRef.current) return
+function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
+  const [customerType, setCustomerType] = useState<RadioValue>('')
+  const [otherText,    setOtherText]    = useState('')
+  const [content,      setContent]      = useState('')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
 
-      // Vercel API Route で JWT 取得
-      const params = new URLSearchParams({
-        room:  shortRoom,
-        name:  displayName,
-        email: user.email ?? '',
-        uid:   user.uid,
+  const errColor = theme === 'light' ? '#dc2626' : '#f87171'
+  const canSubmit = customerType !== '' && content.trim().length > 0
+
+  const handleSubmit = async () => {
+    if (!canSubmit || status === 'sending') return
+    setStatus('sending')
+    const typeFormValue = customerType === 'other'
+      ? (otherText.trim() || 'その他')
+      : (RADIO_OPTIONS.find(o => o.value === customerType)?.formValue ?? '')
+    try {
+      await fetch(FORM_ACTION, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          [ENTRY_TYPE]:    typeFormValue,
+          [ENTRY_CONTENT]: content.trim(),
+        }).toString(),
       })
-      const res = await fetch(`/api/jitsi-token?${params}`)
-      if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`)
-      const { token } = await res.json() as { token: string }
-      if (cancelled || !containerRef.current) return
-
-      const appId     = import.meta.env.VITE_JAAS_APP_ID as string
-      const roomName  = `${appId}/${shortRoom}`
-      const avatarUrl = `${window.location.origin}${import.meta.env.BASE_URL}hakase.png`
-
-      api = new window.JitsiMeetExternalAPI!('8x8.vc', {
-        roomName,
-        jwt: token,
-        parentNode: containerRef.current,
-        userInfo: { displayName, avatarUrl },
-        configOverwrite: {
-          startWithVideoMuted: true,
-          startWithAudioMuted: false,
-          prejoinPageEnabled: false,
-          prejoinConfig: { enabled: false },
-          disableDeepLinking: true,
-          enableWelcomePage: false,
-          toolbarButtons,
-        },
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_BRAND_WATERMARK: false,
-          DISPLAY_WELCOME_FOOTER: false,
-          MOBILE_APP_PROMO: false,
-          HIDE_INVITE_MORE_HEADER: true,
-          TOOLBAR_BUTTONS: toolbarButtons,
-        },
-      })
-
-      api.addListener('videoConferenceJoined', () => {
-        api?.executeCommand('avatarUrl', avatarUrl)
-      })
-      api.addListener('participantJoined', (...args: unknown[]) => {
-        participantRef.current++
-        if (participantRef.current > 2) {
-          const p = args[0] as { id: string }
-          if (isAdmin) {
-            api?.executeCommand('kickParticipant', p.id)
-          } else {
-            setStatus('full')
-            api?.executeCommand('hangup')
-          }
-        }
-      })
-      api.addListener('participantLeft', () => { participantRef.current-- })
-      api.addListener('readyToClose', onClose)
-
-      if (!cancelled) setStatus('ready')
+      setStatus('done')
+    } catch {
+      setStatus('error')
     }
+  }
 
-    init().catch(() => { if (!cancelled) setStatus('error') })
+  const baseInput: React.CSSProperties = {
+    background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: 8,
+    color: 'var(--text)', fontSize: 13, padding: '9px 12px', outline: 'none',
+    width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
+    transition: 'border-color 0.18s',
+  }
 
-    return () => {
-      cancelled = true
-      api?.dispose()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  if (status === 'done') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '52px 24px', gap: 18 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: '50%',
+          background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(100,120,200,0.15)',
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--view-btn-active-color)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: '0.04em' }}>送信しました</div>
+          <div style={{ fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.75 }}>
+            お問い合わせを送信しました。内容を確認後、ご連絡いたします。<br/>
+            <span style={{ fontSize: 11, opacity: 0.65 }}>※通信状況によっては届いていない場合があります。</span>
+          </div>
+        </div>
+        <button
+          onClick={() => { setStatus('idle'); setCustomerType(''); setOtherText(''); setContent('') }}
+          style={{
+            marginTop: 6, padding: '8px 22px', borderRadius: 8, cursor: 'pointer',
+            background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+            color: 'var(--text-sub)', fontSize: 12, fontWeight: 600,
+          }}
+        >
+          別の内容を送る
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div style={{
-      position: 'absolute', inset: 0, zIndex: 15,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: isMobile ? 0 : '18px 22px',
-      userSelect: 'none',
-    }}>
-      <div style={{
-        width: '100%', height: '100%',
-        maxWidth: isMobile ? undefined : 980,
-        maxHeight: isMobile ? undefined : 700,
-        background: '#050810',
-        border: isMobile ? 'none' : '1px solid rgba(0,242,255,0.18)',
-        borderRadius: isMobile ? 0 : 14,
-        overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        boxShadow: isMobile ? 'none' : '0 0 70px rgba(0,60,200,0.18), 0 24px 80px rgba(0,0,0,0.75)',
-      }}>
+    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <p style={{ margin: 0, fontSize: 12, color: 'var(--text-sub)', lineHeight: 1.72 }}>
+        ご要望・ご意見・バグ報告など、お気軽にお送りください。
+      </p>
 
-        {/* ヘッダーバー */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '9px 14px', flexShrink: 0,
-          background: 'rgba(0,10,22,0.97)',
-          borderBottom: '1px solid rgba(0,242,255,0.10)',
-        }}>
-          <span style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: status === 'ready' ? '#00f2ff' : status === 'error' ? '#ff4444' : 'rgba(0,242,255,0.35)',
-            boxShadow: status === 'ready' ? '0 0 8px #00f2ff' : 'none',
-            flexShrink: 0, transition: 'all 0.4s',
-          }} />
-          <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: 'rgba(80,190,255,0.80)', letterSpacing: '0.18em' }}>
-            POIROBO CONNECT
-          </span>
-          <code style={{ fontSize: 9, color: 'rgba(0,242,255,0.35)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-            {shortRoom}
-          </code>
-          <button
-            onClick={onClose}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '4px 11px', borderRadius: 6, cursor: 'pointer',
-              background: 'rgba(200,40,40,0.12)',
-              border: '1px solid rgba(200,40,40,0.35)',
-              color: '#ff6666', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            切断
-          </button>
+      {/* お客様種別 */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
+          お客様種別 <span style={{ color: errColor, marginLeft: 2 }}>*</span>
         </div>
-
-        {/* Jitsi エリア */}
-        <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-          {status === 'loading' && (
-            <div style={{
-              position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
-            }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {RADIO_OPTIONS.map(opt => (
+            <label
+              key={opt.value}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '9px 14px', borderRadius: 10, cursor: 'pointer',
+                background: customerType === opt.value ? 'var(--view-btn-active-bg)' : 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
+                transition: 'background 0.15s',
+              }}
+            >
               <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                border: '2.5px solid rgba(0,242,255,0.15)',
-                borderTopColor: '#00f2ff',
-                animation: 'spin 0.8s linear infinite',
-              }} />
-              <span style={{ color: 'rgba(0,242,255,0.5)', fontSize: 10, letterSpacing: '0.15em' }}>接続中...</span>
-            </div>
+                width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                border: `2px solid ${customerType === opt.value ? 'var(--view-btn-active-color)' : 'var(--glass-border)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}>
+                {customerType === opt.value && (
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--view-btn-active-color)' }} />
+                )}
+              </div>
+              <input type="radio" name="customerType" value={opt.value}
+                checked={customerType === opt.value}
+                onChange={() => setCustomerType(opt.value)}
+                style={{ display: 'none' }} />
+              <span style={{
+                fontSize: 13,
+                color: customerType === opt.value ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
+                fontWeight: customerType === opt.value ? 600 : 400,
+              }}>
+                {opt.label}
+              </span>
+            </label>
+          ))}
+          {customerType === 'other' && (
+            <input
+              type="text"
+              placeholder="詳しく教えてください（任意）"
+              value={otherText}
+              onChange={e => setOtherText(e.target.value)}
+              style={{ ...baseInput, marginTop: 2 }}
+            />
           )}
-          {status === 'error' && (
-            <div style={{
-              position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
-            }}>
-              <span style={{ color: '#ff6666', fontSize: 13 }}>接続に失敗しました</span>
-              <button onClick={onClose} style={{
-                padding: '6px 18px', borderRadius: 8, cursor: 'pointer',
-                background: 'rgba(200,40,40,0.15)', border: '1px solid rgba(200,40,40,0.4)',
-                color: '#ff8888', fontSize: 12, fontWeight: 600,
-              }}>閉じる</button>
-            </div>
-          )}
-          {status === 'full' && (
-            <div style={{
-              position: 'absolute', inset: 0, background: '#050810', zIndex: 1,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
-            }}>
-              <span style={{ color: '#fbbf24', fontSize: 13 }}>現在満員です（最大2名）</span>
-              <button onClick={onClose} style={{
-                padding: '6px 18px', borderRadius: 8, cursor: 'pointer',
-                background: 'rgba(200,140,20,0.15)', border: '1px solid rgba(200,140,20,0.4)',
-                color: '#fbbf24', fontSize: 12, fontWeight: 600,
-              }}>閉じる</button>
-            </div>
-          )}
-          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
         </div>
-      </div>
+      </section>
+
+      {/* お問い合わせの内容 */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
+          お問い合わせの内容 <span style={{ color: errColor, marginLeft: 2 }}>*</span>
+        </div>
+        <textarea
+          rows={6}
+          placeholder="ご要望・バグ報告・ご意見をご自由にどうぞ"
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          style={{ ...baseInput, resize: 'vertical', minHeight: 120 }}
+        />
+        <span style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'right' }}>{content.length} 文字</span>
+      </section>
+
+      {status === 'error' && (
+        <p style={{ margin: 0, fontSize: 12, color: errColor }}>
+          送信に失敗しました。時間をおいて再度お試しください。
+        </p>
+      )}
+
+      <button
+        onClick={handleSubmit}
+        disabled={!canSubmit || status === 'sending'}
+        style={{
+          alignSelf: 'flex-end',
+          padding: '9px 24px', borderRadius: 8,
+          ...(canSubmit
+            ? { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', border: '1px solid transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' }
+            : { background: 'transparent', color: 'var(--text-sub)', border: '1px solid var(--glass-border)' }),
+          fontSize: 13, fontWeight: 600, letterSpacing: '0.06em',
+          cursor: canSubmit ? 'pointer' : 'not-allowed',
+          transition: 'all 0.15s',
+          opacity: status === 'sending' ? 0.65 : 1,
+        }}
+      >
+        {status === 'sending' ? '送信中...' : '送信する →'}
+      </button>
     </div>
   )
 }
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, onOpenLegal, onOpenSettings, onOpenAccount }: Props) {
+export function SupportView({ theme, isMobile, supportTab, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
-  const [visible,      setVisible]      = useState(false)
-  const [connectMode,  setConnectMode]  = useState(false)
-  const [bookingOpen,  setBookingOpen]  = useState(false)
-  const [adminOpen,    setAdminOpen]    = useState(false)
-  const [ripples,      setRipples]      = useState<{ id: number; x: number; y: number }[]>([])
-  const [activeDrawer, setActiveDrawer] = useState<'data' | 'contact' | null>(null)
+  const [visible,       setVisible]       = useState(false)
+  const [bookingOpen,   setBookingOpen]   = useState(false)
+  const [adminOpen,     setAdminOpen]     = useState(false)
+  const [ripples,       setRipples]       = useState<{ id: number; x: number; y: number }[]>([])
+  const [activeDrawer,  setActiveDrawer]  = useState<'data' | 'contact' | 'settings' | null>(null)
   const [drawerVisible, setDrawerVisible] = useState(false)
+  const [showPoirobo,   setShowPoirobo]   = useState(false)
 
   const rippleIdRef = useRef(0)
   const menuRef     = useRef<HTMLDivElement>(null)
@@ -334,7 +307,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
     return () => cancelAnimationFrame(id)
   }, [])
 
-  const openDrawer = (type: 'data' | 'contact') => {
+  const openDrawer = (type: 'data' | 'contact' | 'settings') => {
     setActiveDrawer(type)
     requestAnimationFrame(() => requestAnimationFrame(() => setDrawerVisible(true)))
   }
@@ -345,7 +318,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
   }
 
   const handleRipple = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (connectMode) return
+    if (isConnected) return
     const rect = e.currentTarget.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
@@ -569,7 +542,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         .menu3d-mobile .menu3d-labels {
           flex: 1;
           align-items: flex-start;
-          padding: 0 8px 0 0;
+          padding: 0 8px 0 10px;
           gap: 2px;
           min-width: 0;
         }
@@ -709,7 +682,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       {/* 背景画像 */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: `url(${import.meta.env.BASE_URL}support-room.jpg)`,
+        backgroundImage: `url(${import.meta.env.BASE_URL}support-room.webp)`,
         backgroundSize: 'cover',
         backgroundPosition: isMobile ? '72% top' : 'center top',
         opacity: visible ? 1 : 0,
@@ -753,7 +726,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
       {/* コンテンツカルーセル（コネクト中は非表示） */}
       <div style={{
         position: 'absolute', inset: 0,
-        display: connectMode ? 'none' : 'flex',
+        display: isConnected ? 'none' : 'flex',
         width: '300%',
         transform: `translateX(${-tabIndex * 33.333}%)`,
         transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
@@ -791,10 +764,10 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
                   <button
                     className="menu3d-btn"
                     onClick={() => {
-                      if (item.id === 'settings') { onOpenSettings?.(); return }
-                      if (item.id === 'data')     { openDrawer('data');   return }
+                      if (item.id === 'settings') { openDrawer('settings'); return }
+                      if (item.id === 'data')     { openDrawer('data');    return }
                       if (item.id === 'contact')  { openDrawer('contact'); return }
-                      // poirobo: 準備中
+                      if (item.id === 'poirobo')  { setShowPoirobo(true); onPoiroboChange?.(true); return }
                     }}
                   >
                     <span className="menu3d-tl" />
@@ -848,7 +821,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           userName={user?.displayName ?? 'ユーザー'}
           userEmail={user?.email ?? ''}
           onClose={() => setBookingOpen(false)}
-          onConnectNow={() => setConnectMode(true)}
+          onConnectNow={() => { setBookingOpen(false); onStartConnect?.() }}
           onOpenLogin={() => { setBookingOpen(false); onOpenAccount?.() }}
         />
       )}
@@ -859,7 +832,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
           isOpen={adminOpen}
           theme={theme}
           onClose={() => setAdminOpen(false)}
-          onConnectNow={() => { setAdminOpen(false); setConnectMode(true) }}
+          onConnectNow={() => { setAdminOpen(false); onStartConnect?.() }}
         />
       )}
 
@@ -902,7 +875,7 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme === 'light' ? 'rgba(0,100,200,0.7)' : 'rgba(0,220,255,0.7)', boxShadow: theme === 'light' ? '0 0 7px rgba(0,100,200,0.5)' : '0 0 7px rgba(0,220,255,0.9)', flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: theme === 'light' ? 'rgba(0,60,140,0.80)' : 'rgba(80,200,255,0.85)', letterSpacing: '0.22em' }}>
-                {activeDrawer === 'data' ? 'DATA / 資料' : 'CONTACT / お問い合わせ'}
+                {activeDrawer === 'data' ? 'DATA / 資料' : activeDrawer === 'contact' ? 'CONTACT / お問い合わせ' : 'SETTINGS / 設定'}
               </span>
               <button
                 onClick={closeDrawer}
@@ -929,18 +902,85 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
                 </Suspense>
               )}
               {activeDrawer === 'contact' && (
-                <div style={{ display: 'flex', flexDirection: 'column', padding: '16px 0 0' }}>
-                  <p style={{ margin: '0 16px 14px', fontSize: 12, color: theme === 'light' ? 'rgba(30,60,120,0.70)' : 'rgba(140,200,255,0.7)', lineHeight: 1.6 }}>
-                    ご要望・ご意見・バグ報告など、お気軽にお送りください。
-                  </p>
-                  <iframe
-                    src="https://docs.google.com/forms/d/e/1FAIpQLSfAwqrLssbR0EKh19J3m634gvJtggSbTrl7wDYjWGc3K4-j0A/viewform?embedded=true"
-                    style={{ width: '100%', minHeight: 680, border: 'none', flex: 1 }}
-                    title="お問い合わせフォーム"
-                    scrolling="yes"
-                  >
-                    読み込んでいます…
-                  </iframe>
+                <ContactForm theme={theme} />
+              )}
+              {activeDrawer === 'settings' && (
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                  {/* テーマ */}
+                  <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>表示</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {(['light', 'dark'] as const).map(t => (
+                        <button
+                          key={t}
+                          onClick={() => { if (theme !== t) onToggleTheme?.() }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.15s',
+                            ...(theme === t
+                              ? { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', border: '1px solid transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' }
+                              : { background: 'transparent', color: 'var(--text-sub)', border: '1px solid var(--glass-border)' }),
+                          }}
+                        >
+                          {t === 'light'
+                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                          }
+                          {t === 'light' ? 'ライト' : 'ダーク'}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* アカウント */}
+                  <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>アカウント</div>
+                    <button
+                      onClick={() => { closeDrawer(); onOpenAccount?.() }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                        background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                        transition: 'background 0.15s', textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        {user?.photoURL
+                          ? <img src={user.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} referrerPolicy="no-referrer" />
+                          : <span style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </span>
+                        }
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user ? (user.displayName ?? user.email ?? 'アカウント') : 'Googleでログイン'}
+                          </span>
+                          {user && (
+                            <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                              {syncStatus === 'synced' ? '同期済み' : syncStatus === 'syncing' ? '同期中...' : (user.email ?? '')}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  </section>
+
+                  {/* 開発者（管理者のみ） */}
+                  {isAdmin && (
+                    <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>開発者</div>
+                      <button
+                        onClick={() => { closeDrawer(); onOpenSpec?.() }}
+                        style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-sub)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        システム仕様を開く
+                      </button>
+                    </section>
+                  )}
+
                 </div>
               )}
             </div>
@@ -948,13 +988,19 @@ export function SupportView({ theme, isMobile, supportTab, user, onOpenManual, o
         </div>
       )}
 
-      {/* Jitsi コネクトパネル（コネクト中のみ表示） */}
-      {connectMode && user && (
-        <JitsiPanel user={user} isMobile={isMobile} onClose={() => setConnectMode(false)} />
+      {/* ぽいロボとは？パネル */}
+      {showPoirobo && (
+        <Suspense fallback={<ViewLoader />}>
+          <PoiroboAboutPanel
+            theme={theme}
+            isMobile={isMobile}
+            onBack={() => { setShowPoirobo(false); onPoiroboChange?.(false) }}
+          />
+        </Suspense>
       )}
 
-      {/* コネクトボタン（コネクト中は非表示） */}
-      {!connectMode && (
+      {/* コネクトボタン（接続中・ぽいロボページ表示中は非表示） */}
+      {!isConnected && !showPoirobo && (
         <div className={theme === 'light' ? 'poyon-light' : undefined} style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }}>
           {!isMobile && <div style={{
             position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,

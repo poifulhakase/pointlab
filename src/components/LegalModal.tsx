@@ -168,17 +168,11 @@ const DISCLAIMER_SECTIONS: LegalSection[] = [
   },
 ]
 
-// ── レンダラー（SpecView と同一スタイル）────────────────
-function renderBlock(block: Block, isDark: boolean, key: number) {
-  const c = {
-    text:    isDark ? 'rgba(200,205,225,0.9)'  : 'rgba(30,35,60,0.88)',
-    heading: isDark ? 'rgba(220,225,245,0.95)' : 'rgba(20,25,50,0.95)',
-    bullet:  isDark ? 'rgba(96,165,250,0.7)'   : 'rgba(37,99,235,0.6)',
-  }
-
+// ── レンダラー ────────────────────────────────────────────
+function renderBlock(block: Block, key: number) {
   if (block.type === 'para') {
     return (
-      <p key={key} style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.75, color: c.text }}>
+      <p key={key} style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.75, color: 'var(--text-sub)' }}>
         {block.text}
       </p>
     )
@@ -186,13 +180,13 @@ function renderBlock(block: Block, isDark: boolean, key: number) {
 
   return (
     <div key={key} style={{ marginBottom: 20 }}>
-      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: c.heading }}>
+      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
         {block.heading}
       </p>
       <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {block.items.map((item, i) => (
-          <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: c.text, lineHeight: 1.6 }}>
-            <span style={{ color: c.bullet, flexShrink: 0, marginTop: 2 }}>›</span>
+          <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>
+            <span style={{ color: 'var(--text-dim)', flexShrink: 0, marginTop: 2 }}>›</span>
             <span>{item}</span>
           </li>
         ))}
@@ -204,40 +198,31 @@ function renderBlock(block: Block, isDark: boolean, key: number) {
 // ── メインコンポーネント（フルページビュー）────────────
 export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }) {
   const [tab, setTab] = useState<Tab>('privacy')
-  const isDark = theme === 'dark'
-
-  const c = {
-    cardBg:       isDark ? 'rgba(255,255,255,0.04)'   : 'rgba(255,255,255,0.7)',
-    cardBorder:   isDark ? 'rgba(255,255,255,0.08)'   : 'rgba(0,0,0,0.08)',
-    sectionTitle: isDark ? 'rgba(230,235,255,0.95)'   : 'rgba(15,20,50,0.95)',
-    divider:      isDark ? 'rgba(255,255,255,0.07)'   : 'rgba(0,0,0,0.07)',
-    logoText:     isDark ? 'rgba(180,185,210,0.6)'    : 'rgba(80,90,130,0.55)',
-  }
-
   const sections = tab === 'privacy' ? PRIVACY_SECTIONS : DISCLAIMER_SECTIONS
 
   return (
     <div style={{
       flex: 1, overflowY: 'auto', overflowX: 'hidden',
       padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
+      background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9',
     }}>
       <div style={{ maxWidth: 780, margin: '0 auto' }}>
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="/logo.svg" alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
               プライバシー・免責事項
             </h1>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
               ぽいロボ — 最終更新: 2026年5月18日
             </p>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: 'none', background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: c.logoText, cursor: 'pointer', flexShrink: 0 }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-dim)', cursor: 'pointer', flexShrink: 0 }}
               aria-label="閉じる"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -255,9 +240,10 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
               onClick={() => setTab(t)}
               style={{
                 padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', border: 'none', transition: 'background 0.15s, color 0.15s',
-                background: tab === t ? 'var(--view-btn-active-bg)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
-                color: tab === t ? 'var(--view-btn-active-color)' : c.logoText,
+                cursor: 'pointer', transition: 'all 0.15s',
+                ...(tab === t
+                  ? { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', border: '1px solid transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' }
+                  : { background: 'transparent', color: 'var(--text-sub)', border: '1px solid var(--glass-border)' }),
               }}
             >
               {t === 'privacy' ? 'プライバシーポリシー' : '免責事項'}
@@ -271,24 +257,23 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
             <section
               key={section.id}
               style={{
-                background: c.cardBg,
-                border: `1px solid ${c.cardBorder}`,
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: 14,
                 padding: isMobile ? '18px 16px' : '22px 24px',
-                backdropFilter: 'blur(8px)',
               }}
             >
               <h2 style={{
                 margin: '0 0 12px', fontSize: isMobile ? 15 : 16, fontWeight: 700,
-                color: c.sectionTitle,
+                color: 'var(--text)',
                 display: 'flex', alignItems: 'center', gap: 8,
                 letterSpacing: '-0.3px',
               }}>
                 <span style={{ fontSize: 17 }}>{section.icon}</span>
                 {section.title}
               </h2>
-              <div style={{ borderTop: `1px solid ${c.divider}`, paddingTop: 14 }}>
-                {section.content.map((block, i) => renderBlock(block, isDark, i))}
+              <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 14 }}>
+                {section.content.map((block, i) => renderBlock(block, i))}
               </div>
             </section>
           ))}

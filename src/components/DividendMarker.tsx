@@ -22,6 +22,8 @@ export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
         {markers.map(m => {
           const meta = MARKER_META[m]
+          const color = isLight ? meta.colorLight : meta.color
+          const bg    = isLight ? meta.bgLight    : meta.bg
           return (
             <span
               key={m}
@@ -30,15 +32,15 @@ export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) 
                 fontSize: isSm ? 10 : 12,
                 fontWeight: 700,
                 letterSpacing: '0.02em',
-                color: isLight ? meta.color : 'rgba(255,255,255,0.92)',
-                background: meta.bg,
-                border: `1px solid ${meta.color}40`,
+                color: isLight ? color : 'rgba(255,255,255,0.92)',
+                background: bg,
+                border: `1px solid ${color}${isLight ? '38' : '40'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
                 whiteSpace: 'nowrap',
-                backdropFilter: 'blur(4px)',
-                boxShadow: `0 1px 6px ${meta.color}20`,
+                backdropFilter: isLight ? undefined : 'blur(4px)',
+                boxShadow: isLight ? 'none' : `0 1px 6px ${color}20`,
                 cursor: 'pointer',
               }}
               onClick={ev => {
@@ -53,15 +55,20 @@ export function DividendMarker({ markers, size = 'md', theme = 'dark' }: Props) 
         })}
       </div>
 
-      {popup && (
-        <BadgePopup
-          x={popup.x} y={popup.y}
-          color={MARKER_META[popup.key].color}
-          label={MARKER_META[popup.key].label}
-          desc={MARKER_META[popup.key].desc}
-          onClose={() => setPopup(null)}
-        />
-      )}
+      {popup && (() => {
+        const meta = MARKER_META[popup.key]
+        const color = isLight ? meta.colorLight : meta.color
+        return (
+          <BadgePopup
+            x={popup.x} y={popup.y}
+            color={color}
+            label={meta.label}
+            desc={meta.desc}
+            theme={theme}
+            onClose={() => setPopup(null)}
+          />
+        )
+      })()}
     </>
   )
 }

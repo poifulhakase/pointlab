@@ -35,7 +35,7 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
                 letterSpacing: '0.03em',
                 color: isLight ? color : 'rgba(255,255,255,0.95)',
                 background: bg,
-                border: `1px solid ${color}${isLight ? 'cc' : '99'}`,
+                border: `1px solid ${color}${isLight ? '38' : '99'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
@@ -43,7 +43,7 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
                 WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
                 overflow: 'hidden',
                 wordBreak: 'break-all',
-                boxShadow: `0 1px 4px ${color}28`,
+                boxShadow: isLight ? 'none' : `0 1px 4px ${color}28`,
                 cursor: 'pointer',
               }}
               onClick={ev => {
@@ -67,6 +67,7 @@ export function MacroEventBadge({ events, size = 'md', theme = 'dark' }: Props) 
             color={color}
             label={meta.label}
             desc={meta.desc}
+            theme={theme}
             onClose={() => setPopup(null)}
           />
         )

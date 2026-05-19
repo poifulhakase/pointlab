@@ -116,8 +116,8 @@ export function getMarkersForDate(date: Date, sets: DividendDateSet[]): MarkerTy
 
 // ---- 表示設定 ----
 
-export const MARKER_META: Record<MarkerType, { label: string; desc: string; short: string; color: string; bg: string }> = {
-  saishu:  { label: '権利付最終日', desc: 'この日までに買えば配当取得', short: '権付', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)' },
-  ochi:    { label: '権利落ち日',   desc: 'この日から権利なしで取引',   short: '権落', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)' },
-  kakutei: { label: '権利確定日',   desc: '株主として名簿に確定',       short: '権確', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)' },
+export const MARKER_META: Record<MarkerType, { label: string; desc: string; short: string; color: string; bg: string; colorLight: string; bgLight: string }> = {
+  saishu:  { label: '権利付最終日', desc: 'この日までに買えば配当取得', short: '権付', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)', colorLight: '#0d9488', bgLight: 'rgba(13,148,136,0.08)' },
+  ochi:    { label: '権利落ち日',   desc: 'この日から権利なしで取引',   short: '権落', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)', colorLight: '#0d9488', bgLight: 'rgba(13,148,136,0.08)' },
+  kakutei: { label: '権利確定日',   desc: '株主として名簿に確定',       short: '権確', color: '#67e8f9', bg: 'rgba(103,232,249,0.15)', colorLight: '#0d9488', bgLight: 'rgba(13,148,136,0.08)' },
 }

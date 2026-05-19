@@ -27,8 +27,9 @@ const SPEC_SECTIONS = [
         items: [
           'カレンダー（ホーム）：月/週/日ビュー＋ メモ・スケジュール管理',
           'チャート：TradingView チャート（日経225・ドル円・米国債）',
-          'ぽいロボ（データ）：需給分析（分析 / 環境 / 現物 / 先物 の4タブ構成）＋ AI分析プロンプト自動生成',
-          '研究室：資料閲覧 / 設定（テーマ切替・アカウント）/ 使い方ガイド / ぽいロボ コネクト',
+          'エンジン（需給分析）：分析 / 環境 / 現物 / 先物 の4タブ構成 ＋ AI分析プロンプト自動生成',
+          'シールド：保有中ポジション管理・出口戦略アドバイス（NK225先物データ＋AIプロンプト生成）',
+          '研究室：資料閲覧 / 設定（テーマ切替・アカウント）/ お問い合わせ / ぽいロボ コネクト（予約通話システム）',
           'Firebase Auth（Googleログイン）によるメモ・設定のクロスデバイス同期',
         ],
       },
@@ -278,8 +279,9 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: '現物需給タブ ─ 日経平均（ContribSectorPanel）',
         items: [
-          '銘柄別寄与度（上位/下位5銘柄）と業種別騰落率（東証33業種）を統合テーブルで表示',
-          '7カラム単一テーブル構造: 銘柄寄与度5列 ＋ 区切り ＋ 業種騰落2列（行高さが自動同期）',
+          '銘柄別寄与度（上位/下位5銘柄）と業種別騰落率（東証33業種）を表示',
+          'PC: 7カラム単一テーブル構造（銘柄寄与度5列 ＋ 区切り ＋ 業種騰落2列、行高さが自動同期）',
+          'スマートフォン: 銘柄別寄与度テーブルと業種別騰落率テーブルを縦積み1列表示',
           '上昇/下落カラーはテーマに応じて配色（ダーク: 緑/赤、ライト: 濃緑/濃赤）',
         ],
       },
@@ -356,8 +358,9 @@ const SPEC_SECTIONS = [
         heading: 'メニューボタン（2項目）★2026-05-14 簡略化',
         items: [
           '資料（DATA）→ NoteView（記事一覧）へ切り替え',
-          '設定（SETTINGS）→ 設定モーダルを開く（SettingsPanel）',
-          'カレンダー・チャート・ぽいロボエンジンはフッターの共通メニューから切り替え（研究室固有メニューから削除）',
+          '設定（SETTINGS）→ 右スライドドロワーで開く（テーマ / アカウント / 開発者セクション）',
+          'お問い合わせ（CONTACT）→ 右スライドドロワーでカスタムフォームを表示（Google Forms バックエンド経由送信）',
+          'カレンダー・チャート・エンジン・シールドはフッターの共通メニューから切り替え（研究室固有メニューから削除）',
         ],
       },
       {
@@ -366,7 +369,7 @@ const SPEC_SECTIONS = [
         items: [
           '全ビュー共通の CalendarHeader をフッターに表示（研究室も含む）',
           'つまみボタン（footer wrapper zIndex: 161）でフッター開閉可能',
-          'タブ: カレンダー / チャート / ぽいロボ / 研究室（4タブ・アイコンのみ表示）',
+          'タブ: カレンダー / チャート / エンジン / シールド / 研究室（5タブ・アイコンのみ表示）',
           '選択中タブの左右 padding: 14px（非選択: 8px）',
         ],
       },
@@ -374,10 +377,23 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: '設定モーダル（SettingsPanel）',
         items: [
-          '研究室 > SETTINGS ボタンからのみ開く（ヘッダー歯車アイコンは削除済み）',
+          '研究室 > SETTINGS ボタンで右スライドドロワーとして開く',
           '表示セクション: ライト / ダーク テーマ切り替え（segmented buttons）',
           'アカウントセクション: Googleログイン / ログアウト（AuthModal を開く）・同期ステータス表示',
           '開発者セクション: システム仕様を開く（管理者アカウントのみ表示）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'お問い合わせフォーム（ContactForm）★2026-05-18 新規',
+        items: [
+          '研究室 > CONTACT ボタンで右スライドドロワーとして開く',
+          'Google Forms バックエンドと連携（formResponse エンドポイントへ mode: no-cors POST）',
+          'フォームID: 1FAIpQLSfAwqrLssbR0EKh19J3m634gvJtggSbTrl7wDYjWGc3K4-j0A',
+          'お客様種別: entry.557781178（ラジオボタン: 個人のお客様 / 法人のお客様 / その他）',
+          'お問い合わせ内容: entry.1905599788（textarea）',
+          '送信後: 成功チェックマーク表示 ＋「別の内容を送る」リセットボタン / エラー時はエラーメッセージ表示',
+          'テーマ対応（dark/light）: cy系変数でサイバーUIに統一',
         ],
       },
       {
@@ -410,8 +426,8 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: 'ぽいロボ コネクト — 管理者UI仕様（AdminBookingPanel）★2026-05-18 新規',
         items: [
-          'BOOKINGS タブ: 予約一覧（全件）。pending→「✓ 承認」ボタン / confirmed→「完了」ボタン / 双方とも「キャンセル」ボタン',
-          'SLOTS タブ: 空き枠一覧 ＋ 日付・時刻入力で「+ 追加」。予約済みの枠は削除不可',
+          '予約管理 タブ: 予約一覧（全件）。pending→「✓ 承認」ボタン / confirmed→「完了」ボタン / 双方とも「キャンセル」ボタン',
+          '枠設定 タブ: 空き枠一覧 ＋ 日付・時刻入力で「+ 追加」。予約済みの枠は削除不可',
           '承認・キャンセル時はメッセージ入力欄付きの確認ダイアログを表示（任意メッセージをユーザーメールに送付）',
           '「▶ 接続」ボタン: AdminBookingPanel を閉じて即 JitsiPanel に接続（予約不要で通話開始可）',
         ],
@@ -458,7 +474,10 @@ const SPEC_SECTIONS = [
           'ツールバー: マイク・画面共有・切断のみ（iOS は画面共有非対応のため2ボタン）',
           '管理者アカウント（sushi.ramen.unajyu@gmail.com）は表示名「ぽいふる博士」・moderator: true',
           'アバター: videoConferenceJoined 後に executeCommand("avatarUrl", hakase.png) で博士画像に設定',
-          'コネクト中: メニュー非表示・背景維持・中央に大型黒パネル（inset: 0, zIndex: 15）',
+          'JitsiPanel は App レベルで管理（position: fixed, zIndex: 500）。研究室以外のビューへ移動しても通話は維持される',
+          '最小化ボタン: パネルを display:none にしてWebRTC接続を維持しつつ、右上にフローティングミニバー（ステータスドット・展開ボタン・切断ボタン）を表示',
+          '展開ボタン: 研究室ビューへ遷移してパネルを全画面に戻す（onExpand）',
+          '研究室以外のビューへ移動すると自動最小化 / 研究室へ戻ると自動展開',
           'iOS 判定: /iPhone|iPad|iPod/.test(userAgent) || (platform===MacIntel && maxTouchPoints>1)',
         ],
       },
@@ -512,6 +531,52 @@ const SPEC_SECTIONS = [
     ],
   },
   {
+    id: 'shield',
+    icon: '🛡️',
+    title: 'シールドビュー（ShieldView）',
+    content: [
+      {
+        type: 'para' as const,
+        text: 'フッターナビの「シールド」タブからアクセスできるビューです。保有中ポジションの管理・出口戦略に特化し、エントリー判断は対象外です。NK225先物マーケットデータ（OHLCV・MA・建玉残高・PCR・VIX）を自動取得・表示し、AIプロンプトと保有ポジション画像を組み合わせて分析します。',
+      },
+      {
+        type: 'list' as const,
+        heading: 'NK225マーケットデータ（buildShieldData）',
+        items: [
+          'データソース: Yahoo Finance ^N225（query1→query2 フォールバック、encodeURIComponent 使用）',
+          '取得期間: 1年分日足 OHLCV（interval=1d&range=1y）',
+          '計算値: MA20 / MA60 / MA200 / 直近20日高値 / 直近20日安値 / 直近10日OHLCV（前日比%付き）',
+          '先物建玉・PCR: fetchFuturesDailyData（public/data/futures_daily.json）から最新値',
+          'VIX: fetchVixData（週次 newest-first 配列の[0]が最新）から最新値・前週比',
+          'キャッシュなし（リロードごとに再取得）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'シールド画面構成',
+        items: [
+          'SHIELD_STATUS_LINES: ターミナル風ステータスログ（12行）をタイプライターアニメーションで表示',
+          'マーケットデータカード: 日付・終値・前日比・MA20/MA60/MA200・20日高値/安値・建玉残高・PCR・VIXを表示',
+          '直近OHLCV テーブル（10件）: 日付 / 始値 / 高値 / 安値 / 終値 / 前日比%',
+          'AIプロンプト生成ボタン: マーケットデータ JSON ＋ プロンプトテンプレートをクリップボードにコピー',
+          'プロンプト中には添付画像（ポジション画像）が必須と明示。画像未添付の場合AIが分析拒否',
+          'ログイン済みユーザーにのみコピーボタン・データを表示（未ログイン: ログイン促す表示）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'シールド AIプロンプト仕様',
+        items: [
+          'Role: 保有中ポジション専門アドバイザー「ぽいロボ シールド」',
+          '分析対象: 保有中のポジション（ブル/ベアファンド・先物）の管理・出口戦略のみ',
+          '必須入力: 証券会社保有画面のスクリーンショット（銘柄名・平均取得価格・現在価格・損益）',
+          '提供データ: built_at / nk225（latest_close・change_1d・MA20/60/200・high/low_20d・ohlcv_recent）/ futures（oi・oi_delta・pcr）/ vix（latest・change_pct）',
+          'JSON末尾に市場データを添付。画像確認できない場合はエラーメッセージのみ出力する設計',
+        ],
+      },
+    ],
+  },
+  {
     id: 'sync',
     icon: '☁️',
     title: 'クロスデバイス同期（Firebase）',
@@ -539,20 +604,10 @@ const SPEC_SECTIONS = [
 ]
 
 // ── レンダラー ────────────────────────────────────────
-function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0], isDark: boolean) {
-  const c = {
-    text:       isDark ? 'rgba(255,255,255,0.90)'  : 'rgba(15,20,50,0.88)',
-    sub:        isDark ? 'rgba(255,255,255,0.60)'  : 'rgba(15,20,50,0.62)',
-    heading:    isDark ? 'rgba(255,255,255,0.97)'  : 'rgba(10,15,45,0.97)',
-    border:     isDark ? 'rgba(255,255,255,0.10)'  : 'rgba(0,0,0,0.08)',
-    rowEven:    isDark ? 'rgba(255,255,255,0.05)'  : 'rgba(0,0,0,0.03)',
-    bullet:     isDark ? 'rgba(96,165,250,0.90)'   : 'rgba(37,99,235,0.70)',
-    thBg:       isDark ? 'rgba(255,255,255,0.08)'  : 'rgba(0,0,0,0.04)',
-  }
-
+function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0]) {
   if (block.type === 'para') {
     return (
-      <p key={block.text} style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.75, color: c.text }}>
+      <p key={block.text} style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.75, color: 'var(--text-sub)' }}>
         {block.text}
       </p>
     )
@@ -561,13 +616,13 @@ function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0], isDark: b
   if (block.type === 'list') {
     return (
       <div key={block.heading} style={{ marginBottom: 20 }}>
-        <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: c.heading }}>
+        <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
           {block.heading}
         </p>
         <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {block.items.map((item, i) => (
-            <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: c.text, lineHeight: 1.6 }}>
-              <span style={{ color: c.bullet, flexShrink: 0, marginTop: 2 }}>›</span>
+            <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>
+              <span style={{ color: 'var(--text-dim)', flexShrink: 0, marginTop: 2 }}>›</span>
               <span>{item}</span>
             </li>
           ))}
@@ -585,8 +640,8 @@ function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0], isDark: b
               {block.headers.map(h => (
                 <th key={h} style={{
                   textAlign: 'left', padding: '7px 12px',
-                  background: c.thBg, color: c.heading, fontWeight: 600,
-                  borderBottom: `1px solid ${c.border}`,
+                  background: 'var(--bg-subtle)', color: 'var(--text)', fontWeight: 600,
+                  borderBottom: '1px solid var(--glass-border)',
                   whiteSpace: 'nowrap',
                 }}>
                   {h}
@@ -596,12 +651,13 @@ function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0], isDark: b
           </thead>
           <tbody>
             {block.rows.map((row, ri) => (
-              <tr key={ri} style={{ background: ri % 2 === 0 ? 'transparent' : c.rowEven }}>
+              <tr key={ri} style={{ background: ri % 2 === 0 ? 'transparent' : 'var(--bg-subtle)' }}>
                 {row.map((cell, ci) => (
                   <td key={ci} style={{
-                    padding: '7px 12px', color: ci === 0 ? c.heading : c.text,
+                    padding: '7px 12px',
+                    color: ci === 0 ? 'var(--text)' : 'var(--text-sub)',
                     fontWeight: ci === 0 ? 500 : 400,
-                    borderBottom: `1px solid ${c.border}`,
+                    borderBottom: '1px solid var(--glass-border)',
                     fontSize: 12.5,
                   }}>
                     {cell}
@@ -620,21 +676,11 @@ function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0], isDark: b
 
 // ── メインコンポーネント ──────────────────────────────
 export function SpecView({ theme, isMobile }: Props) {
-  const isDark = theme === 'dark'
-
-  const c = {
-    bg:           isDark ? 'transparent'              : 'transparent',
-    cardBg:       isDark ? 'rgba(255,255,255,0.04)'   : 'rgba(255,255,255,0.7)',
-    cardBorder:   isDark ? 'rgba(255,255,255,0.12)'   : 'rgba(0,0,0,0.08)',
-    sectionTitle: isDark ? 'rgba(255,255,255,0.97)'   : 'rgba(10,15,45,0.97)',
-    divider:      isDark ? 'rgba(255,255,255,0.10)'   : 'rgba(0,0,0,0.07)',
-    logoText:     isDark ? 'rgba(255,255,255,0.45)'   : 'rgba(15,20,50,0.50)',
-  }
-
   return (
     <div style={{
       flex: 1, overflowY: 'auto', overflowX: 'hidden',
       padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
+      background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9',
     }}>
       <div style={{ maxWidth: 780, margin: '0 auto' }}>
 
@@ -642,11 +688,11 @@ export function SpecView({ theme, isMobile }: Props) {
         <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 14 }}>
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.sectionTitle, letterSpacing: '-0.5px' }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
               システム仕様
             </h1>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
-              ぽいロボ — 最終更新: 2026-05-16
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
+              ぽいロボ — 最終更新: 2026-05-18
             </p>
           </div>
         </div>
@@ -658,11 +704,10 @@ export function SpecView({ theme, isMobile }: Props) {
               key={section.id}
               id={section.id}
               style={{
-                background: c.cardBg,
-                border: `1px solid ${c.cardBorder}`,
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: 14,
                 padding: isMobile ? '18px 16px' : '22px 24px',
-                backdropFilter: 'blur(8px)',
               }}
             >
               {/* セクションタイトル */}
@@ -670,7 +715,7 @@ export function SpecView({ theme, isMobile }: Props) {
                 margin: '0 0 16px',
                 fontSize: isMobile ? 16 : 17,
                 fontWeight: 700,
-                color: c.sectionTitle,
+                color: 'var(--text)',
                 display: 'flex', alignItems: 'center', gap: 8,
                 letterSpacing: '-0.3px',
               }}>
@@ -678,9 +723,9 @@ export function SpecView({ theme, isMobile }: Props) {
                 {section.title}
               </h2>
 
-              <div style={{ borderTop: `1px solid ${c.divider}`, paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 16 }}>
                 {section.content.map((block, i) => (
-                  <div key={i}>{renderContent(block, isDark)}</div>
+                  <div key={i}>{renderContent(block)}</div>
                 ))}
               </div>
             </section>

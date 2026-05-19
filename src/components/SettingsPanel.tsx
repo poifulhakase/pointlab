@@ -7,6 +7,8 @@ type Props = {
   onClose: () => void
   theme: 'dark' | 'light'
   onToggleTheme: () => void
+  darkStyle: 'neutral' | 'blue'
+  onChangeDarkStyle: (s: 'neutral' | 'blue') => void
   user: User
   syncStatus: string
   onOpenAccount: () => void
@@ -14,7 +16,7 @@ type Props = {
   onOpenSpec: () => void
 }
 
-export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, user, syncStatus, onOpenAccount, isAdmin, onOpenSpec }: Props) {
+export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, isAdmin, onOpenSpec }: Props) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)
@@ -90,6 +92,24 @@ export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, user, syn
                 ダーク
               </button>
             </div>
+
+            {/* ダークスタイル（ダーク時のみ表示） */}
+            {theme === 'dark' && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                <button
+                  style={{ ...st.styleBtn, ...(darkStyle === 'neutral' ? st.styleBtnActive : {}) }}
+                  onClick={() => onChangeDarkStyle('neutral')}
+                >
+                  ニュートラル
+                </button>
+                <button
+                  style={{ ...st.styleBtn, ...(darkStyle === 'blue' ? st.styleBtnActive : {}) }}
+                  onClick={() => onChangeDarkStyle('blue')}
+                >
+                  ブルー（元）
+                </button>
+              </div>
+            )}
           </section>
 
           {/* アカウント */}
@@ -155,6 +175,17 @@ const st: Record<string, React.CSSProperties> = {
   themeBtnActive: {
     background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)',
     borderColor: 'transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)',
+  },
+
+  styleBtn: {
+    display: 'flex', alignItems: 'center', gap: 5,
+    padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 500,
+    color: 'var(--text-sub)', border: '1px solid var(--glass-border)',
+    background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+  },
+  styleBtnActive: {
+    background: 'var(--bg-subtle)', color: 'var(--text)',
+    borderColor: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent) inset',
   },
 
   accountRow: {

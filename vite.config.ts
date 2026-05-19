@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -24,6 +25,32 @@ export default defineConfig({
     },
   },
   plugins: [
+    {
+      name: 'local-api',
+      configureServer(server) {
+        server.middlewares.use('/api/stocks-daily', async (req: IncomingMessage, res: ServerResponse) => {
+          if (req.method !== 'GET') { res.statusCode = 405; res.end('Method Not Allowed'); return }
+          let statusCode = 200
+          const expRes = {
+            setHeader: (name: string, val: string) => res.setHeader(name, val),
+            status(code: number) { statusCode = code; return expRes },
+            json(data: unknown) {
+              res.statusCode = statusCode
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify(data))
+            },
+          }
+          try {
+            const { default: handler } = await import('./api/stocks-daily.js')
+            await handler(req, expRes)
+          } catch (e) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: String(e) }))
+          }
+        })
+      },
+    },
     react(),
     VitePWA({
       registerType: 'autoUpdate',

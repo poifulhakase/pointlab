@@ -32,6 +32,11 @@ const IconLab = () => (
     <path d="M9 12h6"/>
   </svg>
 )
+const IconShield = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+)
 
 const SECTIONS: Section[] = [
   {
@@ -52,21 +57,31 @@ const SECTIONS: Section[] = [
     items: [
       '画面下のナビバーの「チャート」アイコンをタップすると表示されます。',
       '日経225・ドル円・米国債の TradingView チャートを表示できます。上部のタブで銘柄を切り替えられます。',
-      '右上の分割ボタンで1画面 / 2画面を切り替えられます。',
+      '右上の分割ボタンで1画面 / 2画面を切り替えられます（スマートフォンでは1画面固定）。',
     ],
   },
   {
     icon: <IconRobot />,
-    title: 'ぽいロボ（需給分析）',
+    title: 'エンジン（需給分析）',
     items: [
-      '画面上部のナビバーの「ぽいロボ」アイコンをタップすると表示されます。',
+      '画面下のナビバーの「エンジン」アイコンをタップすると表示されます。',
       '「分析・環境・現物・先物」の4タブで切り替えられます。',
-      '【分析】ぽいロボ エンジンとクオンツ分析レポートを横並びで表示します。ぽいロボ エンジンの「クオンツ分析用プロンプト＋需給データをコピー」ボタンでAI分析用データをクリップボードにコピーし、Gemini / Claude / ChatGPTへワンタップで開けます。',
-      '【分析】クオンツ分析レポートは保存するとプレビューモードに切り替わり、「確信度：XX%」「判定：〜」の行がシアン色でハイライト表示されます。「編集」ボタンまたはプレビューをタップすると編集に戻ります。「全選択」ボタンでテキスト全体を選択できます（スマートフォンでの貼り替えに便利）。',
+      '【分析】ぽいロボ エンジンとクオンツ分析レポートを横並びで表示します。「クオンツ分析用プロンプト＋需給データをコピー」ボタンでAI分析用データをクリップボードにコピーし、Gemini / Claude / ChatGPT へワンタップで開けます。',
+      '【分析】クオンツ分析レポートは保存するとプレビューモードに切り替わり、「確信度：XX%」「判定：〜」の行がシアン色でハイライト表示されます。「全選択」ボタンでテキスト全体を選択できます（スマートフォンでの貼り替えに便利）。',
       '【環境】VIX・NS倍率チャートと、USD/JPY 日次テーブルを表示します。',
-      '【現物】信用倍率・投資主体別売買動向・需給指標（騰落レシオ・空売り比率・裁定買い残）・日経平均（銘柄別寄与度/業種別騰落率）を表示します。',
-      '【先物】CFTC COT 日経225先物ポジション（週次）・売り圧力スコアと、建玉残高・取引高・PCR（プット/コール比）の統合テーブル（日次）を表示します。',
-      'PCRセルは ≥1.2（プット優勢・弱気）= 赤背景、≤0.8（コール優勢・強気）= 緑背景で色付けされます。',
+      '【現物】信用倍率・投資主体別売買動向・需給指標（騰落レシオ・空売り比率・裁定買い残）・日経平均（銘柄別寄与度/業種別騰落率）を表示します。スマートフォンでは銘柄別寄与度と業種別騰落率が縦並びで表示されます。',
+      '【先物】CFTC COT 日経225先物ポジション（週次）・売り圧力スコアと、建玉残高・取引高・PCR（プット/コール比）の統合テーブル（日次）を表示します。PCR ≥1.2（弱気）= 赤、≤0.8（強気）= 緑で色付けされます。',
+    ],
+  },
+  {
+    icon: <IconShield />,
+    title: 'シールド（ポジション管理）',
+    items: [
+      '画面下のナビバーの「シールド」アイコンをタップすると表示されます。',
+      '保有中ポジションの管理・出口戦略に特化した分析ツールです。エントリー判断は対象外です。',
+      '日経225の最新OHLCV・移動平均（MA20/MA60/MA200）・直近高値安値・建玉残高・PCR・VIXが自動取得されます。',
+      '「AIプロンプトをコピー」ボタンで市場データ付きプロンプトをクリップボードにコピーできます。Gemini / Claude / ChatGPT に貼り付けた後、保有ポジションのスクリーンショットを添付して送信すると、出口戦略のアドバイスが得られます。',
+      'ポジション画像（証券会社の保有画面スクリーンショット）は必須です。画像なしの場合、AIは分析を行いません。',
     ],
   },
   {
@@ -74,49 +89,40 @@ const SECTIONS: Section[] = [
     title: '研究室',
     items: [
       '画面下のナビバーの「研究室」アイコンをタップすると表示されます。研究室でもナビバーは共通で表示されます。',
-      '左のメニューは「資料（Data）」「設定（Settings）」の2項目です。',
+      '左のメニューは「資料（Data）」「設定（Settings）」「お問い合わせ（Contact）」の3項目です。',
       '「資料」で記事・解説資料を閲覧できます。資料を開いた後は右上の「×」ボタンで資料トップへ戻れます。',
-      '「設定」では、テーマ（ライト/ダーク）の切り替えや、Google アカウントでのログイン/ログアウトができます。ログイン後、複数デバイス間でメモが自動同期されます。',
-      '右下の「ぽいロボ コネクト」ボタンはGoogleログインが必要です。未ログイン時はボタン下に「Googleログインが必要です」と表示され、タップするとGoogleログインモーダルが開きます。ログイン成功後、自動的に接続確認モーダルが表示されます。',
-      'ぽいロボ コネクトの確認モーダルで「開始」を押すと、ぽいふる博士との音声通話・画面共有セッションが始まります。通話中はメニューが非表示になり、画面中央に通話パネルが表示されます。マイク・画面共有・切断ボタンのみ表示されます（iOS は画面共有非対応）。同時接続は最大2名までです。',
+      '「設定」をタップすると画面右からスライドインするドロワーが開きます。テーマ（ライト/ダーク）の切り替えや、Google アカウントでのログイン/ログアウトができます。ログイン後、複数デバイス間でメモが自動同期されます。',
+      '「お問い合わせ」をタップすると画面右からドロワーが開き、お問い合わせフォームに入力・送信できます（お客様種別選択 ＋ 内容入力）。',
+      '右下の「ぽいロボ コネクト」ボタンをタップすると予約画面が開きます。Googleログイン不要で空き枠を閲覧できます。枠を選んで「予約を申請する」を押すとログインを求められます（未ログイン時）。ログイン後は予約の確認・.ics カレンダーファイルのダウンロードができます。',
+      'セッション開始5分前になると「今すぐ接続する」ボタンが表示され、ぽいふる博士との音声通話・画面共有が始まります。通話パネルを最小化すると、他の画面を見ながら通話を継続できます。マイク・画面共有・切断ボタンのみ表示されます（iOS は画面共有非対応）。同時接続は最大2名です。',
     ],
   },
 ]
 
 export function ManualView({ theme, isMobile, onClose }: Props) {
-  const isDark = theme === 'dark'
-
-  const c = {
-    bg:          isDark ? 'transparent'                 : 'transparent',
-    cardBg:      isDark ? 'rgba(255,255,255,0.04)'      : 'rgba(0,0,0,0.03)',
-    cardBorder:  isDark ? 'rgba(255,255,255,0.12)'      : 'rgba(0,0,0,0.08)',
-    title:       isDark ? 'rgba(255,255,255,0.97)'      : 'rgba(30,40,80,0.95)',
-    text:        isDark ? 'rgba(255,255,255,0.90)'      : 'rgba(50,60,100,0.80)',
-    bullet:      isDark ? 'rgba(96,165,250,0.90)'       : 'rgba(37,99,235,0.7)',
-    logoText:    isDark ? 'rgba(255,255,255,0.45)'      : 'rgba(80,90,130,0.55)',
-    accent:      isDark ? 'rgba(96,165,250,0.15)'       : 'rgba(37,99,235,0.08)',
-    accentBorder:isDark ? 'rgba(96,165,250,0.25)'       : 'rgba(37,99,235,0.2)',
-  }
-
   return (
-    <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: isMobile ? '20px 16px 40px' : '28px 32px 48px' }}>
+    <div style={{
+      flex: 1, overflowY: 'auto', overflowX: 'hidden',
+      padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
+      background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9',
+    }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 28, display: 'flex', alignItems: 'center', gap: 14 }}>
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.title, letterSpacing: '-0.5px' }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
               説明書
             </h1>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: c.logoText }}>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
               ぽいロボ — 説明書
             </p>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: 'none', background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: c.logoText, cursor: 'pointer', flexShrink: 0 }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-dim)', cursor: 'pointer', flexShrink: 0 }}
               aria-label="閉じる"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -129,8 +135,8 @@ export function ManualView({ theme, isMobile, onClose }: Props) {
         {/* リード */}
         <div style={{
           padding: '14px 18px', borderRadius: 12, marginBottom: 20,
-          background: c.accent, border: `1px solid ${c.accentBorder}`,
-          fontSize: 13, color: c.text, lineHeight: 1.7,
+          background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+          fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.7,
         }}>
           ぽいロボは、株式投資家向けのカレンダー＋需給分析アプリです。
           AI分析プロンプトをワンクリックで生成し、Gemini / Claude / ChatGPT に貼り付けるだけで市場の脆弱性・清算プロセスの定量レポートが得られます。
@@ -140,17 +146,17 @@ export function ManualView({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {SECTIONS.map(sec => (
             <div key={sec.title} style={{
-              background: c.cardBg, border: `1px solid ${c.cardBorder}`,
+              background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
               borderRadius: 14, padding: isMobile ? '16px 16px' : '18px 22px',
             }}>
-              <h2 style={{ margin: '0 0 12px', fontSize: isMobile ? 15 : 16, fontWeight: 700, color: c.title, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: c.bullet }}>{sec.icon}</span>
+              <h2 style={{ margin: '0 0 12px', fontSize: isMobile ? 15 : 16, fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: 'var(--text-dim)' }}>{sec.icon}</span>
                 {sec.title}
               </h2>
               <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                 {sec.items.map((item, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 10, fontSize: 13, color: c.text, lineHeight: 1.6 }}>
-                    <span style={{ color: c.bullet, flexShrink: 0, fontWeight: 700, marginTop: 1 }}>▸</span>
+                  <li key={i} style={{ display: 'flex', gap: 10, fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>
+                    <span style={{ color: 'var(--text-dim)', flexShrink: 0, fontWeight: 700, marginTop: 1 }}>▸</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -158,7 +164,6 @@ export function ManualView({ theme, isMobile, onClose }: Props) {
             </div>
           ))}
         </div>
-
 
       </div>
     </div>

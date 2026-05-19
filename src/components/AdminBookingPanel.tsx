@@ -43,7 +43,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
   const [errorMsg, setErrorMsg] = useState('')
 
   // new slot form
-  const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local TZ
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
   const [newDate, setNewDate] = useState(today)
   const [newTime, setNewTime] = useState('10:00')
 
@@ -130,7 +130,9 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
     askConfirm('予約を承認', `${formatBookingLabel(b)} の予約を承認しますか？`, async () => {
       await confirmBooking(b, adminMsg || undefined)
       const updated = { ...b, status: 'confirmed' as const, adminMessage: adminMsg || '' }
-      sendBookingEmail({ type: 'confirm', booking: updated }).catch(() => {})
+      sendBookingEmail({ type: 'confirm', booking: updated }).catch(() => {
+        setErrorMsg('予約を承認しましたが、メール送信に失敗しました。')
+      })
     })
   }
 
@@ -140,7 +142,9 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
     askConfirm('予約をキャンセル', `${formatBookingLabel(b)} の予約をキャンセルしますか？`, async () => {
       await cancelBooking(b, true)
       const updated = { ...b, status: 'cancelled_admin' as const, adminMessage: adminMsg || '' }
-      sendBookingEmail({ type: 'cancel_admin', booking: updated }).catch(() => {})
+      sendBookingEmail({ type: 'cancel_admin', booking: updated }).catch(() => {
+        setErrorMsg('キャンセルしましたが、メール送信に失敗しました。')
+      })
     })
   }
 
@@ -162,7 +166,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
 
   const btnBase: React.CSSProperties = {
     padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700,
-    letterSpacing: '0.04em', border: `1px solid ${CY_BORDER}`, color: CY_ACCENT,
+    letterSpacing: '0.04em', border: `1px solid ${CY_BORDER}`, color: CY_ACCENT, whiteSpace: 'nowrap',
     background: L ? 'rgba(0,100,180,0.07)' : 'rgba(0,180,255,0.07)',
   }
   const btnDanger: React.CSSProperties = {
@@ -238,7 +242,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
                 transition: 'all 0.15s',
               }}
             >
-              {t === 'bookings' ? 'BOOKINGS' : 'SLOTS'}
+              {t === 'bookings' ? '予約管理' : '枠設定'}
             </button>
           ))}
         </div>

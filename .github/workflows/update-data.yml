@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,3 +47,16 @@ jobs:
           git push
 
       # Vercel は GitHub 連携により、push をトリガーに自動デプロイ
+
+      - name: データ取得失敗を GitHub Issue で通知
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ 市場データ取得失敗 ' + new Date().toISOString().slice(0,10),
+              body: `ワークフロー実行中にエラーが発生しました。\n\n**確認先:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['bug'],
+            })

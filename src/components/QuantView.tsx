@@ -1211,8 +1211,8 @@ function EnginePanel({
                     background: copyStatus === 'prompt' ? `rgba(${CY_RGB},0.18)` : `rgba(${CY_RGB},0.07)`,
                     border: `2px solid ${copyStatus === 'prompt' ? CY_GREEN : CY_BORDBR}`,
                     boxShadow: copyStatus === 'prompt'
-                      ? `0 0 24px rgba(${CY_RGB},0.6), inset 0 0 14px rgba(${CY_RGB},0.18)`
-                      : `0 0 16px rgba(${CY_RGB},0.22), inset 0 0 10px rgba(${CY_RGB},0.06)`,
+                      ? `0 0 24px ${CY_FAINT}, inset 0 0 14px ${CY_FAINT}`
+                      : `0 0 16px ${CY_FAINT}, inset 0 0 10px ${CY_FAINT}`,
                     color: CY_GREEN,
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     gap: 7, cursor: 'pointer',
@@ -1236,7 +1236,7 @@ function EnginePanel({
                 <div style={{ position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content' }}>
                   <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${CY_BORDBR}`, flexShrink: 0 }} />
                   <div style={{ background: `rgba(${CY_RGB},0.06)`, border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 10, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
-                    {copyStatus === 'prompt' ? '▶ コピー完了' : <>分析用プロンプト<br />＋需給データ</>}
+                    {copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用<br />プロンプト＋需給データ</>}
                   </div>
                 </div>
               </div>
@@ -1249,7 +1249,7 @@ function EnginePanel({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
-              {copyStatus === 'prompt' ? 'コピーしました！' : <>エントリー分析用プロンプト<br />＋需給データをコピー</>}
+              {copyStatus === 'prompt' ? 'コピーしました！' : <>エントリー分析用<br />プロンプト＋需給データ</>}
             </button>
           )}
         </div>
@@ -1274,7 +1274,7 @@ function EnginePanel({
                     width: 70, height: 70, borderRadius: '50%',
                     background: `rgba(${CY_RGB},0.06)`,
                     border: `2px solid ${CY_BORDER}`,
-                    boxShadow: `0 0 16px rgba(${CY_RGB},0.22), inset 0 0 10px rgba(${CY_RGB},0.06)`,
+                    boxShadow: `0 0 16px ${CY_FAINT}, inset 0 0 10px ${CY_FAINT}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
@@ -1333,7 +1333,7 @@ function EnginePanel({
                     width: 70, height: 70, borderRadius: '50%',
                     background: `rgba(${CY_RGB},0.06)`,
                     border: `2px solid ${CY_BORDER}`,
-                    boxShadow: `0 0 16px rgba(${CY_RGB},0.22), inset 0 0 10px rgba(${CY_RGB},0.06)`,
+                    boxShadow: `0 0 16px ${CY_FAINT}, inset 0 0 10px ${CY_FAINT}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', textDecoration: 'none',
                     transition: 'box-shadow 0.2s, background 0.2s',
@@ -1710,16 +1710,30 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   useEffect(() => { if (!vixDailyLoaded)       loadVixDaily()        }, [vixDailyLoaded,        loadVixDaily])
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
 
+  // 重い計算をデータ変化時のみ再実行（毎レンダーで走らせない）
+  const exportJson = useMemo(
+    () => JSON.stringify(
+      buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData),
+      null, 2
+    ),
+    [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData), null, 2)
-    await copyText(AI_PROMPT_TEMPLATE + json)
+    await copyText(AI_PROMPT_TEMPLATE + exportJson)
     setCopyStatus('prompt')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData])
+  }, [exportJson])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 
   // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
+  const [marLongQ1,  marLongQ3]  = useMemo(() => quartiles(marData.map(r => r.longBal)),  [marData])
+  const [marShortQ1, marShortQ3] = useMemo(() => quartiles(marData.map(r => r.shortBal)), [marData])
+  const [arbLongQ1,  arbLongQ3]  = useMemo(() => quartiles(arbData.map(r => r.longBal)),  [arbData])
+  const [arbShortQ1, arbShortQ3] = useMemo(() => quartiles(arbData.map(r => r.shortBal)), [arbData])
+  const combinedRows = useMemo(() => buildCombinedRows(ssData, adData, arbData), [ssData, adData, arbData])
+
   const { mTblWrap, mTh, mTd, mThDate, mTdDate } = useMemo(() => ({
     mTblWrap: isMobile
       ? { ...s.tableWrap, overflowX: 'hidden' as const, overflowY: 'visible' as const, flex: 'none' as const }
@@ -1885,23 +1899,19 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {(() => {
-                      const [longQ1, longQ3]   = quartiles(marData.map(r => r.longBal))
-                      const [shortQ1, shortQ3] = quartiles(marData.map(r => r.shortBal))
-                      const visibleRows = isMobile && !marExpanded ? marData.slice(0, MOBILE_ROW_LIMIT) : marData
-                      return visibleRows.map((row, i) => (
+                    {(isMobile && !marExpanded ? marData.slice(0, MOBILE_ROW_LIMIT) : marData).map((row, i) => (
                         <tr key={row.date} style={{ ...s.tr, background: i === 0 ? 'var(--latest-row-bg)' : 'transparent' }}>
                           <td style={mTdDate}>
                             <div style={s.dateMain}>{withYear(row.label, row.date)}</div>
                             <div style={s.dateSub}>{row.date}</div>
                           </td>
-                          <td style={{ ...mTd, ...s.tdNum, background: balBg(row.longBal, longQ1, longQ3, true, theme) }}>
-                            <span style={{ color: balTextColor(row.longBal, longQ1, longQ3, true, theme), fontWeight: 500 }}>
+                          <td style={{ ...mTd, ...s.tdNum, background: balBg(row.longBal, marLongQ1, marLongQ3, true, theme) }}>
+                            <span style={{ color: balTextColor(row.longBal, marLongQ1, marLongQ3, true, theme), fontWeight: 500 }}>
                               {fmtHyakuman(row.longBal)}
                             </span>
                           </td>
-                          <td style={{ ...mTd, ...s.tdNum, background: balBg(row.shortBal, shortQ1, shortQ3, false, theme) }}>
-                            <span style={{ color: balTextColor(row.shortBal, shortQ1, shortQ3, false, theme), fontWeight: 500 }}>
+                          <td style={{ ...mTd, ...s.tdNum, background: balBg(row.shortBal, marShortQ1, marShortQ3, false, theme) }}>
+                            <span style={{ color: balTextColor(row.shortBal, marShortQ1, marShortQ3, false, theme), fontWeight: 500 }}>
                               {fmtHyakuman(row.shortBal)}
                             </span>
                           </td>
@@ -1919,8 +1929,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                             ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                           </td>
                         </tr>
-                      ))
-                    })()}
+                    ))}
                   </tbody>
                 </table>
               )
@@ -1995,9 +2004,6 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
         {/* BL: 需給指標（騰落レシオ・空売り比率・裁定残高） */}
         <div style={isMobile ? s.panelMobile : { ...s.panel, borderRight: '1px solid var(--border-dim)' }}>
           {(() => {
-            const combinedRows = buildCombinedRows(ssData, adData, arbData)
-            const [arbQ1, arbQ3]           = quartiles(arbData.map(r => r.longBal))
-            const [arbShortQ1, arbShortQ3] = quartiles(arbData.map(r => r.shortBal))
             const combinedLoading = (ssLoading || adLoading || arbLoading) && combinedRows.length === 0
             const combinedError = ssError || adError || arbError
             const latestDate = combinedRows[0]?.date
@@ -2056,9 +2062,9 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                                   <div style={s.dateMain}>{row.label}</div>
                                   <div style={s.dateSub}>{row.date}</div>
                                 </td>
-                                <td style={{ ...mTd, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbQ1, arbQ3, theme) : 'transparent' }}>
+                                <td style={{ ...mTd, ...s.tdNum, background: row.arbLongBal != null ? arbBg(row.arbLongBal, arbLongQ1, arbLongQ3, theme) : 'transparent' }}>
                                   {row.arbLongBal != null
-                                    ? <span style={{ color: arbTextColor(row.arbLongBal, arbQ1, arbQ3, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbLongBal)}</span>
+                                    ? <span style={{ color: arbTextColor(row.arbLongBal, arbLongQ1, arbLongQ3, theme), fontWeight: 500 }}>{fmtHyakuman(row.arbLongBal)}</span>
                                     : <span style={{ color: 'var(--text-dim)' }}>-</span>
                                   }
                                 </td>

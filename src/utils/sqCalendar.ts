@@ -50,13 +50,15 @@ export function getSqMarkersForDate(date: Date, sqDates: SqDate[]): SqMarker[] {
   return result
 }
 
-export const SQ_META: Record<SqMarker, { label: string; short: string; desc: string; color: string; bg: string }> = {
+export const SQ_META: Record<SqMarker, { label: string; short: string; desc: string; color: string; bg: string; colorLight: string; bgLight: string }> = {
   'sq-major': {
     label: 'メジャーSQ',
     short: 'SQ',
     desc: '日経225先物・オプション特別清算指数算出日',
     color: '#60a5fa',
     bg: 'rgba(96,165,250,0.15)',
+    colorLight: '#2563eb',
+    bgLight: 'rgba(37,99,235,0.08)',
   },
   'sq-mini': {
     label: 'ミニSQ',
@@ -64,5 +66,7 @@ export const SQ_META: Record<SqMarker, { label: string; short: string; desc: str
     desc: '日経225ミニ先物特別清算指数算出日',
     color: '#60a5fa',
     bg: 'rgba(96,165,250,0.15)',
+    colorLight: '#2563eb',
+    bgLight: 'rgba(37,99,235,0.08)',
   },
 }

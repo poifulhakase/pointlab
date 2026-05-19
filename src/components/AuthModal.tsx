@@ -6,6 +6,7 @@ import { guestLogin } from '../utils/guestAuth'
 type Props = {
   isOpen: boolean
   isRequired?: boolean
+  theme?: 'dark' | 'light'
   onClose: () => void
   onUnlock: () => void
   user: User | null
@@ -15,15 +16,16 @@ type Props = {
   onRetry?: () => void
 }
 
-export function AuthModal({ isOpen, isRequired, onClose, onUnlock, user, syncStatus, onSignIn, onSignOut, onRetry }: Props) {
+export function AuthModal({ isOpen, isRequired, theme = 'dark', onClose, onUnlock, user, syncStatus, onSignIn, onSignOut, onRetry }: Props) {
   if (!isOpen) return null
 
   const handleClose = () => { if (!isRequired) onClose() }
+  const modalBg = theme === 'dark' ? '#111115' : 'rgba(255,255,255,0.98)'
 
   return (
     <>
       <div style={styles.backdrop} onClick={handleClose} />
-      <div style={styles.modal} className="glass">
+      <div style={{ ...styles.modal, background: modalBg }} className="glass">
         {!isRequired && (
           <button style={styles.closeBtn} onClick={handleClose} aria-label="閉じる">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -66,7 +68,10 @@ function GateView({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div style={styles.body}>
       <div style={styles.logoWrap}>
-        <img src="/poirobo.png" alt="ぽいロボ" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        <picture>
+          <source srcSet={`${import.meta.env.BASE_URL}poirobo.webp`} type="image/webp" />
+          <img src={`${import.meta.env.BASE_URL}poirobo.png`} alt="ぽいロボ" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </picture>
       </div>
       <h2 style={styles.title}>ぽいロボ</h2>
       <p style={styles.subtitle}>IDとパスワードを入力してください</p>

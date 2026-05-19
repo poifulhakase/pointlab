@@ -7,14 +7,14 @@ export type MacroEvent = { type: MacroEventType }
 // 米国・日本イベント色（アノマリーと同色統一）
 export const MACRO_COLOR        = '#60a5fa'
 export const MACRO_BG           = 'rgba(96,165,250,0.15)'
-export const MACRO_COLOR_LIGHT  = '#1d4ed8'
-export const MACRO_BG_LIGHT     = 'rgba(29,78,216,0.10)'
+export const MACRO_COLOR_LIGHT  = '#2563eb'
+export const MACRO_BG_LIGHT     = 'rgba(37,99,235,0.08)'
 
 // 日本イベント色（アノマリーと同色統一）
 export const MACRO_JP_COLOR       = '#60a5fa'
 export const MACRO_JP_BG          = 'rgba(96,165,250,0.15)'
-export const MACRO_JP_COLOR_LIGHT = '#1d4ed8'
-export const MACRO_JP_BG_LIGHT    = 'rgba(29,78,216,0.10)'
+export const MACRO_JP_COLOR_LIGHT = '#2563eb'
+export const MACRO_JP_BG_LIGHT    = 'rgba(37,99,235,0.08)'
 
 export const MACRO_META: Record<MacroEventType, {
   color: string

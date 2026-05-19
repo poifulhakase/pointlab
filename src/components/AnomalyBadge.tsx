@@ -34,12 +34,12 @@ export function AnomalyBadge({ events, size = 'md', theme = 'dark' }: Props) {
                 letterSpacing: '0.03em',
                 color: isLight ? badgeColor : 'rgba(255,255,255,0.92)',
                 background: badgeBg,
-                border: `1px solid ${badgeColor}${isLight ? 'cc' : '88'}`,
+                border: `1px solid ${badgeColor}${isLight ? '38' : '88'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '2px 6px',
                 lineHeight: 1.5,
                 whiteSpace: 'nowrap',
-                boxShadow: `0 1px 4px ${badgeColor}28`,
+                boxShadow: isLight ? 'none' : `0 1px 4px ${badgeColor}28`,
                 cursor: 'pointer',
               }}
               onClick={ev => {
@@ -61,6 +61,7 @@ export function AnomalyBadge({ events, size = 'md', theme = 'dark' }: Props) {
           color={badgeColor}
           label={ANOMALY_META[popup.key as keyof typeof ANOMALY_META].label}
           desc={ANOMALY_META[popup.key as keyof typeof ANOMALY_META].desc}
+          theme={theme}
           onClose={() => setPopup(null)}
         />
       )}

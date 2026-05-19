@@ -104,9 +104,9 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal }: {
   )
 }
 
-export function NoteView({ isMobile, onOpenManual, onOpenLegal, onGoBack }: Props) {
+export function NoteView({ theme, isMobile, onOpenManual, onOpenLegal, onGoBack }: Props) {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9' }}>
 
       {/* 戻るボタン */}
       {onGoBack && (

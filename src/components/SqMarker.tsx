@@ -10,13 +10,6 @@ type Props = {
 
 type PopupState = { key: SqMarker; x: number; y: number }
 
-function darkenHex(hex: string): string {
-  const r = Math.round(parseInt(hex.slice(1, 3), 16) * 0.45)
-  const g = Math.round(parseInt(hex.slice(3, 5), 16) * 0.45)
-  const b = Math.round(parseInt(hex.slice(5, 7), 16) * 0.45)
-  return `rgb(${r},${g},${b})`
-}
-
 export function SqMarkerBadge({ markers, size = 'md', theme = 'dark' }: Props) {
   const [popup, setPopup] = useState<PopupState | null>(null)
   const isSm = size === 'sm'
@@ -29,6 +22,8 @@ export function SqMarkerBadge({ markers, size = 'md', theme = 'dark' }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
         {markers.map(m => {
           const meta = SQ_META[m]
+          const color = isLight ? meta.colorLight : meta.color
+          const bg    = isLight ? meta.bgLight    : meta.bg
           return (
             <span
               key={m}
@@ -37,14 +32,14 @@ export function SqMarkerBadge({ markers, size = 'md', theme = 'dark' }: Props) {
                 fontSize: isSm ? 11 : 12,
                 fontWeight: 600,
                 letterSpacing: '0.03em',
-                color: isLight ? darkenHex(meta.color) : 'rgba(255,255,255,0.95)',
-                background: isLight ? meta.bg.replace(/[\d.]+\)$/, '0.15)') : meta.bg,
-                border: `1px solid ${meta.color}${isLight ? 'cc' : '99'}`,
+                color: isLight ? color : 'rgba(255,255,255,0.95)',
+                background: bg,
+                border: `1px solid ${color}${isLight ? '38' : '99'}`,
                 borderRadius: 4,
                 padding: isSm ? '1px 4px' : '3px 7px',
                 lineHeight: 1.5,
                 whiteSpace: 'nowrap',
-                boxShadow: `0 1px 4px ${meta.color}30`,
+                boxShadow: isLight ? 'none' : `0 1px 4px ${color}28`,
                 cursor: 'pointer',
               }}
               onClick={ev => {
@@ -59,15 +54,20 @@ export function SqMarkerBadge({ markers, size = 'md', theme = 'dark' }: Props) {
         })}
       </div>
 
-      {popup && (
-        <BadgePopup
-          x={popup.x} y={popup.y}
-          color={SQ_META[popup.key].color}
-          label={SQ_META[popup.key].label}
-          desc={SQ_META[popup.key].desc}
-          onClose={() => setPopup(null)}
-        />
-      )}
+      {popup && (() => {
+        const meta = SQ_META[popup.key]
+        const color = isLight ? meta.colorLight : meta.color
+        return (
+          <BadgePopup
+            x={popup.x} y={popup.y}
+            color={color}
+            label={meta.label}
+            desc={meta.desc}
+            theme={theme}
+            onClose={() => setPopup(null)}
+          />
+        )
+      })()}
     </>
   )
 }

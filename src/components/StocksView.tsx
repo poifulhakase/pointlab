@@ -413,7 +413,7 @@ export function StocksView({ theme, isMobile }: Props) {
 }
 
 // ── 銘柄別寄与度 / 業種別騰落率 (QuantView 現物タブ BR セル用) ─────────
-export function ContribSectorPanel({ theme }: { theme: 'dark' | 'light'; isMobile: boolean }) {
+export function ContribSectorPanel({ theme, isMobile }: { theme: 'dark' | 'light'; isMobile: boolean }) {
   const isDark = theme === 'dark'
   const [data,    setData]    = useState<StocksDailyData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -508,84 +508,165 @@ export function ContribSectorPanel({ theme }: { theme: 'dark' | 'light'; isMobil
         </div>
       ) : data ? (
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {/* 1つのテーブルに統合して行高さを自動同期 */}
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <colgroup>
-              <col style={{ width: 18 }} />
-              <col style={{ width: '30%' }} />
-              <col />
-              <col />
-              <col style={{ width: 1, borderLeft: '1px solid var(--border-dim)' }} />
-              <col style={{ width: '25%' }} />
-              <col />
-            </colgroup>
-            <thead>
-              <tr>
-                <th style={thL} colSpan={2}>銘柄別寄与度</th>
-                <th style={th}>寄与度</th>
-                <th style={th}>比率</th>
-                <th style={{ ...th, padding: 0, width: 1 }} />
-                <th style={thL}>業種別騰落率（東証33業種）</th>
-                <th style={th}>騰落率</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* ── 上昇 TOP5 ── */}
-              <tr>
-                <td colSpan={4} style={sectionTd(upCol, isDark ? 'rgba(96,200,140,0.06)' : 'rgba(22,130,80,0.05)')}>▲ 上昇 TOP5</td>
-                <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)' }} />
-                <td colSpan={2} style={sectionTd(upCol, isDark ? 'rgba(96,200,140,0.06)' : 'rgba(22,130,80,0.05)')}>▲ 上昇 TOP5</td>
-              </tr>
-              {data.contribution.up.map((raw, i) => {
-                const contrib = raw as StocksItem
-                const sector  = data.sector.up[i] as SectorItem | undefined
-                const total   = data.contribution.total ?? 0
-                const pct     = total !== 0 ? Math.abs(contrib.contribution / total * 100) : null
-                const rowBg   = isDark ? 'rgba(96,200,140,0.08)' : 'rgba(22,130,80,0.05)'
-                return (
-                  <tr key={contrib.code} style={{ background: rowBg }}>
-                    <td style={{ ...tdL, color: 'var(--text-dim)', fontSize: 10 }}>{i + 1}</td>
-                    <td style={{ ...tdL, maxWidth: 120, overflow: 'hidden' }}>
-                      <div style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contrib.name}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{contrib.code}</div>
-                    </td>
-                    <td style={{ ...tdR, color: upCol, fontWeight: 700 }}>{fmtContrib(contrib.contribution)}</td>
-                    <td style={{ ...tdR, color: 'var(--text-dim)', fontSize: 11 }}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
-                    <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)', borderBottom: '1px solid var(--border-dim)' }} />
-                    <td style={{ ...tdL, color: 'var(--text-sub)', verticalAlign: 'middle' }}>{sector?.name ?? '—'}</td>
-                    <td style={{ ...tdR, color: upCol, fontWeight: 700, verticalAlign: 'middle' }}>{sector ? fmtPct(sector.changePct) : '—'}</td>
+          {isMobile ? (
+            /* ── モバイル: 銘柄別寄与度 → 業種別騰落率 を縦積み ── */
+            <>
+              {/* 銘柄別寄与度 */}
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={thL} colSpan={2}>銘柄別寄与度</th>
+                    <th style={th}>寄与度</th>
+                    <th style={th}>比率</th>
                   </tr>
-                )
-              })}
-              {/* ── 下落 TOP5 ── */}
-              <tr>
-                <td colSpan={4} style={sectionTd(dnCol, isDark ? 'rgba(255,120,100,0.06)' : 'rgba(200,50,30,0.05)')}>▼ 下落 TOP5</td>
-                <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)' }} />
-                <td colSpan={2} style={sectionTd(dnCol, isDark ? 'rgba(255,120,100,0.06)' : 'rgba(200,50,30,0.05)')}>▼ 下落 TOP5</td>
-              </tr>
-              {data.contribution.down.map((raw, i) => {
-                const contrib = raw as StocksItem
-                const sector  = data.sector.down[i] as SectorItem | undefined
-                const total   = data.contribution.total ?? 0
-                const pct     = total !== 0 ? Math.abs(contrib.contribution / total * 100) : null
-                const rowBg   = isDark ? 'rgba(255,120,100,0.08)' : 'rgba(200,50,30,0.05)'
-                return (
-                  <tr key={contrib.code} style={{ background: rowBg }}>
-                    <td style={{ ...tdL, color: 'var(--text-dim)', fontSize: 10 }}>{i + 1}</td>
-                    <td style={{ ...tdL, maxWidth: 120, overflow: 'hidden' }}>
-                      <div style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contrib.name}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{contrib.code}</div>
-                    </td>
-                    <td style={{ ...tdR, color: dnCol, fontWeight: 700 }}>{fmtContrib(contrib.contribution)}</td>
-                    <td style={{ ...tdR, color: 'var(--text-dim)', fontSize: 11 }}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
-                    <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)', borderBottom: '1px solid var(--border-dim)' }} />
-                    <td style={{ ...tdL, color: 'var(--text-sub)', verticalAlign: 'middle' }}>{sector?.name ?? '—'}</td>
-                    <td style={{ ...tdR, color: dnCol, fontWeight: 700, verticalAlign: 'middle' }}>{sector ? fmtPct(sector.changePct) : '—'}</td>
+                </thead>
+                <tbody>
+                  <tr><td colSpan={4} style={sectionTd(upCol, isDark ? 'rgba(96,200,140,0.06)' : 'rgba(22,130,80,0.05)')}>▲ 上昇 TOP5</td></tr>
+                  {data.contribution.up.map((raw, i) => {
+                    const contrib = raw as StocksItem
+                    const total   = data.contribution.total ?? 0
+                    const pct     = total !== 0 ? Math.abs(contrib.contribution / total * 100) : null
+                    return (
+                      <tr key={contrib.code} style={{ background: isDark ? 'rgba(96,200,140,0.08)' : 'rgba(22,130,80,0.05)' }}>
+                        <td style={{ ...tdL, color: 'var(--text-dim)', fontSize: 10 }}>{i + 1}</td>
+                        <td style={{ ...tdL, maxWidth: 120, overflow: 'hidden' }}>
+                          <div style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contrib.name}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{contrib.code}</div>
+                        </td>
+                        <td style={{ ...tdR, color: upCol, fontWeight: 700 }}>{fmtContrib(contrib.contribution)}</td>
+                        <td style={{ ...tdR, color: 'var(--text-dim)', fontSize: 11 }}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr><td colSpan={4} style={sectionTd(dnCol, isDark ? 'rgba(255,120,100,0.06)' : 'rgba(200,50,30,0.05)')}>▼ 下落 TOP5</td></tr>
+                  {data.contribution.down.map((raw, i) => {
+                    const contrib = raw as StocksItem
+                    const total   = data.contribution.total ?? 0
+                    const pct     = total !== 0 ? Math.abs(contrib.contribution / total * 100) : null
+                    return (
+                      <tr key={contrib.code} style={{ background: isDark ? 'rgba(255,120,100,0.08)' : 'rgba(200,50,30,0.05)' }}>
+                        <td style={{ ...tdL, color: 'var(--text-dim)', fontSize: 10 }}>{i + 1}</td>
+                        <td style={{ ...tdL, maxWidth: 120, overflow: 'hidden' }}>
+                          <div style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contrib.name}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{contrib.code}</div>
+                        </td>
+                        <td style={{ ...tdR, color: dnCol, fontWeight: 700 }}>{fmtContrib(contrib.contribution)}</td>
+                        <td style={{ ...tdR, color: 'var(--text-dim)', fontSize: 11 }}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              {/* 業種別騰落率 */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: '2px solid var(--border-dim)' }}>
+                <thead>
+                  <tr>
+                    <th style={thL}>業種別騰落率（東証33業種）</th>
+                    <th style={th}>騰落率</th>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  <tr><td colSpan={2} style={sectionTd(upCol, isDark ? 'rgba(96,200,140,0.06)' : 'rgba(22,130,80,0.05)')}>▲ 上昇 TOP5</td></tr>
+                  {data.sector.up.map((raw, i) => {
+                    const sector = raw as SectorItem
+                    return (
+                      <tr key={sector.name} style={{ background: isDark ? 'rgba(96,200,140,0.08)' : 'rgba(22,130,80,0.05)' }}>
+                        <td style={{ ...tdL, color: 'var(--text-sub)' }}><span style={{ color: 'var(--text-dim)', fontSize: 10, marginRight: 6 }}>{i + 1}</span>{sector.name}</td>
+                        <td style={{ ...tdR, color: upCol, fontWeight: 700 }}>{fmtPct(sector.changePct)}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr><td colSpan={2} style={sectionTd(dnCol, isDark ? 'rgba(255,120,100,0.06)' : 'rgba(200,50,30,0.05)')}>▼ 下落 TOP5</td></tr>
+                  {data.sector.down.map((raw, i) => {
+                    const sector = raw as SectorItem
+                    return (
+                      <tr key={sector.name} style={{ background: isDark ? 'rgba(255,120,100,0.08)' : 'rgba(200,50,30,0.05)' }}>
+                        <td style={{ ...tdL, color: 'var(--text-sub)' }}><span style={{ color: 'var(--text-dim)', fontSize: 10, marginRight: 6 }}>{i + 1}</span>{sector.name}</td>
+                        <td style={{ ...tdR, color: dnCol, fontWeight: 700 }}>{fmtPct(sector.changePct)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            /* ── デスクトップ: 1テーブル2列（行高さ自動同期） ── */
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <colgroup>
+                <col style={{ width: 18 }} />
+                <col style={{ width: '30%' }} />
+                <col />
+                <col />
+                <col style={{ width: 1, borderLeft: '1px solid var(--border-dim)' }} />
+                <col style={{ width: '25%' }} />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style={thL} colSpan={2}>銘柄別寄与度</th>
+                  <th style={th}>寄与度</th>
+                  <th style={th}>比率</th>
+                  <th style={{ ...th, padding: 0, width: 1 }} />
+                  <th style={thL}>業種別騰落率（東証33業種）</th>
+                  <th style={th}>騰落率</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={4} style={sectionTd(upCol, isDark ? 'rgba(96,200,140,0.06)' : 'rgba(22,130,80,0.05)')}>▲ 上昇 TOP5</td>
+                  <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)' }} />
+                  <td colSpan={2} style={sectionTd(upCol, isDark ? 'rgba(96,200,140,0.06)' : 'rgba(22,130,80,0.05)')}>▲ 上昇 TOP5</td>
+                </tr>
+                {data.contribution.up.map((raw, i) => {
+                  const contrib = raw as StocksItem
+                  const sector  = data.sector.up[i] as SectorItem | undefined
+                  const total   = data.contribution.total ?? 0
+                  const pct     = total !== 0 ? Math.abs(contrib.contribution / total * 100) : null
+                  const rowBg   = isDark ? 'rgba(96,200,140,0.08)' : 'rgba(22,130,80,0.05)'
+                  return (
+                    <tr key={contrib.code} style={{ background: rowBg }}>
+                      <td style={{ ...tdL, color: 'var(--text-dim)', fontSize: 10 }}>{i + 1}</td>
+                      <td style={{ ...tdL, maxWidth: 120, overflow: 'hidden' }}>
+                        <div style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contrib.name}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{contrib.code}</div>
+                      </td>
+                      <td style={{ ...tdR, color: upCol, fontWeight: 700 }}>{fmtContrib(contrib.contribution)}</td>
+                      <td style={{ ...tdR, color: 'var(--text-dim)', fontSize: 11 }}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
+                      <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)', borderBottom: '1px solid var(--border-dim)' }} />
+                      <td style={{ ...tdL, color: 'var(--text-sub)', verticalAlign: 'middle' }}>{sector?.name ?? '—'}</td>
+                      <td style={{ ...tdR, color: upCol, fontWeight: 700, verticalAlign: 'middle' }}>{sector ? fmtPct(sector.changePct) : '—'}</td>
+                    </tr>
+                  )
+                })}
+                <tr>
+                  <td colSpan={4} style={sectionTd(dnCol, isDark ? 'rgba(255,120,100,0.06)' : 'rgba(200,50,30,0.05)')}>▼ 下落 TOP5</td>
+                  <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)' }} />
+                  <td colSpan={2} style={sectionTd(dnCol, isDark ? 'rgba(255,120,100,0.06)' : 'rgba(200,50,30,0.05)')}>▼ 下落 TOP5</td>
+                </tr>
+                {data.contribution.down.map((raw, i) => {
+                  const contrib = raw as StocksItem
+                  const sector  = data.sector.down[i] as SectorItem | undefined
+                  const total   = data.contribution.total ?? 0
+                  const pct     = total !== 0 ? Math.abs(contrib.contribution / total * 100) : null
+                  const rowBg   = isDark ? 'rgba(255,120,100,0.08)' : 'rgba(200,50,30,0.05)'
+                  return (
+                    <tr key={contrib.code} style={{ background: rowBg }}>
+                      <td style={{ ...tdL, color: 'var(--text-dim)', fontSize: 10 }}>{i + 1}</td>
+                      <td style={{ ...tdL, maxWidth: 120, overflow: 'hidden' }}>
+                        <div style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contrib.name}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{contrib.code}</div>
+                      </td>
+                      <td style={{ ...tdR, color: dnCol, fontWeight: 700 }}>{fmtContrib(contrib.contribution)}</td>
+                      <td style={{ ...tdR, color: 'var(--text-dim)', fontSize: 11 }}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
+                      <td style={{ padding: 0, borderLeft: '1px solid var(--border-dim)', borderBottom: '1px solid var(--border-dim)' }} />
+                      <td style={{ ...tdL, color: 'var(--text-sub)', verticalAlign: 'middle' }}>{sector?.name ?? '—'}</td>
+                      <td style={{ ...tdR, color: dnCol, fontWeight: 700, verticalAlign: 'middle' }}>{sector ? fmtPct(sector.changePct) : '—'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       ) : null}
     </div>
