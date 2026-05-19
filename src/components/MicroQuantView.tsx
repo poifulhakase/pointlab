@@ -211,7 +211,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
   const [quantMemo,     setQuantMemo]     = useState('')
   const [savedMemo,     setSavedMemo]     = useState('')
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
-  const [isPreview,     setIsPreview]     = useState(false)
   const [history,       setHistory]       = useState<MemoSnapshot[]>([])
   const [selectedDate,  setSelectedDate]  = useState('')
   const memoIsDirty = quantMemo !== savedMemo
@@ -238,7 +237,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
       setSavedMemo(local)
       setHistory([])
       setSelectedDate('')
-      setIsPreview(!!local)
       return
     }
 
@@ -250,10 +248,9 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
       setQuantMemo(latest.text)
       setSavedMemo(latest.text)
       setSelectedDate(latest.date)
-      setIsPreview(true)
     } else {
       const legacy = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
-      if (legacy) { setQuantMemo(legacy); setSavedMemo(legacy); setIsPreview(true) }
+      if (legacy) { setQuantMemo(legacy); setSavedMemo(legacy) }
     }
 
     // Firestoreから最新データを取得
@@ -271,7 +268,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             setQuantMemo(latest.text)
             setSavedMemo(latest.text)
             setSelectedDate(latest.date)
-            setIsPreview(true)
           } else if (typeof d.text === 'string' && d.text) {
             // 旧フォーマット移行: { text, updatedAt } → snapshots[]
             const today = todayStr()
@@ -281,7 +277,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             setQuantMemo(d.text)
             setSavedMemo(d.text)
             setSelectedDate(today)
-            setIsPreview(true)
             restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: migrated, updatedAt: new Date().toISOString() }).catch(() => {})
           }
         } else {
@@ -296,7 +291,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               setHistory(migrated)
               saveHistoryLocal(migrated)
               setSelectedDate(today)
-              setIsPreview(true)
               restSetDoc(QUANT_MEMO_FS_PATH(user.uid), { snapshots: migrated, updatedAt: new Date().toISOString() }).catch(() => {})
             }
           }
@@ -322,7 +316,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
     localStorage.setItem(QUANT_MEMO_KEY, updatedMemo)
     setMemoSaveFlash(true)
     setTimeout(() => setMemoSaveFlash(false), 2000)
-    setIsPreview(true)
   }, [quantMemo, user, history])
 
   // 保存（ゲスト・1件上書き）
@@ -331,7 +324,6 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
     setSavedMemo(quantMemo)
     setMemoSaveFlash(true)
     setTimeout(() => setMemoSaveFlash(false), 2000)
-    setIsPreview(true)
   }, [quantMemo])
 
   // ⑫ Ctrl+S / Cmd+S で保存
@@ -354,25 +346,16 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
     if (date === '') {
       setQuantMemo('')
       setSavedMemo('')
-      setIsPreview(false)
     } else {
       const snap = history.find(s => s.date === date)
       if (snap) {
         const updated = updateLogDate(snap.text, date)
         setQuantMemo(updated)
         setSavedMemo(updated)
-        setIsPreview(true)
         localStorage.setItem(QUANT_MEMO_KEY, updated)
       }
     }
   }, [history])
-
-  const btnStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 5,
-    padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
-    letterSpacing: '0.06em', color: c.GREEN, background: c.BG_AREA,
-    border: `1px solid ${c.BORDBR}`, cursor: 'pointer', fontFamily: c.FONT,
-  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: c.BG_SUB, backgroundImage: c.SCAN }}>
@@ -413,7 +396,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
           {/* 全選択 */}
           <button
             title="全選択"
-            onClick={() => { setIsPreview(false); setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
+            onClick={() => { setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 28, height: 28, borderRadius: 6, cursor: 'pointer',

@@ -407,7 +407,6 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
     try { return localStorage.getItem(SHIELD_MEMO_KEY) ?? '' } catch { return '' }
   })
   const [saved,     setSaved]     = useState(false)
-  const [isPreview, setIsPreview] = useState(false)
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -455,7 +454,7 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
           {/* 全選択 */}
           <button
             title="全選択"
-            onClick={() => { setIsPreview(false); setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
+            onClick={() => { setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
