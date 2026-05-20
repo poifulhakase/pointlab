@@ -1,13 +1,29 @@
 {
-  "updatedAt": "2026-05-16T02:51:27.924Z",
+  "updatedAt": "2026-05-20T01:52:50.969Z",
   "data": [
     {
-      "time": "2026-05-15",
-      "close": 158.73,
-      "change": 0.35,
-      "changePct": 0.22,
-      "ma5": 157.97,
-      "ma5dev": 0.48
+      "time": "2026-05-20",
+      "close": 159.05,
+      "change": 0.19,
+      "changePct": 0.12,
+      "ma5": 158.6,
+      "ma5dev": 0.28
+    },
+    {
+      "time": "2026-05-18",
+      "close": 158.86,
+      "change": 0.02,
+      "changePct": 0.01,
+      "ma5": 158.32,
+      "ma5dev": 0.34
+    },
+    {
+      "time": "2026-05-17",
+      "close": 158.84,
+      "change": 0.46,
+      "changePct": 0.29,
+      "ma5": 157.99,
+      "ma5dev": 0.54
     },
     {
       "time": "2026-05-14",
@@ -470,60 +486,28 @@
       "close": 155.88,
       "change": 1.25,
       "changePct": 0.81,
-      "ma5": 154.94,
-      "ma5dev": 0.61
+      "ma5": null,
+      "ma5dev": null
     },
     {
       "time": "2026-02-24",
       "close": 154.63,
       "change": 0.29,
       "changePct": 0.19,
-      "ma5": 154.39,
-      "ma5dev": 0.16
+      "ma5": null,
+      "ma5dev": null
     },
     {
       "time": "2026-02-23",
       "close": 154.34,
       "change": -0.82,
       "changePct": -0.53,
-      "ma5": 154.19,
-      "ma5dev": 0.1
+      "ma5": null,
+      "ma5dev": null
     },
     {
       "time": "2026-02-20",
       "close": 155.16,
-      "change": 0.47,
-      "changePct": 0.3,
-      "ma5": 153.88,
-      "ma5dev": 0.83
-    },
-    {
-      "time": "2026-02-19",
-      "close": 154.69,
-      "change": 1.54,
-      "changePct": 1.01,
-      "ma5": null,
-      "ma5dev": null
-    },
-    {
-      "time": "2026-02-18",
-      "close": 153.15,
-      "change": -0.46,
-      "changePct": -0.3,
-      "ma5": null,
-      "ma5dev": null
-    },
-    {
-      "time": "2026-02-17",
-      "close": 153.61,
-      "change": 0.83,
-      "changePct": 0.54,
-      "ma5": null,
-      "ma5dev": null
-    },
-    {
-      "time": "2026-02-16",
-      "close": 152.78,
       "change": null,
       "changePct": null,
       "ma5": null,
