@@ -516,7 +516,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {/* spec / legal / manual はカルーセル外 */}
           {cal.view === 'spec' && (
             <Suspense fallback={<ViewLoader />}>
-              <SpecView theme={theme} isMobile={isMobile} />
+              <SpecView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
             </Suspense>
           )}
           {cal.view === 'manual' && (

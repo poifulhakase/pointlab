@@ -1,4 +1,4 @@
-type Props = { theme: 'dark' | 'light'; isMobile: boolean }
+type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }
 
 // ── セクションデータ ─────────────────────────────────
 const SPEC_SECTIONS = [
@@ -528,7 +528,7 @@ const SPEC_SECTIONS = [
           ['poical-usdjpy-data', '30分（平日）/ 2時間（土日）', 'USD/JPY 日次データ（現物タブ）'],
           ['poical-nas100-data', '30分（平日）/ 2時間（土日）', 'NAS100(^NDX) 日次データ（偏差スコア計算用）'],
           ['poical-vix-daily-data', '30分（平日）/ 2時間（土日）', 'VIX 日次データ（偏差スコア・TPI計算用）'],
-          ['poical-nk-futures-price-v2', '1時間（平日）/ 3時間（土日）', '日経先物 OHLCV データ（^N225 fallback、AI プロンプト用）'],
+          ['poical-nk-futures-price-v4', '30分（平日）/ 2時間（土日）', '日経平均 OHLCV データ（静的JSON優先 → Yahoo Finance プロキシ フォールバック）'],
         ],
       },
       {
@@ -538,7 +538,7 @@ const SPEC_SECTIONS = [
           'スクリプト: `scripts/fetch-jpx.mjs`',
           '実行: `npm run fetch-data`',
           'GitHub Actions: `.github/workflows/update-data.yml`（毎週金曜19:00 JST + 土曜09:00 JST 自動実行）',
-          '出力先: `public/data/margin.json` / `public/data/investor.json` / `public/data/vix.json` / `public/data/advance_decline.json` / `public/data/short_sell.json` / `public/data/arbitrage.json`',
+          '出力先: `public/data/margin.json` / `public/data/investor.json` / `public/data/vix.json` / `public/data/usdjpy.json` / `public/data/nk_futures_price.json` / `public/data/advance_decline.json` / `public/data/short_sell.json` / `public/data/arbitrage.json`',
           '騰落レシオ・空売り比率・PCR: nikkei225jp.com daily2year.json（col[7]/col[11]/col[16]）を一括取得・キャッシュ共有',
           'PCR = プット/コールOI比（日次・値域0.75〜2.52）。オプション市場引け後更新のためOIより数時間遅れる場合あり',
           '裁定買い残: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json（col[8]、Refererヘッダー必要）を週次52件',
@@ -589,6 +589,76 @@ const SPEC_SECTIONS = [
           '必須入力: 証券会社保有画面のスクリーンショット（銘柄名・平均取得価格・現在価格・損益）',
           '提供データ: built_at / nk225（latest_close・change_1d・MA20/60/200・high/low_20d・ohlcv_recent）/ futures（oi・oi_delta・pcr）/ vix（latest・change_pct）',
           'JSON末尾に市場データを添付。画像確認できない場合はエラーメッセージのみ出力する設計',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'design',
+    icon: '🎨',
+    title: 'デザイン仕様',
+    content: [
+      {
+        type: 'para' as const,
+        text: 'ぽいロボのUI・配色システムの概要です。コンポーネントの役割によって配色システムを使い分けています。',
+      },
+      {
+        type: 'list' as const,
+        heading: '配色システム — 2分類',
+        items: [
+          'ぽいロボ機能系（シアン）: QuantView / EnginePanel / ShieldView / ShieldPanel / ShieldMemoPanel / QuantMemoPanel / MicroQuantView / DeltaModal / PoiroboAlertModal。サイバーターミナル風デザイン。カラー: #00e5ff (dark) / #0369a1 (light)',
+          '一般UI系（CSS変数）: SupportView / SettingsPanel / AuthModal / ContactForm / BookingModal / AdminBookingPanel / ManualView / LegalModal / SpecView。var(--glass-bg) / var(--glass-border) / var(--text) / var(--text-dim) などを使用',
+        ],
+      },
+      {
+        type: 'table' as const,
+        headers: ['CSS変数', '用途'],
+        rows: [
+          ['--text', 'メインテキスト'],
+          ['--text-sub', 'サブテキスト・説明文'],
+          ['--text-dim', '薄いテキスト・プレースホルダー・アイコン'],
+          ['--glass-bg', 'カードの背景色（半透明ガラス風）'],
+          ['--glass-border', 'カードのボーダー色'],
+          ['--modal-bg', 'モーダル・スクロール固定ヘッダー背景'],
+          ['--bg-subtle', 'テーブルの交互行背景・セクション区切り'],
+          ['--border-dim', '薄いボーダー・区切り線'],
+          ['--view-btn-active-bg', 'アクティブタブの背景色'],
+          ['--view-btn-active-color', 'アクティブタブのテキスト色'],
+          ['--latest-row-bg', 'テーブル最新行のハイライト背景'],
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'テーマ',
+        items: [
+          'ダークモード / ライトモードの2テーマ。設定は localStorage `poical-settings` に永続保存',
+          'テーマ切り替え: 研究室 > 設定 > 表示セクションの segmented buttons',
+          'カレンダービューはダークモード専用の配色ルールあり（MonthView / WeekView / DayView）',
+          'ぽいロボ機能系は `cy(theme)` ヘルパーで全色変数を切り替え（dark: #00e5ff / light: #0369a1）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'データ着色ルール（QuantView）',
+        items: [
+          '上昇（プラス）: 赤系 / 下落（マイナス）: 緑系（日本株の慣習）',
+          '信用倍率: ≥6=赤（過熱危険）/ ≥4=薄赤 / ≤2.5=緑 / ≤1.5=濃緑',
+          '評価損益率: >−3%=緑背景 / <−15%=赤背景（濃）/ <−10%=赤背景（薄）/ それ以外=透明',
+          'PCR: ≥1.2=赤（プット優勢・弱気）/ ≤0.8=緑（コール優勢・強気）',
+          '空売り比率: ≥50%=赤 / ≤38%=緑',
+          '騰落レシオ: ≥120=赤（過熱）/ ≤70=緑（底値圏）',
+          '前日比（日経平均先物テーブル）: プラス=緑背景 / マイナス=赤背景',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'レイアウト・ブレークポイント',
+        items: [
+          'isMobile: window.innerWidth ≤ 768 を基準に判定（App.tsx で resize イベントにより動的更新）',
+          'スマートフォン（isMobile=true）: 縦1列レイアウト / テーブルは折りたたみ式（MOBILE_ROW_LIMIT=10件）',
+          'PC: 各ビュー固有のカラム構成（2〜3カラム）',
+          'サイドバー: PC のみ表示（width: 280px）/ スマートフォンでは非表示',
+          'フッター CalendarHeader: 全ビュー・全デバイス共通（つまみボタンで開閉可能）',
         ],
       },
     ],
@@ -692,7 +762,7 @@ function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0]) {
 }
 
 // ── メインコンポーネント ──────────────────────────────
-export function SpecView({ theme, isMobile }: Props) {
+export function SpecView({ theme, isMobile, onClose }: Props) {
   return (
     <div style={{
       flex: 1, overflowY: 'auto', overflowX: 'hidden',
@@ -703,13 +773,25 @@ export function SpecView({ theme, isMobile }: Props) {
 
         {/* ヘッダー */}
         <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 14 }}>
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none', border: '1px solid var(--glass-border)', borderRadius: 8,
+                padding: '6px 12px', cursor: 'pointer', color: 'var(--text-dim)',
+                fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+              }}
+            >
+              ← 戻る
+            </button>
+          )}
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div>
             <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
-              ぽいロボ — 最終更新: 2026-05-20
+              ぽいロボ — 最終更新: 2026-05-21
             </p>
           </div>
         </div>
