@@ -2257,6 +2257,11 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
               if (pct < 0) return theme === 'dark' ? 'rgba(248,113,113,0.95)' : 'rgba(185,28,28,0.95)'
               return 'var(--text)'
             }
+            const changePctBg = (pct: number | null) => {
+              if (pct == null || pct === 0) return 'transparent'
+              if (pct > 0) return theme === 'dark' ? 'rgba(52,211,153,0.15)' : 'rgba(5,150,105,0.10)'
+              return theme === 'dark' ? 'rgba(248,113,113,0.15)' : 'rgba(185,28,28,0.10)'
+            }
 
             return (
               <div style={isMobile
@@ -2435,7 +2440,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                                 <td style={{ ...s.td, ...s.tdNum }}>
                                   <span style={{ fontWeight: 600 }}>{row.close.toLocaleString()}</span>
                                 </td>
-                                <td style={{ ...s.td, ...s.tdNum }}>
+                                <td style={{ ...s.td, ...s.tdNum, background: changePctBg(row.change_pct) }}>
                                   {row.change_pct != null ? (
                                     <span style={{ fontWeight: 600, color: changePctColor(row.change_pct) }}>
                                       {row.change_pct > 0 ? '+' : ''}{row.change_pct.toFixed(2)}%
