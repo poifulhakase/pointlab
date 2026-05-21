@@ -29,7 +29,7 @@ export function MarketDailyPanel({
   usdjpyData, usdjpyLoading, usdjpyError, onUsdjpyReload,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const allRows = [...usdjpyData].reverse()
+  const allRows = [...usdjpyData].sort((a, b) => b.time.localeCompare(a.time))
   const rows = isMobile && !expanded ? allRows.slice(0, MOBILE_ROW_LIMIT) : allRows
 
   const th: React.CSSProperties = {
