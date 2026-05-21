@@ -2,8 +2,8 @@ name: データ自動更新
 
 on:
   schedule:
-    # 水曜 09:00 JST (00:00 UTC): JPX投資主体別・信用データ
-    - cron: '0 0 * * 3'
+    # 水曜 18:00 JST (09:00 UTC): JPX信用残高・裁定残高（水曜16時公表の2h後）
+    - cron: '0 9 * * 3'
     # 土曜 09:00 JST (00:00 UTC): COT・週次データ締め後
     - cron: '0 0 * * 6'
   workflow_dispatch:

@@ -4,13 +4,11 @@ import { AdminBookingPanel } from './AdminBookingPanel'
 import type { ConnectUser }  from './JitsiPanel'
 
 const NoteView            = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
-const ManualView          = lazy(() => import('./ManualView').then(m => ({ default: m.ManualView })))
 const PoiroboAboutPanel   = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
 
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
-  supportTab: SupportTab
   user?: ConnectUser | null
   isConnected?: boolean
   onStartConnect?: () => void
@@ -26,8 +24,6 @@ type Props = {
   pushEnabled?: boolean
   onTogglePush?: () => void
 }
-
-type SupportTab = 'session' | 'note' | 'manual'
 
 function ViewLoader() {
   return (
@@ -311,7 +307,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, supportTab, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
+export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -363,8 +359,6 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
     setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 1000)
   }
 
-  const tabIndex = supportTab === 'session' ? 0 : supportTab === 'note' ? 1 : 2
-  const overlayBg = 'rgba(8,16,36,0.82)'
 
   return (
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden', userSelect: 'none' }} onPointerDown={handleRipple}>
@@ -777,18 +771,11 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
         ))}
       </div>
 
-      {/* コンテンツカルーセル */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex',
-        width: '300%',
-        transform: `translateX(${-tabIndex * 33.333}%)`,
-        transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
-        zIndex: 2,
-      }}>
+      {/* コンテンツ */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
 
         {/* ━━ 研究室 ━━ */}
-        <div style={{ width: '33.333%', height: '100%', flexShrink: 0, position: 'relative' }}>
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
 
           {/* 浮遊粒子 */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
@@ -853,31 +840,6 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
               ))}
             </ul>
           </div>
-        </div>
-
-        {/* ━━ 資料 ━━ */}
-        <div style={{
-          width: '33.333%', height: '100%', flexShrink: 0,
-          display: 'flex', flexDirection: 'column',
-          background: overlayBg,
-          backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
-        }}>
-          <Suspense fallback={<ViewLoader />}>
-            <NoteView theme={theme} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} />
-          </Suspense>
-        </div>
-
-        {/* ━━ 使い方 ━━ */}
-        <div style={{
-          width: '33.333%', height: '100%', flexShrink: 0,
-          display: 'flex', flexDirection: 'column',
-          background: overlayBg,
-          backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
-          overflowY: 'auto',
-        }}>
-          <Suspense fallback={<ViewLoader />}>
-            <ManualView theme={theme} isMobile={isMobile} />
-          </Suspense>
         </div>
 
       </div>

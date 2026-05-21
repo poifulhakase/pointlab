@@ -27,6 +27,12 @@ export interface Booking {
   updatedAt: string   // ISO string
 }
 
+export type BookingSlot = {
+  startTime: string
+  confirmed: boolean
+  label: string
+}
+
 export type CancelPolicy =
   | 'free'       // 48h+ before
   | 'warn'       // 24-48h before

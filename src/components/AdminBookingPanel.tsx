@@ -10,6 +10,7 @@ import {
   cancelBooking,
   completeBooking,
   sendBookingEmail,
+  sendBookingPush,
 } from '../utils/bookingApi'
 import { formatBookingLabel, statusLabel, getCancelPolicy } from '../utils/bookingTypes'
 
@@ -41,11 +42,14 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
   const [loading,  setLoading]  = useState(false)
   const [busy,     setBusy]     = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [isWide,   setIsWide]   = useState(window.innerWidth >= 640)
 
   // new slot form
-  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
-  const [newDate, setNewDate] = useState(today)
-  const [newTime, setNewTime] = useState('10:00')
+  const todayStr = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
+  const [newDate,  setNewDate]  = useState(todayStr)
+  const [newTimes, setNewTimes] = useState<string[]>([])
+  const [calYear,  setCalYear]  = useState(parseInt(todayStr.slice(0, 4)))
+  const [calMonth, setCalMonth] = useState(parseInt(todayStr.slice(5, 7)) - 1)
 
   // confirm modal
   const [confirmAction, setConfirmAction] = useState<null | {
@@ -59,6 +63,12 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
     if (!isOpen) return
     load()
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const fn = () => setIsWide(window.innerWidth >= 640)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -82,10 +92,11 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
   }
 
   async function handleAddSlot() {
-    if (!newDate || !newTime) return
+    if (!newDate || newTimes.length === 0) return
     setBusy('add-slot')
     try {
-      await addSlot(newDate, newTime)
+      await Promise.all(newTimes.map(t => addSlot(newDate, t)))
+      setNewTimes([])
       await load()
     } catch (e) {
       setErrorMsg(String(e))
@@ -130,9 +141,10 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
     askConfirm('予約を承認', `${formatBookingLabel(b)} の予約を承認しますか？`, async () => {
       await confirmBooking(b, adminMsg || undefined)
       const updated = { ...b, status: 'confirmed' as const, adminMessage: adminMsg || '' }
-      sendBookingEmail({ type: 'confirm', booking: updated }).catch(() => {
-        setErrorMsg('予約を承認しましたが、メール送信に失敗しました。')
+      sendBookingEmail({ type: 'confirm', booking: updated }).catch(e => {
+        setErrorMsg(`予約を承認しましたが、メール送信に失敗しました。（${String(e)}）`)
       })
+      sendBookingPush({ type: 'confirm', booking: updated }).catch(() => {})
     })
   }
 
@@ -142,9 +154,10 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
     askConfirm('予約をキャンセル', `${formatBookingLabel(b)} の予約をキャンセルしますか？`, async () => {
       await cancelBooking(b, true)
       const updated = { ...b, status: 'cancelled_admin' as const, adminMessage: adminMsg || '' }
-      sendBookingEmail({ type: 'cancel_admin', booking: updated }).catch(() => {
-        setErrorMsg('キャンセルしましたが、メール送信に失敗しました。')
+      sendBookingEmail({ type: 'cancel_admin', booking: updated }).catch(e => {
+        setErrorMsg(`キャンセルしましたが、メール送信に失敗しました。（${String(e)}）`)
       })
+      sendBookingPush({ type: 'cancel_admin', booking: updated }).catch(() => {})
     })
   }
 
@@ -176,6 +189,31 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
     background: L ? 'rgba(200,0,0,0.04)' : 'rgba(200,0,0,0.06)',
   }
 
+  // ── ミニカレンダー計算 ────────────────────────────────────────────────
+  const TIME_SLOTS: string[] = []
+  for (let h = 9; h <= 20; h++) {
+    TIME_SLOTS.push(`${String(h).padStart(2, '0')}:00`)
+    TIME_SLOTS.push(`${String(h).padStart(2, '0')}:30`)
+  }
+  TIME_SLOTS.push('21:00')
+
+  const calFirst   = new Date(calYear, calMonth, 1)
+  const calLast    = new Date(calYear, calMonth + 1, 0).getDate()
+  const calPad     = (calFirst.getDay() + 6) % 7  // Monday-first offset
+  const calCells: (number | null)[] = [
+    ...Array(calPad).fill(null),
+    ...Array.from({ length: calLast }, (_, i) => i + 1),
+  ]
+  while (calCells.length < 42) calCells.push(null)
+
+  const slotsOnDate = newDate ? slots.filter(s => s.date === newDate).map(s => s.startTime) : []
+
+  const fmtDate = (dateStr: string) => {
+    const d = new Date(`${dateStr}T00:00:00+09:00`)
+    const w = ['日', '月', '火', '水', '木', '金', '土']
+    return `${d.getMonth() + 1}月${d.getDate()}日（${w[d.getDay()]}）`
+  }
+
   return createPortal(
     <>
       <div
@@ -187,8 +225,8 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
         style={{
           position: 'fixed', top: '50%', left: '50%', zIndex: 901,
           transform: 'translate(-50%,-50%)',
-          width: 'min(700px, calc(100vw - 32px))',
-          maxHeight: 'calc(100vh - 48px)',
+          width: 'min(760px, calc(100vw - 32px))',
+          height: 'min(700px, calc(100vh - 48px))',
           display: 'flex', flexDirection: 'column',
           background: CY_BG,
           border: `1px solid ${CY_BORDER}`,
@@ -202,7 +240,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
         <div style={{ padding: '14px 18px 12px', borderBottom: `1px solid ${CY_FAINT2}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: CY_DOT, boxShadow: '0 0 8px rgba(0,242,255,0.9)' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.2em' }}>ADMIN — BOOKING MANAGER</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.2em' }}>ぽいロボ コネクト</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {onConnectNow && (
@@ -310,36 +348,129 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
 
           {/* ── SLOTS tab ── */}
           {tab === 'slots' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Add slot form */}
+            <div style={{ display: 'grid', gridTemplateColumns: isWide ? '1fr 1fr' : '1fr', gap: 14, alignItems: 'start' }}>
+
+              {/* 左列: ミニカレンダー + 時間選択 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              {/* ── ミニカレンダー ── */}
               <div style={{ padding: '14px 16px', borderRadius: 10, background: L ? 'rgba(0,100,180,0.04)' : 'rgba(0,180,255,0.04)', border: `1px solid ${CY_FAINT2}` }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.14em', marginBottom: 12 }}>ADD SLOT</div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <input
-                    type="date"
-                    value={newDate}
-                    min={today}
-                    onChange={e => setNewDate(e.target.value)}
-                    style={{ padding: '6px 10px', borderRadius: 7, border: `1px solid ${CY_BORDER}`, background: L ? 'rgba(255,255,255,0.80)' : 'rgba(0,20,40,0.60)', color: L ? 'rgba(0,40,100,0.90)' : CY_ACCENT, fontSize: 13, fontFamily: CY_FONT, outline: 'none' }}
-                  />
-                  <input
-                    type="time"
-                    value={newTime}
-                    onChange={e => setNewTime(e.target.value)}
-                    style={{ padding: '6px 10px', borderRadius: 7, border: `1px solid ${CY_BORDER}`, background: L ? 'rgba(255,255,255,0.80)' : 'rgba(0,20,40,0.60)', color: L ? 'rgba(0,40,100,0.90)' : CY_ACCENT, fontSize: 13, fontFamily: CY_FONT, outline: 'none' }}
-                  />
+                {/* 月ナビ */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <button
-                    onClick={handleAddSlot}
-                    disabled={busy === 'add-slot'}
-                    style={{ ...btnBase, padding: '7px 18px', opacity: busy === 'add-slot' ? 0.5 : 1 }}
-                  >
-                    {busy === 'add-slot' ? '追加中...' : '+ 追加'}
-                  </button>
+                    onClick={() => { const d = new Date(calYear, calMonth - 1, 1); setCalYear(d.getFullYear()); setCalMonth(d.getMonth()) }}
+                    style={{ ...btnBase, padding: '3px 10px' }}
+                  >◀</button>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.12em' }}>
+                    {calYear}年 {calMonth + 1}月
+                  </span>
+                  <button
+                    onClick={() => { const d = new Date(calYear, calMonth + 1, 1); setCalYear(d.getFullYear()); setCalMonth(d.getMonth()) }}
+                    style={{ ...btnBase, padding: '3px 10px' }}
+                  >▶</button>
+                </div>
+                {/* 曜日ヘッダー */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 3 }}>
+                  {['月','火','水','木','金','土','日'].map((d, i) => (
+                    <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, padding: '2px 0', fontFamily: CY_FONT, color: i === 5 ? (L ? 'rgba(0,80,180,0.75)' : 'rgba(100,160,255,0.75)') : i === 6 ? (L ? 'rgba(180,40,40,0.75)' : 'rgba(255,110,110,0.75)') : CY_FAINT }}>{d}</div>
+                  ))}
+                </div>
+                {/* 日付セル */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                  {calCells.map((day, i) => {
+                    if (!day) return <div key={i} style={{ aspectRatio: '1/1' }} />
+                    const mm         = String(calMonth + 1).padStart(2, '0')
+                    const dd         = String(day).padStart(2, '0')
+                    const dateStr    = `${calYear}-${mm}-${dd}`
+                    const isToday    = dateStr === todayStr
+                    const isPast     = dateStr < todayStr
+                    const isSelected = dateStr === newDate
+                    const hasSlots   = slots.some(s => s.date === dateStr)
+                    const dow        = i % 7  // 0=月…5=土,6=日
+                    const dayColor   = isPast
+                      ? (L ? 'rgba(0,0,0,0.20)' : 'rgba(255,255,255,0.18)')
+                      : isSelected
+                      ? (L ? '#fff' : '#000c1a')
+                      : dow === 5 ? (L ? 'rgba(0,80,180,0.85)'  : 'rgba(100,160,255,0.85)')
+                      : dow === 6 ? (L ? 'rgba(180,40,40,0.85)' : 'rgba(255,110,110,0.85)')
+                      : CY_DIM
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { if (!isPast) { setNewDate(dateStr); setNewTimes([]) } }}
+                        disabled={isPast}
+                        style={{
+                          aspectRatio: '1 / 1',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                          borderRadius: 6, cursor: isPast ? 'default' : 'pointer', position: 'relative',
+                          fontSize: 11, fontWeight: isSelected || isToday ? 700 : 500, fontFamily: CY_FONT,
+                          background: isSelected ? CY_ACCENT : isToday ? (L ? 'rgba(0,100,180,0.14)' : 'rgba(0,220,255,0.12)') : 'transparent',
+                          border: `1px solid ${isSelected ? 'transparent' : isToday ? CY_BORDER : 'transparent'}`,
+                          color: dayColor,
+                          opacity: isPast ? 0.8 : 1,
+                        }}
+                      >
+                        {day}
+                        {hasSlots && (
+                          <span style={{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', width: 3, height: 3, borderRadius: '50%', background: isSelected ? (L ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,20,0.45)') : CY_ACCENT }} />
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* Slot list */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {/* ── 時間選択 ── */}
+              {newDate && (
+                <div style={{ padding: '14px 16px', borderRadius: 10, background: L ? 'rgba(0,100,180,0.04)' : 'rgba(0,180,255,0.04)', border: `1px solid ${CY_FAINT2}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, minHeight: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.12em' }}>
+                      {fmtDate(newDate)} — 時間を選択
+                    </div>
+                    {newTimes.length > 0 && (
+                      <button
+                        onClick={handleAddSlot}
+                        disabled={busy === 'add-slot'}
+                        style={{ ...btnBase, padding: '5px 14px', fontSize: 11, opacity: busy === 'add-slot' ? 0.5 : 1 }}
+                      >
+                        {busy === 'add-slot' ? '追加中...' : `+ ${newTimes.length}件を追加`}
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}>
+                    {TIME_SLOTS.map(t => {
+                      const exists   = slotsOnDate.includes(t)
+                      const selected = newTimes.includes(t)
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => {
+                            if (exists) return
+                            setNewTimes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+                          }}
+                          disabled={exists}
+                          style={{
+                            padding: '5px 4px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                            fontFamily: CY_FONT, letterSpacing: '0.03em', cursor: exists ? 'default' : 'pointer',
+                            textAlign: 'center',
+                            background: selected ? CY_ACCENT : 'transparent',
+                            color: selected ? (L ? '#fff' : '#000c1a') : exists ? CY_FAINT : CY_DIM,
+                            border: `1px solid ${selected ? 'transparent' : exists ? 'transparent' : CY_BORDER}`,
+                            opacity: exists ? 0.4 : 1,
+                          }}
+                        >
+                          {t}{exists ? ' ✓' : ''}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              </div>{/* /左列 */}
+
+              {/* 右列: 枠一覧 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
                 {slots.length === 0 && (
                   <div style={{ textAlign: 'center', padding: '24px 0', color: CY_FAINT, fontSize: 13, fontFamily: CY_FONT }}>枠がありません</div>
                 )}

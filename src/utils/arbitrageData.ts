@@ -22,9 +22,9 @@ const CACHE_TTL       = 24 * 60 * 60 * 1000
 
 export async function fetchArbitrageData(force = false): Promise<ArbitrageWeekData[]> {
   return fetchWithCache({
-    key: CACHE_KEY, ttl: CACHE_TTL, force,
+    key: CACHE_KEY, ttl: CACHE_TTL, force, checkUpdatedAt: true,
     fetcher: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage.json`, { signal: AbortSignal.timeout(10000) })
+      const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage.json`, { signal: AbortSignal.timeout(10000), cache: 'no-cache' })
       if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
       const json = await res.json() as { updatedAt: string; data: ArbitrageWeekData[] }
       if (!json.data?.length) throw new Error('データが空です')
@@ -35,9 +35,9 @@ export async function fetchArbitrageData(force = false): Promise<ArbitrageWeekDa
 
 export async function fetchArbitrageDailyData(force = false): Promise<ArbitrageDayData[]> {
   return fetchWithCache({
-    key: DAILY_CACHE_KEY, ttl: CACHE_TTL, force,
+    key: DAILY_CACHE_KEY, ttl: CACHE_TTL, force, checkUpdatedAt: true,
     fetcher: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage_daily.json`, { signal: AbortSignal.timeout(10000) })
+      const res = await fetch(`${import.meta.env.BASE_URL}data/arbitrage_daily.json`, { signal: AbortSignal.timeout(10000), cache: 'no-cache' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json() as { updatedAt: string; data: ArbitrageDayData[] }
       if (!json.data?.length) throw new Error('データが空です')

@@ -17,9 +17,9 @@ const CACHE_TTL = 24 * 60 * 60 * 1000
 
 export async function fetchInvestorData(force = false): Promise<InvestorWeekData[]> {
   return fetchWithCache({
-    key: CACHE_KEY, ttl: CACHE_TTL, force,
+    key: CACHE_KEY, ttl: CACHE_TTL, force, checkUpdatedAt: true,
     fetcher: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}data/investor.json`, { signal: AbortSignal.timeout(10000) })
+      const res = await fetch(`${import.meta.env.BASE_URL}data/investor.json`, { signal: AbortSignal.timeout(10000), cache: 'no-cache' })
       if (!res.ok) throw new Error(`データファイルが見つかりません (HTTP ${res.status})\nnpm run fetch-data を実行してください`)
       const json = await res.json() as { updatedAt: string; data: InvestorWeekData[] }
       if (!json.data?.length) throw new Error('データが空です')

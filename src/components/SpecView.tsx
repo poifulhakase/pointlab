@@ -250,7 +250,7 @@ const SPEC_SECTIONS = [
           'データソース: JPX 信用取引残高 Excel + nikkei225jp.com（評価損益率）',
           '表示列: 日付・買い残・売り残・信用倍率・評価損益率',
           '信用倍率の着色: ≥6=赤（過熱危険）/ ≥4=薄赤 / ≤2.5=緑 / ≤1.5=濃緑',
-          'キャッシュ: localStorage 24時間（`poical-margin-data`）',
+          'キャッシュ: localStorage 24時間（`poical-margin-data-v2`）',
         ],
       },
       {
@@ -308,7 +308,7 @@ const SPEC_SECTIONS = [
           'PCR テキスト色: ≥1.2=赤 / ≤0.8=緑 / その他=デフォルト（前日比Δ付き）',
           '日経225先物 全限月（大証）の日次集計。直近20件表示（スマートフォンでは全件）',
           'Δボタン: 建玉残高・取引高・PCR それぞれ個別チャートモーダル表示',
-          'キャッシュ: localStorage 24時間（`poical-futures-daily-data`）',
+          'キャッシュ: localStorage 24時間（`poical-futures-daily-data-v2`）',
         ],
       },
       {
@@ -375,12 +375,29 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: '設定モーダル（SettingsPanel）',
+        heading: '設定モーダル（SettingsPanel）★2026-05-20 通知セクション追加',
         items: [
           '研究室 > SETTINGS ボタンで右スライドドロワーとして開く',
-          '表示セクション: ライト / ダーク テーマ切り替え（segmented buttons）',
+          'セクション順: アカウント → 通知 → 表示 → 開発者',
           'アカウントセクション: Googleログイン / ログアウト（AuthModal を開く）・同期ステータス表示',
+          '通知セクション（★2026-05-20 新規）: プッシュ通知 ON/OFF トグル。未ログイン時はグレーアウト＋「ログインが必要です」表示。ON 時「前日 12:30 に通知」表示',
+          '表示セクション: ライト / ダーク テーマ切り替え（segmented buttons）',
           '開発者セクション: システム仕様を開く（管理者アカウントのみ表示）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'プッシュ通知（FCM）★2026-05-20 新規',
+        items: [
+          '対象: ぽいロボ レーダーで選択したイベントの前日 12:30 JST に通知',
+          '条件: Googleログイン必須 / 設定 > 通知 で ON',
+          'フロー: ブラウザ通知許可 → VAPID キーで FCM トークン取得 → Firestore REST API で pushSubscriptions/{uid} に保存',
+          'Vercel Cron: `api/cron-push-notifications.js`（毎日 03:30 UTC = 12:30 JST）',
+          'Cron処理: pushEnabled=true かつ poiroboAlertEnabled=true のユーザーを全件取得 → 翌日イベントと poiroboAlertConfig を照合 → 一致時 FCM 送信',
+          'SW: `firebase-messaging-sw.js` をドメインルート `/` に配置。バックグラウンド受信・通知クリックで https://pointlab.vercel.app/calendar/ を開く',
+          '実装注意: Firestore SDK の setDoc() はこのアプリでハングするため、firestoreRest.ts の restSetDoc() を使用すること',
+          'localStorage: `poical-push-enabled` で ON/OFF を永続化（再ログイン時の復元用）',
+          '環境変数: VITE_FIREBASE_VAPID_KEY（Vercel プロジェクトレベル環境変数）',
         ],
       },
       {
@@ -496,7 +513,7 @@ const SPEC_SECTIONS = [
           ['poical-settings', '永続', 'アプリ設定（テーマ設定）'],
           ['poical-vix-data', '30分（市場オープン）/ 2時間（クローズ）', 'VIX日足チャートデータ'],
           ['poical-ns-ratio-data', '30分（市場オープン）/ 2時間（クローズ）', 'NS倍率日足データ'],
-          ['poical-margin-data', '24時間', '信用倍率JSONキャッシュ'],
+          ['poical-margin-data-v2', '24時間', '信用倍率JSONキャッシュ'],
           ['poical-investor-data', '24時間', '投資主体別JSONキャッシュ'],
           ['poical-nhk-news', '30分', 'NHKニュースRSS'],
           ['poical-sticky-notes', '永続', 'サイドバースティッキーメモ（最大1件）'],
@@ -507,7 +524,7 @@ const SPEC_SECTIONS = [
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
           ['poical-futures-participants-v2', '24時間', '先物投資部門別ネット枚数データ（先物タブ・週次）'],
-          ['poical-futures-daily-data', '24時間', '先物建玉残高・取引高・PCRデータ（先物タブ・日次）'],
+          ['poical-futures-daily-data-v2', '24時間', '先物建玉残高・取引高・PCRデータ（先物タブ・日次）'],
           ['poical-usdjpy-data', '30分（平日）/ 2時間（土日）', 'USD/JPY 日次データ（現物タブ）'],
           ['poical-nas100-data', '30分（平日）/ 2時間（土日）', 'NAS100(^NDX) 日次データ（偏差スコア計算用）'],
           ['poical-vix-daily-data', '30分（平日）/ 2時間（土日）', 'VIX 日次データ（偏差スコア・TPI計算用）'],
@@ -692,7 +709,7 @@ export function SpecView({ theme, isMobile }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
-              ぽいロボ — 最終更新: 2026-05-18
+              ぽいロボ — 最終更新: 2026-05-20
             </p>
           </div>
         </div>

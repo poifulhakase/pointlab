@@ -3,6 +3,7 @@ import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
+import { type BookingSlot } from '../utils/bookingTypes'
 import { getMonthBand } from '../utils/earningsSeason'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
@@ -31,9 +32,10 @@ type Props = {
   theme?: 'dark' | 'light'
   showPoiroboAlert?: boolean
   poiroboAlertConfig?: PoiroboAlertConfig
+  getBookingEvents?: (d: Date) => BookingSlot[]
 }
 
-export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT }: Props) {
+export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, onOpenNote, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, hasNote, getNoteTitle, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT, getBookingEvents }: Props) {
   const isLight = theme === 'light'
   const band = getMonthBand(current.getMonth() + 1)
 
@@ -68,6 +70,7 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
           const showBadge  = closed && !isS && !isSat
           const noted      = hasNote(d)
           const noteTitle  = noted ? getNoteTitle(d) : ''
+          const bookingEvts = getBookingEvents ? getBookingEvents(d) : []
 
           return (
             <div
@@ -131,6 +134,19 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                   color: isLight ? '#1a56db' : 'rgba(255,255,255,0.95)',
                 }}>
                   {noteTitle || '　'}
+                </div>
+              )}
+
+              {/* 予約バッジ */}
+              {bookingEvts.length > 0 && !dim && (
+                <div style={{
+                  ...styles.noteBand,
+                  background: isLight ? 'rgba(3,105,161,0.12)' : 'rgba(0,229,255,0.13)',
+                  color: isLight ? '#0369a1' : '#00e5ff',
+                  borderLeft: isLight ? '2px solid rgba(3,105,161,0.55)' : '2px solid rgba(0,229,255,0.55)',
+                  fontWeight: 600,
+                }}>
+                  {bookingEvts[0].label}{bookingEvts.length > 1 ? ` +${bookingEvts.length - 1}` : ''}
                 </div>
               )}
 

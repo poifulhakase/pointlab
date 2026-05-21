@@ -28,7 +28,50 @@ export function JitsiPanel({ user, isMobile, minimized, onMinimize, onExpand, on
   const participantRef = useRef(1)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'full'>('loading')
 
-  const shortRoom   = `poirobo-${user.uid.substring(0, 12)}`
+  // ── ミニバー ドラッグ ─────────────────────────────────────────────────
+  const miniBarRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const dragRef = useRef({ active: false, startX: 0, startY: 0, origX: 0, origY: 0 })
+
+  useEffect(() => { if (!minimized) setPos(null) }, [minimized])
+
+  const startDrag = (clientX: number, clientY: number) => {
+    const el = miniBarRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    dragRef.current = { active: true, startX: clientX, startY: clientY, origX: rect.left, origY: rect.top }
+  }
+  const moveDrag = (clientX: number, clientY: number) => {
+    if (!dragRef.current.active) return
+    const el = miniBarRef.current
+    if (!el) return
+    const dx = clientX - dragRef.current.startX
+    const dy = clientY - dragRef.current.startY
+    const x  = Math.max(0, Math.min(window.innerWidth  - el.offsetWidth,  dragRef.current.origX + dx))
+    const y  = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, dragRef.current.origY + dy))
+    setPos({ x, y })
+  }
+  const endDrag = () => { dragRef.current.active = false }
+
+  useEffect(() => {
+    if (!minimized) return
+    const onMM  = (e: MouseEvent)  => moveDrag(e.clientX, e.clientY)
+    const onMU  = ()               => endDrag()
+    const onTM  = (e: TouchEvent)  => { if (!dragRef.current.active) return; e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY) }
+    const onTE  = ()               => endDrag()
+    document.addEventListener('mousemove', onMM)
+    document.addEventListener('mouseup',   onMU)
+    document.addEventListener('touchmove', onTM, { passive: false })
+    document.addEventListener('touchend',  onTE)
+    return () => {
+      document.removeEventListener('mousemove', onMM)
+      document.removeEventListener('mouseup',   onMU)
+      document.removeEventListener('touchmove', onTM)
+      document.removeEventListener('touchend',  onTE)
+    }
+  }, [minimized]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const shortRoom   = 'poirobo-connect'
   const isAdmin     = user.email === 'sushi.ramen.unajyu@gmail.com'
   const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
@@ -252,21 +295,32 @@ export function JitsiPanel({ user, isMobile, minimized, onMinimize, onExpand, on
 
       {/* フローティングミニバー（最小化中のみ表示） */}
       {minimized && (
-        <div style={{
-          position: 'fixed',
-          top: 'calc(var(--header-height) + env(safe-area-inset-top, 0px) + 8px)',
-          right: 12,
-          zIndex: 501,
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '7px 10px 7px 12px',
-          background: 'rgba(0,8,20,0.94)',
-          border: '1px solid rgba(0,220,255,0.35)',
-          borderRadius: 10,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          boxShadow: '0 0 20px rgba(0,200,255,0.18), 0 4px 24px rgba(0,0,0,0.55)',
-          userSelect: 'none',
-        }}>
+        <div
+          ref={miniBarRef}
+          style={{
+            position: 'fixed',
+            ...(pos
+              ? { top: pos.y, left: pos.x }
+              : { top: 'calc(var(--header-height) + env(safe-area-inset-top, 0px) + 8px)', right: 12 }),
+            zIndex: 501,
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '7px 10px 7px 8px',
+            background: 'rgba(0,8,20,0.94)',
+            border: '1px solid rgba(0,220,255,0.35)',
+            borderRadius: 10,
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            boxShadow: '0 0 20px rgba(0,200,255,0.18), 0 4px 24px rgba(0,0,0,0.55)',
+            userSelect: 'none',
+            cursor: 'grab',
+          }}
+          onMouseDown={e => { if ((e.target as HTMLElement).closest('button')) return; startDrag(e.clientX, e.clientY) }}
+          onTouchStart={e => { if ((e.target as HTMLElement).closest('button')) return; startDrag(e.touches[0].clientX, e.touches[0].clientY) }}
+        >
+          {/* ドラッグハンドル */}
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '0 2px', opacity: 0.4, flexShrink: 0 }}>
+            {[0,1,2].map(i => <span key={i} style={{ display: 'block', width: 14, height: 1.5, background: 'rgba(0,220,255,0.8)', borderRadius: 1 }} />)}
+          </span>
           {/* ステータスドット */}
           <span style={{
             width: 7, height: 7, borderRadius: '50%', flexShrink: 0,

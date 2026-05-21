@@ -182,7 +182,7 @@ export function PoiroboAlertModal({ isOpen, config, theme, onSave, onClose }: Pr
               boxShadow: '0 0 8px rgba(0,242,255,0.9)',
             }} />
             <span style={{ fontSize: 10, fontWeight: 700, color: CY_DIM, fontFamily: CY_FONT, letterSpacing: '0.2em' }}>
-              POI-ROBO RADAR
+              ぽいロボ レーダー
             </span>
           </div>
           <button

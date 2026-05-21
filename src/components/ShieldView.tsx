@@ -6,8 +6,9 @@ import { proxyFetch } from '../utils/proxyFetch'
 import { fetchVixData } from '../utils/vixData'
 import { fetchFuturesDailyData } from '../utils/futuresDailyData'
 import { fetchWithCache } from '../utils/dataCache'
+import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 
-const SHIELD_CACHE_KEY        = 'poical-shield-mkt-data'
+const SHIELD_CACHE_KEY        = 'poical-shield-mkt-data-v2'
 const SHIELD_CACHE_TTL_OPEN   = 30 * 60 * 1000   // 市場時間中: 30分
 const SHIELD_CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000  // 閉場後: 2時間
 
@@ -73,8 +74,13 @@ interface ShieldMktData {
     ma20:          number | null
     ma60:          number | null
     ma200:         number | null
+    ma20_weekly:   number | null  // 週足MA20（週足中央線）
     high_20d:      number | null
     low_20d:       number | null
+    macd:          number | null  // 日足MACD(12,26)
+    macd_signal:   number | null  // 日足MACDシグナル(9)
+    macd_hist:     number | null  // MACDヒストグラム
+    macd_gc:       boolean        // ゴールデンクロス（直近1日）
     ohlcv_recent:  Array<{ date: string; open: number; high: number; low: number; close: number; change_pct: number | null }>
   }
   futures: {
@@ -94,6 +100,38 @@ function calcMA(closes: number[], period: number): number | null {
   if (closes.length < period) return null
   const slice = closes.slice(-period)
   return Math.round(slice.reduce((a, b) => a + b, 0) / period)
+}
+
+function calcEMA(values: number[], period: number): number[] {
+  if (values.length === 0) return []
+  const k = 2 / (period + 1)
+  const result = [values[0]]
+  for (let i = 1; i < values.length; i++)
+    result.push(values[i] * k + result[result.length - 1] * (1 - k))
+  return result
+}
+
+function weeklyMA20(days: Array<{ date: string; close: number }>): number | null {
+  const weekMap = new Map<string, number>()
+  for (const d of days) {
+    const dt  = new Date(d.date + 'T00:00:00Z')
+    const soy = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1))
+    const wn  = Math.ceil(((dt.getTime() - soy.getTime()) / 86400000 + soy.getUTCDay() + 1) / 7)
+    weekMap.set(`${dt.getUTCFullYear()}-${wn}`, d.close)
+  }
+  return calcMA(Array.from(weekMap.values()), 20)
+}
+
+function calcMACD(closes: number[]): { macd: number | null; signal: number | null; hist: number | null; gc: boolean } {
+  if (closes.length < 35) return { macd: null, signal: null, hist: null, gc: false }
+  const ema12  = calcEMA(closes, 12)
+  const ema26  = calcEMA(closes, 26)
+  const line   = ema12.map((v, i) => v - ema26[i])
+  const sig    = calcEMA(line, 9)
+  const n      = line.length - 1
+  const macd   = Math.round(line[n])
+  const signal = Math.round(sig[n])
+  return { macd, signal, hist: macd - signal, gc: line[n - 1] < sig[n - 1] && line[n] >= sig[n] }
 }
 
 async function fetchNk225Ohlcv(): Promise<unknown> {
@@ -155,6 +193,8 @@ async function buildShieldData(): Promise<ShieldMktData> {
         const p = recent10[i - 1]
         return { ...d, change_pct: p ? Math.round((d.close - p.close) / p.close * 10000) / 100 : null }
       })
+      const macdRes  = calcMACD(closes)
+      const ma20w    = weeklyMA20(days)
 
       // 2. 先物日次（建玉残高・PCR）
       let futures: ShieldMktData['futures'] = { oi_latest: null, oi_delta: null, pcr_latest: null, volume_latest: null, data_as_of: null }
@@ -187,8 +227,13 @@ async function buildShieldData(): Promise<ShieldMktData> {
           ma20:          calcMA(closes, 20),
           ma60:          calcMA(closes, 60),
           ma200:         calcMA(closes, 200),
+          ma20_weekly:   ma20w,
           high_20d:      high20d,
           low_20d:       low20d,
+          macd:          macdRes.macd,
+          macd_signal:   macdRes.signal,
+          macd_hist:     macdRes.hist,
+          macd_gc:       macdRes.gc,
           ohlcv_recent:  ohlcvRecent,
         },
         futures,
@@ -268,6 +313,8 @@ const SHIELD_PROMPT_TEMPLATE = `# Role
 [価格構造]
 - 現在値と MA20 / MA60 / MA200 の位置関係（上 or 下 or 交差中）
 - MA200 からの乖離率（過熱 / 適正 / 割安）
+- nk225.ma20_weekly（週足MA20 = 週足中央線）→ 週足レベルの平均回帰ターゲット
+- nk225.macd / macd_signal / macd_gc → gc:true でゴールデンクロス確認済み
 
 [サポート・レジスタンス]
 - nk225.high_20d（直近20日高値）→ レジスタンスとして参照
@@ -297,9 +344,11 @@ const SHIELD_PROMPT_TEMPLATE = `# Role
 - MA20：XX,XXX円 → 現在値は MA20の (上/下)
 - MA60：XX,XXX円 → 現在値は MA60の (上/下)
 - MA200：XX,XXX円 → 現在値は MA200の (上/下) · 乖離率 ±X.X%
+- 週足MA20（週足中央線）：XX,XXX円 → 現在値は (上/下)
 - 直近20日高値：XX,XXX円（レジスタンス）
 - 直近20日安値：XX,XXX円（サポート）
 - 高安値構造：(高値更新中/安値更新中/レンジ継続)
+- MACD：XXXX / シグナル：XXXX / ヒスト：±XX → (GC済み/DC済み/中立)
 
 ### 【2. 需給診断（JSONデータより）】
 - OI前日比：±X,XXX枚 → (積み増し/手仕舞い)
@@ -389,12 +438,14 @@ function CyberSystemLog({ logLines, cursorVisible, typedText, theme }: LogState 
 }
 
 // ── ⑫ ShieldMemoPanel ────────────────────────────────
-const SHIELD_MEMO_KEY = 'poical-shield-memo'
+const SHIELD_MEMO_KEY     = 'poical-shield-memo'
+const SHIELD_MEMO_FS_PATH = (uid: string) => `users/${uid}/data/shieldMemo`
 
 const SHIELD_HL_PATTERNS = [
-  /損切り価格：.+/g,
-  /指令：.+/g,
-  /確信度：[\d.]+%.*/g,
+  /損切り価格：(?:(?!（(?:根拠|条件)：).)+/g,
+  /利確目標：(?:(?!（(?:根拠|条件)：).)+/g,
+  /指令：(?:(?!（(?:根拠|条件)：).)+/g,
+  /確信度：[\d.]+%/g,
 ]
 
 function renderShieldHL(text: string, hlColor: string): React.ReactNode {
@@ -418,7 +469,7 @@ function renderShieldHL(text: string, hlColor: string): React.ReactNode {
   return <>{nodes}</>
 }
 
-function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
+function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 'dark' | 'light'; isMobile: boolean }) {
   const c = cy(theme)
   const nd = theme === 'dark' ? {
     title:  'rgba(255,255,255,0.78)',
@@ -436,12 +487,37 @@ function ShieldMemoPanel({ user: _user, theme, isMobile }: { user: User | null; 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
 
+  // Firestore 初回同期: ログイン時にリモートを取得、リモート優先でマージ
+  useEffect(() => {
+    if (!user) return
+    restGetDoc(SHIELD_MEMO_FS_PATH(user.uid)).then(snap => {
+      if (!snap.exists()) {
+        const local = localStorage.getItem(SHIELD_MEMO_KEY) ?? ''
+        if (local) restSetDoc(SHIELD_MEMO_FS_PATH(user.uid), { text: local, updatedAt: new Date().toISOString() }).catch(() => {})
+        return
+      }
+      const remoteText = (snap.data().text as string) ?? ''
+      const localText  = localStorage.getItem(SHIELD_MEMO_KEY) ?? ''
+      if (remoteText && remoteText !== localText) {
+        localStorage.setItem(SHIELD_MEMO_KEY, remoteText)
+        setText(remoteText)
+      }
+    }).catch(() => {})
+  }, [user])
+
   const handleSave = useCallback(() => {
-    try { localStorage.setItem(SHIELD_MEMO_KEY, text) } catch {}
+    const today  = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
+    const header = `## ${today}`
+    const toSave = text.trimStart().startsWith(header) ? text : `${header}\n\n${text}`
+    try { localStorage.setItem(SHIELD_MEMO_KEY, toSave) } catch {}
+    if (toSave !== text) setText(toSave)
+    if (user) {
+      restSetDoc(SHIELD_MEMO_FS_PATH(user.uid), { text: toSave, updatedAt: new Date().toISOString() }).catch(() => {})
+    }
     setSaved(true)
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => setSaved(false), 2000)
-  }, [text])
+  }, [text, user])
 
   // ⑫ Ctrl+S で保存
   useEffect(() => {

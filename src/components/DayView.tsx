@@ -8,6 +8,7 @@ import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
+import { type BookingSlot } from '../utils/bookingTypes'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const HOUR_HEIGHT = 56
@@ -45,10 +46,11 @@ type Props = {
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
   getScheduledEvents: (d: Date) => ScheduleEntry[]
+  getBookingEvents?: (d: Date) => BookingSlot[]
   theme?: 'dark' | 'light'
 }
 
-export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, theme = 'dark' }: Props) {
+export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, getBookingEvents, theme = 'dark' }: Props) {
   const now = new Date()
   const td = isToday(date)
   const isLight = theme === 'light'
@@ -82,6 +84,12 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
       const timeLabel = formatTimeRangeJa(evt.startTime, evt.endTime || undefined)
       return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
     })
+  const bookingBlocks = getBookingEvents ? getBookingEvents(date).map((slot, i) => {
+    const startMin = timeToMinutes(slot.startTime)
+    const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
+    const heightPx = Math.max(30 / TOTAL_MINUTES * HOUR_HEIGHT * 24, 24)
+    return { topPx, heightPx, ...slot, key: `bk-${i}` }
+  }) : []
 
   return (
     <div style={styles.wrap}>
@@ -177,6 +185,39 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                       <div style={{ ...styles.eventTime, color: isLight ? '#2563eb' : 'rgba(255,255,255,0.85)' }}>{evtBlock.timeLabel}</div>
                     </>
                 }
+              </div>
+            ))}
+            {bookingBlocks.map(b => (
+              <div
+                key={b.key}
+                style={{
+                  position: 'absolute', left: 4, right: 4,
+                  top: b.topPx, height: b.heightPx,
+                  background: b.confirmed
+                    ? (isLight ? 'rgba(3,105,161,0.18)' : 'rgba(0,229,255,0.16)')
+                    : (isLight ? 'rgba(3,105,161,0.10)' : 'rgba(0,229,255,0.09)'),
+                  borderLeft: b.confirmed
+                    ? (isLight ? '4px solid #0369a1' : '4px solid #00e5ff')
+                    : (isLight ? '4px solid rgba(3,105,161,0.5)' : '4px solid rgba(0,229,255,0.5)'),
+                  borderRadius: '0 4px 4px 0',
+                  padding: '3px 7px',
+                  overflow: 'hidden',
+                  zIndex: 2,
+                  pointerEvents: 'none',
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 700, color: isLight ? '#0369a1' : '#00e5ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {b.label}
+                </div>
+                {b.heightPx >= 36 && (
+                  <div style={{ fontSize: 11, color: isLight ? 'rgba(3,105,161,0.7)' : 'rgba(0,229,255,0.65)' }}>
+                    {b.startTime}〜{(() => {
+                      const [h, m] = b.startTime.split(':').map(Number)
+                      const end = h * 60 + m + 30
+                      return `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`
+                    })()}
+                  </div>
+                )}
               </div>
             ))}
             {td && (

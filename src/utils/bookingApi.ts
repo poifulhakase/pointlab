@@ -109,6 +109,40 @@ async function deleteDoc(path: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error(`Firestore DELETE ${res.status}: ${path}`)
 }
 
+/** runQuery でコレクションをフィールド等値条件でサーバー側フィルタリング */
+async function queryDocs(
+  col: string,
+  field: string,
+  value: string,
+): Promise<Array<{ id: string; data: Record<string, unknown> }>> {
+  const t   = await token()
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: col }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: field },
+            op:    'EQUAL',
+            value: { stringValue: value },
+          },
+        },
+      },
+    }),
+  })
+  if (!res.ok) throw new Error(`Firestore QUERY ${res.status}: ${col}`)
+  const json = await res.json() as Array<{ document?: { name: string; fields?: Record<string, unknown> } }>
+  return json
+    .filter(item => item.document)
+    .map(item => ({
+      id:   item.document!.name.split('/').pop()!,
+      data: fromFields(item.document!.fields ?? {}),
+    }))
+}
+
 // ── Slot operations ────────────────────────────────────────────────────────
 
 /** Fetch all available (unbooked) slots within the next 2 weeks — works without login */
@@ -152,48 +186,35 @@ export async function getAllSlots(): Promise<Slot[]> {
 
 // ── Booking operations ─────────────────────────────────────────────────────
 
-/** User: request a booking for a slot */
+/** User: request a booking for a slot (server-side で slot 更新を実行) */
 export async function requestBooking(
   slotId: string,
-  slotDate: string,
-  slotTime: string,
-  userId: string,
+  _slotDate: string,
+  _slotTime: string,
+  _userId: string,
   userDisplayName: string,
   userEmail: string,
 ): Promise<string> {
-  // Check 1-booking-per-user limit
-  const existing = await getUserActiveBooking(userId)
-  if (existing) throw new Error('LIMIT_EXCEEDED')
+  const user = auth.currentUser
+  if (!user) throw new Error('Not authenticated')
+  const idToken = await user.getIdToken()
 
-  // Mark slot as booked
-  const slot = await getDoc(`slots/${slotId}`)
-  if (!slot || slot.isBooked) throw new Error('SLOT_UNAVAILABLE')
-
-  const now    = new Date().toISOString()
-  const bookId = await createDoc('bookings', {
-    userId,
-    userDisplayName,
-    userEmail,
-    slotId,
-    date:            slotDate,
-    startTime:       slotTime,
-    status:          'pending',
-    adminMessage:    '',
-    requestedAt:     now,
-    updatedAt:       now,
+  const res = await fetch('/api/create-booking', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ idToken, slotId, userDisplayName, userEmail }),
   })
-
-  await setDoc(`slots/${slotId}`, { ...slot, isBooked: true })
-  return bookId
+  const json = await res.json() as { ok?: boolean; bookingId?: string; error?: string }
+  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+  return json.bookingId!
 }
 
 /** Get user's single active booking (pending or confirmed) */
 export async function getUserActiveBooking(userId: string): Promise<Booking | null> {
-  const docs = await listDocs('bookings')
+  const docs = await queryDocs('bookings', 'userId', userId)
   const active = docs.find(d => {
     const b = d.data as unknown as Booking
-    return b.userId === userId &&
-      (b.status === 'pending' || b.status === 'confirmed')
+    return b.status === 'pending' || b.status === 'confirmed'
   })
   if (!active) return null
   return { id: active.id, ...active.data } as unknown as Booking
@@ -201,9 +222,8 @@ export async function getUserActiveBooking(userId: string): Promise<Booking | nu
 
 /** Get all bookings for a user (full history) */
 export async function getUserBookings(userId: string): Promise<Booking[]> {
-  const docs = await listDocs('bookings')
+  const docs = await queryDocs('bookings', 'userId', userId)
   return docs
-    .filter(d => (d.data as unknown as Booking).userId === userId)
     .map(d => ({ id: d.id, ...d.data } as unknown as Booking))
     .sort((a, b) => (b.requestedAt ?? '').localeCompare(a.requestedAt ?? ''))
 }
@@ -259,7 +279,22 @@ export async function sendBookingEmail(payload: {
   type: 'request' | 'confirm' | 'cancel_user' | 'cancel_admin'
   booking: Booking
 }): Promise<void> {
-  await fetch('/api/send-booking-email', {
+  const res = await fetch('/api/send-booking-email', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText)
+    throw new Error(`HTTP ${res.status}: ${detail}`)
+  }
+}
+
+export async function sendBookingPush(payload: {
+  type: 'request' | 'confirm' | 'cancel_user' | 'cancel_admin'
+  booking: Booking
+}): Promise<void> {
+  await fetch('/api/send-booking-push', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(payload),

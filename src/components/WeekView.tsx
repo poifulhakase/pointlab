@@ -10,6 +10,7 @@ import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
+import { type BookingSlot } from '../utils/bookingTypes'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const HOUR_HEIGHT = 56
@@ -47,6 +48,7 @@ type Props = {
   theme?: 'dark' | 'light'
   showPoiroboAlert?: boolean
   poiroboAlertConfig?: PoiroboAlertConfig
+  getBookingEvents?: (d: Date) => BookingSlot[]
 }
 
 const TOTAL_MINUTES = 24 * 60
@@ -56,7 +58,7 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
-export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT }: Props) {
+export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT, getBookingEvents }: Props) {
   const now = new Date()
   const isLight = theme === 'light'
 
@@ -199,6 +201,12 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 const timeLabel = formatTimeRangeJa(evt.startTime, evt.endTime || undefined)
                 return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
               })
+            const bookingBlocks = getBookingEvents ? getBookingEvents(d).map((slot, i) => {
+              const startMin = timeToMinutes(slot.startTime)
+              const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
+              const heightPx = Math.max(30 / TOTAL_MINUTES * HOUR_HEIGHT * 24, 22)
+              return { topPx, heightPx, ...slot, key: `bk-${i}` }
+            }) : []
             return (
               <div key={di} style={{ ...styles.dayCol, position: 'relative', background: closed && !td ? 'var(--closed-cell-bg)' : !td && alertDateSet.has(d.toDateString()) ? 'rgba(248,113,113,0.08)' : undefined }}>
                 {!closed && <SessionBands />}
@@ -223,6 +231,35 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                     <div style={{ ...styles.eventTitle, color: isLight ? '#1e3a8a' : 'rgba(255,255,255,0.97)' }}>{evtBlock.title || '（無題）'}</div>
                     {evtBlock.heightPx >= 34 && (
                       <div style={{ ...styles.eventTime, color: isLight ? '#2563eb' : 'rgba(255,255,255,0.80)' }}>{evtBlock.timeLabel}</div>
+                    )}
+                  </div>
+                ))}
+                {bookingBlocks.map(b => (
+                  <div
+                    key={b.key}
+                    style={{
+                      position: 'absolute', left: 2, right: 2,
+                      top: b.topPx, height: b.heightPx,
+                      background: b.confirmed
+                        ? (isLight ? 'rgba(3,105,161,0.18)' : 'rgba(0,229,255,0.16)')
+                        : (isLight ? 'rgba(3,105,161,0.10)' : 'rgba(0,229,255,0.09)'),
+                      borderLeft: b.confirmed
+                        ? (isLight ? '3px solid #0369a1' : '3px solid #00e5ff')
+                        : (isLight ? '3px solid rgba(3,105,161,0.5)' : '3px solid rgba(0,229,255,0.5)'),
+                      borderRadius: '0 4px 4px 0',
+                      padding: '2px 5px',
+                      overflow: 'hidden',
+                      zIndex: 2,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <div style={{ fontSize: 10, fontWeight: 700, color: isLight ? '#0369a1' : '#00e5ff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {b.label}
+                    </div>
+                    {b.heightPx >= 28 && (
+                      <div style={{ fontSize: 9, color: isLight ? 'rgba(3,105,161,0.7)' : 'rgba(0,229,255,0.65)' }}>
+                        {b.startTime}
+                      </div>
                     )}
                   </div>
                 ))}

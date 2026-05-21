@@ -45,7 +45,9 @@
     { "source": "/hakaseAI/(.*)", "destination": "https://hakase-ai.vercel.app/$1", "permanent": false }
   ],
   "functions": {
+    "api/create-booking.js": { "memory": 128 },
     "api/send-booking-email.js": { "memory": 128 },
+    "api/send-booking-push.js": { "memory": 128 },
     "api/booking-ics.js": { "memory": 128 },
     "api/cron-push-notifications.js": { "memory": 256 }
   },

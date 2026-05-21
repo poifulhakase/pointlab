@@ -15,9 +15,9 @@ const CACHE_TTL = 24 * 60 * 60 * 1000
 
 export async function fetchFuturesOiData(force = false): Promise<FuturesOiWeekData[]> {
   return fetchWithCache({
-    key: CACHE_KEY, ttl: CACHE_TTL, force,
+    key: CACHE_KEY, ttl: CACHE_TTL, force, checkUpdatedAt: true,
     fetcher: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}data/futures_oi.json`, { signal: AbortSignal.timeout(10000) })
+      const res = await fetch(`${import.meta.env.BASE_URL}data/futures_oi.json`, { signal: AbortSignal.timeout(10000), cache: 'no-cache' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json() as { updatedAt: string; data: FuturesOiWeekData[] }
       return { data: json.data, updatedAt: json.updatedAt }

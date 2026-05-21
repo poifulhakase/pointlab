@@ -12,14 +12,14 @@ export interface FuturesDayData {
   close?: number | null // 近限月清算値（円）
 }
 
-const CACHE_KEY = 'poical-futures-daily-data'
+const CACHE_KEY = 'poical-futures-daily-data-v2'
 const CACHE_TTL = 6 * 60 * 60 * 1000 // 6時間
 
 export async function fetchFuturesDailyData(force = false): Promise<FuturesDayData[]> {
   return fetchWithCache({
-    key: CACHE_KEY, ttl: CACHE_TTL, force,
+    key: CACHE_KEY, ttl: CACHE_TTL, force, checkUpdatedAt: true,
     fetcher: async () => {
-      const res = await fetch(`${import.meta.env.BASE_URL}data/futures_daily.json`, { signal: AbortSignal.timeout(10000) })
+      const res = await fetch(`${import.meta.env.BASE_URL}data/futures_daily.json`, { signal: AbortSignal.timeout(10000), cache: 'no-cache' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json() as { updatedAt: string; data: FuturesDayData[] }
       return { data: json.data, updatedAt: json.updatedAt }

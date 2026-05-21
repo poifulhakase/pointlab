@@ -22,6 +22,8 @@ import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 import { Z } from './utils/zIndex'
 import { purgeStaleDataCaches } from './utils/dataCache'
 import { enablePush, disablePush, syncPushAlertConfig } from './utils/fcmNotifications'
+import { getUserActiveBooking, getAllBookings } from './utils/bookingApi'
+import type { BookingSlot } from './utils/bookingTypes'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -29,7 +31,6 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 const ChartView    = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
 const QuantView    = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
 const SpecView     = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
-const NoteView     = lazy(() => import('./components/NoteView').then(m => ({ default: m.NoteView })))
 const ManualView   = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
 const SupportView  = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
 const JitsiPanel   = lazy(() => import('./components/JitsiPanel').then(m => ({ default: m.JitsiPanel })))
@@ -52,6 +53,16 @@ const Toast = memo(({ message }: { message: string }) => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
       <circle cx="8" cy="8" r="7.5" stroke="rgba(96,165,250,0.8)" />
       <path d="M4.5 8l2.5 2.5 4.5-5" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+    {message}
+  </div>
+))
+
+const PushErrorToast = memo(({ message }: { message: string }) => (
+  <div style={{ ...styles.toast, maxWidth: 'min(380px, calc(100vw - 48px))', whiteSpace: 'normal', lineHeight: 1.5 }}>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="8" cy="8" r="7.5" stroke="rgba(251,191,36,0.8)" />
+      <path d="M8 4.5v4M8 10.5v1" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
     {message}
   </div>
@@ -176,8 +187,7 @@ export default function App() {
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
   const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro'>('bunseki')
-const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('session')
-  const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
+const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── ノートパネル ──────────────────────────────────────────────────────
   const [noteDate,       setNoteDate]       = useState<Date | null>(null)
@@ -196,6 +206,13 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
   // ── プッシュ通知 ──────────────────────────────────────────────────────
   const [pushEnabled, setPushEnabled] = useState<boolean>(() => localStorage.getItem('poical-push-enabled') === 'true')
 
+  const [pushToast, setPushToast] = useState<string | null>(null)
+  useEffect(() => {
+    if (!pushToast) return
+    const t = setTimeout(() => setPushToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [pushToast])
+
   const handleTogglePush = useCallback(async () => {
     if (!user) return
     if (pushEnabled) {
@@ -203,10 +220,18 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
       setPushEnabled(false)
       localStorage.setItem('poical-push-enabled', 'false')
     } else {
-      const ok = await enablePush(user.uid, showPoiroboAlert, getSettings().poiroboAlertConfig)
-      if (ok) {
+      const result = await enablePush(user.uid, showPoiroboAlert, getSettings().poiroboAlertConfig)
+      console.log('[Push] enablePush result:', result)
+      if (result === 'ok') {
         setPushEnabled(true)
         localStorage.setItem('poical-push-enabled', 'true')
+        console.log('[Push] setPushEnabled(true) called')
+      } else if (result === 'permission-denied') {
+        setPushToast('ブラウザの通知をブロックしています。アドレスバー左の🔒から「通知」を許可してください。')
+      } else if (result === 'no-token') {
+        setPushToast('FCMトークンの取得に失敗しました。しばらくしてから再試行してください。')
+      } else {
+        setPushToast('通知の登録に失敗しました。コンソールを確認してください。')
       }
     }
   }, [user, pushEnabled, showPoiroboAlert])
@@ -216,6 +241,38 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
       syncPushAlertConfig(user.uid, showPoiroboAlert, poiroboAlertConfig).catch(() => {})
     }
   }, [pushEnabled, user, showPoiroboAlert, poiroboAlertConfig])
+
+  // ── 予約カレンダー表示 ────────────────────────────────────────────────
+  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
+  const [bookingMap, setBookingMap] = useState<Map<string, BookingSlot[]>>(new Map())
+
+  useEffect(() => {
+    if (!user) { setBookingMap(new Map()); return }
+    const isAdm = user.email === ADMIN_EMAIL
+    const fetchFn = isAdm
+      ? getAllBookings()
+      : getUserActiveBooking(user.uid).then(b => b ? [b] : [])
+    fetchFn.then(bookings => {
+      const map = new Map<string, BookingSlot[]>()
+      for (const b of bookings) {
+        if (b.status !== 'pending' && b.status !== 'confirmed') continue
+        const slot: BookingSlot = {
+          startTime: b.startTime,
+          confirmed: b.status === 'confirmed',
+          label: b.status === 'confirmed' ? 'コネクト確定' : 'コネクト（仮）',
+        }
+        const existing = map.get(b.date) ?? []
+        existing.push(slot)
+        map.set(b.date, existing)
+      }
+      setBookingMap(map)
+    }).catch(() => {})
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const getBookingEvents = useCallback((d: Date): BookingSlot[] => {
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return bookingMap.get(key) ?? []
+  }, [bookingMap])
 
   // ── トースト ──────────────────────────────────────────────────────────
   const [saveToast,  setSaveToast]  = useState(false)
@@ -304,10 +361,6 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
     prevViewRef2.current = cal.view
     if (prev === 'chart')  setChartSymbol('INDEX:NKY')
     if (prev === 'quant')  setQuantTab('bunseki')
-  // support から legal/manual/spec 以外へ遷移した場合のみリセット（資料タブを保持）
-    if (prev === 'support' && cal.view !== 'legal' && cal.view !== 'manual' && cal.view !== 'spec') {
-      setSupportTab('session')
-    }
   }, [cal.view])
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
@@ -468,12 +521,12 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
           )}
           {cal.view === 'manual' && (
             <Suspense fallback={<ViewLoader />}>
-              <ManualView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('note')} />
+              <ManualView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
             </Suspense>
           )}
           {cal.view === 'legal' && (
             <Suspense fallback={<ViewLoader />}>
-              <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('note')} />
+              <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
             </Suspense>
           )}
 
@@ -481,7 +534,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} supportTab={supportTab} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -512,18 +565,6 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
                 <ShieldView theme={theme} isMobile={isMobile} user={user} />
               </Suspense>
             </ErrorBoundary>
-          )}
-
-          {/* ノート */}
-          {cal.view === 'note' && (
-            <Suspense fallback={<ViewLoader />}>
-              <NoteView
-                theme={theme}
-                isMobile={isMobile}
-                onOpenManual={() => setViewWithTransition('manual')}
-                onOpenLegal={() => setViewWithTransition('legal')}
-              />
-            </Suspense>
           )}
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
@@ -570,6 +611,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
                       hasNote={hasNote} getNoteTitle={getNoteTitle} isMobile={isMobile} theme={theme}
                       showPoiroboAlert={showPoiroboAlert}
                       poiroboAlertConfig={poiroboAlertConfig}
+                      getBookingEvents={getBookingEvents}
                     />
                   </div>
 
@@ -584,6 +626,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
                       getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
                       showPoiroboAlert={showPoiroboAlert}
                       poiroboAlertConfig={poiroboAlertConfig}
+                      getBookingEvents={getBookingEvents}
                     />
                   </div>
 
@@ -595,6 +638,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
                       isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
                       onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
                       getScheduledEvents={getScheduledEvents} theme={theme}
+                      getBookingEvents={getBookingEvents}
                     />
                   </div>
                 </div>
@@ -743,6 +787,7 @@ const [supportTab,        setSupportTab]        = useState<'session' | 'note'>('
       {/* トースト */}
       {loginToast && <Toast message="ログインしました" />}
       {saveToast  && <Toast message="保存しました" />}
+      {pushToast  && <PushErrorToast message={pushToast} />}
     </div>
   )
 }

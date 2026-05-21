@@ -7,6 +7,7 @@ import {
   requestBooking,
   cancelBooking,
   sendBookingEmail,
+  sendBookingPush,
 } from '../utils/bookingApi'
 import { getCancelPolicy, isSessionNow, formatBookingLabel, statusLabel } from '../utils/bookingTypes'
 
@@ -83,6 +84,16 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
       } else {
         setScreen('slot_list')
       }
+      // ログイン後に選択枠を復元
+      const pending = sessionStorage.getItem('poical-pending-slot')
+      if (pending) {
+        try {
+          const saved: Slot = JSON.parse(pending)
+          const match = avail.find(s => s.id === saved.id)
+          if (match) setSelectedSlot(match)
+        } catch { /* noop */ }
+        sessionStorage.removeItem('poical-pending-slot')
+      }
     } catch (e) {
       setErrorMsg(String(e))
       setScreen('error')
@@ -93,6 +104,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
     if (!selectedSlot) return
     if (!userId || !userName || !userEmail) {
       sessionStorage.setItem('poical-pending-connect', '1')
+      sessionStorage.setItem('poical-pending-slot', JSON.stringify(selectedSlot))
       onOpenLogin?.()
       onClose()
       return
@@ -115,6 +127,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
         updatedAt:   new Date().toISOString(),
       }
       sendBookingEmail({ type: 'request', booking: newBooking }).catch(() => {})
+      sendBookingPush({ type: 'request', booking: newBooking }).catch(() => {})
       setActiveBooking(newBooking)
       setScreen('booked')
     } catch (e) {
@@ -140,6 +153,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
     try {
       await cancelBooking(activeBooking, false)
       sendBookingEmail({ type: 'cancel_user', booking: activeBooking }).catch(() => {})
+      sendBookingPush({ type: 'cancel_user', booking: activeBooking }).catch(() => {})
       await load()
     } catch (e) {
       setErrorMsg(String(e))
