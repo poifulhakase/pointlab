@@ -26,7 +26,7 @@ export interface NkFuturesDayData {
 
 export interface StocksDailyData {
   contribution: { up: StocksItem[]; down: StocksItem[]; total: number }
-  sector:       { up: SectorItem[]; down: SectorItem[] }
+  sector:       { up: SectorItem[]; down: SectorItem[]; advanceSectorCount?: number; declineSectorCount?: number }
   nkFutures:    NkFuturesDayData[]
   updatedAt:    string
 }

@@ -199,8 +199,12 @@ export default async function handler(req, res) {
 
     let up5   = allContrib.filter(x => x.contribution > 0).slice(0, 5)
     let down5 = [...allContrib.filter(x => x.contribution < 0)].reverse().slice(0, 5)
-    const sec5u = allSector.filter(x => x.changePct > 0).slice(0, 5)
-    const sec5d = [...allSector.filter(x => x.changePct < 0)].reverse().slice(0, 5)
+    const secUp   = allSector.filter(x => x.changePct > 0)
+    const secDown = allSector.filter(x => x.changePct < 0)
+    const sec5u = secUp.slice(0, 5)
+    const sec5d = [...secDown].reverse().slice(0, 5)
+    const advanceSectorCount = secUp.length
+    const declineSectorCount = secDown.length
 
     // Fetch sector for each displayed stock in parallel
     const displayed = [...up5, ...down5]
@@ -212,7 +216,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       contribution: { up: up5, down: down5, total: contribTotal },
-      sector:       { up: sec5u, down: sec5d },
+      sector:       { up: sec5u, down: sec5d, advanceSectorCount, declineSectorCount },
       nkFutures,
       updatedAt: new Date().toISOString(),
     })

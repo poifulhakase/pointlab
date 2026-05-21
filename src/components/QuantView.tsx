@@ -15,6 +15,7 @@ import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDail
 import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
 import { fetchNkFuturesPriceData, type NkFuturesDayData } from '../utils/nkFuturesPriceData'
+import { fetchStocksDaily, type StocksDailyData } from '../utils/stocksDailyData'
 const VixPanel    = lazy(() => import('./VixPanel').then(m => ({ default: m.VixPanel })))
 const NtRatioPanel = lazy(() => import('./NtRatioPanel').then(m => ({ default: m.NtRatioPanel })))
 const DeltaModal  = lazy(() => import('./DeltaModal').then(m => ({ default: m.DeltaModal })))
@@ -308,6 +309,7 @@ function buildExportJson(
   nas100Data: Nas100DayData[],
   vixDailyData: VixDayData[],
   nkFuturesPriceData: NkFuturesDayData[],
+  stocksDailyData: StocksDailyData | null,
 ) {
   // ── ローカルヘルパー ──────────────────────────────
   function pctRank(series: number[], val: number): number {
@@ -859,6 +861,35 @@ function buildExportJson(
     },
 
     weekly_history,
+
+    internal_structure: (() => {
+      if (!stocksDailyData) return null
+      const absTotal  = Math.abs(stocksDailyData.contribution.total)
+      const up5       = stocksDailyData.contribution.up
+      const down5     = stocksDailyData.contribution.down
+      const netTop10  = Math.round([...up5, ...down5].reduce((s, x) => s + x.contribution, 0) * 100) / 100
+      const advCount  = stocksDailyData.sector.advanceSectorCount ?? null
+      const dnCount   = stocksDailyData.sector.declineSectorCount ?? null
+      const totalSec  = (advCount ?? 0) + (dnCount ?? 0)
+      const breadth   = totalSec > 0 ? Math.round((advCount! - dnCount!) / totalSec * 100) / 100 : null
+      const mkWeight  = (c: number) => absTotal > 0 ? Math.round(Math.abs(c) / absTotal * 1000) / 10 : null
+      return {
+        as_of: stocksDailyData.updatedAt.slice(0, 10),
+        top_contributors: {
+          bullish: up5.map(x => ({ code: x.code, name: x.name, contribution: x.contribution, weight_pct: mkWeight(x.contribution) })),
+          bearish: down5.map(x => ({ code: x.code, name: x.name, contribution: x.contribution, weight_pct: mkWeight(x.contribution) })),
+          net_contribution_top10: netTop10,
+          concentration_ratio: absTotal > 0 ? Math.round(Math.abs(netTop10) / absTotal * 100) / 100 : null,
+        },
+        sector_performance: {
+          top_gainers: stocksDailyData.sector.up.map(x => ({ sector: x.name, change_pct: x.changePct })),
+          top_losers:  stocksDailyData.sector.down.map(x => ({ sector: x.name, change_pct: x.changePct })),
+          advance_sector_count: advCount,
+          decline_sector_count: dnCount,
+          breadth_score: breadth,
+        },
+      }
+    })(),
   }
 }
 
@@ -1632,6 +1663,9 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   const [nkFuturesPriceData,   setNkFuturesPriceData]   = useState<NkFuturesDayData[]>([])
   const [nkFuturesPriceLoaded, setNkFuturesPriceLoaded] = useState(false)
 
+  const [stocksDailyData,   setStocksDailyData]   = useState<StocksDailyData | null>(null)
+  const [stocksDailyLoaded, setStocksDailyLoaded] = useState(false)
+
   const [vixDailyData,   setVixDailyData]   = useState<VixDayData[]>([])
   const [vixDailyLoaded, setVixDailyLoaded] = useState(false)
 
@@ -1736,6 +1770,11 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
     catch { /* エラー時は空配列のまま */ }
   }, [])
 
+  const loadStocksDaily = useCallback(async () => {
+    try { setStocksDailyData(await fetchStocksDaily()); setStocksDailyLoaded(true) }
+    catch { /* エラー時は null のまま */ }
+  }, [])
+
   const loadVixDaily = useCallback(async () => {
     try { setVixDailyData(await fetchVixDailyData()); setVixDailyLoaded(true) }
     catch { /* エラー時は空配列のまま */ }
@@ -1761,14 +1800,15 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   useEffect(() => { if (!nkFuturesPriceLoaded) loadNkFuturesPrice()  }, [nkFuturesPriceLoaded, loadNkFuturesPrice])
   useEffect(() => { if (!vixDailyLoaded)       loadVixDaily()        }, [vixDailyLoaded,        loadVixDaily])
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
+  useEffect(() => { if (!stocksDailyLoaded) loadStocksDaily() }, [stocksDailyLoaded, loadStocksDaily])
 
   // 重い計算をデータ変化時のみ再実行（毎レンダーで走らせない）
   const exportJson = useMemo(
     () => JSON.stringify(
-      buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData),
+      buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData, stocksDailyData),
       null, 2
     ),
-    [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData] // eslint-disable-line react-hooks/exhaustive-deps
+    [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData, stocksDailyData] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   const handlePromptCopy = useCallback(async () => {
@@ -2347,7 +2387,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                         <polyline points="16 7 22 7 22 13"/>
                       </svg>
                       日経平均先物
-                      <span style={s.panelSub}>NK=F / CME 円建て (日足)</span>
+                      <span style={s.panelSub}>^N225 / 日経225 (日足)</span>
                     </div>
                     <div style={s.panelRight}>
                       <FreshnessTag dateStr={nkRows[0]?.date ?? null} />

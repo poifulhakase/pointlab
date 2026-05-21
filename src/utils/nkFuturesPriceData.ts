@@ -13,7 +13,7 @@ export interface NkFuturesDayData {
   change_pct: number | null // 前日比（%）
 }
 
-const CACHE_KEY        = 'poical-nk-futures-price-v2'
+const CACHE_KEY        = 'poical-nk-futures-price-v4'
 const CACHE_TTL_OPEN   = 30 * 60 * 1000
 const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
 const NK_FUTURES_DAYS  = 10
@@ -82,8 +82,10 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
 
 async function fetchSymbolOhlcv(sym: string): Promise<NkFuturesDayData[]> {
   const q    = `interval=1d&range=3mo`
-  const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
-  const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}`
+  // プロキシ(allorigins.win)側のキャッシュをバイパスするため10分単位のバスターを付与
+  const bust = Math.floor(Date.now() / (10 * 60 * 1000))
+  const url1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}&_=${bust}`
+  const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?${q}&_=${bust}`
   try {
     return parseYahooOhlcv(await proxyFetch(url1))
   } catch {
@@ -92,14 +94,15 @@ async function fetchSymbolOhlcv(sym: string): Promise<NkFuturesDayData[]> {
 }
 
 async function fetchFromYahoo(): Promise<NkFuturesDayData[]> {
-  // NK=F: CME 日経225先物（円建て連続限月）→ 取得失敗時は ^N225（日経225指数）で代替
+  // ^N225 をプライマリ（JST当日データあり）、NK=F をフォールバック
+  // NK=F は CME ベースで常に JST 約1日遅れのため
   try {
-    const data = await fetchSymbolOhlcv('NK=F')
+    const data = await fetchSymbolOhlcv('^N225')
     if (data.length > 0) return data
-    throw new Error('NK=F: empty result')
+    throw new Error('^N225: empty result')
   } catch (e) {
-    console.warn('[nkFutures] NK=F failed, falling back to ^N225:', e)
-    return fetchSymbolOhlcv('^N225')
+    console.warn('[nkFutures] ^N225 failed, falling back to NK=F:', e)
+    return fetchSymbolOhlcv('NK=F')
   }
 }
 

@@ -319,8 +319,8 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
   const [bookingOpen,   setBookingOpen]   = useState(false)
   const [adminOpen,     setAdminOpen]     = useState(false)
   const [ripples,       setRipples]       = useState<{ id: number; x: number; y: number }[]>([])
-  const [activeDrawer,  setActiveDrawer]  = useState<'data' | 'contact' | 'settings' | null>(null)
-  const [drawerVisible, setDrawerVisible] = useState(false)
+  const [activeDrawer,   setActiveDrawer]   = useState<'data' | 'contact' | 'settings' | null>(null)
+  const [drawerVisible,  setDrawerVisible]  = useState(false)
   const [showPoirobo,   setShowPoirobo]   = useState(false)
 
   const rippleIdRef = useRef(0)
@@ -777,10 +777,10 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
         ))}
       </div>
 
-      {/* コンテンツカルーセル（コネクト中は非表示） */}
+      {/* コンテンツカルーセル */}
       <div style={{
         position: 'absolute', inset: 0,
-        display: isConnected ? 'none' : 'flex',
+        display: 'flex',
         width: '300%',
         transform: `translateX(${-tabIndex * 33.333}%)`,
         transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
@@ -945,7 +945,9 @@ export function SupportView({ theme, isMobile, supportTab, user, isConnected = f
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme === 'light' ? 'rgba(0,100,200,0.7)' : 'rgba(0,220,255,0.7)', boxShadow: theme === 'light' ? '0 0 7px rgba(0,100,200,0.5)' : '0 0 7px rgba(0,220,255,0.9)', flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: theme === 'light' ? 'rgba(0,60,140,0.80)' : 'rgba(80,200,255,0.85)', letterSpacing: '0.22em' }}>
-                {activeDrawer === 'data' ? 'DATA / 資料' : activeDrawer === 'contact' ? 'CONTACT / お問い合わせ' : 'SETTINGS / 設定'}
+                {activeDrawer === 'data' ? 'DATA / 資料'
+                  : activeDrawer === 'contact' ? 'CONTACT / お問い合わせ'
+                  : 'SETTINGS / 設定'}
               </span>
               <button
                 onClick={closeDrawer}
