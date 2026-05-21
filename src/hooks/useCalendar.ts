@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from 'react'
 
-export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'note' | 'spec' | 'legal' | 'manual' | 'support'
+export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support'
 
 const VIEW_SESSION_KEY = 'poical-view-session'
-const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'note', 'spec', 'legal', 'manual', 'support']
+const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support']
 const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
 function loadView(): ViewMode {
@@ -90,7 +90,6 @@ export function useCalendar() {
     const m = current.toLocaleDateString('ja-JP', { month: 'long' })
     if (view === 'chart')   return 'チャート'
     if (view === 'quant')   return '需給'
-    if (view === 'note')    return 'ノート'
     if (view === 'spec')    return 'システム仕様'
     if (view === 'support') return '研究室'
     if (view === 'manual')  return '説明書'
