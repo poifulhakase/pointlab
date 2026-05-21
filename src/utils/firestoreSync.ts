@@ -190,6 +190,7 @@ export async function subscribeToNotes(uid: string, onRemoteChange: () => void):
 
         const { _updatedAt, ...notes } = change.doc.data()
         for (const [key, note] of Object.entries(notes)) {
+          if (isPendingDelete(key)) continue
           if (JSON.stringify(note) !== JSON.stringify(local[key] ?? {})) {
             local[key] = note as Partial<DayNote>
             changed = true
