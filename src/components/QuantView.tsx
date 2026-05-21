@@ -2250,7 +2250,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
             const latestDate = futuresDailyData[0]?.date ?? null
             const loadingEmpty = futuresDailyLoading && futuresDailyData.length === 0
             const errorEmpty   = futuresDailyError   && futuresDailyData.length === 0
-            const nkRows = [...nkFuturesPriceData].reverse()
+            const nkRows = [...nkFuturesPriceData]
             const changePctColor = (pct: number | null) => {
               if (pct == null) return 'var(--text)'
               if (pct > 0) return theme === 'dark' ? 'rgba(52,211,153,0.95)' : 'rgba(5,150,105,0.95)'

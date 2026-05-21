@@ -647,6 +647,78 @@ async function fetchUsdjpyData() {
   return enriched.slice(0, 90)
 }
 
+// ── 日経平均先物価格（Yahoo Finance ^N225） ────────────
+
+async function fetchNkFuturePriceData() {
+  console.log('\n[nkFuturesPrice] Yahoo Finance ^N225 から日次OHLCVデータ取得...')
+  const NK_DAYS = 15
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EN225?interval=1d&range=3mo'
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
+      'Accept': 'application/json',
+    },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error('レスポンス形式が不正')
+
+  const ts      = result.timestamp ?? []
+  const q       = result.indicators?.quote?.[0] ?? {}
+  const opens   = q.open   ?? []
+  const highs   = q.high   ?? []
+  const lows    = q.low    ?? []
+  const closes  = q.close  ?? []
+  const volumes = q.volume ?? []
+
+  const valid = []
+  for (let i = 0; i < ts.length; i++) {
+    const c = closes[i]
+    if (c == null || isNaN(c)) continue
+    valid.push({
+      date:   new Date(ts[i] * 1000).toISOString().slice(0, 10),
+      open:   Math.round(opens[i] ?? c),
+      high:   Math.round(highs[i] ?? c),
+      low:    Math.round(lows[i]  ?? c),
+      close:  Math.round(c),
+      volume: volumes[i] != null ? Math.round(volumes[i]) : null,
+    })
+  }
+  if (valid.length === 0) throw new Error('有効データなし')
+
+  // 昇順ソート → 前日比計算
+  valid.sort((a, b) => a.date.localeCompare(b.date))
+  const buf = valid.slice(-(NK_DAYS + 1))
+  const startIdx = buf.length > NK_DAYS ? 1 : 0
+  const rows = []
+  for (let i = startIdx; i < buf.length; i++) {
+    const d    = buf[i]
+    const prev = i > 0 ? buf[i - 1] : null
+    const change    = prev != null ? Math.round(d.close - prev.close) : null
+    const changePct = prev != null && prev.close > 0
+      ? Math.round((d.close - prev.close) / prev.close * 10000) / 100
+      : null
+    rows.push({
+      date:       d.date,
+      open:       d.open,
+      high:       d.high,
+      low:        d.low,
+      close:      d.close,
+      volume:     d.volume,
+      prev_close: prev?.close ?? null,
+      change,
+      change_pct: changePct,
+    })
+  }
+  // 降順（最新が先頭）
+  rows.sort((a, b) => b.date.localeCompare(a.date))
+  console.log(`  → ${rows.length}件`)
+  return rows
+}
+
 // ── PCR（プット・コール・レシオ）─────────────────────
 // データソース: nikkei225jp.com/_data/_nfsWEB/DAY/daily2year.json col[16]
 // PCR = プットOI / コールOI  通常値域: 0.75〜2.52（日経225オプション）
@@ -1106,6 +1178,7 @@ async function main() {
   let futuresDailyOk        = false
   let cotNikkeiOk           = false
   let topixOk               = false
+  let nkFuturesPriceOk      = false
 
   try {
     const data = await fetchInvestorData()
@@ -1145,6 +1218,16 @@ async function main() {
     usdjpyOk = true
   } catch (e) {
     console.error('\n✗ usdjpy:', e.message)
+  }
+
+  try {
+    const data = await fetchNkFuturePriceData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'nk_futures_price.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ nk_futures_price.json 保存 (${data.length}件)`)
+    nkFuturesPriceOk = true
+  } catch (e) {
+    console.error('\n✗ nkFuturesPrice:', e.message)
   }
 
   try {
@@ -1224,6 +1307,7 @@ async function main() {
   if (!investorOk || !marginOk) process.exit(1)
   if (!vixOk)                   console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
   if (!usdjpyOk)                console.warn('⚠ usdjpy.json は更新されませんでした（Yahoo Finance 接続要確認）')
+  if (!nkFuturesPriceOk)       console.warn('⚠ nk_futures_price.json は更新されませんでした（Yahoo Finance 接続要確認）')
   if (!advanceDeclineOk)        console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')
   if (!shortSellOk)             console.warn('⚠ short_sell.json は更新されませんでした（列検出要確認）')
   if (!arbitrageOk)             console.warn('⚠ arbitrage.json は更新されませんでした（JPX列構造要確認）')

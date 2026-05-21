@@ -17,6 +17,8 @@ const CACHE_KEY        = 'poical-nk-futures-price-v4'
 const CACHE_TTL_OPEN   = 30 * 60 * 1000
 const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
 const NK_FUTURES_DAYS  = 10
+const STATIC_JSON_URL  = `${import.meta.env.BASE_URL}data/nk_futures_price.json`
+const STATIC_MAX_AGE   = 36 * 60 * 60 * 1000
 
 function isMarketOpen(): boolean {
   const day = new Date().getUTCDay()
@@ -77,6 +79,7 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
       change_pct: changePct,
     })
   }
+  result.sort((a, b) => b.date.localeCompare(a.date)) // 降順（最新が先頭）
   return result
 }
 
@@ -112,6 +115,19 @@ export async function fetchNkFuturesPriceData(force = false): Promise<NkFuturesD
     ttl: () => isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
     force,
     fetcher: async () => {
+      // 静的 JSON を優先（fetch-data スクリプトで毎日生成）
+      try {
+        const res = await fetch(STATIC_JSON_URL)
+        if (res.ok) {
+          const json = await res.json() as { updatedAt: string; data: NkFuturesDayData[] }
+          const age = Date.now() - new Date(json.updatedAt).getTime()
+          if (age < STATIC_MAX_AGE && json.data?.length > 0) {
+            return { data: json.data }
+          }
+        }
+      } catch { /* fall through */ }
+
+      // フォールバック: Yahoo Finance プロキシ経由
       const data = await fetchFromYahoo()
       if (data.length === 0) throw new Error('データが取得できませんでした')
       return { data }
