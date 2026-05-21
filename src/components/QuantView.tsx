@@ -1660,8 +1660,10 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   const [nas100Data,   setNas100Data]   = useState<Nas100DayData[]>([])
   const [nas100Loaded, setNas100Loaded] = useState(false)
 
-  const [nkFuturesPriceData,   setNkFuturesPriceData]   = useState<NkFuturesDayData[]>([])
-  const [nkFuturesPriceLoaded, setNkFuturesPriceLoaded] = useState(false)
+  const [nkFuturesPriceData,    setNkFuturesPriceData]    = useState<NkFuturesDayData[]>([])
+  const [nkFuturesPriceLoaded,  setNkFuturesPriceLoaded]  = useState(false)
+  const [nkFuturesPriceLoading, setNkFuturesPriceLoading] = useState(false)
+  const [nkFuturesPriceError,   setNkFuturesPriceError]   = useState('')
 
   const [stocksDailyData,   setStocksDailyData]   = useState<StocksDailyData | null>(null)
   const [stocksDailyLoaded, setStocksDailyLoaded] = useState(false)
@@ -1765,9 +1767,11 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
     catch { /* エラー時は空配列のまま */ }
   }, [])
 
-  const loadNkFuturesPrice = useCallback(async () => {
-    try { setNkFuturesPriceData(await fetchNkFuturesPriceData()); setNkFuturesPriceLoaded(true) }
-    catch { /* エラー時は空配列のまま */ }
+  const loadNkFuturesPrice = useCallback(async (force = false) => {
+    setNkFuturesPriceLoading(true); setNkFuturesPriceError('')
+    try { setNkFuturesPriceData(await fetchNkFuturesPriceData(force)); setNkFuturesPriceLoaded(true) }
+    catch (e) { setNkFuturesPriceError(e instanceof Error ? e.message : 'データ取得エラー'); setNkFuturesPriceLoaded(true) }
+    finally { setNkFuturesPriceLoading(false) }
   }, [])
 
   const loadStocksDaily = useCallback(async () => {
@@ -2391,10 +2395,16 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                     </div>
                     <div style={s.panelRight}>
                       <FreshnessTag dateStr={nkRows[0]?.date ?? null} />
+                      <button onClick={() => loadNkFuturesPrice(true)} style={s.reloadBtn} title="再読み込み">↺</button>
                     </div>
                   </div>
-                  {!nkFuturesPriceLoaded
+                  {!nkFuturesPriceLoaded || (nkFuturesPriceLoading && nkRows.length === 0)
                     ? <div style={s.center}><div style={s.spinner} /></div>
+                    : nkFuturesPriceError && nkRows.length === 0
+                    ? <div style={s.center}>
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>取得エラー</div>
+                        <button style={s.retryBtn} onClick={() => loadNkFuturesPrice(true)}>再試行</button>
+                      </div>
                     : nkRows.length === 0
                     ? <div style={s.center}><span style={{ color: 'var(--text-dim)', fontSize: 12 }}>データなし</span></div>
                     : (

@@ -111,6 +111,10 @@ export async function fetchNkFuturesPriceData(force = false): Promise<NkFuturesD
     key: CACHE_KEY,
     ttl: () => isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
     force,
-    fetcher: async () => ({ data: await fetchFromYahoo() }),
+    fetcher: async () => {
+      const data = await fetchFromYahoo()
+      if (data.length === 0) throw new Error('データが取得できませんでした')
+      return { data }
+    },
   })
 }
