@@ -793,25 +793,21 @@ function ShieldPanel({
                 <button
                   title="ニュース分析プロンプトをコピー"
                   style={{
-                    position: 'absolute', bottom: -16, left: -16,
-                    width: 38, height: 42, borderRadius: 8,
+                    position: 'absolute', bottom: -14, left: -14,
+                    width: 36, height: 36, borderRadius: '50%',
                     background: copyStatus === 'news_shield'
                       ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.22)`
                       : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
                     border: `1.5px solid ${copyStatus === 'news_shield' ? c.GREEN : c.BORDBR}`,
                     boxShadow: `0 0 10px ${c.FAINT}`,
                     color: c.GREEN,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 2, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
                     transition: 'background 0.2s, border-color 0.2s',
                   }}
                   onClick={onNewsCopy}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m3 11 18-5v12L3 14v-3z"/>
-                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                  </svg>
-                  <span style={{ fontFamily: c.FONT, fontSize: 8, letterSpacing: '0.1em', lineHeight: 1 }}>NEWS</span>
+                  <span style={{ fontFamily: c.FONT, fontSize: 8, letterSpacing: '0.08em', lineHeight: 1, fontWeight: 700 }}>NEWS</span>
                 </button>
               </div>
             </div>
