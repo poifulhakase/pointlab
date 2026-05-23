@@ -1288,7 +1288,10 @@ function EnginePanel({
                   }}
                   onClick={onNewsCopy}
                 >
-                  <span style={{ fontFamily: CY_FONT, fontSize: 8, letterSpacing: '0.08em', lineHeight: 1, fontWeight: 700 }}>NEWS</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 11 18-5v12L3 14v-3z"/>
+                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1317,7 +1320,10 @@ function EnginePanel({
                 }}
                 onClick={onNewsCopy}
               >
-                <span style={{ fontSize: 8, letterSpacing: '0.08em', lineHeight: 1, fontWeight: 700 }}>NEWS</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m3 11 18-5v12L3 14v-3z"/>
+                  <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                </svg>
               </button>
             </div>
           )}
