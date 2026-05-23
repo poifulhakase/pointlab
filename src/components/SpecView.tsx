@@ -330,6 +330,7 @@ const SPEC_SECTIONS = [
           'Signal Density: [Price急変/OI減少/IV急騰/VIX急騰/USDJPY急変/出来高急増] の同時点灯数/6',
           'ぽいロボエンジン（分析タブインライン）: Gemini / Claude / ChatGPT / DeepSeek のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
           'ぽいロボエンジンボタンアイコン: レンチ（スパナ）形状',
+          'ニュース分析プロンプト コピーボタン（★2026-05-23）: エンジンのコピーボタン左下に小さめのメガホン（拡声器）アイコン円ボタン。クリックでニュース分析プロンプト（NEWS_PROMPT_TEMPLATE）をコピー。JST タイムスタンプを自動挿入（YYYY-MM-DD HH:MM:SS を現在時刻で置換）。コピー完了後2秒間ハイライト',
           'シグナルコンフリクト解決ルール（優先順位: 慣性 ＞ 質量 ＞ 弾性）: 慣性優勢→方向維持/質量確認、慣性停止反転→反転シグナル発行、弾性極限→反転優先/慣性は従属、全シグナル拮抗→全力待機強制',
         ],
       },
@@ -537,7 +538,7 @@ const SPEC_SECTIONS = [
         items: [
           'スクリプト: `scripts/fetch-jpx.mjs`',
           '実行: `npm run fetch-data`',
-          'GitHub Actions: `.github/workflows/update-data.yml`（毎週金曜19:00 JST + 土曜09:00 JST 自動実行）',
+          'GitHub Actions: `.github/workflows/fetch-data.yml`（火 18:30 / 水 18:00 / 木 18:30 / 金 18:30 / 土 09:00 JST 自動実行 ＋ Vercel自動デプロイ）',
           '出力先: `public/data/margin.json` / `public/data/investor.json` / `public/data/vix.json` / `public/data/usdjpy.json` / `public/data/nk_futures_price.json` / `public/data/advance_decline.json` / `public/data/short_sell.json` / `public/data/arbitrage.json`',
           '騰落レシオ・空売り比率・PCR: nikkei225jp.com daily2year.json（col[7]/col[11]/col[16]）を一括取得・キャッシュ共有',
           'PCR = プット/コールOI比（日次・値域0.75〜2.52）。オプション市場引け後更新のためOIより数時間遅れる場合あり',
@@ -577,6 +578,7 @@ const SPEC_SECTIONS = [
           '直近OHLCV テーブル（10件）: 日付 / 始値 / 高値 / 安値 / 終値 / 前日比%',
           'AIプロンプト生成ボタン: マーケットデータ JSON ＋ プロンプトテンプレートをクリップボードにコピー',
           'プロンプト中には添付画像（ポジション画像）が必須と明示。画像未添付の場合AIが分析拒否',
+          'ニュース分析プロンプト コピーボタン（★2026-05-23）: シールドのコピーボタン左下に小さめのメガホンアイコン円ボタン。エンジンと共通の NEWS_PROMPT_TEMPLATE（`src/utils/newsPrompt.ts`）をコピー。JST タイムスタンプ自動挿入',
           'ログイン済みユーザーにのみコピーボタン・データを表示（未ログイン: ログイン促す表示）',
         ],
       },
@@ -791,7 +793,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
-              ぽいロボ — 最終更新: 2026-05-21
+              ぽいロボ — 最終更新: 2026-05-23
             </p>
           </div>
         </div>
