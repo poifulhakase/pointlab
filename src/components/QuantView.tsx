@@ -1866,7 +1866,9 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   }, [exportJson])
 
   const handleNewsCopy = useCallback(async () => {
-    await copyText(NEWS_PROMPT_TEMPLATE)
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    const ts = jst.toISOString().replace('T', ' ').slice(0, 19)
+    await copyText(NEWS_PROMPT_TEMPLATE.replace('YYYY-MM-DD HH:MM:SS', ts))
     setCopyStatus('news_engine')
     setTimeout(() => setCopyStatus(''), 2000)
   }, [])

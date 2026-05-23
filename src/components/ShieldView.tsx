@@ -940,11 +940,14 @@ export function ShieldView({ theme, isMobile, user }: Props) {
   }, [isBuilding])
 
   const handleNewsCopy = useCallback(async () => {
+    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    const ts = jst.toISOString().replace('T', ' ').slice(0, 19)
+    const prompt = NEWS_PROMPT_TEMPLATE.replace('YYYY-MM-DD HH:MM:SS', ts)
     try {
-      await navigator.clipboard.writeText(NEWS_PROMPT_TEMPLATE)
+      await navigator.clipboard.writeText(prompt)
     } catch {
       const el = Object.assign(document.createElement('textarea'), {
-        value: NEWS_PROMPT_TEMPLATE, style: 'position:fixed;opacity:0',
+        value: prompt, style: 'position:fixed;opacity:0',
       })
       document.body.appendChild(el); el.select(); document.execCommand('copy')
       document.body.removeChild(el)
