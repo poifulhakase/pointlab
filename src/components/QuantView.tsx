@@ -1276,22 +1276,23 @@ function EnginePanel({
                 <button
                   title="ニュース分析プロンプトをコピー"
                   style={{
-                    position: 'absolute', bottom: -12, left: -12,
-                    width: 32, height: 32, borderRadius: '50%',
+                    position: 'absolute', bottom: -16, left: -16,
+                    width: 38, height: 42, borderRadius: 8,
                     background: copyStatus === 'news_engine' ? `rgba(${CY_RGB},0.22)` : `rgba(${CY_RGB},0.08)`,
                     border: `1.5px solid ${copyStatus === 'news_engine' ? CY_GREEN : CY_BORDBR}`,
                     boxShadow: `0 0 10px ${CY_FAINT}`,
                     color: CY_GREEN,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 2, cursor: 'pointer',
                     transition: 'background 0.2s, border-color 0.2s',
                   }}
                   onClick={onNewsCopy}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
-                    <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 11 18-5v12L3 14v-3z"/>
+                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
                   </svg>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 6, letterSpacing: '0.1em', lineHeight: 1 }}>NEWS</span>
                 </button>
               </div>
             </div>
@@ -1309,21 +1310,22 @@ function EnginePanel({
               <button
                 title="ニュース分析プロンプトをコピー"
                 style={{
-                  position: 'absolute', bottom: -8, left: -8,
-                  width: 28, height: 28, borderRadius: '50%',
+                  position: 'absolute', bottom: -14, left: -14,
+                  width: 38, height: 42, borderRadius: 8,
                   background: copyStatus === 'news_engine' ? 'rgba(96,165,250,0.2)' : 'rgba(96,165,250,0.08)',
                   border: '1.5px solid rgba(96,165,250,0.5)',
                   color: '#60a5fa',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 2, cursor: 'pointer',
                   transition: 'background 0.2s',
                 }}
                 onClick={onNewsCopy}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
-                  <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m3 11 18-5v12L3 14v-3z"/>
+                  <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
                 </svg>
+                <span style={{ fontSize: 6, letterSpacing: '0.1em', lineHeight: 1, fontWeight: 600 }}>NEWS</span>
               </button>
             </div>
           )}
