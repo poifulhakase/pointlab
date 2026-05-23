@@ -7,10 +7,8 @@ import { CalendarHeader, MonitorIcon, ChevronLeft, ChevronRight } from './compon
 import { AuthModal } from './components/AuthModal'
 import { Sidebar } from './components/Sidebar'
 import { MonthView } from './components/MonthView'
-import { PoiroboAlertModal } from './components/PoiroboAlertModal'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
-import { DayNotePanel } from './components/DayNotePanel'
 import { getDividendDates, getMarkersForDate, type DividendDateSet } from './utils/dividendCalendar'
 import { isMarketClosed, getClosedReason } from './utils/marketHolidays'
 import { getSqDates, getSqMarkersForDate, type SqDate } from './utils/sqCalendar'
@@ -28,15 +26,18 @@ import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
-const ChartView    = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
-const QuantView    = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
-const SpecView     = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
-const ManualView   = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
-const SupportView  = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
-const JitsiPanel   = lazy(() => import('./components/JitsiPanel').then(m => ({ default: m.JitsiPanel })))
-const ShieldView   = lazy(() => import('./components/ShieldView').then(m => ({ default: m.ShieldView })))
-const LegalModal   = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
-const SettingsPanel = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
+const ChartView         = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
+const QuantView         = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
+const SpecView          = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
+const ManualView        = lazy(() => import('./components/ManualView').then(m => ({ default: m.ManualView })))
+const SupportView       = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
+const JitsiPanel        = lazy(() => import('./components/JitsiPanel').then(m => ({ default: m.JitsiPanel })))
+const ShieldView        = lazy(() => import('./components/ShieldView').then(m => ({ default: m.ShieldView })))
+const LegalModal        = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
+const SettingsPanel     = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
+// ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
+const PoiroboAlertModal = lazy(() => import('./components/PoiroboAlertModal').then(m => ({ default: m.PoiroboAlertModal })))
+const DayNotePanel      = lazy(() => import('./components/DayNotePanel').then(m => ({ default: m.DayNotePanel })))
 
 // ── ローディングスピナー（Suspense フォールバック） ───────────────────
 function ViewLoader() {
@@ -480,13 +481,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   return (
     <div style={styles.app}>
       <PWAUpdateBanner />
-      <PoiroboAlertModal
-        isOpen={poiroboAlertModalOpen}
-        config={poiroboAlertConfig}
-        theme={theme}
-        onSave={handlePoiroboAlertSave}
-        onClose={() => setPoiroboAlertModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <PoiroboAlertModal
+          isOpen={poiroboAlertModalOpen}
+          config={poiroboAlertConfig}
+          theme={theme}
+          onSave={handlePoiroboAlertSave}
+          onClose={() => setPoiroboAlertModalOpen(false)}
+        />
+      </Suspense>
       <div style={styles.body}>
         {isMobile && sidebarOpen && (
           <div style={styles.mobileOverlay} onClick={handleOverlayClick} />
@@ -692,12 +695,14 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
         user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
       />
 
-      <DayNotePanel
-        date={noteDate} prefillTime={notePrefillTime}
-        onClose={closeNote} onSave={refreshNoteMap}
-        onAfterSave={handleAfterSave} onSaved={showSaveToast}
-        isMobile={isMobile}
-      />
+      <Suspense fallback={null}>
+        <DayNotePanel
+          date={noteDate} prefillTime={notePrefillTime}
+          onClose={closeNote} onSave={refreshNoteMap}
+          onAfterSave={handleAfterSave} onSaved={showSaveToast}
+          isMobile={isMobile}
+        />
+      </Suspense>
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {(isCalView || cal.view === 'chart' || cal.view === 'quant') && (

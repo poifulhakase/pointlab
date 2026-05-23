@@ -139,7 +139,7 @@ async function fetchNk225Ohlcv(): Promise<unknown> {
   const q   = 'interval=1d&range=1y'
   for (const base of ['query1', 'query2'] as const) {
     try {
-      const fetched = await proxyFetch(`https://${base}.finance.yahoo.com/v8/finance/chart/${sym}?${q}`)
+      const fetched = await proxyFetch(`https://${base}.finance.yahoo.com/v8/finance/chart/${sym}?${q}`, 5000)
       if ((fetched as any)?.chart?.result?.[0]?.timestamp?.length) return fetched
     } catch { /* 次のベースURLを試みる */ }
   }
@@ -868,8 +868,13 @@ export function ShieldView({ theme, isMobile, user }: Props) {
     if (isBuilding) return
     setIsBuilding(true)
     try {
-      // 市場データを取得してプロンプトに付加（エンジンと同じパターン）
-      const mktData = await buildShieldData()
+      // 15秒でタイムアウト（プロキシが応答しない場合の保険）
+      const mktData = await Promise.race([
+        buildShieldData(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 15_000)
+        ),
+      ])
       const engineReport = getRecentEngineReport()
       const engineSection = engineReport
         ? `\n---\n# ぽいロボ エンジン 直近レポート（二次参考）\n`
