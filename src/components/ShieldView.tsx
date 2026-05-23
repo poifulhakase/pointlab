@@ -7,6 +7,7 @@ import { fetchVixData } from '../utils/vixData'
 import { fetchFuturesDailyData } from '../utils/futuresDailyData'
 import { fetchWithCache } from '../utils/dataCache'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
+import { NEWS_PROMPT_TEMPLATE } from '../utils/newsPrompt'
 
 const SHIELD_CACHE_KEY        = 'poical-shield-mkt-data-v2'
 const SHIELD_CACHE_TTL_OPEN   = 30 * 60 * 1000   // 市場時間中: 30分
@@ -633,13 +634,14 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
 
 // ── ShieldPanel（左ペイン）────────────────────────────
 function ShieldPanel({
-  isMobile, theme, copyStatus, isBuilding, onPromptCopy, logState,
+  isMobile, theme, copyStatus, isBuilding, onPromptCopy, onNewsCopy, logState,
 }: {
   isMobile: boolean
   theme: 'dark' | 'light'
-  copyStatus: '' | 'shield'
+  copyStatus: '' | 'shield' | 'news_shield'
   isBuilding: boolean
   onPromptCopy: () => void
+  onNewsCopy: () => void
   logState: LogState
 }) {
   const c = cy(theme)
@@ -784,9 +786,32 @@ function ShieldPanel({
                     padding: '6px 10px', fontFamily: 'system-ui, sans-serif',
                     fontSize: 10, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
                   }}>
-                    {isBuilding ? <>データ取得中…<br />しばらくお待ちください</> : copyStatus === 'shield' ? '▶ コピー完了' : <>ポジション分析用<br />プロンプト＋市場データ</>}
+                    {isBuilding ? <>データ取得中…<br />しばらくお待ちください</> : (copyStatus === 'shield' || copyStatus === 'news_shield') ? '▶ コピー完了' : <>ポジション分析用<br />プロンプト＋市場データ</>}
                   </div>
                 </div>
+                {/* ニュース分析プロンプト コピーボタン（左下） */}
+                <button
+                  title="ニュース分析プロンプトをコピー"
+                  style={{
+                    position: 'absolute', bottom: -12, left: -12,
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: copyStatus === 'news_shield'
+                      ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.22)`
+                      : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
+                    border: `1.5px solid ${copyStatus === 'news_shield' ? c.GREEN : c.BORDBR}`,
+                    boxShadow: `0 0 10px ${c.FAINT}`,
+                    color: c.GREEN,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s, border-color 0.2s',
+                  }}
+                  onClick={onNewsCopy}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+                    <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -861,7 +886,7 @@ function ShieldPanel({
 export function ShieldView({ theme, isMobile, user }: Props) {
   const tv = themeVars(theme)
 
-  const [copyStatus,  setCopyStatus]  = useState<'' | 'shield'>('')
+  const [copyStatus,  setCopyStatus]  = useState<'' | 'shield' | 'news_shield'>('')
   const [isBuilding,  setIsBuilding]  = useState(false)
 
   const handlePromptCopy = useCallback(async () => {
@@ -914,6 +939,20 @@ export function ShieldView({ theme, isMobile, user }: Props) {
     }
   }, [isBuilding])
 
+  const handleNewsCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(NEWS_PROMPT_TEMPLATE)
+    } catch {
+      const el = Object.assign(document.createElement('textarea'), {
+        value: NEWS_PROMPT_TEMPLATE, style: 'position:fixed;opacity:0',
+      })
+      document.body.appendChild(el); el.select(); document.execCommand('copy')
+      document.body.removeChild(el)
+    }
+    setCopyStatus('news_shield')
+    setTimeout(() => setCopyStatus(''), 2500)
+  }, [])
+
   // ② SYSTEM LOG state（親で管理してモバイル時に下部へ移動）
   const logState = useSystemLog(SHIELD_STATUS_LINES)
 
@@ -932,6 +971,7 @@ export function ShieldView({ theme, isMobile, user }: Props) {
           copyStatus={copyStatus}
           isBuilding={isBuilding}
           onPromptCopy={handlePromptCopy}
+          onNewsCopy={handleNewsCopy}
           logState={logState}
         />
         <div style={isMobile ? s.dividerH : s.divider} />
