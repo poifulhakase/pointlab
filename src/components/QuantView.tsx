@@ -1283,7 +1283,7 @@ function EnginePanel({
                     boxShadow: `0 0 10px ${CY_FAINT}`,
                     color: CY_GREEN,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer',
+                    cursor: 'pointer', padding: 0,
                     transition: 'background 0.2s, border-color 0.2s',
                   }}
                   onClick={onNewsCopy}
@@ -1312,7 +1312,7 @@ function EnginePanel({
                   border: '1.5px solid rgba(96,165,250,0.5)',
                   color: '#60a5fa',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
+                  cursor: 'pointer', padding: 0,
                   transition: 'background 0.2s',
                 }}
                 onClick={onNewsCopy}

@@ -802,7 +802,7 @@ function ShieldPanel({
                     boxShadow: `0 0 10px ${c.FAINT}`,
                     color: c.GREEN,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer',
+                    cursor: 'pointer', padding: 0,
                     transition: 'background 0.2s, border-color 0.2s',
                   }}
                   onClick={onNewsCopy}
