@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "fetch-data": "node scripts/fetch-jpx.mjs",
+    "backtest": "node scripts/backtest-tev.mjs",
     "add-participant": "node scripts/add-participants.mjs"
   },
   "dependencies": {

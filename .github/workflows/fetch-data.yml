@@ -38,6 +38,11 @@ jobs:
         run: npm run fetch-data
         continue-on-error: true
 
+      - name: バックテスト再計算（土曜のみ）
+        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * 6')
+        run: npm run backtest
+        continue-on-error: true
+
       - name: 変更チェック & コミット
         id: commit
         run: |

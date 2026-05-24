@@ -34,6 +34,7 @@ const SupportView       = lazy(() => import('./components/SupportView').then(m =
 const JitsiPanel        = lazy(() => import('./components/JitsiPanel').then(m => ({ default: m.JitsiPanel })))
 const ShieldView        = lazy(() => import('./components/ShieldView').then(m => ({ default: m.ShieldView })))
 const LegalModal        = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
+const BacktestPanel     = lazy(() => import('./components/BacktestPanel').then(m => ({ default: m.BacktestPanel })))
 const SettingsPanel     = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
 const PoiroboAlertModal = lazy(() => import('./components/PoiroboAlertModal').then(m => ({ default: m.PoiroboAlertModal })))
@@ -532,12 +533,17 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
             </Suspense>
           )}
+          {cal.view === 'backtest' && (
+            <Suspense fallback={<ViewLoader />}>
+              <BacktestPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+            </Suspense>
+          )}
 
           {/* 研究室 */}
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} />
               </Suspense>
             </ErrorBoundary>
           )}
