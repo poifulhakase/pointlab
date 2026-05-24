@@ -680,6 +680,14 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
+        heading: 'Claude への指示文（コピー＆送信するだけで実行）',
+        items: [
+          '【カテゴリA / 不定期】ぽいロボのAIモデル推奨ヒントをメンテナンスしてください。手順書は C:\\Project\\PointLab\\stock-calendar\\docs\\maintenance\\ai-model-check.md にあります。手順書を読んで、Web検索で各AIの最新モデルを調べ、更新が必要なら該当ファイルを修正してビルド・コミット・プッシュ・デプロイまで行ってください。',
+          '【🔴 カテゴリB / 毎年12月必須】ぽいロボのカレンダー年次日程をメンテナンスしてください。手順書は C:\\Project\\PointLab\\stock-calendar\\docs\\maintenance\\calendar-dates-check.md にあります。手順書を読んで、Web検索で翌年のNYSE休場日・各マクロイベント日程を調べ、該当ファイルに追記してビルド・コミット・プッシュ・デプロイまで行ってください。',
+        ],
+      },
+      {
+        type: 'list' as const,
         heading: 'カテゴリA — AIモデル推奨ヒント更新（手順書: docs/maintenance/ai-model-check.md）',
         items: [
           '対象テキスト: ChatGPT「o3以上推奨」/ Gemini「思考モード推奨」/ DeepSeek「R1モデル推奨」',
