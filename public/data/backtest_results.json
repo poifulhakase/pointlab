@@ -1,0 +1,351 @@
+{
+  "computed_at": "2026-05-24T07:29:33.980Z",
+  "data_range": {
+    "from": "2025-11-14",
+    "to": "2026-05-15"
+  },
+  "notes": [
+    "偏差スコアは週次VIX・外国人フロー・先物OIで代替計算（日次USDJPY/NAS100の週次歴史データなし）",
+    "加速度は1週前との差分（本番は3日前との差分）",
+    "先物出来高減少による減衰は未適用（日次出来高の週次過去データなし）",
+    "底打ち反転ステータスは未判定（10日安値圏データなし）",
+    "限界膨張ステータスのシグナルは中立扱い（方向不明のため勝敗カウント外）"
+  ],
+  "summary": {
+    "total_weeks": 27,
+    "signal_weeks": 23,
+    "bull_signals": 0,
+    "bear_signals": 23,
+    "neutral_signals": 3,
+    "bull_wins": 0,
+    "bear_wins": 10,
+    "bull_win_rate": null,
+    "bear_win_rate": 0.43,
+    "overall_win_rate": 0.43,
+    "by_status": {
+      "重力反転中": {
+        "n": 10,
+        "wins": 3,
+        "win_rate": 0.3
+      },
+      "真空落下": {
+        "n": 13,
+        "wins": 7,
+        "win_rate": 0.54
+      }
+    },
+    "by_confidence": {
+      "high": {
+        "label": "高（70%+）",
+        "n": 6,
+        "wins": 2,
+        "win_rate": 0.33
+      },
+      "mid": {
+        "label": "中（50-69%）",
+        "n": 17,
+        "wins": 8,
+        "win_rate": 0.47
+      }
+    }
+  },
+  "weekly_log": [
+    {
+      "week": "2026-05-15",
+      "tev": -100,
+      "status": "真空落下",
+      "confidence": 52,
+      "decay": 0.125,
+      "signal": "bear",
+      "nk_close": 63339,
+      "price_change_pct": null,
+      "win": null
+    },
+    {
+      "week": "2026-05-08",
+      "tev": -75,
+      "status": "重力反転中",
+      "confidence": 56,
+      "decay": 0.5,
+      "signal": "bear",
+      "nk_close": 61409,
+      "price_change_pct": 3.14,
+      "win": false
+    },
+    {
+      "week": "2026-05-01",
+      "tev": -78,
+      "status": "重力反転中",
+      "confidence": 53,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 62714,
+      "price_change_pct": -2.08,
+      "win": true
+    },
+    {
+      "week": "2026-04-24",
+      "tev": -92,
+      "status": "真空落下",
+      "confidence": 65,
+      "decay": 0.25,
+      "signal": "bear",
+      "nk_close": 59513,
+      "price_change_pct": 5.38,
+      "win": false
+    },
+    {
+      "week": "2026-04-17",
+      "tev": -94,
+      "status": "真空落下",
+      "confidence": 54,
+      "decay": 0.25,
+      "signal": "bear",
+      "nk_close": 59716,
+      "price_change_pct": -0.34,
+      "win": true
+    },
+    {
+      "week": "2026-04-10",
+      "tev": -71,
+      "status": "真空落下",
+      "confidence": 63,
+      "decay": 0.25,
+      "signal": "bear",
+      "nk_close": 58476,
+      "price_change_pct": 2.12,
+      "win": false
+    },
+    {
+      "week": "2026-04-03",
+      "tev": -95,
+      "status": "重力反転中",
+      "confidence": 75,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 56924,
+      "price_change_pct": 2.73,
+      "win": false
+    },
+    {
+      "week": "2026-03-27",
+      "tev": -51,
+      "status": "重力反転中",
+      "confidence": 74,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 53123,
+      "price_change_pct": 7.16,
+      "win": false
+    },
+    {
+      "week": "2026-03-19",
+      "tev": -116,
+      "status": "真空落下",
+      "confidence": 83,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 53373,
+      "price_change_pct": -0.47,
+      "win": true
+    },
+    {
+      "week": "2026-03-13",
+      "tev": -75,
+      "status": "重力反転中",
+      "confidence": 86,
+      "decay": 0.5,
+      "signal": "bear",
+      "nk_close": 53373,
+      "price_change_pct": 0,
+      "win": false
+    },
+    {
+      "week": "2026-03-06",
+      "tev": -138,
+      "status": "真空落下",
+      "confidence": 55,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 53820,
+      "price_change_pct": -0.83,
+      "win": true
+    },
+    {
+      "week": "2026-02-27",
+      "tev": -76,
+      "status": "重力反転中",
+      "confidence": 59,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 55621,
+      "price_change_pct": -3.24,
+      "win": true
+    },
+    {
+      "week": "2026-02-20",
+      "tev": -94,
+      "status": "真空落下",
+      "confidence": 54,
+      "decay": 0.25,
+      "signal": "bear",
+      "nk_close": 58850,
+      "price_change_pct": -5.49,
+      "win": true
+    },
+    {
+      "week": "2026-02-13",
+      "tev": -23,
+      "status": "限界膨張",
+      "confidence": 50,
+      "decay": 1,
+      "signal": "neutral",
+      "nk_close": 56826,
+      "price_change_pct": 3.56,
+      "win": null
+    },
+    {
+      "week": "2026-02-06",
+      "tev": -80,
+      "status": "真空落下",
+      "confidence": 67,
+      "decay": 0.5,
+      "signal": "bear",
+      "nk_close": 56942,
+      "price_change_pct": -0.2,
+      "win": true
+    },
+    {
+      "week": "2026-01-30",
+      "tev": -92,
+      "status": "真空落下",
+      "confidence": 61,
+      "decay": 0.5,
+      "signal": "bear",
+      "nk_close": 54254,
+      "price_change_pct": 4.95,
+      "win": false
+    },
+    {
+      "week": "2026-01-23",
+      "tev": -84,
+      "status": "真空落下",
+      "confidence": 53,
+      "decay": 0.125,
+      "signal": "bear",
+      "nk_close": 53323,
+      "price_change_pct": 1.75,
+      "win": false
+    },
+    {
+      "week": "2026-01-16",
+      "tev": -84,
+      "status": "真空落下",
+      "confidence": 53,
+      "decay": 0.125,
+      "signal": "bear",
+      "nk_close": 53847,
+      "price_change_pct": -0.97,
+      "win": true
+    },
+    {
+      "week": "2026-01-09",
+      "tev": -22,
+      "status": "限界膨張",
+      "confidence": 50,
+      "decay": 0.5,
+      "signal": "neutral",
+      "nk_close": 53936,
+      "price_change_pct": -0.17,
+      "win": null
+    },
+    {
+      "week": "2025-12-30",
+      "tev": -83,
+      "status": "真空落下",
+      "confidence": 53,
+      "decay": 0.125,
+      "signal": "bear",
+      "nk_close": 50339,
+      "price_change_pct": 7.15,
+      "win": false
+    },
+    {
+      "week": "2025-12-26",
+      "tev": -59,
+      "status": "重力反転中",
+      "confidence": 72,
+      "decay": 0.5,
+      "signal": "bear",
+      "nk_close": 50339,
+      "price_change_pct": 0,
+      "win": false
+    },
+    {
+      "week": "2025-12-19",
+      "tev": -86,
+      "status": "真空落下",
+      "confidence": 91,
+      "decay": 0.5,
+      "signal": "bear",
+      "nk_close": 50750,
+      "price_change_pct": -0.81,
+      "win": true
+    },
+    {
+      "week": "2025-12-12",
+      "tev": -85,
+      "status": "重力反転中",
+      "confidence": 69,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 49507,
+      "price_change_pct": 2.51,
+      "win": false
+    },
+    {
+      "week": "2025-12-05",
+      "tev": -71,
+      "status": "重力反転中",
+      "confidence": 55,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 50837,
+      "price_change_pct": -2.62,
+      "win": true
+    },
+    {
+      "week": "2025-11-28",
+      "tev": -70,
+      "status": "重力反転中",
+      "confidence": 51,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 50492,
+      "price_change_pct": 0.68,
+      "win": false
+    },
+    {
+      "week": "2025-11-21",
+      "tev": -94,
+      "status": "真空落下",
+      "confidence": 68,
+      "decay": 1,
+      "signal": "bear",
+      "nk_close": 50254,
+      "price_change_pct": 0.47,
+      "win": false
+    },
+    {
+      "week": "2025-11-14",
+      "tev": null,
+      "status": null,
+      "confidence": null,
+      "decay": null,
+      "signal": "neutral",
+      "nk_close": 48626,
+      "price_change_pct": 3.35,
+      "win": null
+    }
+  ]
+}
