@@ -10,17 +10,15 @@ type Props = {
 const STATUS_ORDER = ['慣性航行中', '重力反転中', '真空落下', '限界膨張']
 const mono = "'Courier New', Courier, monospace" as const
 
-export function BacktestPanel({ theme, isMobile, onClose }: Props) {
-  const [data, setData]       = useState<BacktestResult | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showLog, setShowLog] = useState(false)
+type C = {
+  L: boolean; BG: string; HDRBG: string; ACCENT: string; DIM: string
+  TEXT: string; SUB: string; RULE: string; TAGBG: string; TAGBDR: string
+  SCAN: string; GLOW: string; WIN: string; LOSS: string; NEUT: string
+}
 
-  useEffect(() => {
-    fetchBacktestResult().then(r => { setData(r); setLoading(false) })
-  }, [])
-
+function makeC(theme: 'dark' | 'light'): C {
   const L = theme === 'light'
-  const c = {
+  return {
     L,
     BG:     L ? 'rgba(218,236,255,0.92)' : 'rgba(3,10,24,0.92)',
     HDRBG:  L ? 'rgba(228,242,255,0.97)' : 'rgba(3,9,22,0.97)',
@@ -37,6 +35,18 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
     LOSS:   L ? '#dc2626'                : '#f87171',
     NEUT:   L ? 'rgba(30,65,135,0.45)'   : 'rgba(140,188,228,0.45)',
   }
+}
+
+export function BacktestPanel({ theme, isMobile, onClose }: Props) {
+  const [data, setData]       = useState<BacktestResult | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [showLog, setShowLog] = useState(false)
+
+  useEffect(() => {
+    fetchBacktestResult().then(r => { setData(r); setLoading(false) })
+  }, [])
+
+  const c = makeC(theme)
 
   const pctStr   = (v: number | null) => v == null ? '—' : Math.round(v * 100) + '%'
   const winColor = (rate: number | null) => {
@@ -47,132 +57,126 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 30,
-      overflow: 'hidden',
-      background: c.BG,
-      backgroundImage: c.SCAN,
+      display: 'flex', flexDirection: 'column',
+      background: c.BG, backgroundImage: c.SCAN,
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
+      overflow: 'hidden',
     }}>
-      <style>{`@keyframes btSweep { from { transform:translateY(-100%); } to { transform:translateY(250%); } }`}</style>
+      <style>{`@keyframes btSweep{from{transform:translateY(-100%)}to{transform:translateY(250%)}}`}</style>
 
-      {/* Scan sweep (dark only) */}
-      {!L && (
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+      {/* scan sweep */}
+      {!c.L && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
           <div style={{
             position: 'absolute', left: 0, right: 0, height: '26%',
-            background: 'linear-gradient(to bottom,transparent 0%,rgba(0,229,255,0.024) 50%,transparent 100%)',
+            background: 'linear-gradient(to bottom,transparent,rgba(0,229,255,0.024) 50%,transparent)',
             animation: 'btSweep 11s linear infinite',
           }} />
         </div>
       )}
 
-      {/* Scroll container */}
-      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
+      {/* ── Header ── */}
+      <div style={{
+        flexShrink: 0, zIndex: 5,
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: isMobile ? '11px 16px' : '12px 28px',
+        background: c.HDRBG,
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: `1px solid ${c.RULE}`,
+      }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
+        <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap', textShadow: c.L ? 'none' : '0 0 10px rgba(0,229,255,0.28)' }}>
+          POIROBO_OS ▸ TEV_BACKTEST
+        </span>
+        <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>BETA</span>
+        <button onClick={onClose} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28, height: 28, borderRadius: 7, cursor: 'pointer',
+          border: c.L ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
+          background: c.L ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
+          color: c.L ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)',
+          flexShrink: 0,
+        }} aria-label="閉じる">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
-        {/* ── Sticky header ── */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 5,
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: isMobile ? '11px 16px' : '12px 28px',
-          background: c.HDRBG,
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${c.RULE}`,
-        }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
-          <span style={{
-            flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em',
-            color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap',
-            textShadow: L ? 'none' : '0 0 10px rgba(0,229,255,0.28)',
-          }}>
-            POIROBO_OS ▸ TEV_BACKTEST
-          </span>
-          <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>BETA</span>
-          <button
-            onClick={onClose}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 7,
-              border: L ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
-              background: L ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
-              color: L ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)',
-              cursor: 'pointer', flexShrink: 0,
-            }}
-            aria-label="閉じる"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
+      {/* ── Body（スクロールなし・フル画面） ── */}
+      <div style={{
+        flex: 1, overflow: 'hidden', zIndex: 1,
+        display: 'flex', flexDirection: 'column',
+        padding: isMobile ? '12px 16px 14px' : '16px 28px 20px',
+        gap: isMobile ? 10 : 14,
+      }}>
 
-        {/* ── Body ── */}
-        <div style={{
-          maxWidth: isMobile ? '100%' : 680,
-          margin: '0 auto',
-          padding: isMobile ? '20px 20px 80px' : '28px 40px 100px',
-          display: 'flex', flexDirection: 'column', gap: isMobile ? 28 : 36,
-        }}>
+        {/* Loading */}
+        {loading && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: mono, fontSize: 11, color: c.DIM, letterSpacing: '0.18em' }}>LOADING...</span>
+          </div>
+        )}
 
-          {/* Loading */}
-          {loading && (
-            <div style={{ paddingTop: 60, display: 'flex', justifyContent: 'center' }}>
-              <span style={{ fontFamily: mono, fontSize: 11, color: c.DIM, letterSpacing: '0.18em' }}>LOADING...</span>
-            </div>
-          )}
+        {/* No data */}
+        {!loading && !data && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+            <div style={{ fontSize: 32 }}>📊</div>
+            <p style={{ fontSize: 13, color: c.SUB, lineHeight: 1.8, textAlign: 'center', maxWidth: 300 }}>
+              <code style={{ fontFamily: mono, fontSize: 12, color: c.ACCENT }}>npm run backtest</code> を実行するとデータが生成されます。
+            </p>
+          </div>
+        )}
 
-          {/* No data */}
-          {!loading && !data && (
-            <div style={{ paddingTop: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-              <div style={{ fontSize: 32 }}>📊</div>
-              <p style={{ fontSize: 13, color: c.SUB, lineHeight: 1.8, textAlign: 'center', maxWidth: 300 }}>
-                ターミナルで <code style={{ fontFamily: mono, fontSize: 12, color: c.ACCENT }}>npm run backtest</code> を実行するとデータが生成されます。
-              </p>
-            </div>
-          )}
+        {/* Data */}
+        {!loading && data && (() => {
+          const { summary, data_range, computed_at } = data
+          return (
+            <>
+              {/* Meta */}
+              <div style={{ flexShrink: 0, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.10em' }}>
+                {data_range.from} ▸ {data_range.to}&nbsp;&nbsp;{summary.total_weeks} WKS&nbsp;&nbsp;|&nbsp;&nbsp;{new Date(computed_at).toLocaleDateString('ja-JP')} 算出
+              </div>
 
-          {/* Data */}
-          {!loading && data && (() => {
-            const { summary, weekly_log, notes, computed_at, data_range } = data
-            return (
-              <>
-                {/* メタ */}
-                <div style={{ fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.10em' }}>
-                  {data_range.from} ▸ {data_range.to}&nbsp;&nbsp;{summary.total_weeks} WEEKS&nbsp;&nbsp;|&nbsp;&nbsp;{new Date(computed_at).toLocaleDateString('ja-JP')} 算出
-                </div>
-
-                {/* ── サマリーカード ── */}
-                <div>
-                  <SectionLabel label="サマリー" c={c} />
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 10 }}>
-                    {[
-                      { label: 'OVERALL', val: summary.overall_win_rate, sub: `${summary.signal_weeks}週シグナル` },
-                      { label: 'BULL',    val: summary.bull_win_rate,    sub: `${summary.bull_signals}回` },
-                      { label: 'BEAR',    val: summary.bear_win_rate,    sub: `${summary.bear_signals}回` },
-                      { label: 'NEUTRAL', val: null,                     sub: '回避', extra: String(summary.neutral_signals) + '週' },
-                    ].map(item => (
-                      <div key={item.label} style={{
-                        padding: isMobile ? '14px 14px' : '16px 18px',
-                        border: `1px solid ${c.TAGBDR}`,
-                        background: c.TAGBG,
-                        display: 'flex', flexDirection: 'column', gap: 5,
-                      }}>
-                        <div style={{ fontSize: 9, fontWeight: 800, color: item.label === 'NEUTRAL' ? c.DIM : c.ACCENT, letterSpacing: '0.22em', fontFamily: mono }}>{item.label}</div>
-                        <div style={{
-                          fontSize: isMobile ? 26 : 30, fontWeight: 900, lineHeight: 1,
-                          color: item.extra ? c.SUB : winColor(item.val),
-                          fontFamily: mono,
-                          textShadow: (!item.extra && item.val != null && item.val >= 0.5 && !L) ? `0 0 16px ${c.WIN}70` : 'none',
-                        }}>
-                          {item.extra ?? pctStr(item.val)}
-                        </div>
-                        <div style={{ fontSize: 10, color: c.SUB }}>{item.sub}</div>
-                      </div>
-                    ))}
+              {/* Summary cards（4列固定） */}
+              <div style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: isMobile ? 6 : 10 }}>
+                {[
+                  { label: 'OVERALL', val: summary.overall_win_rate, sub: `${summary.signal_weeks}週` },
+                  { label: 'BULL',    val: summary.bull_win_rate,    sub: `${summary.bull_signals}回` },
+                  { label: 'BEAR',    val: summary.bear_win_rate,    sub: `${summary.bear_signals}回` },
+                  { label: 'NEUTRAL', val: null, sub: '回避', extra: String(summary.neutral_signals) + '週' },
+                ].map(item => (
+                  <div key={item.label} style={{
+                    padding: isMobile ? '10px 8px' : '14px 16px',
+                    border: `1px solid ${c.TAGBDR}`, background: c.TAGBG,
+                    display: 'flex', flexDirection: 'column', gap: isMobile ? 3 : 5,
+                  }}>
+                    <div style={{ fontSize: isMobile ? 7 : 9, fontWeight: 800, letterSpacing: '0.16em', fontFamily: mono, color: item.label === 'NEUTRAL' ? c.DIM : c.ACCENT }}>
+                      {item.label}
+                    </div>
+                    <div style={{
+                      fontSize: isMobile ? 20 : 28, fontWeight: 900, lineHeight: 1, fontFamily: mono,
+                      color: item.extra ? c.SUB : winColor(item.val),
+                    }}>
+                      {item.extra ?? pctStr(item.val)}
+                    </div>
+                    <div style={{ fontSize: isMobile ? 9 : 10, color: c.SUB }}>{item.sub}</div>
                   </div>
-                </div>
+                ))}
+              </div>
 
-                {/* ── ステータス別 ── */}
-                <div>
-                  <SectionLabel label="ステータス別" c={c} />
+              {/* Tables エリア（残りスペースを埋める） */}
+              <div style={{
+                flex: 1, minHeight: 0,
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: isMobile ? 10 : 16,
+                overflow: 'hidden',
+              }}>
+
+                {/* ステータス別 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+                  <Label text="ステータス別" c={c} />
                   <CyberTable
                     head={['ステータス', '回数', '勝率']}
                     aligns={['left', 'right', 'right']}
@@ -183,13 +187,13 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
                     rowColors={STATUS_ORDER.filter(k => summary.by_status[k]).map(k =>
                       [null, null, winColor(summary.by_status[k].win_rate)]
                     )}
-                    c={c}
+                    c={c} isMobile={isMobile}
                   />
                 </div>
 
-                {/* ── 信頼度別 ── */}
-                <div>
-                  <SectionLabel label="信頼度別" c={c} />
+                {/* 信頼度別 + ボタン */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+                  <Label text="信頼度別" c={c} />
                   <CyberTable
                     head={['区分', '回数', '勝率']}
                     aligns={['left', 'right', 'right']}
@@ -200,96 +204,152 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
                     rowColors={(['high', 'mid'] as const).map(k =>
                       [null, null, winColor(summary.by_confidence[k].win_rate)]
                     )}
-                    c={c}
+                    c={c} isMobile={isMobile}
                   />
-                </div>
 
-                {/* ── モデル注記 ── */}
-                <div>
-                  <SectionLabel label="モデル注記" c={c} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {notes.map((n, i) => (
-                      <div key={i} style={{
-                        padding: isMobile ? '11px 0' : '13px 0',
-                        borderTop: `1px solid ${c.RULE}`,
-                        borderBottom: i === notes.length - 1 ? `1px solid ${c.RULE}` : 'none',
-                        display: 'flex', gap: 12, alignItems: 'flex-start',
-                      }}>
-                        <span style={{ fontSize: 9, fontFamily: mono, color: c.ACCENT, marginTop: 3, flexShrink: 0 }}>
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <span style={{ fontSize: isMobile ? 12 : 13, color: c.SUB, lineHeight: 1.82, letterSpacing: '0.02em' }}>{n}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ── 週次ログ ── */}
-                <div>
-                  <SectionLabel label="週次ログ" c={c} />
-                  <button
-                    onClick={() => setShowLog(v => !v)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      background: 'none',
-                      border: `1px solid ${c.TAGBDR}`,
-                      padding: '7px 14px', cursor: 'pointer',
-                      fontFamily: mono, fontSize: 10, fontWeight: 700,
-                      color: c.ACCENT, letterSpacing: '0.16em',
-                      marginBottom: showLog ? 14 : 0,
-                    }}
-                  >
-                    <span style={{ fontSize: 8 }}>{showLog ? '▲' : '▼'}</span>
-                    {showLog ? 'COLLAPSE' : 'EXPAND'}
-                  </button>
-
-                  {showLog && (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: mono, fontSize: isMobile ? 10 : 11 }}>
-                        <thead>
-                          <tr>
-                            {['WEEK', 'TEV', 'STATUS', 'CONF', 'SIG', 'NK_%', 'W/L'].map((h, i) => (
-                              <th key={h} style={{
-                                padding: '6px 10px',
-                                textAlign: i === 0 || i === 2 ? 'left' : 'center',
-                                fontSize: 9, fontWeight: 800, color: c.ACCENT,
-                                letterSpacing: '0.14em',
-                                borderBottom: `1px solid ${c.RULE}`,
-                                whiteSpace: 'nowrap',
-                              }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {weekly_log.map((w: WeeklyEntry, idx: number) => {
-                            const sigColor = w.signal === 'bull' ? c.WIN : w.signal === 'bear' ? c.LOSS : c.NEUT
-                            const nkColor  = w.price_change_pct == null ? c.SUB : w.price_change_pct > 0 ? c.WIN : w.price_change_pct < 0 ? c.LOSS : c.TEXT
-                            const wlColor  = w.win == null ? c.SUB : w.win ? c.WIN : c.LOSS
-                            const rowBg    = idx % 2 === 0 ? 'transparent' : (L ? 'rgba(0,80,160,0.025)' : 'rgba(0,200,255,0.018)')
-                            return (
-                              <tr key={w.week} style={{ background: rowBg }}>
-                                <td style={{ padding: '7px 10px', color: c.SUB, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap' }}>{w.week}</td>
-                                <td style={{ padding: '7px 10px', color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>{w.tev ?? '—'}</td>
-                                <td style={{ padding: '7px 10px', color: c.SUB, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap' }}>{w.status ?? '—'}</td>
-                                <td style={{ padding: '7px 10px', color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>{w.confidence != null ? w.confidence + '%' : '—'}</td>
-                                <td style={{ padding: '7px 10px', color: sigColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap', fontWeight: 700 }}>{w.signal.toUpperCase()}</td>
-                                <td style={{ padding: '7px 10px', color: nkColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                  {w.price_change_pct != null ? (w.price_change_pct > 0 ? '+' : '') + w.price_change_pct + '%' : '—'}
-                                </td>
-                                <td style={{ padding: '7px 10px', color: wlColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                                  {w.win === null ? '—' : w.win ? '○' : '✗'}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
+                  {/* ログボタン（デスクトップ：右列下部） */}
+                  {!isMobile && (
+                    <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                      <LogButton c={c} onClick={() => setShowLog(true)} />
                     </div>
                   )}
                 </div>
-              </>
-            )
-          })()}
+              </div>
+
+              {/* ログボタン（モバイル：最下部） */}
+              {isMobile && (
+                <div style={{ flexShrink: 0 }}>
+                  <LogButton c={c} onClick={() => setShowLog(true)} />
+                </div>
+              )}
+            </>
+          )
+        })()}
+      </div>
+
+      {/* ── 週次ログ モーダル ── */}
+      {showLog && data && (
+        <WeeklyLogModal data={data} c={c} isMobile={isMobile} onClose={() => setShowLog(false)} />
+      )}
+    </div>
+  )
+}
+
+// ── 週次ログ モーダル ────────────────────────────────────
+
+function WeeklyLogModal({ data, c, isMobile, onClose }: {
+  data: BacktestResult
+  c: C
+  isMobile: boolean
+  onClose: () => void
+}) {
+  const { weekly_log, notes } = data
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 20,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: c.L ? 'rgba(0,20,60,0.35)' : 'rgba(0,0,0,0.60)',
+      backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+      padding: isMobile ? '12px' : '24px',
+    }} onClick={onClose}>
+      <div
+        style={{
+          width: '100%', maxWidth: 780,
+          height: '100%', maxHeight: isMobile ? '100%' : '88vh',
+          display: 'flex', flexDirection: 'column',
+          background: c.HDRBG,
+          border: `1px solid ${c.TAGBDR}`,
+          boxShadow: c.L ? '0 8px 40px rgba(0,60,180,0.15)' : '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,200,255,0.08)',
+          overflow: 'hidden',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* モーダルヘッダー */}
+        <div style={{
+          flexShrink: 0,
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: isMobile ? '12px 16px' : '14px 24px',
+          borderBottom: `1px solid ${c.RULE}`,
+        }}>
+          <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.20em', color: c.DIM, fontFamily: mono, textShadow: c.L ? 'none' : '0 0 10px rgba(0,229,255,0.28)' }}>
+            WEEKLY_LOG
+          </span>
+          <button onClick={onClose} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 28, height: 28, borderRadius: 7, cursor: 'pointer',
+            border: c.L ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
+            background: c.L ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
+            color: c.L ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)',
+          }} aria-label="閉じる">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* モーダルコンテンツ（スクロール） */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '14px 16px' : '20px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* 週次テーブル */}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: mono, fontSize: isMobile ? 10 : 11 }}>
+              <thead>
+                <tr>
+                  {['WEEK','TEV','STATUS','CONF','SIG','NK_%','W/L'].map((h, i) => (
+                    <th key={h} style={{
+                      padding: '7px 10px',
+                      textAlign: i === 0 || i === 2 ? 'left' : 'center',
+                      fontSize: 9, fontWeight: 800, color: c.ACCENT,
+                      letterSpacing: '0.14em',
+                      borderBottom: `1px solid ${c.RULE}`,
+                      whiteSpace: 'nowrap',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {weekly_log.map((w: WeeklyEntry, idx: number) => {
+                  const sigColor = w.signal === 'bull' ? c.WIN : w.signal === 'bear' ? c.LOSS : c.NEUT
+                  const nkColor  = w.price_change_pct == null ? c.SUB : w.price_change_pct > 0 ? c.WIN : w.price_change_pct < 0 ? c.LOSS : c.TEXT
+                  const wlColor  = w.win == null ? c.SUB : w.win ? c.WIN : c.LOSS
+                  return (
+                    <tr key={w.week} style={{ background: idx % 2 === 0 ? 'transparent' : (c.L ? 'rgba(0,80,160,0.025)' : 'rgba(0,200,255,0.018)') }}>
+                      <td style={{ padding: '8px 10px', color: c.SUB, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap' }}>{w.week}</td>
+                      <td style={{ padding: '8px 10px', color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>{w.tev ?? '—'}</td>
+                      <td style={{ padding: '8px 10px', color: c.SUB, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap' }}>{w.status ?? '—'}</td>
+                      <td style={{ padding: '8px 10px', color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>{w.confidence != null ? w.confidence + '%' : '—'}</td>
+                      <td style={{ padding: '8px 10px', color: sigColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap' }}>{w.signal.toUpperCase()}</td>
+                      <td style={{ padding: '8px 10px', color: nkColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        {w.price_change_pct != null ? (w.price_change_pct > 0 ? '+' : '') + w.price_change_pct + '%' : '—'}
+                      </td>
+                      <td style={{ padding: '8px 10px', color: wlColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        {w.win === null ? '—' : w.win ? '○' : '✗'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* モデル注記 */}
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12 }}>MODEL_NOTES</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {notes.map((n, i) => (
+                <div key={i} style={{
+                  padding: '10px 0',
+                  borderTop: `1px solid ${c.RULE}`,
+                  borderBottom: i === notes.length - 1 ? `1px solid ${c.RULE}` : 'none',
+                  display: 'flex', gap: 12, alignItems: 'flex-start',
+                }}>
+                  <span style={{ fontSize: 9, fontFamily: mono, color: c.ACCENT, marginTop: 2, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span style={{ fontSize: isMobile ? 11 : 12, color: c.SUB, lineHeight: 1.8, letterSpacing: '0.02em' }}>{n}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -298,42 +358,49 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
 
 // ── 小コンポーネント ─────────────────────────────────────
 
-type C = {
-  L: boolean; HDRBG: string; BG: string; ACCENT: string; DIM: string
-  TEXT: string; SUB: string; RULE: string; TAGBG: string; TAGBDR: string
-  SCAN: string; GLOW: string; WIN: string; LOSS: string; NEUT: string
-}
-
-function SectionLabel({ label, c }: { label: string; c: C }) {
+function Label({ text, c }: { text: string; c: C }) {
   return (
-    <div style={{
-      fontSize: 11, fontWeight: 700, letterSpacing: '0.10em',
-      color: c.ACCENT, marginBottom: 12,
-      textShadow: c.L ? 'none' : c.GLOW,
-    }}>
-      {label}
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', color: c.ACCENT, flexShrink: 0, textShadow: c.L ? 'none' : c.GLOW }}>
+      {text}
     </div>
   )
 }
 
-function CyberTable({ head, aligns, rows, rowColors, c }: {
+function LogButton({ c, onClick }: { c: C; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{
+      width: '100%', padding: '10px 0',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      border: `1px solid ${c.TAGBDR}`, background: c.TAGBG,
+      cursor: 'pointer', fontFamily: mono, fontSize: 10, fontWeight: 700,
+      color: c.ACCENT, letterSpacing: '0.18em',
+    }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      WEEKLY LOG
+    </button>
+  )
+}
+
+function CyberTable({ head, aligns, rows, rowColors, c, isMobile }: {
   head: string[]
   aligns: ('left' | 'right' | 'center')[]
   rows: string[][]
   rowColors: (string | null)[][]
   c: C
+  isMobile: boolean
 }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? 11 : 12 }}>
       <thead>
         <tr>
           {head.map((h, i) => (
             <th key={h} style={{
-              padding: '7px 12px', textAlign: aligns[i],
-              fontSize: 10, fontWeight: 700, color: c.DIM,
-              letterSpacing: '0.08em',
-              borderBottom: `1px solid ${c.RULE}`,
-              whiteSpace: 'nowrap',
+              padding: isMobile ? '5px 8px' : '6px 12px',
+              textAlign: aligns[i], fontSize: 9, fontWeight: 700,
+              color: c.DIM, letterSpacing: '0.08em',
+              borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap',
             }}>{h}</th>
           ))}
         </tr>
@@ -345,11 +412,9 @@ function CyberTable({ head, aligns, rows, rowColors, c }: {
               const col = rowColors[ri]?.[ci] ?? c.TEXT
               return (
                 <td key={ci} style={{
-                  padding: '10px 12px',
-                  textAlign: aligns[ci],
-                  color: col,
-                  borderBottom: `1px solid ${c.RULE}`,
-                  whiteSpace: 'nowrap',
+                  padding: isMobile ? '8px 8px' : '10px 12px',
+                  textAlign: aligns[ci], color: col,
+                  borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap',
                   fontWeight: ci === row.length - 1 ? 700 : 400,
                 }}>
                   {cell}
