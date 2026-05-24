@@ -319,15 +319,19 @@ const SPEC_SECTIONS = [
           '含まれるフィールド: VIX・NS倍率・投資主体別フロー・信用倍率・空売り比率・騰落レシオ・裁定買い残・先物ミクロベクター・PCR・NAS100日次・VIX日次・偏差スコア・観測限界・SQ/TPI・価格帯空間情報',
           'futures_oi_recent: 日付/OI/OI前日比Δ/OI前日比%/取引高/取引高Δ/PCR/PCR前日比Δ（直近20件）',
           '今後28日のSQ・FOMC等のイベント一覧も含む',
-          'AIプロンプトテンプレート名: シニア・クオンツ・ストラテジスト（需給ストレス監視エンジン）',
-          'フレームワーク: Layer 0（固定観測ルール） / ステージ1（耐久限界とレジーム） / 解析レイヤー（清算フェーズと自己増殖）',
+          'AIロール名: ぽいロボ エンジン（需給物理解析OS）',
+          'フレームワーク: 4大物理原則（質量の法則・弾性の法則・呼吸の法則・慣性の法則）',
+          'トータル・エネルギー・ベクター（TEV）: TypeScript側で事前計算 → tev_analysis フィールドとして JSON に格納',
+          'トータル・エネルギー・ベクター 構成要素: 上昇エネルギー（外国人フロー×加速度）+ 売り圧（信用残・空売り比率の非線形圧縮）×エネルギー減衰係数',
+          'トータル・エネルギー・ベクター ステータス5種: 慣性航行中 / 限界膨張 / 重力反転中 / 真空落下 / 底打ち反転',
+          'tev_analysis フィールド（公開）: note / tev / status / confidence_pct / decay_factor / decay_reasons / sanity_ok / sanity_warnings',
+          'AIの役割: 独自計算を禁じ、tev_analysis.tev・status・confidence_pct をそのまま引用して物理的意味の解釈に専念',
           '偏差スコア: 0.30×Z_USDJPY + 0.25×Z_NAS100 + 0.20×Z_VIX⁻¹ + 0.15×Z_OI（MIN_Z=3件以上あれば計算・NAS100失敗時は日経225でフォールバック）',
           '偏差加速度: Acc = 本日Score - 3日前Score（scoreAtOffset()で計算）',
           'TPI: (1/SQ残日数) × |VIX日次変化率| — iv_proxyはvixDailyData末尾のchangePct',
-          'price_levels: 日経225 MA5/MA20/MA60・MA乖離率・60日高値/安値 / USDJPY MA5/MA20・MA乖離率・60日高値/安値 / OI集積日Top3',
-          '出力: 脆弱性シミュレーション報告書 / Pain Capacity / 清算・流動性マップ（天井・断崖・安住・底） / 観測限界（Tier比率）',
-          'Cascade Phase 0〜4: 通常→局所清算→自己増殖→パニック連鎖→投げ切り',
-          'Signal Density: [Price急変/OI減少/IV急騰/VIX急騰/USDJPY急変/出来高急増] の同時点灯数/6',
+          'price_structure: 日経225 MA5/MA20/MA60・MA乖離率・60日高値/安値 / USDJPY MA5/MA20・MA乖離率・60日高値/安値',
+          '出力形式: 需給物理・執行ログ（エネルギー・サマリー → 市場の状態診断 → 本質的結論 → 最終執行指令）',
+          '最終執行指令: ブル/ベア各1倍・2倍の判定（購入禁止/打診/本命/継続保持）と物理的根拠（日本語表記）',
           'ぽいロボエンジン（分析タブインライン）: Gemini / Claude / ChatGPT / DeepSeek のリンクをワンタップで開く（Android PWA対応: window.open() 使用）',
           'ぽいロボエンジンボタンアイコン: レンチ（スパナ）形状',
           'ニュース分析プロンプト コピーボタン（★2026-05-23）: エンジンのコピーボタン左下に小さめのメガホン（拡声器）アイコン円ボタン。クリックでニュース分析プロンプト（NEWS_PROMPT_TEMPLATE）をコピー。JST タイムスタンプを自動挿入（YYYY-MM-DD HH:MM:SS を現在時刻で置換）。コピー完了後2秒間ハイライト',
@@ -666,6 +670,57 @@ const SPEC_SECTIONS = [
     ],
   },
   {
+    id: 'maintenance',
+    icon: '🔧',
+    title: 'メンテナンス手順',
+    content: [
+      {
+        type: 'para' as const,
+        text: 'ぽいロボの定期メンテナンス項目と実行手順をまとめています。AI推奨モデルテキストは各AIのモデルリリースに合わせて更新が必要です。',
+      },
+      {
+        type: 'list' as const,
+        heading: 'カテゴリA — AIモデル推奨ヒント更新（手順書: docs/maintenance/ai-model-check.md）',
+        items: [
+          '対象テキスト: ChatGPT「o3以上推奨」/ Gemini「思考モード推奨」/ DeepSeek「R1モデル推奨」',
+          '対象ファイル: src/components/QuantView.tsx（CYBER_MODE行 + 通常モード行、各AI 2箇所） / src/components/ShieldView.tsx（SHIELD_AI_LINKS の hint、各AI 1箇所）',
+          '更新トリガー: 各AIが新しい推論/思考モデルを正式リリースした時（プレビュー・限定公開は対象外）',
+          '更新頻度目安: 数ヶ月〜1年に1回程度',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'カテゴリA 実行手順',
+        items: [
+          '手順1 — Web検索: ChatGPT（OpenAI最新推論モデル）/ Gemini（思考モード対応モデル）/ DeepSeek（最新モデル）を検索して現在推奨すべきモデルを確認',
+          '手順2 — 変更判断: 正式リリース済み・一般利用可能な場合のみ更新する。プレビュー版は対象外',
+          '手順3 — ファイル更新: Editツールで replace_all: true を使用して各ファイルのテキストを一括変換',
+          '手順4 — ビルド確認: npm run build でTypeScriptエラーがないことを確認',
+          '手順5 — コミット & プッシュ: git commit → git push → Vercel自動デプロイ確認',
+          '手順6 — docs/maintenance/ai-model-check.md の「現在の値」テーブルと「最終更新」日付を更新',
+        ],
+      },
+      {
+        type: 'table' as const,
+        headers: ['AI', 'QuantView CYBER行', 'QuantView 通常行', 'ShieldView hint行', '現在のヒント'],
+        rows: [
+          ['ChatGPT', '1479', '1590', '1002', 'o3以上推奨'],
+          ['Gemini', '1509', '1614', '1011', '思考モード推奨'],
+          ['DeepSeek', '1567', '1660', '1030', 'R1モデル推奨'],
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: '注意事項',
+        items: [
+          'ファイル編集後は行番号がずれる場合があるため、次回更新時は Grep で最新行番号を確認すること',
+          'ヒントテキストは表示スペースが限られるため6〜10文字程度に収める',
+          'DeepSeekはサーバー安定性・データプライバシー懸念（中国企業）のため、ポジション情報を含むシールドプロンプトへの利用には注意喚起を検討すること',
+        ],
+      },
+    ],
+  },
+  {
     id: 'sync',
     icon: '☁️',
     title: 'クロスデバイス同期（Firebase）',
@@ -793,7 +848,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
-              ぽいロボ — 最終更新: 2026-05-23
+              ぽいロボ — 最終更新: 2026-05-24
             </p>
           </div>
         </div>

@@ -620,6 +620,102 @@ function buildExportJson(
     }
   })
 
+  // ── TEV（トータル物理エネルギーベクトル）計算 ───────────
+  const tev_V       = score_today != null ? r2(score_today * 100) : null
+  const tev_A       = score_today != null && score_3d != null ? r2((score_today - score_3d) * 100) : null
+  const tev_pCredit = creditRatioPct
+  const tev_pShort  = 100 - ssPct
+
+  let tev_fBase:        number | null = null
+  let tev_fInertia:     number | null = null
+  let tev_decay                       = 1.0
+  const tev_decayReasons: string[]    = []
+  let tev_rResist:      number | null = null
+  let tev_value:        number | null = null
+  let tev_status:       string | null = null
+  let tev_confidence:   number | null = null
+
+  if (tev_V != null && tev_A != null) {
+    tev_fBase              = r2((0.3 * tev_V) + (0.7 * tev_A))
+    const tev_fInertiaRaw  = r2(tev_fBase * (foreign4wPct / 100))
+
+    // 天井の失速: V > 0 かつ A ≤ 0 → ×0.25
+    if (tev_V > 0 && tev_A <= 0) {
+      tev_decay *= 0.25
+      tev_decayReasons.push('天井の失速（V>0かつA≤0）→75%減衰')
+    }
+    // 燃料漏れ: COT BEAR → ×0.5
+    if (sig(cotLfPct) === 'BEAR') {
+      tev_decay *= 0.5
+      tev_decayReasons.push('燃料漏れ（COT BEAR）→50%減衰')
+    }
+    // 燃料漏れ: 先物volume 直近3日連続減少 → ×0.5
+    if (futuresDailyData.length >= 3) {
+      const [fv0, fv1, fv2] = [futuresDailyData[0].volume, futuresDailyData[1].volume, futuresDailyData[2].volume]
+      if (fv0 < fv1 && fv1 < fv2) {
+        tev_decay *= 0.5
+        tev_decayReasons.push('燃料漏れ（先物volume3日連続減少）→50%減衰')
+      }
+    }
+
+    tev_fInertia = r2(tev_fInertiaRaw * tev_decay)
+
+    // R_resistance = -8 × √(P_credit + P_short)
+    const inner = tev_pCredit + tev_pShort
+    tev_rResist = inner >= 0 ? r2(-8 * Math.sqrt(inner)) : null
+
+    if (tev_rResist != null) {
+      tev_value = Math.round(tev_fInertia + tev_rResist)
+
+      // 底打ち反転: 直近10日安値圏（安値の1.02倍以内）かつ A ≥ +50
+      const lows10d  = nkFuturesPriceData.slice(0, 10).map(d => d.low).filter(v => v > 0)
+      const low10d   = lows10d.length > 0 ? Math.min(...lows10d) : null
+      const is10dLow = low10d != null && nkCur != null && nkCur <= low10d * 1.02
+
+      // ステータス判定（優先順位: 底打ち反転 > 慣性航行中 > 真空落下 > 重力反転中 > 限界膨張）
+      if (tev_value >= -24 && tev_A >= 50 && is10dLow) {
+        tev_status = '底打ち反転'
+      } else if (tev_value >= 25 && tev_A > 0) {
+        tev_status = '慣性航行中'
+      } else if (tev_value <= -25 && tev_A < 0) {
+        tev_status = '真空落下'
+      } else if (tev_value <= -25 && tev_A >= 0) {
+        tev_status = '重力反転中'
+      } else if (tev_value >= 25) {
+        tev_status = '限界膨張（慣性失速）'
+      } else {
+        tev_status = '限界膨張'
+      }
+
+      // 確信度: 限界膨張系は50%固定
+      tev_confidence = tev_status.startsWith('限界膨張')
+        ? 50
+        : Math.min(95, Math.round(Math.abs(compositeScore) * 0.5 + 50))
+    }
+  }
+
+  // ── TEV 整合性検証 ───────────────────────────────
+  const tev_sanityWarnings: string[] = []
+  if (tev_value !== null && tev_rResist !== null && tev_status !== null && tev_confidence !== null) {
+    // R_resistance は -8√x の公式上、常に負値
+    if (tev_rResist > 0)
+      tev_sanityWarnings.push(`r_resistance>0（常に負であるべき: ${tev_rResist}）`)
+    // decay_factor は 0〜1.0 の範囲
+    if (tev_decay < 0 || tev_decay > 1.0)
+      tev_sanityWarnings.push(`decay_factor範囲外（${r2(tev_decay)}）`)
+    // 限界膨張系は confidence 50% 固定
+    if (tev_status.startsWith('限界膨張') && tev_confidence !== 50)
+      tev_sanityWarnings.push(`限界膨張だがconfidence≠50（実値: ${tev_confidence}）`)
+    // ステータスと tev/A の値域整合
+    if (tev_status === '慣性航行中' && !(tev_value >= 25 && tev_A != null && tev_A > 0))
+      tev_sanityWarnings.push(`慣性航行中だがTEV/A条件不一致（tev=${tev_value} A=${tev_A}）`)
+    if (tev_status === '真空落下'   && !(tev_value <= -25 && tev_A != null && tev_A < 0))
+      tev_sanityWarnings.push(`真空落下だがTEV/A条件不一致（tev=${tev_value} A=${tev_A}）`)
+    if (tev_status === '重力反転中' && !(tev_value <= -25 && tev_A != null && tev_A >= 0))
+      tev_sanityWarnings.push(`重力反転中だがTEV/A条件不一致（tev=${tev_value} A=${tev_A}）`)
+  }
+  const tev_sanityOk: boolean | null = tev_value === null ? null : tev_sanityWarnings.length === 0
+
   // ── 組立 ─────────────────────────────────────────
   const generated_at = new Date().toISOString().slice(0, 19).replace('T', ' ')
 
@@ -840,6 +936,17 @@ function buildExportJson(
       window_days: W,
     },
 
+    tev_analysis: {
+      note:            'システム事前計算済み。sanity_ok=trueの場合のみtev・status・confidence_pctを正として引用し、物理的意味の解釈に専念せよ。sanity_ok=falseの場合はsanity_warningsを報告し定性判断を優先せよ',
+      tev:             tev_value,
+      status:          tev_status,
+      confidence_pct:  tev_confidence,
+      decay_factor:    r2(tev_decay),
+      decay_reasons:   tev_decayReasons,
+      sanity_ok:       tev_sanityOk,
+      sanity_warnings: tev_sanityWarnings,
+    },
+
     events: {
       sq: {
         next_date:      nextSq ? nextSq.date.toISOString().slice(0, 10) : null,
@@ -927,33 +1034,27 @@ const AI_PROMPT_TEMPLATE = `# Role
 - deviation_score.acc → 偏差スコアの3日加速度（正=慣性加速中）
 - flows.foreign.cumulative_trillion.w4 → 外国人4週累計フロー（慣性の方向）
 
-# シグナルコンフリクト解決ルール
-複数の物理法則が矛盾するシグナルを発した場合、以下の優先順位で一意に決定すること。
+# トータル・エネルギー・ベクター（TEV）参照ガイド
 
-**優先順位（高 → 低）：慣性 ＞ 質量 ＞ 弾性**
+⚠ **トータル・エネルギー・ベクター 事前計算完了**: 入力JSONの \`tev_analysis\` に全計算結果が格納されている。**AIによる独自計算を禁じる**。出力には \`tev_analysis.tev\`・\`tev_analysis.status\`・\`tev_analysis.confidence_pct\` をそのまま引用すること。AIの役割は数値の計算ではなく、物理的意味の**解釈と説明**に専念することである。
 
-【慣性が優勢な局面】deviation_score.acc > +0.2 かつ flows.cot.leveraged_funds.net が方向と一致
-→ 慣性を採用。質量（信用残重力）は「まだ発火していない」と判定し保留。弾性（MA乖離復元）は一時停止。バンドウォークとして継続指令を優先。
+## トータル・エネルギー・ベクターの解釈ガイド
+- **上昇エネルギー**：外国人フローで増幅された「速度×加速度」の合成推進力。tev が正方向に大きいほど上昇慣性が強い。
+- **売り圧**：信用残・空売り比率に基づく構造的な上昇抵抗。tev を押し下げる方向に作用する（常に負寄与）。
+- **エネルギー減衰**：\`tev_analysis.decay_factor\`（1.0未満なら推進力が物理的に減衰済み）。\`tev_analysis.decay_reasons\` の各要素を引用して原因を説明せよ。
 
-【慣性が停止・反転した局面】deviation_score.acc ≤ 0、または flows.cot の方向転換を確認
-→ 慣性を無効化し、質量の法則（重力）を主軸に切り替え。信用残百分位 ≥ 80% なら「崩壊圧力」として弾性と合力し判定。
+## ステータス別・物理解釈（\`tev_analysis.status\` の意味）
+- **慣性航行中**：ブル推進力が抵抗に打ち勝ち加速継続。慣性が切れる「エネルギー枯渇」の兆候を監視せよ。
+- **限界膨張**：アクセルとブレーキが拮抗。エネルギー充填中か、どちらかへのブレイクを待つ状態。**新規エントリー禁止・トリガー待ち。確信度は50%固定。**
+- **重力反転中**：重力（質量）が推進力を上回るが、まだ下落加速していない。反転の初期段階。
+- **真空落下**：重力支配下で下落速度が加速中。バンドウォークの可能性があるため、単純な復元力判断を一時停止せよ。
+- **底打ち反転**：重力圏内にいるが加速度が急反発。反転エネルギーの蓄積段階。
 
-【弾性が極限値に達した局面】|price_structure.nikkei225.ma20_dev_pct| ≥ 8% または |ma60_dev_pct| ≥ 12%
-→ 弾性の優先度を例外的に質量と同等まで引き上げ。質量と弾性が同方向（例：MA過熱 + 信用残過剰）なら確信度に +10%。逆方向なら打ち消し合い → 確信度上限を 60% に制限。
+## データ品質チェック（必須・最初に確認）
+1. **\`tev_analysis.tev\` が null** → エネルギー・サマリーを「計算不能（データ不足）」と記載し、定性判断（COT・VIX・MA乖離等）のみで執行指令を決定せよ。
+2. **\`tev_analysis.sanity_ok\` が false** → エネルギー・サマリー冒頭に「⚠ データ整合性警告: [sanity_warnings の内容を列挙]」を明記し、エネルギー数値は参考値として扱い、定性判断を優先せよ。確信度は最大60%に制限せよ。
+3. **\`tev_analysis.sanity_ok\` が true または null（tev=nullの場合）** → 通常フローで解釈せよ。
 
-【全シグナルが完全拮抗した局面】慣性・質量・弾性が全て異なる方向を向いている
-→「全力待機（視界不良）」を強制。いかなる方向へもエントリー指令を出してはならない。
-
-⚠ データ遅延注意
-- flows.cot は火曜基準・金曜公開で約3〜4日遅延。最新の慣性判定は deviation_score.acc で補完すること。
-- breadth / positioning の週次データは公表タイミングにより1〜2週遅延あり。data_quality.stale_fields を必ず確認すること。
-
-# 確信度の算出基準（必ずこの手順で計算すること）
-1. ベース: |signal_scoreboard.composite_score| × 0.5 + 50（スコアの絶対値を確信の強さに変換）
-2. 方向補正: flows.cot.leveraged_funds.signal と flows.foreign.signal が net_signal と同方向 → +8%
-3. 加速補正: deviation_score.acc が net_signal と同方向に 0.2 超 → +5%
-4. データ品質上限: data_quality.score < 0.6 の場合は最大 70% に制限
-5. 出力時は「確信度 XX%（根拠: ○○補正適用）」の形式で1行明示すること。
 
 # 執行の確信度と資金配分ルール
 - 30-50% [打診執行]：物理的予兆（乖離限界など）に基づく「先回り」。トレンド転換の確証はないが、有利な位置を確保するための少量エントリー。
@@ -965,26 +1066,33 @@ const AI_PROMPT_TEMPLATE = `# Role
 
 ---
 ## 需給物理・執行ログ：[日付]
+
+### 【エネルギー・サマリー】
+- **トータル・エネルギー・ベクター**：[tev_analysis.tev]
+- **ステータス**：[tev_analysis.status]
+- **確信度**：[tev_analysis.confidence_pct]%
+- **エネルギー減衰**：×[tev_analysis.decay_factor]（理由: [tev_analysis.decay_reasons の各要素を列挙。なければ「なし」]）
+
 ### 【1. 市場の状態診断】
-- ステータス：[ 限界膨張 / 重力反転中 / 真空落下 / 底打ち反転 / 慣性航行中 ]
-- 質量負荷：(positioning フィールドの数値を引用しつつ物理的に記述)
-- 復元力：(MA乖離・deviation_score.score の数値を引用しつつ記述)
-- 推進力（慣性）：(COT純計・deviation_score.acc の数値を引用しつつ記述)
+- 質量負荷：（positioning フィールドの数値を引用しつつ物理的に記述）
+- 復元力：（MA乖離・deviation_score.score の数値を引用しつつ記述）
+- 推進力（慣性）：（COT純計・deviation_score.acc の数値を引用しつつ記述）
+- エネルギー物理解釈：（上記ステータスが示す物理的意味を2〜3文で説明）
 
 ### 【2. 本質的結論】
 - スイングトレードの視点から、現在の「呼吸（サイクル）」がどこにあるのかを簡潔に総括。
 
 ### 【3. 最終執行指令】
 - 指令：[ ベア本命執行 / ブル打診買い / 全力待機 / 利益最大化保持 等 ]
-- 確信度：XX%（根拠: ○○補正適用）
+- 確信度：[tev_analysis.confidence_pct]%（ステータス: [tev_analysis.status]）
 
 #### ■ ブル（1倍・2倍）
 - 判定：(購入禁止 / 打診 / 本命 / 継続保持)
-- 物理的根拠：
+- 物理的根拠：（数値を引用しつつ、「上昇エネルギーは〇〇で△△の状態」「売り圧が〇〇のため上昇に抵抗」「エネルギー減衰が発生しており原因は〇〇」のように、ユーザーが直感的に理解できる日本語で記述すること。F_inertia・R_resistance・Decay等の英語変数名を出力することを禁じる）
 
 #### ■ ベア（1倍・2倍）
 - 判定：(購入禁止 / 打診 / 本命 / 継続保持)
-- 物理的根拠：
+- 物理的根拠：（上記ブルと同じ形式で、ベア側の判断根拠を記述）
 
 ---
 
@@ -1327,6 +1435,11 @@ function EnginePanel({
               </button>
             </div>
           )}
+          <div style={{ textAlign: 'center', marginTop: 4, fontSize: 9, letterSpacing: '0.04em', fontFamily: CYBER_MODE ? CY_FONT : undefined, color: CYBER_MODE ? CY_DIM : 'var(--text-dim)' }}>
+            推奨: <span style={{ color: CYBER_MODE ? CY_GREEN : 'var(--accent)' }}>Claude</span>
+            <span style={{ margin: '0 8px', opacity: 0.35 }}>|</span>
+            ニュース推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
+          </div>
         </div>
 
         {/* AI チャットへのリンク */}
@@ -1363,7 +1476,7 @@ function EnginePanel({
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
                   <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>ChatGPT</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>o3以上推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>o3以上推奨</span>
                 </div>
               </div>
 
@@ -1393,7 +1506,7 @@ function EnginePanel({
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
                   <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Gemini</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>思考モード推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>思考モード推奨</span>
                 </div>
               </div>
 
@@ -1422,7 +1535,7 @@ function EnginePanel({
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
                   <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Claude</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>新規チャット推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>ぽいロボ推奨</span>
                 </div>
               </div>
 
@@ -1451,7 +1564,7 @@ function EnginePanel({
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
                   <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>DeepSeek</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_FAINT, letterSpacing: '0.02em' }}>R1モデル推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>R1モデル推奨</span>
                 </div>
               </div>
 
@@ -1521,7 +1634,7 @@ function EnginePanel({
                 </div>
                 <div style={ms.aiInfo}>
                   <div style={ms.aiName}>Claude</div>
-                  <div style={ms.aiDesc}>新規チャット推奨</div>
+                  <div style={ms.aiDesc}>ぽいロボ推奨</div>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -1591,7 +1704,7 @@ const ms: Record<string, React.CSSProperties> = {
   },
   aiInfo:  { flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 },
   aiName:  { fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' as const },
-  aiDesc:  { fontSize: 10, color: 'var(--text-dim)', whiteSpace: 'nowrap' as const },
+  aiDesc:  { fontSize: 10, color: 'var(--text)', whiteSpace: 'nowrap' as const },
 }
 
 // ── データ鮮度ヘルパー ──────────────────────────────

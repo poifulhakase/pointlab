@@ -183,9 +183,9 @@ function todayStr(): string {
 
 
 const QUANT_HL_PATTERNS = [
-  /確信度：[\d.]+%/g,
-  /判定：.+/g,
-  /指令：.+/g,
+  /\*\*確信度\*\*：[\d.]+%/g,       // **確信度**：52%
+  /\*\*判定\*\*：[^（(\n]+/g,       // **判定**：打診 / 購入禁止（全角・半角カッコ手前まで）
+  /\*\*指令\*\*：[^（(\n]+/g,       // **指令**：ベア打診・ブル購入禁止
 ]
 
 function renderQuantHL(text: string, hlColor: string): React.ReactNode {

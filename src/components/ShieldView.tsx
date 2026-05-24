@@ -814,6 +814,11 @@ function ShieldPanel({
                 </button>
               </div>
             </div>
+            <div style={{ textAlign: 'center', marginTop: 4, fontFamily: c.FONT, fontSize: 9, letterSpacing: '0.04em', color: c.DIM }}>
+              推奨: <span style={{ color: c.GREEN }}>Claude</span>
+              <span style={{ margin: '0 8px', opacity: 0.35 }}>|</span>
+              ニュース推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
+            </div>
           </div>
 
           {/* AI起動 */}
@@ -844,7 +849,7 @@ function ShieldPanel({
                   </a>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
                     <span style={{ fontFamily: c.FONT, fontSize: 12, color: c.GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>{ai.name}</span>
-                    <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.FAINT, letterSpacing: '0.02em' }}>{ai.hint}</span>
+                    <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.DIM, letterSpacing: '0.02em' }}>{ai.hint}</span>
                   </div>
                 </div>
               ))}
@@ -1013,7 +1018,7 @@ const SHIELD_AI_LINKS = [
     ),
   },
   {
-    name: 'Claude', url: 'https://claude.ai/new', hint: '新規チャット推奨',
+    name: 'Claude', url: 'https://claude.ai/new', hint: 'ぽいロボ推奨',
     bg: '#d97757',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
