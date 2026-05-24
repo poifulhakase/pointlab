@@ -718,6 +718,18 @@ const SPEC_SECTIONS = [
           'DeepSeekはサーバー安定性・データプライバシー懸念（中国企業）のため、ポジション情報を含むシールドプロンプトへの利用には注意喚起を検討すること',
         ],
       },
+      {
+        type: 'list' as const,
+        heading: '🔴 カテゴリB — カレンダー年次日程更新（手順書: docs/maintenance/calendar-dates-check.md）',
+        items: [
+          '実施タイミング: 毎年12月上旬（翌年分のFOMCスケジュール等が公表される頃）',
+          '更新しないと機能破綻: 翌年のNYSE休場日・マクロイベントがカレンダーに一切表示されなくなる',
+          'src/utils/marketHolidays.ts — NYSE_HOLIDAYS 配列に翌年分を追加（NYSE公式サイトから取得）',
+          'src/utils/macroCalendar.ts — FOMC / 日銀 / NFP / CPI / PCE / GDP / 短観 の各配列に翌年分を追加',
+          'SQ算出日・配当権利日は計算式で自動判定されるため更新不要',
+          '現在のカバレッジ: 〜2026年末（次回更新: 2026年12月頃・2027年分を追加）',
+        ],
+      },
     ],
   },
   {
