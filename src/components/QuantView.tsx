@@ -422,7 +422,6 @@ function buildExportJson(
     phase: creditRatioPct >= 80 && adPct <= 40 ? '高危険（塩漬け解消売り優位）'
          : creditRatioPct >= 70 && adPct <= 50 ? '中危険（戻り売り圧力あり）'
          : '正常範囲',
-    note: '信用倍率が高く騰落レシオが低いほど、反転時のやれやれ売りが上昇慣性を打ち消す',
   }
 
   const cotLfNets = cotS.slice(0, 52).map(d => d.nonCommNet)
@@ -470,9 +469,6 @@ function buildExportJson(
   const z_nas100  = zScore(nasSeries)
   const z_vix_inv = zScore(vixInvSeries)
   const z_oi      = zScore(oiDeltas)
-  const nas100_source = nas100Data.length >= MIN_Z
-    ? 'NAS100(^NDX)'
-    : ntData.length >= MIN_Z + 1 ? '日経225(^N225)フォールバック' : null
 
   function scoreAtOffset(offsetDays: number): number | null {
     function zAt(series: number[], offset: number): number | null {
@@ -510,20 +506,13 @@ function buildExportJson(
   const nkPos52w     = nkCur != null && nkHigh52w != null && nkLow52w != null && nkHigh52w > nkLow52w
     ? r2((nkCur - nkLow52w) / (nkHigh52w - nkLow52w) * 100) : null
 
-  const fxPrices     = usdjpyData.map(d => d.close)
-  const fxMa5        = maL(fxPrices, 5)
-  const fxMa20       = maL(fxPrices, 20)
-  const fxPrices260  = fxPrices.slice(-260)
-  const fxHigh52w    = fxPrices260.length > 0 ? r2(Math.max(...fxPrices260)) : null
-  const fxLow52w     = fxPrices260.length > 0 ? r2(Math.min(...fxPrices260)) : null
+  const fxPrices = usdjpyData.map(d => d.close)
+  const fxMa20   = maL(fxPrices, 20)
 
   // ── 先物ベーシス ─────────────────────────────────
-  const futClose  = latestFut?.close ?? null
-  const basis     = futClose != null && nkCur != null ? r2(futClose - nkCur) : null
-  const basisPct  = basis != null && nkCur != null && nkCur > 0 ? r2(basis / nkCur * 100) : null
-  const basisNote = basis != null
-    ? (basis > 0 ? 'コンタンゴ（先物プレミアム）' : '逆ざや（先物ディスカウント）')
-    : '先物清算値データなし'
+  const futClose = latestFut?.close ?? null
+  const basis    = futClose != null && nkCur != null ? r2(futClose - nkCur) : null
+  const basisPct = basis != null && nkCur != null && nkCur > 0 ? r2(basis / nkCur * 100) : null
 
   // ── シグナルスコアボード ─────────────────────────
   type SigItem = {
@@ -669,7 +658,6 @@ function buildExportJson(
       gravScore >=  1 ? '積み上げ優勢（SQ後にエネルギー放出リスク）' :
       gravScore <= -1 ? '清算優勢（SQ前にエネルギー放出中）'         :
                         '混合・横ばい（方向性不明確）',
-    note: 'credit_ratio/long_t が清算中 かつ days_to_sq が残り少ない場合、SQ日前後に売り圧力が集中しやすい',
   }
 
   // ── TEV（トータル物理エネルギーベクトル）計算 ───────────
@@ -802,8 +790,6 @@ function buildExportJson(
 
   return {
     generated_at,
-    market:   { exchange: 'JPX', index: '日経225', type: 'swing_trade' },
-    strategy: { timeframe: '週次スイング', direction: 'long/short', leverage: '1x/2x' },
 
     instant_briefing: {
       date:            nk?.time ?? generated_at.slice(0, 10),
@@ -822,13 +808,6 @@ function buildExportJson(
       days_to_sq,
     },
 
-    signal_scoreboard: {
-      items:           sigItems,
-      composite_score: compositeScore,
-      net_signal:      netSignal,
-      regime:          market_regime,
-    },
-
     flows: {
       foreign: {
         latest_week_t:       invS[0] ? r2(invT(invS[0]))    : null,
@@ -837,21 +816,10 @@ function buildExportJson(
         signal:              sig(foreign4wPct),
         as_of:               invS[0] ? toDate(invS[0].date) : null,
       },
-      institution: {
-        trust_bank_t: invS[0] ? r2(invS[0].trustBank  / 1_000_000) : null,
-        securities_t: invS[0] ? r2(invS[0].securities / 1_000_000) : null,
-        combined_t:   invS[0] ? r2((invS[0].trustBank + invS[0].securities) / 1_000_000) : null,
-        as_of:        invS[0] ? toDate(invS[0].date) : null,
-      },
-      retail: {
-        latest_week_t: invS[0] ? r2(invS[0].individual / 1_000_000) : null,
-        as_of:         invS[0] ? toDate(invS[0].date) : null,
-      },
       cot: {
         as_of:          cotS[0]?.date ?? null,
         open_interest:  cotS[0]?.openInterest ?? null,
         leveraged_funds: {
-          label: 'ヘッジファンド（投機筋）',
           net:   cotS[0]?.nonCommNet   ?? null,
           long:  cotS[0]?.nonCommLong  ?? null,
           short: cotS[0]?.nonCommShort ?? null,
@@ -859,20 +827,12 @@ function buildExportJson(
           signal: sig(cotLfPct),
         },
         asset_manager: {
-          label: '機関投資家（実需）',
           net:   cotS[0]?.commNet   ?? null,
           long:  cotS[0]?.commLong  ?? null,
           short: cotS[0]?.commShort ?? null,
           percentile_52w: cotAmPct,
           signal: sig(cotAmPct),
         },
-        non_reportable: {
-          label: '個人投資家（小口）',
-          net:   cotS[0]?.nonReptNet   ?? null,
-          long:  cotS[0]?.nonReptLong  ?? null,
-          short: cotS[0]?.nonReptShort ?? null,
-        },
-        lag_note: 'CFTC公表（火曜基準→金曜公開）約3〜4日遅延',
       },
     },
 
@@ -893,7 +853,7 @@ function buildExportJson(
         percentile_26w: arbLongPct,
         signal:         sig(100 - arbLongPct),
         as_of:          arbS[0] ? toDate(arbS[0].date) : null,
-        daily_recent:   arbDailyData.slice(0, 7).map(d => ({
+        daily_recent:   arbDailyData.slice(0, 5).map(d => ({
           date:       d.date,
           long_bal_t: r2(d.longBal / 1_000_000),
           delta_100m: d.longBalDelta != null ? Math.round(d.longBalDelta / 100) : null,
@@ -912,10 +872,9 @@ function buildExportJson(
       close:                 futClose,
       basis,
       basis_pct:             basisPct,
-      basis_note:            basisNote,
       as_of:                 latestFut?.date ?? null,
       oi_heavy_3d:           oiHeavy3d,
-      recent_20d:            futuresDailyData.slice(0, 20).map((d, i) => {
+      recent_10d:            futuresDailyData.slice(0, 10).map((d, i) => {
         const prev = futuresDailyData[i + 1]
         return {
           date:     d.date,
@@ -936,21 +895,18 @@ function buildExportJson(
         percentile_26w: adPct,
         signal:         sig(adPct),
         as_of:          adS[0] ? toDate(adS[0].date) : null,
-        note:           '120以上=過熱・80以下=売られすぎ',
       },
       short_sell: {
         value:          ssS[0]?.ratio ?? null,
         percentile_26w: ssPct,
         signal:         sig(100 - ssPct),
         as_of:          ssS[0] ? toDate(ssS[0].date) : null,
-        note:           '高比率=ベア（逆転シグナル）',
       },
       nt_ratio: {
         value:      nk ? r2(nk.ratio) : null,
         wow_change: nk?.change ?? null,
         as_of:      nk?.time  ?? null,
       },
-      sp500_nikkei_ratio: nk ? r2(nk.benchmark / nk.nikkei) : null,
     },
 
     volatility: {
@@ -959,7 +915,6 @@ function buildExportJson(
         weekly: vixS[0] ? {
           date:           toDate(vixS[0].date),
           close:          vixS[0].close,
-          change:         vixS[0].change,
           change_pct:     vixS[0].changePct,
           percentile_52w: vixPct52w,
           signal:         sig(100 - vixPct52w),
@@ -992,18 +947,12 @@ function buildExportJson(
         pos_in_52w_pct: nkPos52w,
       },
       usdjpy: {
-        ma5:           fxMa5,
-        ma20:          fxMa20,
-        ma5_dev_pct:   fxMa5 && fx ? r2((fx.close - fxMa5)  / fxMa5  * 100) : null,
         ma20_dev_pct:  fxMa20 && fx ? r2((fx.close - fxMa20) / fxMa20 * 100) : null,
-        high_52w:      fxHigh52w,
-        low_52w:       fxLow52w,
         z_score_30d:   z_usdjpy,
         signal:        usdjpySig,
       },
       nas100: {
         z_score_30d:   z_nas100,
-        source:        nas100_source,
         signal:        nasSig,
       },
     },
@@ -1019,7 +968,7 @@ function buildExportJson(
     },
 
     tev_analysis: {
-      note:                  'システム事前計算済み。tev_for_executionがnullの場合は定性判断バックアップモードに切り替えること。sanity_ok=trueの場合のみtev・status・confidence_pctを正として引用し、物理的意味の解釈に専念せよ',
+      note:                  'tev_for_execution=nullなら定性バックアップモード。sanity_ok=true時のみtev値を執行根拠に使用可',
       tev:                   tev_value,
       tev_for_execution:     tev_sanityOk === true ? tev_value : null,
       status:                tev_status,
@@ -1038,7 +987,6 @@ function buildExportJson(
         days_remaining: days_to_sq,
         rule:           sq_rule_current,
         tpi,
-        tpi_note:       'TPI=(1/SQ残日数)×|VIX日次変化率|',
         iv_proxy:       vix_iv_proxy,
         gravity:        sq_gravity,
       },
@@ -1047,9 +995,9 @@ function buildExportJson(
 
     data_quality: {
       score:        dqScore,
-      tier1_daily:  { items: tier1, ok: t1ok, total: tier1.length, max_age_days: 5 },
-      tier2_semi:   { items: tier2, ok: t2ok, total: tier2.length, max_age_days: 10 },
-      tier3_weekly: { items: tier3, ok: t3ok, total: tier3.length, max_age_days: 14 },
+      tier1_daily:  { ok: t1ok, total: tier1.length },
+      tier2_semi:   { ok: t2ok, total: tier2.length },
+      tier3_weekly: { ok: t3ok, total: tier3.length },
       stale_fields: staleFields,
     },
 
