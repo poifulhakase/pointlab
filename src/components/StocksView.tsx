@@ -56,6 +56,12 @@ function fmtUpdatedAt(iso: string | null): string {
   const mn = d.getMinutes().toString().padStart(2, '0')
   return `${h}:${mn}`
 }
+function fmtDateMD(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}/${d.getDate()}`
+}
 
 // ── 日経先物 日次テーブル ──────────────────────────────────
 function NkDailyTable({ rows, isMobile, isDark }: {
@@ -475,6 +481,9 @@ export function ContribSectorPanel({ theme, isMobile }: { theme: 'dark' | 'light
           </svg>
           日経平均
           <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 }}>銘柄別寄与度 / 業種別騰落率</span>
+          {data?.updatedAt && (
+            <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-dim)' }}>{fmtDateMD(data.updatedAt)}</span>
+          )}
         </div>
         <button
           onClick={() => load(true)} disabled={loading}
