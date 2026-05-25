@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
-import ReactMarkdown from 'react-markdown'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import type { CotNikkeiWeekData } from '../utils/cotNikkeiData'
@@ -508,7 +507,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               />
             </>
           ) : (
-            // ─ 表示モード：マークダウンレンダリング ─
+            // ─ 表示モード：プレーンテキスト ─
             <div
               onClick={() => { setIsEditing(true); setTimeout(() => textareaRef.current?.focus(), 0) }}
               style={{
@@ -519,48 +518,13 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
                 cursor: 'text',
                 fontSize: 14, lineHeight: 1.8,
                 fontFamily: c.FONT, color: c.TEXT,
+                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
               }}
             >
-              {quantMemo ? (
-                <ReactMarkdown
-                  components={{
-                    h2: ({ children }) => (
-                      <h2 style={{ fontSize: 15, fontWeight: 700, color: c.GREEN, borderBottom: `1px solid ${c.BORDER}`, paddingBottom: 4, marginBottom: 6, marginTop: 16 }}>{children}</h2>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 style={{ fontSize: 13, fontWeight: 700, color: c.GREEN, marginBottom: 4, marginTop: 12 }}>{children}</h3>
-                    ),
-                    h4: ({ children }) => (
-                      <h4 style={{ fontSize: 13, fontWeight: 600, color: c.DIM, marginBottom: 2, marginTop: 8 }}>{children}</h4>
-                    ),
-                    p: ({ children }) => (
-                      <p style={{ margin: '2px 0', color: c.TEXT }}>{children}</p>
-                    ),
-                    li: ({ children }) => (
-                      <li style={{ color: c.TEXT, marginBottom: 2 }}>{children}</li>
-                    ),
-                    ul: ({ children }) => (
-                      <ul style={{ paddingLeft: 18, margin: '4px 0' }}>{children}</ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol style={{ paddingLeft: 18, margin: '4px 0' }}>{children}</ol>
-                    ),
-                    strong: ({ children }) => (
-                      <strong style={{ color: theme === 'light' ? '#db2777' : 'rgba(255,100,180,0.95)', fontWeight: 700 }}>{children}</strong>
-                    ),
-                    hr: () => (
-                      <hr style={{ border: 'none', borderTop: `1px solid ${c.BORDER}`, margin: '10px 0' }} />
-                    ),
-                    code: ({ children }) => (
-                      <code style={{ background: c.BG_SUB, padding: '1px 5px', borderRadius: 4, fontSize: 12, color: c.GREEN }}>{children}</code>
-                    ),
-                  }}
-                >
-                  {quantMemo}
-                </ReactMarkdown>
-              ) : (
-                <span style={{ color: c.DIM, fontStyle: 'italic' }}>▌ クリックして編集...</span>
-              )}
+              {quantMemo
+                ? quantMemo
+                : <span style={{ color: c.DIM, fontStyle: 'italic' }}>▌ クリックして編集...</span>
+              }
             </div>
           )}
         </div>
