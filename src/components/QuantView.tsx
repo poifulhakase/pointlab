@@ -336,7 +336,14 @@ function buildExportJson(
     const up         = weekDeltas.filter(d => d > 0).length
     const down       = weekDeltas.filter(d => d < 0).length
     const phase      = delta > threshold ? '積み上げ中' : delta < -threshold ? '清算中' : '横ばい'
-    return { delta, week_deltas: weekDeltas, up_weeks: up, down_weeks: down, phase }
+    // 直近2週の勢い（過去の大きな変動に引きずられない現在のモメンタム）
+    const rec2       = weekDeltas.length >= 2
+      ? r2(weekDeltas[0] + weekDeltas[1])
+      : weekDeltas[0] ?? null
+    const recPhase   = rec2 == null ? null
+      : rec2 > threshold ? '積み上げ中' : rec2 < -threshold ? '清算中' : '横ばい'
+    return { delta, week_deltas: weekDeltas, up_weeks: up, down_weeks: down, phase,
+             recent_2w_delta: rec2, recent_phase: recPhase }
   }
   function maL(arr: number[], n: number): number | null {
     if (arr.length < n) return null
@@ -405,6 +412,18 @@ function buildExportJson(
 
   const ssRatios = ssS.slice(0, 26).map(d => d.ratio)
   const ssPct    = ssRatios.length > 1 ? pctRank(ssRatios.slice(1), ssRatios[0]) : 50
+
+  // 「死せる質量」= 高信用倍率 × 低騰落レシオ → やれやれ売りが上昇エネルギーを打ち消す
+  const deadMassScore = Math.round((creditRatioPct + (100 - adPct)) / 2)
+  const dead_mass_risk = {
+    score: deadMassScore,
+    credit_ratio_pct: creditRatioPct,
+    ad_25d_pct: adPct,
+    phase: creditRatioPct >= 80 && adPct <= 40 ? '高危険（塩漬け解消売り優位）'
+         : creditRatioPct >= 70 && adPct <= 50 ? '中危険（戻り売り圧力あり）'
+         : '正常範囲',
+    note: '信用倍率が高く騰落レシオが低いほど、反転時のやれやれ売りが上昇慣性を打ち消す',
+  }
 
   const cotLfNets = cotS.slice(0, 52).map(d => d.nonCommNet)
   const cotLfPct  = cotLfNets.length > 1 ? pctRank(cotLfNets.slice(1), cotLfNets[0]) : 50
@@ -638,8 +657,9 @@ function buildExportJson(
   const gravLongVals  = gravWin.map(w => w.credit_long_t).filter((v): v is number => v !== null)
   const gravRatio = trendCalc(gravRatioVals, 0.1)
   const gravLong  = trendCalc(gravLongVals,  0.05)
-  const gravScoreR = gravRatio ? (gravRatio.delta > 0.1 ? 1 : gravRatio.delta < -0.1 ? -1 : 0) : 0
-  const gravScoreL = gravLong  ? (gravLong.delta  > 0.05 ? 1 : gravLong.delta < -0.05 ? -1 : 0) : 0
+  // pressure_phase は直近2週（recent_phase）を優先し、過去の大変動バイアスを排除
+  const gravScoreR = gravRatio ? (gravRatio.recent_phase === '積み上げ中' ? 1 : gravRatio.recent_phase === '清算中' ? -1 : 0) : 0
+  const gravScoreL = gravLong  ? (gravLong.recent_phase  === '積み上げ中' ? 1 : gravLong.recent_phase  === '清算中' ? -1 : 0) : 0
   const gravScore  = gravScoreR + gravScoreL
   const sq_gravity = {
     window_weeks:    gravWin.length - 1,
@@ -865,6 +885,7 @@ function buildExportJson(
         ratio_percentile_26w: creditRatioPct,
         signal:              sig(100 - creditRatioPct),
         as_of:               marS[0] ? toDate(marS[0].date) : null,
+        dead_mass_risk,
       },
       arbitrage: {
         long_bal_t:     arbS[0] ? r2(arbS[0].longBal  / 1_000_000) : null,
@@ -998,8 +1019,9 @@ function buildExportJson(
     },
 
     tev_analysis: {
-      note:                  'システム事前計算済み。sanity_ok=trueの場合のみtev・status・confidence_pctを正として引用し、物理的意味の解釈に専念せよ。sanity_ok=falseの場合はsanity_warningsを報告し定性判断を優先せよ',
+      note:                  'システム事前計算済み。tev_for_executionがnullの場合は定性判断バックアップモードに切り替えること。sanity_ok=trueの場合のみtev・status・confidence_pctを正として引用し、物理的意味の解釈に専念せよ',
       tev:                   tev_value,
+      tev_for_execution:     tev_sanityOk === true ? tev_value : null,
       status:                tev_status,
       confidence_pct:        tev_confidence,
       confidence_pct_is_fixed: confidence_pct_is_fixed,
@@ -1090,6 +1112,7 @@ const AI_PROMPT_TEMPLATE = `# Role
 - positioning.credit_margin.long_bal_t + positioning.arbitrage.long_bal_t → 信用・裁定の合算買い残（兆円）
 - 百分位（ratio_percentile_26w / percentile_26w）が 80%+ で「過剰質量・崩壊リスク」
 - positioning.credit_margin.eval_ratio_pct が -10% 以下なら「含み損臨界・強制決済リスク」
+- positioning.credit_margin.dead_mass_risk.phase が「高危険」の場合、上昇反転時の「やれやれ売り（塩漬け株解消）」が慣性を打ち消す「死せる質量」として機能する。dead_mass_risk.score（0〜100）が70以上なら上昇エネルギーの変換効率が低下すると解釈せよ
 
 【復元力（弾性）の計算根拠】
 - price_structure.nikkei225（ma20_dev_pct / ma60_dev_pct）→ MA乖離が大きいほど復元力大
@@ -1134,8 +1157,8 @@ weekly_history の先頭が最新週・末尾が26週前。以下の観点でト
 
 ## データ品質チェック（必須・最初に確認）
 1. **\`tev_analysis.tev\` が null** → エネルギー・サマリーを「計算不能（データ不足）」と記載し、定性判断（COT・VIX・MA乖離等）のみで執行指令を決定せよ。
-2. **\`tev_analysis.sanity_ok\` が false** → エネルギー・サマリー冒頭に「⚠ データ整合性警告: [sanity_warnings の内容を列挙]」を明記し、エネルギー数値は参考値として扱い、定性判断を優先せよ。確信度は最大60%に制限せよ。
-3. **\`tev_analysis.sanity_ok\` が true または null（tev=nullの場合）** → 通常フローで解釈せよ。
+2. **\`tev_analysis.tev_for_execution\` が null（= sanity_ok=false）** → **TEV数値への言及を一切禁止**し、定性判断バックアップモードで出力すること。エネルギー・サマリー冒頭に「⚠ TEV執行停止: [sanity_warnings の内容を列挙]」を明記し、以降の分析はCOT・VIX・MA乖離・フロー・dead_mass_risk のみで構成せよ。確信度は最大50%に制限せよ。
+3. **\`tev_analysis.tev_for_execution\` が null でない** → 通常フローで解釈せよ。
 4. **\`tev_analysis.sanity_warnings\` に「価格基準日乖離」または「当日価格乖離」が含まれる場合** → MA乖離率・TEVは旧日付の終値ベースで計算されたものである。先物最新終値と基準値の差分を踏まえ、実態との乖離を定性的に補正して解釈せよ。（例：「先物は+3%急騰しているが、MA乖離率はその前日値ベースであるため実際の乖離はさらに大きい可能性がある」）
 5. **\`tev_analysis.sanity_warnings\` に「USD/JPY 鮮度注意」が含まれる場合** → z_usdjpyスコア（TEV全体の30%ウェイト）が古い終値ベースで計算されている。USD/JPY変動が大きい局面では、TEV値を定性的に補正して解釈せよ。
 
