@@ -18,7 +18,7 @@ const CACHE_TTL_OPEN   = 30 * 60 * 1000
 const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
 const NK_FUTURES_DAYS  = 10
 const STATIC_JSON_URL  = `${import.meta.env.BASE_URL}data/nk_futures_price.json`
-const STATIC_MAX_AGE   = 36 * 60 * 60 * 1000
+const STATIC_MAX_AGE   = 12 * 60 * 60 * 1000
 
 function isMarketOpen(): boolean {
   const day = new Date().getUTCDay()

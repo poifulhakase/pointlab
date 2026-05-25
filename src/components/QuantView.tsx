@@ -696,6 +696,26 @@ function buildExportJson(
 
   // ── TEV 整合性検証 ───────────────────────────────
   const tev_sanityWarnings: string[] = []
+
+  // 価格基準日の乖離チェック（TEV計算に依存しない・当日急騰等を検知）
+  const ntBaseDate  = nk?.time ?? null
+  const futLatDate  = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].date : null
+  if (ntBaseDate && futLatDate && ntBaseDate !== futLatDate) {
+    tev_sanityWarnings.push(
+      `価格基準日乖離: MA計算基準=${ntBaseDate} 先物最新=${futLatDate}。MA乖離率は${ntBaseDate}終値ベースのため実態より過小/過大の可能性あり`
+    )
+  }
+  const futLatClose = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].close : null
+  if (nkCur && futLatClose) {
+    const priceDiffPct = (futLatClose - nkCur) / nkCur * 100
+    if (Math.abs(priceDiffPct) >= 1.0) {
+      const sign = priceDiffPct > 0 ? '+' : ''
+      tev_sanityWarnings.push(
+        `当日価格乖離: MA基準値=${Math.round(nkCur)} 先物最新終値=${futLatClose}（${sign}${r2(priceDiffPct)}%）。当日の大きな価格変動がMA乖離率・TEVに未反映`
+      )
+    }
+  }
+
   if (tev_value !== null && tev_rResist !== null && tev_status !== null && tev_confidence !== null) {
     // R_resistance は -8√x の公式上、常に負値
     if (tev_rResist > 0)
@@ -715,6 +735,7 @@ function buildExportJson(
       tev_sanityWarnings.push(`重力反転中だがTEV/A条件不一致（tev=${tev_value} A=${tev_A}）`)
   }
   const tev_sanityOk: boolean | null = tev_value === null ? null : tev_sanityWarnings.length === 0
+  const confidence_pct_is_fixed      = tev_status !== null && tev_status.startsWith('限界膨張')
 
   // ── 組立 ─────────────────────────────────────────
   const generated_at = new Date().toISOString().slice(0, 19).replace('T', ' ')
@@ -937,14 +958,15 @@ function buildExportJson(
     },
 
     tev_analysis: {
-      note:            'システム事前計算済み。sanity_ok=trueの場合のみtev・status・confidence_pctを正として引用し、物理的意味の解釈に専念せよ。sanity_ok=falseの場合はsanity_warningsを報告し定性判断を優先せよ',
-      tev:             tev_value,
-      status:          tev_status,
-      confidence_pct:  tev_confidence,
-      decay_factor:    r2(tev_decay),
-      decay_reasons:   tev_decayReasons,
-      sanity_ok:       tev_sanityOk,
-      sanity_warnings: tev_sanityWarnings,
+      note:                  'システム事前計算済み。sanity_ok=trueの場合のみtev・status・confidence_pctを正として引用し、物理的意味の解釈に専念せよ。sanity_ok=falseの場合はsanity_warningsを報告し定性判断を優先せよ',
+      tev:                   tev_value,
+      status:                tev_status,
+      confidence_pct:        tev_confidence,
+      confidence_pct_is_fixed: confidence_pct_is_fixed,
+      decay_factor:          r2(tev_decay),
+      decay_reasons:         tev_decayReasons,
+      sanity_ok:             tev_sanityOk,
+      sanity_warnings:       tev_sanityWarnings,
     },
 
     events: {
@@ -1069,6 +1091,7 @@ weekly_history の先頭が最新週・末尾が26週前。以下の観点でト
 1. **\`tev_analysis.tev\` が null** → エネルギー・サマリーを「計算不能（データ不足）」と記載し、定性判断（COT・VIX・MA乖離等）のみで執行指令を決定せよ。
 2. **\`tev_analysis.sanity_ok\` が false** → エネルギー・サマリー冒頭に「⚠ データ整合性警告: [sanity_warnings の内容を列挙]」を明記し、エネルギー数値は参考値として扱い、定性判断を優先せよ。確信度は最大60%に制限せよ。
 3. **\`tev_analysis.sanity_ok\` が true または null（tev=nullの場合）** → 通常フローで解釈せよ。
+4. **\`tev_analysis.sanity_warnings\` に「価格基準日乖離」または「当日価格乖離」が含まれる場合** → MA乖離率・TEVは旧日付の終値ベースで計算されたものである。先物最新終値と基準値の差分を踏まえ、実態との乖離を定性的に補正して解釈せよ。（例：「先物は+3%急騰しているが、MA乖離率はその前日値ベースであるため実際の乖離はさらに大きい可能性がある」）
 
 # 執行の確信度と資金配分ルール
 ⚠ **確信度は必ず \`tev_analysis.confidence_pct\` の値をそのまま使用すること。以下の区分はその値の解釈・説明のためのガイドであり、AIが独自に確信度を算出・上書きすることを禁じる。**
@@ -1085,7 +1108,7 @@ weekly_history の先頭が最新週・末尾が26週前。以下の観点でト
 ### 【エネルギー・サマリー】
 - **トータル・エネルギー・ベクター**：[tev_analysis.tev]
 - **ステータス**：[tev_analysis.status]
-- **確信度**：[tev_analysis.confidence_pct]%
+- **確信度**：[tev_analysis.confidence_pct]%[tev_analysis.confidence_pct_is_fixedがtrueの場合のみ「（限界膨張による固定値）」を付記]
 - **エネルギー減衰**：×[tev_analysis.decay_factor]（理由: [tev_analysis.decay_reasons の各要素を列挙。なければ「なし」]）
 
 ### 【1. 市場の状態診断】
