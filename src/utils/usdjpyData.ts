@@ -16,7 +16,7 @@ const CACHE_KEY         = 'poical-usdjpy-data'
 const CACHE_TTL_OPEN    = 30 * 60 * 1000
 const CACHE_TTL_CLOSED  = 2  * 60 * 60 * 1000
 const STATIC_JSON_URL   = `${import.meta.env.BASE_URL}data/usdjpy.json`
-const STATIC_MAX_AGE_MS = 36 * 60 * 60 * 1000  // 36時間以内なら静的JSONを使用
+const STATIC_MAX_AGE_MS = 12 * 60 * 60 * 1000  // 12時間以内なら静的JSONを使用（日本市場時間帯は自動的にliveへ）
 
 function isForexOpen(): boolean {
   const now = new Date()
@@ -78,7 +78,9 @@ export async function fetchUsdjpyData(force = false): Promise<UsdjpyDayData[]> {
           const json = await res.json() as { updatedAt: string; data: UsdjpyDayData[] }
           const age = Date.now() - new Date(json.updatedAt).getTime()
           if (age < STATIC_MAX_AGE_MS && json.data?.length > 0) {
-            return { data: json.data }
+            // 静的JSONは降順保存のため昇順に変換（buildPoints と同一順序に統一）
+            const sorted = [...json.data].sort((a, b) => a.time.localeCompare(b.time))
+            return { data: sorted }
           }
         }
       } catch { /* fall through to live fetch */ }
