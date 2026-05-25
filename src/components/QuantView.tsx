@@ -328,6 +328,16 @@ function buildExportJson(
     const variance = rets.reduce((a, r) => a + (r - mean) ** 2, 0) / rets.length
     return r2(Math.sqrt(variance * 252) * 100)
   }
+  // weekly_history[0]=最新週(降順)での数値トレンド計算（SQ重力加速度用）
+  function trendCalc(vals: number[], threshold: number) {
+    if (vals.length < 2) return null
+    const delta      = r2(vals[0] - vals[vals.length - 1])
+    const weekDeltas = vals.slice(0, -1).map((v, i) => r2(v - vals[i + 1]))
+    const up         = weekDeltas.filter(d => d > 0).length
+    const down       = weekDeltas.filter(d => d < 0).length
+    const phase      = delta > threshold ? '積み上げ中' : delta < -threshold ? '清算中' : '横ばい'
+    return { delta, week_deltas: weekDeltas, up_weeks: up, down_weeks: down, phase }
+  }
   function maL(arr: number[], n: number): number | null {
     if (arr.length < n) return null
     return r2(arr.slice(-n).reduce((a, b) => a + b, 0) / n)
@@ -619,6 +629,28 @@ function buildExportJson(
       ss_ratio:        ss   ? ss.ratio                      : null,
     }
   })
+
+  // ── SQ重力加速度（信用買い残のSQ向け方向性）─────────────
+  // SQサイクル≒4週。直近4週の信用倍率・買い残トレンドで清算/積み上げ圧力を数値化
+  const SQ_GRAVITY_WEEKS = 4
+  const gravWin = weekly_history.slice(0, Math.min(SQ_GRAVITY_WEEKS + 1, weekly_history.length))
+  const gravRatioVals = gravWin.map(w => w.credit_ratio).filter((v): v is number => v !== null)
+  const gravLongVals  = gravWin.map(w => w.credit_long_t).filter((v): v is number => v !== null)
+  const gravRatio = trendCalc(gravRatioVals, 0.1)
+  const gravLong  = trendCalc(gravLongVals,  0.05)
+  const gravScoreR = gravRatio ? (gravRatio.delta > 0.1 ? 1 : gravRatio.delta < -0.1 ? -1 : 0) : 0
+  const gravScoreL = gravLong  ? (gravLong.delta  > 0.05 ? 1 : gravLong.delta < -0.05 ? -1 : 0) : 0
+  const gravScore  = gravScoreR + gravScoreL
+  const sq_gravity = {
+    window_weeks:    gravWin.length - 1,
+    credit_ratio:    gravRatio,
+    credit_long_t:   gravLong,
+    pressure_phase:
+      gravScore >=  1 ? '積み上げ優勢（SQ後にエネルギー放出リスク）' :
+      gravScore <= -1 ? '清算優勢（SQ前にエネルギー放出中）'         :
+                        '混合・横ばい（方向性不明確）',
+    note: 'credit_ratio/long_t が清算中 かつ days_to_sq が残り少ない場合、SQ日前後に売り圧力が集中しやすい',
+  }
 
   // ── TEV（トータル物理エネルギーベクトル）計算 ───────────
   const tev_V       = score_today != null ? r2(score_today * 100) : null
@@ -986,6 +1018,7 @@ function buildExportJson(
         tpi,
         tpi_note:       'TPI=(1/SQ残日数)×|VIX日次変化率|',
         iv_proxy:       vix_iv_proxy,
+        gravity:        sq_gravity,
       },
       scheduled_28d: getUpcomingEvents(28),
     },
@@ -1045,6 +1078,10 @@ const AI_PROMPT_TEMPLATE = `# Role
 # スイング解析の物理定義
 - 解析射程：週足・日足の慣性を主軸とし、2日から2週間程度のスイング波動を物理的射程とする。
 - 事象の地平線：SQ（特別清算指数）は、蓄積された全エネルギーが強制放出される「事象の地平線」である。残日数に応じたロールオーバー（乗り換え）圧力を重力計算に含めよ。
+- SQ重力加速度：\`events.sq.gravity\` に「SQに向かう信用ポジションの加速度」が格納されている。\`pressure_phase\`・\`credit_ratio.phase\`・\`credit_long_t.phase\` を参照し、以下の物理的解釈を行え：
+  - 「清算優勢」かつ days_remaining ≤ 10 → エネルギーは既に放出段階。SQ日前後に売り圧力が集中しやすく、下落慣性が強まりやすい
+  - 「積み上げ優勢」かつ days_remaining > 10 → 質量はまだ蓄積中。SQ通過後に清算が集中するリスク（先高後急落）
+  - \`week_deltas\` 配列（直近週→古い順）の符号パターンで「加速/減速」を確認せよ（例：[-0.2, -0.3, -0.1] なら加速清算）
 
 # データ → 物理法則 変換ガイド
 以下のJSONフィールドを各法則の計算根拠として必ず使用すること。
