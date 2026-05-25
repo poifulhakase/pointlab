@@ -716,6 +716,14 @@ function buildExportJson(
     }
   }
 
+  // USD/JPY 鮮度チェック
+  const fxLatDate = usdjpyData.length > 0 ? usdjpyData[usdjpyData.length - 1].time : null
+  if (fxLatDate && ntBaseDate && fxLatDate < ntBaseDate) {
+    tev_sanityWarnings.push(
+      `USD/JPY 鮮度注意: 最新データ=${fxLatDate}（基準日${ntBaseDate}より古い）。z_usdjpy（偏差スコアの30%重み）が古い終値ベースの可能性あり`
+    )
+  }
+
   if (tev_value !== null && tev_rResist !== null && tev_status !== null && tev_confidence !== null) {
     // R_resistance は -8√x の公式上、常に負値
     if (tev_rResist > 0)
@@ -1092,6 +1100,7 @@ weekly_history の先頭が最新週・末尾が26週前。以下の観点でト
 2. **\`tev_analysis.sanity_ok\` が false** → エネルギー・サマリー冒頭に「⚠ データ整合性警告: [sanity_warnings の内容を列挙]」を明記し、エネルギー数値は参考値として扱い、定性判断を優先せよ。確信度は最大60%に制限せよ。
 3. **\`tev_analysis.sanity_ok\` が true または null（tev=nullの場合）** → 通常フローで解釈せよ。
 4. **\`tev_analysis.sanity_warnings\` に「価格基準日乖離」または「当日価格乖離」が含まれる場合** → MA乖離率・TEVは旧日付の終値ベースで計算されたものである。先物最新終値と基準値の差分を踏まえ、実態との乖離を定性的に補正して解釈せよ。（例：「先物は+3%急騰しているが、MA乖離率はその前日値ベースであるため実際の乖離はさらに大きい可能性がある」）
+5. **\`tev_analysis.sanity_warnings\` に「USD/JPY 鮮度注意」が含まれる場合** → z_usdjpyスコア（TEV全体の30%ウェイト）が古い終値ベースで計算されている。USD/JPY変動が大きい局面では、TEV値を定性的に補正して解釈せよ。
 
 # 執行の確信度と資金配分ルール
 ⚠ **確信度は必ず \`tev_analysis.confidence_pct\` の値をそのまま使用すること。以下の区分はその値の解釈・説明のためのガイドであり、AIが独自に確信度を算出・上書きすることを禁じる。**
