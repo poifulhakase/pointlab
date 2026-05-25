@@ -507,7 +507,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               />
             </>
           ) : (
-            // ─ 表示モード：プレーンテキスト ─
+            // ─ 表示モード：プレーンテキスト（ハイライト付き）─
             <div
               onClick={() => { setIsEditing(true); setTimeout(() => textareaRef.current?.focus(), 0) }}
               style={{
@@ -522,7 +522,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               }}
             >
               {quantMemo
-                ? quantMemo
+                ? renderQuantHL(quantMemo, theme === 'light' ? '#db2777' : 'rgba(255,100,180,0.95)')
                 : <span style={{ color: c.DIM, fontStyle: 'italic' }}>▌ クリックして編集...</span>
               }
             </div>
