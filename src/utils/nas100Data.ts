@@ -7,9 +7,11 @@ export interface Nas100DayData {
   changePct: number | null // 前日比（%）
 }
 
-const CACHE_KEY        = 'poical-nas100-data'
-const CACHE_TTL_OPEN   = 30 * 60 * 1000
-const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
+const CACHE_KEY          = 'poical-nas100-data'
+const CACHE_TTL_OPEN     = 30 * 60 * 1000
+const CACHE_TTL_CLOSED   = 2  * 60 * 60 * 1000
+const STATIC_JSON_URL    = `${import.meta.env.BASE_URL}data/nas100_daily.json`
+const STATIC_MAX_AGE_MS  = 12 * 60 * 60 * 1000
 
 function isMarketOpen(): boolean {
   const day = new Date().getUTCDay()
@@ -46,6 +48,17 @@ export async function fetchNas100Data(force = false): Promise<Nas100DayData[]> {
     ttl: () => isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
     force,
     fetcher: async () => {
+      // 静的JSONを優先使用
+      try {
+        const res = await fetch(STATIC_JSON_URL, { signal: AbortSignal.timeout(10000) })
+        if (res.ok) {
+          const json = await res.json() as { updatedAt: string; data: Nas100DayData[] }
+          const age = Date.now() - new Date(json.updatedAt).getTime()
+          if (age < STATIC_MAX_AGE_MS && json.data?.length > 0)
+            return { data: json.data }
+        }
+      } catch { /* fall through */ }
+
       const closeMap = await fetchSymbol('^NDX')
       const dates    = Array.from(closeMap.keys()).sort()
       const data: Nas100DayData[] = dates.map((time, i) => {

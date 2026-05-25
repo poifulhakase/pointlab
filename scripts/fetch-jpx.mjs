@@ -595,6 +595,66 @@ async function fetchVixData() {
   })
 }
 
+// ── VIX 日次（Yahoo Finance） ─────────────────────────
+
+async function fetchVixDailyData() {
+  console.log('\n[vix_daily] Yahoo Finance から日次データ取得...')
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=3mo'
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error('レスポンス形式が不正')
+  const timestamps = result.timestamp ?? []
+  const closes     = result.indicators?.quote?.[0]?.close ?? []
+  const rows = []
+  for (let i = 0; i < timestamps.length; i++) {
+    const close = closes[i]
+    if (close == null || isNaN(close)) continue
+    const time = new Date(timestamps[i] * 1000).toISOString().slice(0, 10)
+    rows.push({ time, close: Math.round(close * 100) / 100 })
+  }
+  rows.sort((a, b) => a.time.localeCompare(b.time))
+  return rows.map((r, i, arr) => {
+    const prev = arr[i - 1]?.close ?? null
+    const changePct = prev != null ? Math.round((r.close - prev) / prev * 10000) / 100 : null
+    return { time: r.time, close: r.close, changePct }
+  })
+}
+
+// ── NAS100 日次（Yahoo Finance） ────────────────────────
+
+async function fetchNas100DailyData() {
+  console.log('\n[nas100_daily] Yahoo Finance から日次データ取得...')
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ENDX?interval=1d&range=3mo'
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error('レスポンス形式が不正')
+  const timestamps = result.timestamp ?? []
+  const closes     = result.indicators?.quote?.[0]?.close ?? []
+  const rows = []
+  for (let i = 0; i < timestamps.length; i++) {
+    const close = closes[i]
+    if (close == null || isNaN(close)) continue
+    const time = new Date(timestamps[i] * 1000).toISOString().slice(0, 10)
+    rows.push({ time, close: Math.round(close * 100) / 100 })
+  }
+  rows.sort((a, b) => a.time.localeCompare(b.time))
+  return rows.map((r, i, arr) => {
+    const prev = arr[i - 1]?.close ?? null
+    const changePct = prev != null ? Math.round((r.close - prev) / prev * 10000) / 100 : null
+    return { time: r.time, close: r.close, changePct }
+  })
+}
+
 // ── ドル円（Yahoo Finance） ────────────────────────
 
 async function fetchUsdjpyData() {
@@ -1170,6 +1230,8 @@ async function main() {
   let investorOk            = false
   let marginOk              = false
   let vixOk                 = false
+  let vixDailyOk            = false
+  let nas100DailyOk         = false
   let usdjpyOk              = false
   let advanceDeclineOk      = false
   let shortSellOk           = false
@@ -1208,6 +1270,26 @@ async function main() {
     vixOk = true
   } catch (e) {
     console.error('\n✗ vix:', e.message)
+  }
+
+  try {
+    const data = await fetchVixDailyData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'vix_daily.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ vix_daily.json 保存 (${data.length}件)`)
+    vixDailyOk = true
+  } catch (e) {
+    console.warn('\n⚠ vix_daily:', e.message)
+  }
+
+  try {
+    const data = await fetchNas100DailyData()
+    const out  = { updatedAt: new Date().toISOString(), data }
+    writeFileSync(join(OUT_DIR, 'nas100_daily.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ nas100_daily.json 保存 (${data.length}件)`)
+    nas100DailyOk = true
+  } catch (e) {
+    console.warn('\n⚠ nas100_daily:', e.message)
   }
 
   try {
@@ -1306,6 +1388,8 @@ async function main() {
   console.log('\n=== 完了 ===')
   if (!investorOk || !marginOk) process.exit(1)
   if (!vixOk)                   console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
+  if (!vixDailyOk)              console.warn('⚠ vix_daily.json は更新されませんでした（Yahoo Finance 接続要確認）')
+  if (!nas100DailyOk)           console.warn('⚠ nas100_daily.json は更新されませんでした（Yahoo Finance 接続要確認）')
   if (!usdjpyOk)                console.warn('⚠ usdjpy.json は更新されませんでした（Yahoo Finance 接続要確認）')
   if (!nkFuturesPriceOk)       console.warn('⚠ nk_futures_price.json は更新されませんでした（Yahoo Finance 接続要確認）')
   if (!advanceDeclineOk)        console.warn('⚠ advance_decline.json は更新されませんでした（列検出要確認）')

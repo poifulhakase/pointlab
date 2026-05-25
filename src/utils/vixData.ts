@@ -79,12 +79,26 @@ export async function fetchVixData(): Promise<VixWeekData[]> {
   })
 }
 
+const STATIC_DAILY_URL   = `${import.meta.env.BASE_URL}data/vix_daily.json`
+const STATIC_DAILY_MAX_AGE = 12 * 60 * 60 * 1000
+
 export async function fetchVixDailyData(force = false): Promise<VixDayData[]> {
   return fetchWithCache({
     key: CACHE_KEY_DAILY,
     ttl: () => isMarketOpen() ? CACHE_TTL_OPEN : CACHE_TTL_CLOSED,
     force,
     fetcher: async () => {
+      // 静的JSONを優先使用
+      try {
+        const res = await fetch(STATIC_DAILY_URL, { signal: AbortSignal.timeout(10000) })
+        if (res.ok) {
+          const json = await res.json() as { updatedAt: string; data: VixDayData[] }
+          const age = Date.now() - new Date(json.updatedAt).getTime()
+          if (age < STATIC_DAILY_MAX_AGE && json.data?.length > 0)
+            return { data: json.data }
+        }
+      } catch { /* fall through */ }
+
       for (const base of ['query1', 'query2']) {
         try {
           const target = `https://${base}.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=3mo`
