@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
+import ReactMarkdown from 'react-markdown'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import type { CotNikkeiWeekData } from '../utils/cotNikkeiData'
@@ -244,6 +245,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
   const [memoSaveFlash, setMemoSaveFlash] = useState(false)
   const [history,       setHistory]       = useState<MemoSnapshot[]>([])
   const [selectedDate,  setSelectedDate]  = useState('')
+  const [isEditing,     setIsEditing]     = useState(false)
   const memoIsDirty = quantMemo !== savedMemo
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -347,6 +349,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
     setSelectedDate(today)
     localStorage.setItem(QUANT_MEMO_KEY, updatedMemo)
     setMemoSaveFlash(true)
+    setIsEditing(false)
     setTimeout(() => setMemoSaveFlash(false), 2000)
   }, [quantMemo, user, history])
 
@@ -355,6 +358,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
     localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
     setSavedMemo(quantMemo)
     setMemoSaveFlash(true)
+    setIsEditing(false)
     setTimeout(() => setMemoSaveFlash(false), 2000)
   }, [quantMemo])
 
@@ -384,6 +388,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
         const updated = updateLogDate(snap.text, date)
         setQuantMemo(updated)
         setSavedMemo(updated)
+        setIsEditing(false)
         localStorage.setItem(QUANT_MEMO_KEY, updated)
       }
     }
@@ -428,7 +433,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
           {/* 全選択 */}
           <button
             title="全選択"
-            onClick={() => { setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
+            onClick={() => { setIsEditing(true); setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
@@ -463,40 +468,101 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
         </div>
       </div>
 
-      {/* テキストエリア（ハイライトオーバーレイ） */}
+      {/* テキストエリア / マークダウン表示 */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0, padding: '14px 16px' }}>
         <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'max(320px, calc(100dvh - 116px))' : 280 }}>
-          <div
-            ref={backdropRef}
-            aria-hidden
-            style={{
-              position: 'absolute', inset: 0, pointerEvents: 'none',
-              padding: '12px 14px', fontSize: 14, lineHeight: 1.8,
-              fontFamily: c.FONT, borderRadius: 8,
-              border: `1px solid ${c.BORDER}`,
-              background: c.BG_AREA,
-              whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-              overflow: 'hidden', color: c.TEXT,
-            }}
-          >
-            {renderQuantHL(quantMemo, theme === 'light' ? '#db2777' : 'rgba(255,100,180,0.95)')}
-          </div>
-          <textarea
-            ref={textareaRef}
-            value={quantMemo}
-            onChange={e => setQuantMemo(e.target.value)}
-            onScroll={() => { if (backdropRef.current && textareaRef.current) backdropRef.current.scrollTop = textareaRef.current.scrollTop }}
-            placeholder="▌ エントリー分析レポートを記録..."
-            style={{
-              flex: 1, resize: 'none',
-              padding: '12px 14px', fontSize: 14, lineHeight: 1.8,
-              fontFamily: c.FONT, borderRadius: 8,
-              background: 'transparent',
-              border: '1px solid transparent',
-              color: 'transparent', caretColor: c.TEXT, outline: 'none',
-              position: 'relative', overflowY: 'auto',
-            }}
-          />
+          {isEditing ? (
+            // ─ 編集モード：テキストエリア + ハイライトバックドロップ ─
+            <>
+              <div
+                ref={backdropRef}
+                aria-hidden
+                style={{
+                  position: 'absolute', inset: 0, pointerEvents: 'none',
+                  padding: '12px 14px', fontSize: 14, lineHeight: 1.8,
+                  fontFamily: c.FONT, borderRadius: 8,
+                  border: `1px solid ${c.BORDER}`,
+                  background: c.BG_AREA,
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                  overflow: 'hidden', color: c.TEXT,
+                }}
+              >
+                {renderQuantHL(quantMemo, theme === 'light' ? '#db2777' : 'rgba(255,100,180,0.95)')}
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={quantMemo}
+                onChange={e => setQuantMemo(e.target.value)}
+                onScroll={() => { if (backdropRef.current && textareaRef.current) backdropRef.current.scrollTop = textareaRef.current.scrollTop }}
+                onBlur={() => { if (!memoIsDirty) setIsEditing(false) }}
+                placeholder="▌ エントリー分析レポートを記録..."
+                style={{
+                  flex: 1, resize: 'none',
+                  padding: '12px 14px', fontSize: 14, lineHeight: 1.8,
+                  fontFamily: c.FONT, borderRadius: 8,
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  color: 'transparent', caretColor: c.TEXT, outline: 'none',
+                  position: 'relative', overflowY: 'auto',
+                }}
+              />
+            </>
+          ) : (
+            // ─ 表示モード：マークダウンレンダリング ─
+            <div
+              onClick={() => { setIsEditing(true); setTimeout(() => textareaRef.current?.focus(), 0) }}
+              style={{
+                flex: 1, overflowY: 'auto',
+                padding: '12px 14px', borderRadius: 8,
+                border: `1px solid ${c.BORDER}`,
+                background: c.BG_AREA,
+                cursor: 'text',
+                fontSize: 14, lineHeight: 1.8,
+                fontFamily: c.FONT, color: c.TEXT,
+              }}
+            >
+              {quantMemo ? (
+                <ReactMarkdown
+                  components={{
+                    h2: ({ children }) => (
+                      <h2 style={{ fontSize: 15, fontWeight: 700, color: c.GREEN, borderBottom: `1px solid ${c.BORDER}`, paddingBottom: 4, marginBottom: 6, marginTop: 16 }}>{children}</h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 style={{ fontSize: 13, fontWeight: 700, color: c.GREEN, marginBottom: 4, marginTop: 12 }}>{children}</h3>
+                    ),
+                    h4: ({ children }) => (
+                      <h4 style={{ fontSize: 13, fontWeight: 600, color: c.DIM, marginBottom: 2, marginTop: 8 }}>{children}</h4>
+                    ),
+                    p: ({ children }) => (
+                      <p style={{ margin: '2px 0', color: c.TEXT }}>{children}</p>
+                    ),
+                    li: ({ children }) => (
+                      <li style={{ color: c.TEXT, marginBottom: 2 }}>{children}</li>
+                    ),
+                    ul: ({ children }) => (
+                      <ul style={{ paddingLeft: 18, margin: '4px 0' }}>{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol style={{ paddingLeft: 18, margin: '4px 0' }}>{children}</ol>
+                    ),
+                    strong: ({ children }) => (
+                      <strong style={{ color: theme === 'light' ? '#db2777' : 'rgba(255,100,180,0.95)', fontWeight: 700 }}>{children}</strong>
+                    ),
+                    hr: () => (
+                      <hr style={{ border: 'none', borderTop: `1px solid ${c.BORDER}`, margin: '10px 0' }} />
+                    ),
+                    code: ({ children }) => (
+                      <code style={{ background: c.BG_SUB, padding: '1px 5px', borderRadius: 4, fontSize: 12, color: c.GREEN }}>{children}</code>
+                    ),
+                  }}
+                >
+                  {quantMemo}
+                </ReactMarkdown>
+              ) : (
+                <span style={{ color: c.DIM, fontStyle: 'italic' }}>▌ クリックして編集...</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
