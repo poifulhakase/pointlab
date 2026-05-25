@@ -6,7 +6,7 @@
 //
 // 変更頻度ガイド:
 //   ほぼ固定   → ROLE / PHYSICAL_LAWS / PHYSICS_DEFINITIONS / CONFIDENCE_RULES
-//   ときどき   → EMERGENCY_RULES / TEV_RULES / STATUS_INTERPRETATION
+//   ときどき   → MARKET_ALERT / DATA_MEMO / TEV_RULES / STATUS_INTERPRETATION
 //   よく変わる → DATA_MAPPING / OUTPUT_FORMAT
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -40,23 +40,29 @@ const PROMPT_CONFIDENCE_RULES = `# 執行の確信度と資金配分ルール
 
 // ── ときどき変わる ───────────────────────────────────────────────────────
 
-const PROMPT_EMERGENCY_RULES = `# 最優先ルール：緊急アラート
-以下のいずれかに該当する場合、通常フォーマットの前に【⚠ 緊急アラート】セクションを出力すること：
-- \`tev_analysis.tev_for_execution\` が null（sanity_ok=false）
-- \`tev_analysis.sanity_warnings\` に「価格基準日乖離」「当日価格乖離」「USD/JPY 鮮度注意」のいずれかが含まれる
-- 先物終値が前日比±2%超の急変動
+const PROMPT_MARKET_ALERT = `# 相場急変チェック（出力の冒頭に配置）
+先物終値が前日比±2%超の場合のみ、エネルギー・サマリーの直前に【相場急変あり】セクションを出力すること。
+記載内容：
+1. 急変動の方向と幅（例：「先物が前日比+2.3%の急騰」）
+2. 分析への影響（データが急変前の終値ベースの場合はその旨を一言添える）
+該当しない場合はこのセクション自体を出力しない。`
 
-【⚠ 緊急アラート】セクションには以下を記載する：
-1. 警告内容（sanity_warnings の全項目を列挙、または急変動の詳細）
-2. 該当データの信頼度への影響（どのスコアが影響を受けるか）
-3. 以降の分析の前提条件（補正が必要な箇所）`
+const PROMPT_DATA_MEMO = `# データ品質メモ（出力の末尾に配置）
+以下のいずれかに該当する場合のみ、出力の末尾に【データメモ】セクションを追加すること：
+- \`tev_analysis.sanity_warnings\` に何らかの警告が含まれる
+- \`tev_analysis.tev_for_execution\` が null
+
+【データメモ】の記載内容：
+- sanity_warnings の各項目と、どのスコアに影響するか
+- 補正が必要な場合はその方向性（例：「MA乖離率は実態より小さく見えている可能性あり」）
+該当しない場合はこのセクション自体を出力しない。`
 
 const PROMPT_TEV_RULES = `# TEV（トータル・エネルギー・ベクター）ルール
 \`tev_analysis\` に全計算結果が格納されている。tev・status・confidence_pct はそのまま引用する（AI独自の再計算は行わない）。
 
 ## tev_for_execution による分岐
 - **null でない場合**：通常フローで解釈する。
-- **null の場合（sanity_ok=false）**：エネルギー・サマリー冒頭に「⚠ TEV執行停止: [sanity_warnings を列挙]」を記載し、以降の分析はCOT・VIX・MA乖離・フロー・dead_mass_risk のみで構成する。確信度は最大50%とする。【データ品質起因の上限。ステータス起因の固定値とは別ルール】
+- **null の場合（sanity_ok=false）**：エネルギー・サマリー冒頭に「TEV執行停止: [sanity_warnings を列挙]」を記載し、以降の分析はCOT・VIX・MA乖離・フロー・dead_mass_risk のみで構成する。確信度は最大50%とする。詳細は出力末尾の【データメモ】に記載する。【データ品質起因の上限。ステータス起因の固定値とは別ルール】
 - **tev が null**（データ不足）：エネルギー・サマリーを「計算不能（データ不足）」と記載し、定性判断のみで執行指令を決定する。
 
 ## データ品質チェック
@@ -115,7 +121,11 @@ weekly_history の先頭が最新週・末尾が26週前。以下の観点でト
 const PROMPT_OUTPUT_FORMAT = `# 出力形式
 プレーンテキスト形式で出力する（#・**・- などのマークダウン記法は使わない）。
 使用可能な記号: 【】・────・■・※ のみ。それ以外の装飾記号（★・◆・→・▶ 等）は使わない。
-緊急アラート該当時は冒頭に【⚠ 緊急アラート】を追加する。
+
+出力の構造（上から順に）：
+1. 【相場急変あり】 ← 先物±2%超の場合のみ。該当なしは出力しない
+2. 本文（エネルギー・サマリー〜執行指令）
+3. 【データメモ】 ← データ品質問題がある場合のみ。該当なしは出力しない
 
 需給物理・執行ログ：[日付]
 ────────────────────────────
@@ -155,7 +165,8 @@ TEV：[tev_analysis.tev]
 // ── 結合（ユーザーへのコピー文字列）─────────────────────────────────────
 export const AI_PROMPT_TEMPLATE = [
   PROMPT_ROLE,
-  PROMPT_EMERGENCY_RULES,
+  PROMPT_MARKET_ALERT,
+  PROMPT_DATA_MEMO,
   PROMPT_TEV_RULES,
   PROMPT_PHYSICAL_LAWS,
   PROMPT_PHYSICS_DEFINITIONS,
