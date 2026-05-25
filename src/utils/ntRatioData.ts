@@ -15,12 +15,13 @@ const NT_CACHE_KEY        = 'poical-ns-ratio-v2'
 const NT_CACHE_TTL_OPEN   = 30 * 60 * 1000
 const NT_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000
 
-function isUsMarketOpen(): boolean {
+function isJpMarketOpen(): boolean {
   const now = new Date()
   const day = now.getUTCDay()
   if (day === 0 || day === 6) return false
+  // 09:00–15:30 JST = 00:00–06:30 UTC
   const mins = now.getUTCHours() * 60 + now.getUTCMinutes()
-  return mins >= 13 * 60 + 30 && mins <= 21 * 60 + 15
+  return mins <= 6 * 60 + 30
 }
 
 function parseYahooClose(json: unknown): Map<string, number> {
@@ -50,7 +51,7 @@ async function fetchSymbol(sym: string): Promise<Map<string, number>> {
 export async function fetchNtRatioData(force = false): Promise<NtRatioPoint[]> {
   return fetchWithCache({
     key: NT_CACHE_KEY,
-    ttl: () => isUsMarketOpen() ? NT_CACHE_TTL_OPEN : NT_CACHE_TTL_CLOSED,
+    ttl: () => isJpMarketOpen() ? NT_CACHE_TTL_OPEN : NT_CACHE_TTL_CLOSED,
     force,
     fetcher: async () => {
       // 直列取得（同一プロキシへの同時リクエストによるレート制限を回避）
