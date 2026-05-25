@@ -130,7 +130,50 @@ export function NoteView({ theme, isMobile, onOpenManual, onOpenLegal, onOpenBac
         </div>
 
         {/* フッター：スクロール末尾に配置 */}
-        <div style={s.footer}>
+        <div style={{ ...s.footer, flexDirection: 'column', gap: 12 }}>
+          {/* SNS リンク */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <a
+              href="https://note.com/pointlab"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open('https://note.com/pointlab', '_blank') }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 8,
+                border: '1px solid var(--glass-border)',
+                background: 'var(--glass-bg)',
+                color: 'var(--text-sub)',
+                textDecoration: 'none',
+                fontSize: 12, fontWeight: 600,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                <path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5zm2 4h4.5c1.4 0 2.5.6 3.1 1.5.4.6.6 1.3.6 2 0 1.9-1.2 3.5-3.2 3.5H9v3H7V7zm2 5.3h2.1c.9 0 1.4-.7 1.4-1.8 0-1-.5-1.7-1.4-1.7H9v3.5z"/>
+              </svg>
+              note
+            </a>
+            <a
+              href="https://x.com/Aojiru_Hakase"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open('https://x.com/Aojiru_Hakase', '_blank') }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 8,
+                border: '1px solid var(--glass-border)',
+                background: 'var(--glass-bg)',
+                color: 'var(--text-sub)',
+                textDecoration: 'none',
+                fontSize: 12, fontWeight: 600,
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.727-8.84L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              X
+            </a>
+          </div>
           <button onClick={onOpenLegal} style={s.footerLink}>
             プライバシーポリシー・免責事項
           </button>

@@ -20,15 +20,15 @@ function makeC(theme: 'dark' | 'light'): C {
   const L = theme === 'light'
   return {
     L,
-    BG:     L ? 'rgba(218,236,255,0.92)' : 'rgba(3,10,24,0.92)',
-    HDRBG:  L ? 'rgba(228,242,255,0.97)' : 'rgba(3,9,22,0.97)',
+    BG:     L ? 'rgba(240,248,255,0.72)' : 'rgba(4,10,22,0.55)',
+    HDRBG:  L ? 'rgba(248,252,255,0.90)' : 'rgba(4,10,22,0.80)',
     ACCENT: L ? '#0369a1'                : '#00e5ff',
-    DIM:    L ? 'rgba(3,105,161,0.62)'   : 'rgba(0,229,255,0.52)',
+    DIM:    L ? 'rgba(3,105,161,0.62)'   : 'rgba(0,229,255,0.42)',
     TEXT:   L ? 'rgba(8,28,75,0.90)'     : 'rgba(220,240,255,0.90)',
     SUB:    L ? 'rgba(30,65,135,0.62)'   : 'rgba(140,188,228,0.68)',
-    RULE:   L ? 'rgba(3,105,161,0.12)'   : 'rgba(0,200,255,0.10)',
-    TAGBG:  L ? 'rgba(3,105,161,0.07)'   : 'rgba(0,200,255,0.06)',
-    TAGBDR: L ? 'rgba(3,105,161,0.26)'   : 'rgba(0,200,255,0.22)',
+    RULE:   L ? 'rgba(3,105,161,0.18)'   : 'rgba(0,229,255,0.18)',
+    TAGBG:  L ? 'rgba(3,105,161,0.08)'   : 'rgba(0,229,255,0.12)',
+    TAGBDR: L ? 'rgba(3,105,161,0.28)'   : 'rgba(0,229,255,0.18)',
     SCAN:   L ? ''                       : 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.013) 3px,rgba(0,229,255,0.013) 4px)',
     GLOW:   L ? 'none'                   : '0 0 14px rgba(0,229,255,0.55)',
     WIN:    L ? '#15803d'                : '#4ade80',
@@ -59,7 +59,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
       position: 'absolute', inset: 0, zIndex: 30,
       display: 'flex', flexDirection: 'column',
       background: c.BG, backgroundImage: c.SCAN,
-      backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
+      backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
       overflow: 'hidden',
     }}>
       <style>{`@keyframes btSweep{from{transform:translateY(-100%)}to{transform:translateY(250%)}}`}</style>

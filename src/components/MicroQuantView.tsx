@@ -470,7 +470,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             aria-hidden
             style={{
               position: 'absolute', inset: 0, pointerEvents: 'none',
-              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+              padding: '12px 14px', fontSize: 14, lineHeight: 1.8,
               fontFamily: c.FONT, borderRadius: 8,
               border: `1px solid ${c.BORDER}`,
               background: c.BG_AREA,
@@ -488,7 +488,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             placeholder="▌ エントリー分析レポートを記録..."
             style={{
               flex: 1, resize: 'none',
-              padding: '12px 14px', fontSize: 13, lineHeight: 1.8,
+              padding: '12px 14px', fontSize: 14, lineHeight: 1.8,
               fontFamily: c.FONT, borderRadius: 8,
               background: 'transparent',
               border: '1px solid transparent',

@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
-import { BookingModal }      from './BookingModal'
-import { AdminBookingPanel } from './AdminBookingPanel'
 import type { ConnectUser }  from './JitsiPanel'
 
 const NoteView            = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const PoiroboAboutPanel   = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
+const BookingModal        = lazy(() => import('./BookingModal').then(m => ({ default: m.BookingModal })))
+const AdminBookingPanel   = lazy(() => import('./AdminBookingPanel').then(m => ({ default: m.AdminBookingPanel })))
 
 type Props = {
   theme: 'dark' | 'light'
@@ -340,6 +340,8 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
     return () => cancelAnimationFrame(id)
   }, [])
 
+  const DATA_RETURN_KEY = 'poical-return-data-drawer'
+
   const openDrawer = (type: 'data' | 'contact' | 'settings') => {
     setActiveDrawer(type)
     requestAnimationFrame(() => requestAnimationFrame(() => setDrawerVisible(true)))
@@ -349,6 +351,14 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
     setDrawerVisible(false)
     setTimeout(() => setActiveDrawer(null), 320)
   }
+
+  // DATA ドロワー経由でサブページに遷移した場合、戻ったときに DATA ドロワーを再表示
+  useEffect(() => {
+    if (sessionStorage.getItem(DATA_RETURN_KEY)) {
+      sessionStorage.removeItem(DATA_RETURN_KEY)
+      openDrawer('data')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRipple = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isConnected) return
@@ -847,26 +857,30 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
 
       {/* 予約モーダル */}
       {bookingOpen && !isAdmin && (
-        <BookingModal
-          isOpen={bookingOpen}
-          theme={theme}
-          userId={user?.uid}
-          userName={user?.displayName ?? 'ユーザー'}
-          userEmail={user?.email ?? ''}
-          onClose={() => setBookingOpen(false)}
-          onConnectNow={() => { setBookingOpen(false); onStartConnect?.() }}
-          onOpenLogin={() => { setBookingOpen(false); onOpenAccount?.() }}
-        />
+        <Suspense fallback={null}>
+          <BookingModal
+            isOpen={bookingOpen}
+            theme={theme}
+            userId={user?.uid}
+            userName={user?.displayName ?? 'ユーザー'}
+            userEmail={user?.email ?? ''}
+            onClose={() => setBookingOpen(false)}
+            onConnectNow={() => { setBookingOpen(false); onStartConnect?.() }}
+            onOpenLogin={() => { setBookingOpen(false); onOpenAccount?.() }}
+          />
+        </Suspense>
       )}
 
       {/* 管理者パネル */}
       {adminOpen && isAdmin && (
-        <AdminBookingPanel
-          isOpen={adminOpen}
-          theme={theme}
-          onClose={() => setAdminOpen(false)}
-          onConnectNow={() => { setAdminOpen(false); onStartConnect?.() }}
-        />
+        <Suspense fallback={null}>
+          <AdminBookingPanel
+            isOpen={adminOpen}
+            theme={theme}
+            onClose={() => setAdminOpen(false)}
+            onConnectNow={() => { setAdminOpen(false); onStartConnect?.() }}
+          />
+        </Suspense>
       )}
 
       {/* ━━ DATA / CONTACT ドロワー ━━ */}
@@ -933,7 +947,11 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {activeDrawer === 'data' && (
                 <Suspense fallback={<ViewLoader />}>
-                  <NoteView theme={theme} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} />
+                  <NoteView theme={theme} isMobile={isMobile}
+                    onOpenManual={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenManual?.() }}
+                    onOpenLegal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.() }}
+                    onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}
+                  />
                 </Suspense>
               )}
               {activeDrawer === 'contact' && (

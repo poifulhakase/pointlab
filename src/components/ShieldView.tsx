@@ -35,6 +35,7 @@ function cy(theme: 'dark' | 'light') {
     BG:     L ? '#f0f7ff' : '#050e1a',
     GREEN:  L ? '#0369a1' : '#00e5ff',
     DIM:    L ? 'rgba(3,105,161,0.75)' : 'rgba(0,229,255,0.55)',
+    DESC:   L ? 'rgba(3,105,161,0.90)' : 'rgba(200,240,255,0.88)',
     FAINT:  L ? 'rgba(3,105,161,0.38)' : 'rgba(0,229,255,0.22)',
     BORDER: L ? 'rgba(3,105,161,0.28)' : 'rgba(0,229,255,0.22)',
     BORDBR: L ? 'rgba(3,105,161,0.55)' : 'rgba(0,229,255,0.45)',
@@ -600,7 +601,7 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
             aria-hidden
             style={{
               position: 'absolute', inset: 0, pointerEvents: 'none',
-              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+              padding: '10px 12px', fontSize: 14, lineHeight: 1.7,
               fontFamily: c.FONT, borderRadius: 8,
               border: `1px solid ${nd ? nd.border : c.BORDER}`,
               background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : c.TAREA,
@@ -618,7 +619,7 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
             placeholder="▌ ポジション分析レポートを記録..."
             style={{
               flex: 1, width: '100%', resize: 'none', borderRadius: 8,
-              padding: '10px 12px', fontSize: 13, lineHeight: 1.7,
+              padding: '10px 12px', fontSize: 14, lineHeight: 1.7,
               fontFamily: c.FONT,
               background: 'transparent',
               border: '1px solid transparent',
@@ -650,7 +651,7 @@ function ShieldPanel({
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
           background: c.BG, backgroundImage: c.SCAN }
-      : { width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      : { width: 500, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
           borderRight: `1px solid ${c.BORDBR}` }
     }>
 
@@ -710,13 +711,13 @@ function ShieldPanel({
               stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span style={{ fontFamily: c.FONT, fontSize: 12, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
+            <span style={{ fontFamily: c.FONT, fontSize: 13, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
               ぽいロボ シールド
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.GREEN, boxShadow: `0 0 6px ${c.GREEN}` }} />
-            <span style={{ fontFamily: c.FONT, fontSize: 9, color: c.DIM, letterSpacing: '0.12em' }}>ONLINE</span>
+            <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.DIM, letterSpacing: '0.12em' }}>ONLINE</span>
           </div>
         </div>
 
@@ -733,8 +734,8 @@ function ShieldPanel({
               background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.05)`,
               borderRadius: '0 8px 8px 0',
               padding: '10px 14px',
-              fontSize: 13, lineHeight: 1.75,
-              color: c.DIM,
+              fontSize: 14, lineHeight: 1.75,
+              color: c.DESC,
               fontFamily: c.FONT, letterSpacing: '0.04em',
             }}>
               {/* ⑩ テキスト修正 */}
@@ -770,7 +771,7 @@ function ShieldPanel({
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                       </svg>
                   }
-                  <span style={{ fontFamily: c.FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>
+                  <span style={{ fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
                     {isBuilding ? '取得中' : copyStatus === 'shield' ? 'DONE' : 'COPY'}
                   </span>
                 </button>
@@ -784,7 +785,7 @@ function ShieldPanel({
                     background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
                     border: `1px solid ${c.BORDBR}`, borderRadius: 8,
                     padding: '6px 10px', fontFamily: 'system-ui, sans-serif',
-                    fontSize: 10, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
+                    fontSize: 11, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
                   }}>
                     {isBuilding ? <>データ取得中…<br />しばらくお待ちください</> : (copyStatus === 'shield' || copyStatus === 'news_shield') ? '▶ コピー完了' : <>ポジション分析用<br />プロンプト＋市場データ</>}
                   </div>
@@ -814,7 +815,7 @@ function ShieldPanel({
                 </button>
               </div>
             </div>
-            <div style={{ textAlign: 'center', marginTop: 4, fontFamily: c.FONT, fontSize: 9, letterSpacing: '0.04em', color: c.DIM }}>
+            <div style={{ textAlign: 'center', marginTop: 4, fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.04em', color: c.DIM }}>
               推奨: <span style={{ color: c.GREEN }}>Claude</span>
               <span style={{ margin: '0 8px', opacity: 0.35 }}>|</span>
               ニュース推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
@@ -823,7 +824,7 @@ function ShieldPanel({
 
           {/* AI起動 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div style={{ fontFamily: c.FONT, fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: c.DIM }}>
+            <div style={{ fontFamily: c.FONT, fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', color: c.DIM }}>
               ▌ AI起動
             </div>
 
@@ -848,8 +849,8 @@ function ShieldPanel({
                     </div>
                   </a>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                    <span style={{ fontFamily: c.FONT, fontSize: 12, color: c.GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>{ai.name}</span>
-                    <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.DIM, letterSpacing: '0.02em' }}>{ai.hint}</span>
+                    <span style={{ fontFamily: c.FONT, fontSize: 13, color: c.GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>{ai.name}</span>
+                    <span style={{ fontFamily: c.FONT, fontSize: 11, color: c.DIM, letterSpacing: '0.02em' }}>{ai.hint}</span>
                   </div>
                 </div>
               ))}
@@ -869,9 +870,9 @@ function ShieldPanel({
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
-              <span style={{ fontFamily: c.FONT, fontSize: 11, color: c.NOTICE, letterSpacing: '0.04em', lineHeight: 1.7 }}>
+              <span style={{ fontFamily: c.FONT, fontSize: 12, color: c.NOTICE, letterSpacing: '0.04em', lineHeight: 1.7 }}>
                 AI起動後、保有ポジション画面のキャプチャを必ず添付すること<br />
-                <span style={{ color: c.DIM, fontSize: 10 }}>（未添付の場合、AIがエラーを出力します）</span>
+                <span style={{ color: c.DIM, fontSize: 11 }}>（未添付の場合、AIがエラーを出力します）</span>
               </span>
             </div>
           </div>

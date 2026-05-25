@@ -169,10 +169,10 @@ const DISCLAIMER_SECTIONS: LegalSection[] = [
 ]
 
 // ── レンダラー ────────────────────────────────────────────
-function renderBlock(block: Block, key: number) {
+function renderBlock(block: Block, key: number, textClr: string, subClr: string) {
   if (block.type === 'para') {
     return (
-      <p key={key} style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.75, color: 'var(--text-sub)' }}>
+      <p key={key} style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.75, color: subClr }}>
         {block.text}
       </p>
     )
@@ -180,13 +180,13 @@ function renderBlock(block: Block, key: number) {
 
   return (
     <div key={key} style={{ marginBottom: 20 }}>
-      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: textClr }}>
         {block.heading}
       </p>
       <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {block.items.map((item, i) => (
-          <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-sub)', lineHeight: 1.6 }}>
-            <span style={{ color: 'var(--text-dim)', flexShrink: 0, marginTop: 2 }}>›</span>
+          <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: subClr, lineHeight: 1.6 }}>
+            <span style={{ color: subClr, flexShrink: 0, marginTop: 2 }}>›</span>
             <span>{item}</span>
           </li>
         ))}
@@ -200,11 +200,29 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
   const [tab, setTab] = useState<Tab>('privacy')
   const sections = tab === 'privacy' ? PRIVACY_SECTIONS : DISCLAIMER_SECTIONS
 
+  const D = theme === 'dark'
+  const c = {
+    bg:        D ? 'rgba(4,10,22,0.97)'        : '#f4f6f9',
+    scan:      D ? 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.013) 3px,rgba(0,229,255,0.013) 4px)' : 'none',
+    accent:    D ? '#00e5ff'                   : '#0369a1',
+    dim:       D ? 'rgba(0,229,255,0.42)'      : 'rgba(3,105,161,0.62)',
+    text:      D ? 'rgba(220,240,255,0.90)'    : 'rgba(8,28,75,0.90)',
+    sub:       D ? 'rgba(140,188,228,0.68)'    : 'rgba(30,65,135,0.62)',
+    rule:      D ? 'rgba(0,229,255,0.18)'      : 'rgba(3,105,161,0.18)',
+    cardBg:    D ? 'rgba(0,229,255,0.05)'      : 'var(--glass-bg)',
+    cardBdr:   D ? 'rgba(0,229,255,0.18)'      : 'var(--glass-border)',
+    tabActBg:  D ? 'rgba(0,229,255,0.12)'      : 'var(--view-btn-active-bg)',
+    tabActClr: D ? '#00e5ff'                   : 'var(--view-btn-active-color)',
+    closeBdr:  D ? 'rgba(0,200,255,0.20)'      : 'var(--glass-border)',
+    closeBg:   D ? 'rgba(0,200,255,0.06)'      : 'var(--glass-bg)',
+    closeClr:  D ? 'rgba(0,200,255,0.65)'      : 'var(--text-dim)',
+  }
+
   return (
     <div style={{
       flex: 1, overflowY: 'auto', overflowX: 'hidden',
       padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
-      background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9',
+      background: c.bg, backgroundImage: c.scan,
     }}>
       <div style={{ maxWidth: 780, margin: '0 auto' }}>
 
@@ -212,17 +230,17 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
         <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 }}>
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
+            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: c.text, letterSpacing: '-0.5px' }}>
               プライバシー・免責事項
             </h1>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: c.dim }}>
               ぽいロボ — 最終更新: 2026年5月18日
             </p>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--glass-bg)', color: 'var(--text-dim)', cursor: 'pointer', flexShrink: 0 }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: `1px solid ${c.closeBdr}`, background: c.closeBg, color: c.closeClr, cursor: 'pointer', flexShrink: 0 }}
               aria-label="閉じる"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -230,50 +248,6 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
               </svg>
             </button>
           )}
-        </div>
-
-        {/* SNS リンク */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          <a
-            href="https://note.com/pointlab"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '5px 12px', borderRadius: 8,
-              border: '1px solid var(--glass-border)',
-              background: 'var(--glass-bg)',
-              color: 'var(--text-sub)',
-              textDecoration: 'none',
-              fontSize: 12, fontWeight: 600,
-              transition: 'opacity 0.15s',
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-              <path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5zm2 4h4.5c1.4 0 2.5.6 3.1 1.5.4.6.6 1.3.6 2 0 1.9-1.2 3.5-3.2 3.5H9v3H7V7zm2 5.3h2.1c.9 0 1.4-.7 1.4-1.8 0-1-.5-1.7-1.4-1.7H9v3.5z"/>
-            </svg>
-            note
-          </a>
-          <a
-            href="https://x.com/Aojiru_Hakase"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '5px 12px', borderRadius: 8,
-              border: '1px solid var(--glass-border)',
-              background: 'var(--glass-bg)',
-              color: 'var(--text-sub)',
-              textDecoration: 'none',
-              fontSize: 12, fontWeight: 600,
-              transition: 'opacity 0.15s',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.727-8.84L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-            X
-          </a>
         </div>
 
         {/* タブ切り替え */}
@@ -286,8 +260,8 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
                 padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', transition: 'all 0.15s',
                 ...(tab === t
-                  ? { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', border: '1px solid transparent', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' }
-                  : { background: 'transparent', color: 'var(--text-sub)', border: '1px solid var(--glass-border)' }),
+                  ? { background: c.tabActBg, color: c.tabActClr, border: `1px solid ${c.rule}`, boxShadow: D ? `0 0 12px rgba(0,229,255,0.15)` : '0 2px 8px rgba(100,120,200,0.15)' }
+                  : { background: 'transparent', color: c.sub, border: `1px solid ${c.rule}` }),
               }}
             >
               {t === 'privacy' ? 'プライバシーポリシー' : '免責事項'}
@@ -301,23 +275,23 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
             <section
               key={section.id}
               style={{
-                background: 'var(--glass-bg)',
-                border: '1px solid var(--glass-border)',
+                background: c.cardBg,
+                border: `1px solid ${c.cardBdr}`,
                 borderRadius: 14,
                 padding: isMobile ? '18px 16px' : '22px 24px',
               }}
             >
               <h2 style={{
                 margin: '0 0 12px', fontSize: isMobile ? 15 : 16, fontWeight: 700,
-                color: 'var(--text)',
+                color: c.text,
                 display: 'flex', alignItems: 'center', gap: 8,
                 letterSpacing: '-0.3px',
               }}>
                 <span style={{ fontSize: 17 }}>{section.icon}</span>
                 {section.title}
               </h2>
-              <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 14 }}>
-                {section.content.map((block, i) => renderBlock(block, i))}
+              <div style={{ borderTop: `1px solid ${c.rule}`, paddingTop: 14 }}>
+                {section.content.map((block, i) => renderBlock(block, i, c.text, c.sub))}
               </div>
             </section>
           ))}

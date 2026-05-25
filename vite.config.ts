@@ -87,8 +87,29 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,webp,woff2}'],
+        // JS/CSS/HTML とコアアイコンのみプリキャッシュ。
+        // data/*.json（頻繁に更新）と notes/*.webp（多数・大容量）は除外してランタイムキャッシュへ
+        globPatterns: ['**/*.{js,css,html,svg,woff2}', 'favicon*.{ico,png}', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'logo.svg'],
+        globIgnores: ['**/data/**', '**/notes/**'],
         runtimeCaching: [
+          {
+            // 市場データ JSON（頻繁に更新）— 古いキャッシュで即表示しつつバックグラウンド更新
+            urlPattern: /\/calendar\/data\//,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'market-data',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+          {
+            // 記事サムネイル WebP — 変更まれ → 長めにキャッシュ
+            urlPattern: /\/calendar\/notes\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'note-images',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
           {
             // Yahoo Finance / プロキシ経由のデータはネットワーク優先
             urlPattern: /^https:\/\/(api\.allorigins\.win|api\.codetabs\.com|query[12]\.finance\.yahoo\.com)/,

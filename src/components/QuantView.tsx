@@ -1237,7 +1237,7 @@ function EnginePanel({
     <div style={isMobile
       ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
           background: CY_BG, backgroundImage: CY_SCAN }
-      : { width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      : { width: 500, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
           borderRight: `1px solid ${CY_BORDBR}` }
     }>
 
@@ -1307,14 +1307,14 @@ function EnginePanel({
             <path d="M9 13v2"/>
           </svg>
           <span style={CYBER_MODE
-            ? { fontFamily: CY_FONT, fontSize: 12, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
+            ? { fontFamily: CY_FONT, fontSize: 13, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
             : {}
           }>ぽいロボ エンジン</span>
         </div>
         {CYBER_MODE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: CY_GREEN, boxShadow: `0 0 6px ${CY_GREEN}` }} />
-            <span style={{ fontFamily: CY_FONT, fontSize: 9, color: CY_DIM, letterSpacing: '0.12em' }}>ONLINE</span>
+            <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.12em' }}>ONLINE</span>
           </div>
         )}
       </div>
@@ -1328,8 +1328,8 @@ function EnginePanel({
             background: `rgba(${CY_RGB},0.05)`,
             borderRadius: '0 8px 8px 0',
             padding: '10px 14px',
-            fontSize: 13, lineHeight: 1.75,
-            color: CY_DIM,
+            fontSize: 14, lineHeight: 1.75,
+            color: L ? 'rgba(3,105,161,0.90)' : 'rgba(200,240,255,0.88)',
             fontFamily: CY_FONT,
             letterSpacing: '0.04em',
           } : {
@@ -1337,7 +1337,7 @@ function EnginePanel({
             background: 'var(--bg-subtle)',
             borderRadius: '0 8px 8px 0',
             padding: '10px 14px',
-            fontSize: 13, lineHeight: 1.7,
+            fontSize: 14, lineHeight: 1.7,
             color: 'var(--text)',
             fontWeight: 500,
           }}>
@@ -1369,14 +1369,14 @@ function EnginePanel({
                     <path d="M15 13v2"/>
                     <path d="M9 13v2"/>
                   </svg>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 9, letterSpacing: '0.07em', lineHeight: 1 }}>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
                     {copyStatus === 'prompt' ? 'DONE' : 'COPY'}
                   </span>
                 </button>
                 {/* 吹き出し（右横フロート） */}
                 <div style={{ position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content' }}>
                   <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${CY_BORDBR}`, flexShrink: 0 }} />
-                  <div style={{ background: `rgba(${CY_RGB},0.06)`, border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 10, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
+                  <div style={{ background: `rgba(${CY_RGB},0.06)`, border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
                     {copyStatus === 'news_engine' ? '▶ コピー完了' : copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用<br />プロンプト＋需給データ</>}
                   </div>
                 </div>
@@ -1435,7 +1435,7 @@ function EnginePanel({
               </button>
             </div>
           )}
-          <div style={{ textAlign: 'center', marginTop: 4, fontSize: 9, letterSpacing: '0.04em', fontFamily: CYBER_MODE ? CY_FONT : undefined, color: CYBER_MODE ? CY_DIM : 'var(--text-dim)' }}>
+          <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, letterSpacing: '0.04em', fontFamily: CYBER_MODE ? CY_FONT : undefined, color: CYBER_MODE ? CY_DIM : 'var(--text-dim)' }}>
             推奨: <span style={{ color: CYBER_MODE ? CY_GREEN : 'var(--accent)' }}>Claude</span>
             <span style={{ margin: '0 8px', opacity: 0.35 }}>|</span>
             ニュース推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
@@ -1445,7 +1445,7 @@ function EnginePanel({
         {/* AI チャットへのリンク */}
         <div style={ms.section}>
           <div style={CYBER_MODE
-            ? { ...ms.sectionTitle, color: CY_DIM, fontFamily: CY_FONT, fontSize: 13, letterSpacing: '0.08em' }
+            ? { ...ms.sectionTitle, color: CY_DIM, fontFamily: CY_FONT, fontSize: 14, letterSpacing: '0.08em' }
             : ms.sectionTitle
           }>{CYBER_MODE ? '▌ AI起動' : 'AI起動'}</div>
           {CYBER_MODE ? (
@@ -1475,8 +1475,8 @@ function EnginePanel({
                   </div>
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>ChatGPT</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>o3以上推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 13, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>ChatGPT</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.02em' }}>o3以上推奨</span>
                 </div>
               </div>
 
@@ -1505,8 +1505,8 @@ function EnginePanel({
                   </div>
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Gemini</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>思考モード推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 13, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Gemini</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.02em' }}>思考モード推奨</span>
                 </div>
               </div>
 
@@ -1534,8 +1534,8 @@ function EnginePanel({
                   </div>
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Claude</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>ぽいロボ推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 13, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>Claude</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.02em' }}>ぽいロボ推奨</span>
                 </div>
               </div>
 
@@ -1563,8 +1563,8 @@ function EnginePanel({
                   </div>
                 </a>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 12, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>DeepSeek</span>
-                  <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.02em' }}>R1モデル推奨</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 13, color: CY_GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>DeepSeek</span>
+                  <span style={{ fontFamily: CY_FONT, fontSize: 11, color: CY_DIM, letterSpacing: '0.02em' }}>R1モデル推奨</span>
                 </div>
               </div>
 
