@@ -481,10 +481,10 @@ export function ContribSectorPanel({ theme, isMobile }: { theme: 'dark' | 'light
           </svg>
           日経平均
           <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 }}>銘柄別寄与度 / 業種別騰落率</span>
-          {data?.updatedAt && (
-            <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-dim)' }}>{fmtDateMD(data.updatedAt)}</span>
-          )}
         </div>
+        {data?.updatedAt && (
+          <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>{fmtDateMD(data.updatedAt)}現在</span>
+        )}
       </div>
 
       {/* content */}
