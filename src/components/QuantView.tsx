@@ -2384,7 +2384,6 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                     </div>
                     <div style={s.panelRight}>
                       <FreshnessTag dateStr={latestDate} />
-                      <button onClick={() => loadFuturesDaily(true)} style={s.reloadBtn} title="再読み込み">↺</button>
                     </div>
                   </div>
                   {loadingEmpty
@@ -2504,7 +2503,6 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                     </div>
                     <div style={s.panelRight}>
                       <FreshnessTag dateStr={nkRows[0]?.date ?? null} />
-                      <button onClick={() => loadNkFuturesPrice(true)} style={s.reloadBtn} title="再読み込み">↺</button>
                     </div>
                   </div>
                   {!nkFuturesPriceLoaded || (nkFuturesPriceLoading && nkRows.length === 0)
@@ -2607,12 +2605,6 @@ const s: Record<string, React.CSSProperties> = {
   panelSub:   { fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2, overflow: 'hidden', textOverflow: 'ellipsis' },
   panelRight: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
   dataRange:  { fontSize: 10, color: 'var(--text-dim)' },
-  reloadBtn:  {
-    display: 'flex', alignItems: 'center', gap: 5,
-    padding: '4px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600,
-    color: 'var(--text-sub)', background: 'var(--glass-bg)',
-    border: '1px solid var(--glass-border)', cursor: 'pointer',
-  },
 
   center:   { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 },
   spinner:  {
