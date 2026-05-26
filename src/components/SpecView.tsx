@@ -176,13 +176,13 @@ const SPEC_SECTIONS = [
     content: [
       {
         type: 'para' as const,
-        text: '需給分析に特化したビューです。分析・環境・現物・先物の4タブ構成。分析タブは2カラム（ぽいロボ エンジン / クオンツ分析レポート）、環境・現物タブは3カラムレイアウト（各1/3幅）、先物タブは左2/3（週次分析）＋右1/3（日次テーブル）の横分割。市場の過熱感・資金動向を把握します。スマートフォンでは縦1列に並びます。',
+        text: '需給分析に特化したビューです。分析・環境・現物・先物の4タブ構成。分析タブは2カラム（ぽいロボ エンジン / エントリー分析レポート）、環境・現物タブは3カラムレイアウト（各1/3幅）、先物タブは左2/3（週次分析）＋右1/3（日次テーブル）の横分割。市場の過熱感・資金動向を把握します。スマートフォンでは縦1列に並びます。',
       },
       {
         type: 'table' as const,
         headers: ['タブ', '左', '中', '右'],
         rows: [
-          ['分析', 'ぽいロボ エンジン（左1/2）', '←', 'クオンツ分析レポート（右1/2）'],
+          ['分析', 'ぽいロボ エンジン（左1/2）', '←', 'エントリー分析レポート（右1/2）'],
           ['環境', 'VIXチャート', 'NS倍率チャート', 'USD/JPY 日次テーブル'],
           ['現物', '信用倍率', '投資主体別売買動向', '需給指標（騰落レシオ・空売り・裁定）＋日経平均（銘柄別寄与度/業種別騰落率）'],
           ['先物', '先物参加者別ネット枚数＋ベクター分析（左2/3幅）', '←', '建玉残高・取引高統合テーブル（右1/3幅・日次）'],
@@ -201,7 +201,7 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: '分析タブ ─ クオンツ分析レポート（右1/2）',
+        heading: '分析タブ ─ エントリー分析レポート（右1/2）',
         items: [
           'データビュー専用のメモパネル（AIへの引継ぎメモとして使用）',
           'テキストエリア入力後に「保存」ボタンでプレビューモードへ切り替わる',
@@ -291,7 +291,7 @@ const SPEC_SECTIONS = [
         items: [
           'データソース: CFTC Legacy Financial Futures Only Report → public/data/cot_nikkei.json',
           '3区分: Non-Commercial（投機筋）/ Commercial（ヘッジャー）/ Non-Reportable（小口）',
-          '週次テーブル列: NC Net / NC Long / NC Short / Comm Net / Comm Long / Comm Short / OI',
+          '週次テーブル列: NC Net / NC Long / NC Short / Comm Net / Comm Long / Comm Short / COT建玉',
           '売り圧力スコア: NC Netの直近26週百分位を逆転してalertLevel（green/yellow/orange/red）判定',
           '遅延: 火曜基準データを毎週金曜公表（約3〜4日遅延）',
           'キャッシュ: localStorage 24時間（`poical-cot-nikkei-v1`）',
@@ -525,7 +525,7 @@ const SPEC_SECTIONS = [
           ['poical-short-sell-data', '24時間', '空売り比率JSONキャッシュ'],
           ['poical-ad-ratio-data', '24時間', '騰落レシオJSONキャッシュ'],
           ['poical-arbitrage-data', '24時間', '裁定買い残JSONキャッシュ'],
-          ['poical-quant-memo', '永続', 'データビュー クオンツ分析レポートメモ'],
+          ['poical-quant-memo', '永続', 'データビュー エントリー分析レポートメモ（分析タブ右）'],
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
           ['poical-futures-participants-v2', '24時間', '先物投資部門別ネット枚数データ（先物タブ・週次）'],
@@ -665,6 +665,7 @@ const SPEC_SECTIONS = [
           'PC: 各ビュー固有のカラム構成（2〜3カラム）',
           'サイドバー: PC のみ表示（width: 280px）/ スマートフォンでは非表示',
           'フッター CalendarHeader: 全ビュー・全デバイス共通（つまみボタンで開閉可能）',
+          'パネルヘッダー高さ: minHeight: 36 を全パネルで統一（★2026-05-26）。ボタン・select 等のコントロールがある場合は height: 26px・padding: 5px 14px に統一してはみ出しを防止',
         ],
       },
     ],
@@ -868,7 +869,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
               システム仕様
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
-              ぽいロボ — 最終更新: 2026-05-24
+              ぽいロボ — 最終更新: 2026-05-26
             </p>
           </div>
         </div>

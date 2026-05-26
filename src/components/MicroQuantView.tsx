@@ -398,7 +398,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
       {/* ヘッダー */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
+        padding: '5px 14px', minHeight: 36, flexShrink: 0,
         borderBottom: `1px solid ${c.BORDER}`,
         background: c.BG_AREA,
         userSelect: 'none', gap: 8,
@@ -417,7 +417,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
               value={selectedDate}
               onChange={e => handleSelectSnapshot(e.target.value)}
               style={{
-                fontFamily: c.FONT, fontSize: 12, padding: '5px 10px', borderRadius: 6,
+                fontFamily: c.FONT, fontSize: 11, padding: '0 8px', height: 26, borderRadius: 6,
                 background: c.SELECT_BG, border: `1px solid ${c.BORDBR}`,
                 color: c.DIM, cursor: 'pointer', minWidth: 130,
                 outline: 'none',
@@ -435,7 +435,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             onClick={() => { setIsEditing(true); setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
+              width: 26, height: 26, borderRadius: 6, cursor: 'pointer',
               background: c.BG_AREA, border: `1px solid ${c.BORDBR}`,
               color: c.GREEN,
             }}
@@ -452,7 +452,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             onClick={user ? handleSnapSave : handleSave}
             disabled={!memoIsDirty}
             style={{
-              padding: '4px 10px', borderRadius: 6, fontFamily: c.FONT,
+              height: 26, padding: '0 10px', borderRadius: 6, fontFamily: c.FONT,
               fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
               cursor: memoIsDirty ? 'pointer' : 'default', opacity: memoIsDirty ? 1 : 0.40,
               background: memoSaveFlash ? c.FAINT : c.BG_AREA,

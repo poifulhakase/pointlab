@@ -539,7 +539,7 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
       {/* ヘッダー */}
       <div style={{
         position: 'relative', zIndex: 1,
-        padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
+        padding: '5px 14px', minHeight: 36, flexShrink: 0,
         borderBottom: `1px solid ${nd ? nd.border : c.BORDER}`,
         background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : c.HDBG,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
@@ -561,7 +561,7 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
             onClick={() => { setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select() }, 0) }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 6, cursor: 'pointer',
+              width: 26, height: 26, borderRadius: 6, cursor: 'pointer',
               background: nd ? nd.btnBg(false) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
               border: `1px solid ${nd ? nd.bordbr : c.BORDBR}`,
               color: nd ? nd.title : c.GREEN,
@@ -579,7 +579,7 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
           <button
             onClick={handleSave}
             style={{
-              padding: '4px 14px', borderRadius: 6, cursor: 'pointer',
+              height: 26, padding: '0 14px', borderRadius: 6, cursor: 'pointer',
               fontFamily: c.FONT, fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
               background: nd ? nd.btnBg(saved) : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},${saved ? '0.18' : '0.06'})`,
               border: `1px solid ${nd ? (saved ? nd.title : nd.bordbr) : (saved ? c.GREEN : c.BORDBR)}`,
@@ -701,7 +701,7 @@ function ShieldPanel({
         {/* ヘッダー */}
         <div style={{
           position: 'relative', zIndex: 1,
-          padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
+          padding: '5px 14px', minHeight: 36, flexShrink: 0,
           borderBottom: `1px solid ${c.BORDER}`,
           background: c.HDBG,
           display: 'flex', alignItems: 'center', gap: 8,
