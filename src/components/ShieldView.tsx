@@ -707,11 +707,11 @@ function ShieldPanel({
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
               stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span style={{ fontFamily: c.FONT, fontSize: 13, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
+            <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
               ぽいロボ シールド
             </span>
           </div>

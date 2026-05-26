@@ -1235,7 +1235,7 @@ function EnginePanel({
         display: 'flex', alignItems: 'center', gap: 8,
       } : s.panelHead) }}>
         <div style={CYBER_MODE ? { display: 'flex', alignItems: 'center', gap: 8, flex: 1 } : s.panelTitle}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 8V4H8"/>
@@ -1246,7 +1246,7 @@ function EnginePanel({
             <path d="M9 13v2"/>
           </svg>
           <span style={CYBER_MODE
-            ? { fontFamily: CY_FONT, fontSize: 13, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
+            ? { fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
             : {}
           }>ぽいロボ エンジン</span>
         </div>

@@ -444,7 +444,7 @@ export function ContribSectorPanel({ theme, isMobile }: { theme: 'dark' | 'light
 
   const th: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 2,
-    padding: '9px 10px', textAlign: 'right',
+    padding: '16px 10px', textAlign: 'right',
     background: 'var(--modal-bg)', backdropFilter: 'blur(16px)',
     borderBottom: '2px solid var(--border-dim)',
     fontSize: 11, fontWeight: 700, color: 'var(--text)',

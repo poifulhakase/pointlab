@@ -69,6 +69,11 @@ export function MarketDailyPanel({
           USD / JPY
           <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-sub)', marginLeft: 2 }}>日次（平日）</span>
         </div>
+        {allRows[0]?.time && (
+          <span style={{ fontSize: 10, color: 'var(--text-dim)', flexShrink: 0 }}>
+            {allRows[0].time.slice(5).replace('-', '/')}現在
+          </span>
+        )}
       </div>
 
       {/* ── テーブル ── */}
