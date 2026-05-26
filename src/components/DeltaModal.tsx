@@ -29,7 +29,7 @@ const CONFIG: Record<DeltaModalType, { title: string; unit: string; positiveIsBa
   arbitrage_short:    { title: '裁定売り残 変化率',        unit: '億円', positiveIsBad: true,  accent: '#fb923c' },
   short_sell:         { title: '空売り比率 変化率',        unit: 'pp',  positiveIsBad: true,  accent: '#fb923c' },
   advance_decline:    { title: '騰落レシオ 変化率',        unit: 'pp',  positiveIsBad: true,  accent: '#a78bfa' },
-  futures_oi:         { title: '先物OI 変化率',            unit: '枚',  positiveIsBad: false, accent: '#34d399' },
+  futures_oi:         { title: '建玉残高 前日比（日次）',   unit: '枚',  positiveIsBad: false, accent: '#34d399' },
   futures_net_weekly: { title: 'Non-Commercial ネット 週次変化', unit: '枚', positiveIsBad: false, accent: '#34d399' },
   pcr:                { title: 'PCR 変化率',               unit: '',    positiveIsBad: true,  accent: '#f87171' },
 }

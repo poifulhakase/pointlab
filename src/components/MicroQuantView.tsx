@@ -659,7 +659,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
                           <th style={{ ...s.th, borderLeft: '2px solid var(--border-dim)' }}>機関純計</th>
                           <th style={s.th}>機関買い</th>
                           <th style={s.th}>機関売り</th>
-                          <th style={s.th}>OI</th>
+                          <th style={s.th}>COT建玉</th>
                         </tr>
                       </thead>
                       <tbody>

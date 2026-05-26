@@ -2380,7 +2380,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
                       </svg>
                       建玉残高・取引高
-                      <span style={s.panelSub}>日経225先物 全限月 (日次)</span>
+                      <span style={s.panelSub}>日経225先物 全限月 (日次・JPX)</span>
                     </div>
                     <div style={s.panelRight}>
                       <FreshnessTag dateStr={latestDate} />
@@ -2404,7 +2404,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                               <th style={{ ...s.th, ...s.thDate }}>日付</th>
                               <th style={s.th}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                                  <button onClick={() => setDeltaModal('futures_oi')} title="先物OI前日比 Δ分析" style={s.deltaBtn}>Δ</button>
+                                  <button onClick={() => setDeltaModal('futures_oi')} title="建玉残高前日比 Δ分析" style={s.deltaBtn}>Δ</button>
                                   建玉残高
                                 </div>
                                 <div style={s.thSub}>万枚</div>
