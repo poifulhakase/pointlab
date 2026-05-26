@@ -485,21 +485,6 @@ export function ContribSectorPanel({ theme, isMobile }: { theme: 'dark' | 'light
             <span style={{ fontSize: 10, fontWeight: 400, color: 'var(--text-dim)' }}>{fmtDateMD(data.updatedAt)}</span>
           )}
         </div>
-        <button
-          onClick={() => load(true)} disabled={loading}
-          style={{
-            background: 'none', border: 'none', cursor: loading ? 'default' : 'pointer',
-            padding: 4, display: 'flex', alignItems: 'center', color: 'var(--text-dim)',
-            opacity: loading ? 0.5 : 1, borderRadius: 4,
-          }}
-          title="再取得"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ animation: loading ? 'spin 0.8s linear infinite' : 'none' }}>
-            <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-            <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-          </svg>
-        </button>
       </div>
 
       {/* content */}
