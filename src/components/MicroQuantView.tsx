@@ -398,7 +398,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
       {/* ヘッダー */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px 9px', flexShrink: 0,
+        padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
         borderBottom: `1px solid ${c.BORDER}`,
         background: c.BG_AREA,
         userSelect: 'none', gap: 8,

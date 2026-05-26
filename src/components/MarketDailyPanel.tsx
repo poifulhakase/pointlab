@@ -59,7 +59,7 @@ export function MarketDailyPanel({
       {/* ── ヘッダー ── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '7px 14px', flexShrink: 0, borderBottom: '1px solid var(--border-dim)',
+        padding: '7px 14px', minHeight: 36, flexShrink: 0, borderBottom: '1px solid var(--border-dim)',
         userSelect: 'none',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text)', minWidth: 0, overflow: 'hidden' }}>

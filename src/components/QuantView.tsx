@@ -1229,7 +1229,7 @@ function EnginePanel({
 
       {/* ── ヘッダー ── */}
       <div style={{ position: 'relative', zIndex: 1, ...(CYBER_MODE ? {
-        padding: '10px 14px 9px', flexShrink: 0,
+        padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
         borderBottom: `1px solid ${CY_BORDER}`,
         background: `rgba(${CY_RGB},0.06)`,
         display: 'flex', alignItems: 'center', gap: 8,

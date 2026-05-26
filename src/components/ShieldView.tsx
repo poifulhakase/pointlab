@@ -539,7 +539,7 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
       {/* ヘッダー */}
       <div style={{
         position: 'relative', zIndex: 1,
-        padding: '10px 14px 9px', flexShrink: 0,
+        padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
         borderBottom: `1px solid ${nd ? nd.border : c.BORDER}`,
         background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : c.HDBG,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
@@ -701,7 +701,7 @@ function ShieldPanel({
         {/* ヘッダー */}
         <div style={{
           position: 'relative', zIndex: 1,
-          padding: '10px 14px 9px', flexShrink: 0,
+          padding: '10px 14px 9px', minHeight: 36, flexShrink: 0,
           borderBottom: `1px solid ${c.BORDER}`,
           background: c.HDBG,
           display: 'flex', alignItems: 'center', gap: 8,
