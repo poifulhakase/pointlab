@@ -15,6 +15,7 @@ type Props = {
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onOpenBacktest?: () => void
+  onOpenEvals?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant') => void
   onOpenSettings?: () => void
   onOpenAccount?: () => void
@@ -308,7 +309,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
+export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -951,6 +952,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                     onOpenManual={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenManual?.() }}
                     onOpenLegal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.() }}
                     onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}
+                    onOpenEvals={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenEvals?.() }}
                   />
                 </Suspense>
               )}
