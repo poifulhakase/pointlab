@@ -725,7 +725,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
 const s: Record<string, React.CSSProperties> = {
   topBar: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '6px 12px', minHeight: 44, flexShrink: 0,
+    padding: '6px 12px', minHeight: 36, flexShrink: 0,
     borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none',
     userSelect: 'none',
   },
