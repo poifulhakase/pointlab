@@ -136,7 +136,7 @@ export async function saveNoteToFirestore(uid: string, key: string, note: DayNot
   }
 
   const isEmpty = !note.title.trim() && !note.memo.trim() &&
-    note.checklist.length === 0 && (note.schedules?.length ?? 0) === 0
+    (note.schedules?.length ?? 0) === 0
 
   if (!isEmpty) {
     monthNotes[key] = note

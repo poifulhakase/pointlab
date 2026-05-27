@@ -1,9 +1,3 @@
-export type CheckItem = {
-  id: string
-  text: string
-  done: boolean
-}
-
 export type ScheduleEntry = {
   id: string
   title: string
@@ -15,7 +9,6 @@ export type ScheduleEntry = {
 export type DayNote = {
   title: string
   memo: string
-  checklist: CheckItem[]
   schedules?: ScheduleEntry[]
   // Legacy fields (読み込み時のみ参照・新規保存では使わない)
   startTime?: string
@@ -93,7 +86,6 @@ export function getNote(date: Date): DayNote {
   return {
     title: stored.title ?? '',
     memo: stored.memo ?? '',
-    checklist: stored.checklist ?? [],
     schedules: migrateLegacySchedules(stored),
   }
 }
@@ -101,7 +93,7 @@ export function getNote(date: Date): DayNote {
 export function saveNote(date: Date, note: DayNote): void {
   const all = load()
   const k = dateKey(date)
-  const hasContent = note.title.trim() || note.memo.trim() || note.checklist.length > 0
+  const hasContent = note.title.trim() || note.memo.trim()
   const hasSchedules = (note.schedules?.length ?? 0) > 0
   if (!hasContent && !hasSchedules) {
     delete all[k]
@@ -110,7 +102,6 @@ export function saveNote(date: Date, note: DayNote): void {
     all[k] = {
       title: note.title,
       memo: note.memo,
-      checklist: note.checklist,
       schedules: note.schedules ?? [],
     }
     removePendingDelete(k)
@@ -132,7 +123,7 @@ export function getAllNoteData(): Map<string, NoteMapEntry> {
   const all = load()
   const map = new Map<string, NoteMapEntry>()
   for (const [key, note] of Object.entries(all)) {
-    const hasContent = note.title?.trim() || note.memo?.trim() || (note.checklist?.length ?? 0) > 0
+    const hasContent = note.title?.trim() || note.memo?.trim()
     const schedules = migrateLegacySchedules(note)
     if (hasContent || schedules.length > 0) {
       map.set(key, {

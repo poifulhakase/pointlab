@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { type CheckItem, type DayNote, type ScheduleEntry, getNote, saveNote } from '../utils/noteStorage'
+import { type DayNote, type ScheduleEntry, getNote, saveNote } from '../utils/noteStorage'
 import { TimeField } from './TimeField'
 
 type Props = {
@@ -21,14 +21,9 @@ function calcDefaultEnd(start: string): string {
 export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, onSaved, isMobile }: Props) {
   const [title, setTitle]         = useState('')
   const [memo, setMemo]           = useState('')
-  const [checklist, setChecklist] = useState<CheckItem[]>([])
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([])
-  const [newText, setNewText]     = useState('')
   const [isDirty, setIsDirty]     = useState(false)
   const [titleFocused, setTitleFocused] = useState(false)
-  const [editingItemId, setEditingItemId]     = useState<string | null>(null)
-  const [editingItemText, setEditingItemText] = useState('')
-  const addInputRef   = useRef<HTMLInputElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -36,7 +31,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     const note = getNote(date)
     setTitle(note.title)
     setMemo(note.memo)
-    setChecklist(note.checklist)
     let scheds = note.schedules ?? []
     // 古いデータにタイトルなしスケジュールが残っている場合は即座に修正
     const cleaned = scheds.filter(s => s.title.trim())
@@ -62,24 +56,24 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     setTimeout(() => titleInputRef.current?.focus(), 20)
   }, [date?.toDateString(), prefillTime])
 
-  const persist = (t: string, m: string, cl: CheckItem[], schs: ScheduleEntry[]) => {
+  const persist = (t: string, m: string, schs: ScheduleEntry[]) => {
     if (!date) return
     setIsDirty(true)
     const savedSchs = schs.filter(s => s.title.trim())
-    const note: DayNote = { title: t, memo: m, checklist: cl, schedules: savedSchs }
+    const note: DayNote = { title: t, memo: m, schedules: savedSchs }
     saveNote(date, note)
     onSave()
     onAfterSave?.(date, note)
   }
 
   // ── ノートフィールド ──
-  const handleTitle = (v: string) => { setTitle(v); persist(v, memo, checklist, schedules) }
-  const handleMemo  = (v: string) => { setMemo(v);  persist(title, v, checklist, schedules) }
+  const handleTitle = (v: string) => { setTitle(v); persist(v, memo, schedules) }
+  const handleMemo  = (v: string) => { setMemo(v);  persist(title, v, schedules) }
 
   // ── スケジュール ──
   const handleSchTitle = (id: string, v: string) => {
     const next = schedules.map(s => s.id === id ? { ...s, title: v } : s)
-    setSchedules(next); persist(title, memo, checklist, next)
+    setSchedules(next); persist(title, memo, next)
   }
   const handleSchStart = (id: string, v: string) => {
     const next = schedules.map(s => {
@@ -87,15 +81,15 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
       const endTime = s.endTime || calcDefaultEnd(v)
       return { ...s, startTime: v, endTime }
     })
-    setSchedules(next); persist(title, memo, checklist, next)
+    setSchedules(next); persist(title, memo, next)
   }
   const handleSchEnd = (id: string, v: string) => {
     const next = schedules.map(s => s.id === id ? { ...s, endTime: v } : s)
-    setSchedules(next); persist(title, memo, checklist, next)
+    setSchedules(next); persist(title, memo, next)
   }
   const handleSchDelete = (id: string) => {
     const next = schedules.filter(s => s.id !== id)
-    setSchedules(next); persist(title, memo, checklist, next)
+    setSchedules(next); persist(title, memo, next)
   }
   const handleSchAdd = () => {
     const newSch: ScheduleEntry = {
@@ -106,49 +100,16 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
       alertMinutes: 0,
     }
     const next = [...schedules, newSch]
-    setSchedules(next); persist(title, memo, checklist, next)
-  }
-
-  // ── チェックリスト ──
-  const toggleItem = (id: string) => {
-    const next = checklist.map(i => i.id === id ? { ...i, done: !i.done } : i)
-    setChecklist(next); persist(title, memo, next, schedules)
-  }
-  const deleteItem = (id: string) => {
-    const next = checklist.filter(i => i.id !== id)
-    setChecklist(next); persist(title, memo, next, schedules)
-  }
-  const clearDone = () => {
-    const next = checklist.filter(i => !i.done)
-    setChecklist(next); persist(title, memo, next, schedules)
-  }
-  const addItem = () => {
-    const text = newText.trim()
-    if (!text) return
-    const next = [...checklist, { id: String(Date.now()), text, done: false }]
-    setChecklist(next); setNewText(''); persist(title, memo, next, schedules)
-    setTimeout(() => addInputRef.current?.focus(), 0)
-  }
-
-  const startEditItem = (item: CheckItem) => {
-    setEditingItemId(item.id)
-    setEditingItemText(item.text)
-  }
-  const commitEditItem = (id: string) => {
-    const text = editingItemText.trim()
-    setEditingItemId(null)
-    if (!text) return
-    const next = checklist.map(i => i.id === id ? { ...i, text } : i)
-    setChecklist(next); persist(title, memo, next, schedules)
+    setSchedules(next); persist(title, memo, next)
   }
 
   const handleClose = useCallback(() => {
     const cleaned = schedules.filter(s => s.title.trim())
     if (cleaned.length !== schedules.length) {
-      persist(title, memo, checklist, cleaned)
+      persist(title, memo, cleaned)
     }
     onClose()
-  }, [schedules, title, memo, checklist, onClose])
+  }, [schedules, title, memo, onClose])
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
@@ -159,15 +120,13 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   const handleDelete = () => {
     if (!date) return
     if (!window.confirm('このメモ・スケジュールを削除してよろしいですか？')) return
-    saveNote(date, { title: '', memo: '', checklist: [], schedules: [] })
+    saveNote(date, { title: '', memo: '', schedules: [] })
     onSave()
     onClose()
   }
 
-  const doneCount       = checklist.filter(i => i.done).length
-  const progress        = checklist.length > 0 ? Math.round(doneCount / checklist.length * 100) : 0
   const isOpen          = !!date
-  const hasContent      = !!(title.trim() || memo.trim() || checklist.length > 0 || schedules.length > 0)
+  const hasContent      = !!(title.trim() || memo.trim() || schedules.length > 0)
   const hasEmptySchTitle = schedules.some(s => !s.title.trim())
 
   const [mounted, setMounted] = useState(false)
@@ -339,92 +298,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
             </button>
           </section>
 
-          {/* チェックリスト */}
-          <section style={styles.section}>
-            <div style={styles.sectionTitle}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 11 12 14 22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
-              チェックリスト
-              {checklist.length > 0 && (
-                <span style={styles.countBadge}>{doneCount} / {checklist.length}</span>
-              )}
-              {doneCount > 0 && (
-                <button style={styles.clearBtn} onClick={clearDone}>完了済みを削除</button>
-              )}
-            </div>
-
-            {checklist.length > 0 && (
-              <div style={styles.progressWrap}>
-                <span style={styles.progressPct}>{progress}%</span>
-                <div style={styles.progressTrack}>
-                  <div style={{ ...styles.progressFill, width: `${progress}%` }} />
-                </div>
-              </div>
-            )}
-
-            <div style={styles.itemList}>
-              {checklist.map(item => (
-                <div key={item.id} style={styles.itemRow}>
-                  <button
-                    style={{
-                      ...styles.checkbox,
-                      background: item.done ? 'rgba(96,165,250,0.8)' : 'transparent',
-                      borderColor: item.done ? '#60a5fa' : 'rgba(255,255,255,0.30)',
-                    }}
-                    onClick={() => toggleItem(item.id)}
-                  >
-                    {item.done && (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    )}
-                  </button>
-                  {editingItemId === item.id ? (
-                    <input
-                      autoFocus
-                      value={editingItemText}
-                      onChange={e => setEditingItemText(e.target.value)}
-                      onBlur={() => commitEditItem(item.id)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); commitEditItem(item.id) }
-                        if (e.key === 'Escape') setEditingItemId(null)
-                      }}
-                      style={styles.itemEditInput}
-                    />
-                  ) : (
-                    <span
-                      style={{ ...styles.itemText, textDecoration: item.done ? 'line-through' : 'none', opacity: item.done ? 0.40 : 1, cursor: 'text' }}
-                      onClick={() => startEditItem(item)}
-                    >
-                      {item.text}
-                    </span>
-                  )}
-                  <button style={styles.delBtn} onClick={() => deleteItem(item.id)}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div style={styles.addRow}>
-              <input
-                ref={addInputRef}
-                value={newText}
-                onChange={e => setNewText(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addItem() }}
-                placeholder="+ 項目を追加..."
-                style={styles.addInput}
-              />
-              {newText.trim() && (
-                <button style={styles.addBtn} onClick={addItem}>追加</button>
-              )}
-            </div>
-          </section>
-
           {/* メモ */}
           <section style={{ ...styles.section, ...(!isMobile ? styles.sectionGrow : {}) }}>
             <div style={styles.sectionTitle}>
@@ -512,11 +385,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--text-sub)', background: 'var(--bg-medium)',
     borderRadius: 10, padding: '1px 7px',
   },
-  clearBtn: {
-    marginLeft: 'auto', fontSize: 10, fontWeight: 500,
-    color: 'rgba(255,100,100,0.65)',
-    textTransform: 'none' as const, letterSpacing: 0,
-  },
   // スケジュールカード
   schedCard: {
     background: 'var(--bg-item)',
@@ -551,46 +419,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--accent)', fontSize: 12, fontWeight: 600,
     alignSelf: 'flex-start',
     cursor: 'pointer',
-  },
-  // チェックリスト
-  progressWrap: { display: 'flex', alignItems: 'center', gap: 8 },
-  progressPct: { fontSize: 10, fontWeight: 700, color: 'var(--accent)', minWidth: 28, textAlign: 'right' as const },
-  progressTrack: { flex: 1, height: 6, borderRadius: 3, background: 'var(--bg-medium)', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, rgba(96,165,250,0.7), rgba(96,165,250,1))', transition: 'width 0.25s ease' },
-  itemList: { display: 'flex', flexDirection: 'column', gap: 2 },
-  itemRow: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '7px 10px', borderRadius: 8,
-    background: 'var(--bg-item)',
-    border: '1px solid var(--border-dim)',
-  },
-  checkbox: {
-    width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-    border: '1.5px solid', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    transition: 'all 0.15s',
-  },
-  itemText: { flex: 1, fontSize: 13, color: 'var(--text)', lineHeight: 1.4, transition: 'opacity 0.15s' },
-  itemEditInput: {
-    flex: 1, background: 'none', border: 'none', borderBottom: '1px solid var(--accent)',
-    outline: 'none', color: 'var(--text)', fontSize: 13, lineHeight: 1.4,
-    fontFamily: 'inherit', padding: '0 0 1px',
-  },
-  delBtn: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: 22, height: 22, borderRadius: 4, flexShrink: 0,
-    color: 'var(--text-dim)',
-  },
-  addRow: { display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 },
-  addInput: {
-    flex: 1, background: 'var(--bg-subtle)',
-    border: '1px solid var(--glass-border)',
-    borderRadius: 8, color: 'var(--text)',
-    fontSize: 13, padding: '8px 12px', fontFamily: 'inherit', outline: 'none',
-  },
-  addBtn: {
-    padding: '8px 14px', borderRadius: 8,
-    background: 'rgba(96,165,250,0.20)', border: '1px solid rgba(96,165,250,0.35)',
-    color: 'var(--accent)', fontSize: 12, fontWeight: 600, flexShrink: 0,
   },
   // メモ
   textarea: {
