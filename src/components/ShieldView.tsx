@@ -26,6 +26,8 @@ type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
+  shieldTab?: 'shield' | 'news'
+  onShieldTabChange?: (tab: 'shield' | 'news') => void
 }
 
 // ── CYBER カラー（テーマ対応） ──────────────────────
@@ -1068,11 +1070,11 @@ function NewsPanel({
 }
 
 // ── メインコンポーネント ──────────────────────────────
-export function ShieldView({ theme, isMobile, user }: Props) {
+export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Props) {
   const tv = themeVars(theme)
   const c  = cy(theme)
 
-  const [mode,        setMode]        = useState<'shield' | 'news'>('shield')
+  const mode = shieldTab
   const [copyStatus,  setCopyStatus]  = useState<'' | 'shield' | 'news_shield'>('')
   const [isBuilding,  setIsBuilding]  = useState(false)
 
@@ -1147,46 +1149,8 @@ export function ShieldView({ theme, isMobile, user }: Props) {
   const logState     = useSystemLog(SHIELD_STATUS_LINES)
   const newsLogState = useSystemLog(NEWS_STATUS_LINES)
 
-  const TABS = [
-    {
-      key: 'shield' as const,
-      label: 'シールド',
-      icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-    },
-    {
-      key: 'news' as const,
-      label: 'ニュース',
-      icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>,
-    },
-  ]
-
   return (
     <div style={{ ...s.wrap, ...tv }}>
-      {/* タブ切り替え */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 12px', borderBottom: `1px solid ${c.BORDER}` }}>
-        <div className="glass" style={{ display: 'flex', alignItems: 'center', borderRadius: 10, padding: 2, gap: 2 }}>
-          {TABS.map(tab => {
-            const active = mode === tab.key
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setMode(tab.key)}
-                style={{
-                  padding: '5px 14px', borderRadius: 7,
-                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                  color: active ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
-                  background: active ? 'var(--view-btn-active-bg)' : 'transparent',
-                  boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
-                  transition: 'background 0.15s, color 0.15s',
-                }}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
       {/* コンテンツ */}
       <div style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
