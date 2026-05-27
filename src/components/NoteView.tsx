@@ -8,6 +8,7 @@ type Props = {
   onOpenLegal?: () => void
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
+  onOpenSpec?: () => void
 }
 
 type Article = {
@@ -16,7 +17,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -46,6 +47,7 @@ const ARTICLES: Article[] = [
   { genre: 'イベントドリブン', title: '権利確定日前',  url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Rights_Record_Day.webp' },
   { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_TOPIX_Inclusion.webp' },
   // ── 管理者 ────────────────────────────────────────────────────
+  { genre: '管理者', title: 'システム仕様', url: null, thumb: null, internalAction: 'spec' },
   { genre: '管理者', title: 'プロンプト Evals', url: null, thumb: null, internalAction: 'evals' },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
@@ -53,13 +55,14 @@ const ARTICLES: Article[] = [
 
 const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理者']
 
-function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals }: {
+function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec }: {
   article: Article
   isMobile: boolean
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
+  onOpenSpec?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -70,6 +73,7 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
     if (article.internalAction === 'legal')    { onOpenLegal?.();    return }
     if (article.internalAction === 'backtest') { onOpenBacktest?.(); return }
     if (article.internalAction === 'evals')    { onOpenEvals?.();    return }
+    if (article.internalAction === 'spec')     { onOpenSpec?.();     return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -113,8 +117,8 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals }: Props) {
-  const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals')
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec }: Props) {
+  const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals' && a.internalAction !== 'spec')
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? 'transparent' : '#f4f6f9' }}>
@@ -130,7 +134,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} />
                   ))}
                 </div>
               </section>
@@ -243,7 +247,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: 16,
   },
   gridMobile: {

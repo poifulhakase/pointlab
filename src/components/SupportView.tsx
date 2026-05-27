@@ -954,6 +954,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                     onOpenLegal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.() }}
                     onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}
                     onOpenEvals={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenEvals?.() }}
+                    onOpenSpec={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenSpec?.() }}
                   />
                 </Suspense>
               )}

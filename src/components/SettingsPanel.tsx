@@ -13,12 +13,11 @@ type Props = {
   syncStatus: string
   onOpenAccount: () => void
   isAdmin: boolean
-  onOpenSpec: () => void
   pushEnabled: boolean
   onTogglePush: () => void
 }
 
-export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, isAdmin, onOpenSpec, pushEnabled, onTogglePush }: Props) {
+export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, isAdmin, pushEnabled, onTogglePush }: Props) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)
@@ -179,16 +178,6 @@ export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle
               </div>
             )}
           </section>
-
-          {/* システム仕様（管理者のみ） */}
-          {isAdmin && (
-            <section style={st.section}>
-              <div style={st.sectionTitle}>開発者</div>
-              <button style={st.actionBtn} onClick={() => { onClose(); onOpenSpec() }}>
-                システム仕様を開く
-              </button>
-            </section>
-          )}
 
         </div>
       </div>
