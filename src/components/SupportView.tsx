@@ -949,6 +949,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
               {activeDrawer === 'data' && (
                 <Suspense fallback={<ViewLoader />}>
                   <NoteView theme={theme} isMobile={isMobile}
+                    isAdmin={isAdmin}
                     onOpenManual={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenManual?.() }}
                     onOpenLegal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.() }}
                     onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}

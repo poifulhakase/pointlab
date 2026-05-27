@@ -173,7 +173,7 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
     ? 50
     : Math.min(95, Math.round(Math.abs(compositeScore) * 0.5 + 50))
 
-  return { tev_value, tev_status, tev_confidence, tev_decay }
+  return { tev_value, tev_status, tev_confidence, tev_decay, tev_acc: tev_A, foreign4w_pct: foreign4wPct, cot_pct: cotLfPct }
 }
 
 // ── メイン ──────────────────────────────────────────────
@@ -261,6 +261,9 @@ async function main() {
       status:           tev?.tev_status      ?? null,
       confidence:       tev?.tev_confidence  ?? null,
       decay:            tev?.tev_decay       ?? null,
+      acc:              tev?.tev_acc         ?? null,
+      foreign4w_pct:    tev?.foreign4w_pct   ?? null,
+      cot_pct:          tev?.cot_pct         ?? null,
       signal,
       nk_close:         nkCur  ?? null,
       price_change_pct: priceChangePct,
@@ -326,10 +329,11 @@ async function main() {
     },
     notes: [
       '偏差スコアは週次VIX・外国人フロー・先物OIで代替計算（日次USDJPY/NAS100の週次歴史データなし）',
-      '加速度は1週前との差分（本番は3日前との差分）',
+      '加速度(acc)は1週前との差分（本番は3日前との差分）',
       '先物出来高減少による減衰は未適用（日次出来高の週次過去データなし）',
       '底打ち反転ステータスは未判定（10日安値圏データなし）',
       '限界膨張ステータスのシグナルは中立扱い（方向不明のため勝敗カウント外）',
+      '慣性フィルター: acc・foreign4w_pct・cot_pctを用いた3基準判定（強持続/中持続/枯渇圏）',
     ],
     summary,
     weekly_log: weeklyLog,

@@ -10,6 +10,23 @@ type Props = {
 const STATUS_ORDER = ['慣性航行中', '重力反転中', '真空落下', '限界膨張']
 const mono = "'Courier New', Courier, monospace" as const
 
+function inertiaPhase(e: WeeklyEntry): 'strong' | 'mid' | 'exhausted' {
+  if (e.status?.startsWith('限界膨張')) return 'exhausted'
+  const dec = e.decay
+  const acc = e.acc
+  const f4w = e.foreign4w_pct
+  const cot = e.cot_pct
+  if (dec !== null && acc !== null && f4w !== null && cot !== null) {
+    const n = [dec < 0.85, acc < 0, f4w < 40, cot < 40].filter(Boolean).length
+    if (n >= 2) return 'exhausted'
+    if (dec >= 0.95 && acc > 0 && f4w >= 60 && e.status === '慣性航行中') return 'strong'
+    return 'mid'
+  }
+  if (dec !== null && dec < 0.85) return 'exhausted'
+  if (dec !== null && dec >= 0.95 && e.status === '慣性航行中') return 'strong'
+  return 'mid'
+}
+
 type C = {
   L: boolean; BG: string; HDRBG: string; ACCENT: string; DIM: string
   TEXT: string; SUB: string; RULE: string; TAGBG: string; TAGBDR: string
@@ -131,6 +148,16 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
         {/* Data */}
         {!loading && data && (() => {
           const { summary, data_range, computed_at } = data
+          const calcWinRate = (arr: WeeklyEntry[]) =>
+            arr.length === 0 ? null : Math.round(arr.filter(w => w.win).length / arr.length * 100) / 100
+          const allSig     = data.weekly_log.filter(w => w.signal !== 'neutral' && w.win !== null)
+          const noExh      = allSig.filter(w => inertiaPhase(w) !== 'exhausted')
+          const strongOnly = allSig.filter(w => inertiaPhase(w) === 'strong')
+          const regimeRows = [
+            { label: '全シグナル', entries: allSig },
+            { label: '枯渇圏除外', entries: noExh },
+            { label: '強持続のみ', entries: strongOnly },
+          ]
           return (
             <>
               {/* Meta */}
@@ -169,7 +196,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
               <div style={{
                 flex: 1, minHeight: 0,
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
                 gap: isMobile ? 10 : 16,
                 overflow: 'hidden',
               }}>
@@ -191,7 +218,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
                   />
                 </div>
 
-                {/* 信頼度別 + ボタン */}
+                {/* 信頼度別 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
                   <Label text="信頼度別" c={c} />
                   <CyberTable
@@ -206,8 +233,18 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
                     )}
                     c={c} isMobile={isMobile}
                   />
+                </div>
 
-                  {/* ログボタン（デスクトップ：右列下部） */}
+                {/* 慣性フィルター */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+                  <Label text="慣性フィルター" c={c} />
+                  <CyberTable
+                    head={['条件', '回数', '勝率']}
+                    aligns={['left', 'right', 'right']}
+                    rows={regimeRows.map(r => [r.label, `${r.entries.length}回`, pctStr(calcWinRate(r.entries))])}
+                    rowColors={regimeRows.map(r => [null, null, winColor(calcWinRate(r.entries))])}
+                    c={c} isMobile={isMobile}
+                  />
                   {!isMobile && (
                     <div style={{ marginTop: 'auto', paddingTop: 8 }}>
                       <LogButton c={c} onClick={() => setShowLog(true)} />

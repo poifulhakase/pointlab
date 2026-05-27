@@ -26,6 +26,7 @@ function makeC(theme: 'dark' | 'light') {
     CARD:   L ? 'rgba(255,255,255,0.72)' : 'rgba(0,20,50,0.55)',
     WIN:    L ? '#15803d'                : '#4ade80',
     LOSS:   L ? '#dc2626'                : '#f87171',
+    WARN:   L ? '#d97706'                : '#fbbf24',
     SCAN:   L ? ''                       : 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.013) 3px,rgba(0,229,255,0.013) 4px)',
   }
 }
@@ -192,8 +193,8 @@ const SCENARIOS: Scenario[] = [
     name: '強気相場',
     badge: '慣性航行中',
     badgeColor: '#4ade80',
-    description: 'TEV+42・確信度72%・外国人4週累計+1.4兆・信用評価損益-3.8%（健全水準）。典型的な上昇トレンド継続局面。',
-    expectedBehavior: 'ブル判定：打診 or 本命 / ベア判定：購入禁止',
+    description: 'TEV+42・確信度72%・外国人4週+1.4兆・評価損益-3.8%（健全）。典型的な上昇継続局面。',
+    expectedBehavior: 'ブル：打診 or 本命 / ベア：購入禁止',
     json: SCENARIO_1_JSON,
     specificCheck: (output) => {
       const bullSection = output.split('■ ベア')[0] ?? ''
@@ -207,8 +208,8 @@ const SCENARIOS: Scenario[] = [
     name: '恐怖相場',
     badge: '真空落下',
     badgeColor: '#f87171',
-    description: 'TEV-61・確信度78%・信用評価損益-14.2%（臨界水準）・外国人4週-2.1兆・ヘッジファンドネット-35000枚・SQ残6日。',
-    expectedBehavior: 'ベア判定：打診 or 本命 / ブル判定：購入禁止',
+    description: 'TEV-61・確信度78%・評価損益-14.2%（臨界）・外国人4週-2.1兆・SQ残6日。',
+    expectedBehavior: 'ベア：打診 or 本命 / ブル：購入禁止',
     json: SCENARIO_2_JSON,
     specificCheck: (output) => {
       const bearSection = output.split('■ ベア')[1] ?? ''
@@ -220,10 +221,10 @@ const SCENARIOS: Scenario[] = [
   {
     id: 3,
     name: 'データ品質問題',
-    badge: 'tev_for_execution=null',
+    badge: 'tev=null',
     badgeColor: '#fbbf24',
-    description: 'TEV計算不能・sanity_warnings 2件（価格乖離・ドル円鮮度）。データ品質起因で執行停止となるべき局面。',
-    expectedBehavior: '「需給推進力・執行停止」出力 + 【データメモ】出力',
+    description: 'TEV計算不能・sanity_warnings 2件（価格乖離・ドル円鮮度）。執行停止局面。',
+    expectedBehavior: '執行停止宣言 + 【データメモ】両方出力',
     json: SCENARIO_3_JSON,
     specificCheck: (output) => {
       const hasStop = /需給推進力・執行停止/.test(output)
@@ -242,7 +243,7 @@ function scoreOutput(output: string, scenario: Scenario): ScoreResult {
   const items: ScoreItem[] = [
     {
       label: '確信度が「確信度：〇〇%」の形式で出力されているか',
-      pass: /確信度：\d+(\.\d+)?%/.test(output),
+      pass: /確信度[：:]\s*\d+(\.\d+)?%/.test(output),
     },
     {
       label: 'マークダウン記法（**・###・行頭ハイフン）がないか',
@@ -250,23 +251,27 @@ function scoreOutput(output: string, scenario: Scenario): ScoreResult {
     },
     {
       label: '「需給推進力：」が出力されているか',
-      pass: /需給推進力：/.test(output),
+      pass: /需給推進力[：:]/.test(output),
     },
     {
       label: '「需給ステータス：」が出力されているか',
-      pass: /需給ステータス：/.test(output),
+      pass: /需給ステータス[：:]/.test(output),
     },
     {
       label: '「指令：」が出力されているか',
-      pass: /指令：/.test(output),
+      pass: /指令[：:]/.test(output),
     },
     {
       label: '「■ ブル」と「■ ベア」の両セクションが含まれるか',
-      pass: /■ ブル/.test(output) && /■ ベア/.test(output),
+      pass: /■\s*ブル/.test(output) && /■\s*ベア/.test(output),
     },
     {
       label: '英語変数名（tev_analysis等）が出力に含まれていないか',
       pass: !ENGLISH_VAR_PATTERN.test(output),
+    },
+    {
+      label: '「慣性持続性：」が出力されているか（強持続/中持続/枯渇圏）',
+      pass: /慣性持続性[：:]/.test(output),
     },
     scenario.specificCheck(output),
   ]
@@ -275,13 +280,45 @@ function scoreOutput(output: string, scenario: Scenario): ScoreResult {
   return { items, total: items.length, passed }
 }
 
+// ── スコアゲージ ────────────────────────────────────────────────────────────
+
+function ScoreGauge({ result, c }: { result: ScoreResult; c: ReturnType<typeof makeC> }) {
+  const pct = result.passed / result.total
+  const color = pct === 1 ? c.WIN : pct >= 0.625 ? c.WARN : c.LOSS
+  const status = pct === 1 ? 'PASS' : pct >= 0.625 ? 'WARN' : 'FAIL'
+  const filled = Math.round(pct * 10)
+  const bar = '▓'.repeat(filled) + '░'.repeat(10 - filled)
+
+  return (
+    <div style={{
+      background: color + '14',
+      border: `1px solid ${color}55`,
+      borderRadius: 8,
+      padding: '10px 14px',
+      marginBottom: 10,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <span style={{
+          fontSize: 11, fontWeight: 'bold', letterSpacing: 3,
+          color, fontFamily: mono,
+        }}>{status}</span>
+        <span style={{ color, fontSize: 20, fontWeight: 'bold', fontFamily: mono, lineHeight: 1 }}>
+          {result.passed}
+          <span style={{ fontSize: 11, opacity: 0.55 }}>/{result.total}</span>
+        </span>
+      </div>
+      <div style={{ color, fontSize: 12, letterSpacing: 1, fontFamily: mono }}>{bar}</div>
+    </div>
+  )
+}
+
 // ── コンポーネント ──────────────────────────────────────────────────────────
 
 export function EvalsPanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
-  const [outputs,  setOutputs]  = useState<Record<number, string>>({})
-  const [results,  setResults]  = useState<Record<number, ScoreResult>>({})
-  const [copied,   setCopied]   = useState<number | null>(null)
+  const [outputs, setOutputs] = useState<Record<number, string>>({})
+  const [results, setResults] = useState<Record<number, ScoreResult>>({})
+  const [copied,  setCopied]  = useState<number | null>(null)
 
   const handleCopy = (scenario: Scenario) => {
     const text = AI_PROMPT_TEMPLATE + JSON.stringify(scenario.json, null, 2)
@@ -303,9 +340,15 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
     setResults(prev => ({ ...prev, [scenario.id]: scoreOutput(output, scenario) }))
   }
 
-  const totalPassed  = Object.values(results).reduce((s, r) => s + r.passed, 0)
-  const totalChecks  = Object.values(results).reduce((s, r) => s + r.total, 0)
+  const totalPassed   = Object.values(results).reduce((s, r) => s + r.passed, 0)
+  const totalChecks   = Object.values(results).reduce((s, r) => s + r.total, 0)
   const scenariosDone = Object.keys(results).length
+  const allDone       = scenariosDone === SCENARIOS.length
+  const globalPct     = totalChecks > 0 ? totalPassed / totalChecks : null
+  const globalColor   = globalPct === null ? c.ACCENT
+    : globalPct === 1 ? c.WIN
+    : globalPct >= 0.7 ? c.WARN
+    : c.LOSS
 
   return (
     <div style={{
@@ -324,26 +367,30 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
       }}>
         <div>
           <span style={{ color: c.ACCENT, fontSize: 12, letterSpacing: 2 }}>PROMPT EVALS</span>
-          <div style={{ color: c.TEXT, fontSize: 11, marginTop: 2 }}>プロンプト品質テスト — 3シナリオ</div>
+          <div style={{ color: c.SUB, fontSize: 10, marginTop: 2 }}>
+            ① コピー → ② AIへ貼付・生成 → ③ 出力をペースト → ④ 採点
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {scenariosDone > 0 && (
-            <div style={{ color: totalPassed === totalChecks ? c.WIN : c.ACCENT, fontSize: 13 }}>
-              {totalPassed}/{totalChecks} 合格（{scenariosDone}/3 実施）
+          {allDone && globalPct !== null && (
+            <div style={{
+              fontSize: 12, fontWeight: 'bold', color: globalColor,
+              letterSpacing: 1,
+            }}>
+              TOTAL {totalPassed}/{totalChecks}
+            </div>
+          )}
+          {!allDone && scenariosDone > 0 && (
+            <div style={{ color: c.SUB, fontSize: 11 }}>
+              {totalPassed}/{totalChecks}（{scenariosDone}/3）
             </div>
           )}
           <button onClick={onClose} style={{
             background: 'transparent', border: `1px solid ${c.RULE}`,
             color: c.SUB, cursor: 'pointer', fontSize: 18, lineHeight: 1,
-            width: 32, height: 32, borderRadius: 6,
+            width: 32, height: 32, borderRadius: 6, fontFamily: mono,
           }}>×</button>
         </div>
-      </div>
-
-      {/* 説明 */}
-      <div style={{ padding: '10px 16px 0', color: c.SUB, fontSize: 11, flexShrink: 0 }}>
-        各シナリオのデータをAIに渡し、出力を貼り付けて採点します。
-        プロンプトの出力品質（フォーマット・ロジック）を測定するものであり、相場予測の精度とは別です。
       </div>
 
       {/* シナリオカード */}
@@ -351,17 +398,27 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
         padding: 16, display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         gap: 16, alignItems: 'flex-start',
+        flex: 1,
       }}>
         {SCENARIOS.map(scenario => {
-          const result = results[scenario.id]
-          const output = outputs[scenario.id] ?? ''
+          const result   = results[scenario.id]
+          const output   = outputs[scenario.id] ?? ''
           const isCopied = copied === scenario.id
+
+          const pct = result ? result.passed / result.total : null
+          const borderColor = pct === null ? c.RULE
+            : pct === 1 ? c.WIN + '88'
+            : pct >= 0.625 ? c.WARN + '88'
+            : c.LOSS + '88'
 
           return (
             <div key={scenario.id} style={{
               flex: 1, background: c.CARD,
-              border: `1px solid ${c.RULE}`, borderRadius: 10,
+              border: `1px solid ${borderColor}`,
+              borderRadius: 10,
               display: 'flex', flexDirection: 'column', overflow: 'hidden',
+              transition: 'border-color 0.3s',
+              boxShadow: pct === 1 ? `0 0 16px ${c.WIN}22` : 'none',
             }}>
               {/* カードヘッダー */}
               <div style={{ padding: '10px 14px', borderBottom: `1px solid ${c.RULE}` }}>
@@ -391,19 +448,21 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
                   borderRadius: 6, cursor: 'pointer', fontSize: 11,
                   fontFamily: mono, transition: 'all 0.2s',
                 }}>
-                  {isCopied ? '▶ コピー完了' : 'プロンプト＋シナリオデータをコピー'}
+                  {isCopied ? '▶ コピー完了' : '① プロンプト＋データをコピー'}
                 </button>
               </div>
 
               {/* 出力貼り付けエリア */}
               <div style={{ padding: '10px 14px', borderBottom: `1px solid ${c.RULE}` }}>
-                <div style={{ fontSize: 10, color: c.SUB, marginBottom: 6 }}>AIの出力を貼り付け</div>
+                <div style={{ fontSize: 10, color: c.SUB, marginBottom: 6 }}>
+                  ③ AIが出力したテキストを貼り付け
+                </div>
                 <textarea
                   value={output}
                   onChange={e => setOutputs(prev => ({ ...prev, [scenario.id]: e.target.value }))}
-                  placeholder="ここにAIの出力をペーストしてください..."
+                  placeholder={'AIの出力のみをペーストしてください\n（プロンプトやJSONは不要です）'}
                   style={{
-                    width: '100%', height: 120, resize: 'vertical',
+                    width: '100%', height: 110, resize: 'vertical',
                     background: c.L ? 'rgba(255,255,255,0.8)' : 'rgba(0,10,30,0.6)',
                     border: `1px solid ${c.RULE}`, borderRadius: 6,
                     color: c.TEXT, fontSize: 10, padding: 8, boxSizing: 'border-box',
@@ -414,44 +473,41 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
                   onClick={() => handleScore(scenario)}
                   disabled={!output.trim()}
                   style={{
-                    marginTop: 8, width: '100%', padding: '7px 0',
+                    marginTop: 8, width: '100%', padding: '8px 0',
                     background: output.trim() ? c.ACCENT + '18' : 'transparent',
                     border: `1px solid ${output.trim() ? c.ACCENT : c.RULE}`,
                     color: output.trim() ? c.ACCENT : c.SUB,
                     borderRadius: 6, cursor: output.trim() ? 'pointer' : 'default',
                     fontSize: 11, fontFamily: mono,
+                    fontWeight: output.trim() ? 'bold' : 'normal',
+                    letterSpacing: output.trim() ? 1 : 0,
                   }}
                 >
-                  採点する
+                  ④ 採点する
                 </button>
               </div>
 
               {/* スコア結果 */}
               {result && (
                 <div style={{ padding: '10px 14px' }}>
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between',
-                    marginBottom: 8, alignItems: 'baseline',
-                  }}>
-                    <span style={{ fontSize: 11, color: c.SUB }}>採点結果</span>
-                    <span style={{
-                      fontSize: 16,
-                      color: result.passed === result.total ? c.WIN : result.passed >= result.total / 2 ? c.ACCENT : c.LOSS,
-                      fontWeight: 'bold',
-                    }}>
-                      {result.passed}/{result.total}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <ScoreGauge result={result} c={c} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     {result.items.map((item, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <div key={i} style={{
+                        display: 'flex', gap: 8, alignItems: 'flex-start',
+                        padding: '4px 8px', borderRadius: 5,
+                        background: item.pass
+                          ? (c.L ? 'rgba(21,128,61,0.06)' : 'rgba(74,222,128,0.06)')
+                          : (c.L ? 'rgba(220,38,38,0.06)' : 'rgba(248,113,113,0.06)'),
+                      }}>
                         <span style={{
                           fontSize: 11, flexShrink: 0, marginTop: 1,
                           color: item.pass ? c.WIN : c.LOSS,
+                          fontWeight: 'bold',
                         }}>
                           {item.pass ? '✓' : '✗'}
                         </span>
-                        <span style={{ fontSize: 10, color: item.pass ? c.TEXT : c.LOSS, lineHeight: 1.5 }}>
+                        <span style={{ fontSize: 10, color: item.pass ? c.SUB : c.LOSS, lineHeight: 1.5 }}>
                           {item.label}
                         </span>
                       </div>
@@ -463,6 +519,23 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
           )
         })}
       </div>
+
+      {/* 全完了バナー */}
+      {allDone && globalPct !== null && (
+        <div style={{
+          margin: '0 16px 16px', padding: '12px 16px',
+          background: globalColor + '14',
+          border: `1px solid ${globalColor}55`,
+          borderRadius: 8, textAlign: 'center',
+        }}>
+          <div style={{ color: globalColor, fontSize: 13, fontWeight: 'bold', letterSpacing: 2, marginBottom: 4 }}>
+            {globalPct === 1 ? '全チェック合格' : globalPct >= 0.7 ? '一部改善が必要' : 'プロンプト修正を推奨'}
+          </div>
+          <div style={{ color: c.SUB, fontSize: 10 }}>
+            合計 {totalPassed}/{totalChecks} 合格（{Math.round(globalPct * 100)}%）
+          </div>
+        </div>
+      )}
     </div>
   )
 }

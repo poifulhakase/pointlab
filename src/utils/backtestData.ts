@@ -6,6 +6,9 @@ export type WeeklyEntry = {
   status: string | null
   confidence: number | null
   decay: number | null
+  acc: number | null
+  foreign4w_pct: number | null
+  cot_pct: number | null
   signal: 'bull' | 'bear' | 'neutral'
   nk_close: number | null
   price_change_pct: number | null
