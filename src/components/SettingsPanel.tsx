@@ -257,12 +257,17 @@ const st: Record<string, React.CSSProperties> = {
 function NotifyCheckbox({ checked, onToggle, label, sub }: { checked: boolean; onToggle: () => void; label: string; sub: string }) {
   return (
     <label style={{
-      display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 10px',
       borderRadius: 8, cursor: 'pointer',
       background: checked ? 'rgba(96,165,250,0.08)' : 'transparent',
       border: `1px solid ${checked ? 'rgba(96,165,250,0.25)' : 'var(--glass-border)'}`,
       transition: 'all 0.15s',
     }}>
+      <input type="checkbox" checked={checked} onChange={onToggle} style={{ display: 'none' }} />
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <span style={{ fontSize: 12, fontWeight: checked ? 600 : 500, color: checked ? 'rgba(96,165,250,0.95)' : 'var(--text-sub)' }}>{label}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub}</span>
+      </span>
       <span style={{
         width: 16, height: 16, borderRadius: 4, flexShrink: 0,
         border: `2px solid ${checked ? 'rgba(96,165,250,0.9)' : 'var(--text-dim)'}`,
@@ -275,11 +280,6 @@ function NotifyCheckbox({ checked, onToggle, label, sub }: { checked: boolean; o
             <polyline points="2,6 5,9 10,3"/>
           </svg>
         )}
-      </span>
-      <input type="checkbox" checked={checked} onChange={onToggle} style={{ display: 'none' }} />
-      <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <span style={{ fontSize: 12, fontWeight: checked ? 600 : 500, color: checked ? 'rgba(96,165,250,0.95)' : 'var(--text-sub)' }}>{label}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub}</span>
       </span>
     </label>
   )
