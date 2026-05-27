@@ -900,7 +900,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
             style={{
               position: 'absolute',
               top: 0, right: 0, bottom: 0,
-              width: isMobile ? '100%' : 500,
+              width: isMobile ? '100%' : (activeDrawer === 'data' ? 1000 : 500),
               background: theme === 'light' ? 'rgba(245,250,255,0.97)' : 'rgba(6,12,26,0.97)',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
