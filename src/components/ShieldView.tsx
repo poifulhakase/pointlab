@@ -1162,38 +1162,29 @@ export function ShieldView({ theme, isMobile, user }: Props) {
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
-      {/* フローティングタブメニュー */}
-      <div style={{
-        flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-        padding: '6px 16px',
-        background: theme === 'light' ? 'rgba(240,247,255,0.96)' : 'rgba(5,14,26,0.96)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: `1px solid ${c.BORDER}`,
-      }}>
-        {TABS.map(tab => {
-          const active = mode === tab.key
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setMode(tab.key)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 16px', borderRadius: 7,
-                fontFamily: c.FONT, fontSize: 11, fontWeight: 700,
-                letterSpacing: '0.08em', cursor: 'pointer',
-                border: `1px solid ${active ? c.BORDBR : 'transparent'}`,
-                background: active ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.10)` : 'transparent',
-                color: active ? c.GREEN : c.DIM,
-                boxShadow: (active && theme === 'dark') ? `0 0 12px rgba(0,229,255,0.12)` : 'none',
-                transition: 'all 0.15s',
-              }}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          )
-        })}
+      {/* タブ切り替え */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 12px', borderBottom: `1px solid ${c.BORDER}` }}>
+        <div className="glass" style={{ display: 'flex', alignItems: 'center', borderRadius: 10, padding: 2, gap: 2 }}>
+          {TABS.map(tab => {
+            const active = mode === tab.key
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setMode(tab.key)}
+                style={{
+                  padding: '5px 14px', borderRadius: 7,
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                  color: active ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
+                  background: active ? 'var(--view-btn-active-bg)' : 'transparent',
+                  boxShadow: active ? '0 2px 8px rgba(100,120,200,0.15)' : 'none',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* コンテンツ */}
