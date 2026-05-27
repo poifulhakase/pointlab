@@ -12,12 +12,11 @@ type Props = {
   user: User
   syncStatus: string
   onOpenAccount: () => void
-  isAdmin: boolean
   pushEnabled: boolean
   onTogglePush: () => void
 }
 
-export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, isAdmin, pushEnabled, onTogglePush }: Props) {
+export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, pushEnabled, onTogglePush }: Props) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)

@@ -691,7 +691,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           user={user}
           syncStatus={syncStatus}
           onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
-          isAdmin={user?.email === 'sushi.ramen.unajyu@gmail.com'}
           pushEnabled={pushEnabled}
           onTogglePush={handleTogglePush}
         />
