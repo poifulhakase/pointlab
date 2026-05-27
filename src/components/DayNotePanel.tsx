@@ -51,7 +51,6 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
       }
     }
     setSchedules(scheds)
-    setNewText('')
     setIsDirty(prefillTime ? true : false)
     setTimeout(() => titleInputRef.current?.focus(), 20)
   }, [date?.toDateString(), prefillTime])
@@ -120,7 +119,9 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   const handleDelete = () => {
     if (!date) return
     if (!window.confirm('このメモ・スケジュールを削除してよろしいですか？')) return
-    saveNote(date, { title: '', memo: '', schedules: [] })
+    const emptyNote: DayNote = { title: '', memo: '', schedules: [] }
+    saveNote(date, emptyNote)
+    onAfterSave?.(date, emptyNote)
     onSave()
     onClose()
   }
