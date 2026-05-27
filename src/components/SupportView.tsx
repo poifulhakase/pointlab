@@ -26,6 +26,10 @@ type Props = {
   onPoiroboChange?: (open: boolean) => void
   pushEnabled?: boolean
   onTogglePush?: () => void
+  notifyRadar?: boolean
+  onToggleNotifyRadar?: () => void
+  notifyDataReady?: boolean
+  onToggleNotifyDataReady?: () => void
 }
 
 function ViewLoader() {
@@ -310,7 +314,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
+export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -1023,7 +1027,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>プッシュ通知</span>
                           <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                            {!user ? 'ログインが必要です' : pushEnabled ? 'ON — 前日 12:30 に通知' : 'OFF'}
+                            {!user ? 'ログインが必要です' : pushEnabled ? 'ON' : 'OFF'}
                           </span>
                         </span>
                       </span>
@@ -1041,6 +1045,24 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                         }} />
                       </span>
                     </div>
+                    {pushEnabled && user && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 4 }}>
+                        {[
+                          { checked: notifyRadar, onToggle: onToggleNotifyRadar, label: 'ぽいロボ レーダー', sub: 'イベント前日 12:30' },
+                          { checked: notifyDataReady, onToggle: onToggleNotifyDataReady, label: 'データ更新通知', sub: '週次データ更新後（土曜）' },
+                        ].map(({ checked, onToggle, label, sub }) => (
+                          <div key={label} onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+                            <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? 'rgba(96,165,250,0.85)' : 'var(--glass-border)'}`, background: checked ? 'rgba(96,165,250,0.85)' : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                              {checked && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            </span>
+                            <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{label}</span>
+                              <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </section>
 
                   {/* 表示 */}
