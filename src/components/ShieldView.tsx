@@ -1072,7 +1072,6 @@ function NewsPanel({
 // ── メインコンポーネント ──────────────────────────────
 export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Props) {
   const tv = themeVars(theme)
-  const c  = cy(theme)
 
   const mode = shieldTab
   const [copyStatus,  setCopyStatus]  = useState<'' | 'shield' | 'news_shield'>('')
