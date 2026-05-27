@@ -7,7 +7,7 @@ import { fetchVixData } from '../utils/vixData'
 import { fetchFuturesDailyData } from '../utils/futuresDailyData'
 import { fetchWithCache } from '../utils/dataCache'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
-import { NEWS_PROMPT_TEMPLATE } from '../utils/newsPrompt'
+import { buildNewsPrompt, buildUpcomingEventsText } from '../utils/newsPrompt'
 
 const SHIELD_CACHE_KEY        = 'poical-shield-mkt-data-v2'
 const SHIELD_CACHE_TTL_OPEN   = 30 * 60 * 1000   // 市場時間中: 30分
@@ -948,7 +948,8 @@ export function ShieldView({ theme, isMobile, user }: Props) {
   const handleNewsCopy = useCallback(async () => {
     const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
     const ts = jst.toISOString().replace('T', ' ').slice(0, 19)
-    const prompt = NEWS_PROMPT_TEMPLATE.replace('YYYY-MM-DD HH:MM:SS', ts)
+    const tevState = '（ぽいロボ エンジンの需給分析結果を参照）'
+    const prompt = buildNewsPrompt(ts, buildUpcomingEventsText(5), tevState)
     try {
       await navigator.clipboard.writeText(prompt)
     } catch {

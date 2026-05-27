@@ -16,7 +16,7 @@ import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
 import { fetchNkFuturesPriceData, type NkFuturesDayData } from '../utils/nkFuturesPriceData'
 import { fetchStocksDaily, type StocksDailyData } from '../utils/stocksDailyData'
-import { NEWS_PROMPT_TEMPLATE } from '../utils/newsPrompt'
+import { buildNewsPrompt, buildUpcomingEventsText } from '../utils/newsPrompt'
 import { AI_PROMPT_TEMPLATE } from '../utils/enginePrompt'
 const VixPanel    = lazy(() => import('./VixPanel').then(m => ({ default: m.VixPanel })))
 const NtRatioPanel = lazy(() => import('./NtRatioPanel').then(m => ({ default: m.NtRatioPanel })))
@@ -1926,10 +1926,23 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   const handleNewsCopy = useCallback(async () => {
     const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
     const ts = jst.toISOString().replace('T', ' ').slice(0, 19)
-    await copyText(NEWS_PROMPT_TEMPLATE.replace('YYYY-MM-DD HH:MM:SS', ts))
+    let tevState = '（需給データ取得中）'
+    try {
+      const parsed = JSON.parse(exportJson)
+      const tev = parsed?.tev_analysis
+      if (tev?.status) {
+        const conf = tev.confidence_pct != null ? `確信度${tev.confidence_pct}%` : ''
+        const exec = tev.tev_for_execution != null ? `TEV=${tev.tev_for_execution}` : 'TEV執行不可'
+        tevState = `ステータス：${tev.status}　${conf}　${exec}`
+        if (Array.isArray(tev.sanity_warnings) && tev.sanity_warnings.length > 0) {
+          tevState += `\n注意：${tev.sanity_warnings.join('、')}`
+        }
+      }
+    } catch { /* noop */ }
+    await copyText(buildNewsPrompt(ts, buildUpcomingEventsText(5), tevState))
     setCopyStatus('news_engine')
     setTimeout(() => setCopyStatus(''), 2000)
-  }, [])
+  }, [exportJson])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 
