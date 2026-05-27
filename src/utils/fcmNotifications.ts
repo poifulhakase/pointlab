@@ -7,7 +7,8 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string
 export type PushSettings = {
   fcmToken: string
   pushEnabled: boolean
-  poiroboAlertEnabled: boolean
+  notifyRadar: boolean
+  notifyDataReady: boolean
   poiroboAlertConfig: PoiroboAlertConfig
 }
 
@@ -21,7 +22,8 @@ export type EnablePushResult = 'ok' | 'permission-denied' | 'no-token' | 'error'
 /** 通知許可を取得して FCM トークンを登録 */
 export async function enablePush(
   uid: string,
-  poiroboAlertEnabled: boolean,
+  notifyRadar: boolean,
+  notifyDataReady: boolean,
   poiroboAlertConfig: PoiroboAlertConfig
 ): Promise<EnablePushResult> {
   try {
@@ -45,7 +47,8 @@ export async function enablePush(
     await restSetDoc(`pushSubscriptions/${uid}`, {
       fcmToken: token,
       pushEnabled: true,
-      poiroboAlertEnabled,
+      notifyRadar,
+      notifyDataReady,
       poiroboAlertConfig: poiroboAlertConfig as unknown as Record<string, unknown>,
       updatedAt: new Date().toISOString(),
     })
@@ -72,15 +75,17 @@ export async function disablePush(uid: string): Promise<void> {
   }
 }
 
-/** ぽいロボアラート設定を Firestore に同期 */
-export async function syncPushAlertConfig(
+/** プッシュ通知設定（種別・アラート設定）を Firestore に同期 */
+export async function syncPushSettings(
   uid: string,
-  poiroboAlertEnabled: boolean,
+  notifyRadar: boolean,
+  notifyDataReady: boolean,
   poiroboAlertConfig: PoiroboAlertConfig
 ): Promise<void> {
   try {
     await restSetDoc(`pushSubscriptions/${uid}`, {
-      poiroboAlertEnabled,
+      notifyRadar,
+      notifyDataReady,
       poiroboAlertConfig: poiroboAlertConfig as unknown as Record<string, unknown>,
     })
   } catch { /* ドキュメント未作成時は無視 */ }

@@ -14,9 +14,13 @@ type Props = {
   onOpenAccount: () => void
   pushEnabled: boolean
   onTogglePush: () => void
+  notifyRadar: boolean
+  onToggleNotifyRadar: () => void
+  notifyDataReady: boolean
+  onToggleNotifyDataReady: () => void
 }
 
-export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, pushEnabled, onTogglePush }: Props) {
+export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle, onChangeDarkStyle, user, syncStatus, onOpenAccount, pushEnabled, onTogglePush, notifyRadar, onToggleNotifyRadar, notifyDataReady, onToggleNotifyDataReady }: Props) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)
@@ -98,6 +102,7 @@ export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle
           {/* 通知 */}
           <section style={st.section}>
             <div style={st.sectionTitle}>通知</div>
+            {/* プッシュ通知 ON/OFF */}
             <div style={{ ...st.accountRow, cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}
               onClick={user ? onTogglePush : undefined}>
               <span style={st.accountLeft}>
@@ -110,7 +115,7 @@ export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle
                 <span style={st.accountInfo}>
                   <span style={st.accountName}>プッシュ通知</span>
                   <span style={st.accountSub}>
-                    {!user ? 'ログインが必要です' : pushEnabled ? 'ON — 前日 12:30 に通知' : 'OFF'}
+                    {!user ? 'ログインが必要です' : pushEnabled ? 'ON' : 'OFF'}
                   </span>
                 </span>
               </span>
@@ -129,6 +134,23 @@ export function SettingsPanel({ isOpen, onClose, theme, onToggleTheme, darkStyle
                 }} />
               </span>
             </div>
+            {/* 通知種別チェックボックス（プッシュ通知 ON のときのみ表示） */}
+            {pushEnabled && user && (
+              <div style={st.notifyTypes}>
+                <NotifyCheckbox
+                  checked={notifyRadar}
+                  onToggle={onToggleNotifyRadar}
+                  label="ぽいロボ レーダー"
+                  sub="イベント前日 12:30"
+                />
+                <NotifyCheckbox
+                  checked={notifyDataReady}
+                  onToggle={onToggleNotifyDataReady}
+                  label="データ更新通知"
+                  sub="週次データ更新後（土曜）"
+                />
+              </div>
+            )}
           </section>
 
           {/* 表示 */}
@@ -228,4 +250,37 @@ const st: Record<string, React.CSSProperties> = {
   avatarPlaceholder: { width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-sub)' },
 
   actionBtn: { padding: '8px 14px', borderRadius: 8, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-sub)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' as const },
+
+  notifyTypes: { display: 'flex', flexDirection: 'column' as const, gap: 6, paddingLeft: 4 },
+}
+
+function NotifyCheckbox({ checked, onToggle, label, sub }: { checked: boolean; onToggle: () => void; label: string; sub: string }) {
+  return (
+    <label style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px',
+      borderRadius: 8, cursor: 'pointer',
+      background: checked ? 'rgba(96,165,250,0.08)' : 'transparent',
+      border: `1px solid ${checked ? 'rgba(96,165,250,0.25)' : 'var(--glass-border)'}`,
+      transition: 'all 0.15s',
+    }}>
+      <span style={{
+        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+        border: `2px solid ${checked ? 'rgba(96,165,250,0.9)' : 'var(--text-dim)'}`,
+        background: checked ? 'rgba(96,165,250,0.85)' : 'transparent',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.15s',
+      }}>
+        {checked && (
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="2,6 5,9 10,3"/>
+          </svg>
+        )}
+      </span>
+      <input type="checkbox" checked={checked} onChange={onToggle} style={{ display: 'none' }} />
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <span style={{ fontSize: 12, fontWeight: checked ? 600 : 500, color: checked ? 'rgba(96,165,250,0.95)' : 'var(--text-sub)' }}>{label}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub}</span>
+      </span>
+    </label>
+  )
 }

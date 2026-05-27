@@ -302,10 +302,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ sent: 0, reason: 'no events tomorrow' })
   }
 
-  // pushEnabled かつ poiroboAlertEnabled のユーザーを取得
+  // pushEnabled のユーザーを取得（notifyRadar / 旧 poiroboAlertEnabled の絞り込みはループ内で行う）
   const snap = await db.collection('pushSubscriptions')
     .where('pushEnabled', '==', true)
-    .where('poiroboAlertEnabled', '==', true)
     .get()
 
   let sent = 0
@@ -315,6 +314,9 @@ export default async function handler(req, res) {
     const data = docSnap.data()
     const { fcmToken, poiroboAlertConfig } = data
     if (!fcmToken) continue
+    // notifyRadar が未設定の場合は旧フィールド poiroboAlertEnabled で後方互換
+    const radarEnabled = data.notifyRadar ?? data.poiroboAlertEnabled ?? false
+    if (!radarEnabled) continue
 
     // ユーザー設定と明日のイベントを照合
     const matched = Object.entries(tomorrowHit)

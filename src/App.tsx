@@ -19,7 +19,7 @@ import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 import { Z } from './utils/zIndex'
 import { purgeStaleDataCaches } from './utils/dataCache'
-import { enablePush, disablePush, syncPushAlertConfig } from './utils/fcmNotifications'
+import { enablePush, disablePush, syncPushSettings } from './utils/fcmNotifications'
 import { getUserActiveBooking, getAllBookings } from './utils/bookingApi'
 import type { BookingSlot } from './utils/bookingTypes'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
@@ -36,6 +36,7 @@ const ShieldView        = lazy(() => import('./components/ShieldView').then(m =>
 const LegalModal        = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
 const BacktestPanel     = lazy(() => import('./components/BacktestPanel').then(m => ({ default: m.BacktestPanel })))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
+const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
 const SettingsPanel     = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
 const PoiroboAlertModal = lazy(() => import('./components/PoiroboAlertModal').then(m => ({ default: m.PoiroboAlertModal })))
@@ -210,7 +211,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   } = useFirebaseSync(refreshNoteMap)
 
   // ── プッシュ通知 ──────────────────────────────────────────────────────
-  const [pushEnabled, setPushEnabled] = useState<boolean>(() => localStorage.getItem('poical-push-enabled') === 'true')
+  const [pushEnabled,     setPushEnabled]     = useState<boolean>(() => localStorage.getItem('poical-push-enabled') === 'true')
+  const [notifyRadar,     setNotifyRadar]     = useState<boolean>(() => localStorage.getItem('poical-notify-radar') !== 'false')
+  const [notifyDataReady, setNotifyDataReady] = useState<boolean>(() => localStorage.getItem('poical-notify-data-ready') === 'true')
 
   const [pushToast, setPushToast] = useState<string | null>(null)
   useEffect(() => {
@@ -226,7 +229,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       setPushEnabled(false)
       localStorage.setItem('poical-push-enabled', 'false')
     } else {
-      const result = await enablePush(user.uid, showPoiroboAlert, getSettings().poiroboAlertConfig)
+      const result = await enablePush(user.uid, notifyRadar, notifyDataReady, getSettings().poiroboAlertConfig)
       console.log('[Push] enablePush result:', result)
       if (result === 'ok') {
         setPushEnabled(true)
@@ -240,13 +243,29 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
         setPushToast('通知の登録に失敗しました。コンソールを確認してください。')
       }
     }
-  }, [user, pushEnabled, showPoiroboAlert])
+  }, [user, pushEnabled, notifyRadar, notifyDataReady])
+
+  const handleToggleNotifyRadar = useCallback(() => {
+    if (!user || !pushEnabled) return
+    const next = !notifyRadar
+    setNotifyRadar(next)
+    localStorage.setItem('poical-notify-radar', String(next))
+    syncPushSettings(user.uid, next, notifyDataReady, poiroboAlertConfig).catch(() => {})
+  }, [user, pushEnabled, notifyRadar, notifyDataReady, poiroboAlertConfig])
+
+  const handleToggleNotifyDataReady = useCallback(() => {
+    if (!user || !pushEnabled) return
+    const next = !notifyDataReady
+    setNotifyDataReady(next)
+    localStorage.setItem('poical-notify-data-ready', String(next))
+    syncPushSettings(user.uid, notifyRadar, next, poiroboAlertConfig).catch(() => {})
+  }, [user, pushEnabled, notifyRadar, notifyDataReady, poiroboAlertConfig])
 
   useEffect(() => {
     if (pushEnabled && user) {
-      syncPushAlertConfig(user.uid, showPoiroboAlert, poiroboAlertConfig).catch(() => {})
+      syncPushSettings(user.uid, notifyRadar, notifyDataReady, poiroboAlertConfig).catch(() => {})
     }
-  }, [pushEnabled, user, showPoiroboAlert, poiroboAlertConfig])
+  }, [pushEnabled, user, notifyRadar, notifyDataReady, poiroboAlertConfig])
 
   // ── 予約カレンダー表示 ────────────────────────────────────────────────
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
@@ -547,12 +566,17 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               <EvalsPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
             </Suspense>
           )}
+          {cal.view === 'original' && (
+            <Suspense fallback={<ViewLoader />}>
+              <OriginalFeatureView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+            </Suspense>
+          )}
 
           {/* 研究室 */}
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -694,6 +718,10 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
           pushEnabled={pushEnabled}
           onTogglePush={handleTogglePush}
+          notifyRadar={notifyRadar}
+          onToggleNotifyRadar={handleToggleNotifyRadar}
+          notifyDataReady={notifyDataReady}
+          onToggleNotifyDataReady={handleToggleNotifyDataReady}
         />
       </Suspense>
 

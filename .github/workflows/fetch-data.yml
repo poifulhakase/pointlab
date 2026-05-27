@@ -75,3 +75,9 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: npx vercel --prod --token "$VERCEL_TOKEN"
+
+      - name: データ更新通知を送信（土曜のみ・成功時）
+        if: success() && github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * 6')
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST https://pointlab.vercel.app/api/notify-data-ready \
+            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}"
