@@ -723,7 +723,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           <div style={styles.floatPill} className="glass">
             {isCalView && (
               <>
-                {CAL_VIEW_TABS.map(([key, label]) => (
+                {CAL_VIEW_TABS.filter(([key]) => isMobile || key !== 'day').map(([key, label]) => (
                   <button
                     key={key}
                     style={{ ...styles.floatTab, ...(cal.view === key ? styles.floatTabActive : {}) }}
