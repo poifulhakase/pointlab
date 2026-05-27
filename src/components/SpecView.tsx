@@ -875,39 +875,58 @@ function renderContent(block: (typeof SPEC_SECTIONS)[0]['content'][0]) {
 
 // ── メインコンポーネント ──────────────────────────────
 export function SpecView({ theme, isMobile, onClose }: Props) {
-  return (
-    <div style={{
-      flex: 1, overflowY: 'auto', overflowX: 'hidden',
-      padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
-      background: theme === 'dark' ? '#0f0f0f' : '#f4f6f9',
-    }}>
-      <div style={{ maxWidth: 780, margin: '0 auto' }}>
+  const D = theme === 'dark'
+  const mono = "'Courier New', Courier, monospace" as const
+  const c = {
+    bg:     D ? 'rgba(3,10,24,0.92)'  : 'rgba(218,236,255,0.92)',
+    hdrBg:  D ? 'rgba(3,9,22,0.97)'   : 'rgba(228,242,255,0.97)',
+    scan:   D ? 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.013) 3px,rgba(0,229,255,0.013) 4px)' : 'none',
+    accent: D ? '#00e5ff'              : '#0369a1',
+    dim:    D ? 'rgba(0,229,255,0.42)' : 'rgba(3,105,161,0.62)',
+    rule:   D ? 'rgba(0,200,255,0.10)' : 'rgba(3,105,161,0.12)',
+    cardBg: D ? 'rgba(0,229,255,0.05)' : 'var(--glass-bg)',
+    cardBr: D ? 'rgba(0,229,255,0.18)' : 'var(--glass-border)',
+    text:   D ? 'rgba(220,240,255,0.90)' : 'rgba(8,28,75,0.90)',
+  }
 
-        {/* ヘッダー */}
-        <div style={{ marginBottom: 32, display: 'flex', alignItems: 'center', gap: 14 }}>
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: c.bg, backgroundImage: c.scan }}>
+      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
+
+        {/* Sticky header — ManualView スタイル */}
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 5,
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: isMobile ? '11px 16px' : '12px 28px',
+          background: c.hdrBg,
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${c.rule}`,
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.accent, boxShadow: D ? `0 0 7px ${c.accent}` : 'none', flexShrink: 0 }} />
+          <span style={{
+            flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em',
+            color: c.dim, fontFamily: mono, whiteSpace: 'nowrap',
+            textShadow: D ? '0 0 10px rgba(0,229,255,0.28)' : 'none',
+          }}>
+            ぽいロボ ▸ システム仕様
+          </span>
           {onClose && (
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none', border: '1px solid var(--glass-border)', borderRadius: 8,
-                padding: '6px 12px', cursor: 'pointer', color: 'var(--text-dim)',
-                fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-              }}
-            >
-              ← 戻る
+            <button onClick={onClose} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, borderRadius: 7,
+              border: D ? '1px solid rgba(0,200,255,0.20)' : '1px solid rgba(0,100,180,0.25)',
+              background: D ? 'rgba(0,200,255,0.06)' : 'rgba(0,100,180,0.08)',
+              color: D ? 'rgba(0,200,255,0.65)' : 'rgba(0,80,160,0.70)',
+              cursor: 'pointer', flexShrink: 0,
+            }} aria-label="閉じる">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
             </button>
           )}
-          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="ぽいロボ" style={{ height: 36, objectFit: 'contain', opacity: 0.9 }} />
-          <div>
-            <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>
-              システム仕様
-            </h1>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-dim)' }}>
-              ぽいロボ — 最終更新: 2026-05-26
-            </p>
-          </div>
         </div>
 
+        <div style={{ maxWidth: 780, margin: '0 auto', padding: isMobile ? '20px 16px 40px' : '28px 32px 48px' }}>
         {/* セクション一覧 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {SPEC_SECTIONS.map(section => (
@@ -915,8 +934,8 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
               key={section.id}
               id={section.id}
               style={{
-                background: 'var(--glass-bg)',
-                border: '1px solid var(--glass-border)',
+                background: c.cardBg,
+                border: `1px solid ${c.cardBr}`,
                 borderRadius: 14,
                 padding: isMobile ? '18px 16px' : '22px 24px',
               }}
@@ -926,7 +945,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
                 margin: '0 0 16px',
                 fontSize: isMobile ? 16 : 17,
                 fontWeight: 700,
-                color: 'var(--text)',
+                color: c.text,
                 display: 'flex', alignItems: 'center', gap: 8,
                 letterSpacing: '-0.3px',
               }}>
@@ -934,7 +953,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
                 {section.title}
               </h2>
 
-              <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 16 }}>
+              <div style={{ borderTop: `1px solid ${c.cardBr}`, paddingTop: 16 }}>
                 {section.content.map((block, i) => (
                   <div key={i}>{renderContent(block)}</div>
                 ))}
@@ -942,8 +961,8 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
             </section>
           ))}
         </div>
-
-      </div>
+        </div>{/* /maxWidth */}
+      </div>{/* /scroll */}
     </div>
   )
 }
