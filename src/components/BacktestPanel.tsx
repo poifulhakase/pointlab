@@ -103,7 +103,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
         <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap', textShadow: c.L ? 'none' : '0 0 10px rgba(0,229,255,0.28)' }}>
-          ぽいロボ ▸ TEVバックテスト
+          ぽいロボ ▸ 需給エネルギーバックテスト
         </span>
         <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>ベータ</span>
         <button onClick={onClose} style={{
