@@ -48,13 +48,23 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # フレッシュデータを一時退避
+          cp -r public/data/ /tmp/fresh_data
+
+          # リモート最新に強制同期（コンフリクト根絶）
+          git fetch origin main
+          git reset --hard origin/main
+
+          # フレッシュデータを上書き
+          cp -r /tmp/fresh_data/. public/data/
+
           git add public/data/
           if git diff --cached --quiet; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "データに変更なし。スキップします。"
           else
             git commit -m "chore: データ自動更新 $(date '+%Y-%m-%d')"
-            git pull --rebase -Xtheirs origin main
             git push
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
