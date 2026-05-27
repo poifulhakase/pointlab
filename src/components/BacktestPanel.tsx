@@ -103,9 +103,9 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
         <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap', textShadow: c.L ? 'none' : '0 0 10px rgba(0,229,255,0.28)' }}>
-          POIROBO_OS ▸ TEV_BACKTEST
+          ぽいロボ ▸ TEVバックテスト
         </span>
-        <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>BETA</span>
+        <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>ベータ</span>
         <button onClick={onClose} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: 28, height: 28, borderRadius: 7, cursor: 'pointer',
@@ -131,7 +131,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
         {/* Loading */}
         {loading && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: mono, fontSize: 11, color: c.DIM, letterSpacing: '0.18em' }}>LOADING...</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: c.DIM, letterSpacing: '0.18em' }}>読み込み中...</span>
           </div>
         )}
 
@@ -162,23 +162,23 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
             <>
               {/* Meta */}
               <div style={{ flexShrink: 0, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.10em' }}>
-                {data_range.from} ▸ {data_range.to}&nbsp;&nbsp;{summary.total_weeks} WKS&nbsp;&nbsp;|&nbsp;&nbsp;{new Date(computed_at).toLocaleDateString('ja-JP')} 算出
+                {data_range.from} ▸ {data_range.to}&nbsp;&nbsp;{summary.total_weeks}週&nbsp;&nbsp;|&nbsp;&nbsp;{new Date(computed_at).toLocaleDateString('ja-JP')} 算出
               </div>
 
               {/* Summary cards（4列固定） */}
               <div style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: isMobile ? 6 : 10 }}>
                 {[
-                  { label: 'OVERALL', val: summary.overall_win_rate, sub: `${summary.signal_weeks}週` },
-                  { label: 'BULL',    val: summary.bull_win_rate,    sub: `${summary.bull_signals}回` },
-                  { label: 'BEAR',    val: summary.bear_win_rate,    sub: `${summary.bear_signals}回` },
-                  { label: 'NEUTRAL', val: null, sub: '回避', extra: String(summary.neutral_signals) + '週' },
+                  { label: '総合',   val: summary.overall_win_rate, sub: `${summary.signal_weeks}週` },
+                  { label: 'ブル',   val: summary.bull_win_rate,    sub: `${summary.bull_signals}回` },
+                  { label: 'ベア',   val: summary.bear_win_rate,    sub: `${summary.bear_signals}回` },
+                  { label: '中立',   val: null, sub: '回避', extra: String(summary.neutral_signals) + '週' },
                 ].map(item => (
                   <div key={item.label} style={{
                     padding: isMobile ? '10px 8px' : '14px 16px',
                     border: `1px solid ${c.TAGBDR}`, background: c.TAGBG,
                     display: 'flex', flexDirection: 'column', gap: isMobile ? 3 : 5,
                   }}>
-                    <div style={{ fontSize: isMobile ? 7 : 9, fontWeight: 800, letterSpacing: '0.16em', fontFamily: mono, color: item.label === 'NEUTRAL' ? c.DIM : c.ACCENT }}>
+                    <div style={{ fontSize: isMobile ? 7 : 9, fontWeight: 800, letterSpacing: '0.16em', fontFamily: mono, color: item.label === '中立' ? c.DIM : c.ACCENT }}>
                       {item.label}
                     </div>
                     <div style={{
@@ -310,7 +310,7 @@ function WeeklyLogModal({ data, c, isMobile, onClose }: {
           borderBottom: `1px solid ${c.RULE}`,
         }}>
           <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.20em', color: c.DIM, fontFamily: mono, textShadow: c.L ? 'none' : '0 0 10px rgba(0,229,255,0.28)' }}>
-            WEEKLY_LOG
+            週次ログ
           </span>
           <button onClick={onClose} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -333,7 +333,7 @@ function WeeklyLogModal({ data, c, isMobile, onClose }: {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: mono, fontSize: isMobile ? 10 : 11 }}>
               <thead>
                 <tr>
-                  {['WEEK','TEV','STATUS','CONF','SIG','NK_%','W/L'].map((h, i) => (
+                  {['週','TEV','ステータス','確信度','判定','日経%','勝敗'].map((h, i) => (
                     <th key={h} style={{
                       padding: '7px 10px',
                       textAlign: i === 0 || i === 2 ? 'left' : 'center',
@@ -356,7 +356,7 @@ function WeeklyLogModal({ data, c, isMobile, onClose }: {
                       <td style={{ padding: '8px 10px', color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>{w.tev ?? '—'}</td>
                       <td style={{ padding: '8px 10px', color: c.SUB, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap' }}>{w.status ?? '—'}</td>
                       <td style={{ padding: '8px 10px', color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>{w.confidence != null ? w.confidence + '%' : '—'}</td>
-                      <td style={{ padding: '8px 10px', color: sigColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap' }}>{w.signal.toUpperCase()}</td>
+                      <td style={{ padding: '8px 10px', color: sigColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap' }}>{w.signal === 'bull' ? 'ブル' : w.signal === 'bear' ? 'ベア' : '中立'}</td>
                       <td style={{ padding: '8px 10px', color: nkColor, borderBottom: `1px solid ${c.RULE}`, textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {w.price_change_pct != null ? (w.price_change_pct > 0 ? '+' : '') + w.price_change_pct + '%' : '—'}
                       </td>
@@ -372,7 +372,7 @@ function WeeklyLogModal({ data, c, isMobile, onClose }: {
 
           {/* モデル注記 */}
           <div>
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12 }}>MODEL_NOTES</div>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12 }}>モデル注記</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {notes.map((n, i) => (
                 <div key={i} style={{
@@ -415,7 +415,7 @@ function LogButton({ c, onClick }: { c: C; onClick: () => void }) {
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
       </svg>
-      WEEKLY LOG
+      週次ログ
     </button>
   )
 }
