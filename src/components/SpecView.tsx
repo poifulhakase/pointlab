@@ -900,6 +900,9 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
     const handler = () => {
       const secs = [...container.querySelectorAll<HTMLElement>('.spec-section')]
       if (!secs.length) return
+      // ページ最下部に到達したら最後のセクションをアクティブにする
+      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 4
+      if (atBottom) { setActiveId(secs[secs.length - 1].id); return }
       const ct = container.getBoundingClientRect().top
       let cur = secs[0].id
       for (const s of secs) {
@@ -964,7 +967,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
         <div style={{
           maxWidth: isMobile ? '100%' : 1040,
           margin: '0 auto',
-          padding: isMobile ? '20px 16px 40px' : '0 32px 48px',
+          padding: isMobile ? '20px 16px 40px' : '0 32px 200px',
           ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
         }}>
 

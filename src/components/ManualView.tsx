@@ -160,6 +160,8 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
     const handler = () => {
       const secs = [...container.querySelectorAll<HTMLElement>('.mv-toc-section')]
       if (!secs.length) return
+      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 4
+      if (atBottom) { setActiveId(secs[secs.length - 1].id); return }
       const ct = container.getBoundingClientRect().top
       let cur = secs[0].id
       for (const s of secs) {
@@ -259,7 +261,7 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
         <div style={{
           maxWidth: isMobile ? '100%' : 1200,
           margin: '0 auto',
-          padding: isMobile ? '20px 16px 80px' : '0 40px 100px',
+          padding: isMobile ? '20px 16px 80px' : '0 40px 200px',
           ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
         }}>
 
