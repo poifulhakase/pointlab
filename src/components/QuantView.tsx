@@ -739,21 +739,25 @@ function buildExportJson(
   // ── TEV 整合性検証 ───────────────────────────────
   const tev_sanityWarnings: string[] = []
 
-  // 価格基準日の乖離チェック（TEV計算に依存しない・当日急騰等を検知）
+  // 価格基準日チェック: 1日差は構造的制限（市場時間中は当日終値が未確定）→ 2日以上の乖離のみ警告
   const ntBaseDate  = nk?.time ?? null
   const futLatDate  = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].date : null
-  if (ntBaseDate && futLatDate && ntBaseDate !== futLatDate) {
+  const futLatClose = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].close : null
+  const daysDiff    = ntBaseDate && futLatDate
+    ? Math.round(Math.abs(new Date(ntBaseDate).getTime() - new Date(futLatDate).getTime()) / 86400000)
+    : 0
+  if (daysDiff >= 2) {
     tev_sanityWarnings.push(
-      `価格基準日乖離: MA計算基準=${ntBaseDate} 先物最新=${futLatDate}。MA乖離率は${ntBaseDate}終値ベースのため実態より過小/過大の可能性あり`
+      `価格データ陳腐化: MA計算基準=${ntBaseDate} 先物JSON最新=${futLatDate}（${daysDiff}日乖離）。静的JSONの更新失敗の可能性あり`
     )
   }
-  const futLatClose = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].close : null
+  // 価格急変動チェック: ≥3%のみ（1-2%の日中変動は構造的なため除外）
   if (nkCur && futLatClose) {
     const priceDiffPct = (futLatClose - nkCur) / nkCur * 100
-    if (Math.abs(priceDiffPct) >= 1.0) {
+    if (Math.abs(priceDiffPct) >= 3.0) {
       const sign = priceDiffPct > 0 ? '+' : ''
       tev_sanityWarnings.push(
-        `当日価格乖離: MA基準値=${Math.round(nkCur)} 先物最新終値=${futLatClose}（${sign}${r2(priceDiffPct)}%）。当日の大きな価格変動がMA乖離率・TEVに未反映`
+        `価格急変動: 前日終値=${futLatClose} 現在値≈${Math.round(nkCur)}（${sign}${r2(priceDiffPct)}%）。急変動のためMA乖離率を参考値として扱うこと`
       )
     }
   }
@@ -936,6 +940,8 @@ function buildExportJson(
     },
 
     price_structure: {
+      price_as_of:   ntBaseDate ?? futLatDate,
+      price_basis:   '前営業日終値基準（市場時間中は当日終値未確定）',
       nikkei225: {
         ma5:           nkMa5,
         ma20:          nkMa20,
