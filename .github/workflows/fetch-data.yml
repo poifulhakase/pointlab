@@ -54,6 +54,7 @@ jobs:
             echo "データに変更なし。スキップします。"
           else
             git commit -m "chore: データ自動更新 $(date '+%Y-%m-%d')"
+            git pull --rebase origin main
             git push
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
