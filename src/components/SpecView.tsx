@@ -964,13 +964,13 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
         <div style={{
           maxWidth: isMobile ? '100%' : 1040,
           margin: '0 auto',
-          padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
+          padding: isMobile ? '20px 16px 40px' : '0 32px 48px',
           ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
         }}>
 
           {/* 追従目次 — PC のみ */}
           {!isMobile && (
-            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4 }}>
+            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4, paddingTop: 28 }}>
               <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.20em', color: c.dim, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
                 CONTENTS
               </div>
@@ -993,7 +993,7 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
           )}
 
           {/* セクション一覧 */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 28 }}>
             {SPEC_SECTIONS.map(section => (
               <section
                 key={section.id}

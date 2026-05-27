@@ -259,13 +259,13 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
         <div style={{
           maxWidth: isMobile ? '100%' : 1200,
           margin: '0 auto',
-          padding: isMobile ? '20px 16px 80px' : '28px 40px 100px',
+          padding: isMobile ? '20px 16px 80px' : '0 40px 100px',
           ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
         }}>
 
           {/* 追従目次 — PC のみ */}
           {!isMobile && (
-            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4 }}>
+            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4, paddingTop: 28 }}>
               <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
                 CONTENTS
               </div>
@@ -297,6 +297,7 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
             flexDirection: 'column',
             gap: isMobile ? 14 : 18,
             alignItems: 'start',
+            paddingTop: isMobile ? 0 : 28,
           }}>
             {SECTIONS.map((sec, i) => (
               <div
