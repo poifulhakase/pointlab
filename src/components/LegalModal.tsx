@@ -1,4 +1,3 @@
-import { useState } from 'react'
 
 type Tab = 'privacy' | 'disclaimer'
 
@@ -196,9 +195,8 @@ function renderBlock(block: Block, key: number, textClr: string, subClr: string)
 }
 
 // ── メインコンポーネント（フルページビュー）────────────
-export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }) {
-  const [tab, setTab] = useState<Tab>('privacy')
-  const sections = tab === 'privacy' ? PRIVACY_SECTIONS : DISCLAIMER_SECTIONS
+export function LegalModal({ theme, isMobile, onClose, legalTab = 'privacy' }: { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void; legalTab?: Tab; onLegalTabChange?: (t: Tab) => void }) {
+  const sections = legalTab === 'privacy' ? PRIVACY_SECTIONS : DISCLAIMER_SECTIONS
 
   const D = theme === 'dark'
   const c = {
@@ -211,8 +209,7 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
     rule:      D ? 'rgba(0,229,255,0.18)'      : 'rgba(3,105,161,0.18)',
     cardBg:    D ? 'rgba(0,229,255,0.05)'      : 'var(--glass-bg)',
     cardBdr:   D ? 'rgba(0,229,255,0.18)'      : 'var(--glass-border)',
-    tabActBg:  D ? 'rgba(0,229,255,0.12)'      : 'var(--view-btn-active-bg)',
-    tabActClr: D ? '#00e5ff'                   : 'var(--view-btn-active-color)',
+
     closeBdr:  D ? 'rgba(0,200,255,0.20)'      : 'var(--glass-border)',
     closeBg:   D ? 'rgba(0,200,255,0.06)'      : 'var(--glass-bg)',
     closeClr:  D ? 'rgba(0,200,255,0.65)'      : 'var(--text-dim)',
@@ -248,25 +245,6 @@ export function LegalModal({ theme, isMobile, onClose }: { theme: 'dark' | 'ligh
               </svg>
             </button>
           )}
-        </div>
-
-        {/* タブ切り替え */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-          {(['privacy', 'disclaimer'] as Tab[]).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.15s',
-                ...(tab === t
-                  ? { background: c.tabActBg, color: c.tabActClr, border: `1px solid ${c.rule}`, boxShadow: D ? `0 0 12px rgba(0,229,255,0.15)` : '0 2px 8px rgba(100,120,200,0.15)' }
-                  : { background: 'transparent', color: c.sub, border: `1px solid ${c.rule}` }),
-              }}
-            >
-              {t === 'privacy' ? 'プライバシーポリシー' : '免責事項'}
-            </button>
-          ))}
         </div>
 
         {/* セクション一覧 */}

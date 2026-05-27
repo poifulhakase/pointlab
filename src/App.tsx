@@ -191,6 +191,7 @@ export default function App() {
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
   const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro'>('bunseki')
   const [shieldTab,         setShieldTab]         = useState<'shield' | 'news'>('shield')
+  const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── ノートパネル ──────────────────────────────────────────────────────
@@ -532,7 +533,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           )}
           {cal.view === 'legal' && (
             <Suspense fallback={<ViewLoader />}>
-              <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} legalTab={legalTab} onLegalTabChange={setLegalTab} />
             </Suspense>
           )}
           {cal.view === 'backtest' && (
@@ -718,7 +719,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       </Suspense>
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield') && (
+      {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)' }}>
           <div style={styles.floatSubBar} className="glass">
           <div style={styles.floatPill} className="glass">
@@ -771,6 +772,17 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                     style={{ ...styles.floatTab, ...(shieldTab === tab ? styles.floatTabActive : {}) }}
                     onClick={() => setShieldTab(tab)}
                   >{SHIELD_LABELS[i]}</button>
+                ))}
+              </>
+            )}
+            {cal.view === 'legal' && (
+              <>
+                {LEGAL_TABS.map((tab, i) => (
+                  <button
+                    key={tab}
+                    style={{ ...styles.floatTab, ...(legalTab === tab ? styles.floatTabActive : {}) }}
+                    onClick={() => setLegalTab(tab)}
+                  >{LEGAL_LABELS[i]}</button>
                 ))}
               </>
             )}
@@ -828,6 +840,8 @@ const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['エンジン', '環境', '現物', '先物'] as const
 const SHIELD_TABS   = ['shield', 'news'] as const
 const SHIELD_LABELS = ['シールド', 'イベント'] as const
+const LEGAL_TABS    = ['privacy', 'disclaimer'] as const
+const LEGAL_LABELS  = ['プライバシー', '免責事項'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
 const carouselOuterStyle: React.CSSProperties = { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }
 const carouselWrapStyle:  React.CSSProperties = { flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }
