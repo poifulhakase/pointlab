@@ -79,7 +79,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick,
   const showMenu = isMobile || isTablet
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
-  const isLab    = view === 'support'
+  const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal'
   const useNeon  = isLab && theme === 'dark'
   const neonColor      = '#00e5ff'
   const neonDim        = 'rgba(0,229,255,0.42)'
