@@ -1068,19 +1068,6 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                     </div>
                   </section>
 
-                  {/* 開発者（管理者のみ） */}
-                  {isAdmin && (
-                    <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>開発者</div>
-                      <button
-                        onClick={() => { closeDrawer(); onOpenSpec?.() }}
-                        style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-sub)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
-                      >
-                        システム仕様を開く
-                      </button>
-                    </section>
-                  )}
-
                 </div>
               )}
             </div>
