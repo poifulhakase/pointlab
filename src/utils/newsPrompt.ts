@@ -63,22 +63,25 @@ ${tevState}
 
 ## 手順1.5：コンセンサス予想の取得（Web検索）
 
-手順1で特定したイベントについて、以下のサイトからコンセンサス予想を個別に検索する。
-一度にまとめて検索しない。イベントごとに1サイトずつ検索すること。
+手順1で特定したイベントについて、ニュースの事前プレビュー記事からコンセンサス予想を取得する。
+経済カレンダーサイト（Econoday・ForexFactory等）は有料・アクセス制限・スクレイピング不可のため使わない。
+代わりに、主要イベントの直前に必ず公開される「事前プレビュー記事」を検索する。
 
-検索クエリ例：
-- "FOMC June 2026 rate decision forecast site:econoday.com"
-- "nonfarm payroll June 2026 consensus site:forexfactory.com"
-- "日銀 政策金利 予想 site:jp.reuters.com"
+検索クエリ例（イベントごとに個別に検索すること）：
+- "FOMC June 2026 rate decision forecast" → Reuters/Bloomberg の英語記事
+- "nonfarm payroll June 2026 expectations preview"
+- "日銀 政策金利 予想 2026年6月" → ロイター/日経の日本語記事
+- "米CPI 6月 予想 コンセンサス"
 
-参照サイト（この順で試みる）：
-① Econoday（econoday.com）
-② ForexFactory（forexfactory.com）
-③ Reuters Economic Calendar（reuters.com / jp.reuters.com）
-④ Bloomberg Economic Calendar（bloomberg.com）
+検索結果の優先順位：
+① ロイター（reuters.com / jp.reuters.com）
+② ブルームバーグ（bloomberg.com / bloomberg.co.jp）
+③ 日本経済新聞（nikkei.com）
+④ 上記で取得できない場合：MarketWatch・ForexLive等の英語金融メディア
 
 結果の記録ルール：
-- 取得できた場合：具体的な数値・予想分布（例：据え置き予想98%、利上げ予想2%）を記録し手順2の分類に使う
+- 取得できた場合：具体的な数値・予想分布（例：据え置き予想98%、25bp利上げ予想2%）を記録し手順2の分類に使う
+- 記事はあるが数値が不明確な場合：記事の内容を要約して記録し「参考値」と明記する
 - 取得できなかった場合：「コンセンサス取得不可」と記録し、AIの学習データによる推定で代替する（出力に「推定」と明記）
 
 ## 手順2：事前確率の分類
