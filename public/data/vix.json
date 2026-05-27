@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-05-27T09:20:16.397Z",
+  "updatedAt": "2026-05-27T09:24:04.262Z",
   "data": [
     {
       "date": "2026/05/27",
-      "close": 16.98,
-      "change": -0.03,
-      "changePct": -0.18
+      "close": 17.01,
+      "change": 0,
+      "changePct": 0
     },
     {
       "date": "2026/05/25",
