@@ -75,8 +75,8 @@ const MAIN_VIEWS = [
 ]
 
 // ── コンポーネント ────────────────────────────────────
-export function CalendarHeader({ view, setView, isMobile, isTablet, onMenuClick, theme = 'dark' }: Props) {
-  const showMenu = isMobile || isTablet
+export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, onMenuClick, theme = 'dark' }: Props) {
+  const showMenu = isMobile
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
   const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal'
