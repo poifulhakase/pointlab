@@ -105,6 +105,7 @@ export default function App() {
   }, [cal])
 
   const { isMobile, isTablet, isDesktop } = useBreakpoint()
+  const isLegalNeon = cal.view === 'legal' && theme === 'dark'
 
   // ── 日/週/月 スワイプ ─────────────────────────────────────────────────
   const calTouchStartXRef  = useRef(0)
@@ -718,8 +719,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'legal') && (
-        <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)' }}>
-          <div style={styles.floatPill} className="glass">
+        <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isLegalNeon ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
+          <div style={styles.floatSubBar} className={isLegalNeon ? undefined : 'glass'}>
+          <div style={styles.floatPill} className={isLegalNeon ? undefined : 'glass'}>
             {isCalView && (
               <>
                 {CAL_VIEW_TABS.filter(([key]) => isMobile || key !== 'day').map(([key, label]) => (
@@ -777,12 +779,21 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 {LEGAL_TABS.map((tab, i) => (
                   <button
                     key={tab}
-                    style={{ ...styles.floatTab, ...(legalTab === tab ? styles.floatTabActive : {}) }}
+                    style={{
+                      ...styles.floatTab,
+                      color: isLegalNeon ? (legalTab === tab ? NEON_CLR : NEON_DIM) : undefined,
+                      ...(legalTab === tab
+                        ? isLegalNeon
+                          ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
+                          : styles.floatTabActive
+                        : {}),
+                    }}
                     onClick={() => setLegalTab(tab)}
                   >{LEGAL_LABELS[i]}</button>
                 ))}
               </>
             )}
+          </div>
           </div>
         </div>
       )}
@@ -828,6 +839,13 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     </div>
   )
 }
+
+// ── Neon（フッター配色ルール共通）─────────────────────────────────────────
+const NEON_CLR  = '#00e5ff'
+const NEON_DIM  = 'rgba(0,229,255,0.42)'
+const NEON_ACT  = 'rgba(0,229,255,0.12)'
+const NEON_BG   = 'rgba(4,10,22,0.55)'
+const NEON_BRDR = 'rgba(0,229,255,0.18)'
 
 // ── 定数 ──────────────────────────────────────────────────────────────────
 const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
@@ -898,7 +916,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer', zIndex: Z.footer,
     transition: 'opacity 0.15s',
   } as React.CSSProperties,
-  floatSubBar:  { borderRadius: 14, padding: 4 },
+  floatSubBar:  { borderRadius: 14, padding: 0 },
   floatPill:    { display: 'flex', alignItems: 'center', borderRadius: 14, padding: 5, gap: 2 },
   floatDivider:    { width: 1, height: 16, background: 'var(--border-dim)', alignSelf: 'center', flexShrink: 0, margin: '0 1px' },
   floatTab:        { padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s' },
