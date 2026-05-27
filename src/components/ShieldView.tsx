@@ -950,7 +950,7 @@ function NewsPanel({
               <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
             </svg>
             <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
-              ぽいロボ ニュース
+              ぽいロボ イベント
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>

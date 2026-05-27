@@ -827,7 +827,7 @@ const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['分析', '環境', '現物', '先物'] as const
 const SHIELD_TABS   = ['shield', 'news'] as const
-const SHIELD_LABELS = ['シールド', 'ニュース'] as const
+const SHIELD_LABELS = ['シールド', 'イベント'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
 const carouselOuterStyle: React.CSSProperties = { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }
 const carouselWrapStyle:  React.CSSProperties = { flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }
