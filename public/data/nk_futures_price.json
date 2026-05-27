@@ -1,16 +1,16 @@
 {
-  "updatedAt": "2026-05-27T00:42:32.024Z",
+  "updatedAt": "2026-05-27T08:03:31.946Z",
   "data": [
     {
       "date": "2026-05-27",
       "open": 65778,
       "high": 66429,
-      "low": 65707,
-      "close": 65788,
+      "low": 64999,
+      "close": 64999,
       "volume": 0,
       "prev_close": 64996,
-      "change": 792,
-      "change_pct": 1.22
+      "change": 3,
+      "change_pct": 0
     },
     {
       "date": "2026-05-26",
