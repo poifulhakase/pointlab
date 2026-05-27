@@ -719,7 +719,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)' }}>
-          <div style={styles.floatSubBar} className="glass">
           <div style={styles.floatPill} className="glass">
             {isCalView && (
               <>
@@ -784,7 +783,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 ))}
               </>
             )}
-          </div>
           </div>
         </div>
       )}
@@ -901,7 +899,7 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'opacity 0.15s',
   } as React.CSSProperties,
   floatSubBar:  { borderRadius: 14, padding: 4 },
-  floatPill:    { display: 'flex', alignItems: 'center', borderRadius: 10, padding: 2, gap: 2 },
+  floatPill:    { display: 'flex', alignItems: 'center', borderRadius: 14, padding: 5, gap: 2 },
   floatDivider:    { width: 1, height: 16, background: 'var(--border-dim)', alignSelf: 'center', flexShrink: 0, margin: '0 1px' },
   floatTab:        { padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s' },
   floatTabActive:  { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' },
