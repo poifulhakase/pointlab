@@ -22,6 +22,7 @@ type Props = {
   onToggleTheme?: () => void
   syncStatus?: string
   onOpenSpec?: () => void
+  onOpenOriginal?: () => void
   onPoiroboChange?: (open: boolean) => void
   pushEnabled?: boolean
   onTogglePush?: () => void
@@ -309,7 +310,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
+export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -955,6 +956,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                     onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}
                     onOpenEvals={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenEvals?.() }}
                     onOpenSpec={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenSpec?.() }}
+                    onOpenOriginal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenOriginal?.() }}
                   />
                 </Suspense>
               )}

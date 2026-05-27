@@ -1,10 +1,13 @@
-import type { FC } from 'react'
+import { useState, useRef, useEffect, type FC } from 'react'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }
 
 type SubSection = { subtitle: string; items: string[] }
 type Section = {
+  id: string
+  icon: string
   title: string
+  tocLabel?: string
   intro?: string[]
   items?: string[]
   subs?: SubSection[]
@@ -13,6 +16,8 @@ type Section = {
 
 const SECTIONS: Section[] = [
   {
+    id: 'calendar',
+    icon: '📅',
     title: 'カレンダー',
     items: [
       '画面下のナビバーにある「カレンダー」アイコンをタップすると表示されます。',
@@ -24,6 +29,8 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'chart',
+    icon: '📈',
     title: 'チャート',
     items: [
       '画面下のナビバーにある「チャート」アイコンをタップすると表示されます。',
@@ -32,7 +39,10 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'engine',
+    icon: '📊',
     title: 'エンジン（需給分析）',
+    tocLabel: 'エンジン',
     wide: true,
     intro: [
       '画面下のナビバーにある「エンジン」アイコンをタップすると表示されます。',
@@ -68,7 +78,10 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'shield',
+    icon: '🛡️',
     title: 'シールド（ポジション管理）',
+    tocLabel: 'シールド',
     items: [
       '画面下のナビバーにある「シールド」アイコンをタップすると表示されます。',
       '保有中のポジション管理と出口戦略の検討に特化したツールです。新規エントリーの判断には使いません。',
@@ -78,6 +91,8 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'lab',
+    icon: '🧪',
     title: '研究室',
     wide: true,
     intro: [
@@ -136,6 +151,38 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
 
   const mono = "'Courier New', Courier, monospace" as const
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [activeId, setActiveId] = useState(SECTIONS[0].id)
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container || isMobile) return
+    const handler = () => {
+      const secs = [...container.querySelectorAll<HTMLElement>('.mv-toc-section')]
+      if (!secs.length) return
+      const ct = container.getBoundingClientRect().top
+      let cur = secs[0].id
+      for (const s of secs) {
+        if (s.getBoundingClientRect().top - ct <= 56) cur = s.id
+      }
+      setActiveId(cur)
+    }
+    container.addEventListener('scroll', handler, { passive: true })
+    handler()
+    return () => container.removeEventListener('scroll', handler)
+  }, [isMobile])
+
+  const scrollToId = (id: string) => {
+    const container = scrollRef.current
+    if (!container) return
+    const target = document.getElementById(id)
+    if (!target) return
+    container.scrollTo({
+      top: container.scrollTop + target.getBoundingClientRect().top - container.getBoundingClientRect().top - 52,
+      behavior: 'smooth',
+    })
+  }
+
   const BulletItem = ({ text }: { text: string }) => (
     <div style={{ display: 'flex', gap: isMobile ? 9 : 10, alignItems: 'flex-start' }}>
       <span style={{
@@ -173,7 +220,7 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
         </div>
       )}
 
-      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
+      <div ref={scrollRef} style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
         {/* Sticky header */}
         <div style={{
           position: 'sticky', top: 0, zIndex: 5,
@@ -208,14 +255,43 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
           )}
         </div>
 
-        {/* Content */}
+        {/* Content with TOC */}
         <div style={{
-          maxWidth: isMobile ? '100%' : 1000,
+          maxWidth: isMobile ? '100%' : 1200,
           margin: '0 auto',
           padding: isMobile ? '20px 16px 80px' : '28px 40px 100px',
+          ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
         }}>
+
+          {/* 追従目次 — PC のみ */}
+          {!isMobile && (
+            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
+                CONTENTS
+              </div>
+              {SECTIONS.map(sec => (
+                <button key={sec.id} onClick={() => scrollToId(sec.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                  padding: '5px 8px', marginBottom: 2, borderRadius: 7,
+                  border: 'none', cursor: 'pointer', textAlign: 'left' as const,
+                  background: activeId === sec.id ? c.CARD : 'transparent',
+                  borderLeft: `2px solid ${activeId === sec.id ? c.ACCENT : 'transparent'}`,
+                  color: activeId === sec.id ? c.ACCENT : c.DIM,
+                  fontSize: 12, fontFamily: mono, lineHeight: 1.35,
+                  transition: 'color 0.15s, background 0.15s',
+                }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{sec.icon}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {sec.tocLabel ?? sec.title}
+                  </span>
+                </button>
+              ))}
+            </nav>
+          )}
+
           {/* 2カラムグリッド（PCのみ）*/}
           <div style={{
+            flex: 1, minWidth: 0,
             display: isMobile ? 'flex' : 'grid',
             gridTemplateColumns: '1fr 1fr',
             flexDirection: 'column',
@@ -225,7 +301,8 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
             {SECTIONS.map((sec, i) => (
               <div
                 key={sec.title}
-                className="mv-s"
+                id={sec.id}
+                className="mv-s mv-toc-section"
                 style={{
                   animationDelay: `${i * 60}ms`,
                   gridColumn: (!isMobile && sec.wide) ? '1 / -1' : 'auto',

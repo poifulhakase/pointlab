@@ -9,6 +9,7 @@ type Props = {
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
   onOpenSpec?: () => void
+  onOpenOriginal?: () => void
 }
 
 type Article = {
@@ -17,7 +18,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -25,7 +26,7 @@ const BASE = import.meta.env.BASE_URL + 'notes/'
 const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
-  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: BASE + 'poirobo_original_feature.png' },
+  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'original' },
   { genre: 'ぽいロボ', title: '需給エネルギーバックテスト', mobileTitle: 'エネルギーバックテスト', url: null, thumb: null, internalAction: 'backtest' },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
@@ -55,7 +56,7 @@ const ARTICLES: Article[] = [
 
 const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理者']
 
-function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec }: {
+function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal }: {
   article: Article
   isMobile: boolean
   onOpenManual?: () => void
@@ -63,6 +64,7 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
   onOpenSpec?: () => void
+  onOpenOriginal?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -74,6 +76,7 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
     if (article.internalAction === 'backtest') { onOpenBacktest?.(); return }
     if (article.internalAction === 'evals')    { onOpenEvals?.();    return }
     if (article.internalAction === 'spec')     { onOpenSpec?.();     return }
+    if (article.internalAction === 'original') { onOpenOriginal?.(); return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -117,7 +120,7 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal }: Props) {
   const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals' && a.internalAction !== 'spec')
 
   return (
@@ -134,7 +137,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} />
                   ))}
                 </div>
               </section>

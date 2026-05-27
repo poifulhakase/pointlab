@@ -1,3 +1,5 @@
+import { useState, useRef, useEffect } from 'react'
+
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }
 
 // ── セクションデータ ─────────────────────────────────
@@ -889,9 +891,41 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
     text:   D ? 'rgba(220,240,255,0.90)' : 'rgba(8,28,75,0.90)',
   }
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [activeId, setActiveId] = useState(SPEC_SECTIONS[0].id)
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container || isMobile) return
+    const handler = () => {
+      const secs = [...container.querySelectorAll<HTMLElement>('.spec-section')]
+      if (!secs.length) return
+      const ct = container.getBoundingClientRect().top
+      let cur = secs[0].id
+      for (const s of secs) {
+        if (s.getBoundingClientRect().top - ct <= 56) cur = s.id
+      }
+      setActiveId(cur)
+    }
+    container.addEventListener('scroll', handler, { passive: true })
+    handler()
+    return () => container.removeEventListener('scroll', handler)
+  }, [isMobile])
+
+  const scrollToId = (id: string) => {
+    const container = scrollRef.current
+    if (!container) return
+    const target = document.getElementById(id)
+    if (!target) return
+    container.scrollTo({
+      top: container.scrollTop + target.getBoundingClientRect().top - container.getBoundingClientRect().top - 52,
+      behavior: 'smooth',
+    })
+  }
+
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: c.bg, backgroundImage: c.scan }}>
-      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
+      <div ref={scrollRef} style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
 
         {/* Sticky header — ManualView スタイル */}
         <div style={{
@@ -926,43 +960,76 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
           )}
         </div>
 
-        <div style={{ maxWidth: 780, margin: '0 auto', padding: isMobile ? '20px 16px 40px' : '28px 32px 48px' }}>
-        {/* セクション一覧 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {SPEC_SECTIONS.map(section => (
-            <section
-              key={section.id}
-              id={section.id}
-              style={{
-                background: c.cardBg,
-                border: `1px solid ${c.cardBr}`,
-                borderRadius: 14,
-                padding: isMobile ? '18px 16px' : '22px 24px',
-              }}
-            >
-              {/* セクションタイトル */}
-              <h2 style={{
-                margin: '0 0 16px',
-                fontSize: isMobile ? 16 : 17,
-                fontWeight: 700,
-                color: c.text,
-                display: 'flex', alignItems: 'center', gap: 8,
-                letterSpacing: '-0.3px',
-              }}>
-                <span style={{ fontSize: 18 }}>{section.icon}</span>
-                {section.title}
-              </h2>
+        {/* コンテンツ + 追従目次 */}
+        <div style={{
+          maxWidth: isMobile ? '100%' : 1040,
+          margin: '0 auto',
+          padding: isMobile ? '20px 16px 40px' : '28px 32px 48px',
+          ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
+        }}>
 
-              <div style={{ borderTop: `1px solid ${c.cardBr}`, paddingTop: 16 }}>
-                {section.content.map((block, i) => (
-                  <div key={i}>{renderContent(block)}</div>
-                ))}
+          {/* 追従目次 — PC のみ */}
+          {!isMobile && (
+            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.20em', color: c.dim, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
+                CONTENTS
               </div>
-            </section>
-          ))}
+              {SPEC_SECTIONS.map(sec => (
+                <button key={sec.id} onClick={() => scrollToId(sec.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                  padding: '5px 8px', marginBottom: 2, borderRadius: 7,
+                  border: 'none', cursor: 'pointer', textAlign: 'left' as const,
+                  background: activeId === sec.id ? c.cardBg : 'transparent',
+                  borderLeft: `2px solid ${activeId === sec.id ? c.accent : 'transparent'}`,
+                  color: activeId === sec.id ? c.accent : c.dim,
+                  fontSize: 11.5, fontFamily: mono, lineHeight: 1.35,
+                  transition: 'color 0.15s, background 0.15s',
+                }}>
+                  <span style={{ fontSize: 12, flexShrink: 0 }}>{sec.icon}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sec.title}</span>
+                </button>
+              ))}
+            </nav>
+          )}
+
+          {/* セクション一覧 */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {SPEC_SECTIONS.map(section => (
+              <section
+                key={section.id}
+                id={section.id}
+                className="spec-section"
+                style={{
+                  background: c.cardBg,
+                  border: `1px solid ${c.cardBr}`,
+                  borderRadius: 14,
+                  padding: isMobile ? '18px 16px' : '22px 24px',
+                }}
+              >
+                {/* セクションタイトル */}
+                <h2 style={{
+                  margin: '0 0 16px',
+                  fontSize: isMobile ? 16 : 17,
+                  fontWeight: 700,
+                  color: c.text,
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  letterSpacing: '-0.3px',
+                }}>
+                  <span style={{ fontSize: 18 }}>{section.icon}</span>
+                  {section.title}
+                </h2>
+
+                <div style={{ borderTop: `1px solid ${c.cardBr}`, paddingTop: 16 }}>
+                  {section.content.map((block, i) => (
+                    <div key={i}>{renderContent(block)}</div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
         </div>
-        </div>{/* /maxWidth */}
-      </div>{/* /scroll */}
+      </div>
     </div>
   )
 }
