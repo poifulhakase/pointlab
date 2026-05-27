@@ -1130,7 +1130,10 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
   const handleNewsCopy = useCallback(async () => {
     const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
     const ts = jst.toISOString().replace('T', ' ').slice(0, 19)
-    const tevState = '（ぽいロボ エンジンの需給分析結果を参照）'
+    const report = getRecentEngineReport()
+    const tevState = report
+      ? `エンジンレポート日付：${report.date}\n${report.text}`
+      : '（エンジンレポートなし。ぽいロボ エンジンで需給分析を行ってからコピーしてください）'
     const prompt = buildNewsPrompt(ts, buildUpcomingEventsText(5), tevState)
     try {
       await navigator.clipboard.writeText(prompt)
