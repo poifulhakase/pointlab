@@ -24,7 +24,7 @@ const BASE = import.meta.env.BASE_URL + 'notes/'
 const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
-  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: BASE + 'poirobo_original_feature.webp' },
+  { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: BASE + 'poirobo_original_feature.png' },
   { genre: 'ぽいロボ', title: 'TEVバックテスト', url: null, thumb: null, internalAction: 'backtest' },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
