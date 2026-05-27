@@ -50,6 +50,19 @@ function cy(theme: 'dark' | 'light') {
 }
 
 // ── STATUS LINES ─────────────────────────────────────
+const NEWS_STATUS_LINES = [
+  'POI-ROBO NEWS v1.0  ▶ ONLINE',
+  'マクロイベントカレンダー ...... スキャン中',
+  '5営業日以内のイベント ......... 抽出中',
+  'コンセンサス予想 .............. 取得準備中',
+  '中央銀行スケジュール .......... ロード済み',
+  'SQ日程チェック ................ 確認中',
+  '需給物理統合モード ............ 待機中',
+  '事前確率分類エンジン .......... スタンバイ',
+  'イベント予測プロンプト ........ 生成完了',
+  'ぽいロボ イベント予測 .......... オンライン',
+]
+
 const SHIELD_STATUS_LINES = [
   'POI-ROBO SHIELD v1.0  ▶ ONLINE',
   '日経225先物 OHLC ........... 取得中',
@@ -635,14 +648,13 @@ function ShieldMemoPanel({ user, theme, isMobile }: { user: User | null; theme: 
 
 // ── ShieldPanel（左ペイン）────────────────────────────
 function ShieldPanel({
-  isMobile, theme, copyStatus, isBuilding, onPromptCopy, onNewsCopy, logState,
+  isMobile, theme, copyStatus, isBuilding, onPromptCopy, logState,
 }: {
   isMobile: boolean
   theme: 'dark' | 'light'
-  copyStatus: '' | 'shield' | 'news_shield'
+  copyStatus: '' | 'shield'
   isBuilding: boolean
   onPromptCopy: () => void
-  onNewsCopy: () => void
   logState: LogState
 }) {
   const c = cy(theme)
@@ -787,38 +799,13 @@ function ShieldPanel({
                     padding: '6px 10px', fontFamily: 'system-ui, sans-serif',
                     fontSize: 11, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
                   }}>
-                    {isBuilding ? <>データ取得中…<br />しばらくお待ちください</> : (copyStatus === 'shield' || copyStatus === 'news_shield') ? '▶ コピー完了' : <>ポジション分析用<br />プロンプト＋市場データ</>}
+                    {isBuilding ? <>データ取得中…<br />しばらくお待ちください</> : copyStatus === 'shield' ? '▶ コピー完了' : <>ポジション分析用<br />プロンプト＋市場データ</>}
                   </div>
                 </div>
-                {/* ニュース分析プロンプト コピーボタン（左下） */}
-                <button
-                  title="ニュース分析プロンプトをコピー"
-                  style={{
-                    position: 'absolute', bottom: -14, left: -14,
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: copyStatus === 'news_shield'
-                      ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.22)`
-                      : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.08)`,
-                    border: `1.5px solid ${copyStatus === 'news_shield' ? c.GREEN : c.BORDBR}`,
-                    boxShadow: `0 0 10px ${c.FAINT}`,
-                    color: c.GREEN,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', padding: 0,
-                    transition: 'background 0.2s, border-color 0.2s',
-                  }}
-                  onClick={onNewsCopy}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m3 11 18-5v12L3 14v-3z"/>
-                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                  </svg>
-                </button>
               </div>
             </div>
             <div style={{ textAlign: 'center', marginTop: 4, fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.04em', color: c.DIM }}>
               推奨: <span style={{ color: c.GREEN }}>Claude</span>
-              <span style={{ margin: '0 8px', opacity: 0.35 }}>|</span>
-              ニュース推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
             </div>
           </div>
 
@@ -888,10 +875,204 @@ function ShieldPanel({
   )
 }
 
+// ── NewsPanel（ニュースモード左ペイン）──────────────────
+function NewsPanel({
+  isMobile, theme, copyStatus, onNewsCopy, logState,
+}: {
+  isMobile: boolean
+  theme: 'dark' | 'light'
+  copyStatus: '' | 'news_shield'
+  onNewsCopy: () => void
+  logState: LogState
+}) {
+  const c = cy(theme)
+
+  return (
+    <div style={isMobile
+      ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
+          background: c.BG, backgroundImage: c.SCAN }
+      : { width: 500, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          borderRight: `1px solid ${c.BORDBR}` }
+    }>
+      {theme === 'dark' && <style>{`
+        @keyframes news-dust {
+          0%   { transform: translateY(0); opacity: 0; }
+          20%  { opacity: 0.35; }
+          100% { transform: translateY(-160px); opacity: 0; }
+        }
+        .news-dust {
+          position: absolute; width: 2px; height: 2px;
+          background: #00e5ff; border-radius: 50%; opacity: 0;
+          animation: news-dust 10s linear infinite; pointer-events: none;
+        }
+        @keyframes news-scanline {
+          0%   { top: -20px; }
+          100% { top: 110%; }
+        }
+        .news-scanline {
+          position: absolute; left: 0; width: 100%; height: 15px;
+          background: linear-gradient(to bottom, transparent, rgba(0,229,255,0.04), transparent);
+          pointer-events: none;
+          animation: news-scanline 8s linear infinite;
+        }
+      `}</style>}
+
+      <div style={{
+        flex: 1,
+        position: 'relative', display: 'flex', flexDirection: 'column',
+        overflow: isMobile ? 'visible' : 'hidden',
+        ...(!isMobile && theme === 'dark' ? { background: c.BG, backgroundImage: c.SCAN } : {}),
+        ...(!isMobile && theme === 'light' ? { background: c.BG } : {}),
+      }}>
+        {theme === 'dark' && !isMobile && <>
+          <div className="news-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
+          <div className="news-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
+          <div className="news-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
+          <div className="news-dust" style={{ top: '20%', left: '30%', animationDelay: '3s' }} />
+          <div className="news-dust" style={{ top: '60%', left: '50%', animationDelay: '4.5s' }} />
+          <div className="news-scanline" />
+        </>}
+
+        {/* ヘッダー */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          padding: '5px 14px', minHeight: 36, flexShrink: 0,
+          borderBottom: `1px solid ${c.BORDER}`,
+          background: c.HDBG,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m3 11 18-5v12L3 14v-3z"/>
+              <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+            </svg>
+            <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
+              ぽいロボ ニュース
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.GREEN, boxShadow: `0 0 6px ${c.GREEN}` }} />
+            <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.DIM, letterSpacing: '0.12em' }}>ONLINE</span>
+          </div>
+        </div>
+
+        {/* コンテンツ */}
+        <div style={{
+          position: 'relative', zIndex: 1, flex: 1, overflowY: 'auto',
+          padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42,
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{
+              borderLeft: `3px solid ${c.GREEN}`,
+              background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.05)`,
+              borderRadius: '0 8px 8px 0',
+              padding: '10px 14px',
+              fontSize: 14, lineHeight: 1.75,
+              color: c.DESC,
+              fontFamily: c.FONT, letterSpacing: '0.04em',
+            }}>
+              今後5営業日のマクロイベントを分析。<br />
+              下のボタンでコピーしてAI分析してください。
+            </div>
+
+            {/* COPYボタン */}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  style={{
+                    width: 84, height: 84, borderRadius: '50%',
+                    background: copyStatus === 'news_shield'
+                      ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)`
+                      : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.07)`,
+                    border: `2px solid ${copyStatus === 'news_shield' ? c.GREEN : c.BORDBR}`,
+                    boxShadow: copyStatus === 'news_shield'
+                      ? `0 0 24px ${c.FAINT}, inset 0 0 14px ${c.FAINT}`
+                      : `0 0 16px ${c.FAINT}, inset 0 0 10px ${c.FAINT}`,
+                    color: c.GREEN,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 7, cursor: 'pointer',
+                    transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
+                  }}
+                  onClick={onNewsCopy}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 11 18-5v12L3 14v-3z"/>
+                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                  </svg>
+                  <span style={{ fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
+                    {copyStatus === 'news_shield' ? 'DONE' : 'COPY'}
+                  </span>
+                </button>
+                {/* 吹き出し */}
+                <div style={{
+                  position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)',
+                  display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content',
+                }}>
+                  <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${c.BORDBR}`, flexShrink: 0 }} />
+                  <div style={{
+                    background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
+                    border: `1px solid ${c.BORDBR}`, borderRadius: 8,
+                    padding: '6px 10px', fontFamily: 'system-ui, sans-serif',
+                    fontSize: 11, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
+                  }}>
+                    {copyStatus === 'news_shield' ? '▶ コピー完了' : <>イベント予測<br />プロンプト＋需給状態</>}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 4, fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.04em', color: c.DIM }}>
+              推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
+            </div>
+          </div>
+
+          {/* AI起動 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{ fontFamily: c.FONT, fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', color: c.DIM }}>
+              ▌ AI起動
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly' }}>
+              {SHIELD_AI_LINKS.map(ai => (
+                <div key={ai.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: 86 }}>
+                  <a
+                    href={ai.url} target="_blank" rel="noopener noreferrer"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(ai.url, '_blank', 'noopener,noreferrer') }}
+                    style={{
+                      width: 70, height: 70, borderRadius: '50%',
+                      background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
+                      border: `2px solid ${c.BORDER}`,
+                      boxShadow: `0 0 16px ${c.FAINT}, inset 0 0 10px ${c.FAINT}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', textDecoration: 'none',
+                      transition: 'box-shadow 0.2s, background 0.2s',
+                    }}
+                  >
+                    <div style={{ width: 46, height: 46, borderRadius: '50%', background: ai.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      {ai.icon}
+                    </div>
+                  </a>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+                    <span style={{ fontFamily: c.FONT, fontSize: 13, color: c.GREEN, letterSpacing: '0.04em', fontWeight: 700 }}>{ai.name}</span>
+                    <span style={{ fontFamily: c.FONT, fontSize: 11, color: c.DIM, letterSpacing: '0.02em' }}>{ai.hint}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {!isMobile && <CyberSystemLog {...logState} theme={theme} />}
+    </div>
+  )
+}
+
 // ── メインコンポーネント ──────────────────────────────
 export function ShieldView({ theme, isMobile, user }: Props) {
   const tv = themeVars(theme)
+  const c  = cy(theme)
 
+  const [mode,        setMode]        = useState<'shield' | 'news'>('shield')
   const [copyStatus,  setCopyStatus]  = useState<'' | 'shield' | 'news_shield'>('')
   const [isBuilding,  setIsBuilding]  = useState(false)
 
@@ -963,11 +1144,59 @@ export function ShieldView({ theme, isMobile, user }: Props) {
     setTimeout(() => setCopyStatus(''), 2500)
   }, [])
 
-  // ② SYSTEM LOG state（親で管理してモバイル時に下部へ移動）
-  const logState = useSystemLog(SHIELD_STATUS_LINES)
+  const logState     = useSystemLog(SHIELD_STATUS_LINES)
+  const newsLogState = useSystemLog(NEWS_STATUS_LINES)
+
+  const TABS = [
+    {
+      key: 'shield' as const,
+      label: 'シールド',
+      icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+    },
+    {
+      key: 'news' as const,
+      label: 'ニュース',
+      icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>,
+    },
+  ]
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
+      {/* フローティングタブメニュー */}
+      <div style={{
+        flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+        padding: '6px 16px',
+        background: theme === 'light' ? 'rgba(240,247,255,0.96)' : 'rgba(5,14,26,0.96)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${c.BORDER}`,
+      }}>
+        {TABS.map(tab => {
+          const active = mode === tab.key
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setMode(tab.key)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 16px', borderRadius: 7,
+                fontFamily: c.FONT, fontSize: 11, fontWeight: 700,
+                letterSpacing: '0.08em', cursor: 'pointer',
+                border: `1px solid ${active ? c.BORDBR : 'transparent'}`,
+                background: active ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.10)` : 'transparent',
+                color: active ? c.GREEN : c.DIM,
+                boxShadow: (active && theme === 'dark') ? `0 0 12px rgba(0,229,255,0.12)` : 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* コンテンツ */}
       <div style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'flex',
@@ -975,23 +1204,37 @@ export function ShieldView({ theme, isMobile, user }: Props) {
         overflowY: isMobile ? 'auto' : 'hidden',
         paddingBottom: isMobile ? 130 : 0,
       }}>
-        <ShieldPanel
-          isMobile={isMobile}
-          theme={theme}
-          copyStatus={copyStatus}
-          isBuilding={isBuilding}
-          onPromptCopy={handlePromptCopy}
-          onNewsCopy={handleNewsCopy}
-          logState={logState}
-        />
-        <div style={isMobile ? s.dividerH : s.divider} />
-        <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-          <ShieldMemoPanel user={user} theme={theme} isMobile={isMobile} />
-        </div>
-
-        {/* ② スマホ: ポジション分析レポートより下に SYSTEM LOG */}
-        {isMobile && (
-          <CyberSystemLog {...logState} theme={theme} />
+        {mode === 'shield' ? (
+          <>
+            <ShieldPanel
+              isMobile={isMobile}
+              theme={theme}
+              copyStatus={copyStatus === 'shield' ? 'shield' : ''}
+              isBuilding={isBuilding}
+              onPromptCopy={handlePromptCopy}
+              logState={logState}
+            />
+            <div style={isMobile ? s.dividerH : s.divider} />
+            <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
+              <ShieldMemoPanel user={user} theme={theme} isMobile={isMobile} />
+            </div>
+            {isMobile && <CyberSystemLog {...logState} theme={theme} />}
+          </>
+        ) : (
+          <>
+            <NewsPanel
+              isMobile={isMobile}
+              theme={theme}
+              copyStatus={copyStatus === 'news_shield' ? 'news_shield' : ''}
+              onNewsCopy={handleNewsCopy}
+              logState={newsLogState}
+            />
+            <div style={isMobile ? s.dividerH : s.divider} />
+            <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
+              {/* 右側エリア（未実装） */}
+            </div>
+            {isMobile && <CyberSystemLog {...newsLogState} theme={theme} />}
+          </>
         )}
       </div>
     </div>

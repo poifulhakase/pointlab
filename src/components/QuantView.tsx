@@ -16,7 +16,6 @@ import { fetchUsdjpyData, type UsdjpyDayData } from '../utils/usdjpyData'
 import { fetchNas100Data, type Nas100DayData } from '../utils/nas100Data'
 import { fetchNkFuturesPriceData, type NkFuturesDayData } from '../utils/nkFuturesPriceData'
 import { fetchStocksDaily, type StocksDailyData } from '../utils/stocksDailyData'
-import { buildNewsPrompt, buildUpcomingEventsText } from '../utils/newsPrompt'
 import { AI_PROMPT_TEMPLATE } from '../utils/enginePrompt'
 const VixPanel    = lazy(() => import('./VixPanel').then(m => ({ default: m.VixPanel })))
 const NtRatioPanel = lazy(() => import('./NtRatioPanel').then(m => ({ default: m.NtRatioPanel })))
@@ -1158,11 +1157,10 @@ function EngineSystemLog({ logLines, cursorVisible, typedText, theme }: EngineLo
 
 // ── エンジンパネル（インライン）────────────────────
 function EnginePanel({
-  onPromptCopy, onNewsCopy, copyStatus, isMobile, theme, logState,
+  onPromptCopy, copyStatus, isMobile, theme, logState,
 }: {
   onPromptCopy: () => void
-  onNewsCopy: () => void
-  copyStatus: '' | 'prompt' | 'news_engine'
+  copyStatus: '' | 'prompt'
   isMobile: boolean
   theme: 'dark' | 'light'
   logState: EngineLogState
@@ -1322,30 +1320,9 @@ function EnginePanel({
                 <div style={{ position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content' }}>
                   <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${CY_BORDBR}`, flexShrink: 0 }} />
                   <div style={{ background: `rgba(${CY_RGB},0.06)`, border: `1px solid ${CY_BORDBR}`, borderRadius: 8, padding: '6px 10px', fontFamily: 'system-ui, sans-serif', fontSize: 11, color: CY_DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap' }}>
-                    {copyStatus === 'news_engine' ? '▶ コピー完了' : copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用<br />プロンプト＋需給データ</>}
+                    {copyStatus === 'prompt' ? '▶ コピー完了' : <>エントリー分析用<br />プロンプト＋需給データ</>}
                   </div>
                 </div>
-                {/* ニュース分析プロンプト コピーボタン（左下） */}
-                <button
-                  title="ニュース分析プロンプトをコピー"
-                  style={{
-                    position: 'absolute', bottom: -14, left: -14,
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: copyStatus === 'news_engine' ? `rgba(${CY_RGB},0.22)` : `rgba(${CY_RGB},0.08)`,
-                    border: `1.5px solid ${copyStatus === 'news_engine' ? CY_GREEN : CY_BORDBR}`,
-                    boxShadow: `0 0 10px ${CY_FAINT}`,
-                    color: CY_GREEN,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', padding: 0,
-                    transition: 'background 0.2s, border-color 0.2s',
-                  }}
-                  onClick={onNewsCopy}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m3 11 18-5v12L3 14v-3z"/>
-                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                  </svg>
-                </button>
               </div>
             </div>
           ) : (
@@ -1359,31 +1336,10 @@ function EnginePanel({
                 </svg>
                 {copyStatus === 'prompt' ? 'コピーしました！' : <>エントリー分析用<br />プロンプト＋需給データ</>}
               </button>
-              <button
-                title="ニュース分析プロンプトをコピー"
-                style={{
-                  position: 'absolute', bottom: -12, left: -12,
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: copyStatus === 'news_engine' ? 'rgba(96,165,250,0.2)' : 'rgba(96,165,250,0.08)',
-                  border: '1.5px solid rgba(96,165,250,0.5)',
-                  color: '#60a5fa',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', padding: 0,
-                  transition: 'background 0.2s',
-                }}
-                onClick={onNewsCopy}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m3 11 18-5v12L3 14v-3z"/>
-                  <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                </svg>
-              </button>
             </div>
           )}
           <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, letterSpacing: '0.04em', fontFamily: CYBER_MODE ? CY_FONT : undefined, color: CYBER_MODE ? CY_DIM : 'var(--text-dim)' }}>
             推奨: <span style={{ color: CYBER_MODE ? CY_GREEN : 'var(--accent)' }}>Claude</span>
-            <span style={{ margin: '0 8px', opacity: 0.35 }}>|</span>
-            ニュース推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
           </div>
         </div>
 
@@ -1789,7 +1745,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   }, [])
 
   // settingsOpen / onCloseSettings は props から受け取る（App.tsx でリフト済み）
-  const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt' | 'news_engine'>('')
+  const [copyStatus,   setCopyStatus]   = useState<'' | 'prompt'>('')
   const engineLogState = useEngineSystemLog(STATUS_LINES)
   // quantTab / setQuantTab は props から受け取る（App.tsx でリフト済み）
   const [deltaModal,  setDeltaModal]  = useState<DeltaModalType | null>(null)
@@ -1923,26 +1879,6 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
     setTimeout(() => setCopyStatus(''), 2000)
   }, [exportJson])
 
-  const handleNewsCopy = useCallback(async () => {
-    const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    const ts = jst.toISOString().replace('T', ' ').slice(0, 19)
-    let tevState = '（需給データ取得中）'
-    try {
-      const parsed = JSON.parse(exportJson)
-      const tev = parsed?.tev_analysis
-      if (tev?.status) {
-        const conf = tev.confidence_pct != null ? `確信度${tev.confidence_pct}%` : ''
-        const exec = tev.tev_for_execution != null ? `TEV=${tev.tev_for_execution}` : 'TEV執行不可'
-        tevState = `ステータス：${tev.status}　${conf}　${exec}`
-        if (Array.isArray(tev.sanity_warnings) && tev.sanity_warnings.length > 0) {
-          tevState += `\n注意：${tev.sanity_warnings.join('、')}`
-        }
-      }
-    } catch { /* noop */ }
-    await copyText(buildNewsPrompt(ts, buildUpcomingEventsText(5), tevState))
-    setCopyStatus('news_engine')
-    setTimeout(() => setCopyStatus(''), 2000)
-  }, [exportJson])
 
   const tv = useMemo(() => themeVars(theme), [theme])
 
@@ -2003,7 +1939,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
           overflowY: isMobile ? 'auto' : 'hidden',
           paddingBottom: isMobile ? 130 : 0,
         }}>
-          <EnginePanel onPromptCopy={handlePromptCopy} onNewsCopy={handleNewsCopy} copyStatus={copyStatus} isMobile={isMobile} theme={theme} logState={engineLogState} />
+          <EnginePanel onPromptCopy={handlePromptCopy} copyStatus={copyStatus} isMobile={isMobile} theme={theme} logState={engineLogState} />
           <div style={isMobile ? s.dividerH : s.divider} />
           <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
             <Suspense fallback={null}><QuantMemoPanel theme={theme} user={user} isMobile={isMobile} /></Suspense>
