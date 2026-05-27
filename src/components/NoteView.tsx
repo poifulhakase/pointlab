@@ -3,6 +3,7 @@ import React from 'react'
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
+  isAdmin?: boolean
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onOpenBacktest?: () => void
@@ -25,7 +26,6 @@ const ARTICLES: Article[] = [
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
   { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: BASE + 'poirobo_original_feature.webp' },
   { genre: 'ぽいロボ', title: 'TEVバックテスト', url: null, thumb: null, internalAction: 'backtest' },
-  { genre: 'ぽいロボ', title: 'プロンプト Evals', url: null, thumb: null, internalAction: 'evals' },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
@@ -45,11 +45,13 @@ const ARTICLES: Article[] = [
   { genre: 'イベントドリブン', title: '権利落ち日',    url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Ex_Rights_Day.webp' },
   { genre: 'イベントドリブン', title: '権利確定日前',  url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Rights_Record_Day.webp' },
   { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_TOPIX_Inclusion.webp' },
+  // ── 管理者 ────────────────────────────────────────────────────
+  { genre: '管理者', title: 'プロンプト Evals', url: null, thumb: null, internalAction: 'evals' },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
 ]
 
-const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン']
+const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理者']
 
 function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals }: {
   article: Article
@@ -111,7 +113,9 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
   )
 }
 
-export function NoteView({ theme, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals }: Props) {
+  const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals')
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? 'transparent' : '#f4f6f9' }}>
 
@@ -119,7 +123,8 @@ export function NoteView({ theme, isMobile, onOpenManual, onOpenLegal, onOpenBac
       <div style={s.wrap}>
         <div style={s.inner}>
           {GENRES.map(genre => {
-            const items = ARTICLES.filter(a => a.genre === genre)
+            const items = visibleArticles.filter(a => a.genre === genre)
+            if (items.length === 0) return null
             return (
               <section key={genre} style={s.section}>
                 <h2 style={s.genreHeading}>{genre}</h2>
