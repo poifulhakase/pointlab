@@ -1,15 +1,10 @@
 {
-  "updatedAt": "2026-05-28T00:26:05.398Z",
+  "updatedAt": "2026-05-28T12:48:11.096Z",
   "data": [
-    {
-      "time": "2026-02-27",
-      "close": 19.86,
-      "changePct": null
-    },
     {
       "time": "2026-03-02",
       "close": 21.44,
-      "changePct": 7.96
+      "changePct": null
     },
     {
       "time": "2026-03-03",
@@ -315,6 +310,11 @@
       "time": "2026-05-27",
       "close": 16.29,
       "changePct": -4.23
+    },
+    {
+      "time": "2026-05-28",
+      "close": 16.63,
+      "changePct": 2.09
     }
   ]
 }
