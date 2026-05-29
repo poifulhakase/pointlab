@@ -95,6 +95,6 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true })
   } catch (e) {
     console.error('[send-booking-push]', e)
-    return res.status(500).json({ error: String(e) })
+    return res.status(500).json({ error: 'プッシュ通知に失敗しました' })
   }
 }

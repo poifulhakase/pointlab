@@ -1,8 +1,6 @@
 import { SignJWT, importPKCS8 } from 'jose'
 import { createPrivateKey } from 'crypto'
 
-const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
-
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
 
@@ -33,7 +31,9 @@ export default async function handler(req, res) {
     // 形式: "vpaas-magic-cookie-xxx/uuid" — appId プレフィックスがなければ補完
     const kid = keyId.includes('/') ? keyId : `${appId}/${keyId}`
 
-    const isModerator = email === ADMIN_EMAIL
+    // uid で管理者判定（email クエリパラメータは信頼しない）
+    const adminUid = process.env.ADMIN_UID ?? ''
+    const isModerator = adminUid !== '' && uid === adminUid
 
     const token = await new SignJWT({
       aud: 'jitsi',
@@ -64,6 +64,6 @@ export default async function handler(req, res) {
     return res.json({ token })
   } catch (e) {
     console.error('[jitsi-token] error:', e)
-    return res.status(500).json({ error: 'Token generation failed', detail: String(e) })
+    return res.status(500).json({ error: 'Token generation failed' })
   }
 }

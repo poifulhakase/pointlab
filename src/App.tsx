@@ -4,7 +4,7 @@ import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
 import { CalendarHeader, MonitorIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
-import { AuthModal } from './components/AuthModal'
+const AuthModal         = lazy(() => import('./components/AuthModal').then(m => ({ default: m.AuthModal })))
 import { Sidebar } from './components/Sidebar'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
@@ -326,8 +326,17 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   }, [saveToast])
 
   // ── 認証ゲート ────────────────────────────────────────────────────────
-  const [isUnlocked, setIsUnlocked] = useState(() => isGuestAuthed())
-  useEffect(() => { if (user) setIsUnlocked(true) }, [user])
+  const [isUnlocked, setIsUnlocked] = useState(() =>
+    isGuestAuthed() || localStorage.getItem('poical-was-google-authed') === '1'
+  )
+  useEffect(() => {
+    if (user) {
+      setIsUnlocked(true)
+    } else if (!authLoading && !isGuestAuthed()) {
+      // Google ログアウト確定（optimistic フラグ起因のケースも含む）
+      setIsUnlocked(false)
+    }
+  }, [user, authLoading])
   const showLoading = authLoading && !isUnlocked
 
   // ── カレンダーイベント系 ──────────────────────────────────────────────
@@ -355,7 +364,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       const suffix = data.schedules.length > 1 ? ` +${data.schedules.length - 1}` : ''
       return [first.startTime, first.title].filter(Boolean).join(' ') + suffix
     }
-    return data.title
+    return data.title || 'メモ'
   }, [noteMap, showPrivate])
   const getScheduledEvents = useCallback((d: Date): ScheduleEntry[] =>
     showPrivate ? (noteMap.get(dateKey(d))?.schedules ?? []) : [], [noteMap, showPrivate])
@@ -542,41 +551,53 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
         <main style={styles.main}>
           {/* spec / legal / manual はカルーセル外 */}
           {cal.view === 'spec' && (
-            <Suspense fallback={<ViewLoader />}>
-              <SpecView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
-            </Suspense>
+            <ErrorBoundary label="システム仕様">
+              <Suspense fallback={<ViewLoader />}>
+                <SpecView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
           )}
           {cal.view === 'manual' && (
-            <Suspense fallback={<ViewLoader />}>
-              <ManualView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
-            </Suspense>
+            <ErrorBoundary label="使い方ガイド">
+              <Suspense fallback={<ViewLoader />}>
+                <ManualView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
           )}
           {cal.view === 'legal' && (
-            <Suspense fallback={<ViewLoader />}>
-              <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} legalTab={legalTab} onLegalTabChange={setLegalTab} />
-            </Suspense>
+            <ErrorBoundary label="法的情報">
+              <Suspense fallback={<ViewLoader />}>
+                <LegalModal theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} legalTab={legalTab} onLegalTabChange={setLegalTab} />
+              </Suspense>
+            </ErrorBoundary>
           )}
           {cal.view === 'backtest' && (
-            <Suspense fallback={<ViewLoader />}>
-              <BacktestPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
-            </Suspense>
+            <ErrorBoundary label="バックテスト">
+              <Suspense fallback={<ViewLoader />}>
+                <BacktestPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
           )}
           {cal.view === 'evals' && (
-            <Suspense fallback={<ViewLoader />}>
-              <EvalsPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
-            </Suspense>
+            <ErrorBoundary label="Evals">
+              <Suspense fallback={<ViewLoader />}>
+                <EvalsPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
           )}
           {cal.view === 'original' && (
-            <Suspense fallback={<ViewLoader />}>
-              <OriginalFeatureView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
-            </Suspense>
+            <ErrorBoundary label="独自機能">
+              <Suspense fallback={<ViewLoader />}>
+                <OriginalFeatureView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* 研究室 */}
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -725,16 +746,18 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
         />
       </Suspense>
 
-      <AuthModal
-        isOpen={!isUnlocked && !showLoading} isRequired theme={theme}
-        onClose={() => {}} onUnlock={() => setIsUnlocked(true)}
-        user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
-      />
-      <AuthModal
-        isOpen={authModalOpen && isUnlocked} theme={theme}
-        onClose={() => setAuthModalOpen(false)} onUnlock={() => {}}
-        user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
-      />
+      <Suspense fallback={null}>
+        <AuthModal
+          isOpen={!isUnlocked && !showLoading} isRequired theme={theme}
+          onClose={() => {}} onUnlock={() => setIsUnlocked(true)}
+          user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
+        />
+        <AuthModal
+          isOpen={authModalOpen && isUnlocked} theme={theme}
+          onClose={() => setAuthModalOpen(false)} onUnlock={() => {}}
+          user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
+        />
+      </Suspense>
 
       <Suspense fallback={null}>
         <DayNotePanel

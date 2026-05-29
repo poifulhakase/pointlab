@@ -88,6 +88,6 @@ module.exports = async (req, res) => {
     if (code === 'LIMIT_EXCEEDED')   return res.status(409).json({ error: 'LIMIT_EXCEEDED' })
     if (code === 'SLOT_UNAVAILABLE') return res.status(409).json({ error: 'SLOT_UNAVAILABLE' })
     console.error('[create-booking]', e)
-    return res.status(500).json({ error: String(e) })
+    return res.status(500).json({ error: '予約処理に失敗しました' })
   }
 }

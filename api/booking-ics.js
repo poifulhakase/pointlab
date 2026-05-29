@@ -2,6 +2,23 @@ const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
 
 function pad(n) { return String(n).padStart(2, '0') }
 
+// ICS フィールド値のエスケープ（RFC 5545: \ , ; CRLF を要エスケープ）
+function escapeIcs(str) {
+  return String(str ?? '').replace(/\\/g, '\\\\').replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\r?\n/g, '\\n')
+}
+
+function isValidDate(str) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false
+  const [, mo, d] = str.split('-').map(Number)
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= 31
+}
+
+function isValidTime(str) {
+  if (!/^\d{2}:\d{2}$/.test(str)) return false
+  const [h, m] = str.split(':').map(Number)
+  return h >= 0 && h <= 23 && m >= 0 && m <= 59
+}
+
 function toIcsDate(dateStr, timeStr) {
   // dateStr: YYYY-MM-DD, timeStr: HH:MM (JST = UTC+9)
   const [y, mo, d] = dateStr.split('-').map(Number)
@@ -23,6 +40,7 @@ module.exports = (req, res) => {
 
   const { date, startTime, bookingId, name } = req.query ?? {}
   if (!date || !startTime) return res.status(400).end()
+  if (!isValidDate(date) || !isValidTime(startTime)) return res.status(400).end()
 
   const dtStart  = toIcsDate(date, startTime)
   // end = start + 30 minutes
@@ -35,7 +53,8 @@ module.exports = (req, res) => {
   )
 
   const uid = `${bookingId || 'booking'}-${Date.now()}@pointlab.vercel.app`
-  const summary = `ぽいロボ コネクト${name ? ` (${name})` : ''}`
+  const safeName = name ? escapeIcs(String(name).slice(0, 100)) : ''
+  const summary = `ぽいロボ コネクト${safeName ? ` (${safeName})` : ''}`
 
   const ics = [
     'BEGIN:VCALENDAR',

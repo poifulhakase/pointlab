@@ -92,9 +92,9 @@ const SPEC_SECTIONS = [
         items: [
           'タイトル・開始時刻・終了時刻・本文（メモ）を入力',
           '「スケジュールに追加」で週ビューのタイムラインに表示',
-          'タイトルが空のままスケジュール保存する場合、メモ欄またはチェックリスト先頭行を自動でタイトルに補完',
+          'タイトルが空のままスケジュール保存する場合、メモ欄先頭行を自動でタイトルに補完',
           '30分刻みドロップダウン + テキスト入力のハイブリッド時刻入力',
-          'スケジュール削除時は確認ダイアログを表示',
+          'メモ・スケジュール全削除: 確認ダイアログ → localStorage と Firestore 両方から削除（★2026-05-28 修正: handleDelete で onAfterSave を呼び出し空データを Firestore に書き込むことで同期削除）',
           'データは localStorage `stock-cal-notes` ＋ Firestore（ログイン時）に保存',
         ],
       },
@@ -174,7 +174,7 @@ const SPEC_SECTIONS = [
   {
     id: 'quant',
     icon: '📊',
-    title: 'データビュー（QuantView）',
+    title: 'エンジン（QuantView）',
     content: [
       {
         type: 'para' as const,
@@ -237,12 +237,12 @@ const SPEC_SECTIONS = [
         type: 'table' as const,
         headers: ['データ', '基準日', 'JPX公表日', 'アプリ反映'],
         rows: [
-          ['信用倍率', '毎週金曜日', '翌週火曜日', '毎週金曜19:00 JST 自動取得'],
-          ['投資主体別売買動向', '毎週金曜日', '翌週木曜日', '毎週金曜19:00 JST 自動取得'],
-          ['騰落レシオ・空売り比率', '毎日', '当日', '毎週金曜19:00 JST 自動取得（52週分）'],
-          ['裁定買い残', '毎週金曜日', '翌週金曜日', '毎週金曜19:00 JST 自動取得（52週分）'],
-          ['先物投資部門別手口', '毎週金曜日', '翌週木曜日', '毎週金曜19:00 JST 自動取得'],
-          ['PCR（プット・コール・レシオ）', '毎日', '当日（オプション引け後）', '毎週金曜19:00 JST 自動取得（日次60件）'],
+          ['信用倍率', '毎週金曜日', '翌週火曜日', '週次自動取得（火〜土 JST）'],
+          ['投資主体別売買動向', '毎週金曜日', '翌週木曜日', '週次自動取得（火〜土 JST）'],
+          ['騰落レシオ・空売り比率', '毎日', '当日', '週次自動取得（火〜土 JST）（52週分）'],
+          ['裁定買い残', '毎週金曜日', '翌週金曜日', '週次自動取得（火〜土 JST）（52週分）'],
+          ['先物投資部門別手口', '毎週金曜日', '翌週木曜日', '週次自動取得（火〜土 JST）'],
+          ['PCR（プット・コール・レシオ）', '毎日', '当日（オプション引け後）', '週次自動取得（火〜土 JST）（日次60件）'],
         ],
       },
       {
@@ -371,19 +371,19 @@ const SPEC_SECTIONS = [
         type: 'table' as const,
         headers: ['パネル', '内容'],
         rows: [
-          ['研究室', 'メニュー（2ボタン）: 資料（DATA）/ 設定（SETTINGS）'],
+          ['研究室', 'メニュー（4ボタン）: POIROBO（ぽいロボとは？）/ 資料（DATA）/ 設定（SETTINGS）/ お問い合わせ（CONTACT）'],
           ['資料', 'NoteView — 記事一覧（基礎・インジケーター・イベントドリブン・未来ガジェット）。特殊カード: 需給エネルギーバックテスト（一般ユーザーも閲覧可）/ システム仕様・プロンプト Evals（管理者のみ）。DATAドロワー幅: PC時 1000px（★2026-05-27 500px→1000px に拡大）。「← 研究室」ボタンで研究室へ戻れる'],
           ['使い方', 'ManualView — アプリ説明書（研究室 > 資料 > 使い方ガイドカードからアクセス）。★2026-05-27 PC2カラムレイアウト・サブセクション構造に改善（maxWidth: 1000、エンジン/研究室は gridColumn: 1/-1 でフル幅）'],
         ],
       },
       {
         type: 'list' as const,
-        heading: 'メニューボタン（2項目）★2026-05-14 簡略化',
+        heading: 'メニューボタン（4項目）',
         items: [
-          '資料（DATA）→ NoteView（記事一覧）へ切り替え',
-          '設定（SETTINGS）→ 右スライドドロワーで開く（テーマ / アカウント / 開発者セクション）',
+          'POIROBO → ぽいロボとは？ページ（PoiroboAboutPanel）をフルスクリーンオーバーレイで表示',
+          '資料（DATA）→ NoteView（記事一覧）を右スライドドロワーで表示（PC: 1000px幅）',
+          '設定（SETTINGS）→ 右スライドドロワーで開く（テーマ / アカウント / 通知）',
           'お問い合わせ（CONTACT）→ 右スライドドロワーでカスタムフォームを表示（Google Forms バックエンド経由送信）',
-          'カレンダー・チャート・エンジン・シールドはフッターの共通メニューから切り替え（研究室固有メニューから削除）',
         ],
       },
       {
@@ -395,6 +395,7 @@ const SPEC_SECTIONS = [
           'タブ: カレンダー / チャート / エンジン / シールド / 研究室（5タブ・アイコンのみ表示）',
           '選択中タブの左右 padding: 14px（非選択: 8px）',
           'フローティングサブバー（右下 position:fixed zIndex: 150）: カレンダー(月/週/日)・チャート(銘柄)・エンジン(エンジン/環境/現物/先物)・シールド(シールド/イベント)・LegalModal(プライバシー/免責事項)でタブ表示。各ビューのアクティブタブを右下 pill で切り替え（★2026-05-27 シールドタブ・LegalModalタブ追加、「分析」→「エンジン」改称、「ニュース」→「イベント」改称）',
+          'ハンバーガーメニューアイコン（左下）: スマートフォン（<640px）のみ表示。タブレット幅（640〜1023px）では非表示（★2026-05-28 修正）。CalendarHeader: showMenu = isMobile のみ',
         ],
       },
       {
@@ -404,24 +405,26 @@ const SPEC_SECTIONS = [
           '研究室 > SETTINGS ボタンで右スライドドロワーとして開く',
           'セクション順: アカウント → 通知 → 表示',
           'アカウントセクション: Googleログイン / ログアウト（AuthModal を開く）・同期ステータス表示',
-          '通知セクション（★2026-05-20 新規）: プッシュ通知 ON/OFF トグル。未ログイン時はグレーアウト＋「ログインが必要です」表示。ON 時「前日 12:30 に通知」表示',
+          '通知セクション: プッシュ通知 ON/OFF トグル。未ログイン時はグレーアウト＋「ログインが必要です」表示。ON にすると種別チェックボックスが展開（★2026-05-28 追加）',
+          '通知種別（★2026-05-28）: ① ぽいロボ レーダー（イベント前日 12:30）② データ更新通知（週次・土曜）。各種別は個別にON/OFF可能。localStorage: poical-notify-radar / poical-notify-data-ready',
+          '同じ通知UIが研究室（SupportView）内のSETTINGSセクションにも存在し同じpropsで制御',
           '表示セクション: ライト / ダーク テーマ切り替え（segmented buttons）',
           '開発者セクション（★2026-05-27 削除）: 以前は「システム仕様を開く」ボタンあり → NoteView 管理者カードに統合したため削除',
         ],
       },
       {
         type: 'list' as const,
-        heading: 'プッシュ通知（FCM）★2026-05-20 新規',
+        heading: 'プッシュ通知（FCM）★2026-05-28 種別選択追加',
         items: [
-          '対象: ぽいロボ レーダーで選択したイベントの前日 12:30 JST に通知',
-          '条件: Googleログイン必須 / 設定 > 通知 で ON',
-          'フロー: ブラウザ通知許可 → VAPID キーで FCM トークン取得 → Firestore REST API で pushSubscriptions/{uid} に保存',
-          'Vercel Cron: `api/cron-push-notifications.js`（毎日 03:30 UTC = 12:30 JST）',
-          'Cron処理: pushEnabled=true かつ poiroboAlertEnabled=true のユーザーを全件取得 → 翌日イベントと poiroboAlertConfig を照合 → 一致時 FCM 送信',
+          '通知種別① ぽいロボ レーダー: 選択イベントの前日 12:30 JST に通知。Vercel Cron `api/cron-push-notifications.js`（毎日 03:30 UTC）',
+          '通知種別② データ更新通知: 週次需給データ更新後（土曜）に通知。GitHub Actions 成功後 `api/notify-data-ready.js` を POST 呼び出し',
+          'Firestore スキーマ: pushSubscriptions/{uid} に pushEnabled / notifyRadar / notifyDataReady / fcmToken / poiroboAlertConfig を保存',
+          'notify-data-ready.js 認証: x-notify-secret ヘッダー（NOTIFY_SECRET 環境変数）で保護。Vercel + GitHub Secrets に登録済み',
+          'フロー: ブラウザ通知許可 → VAPID キーで FCM トークン取得 → firestoreRest.ts の restSetDoc() で保存',
           'SW: `firebase-messaging-sw.js` をドメインルート `/` に配置。バックグラウンド受信・通知クリックで https://pointlab.vercel.app/calendar/ を開く',
-          '実装注意: Firestore SDK の setDoc() はこのアプリでハングするため、firestoreRest.ts の restSetDoc() を使用すること',
-          'localStorage: `poical-push-enabled` で ON/OFF を永続化（再ログイン時の復元用）',
-          '環境変数: VITE_FIREBASE_VAPID_KEY（Vercel プロジェクトレベル環境変数）',
+          '実装注意: Firestore SDK の setDoc() はこのアプリでハングするため、必ず firestoreRest.ts の restSetDoc() を使用すること',
+          'localStorage: poical-push-enabled / poical-notify-radar（デフォルトtrue）/ poical-notify-data-ready（デフォルトfalse）',
+          '後方互換: cron-push-notifications.js は notifyRadar ?? poiroboAlertEnabled で旧データに対応',
         ],
       },
       {
@@ -498,7 +501,7 @@ const SPEC_SECTIONS = [
         items: [
           'メール通知: Vercel API Route `api/send-booking-email.js`（Resend API 経由）',
           '通知タイミング: 予約申請時（ユーザー受付確認 ＋ 管理者通知）/ 承認時 / ユーザーキャンセル時 / 管理者キャンセル時',
-          '必要環境変数: RESEND_API_KEY / RESEND_FROM_DOMAIN',
+          '必要環境変数: RESEND_API_KEY / RESEND_FROM_EMAIL（後方互換: RESEND_FROM_DOMAIN）。値はメールアドレス形式（例: noreply@yourdomain.com）で設定すること',
           '.ics 生成: Vercel API Route `api/booking-ics.js`。クエリパラメータ: date/startTime/bookingId/name',
           '.ics 仕様: VCALENDAR/VEVENT 形式。開始〜30分のイベント（UTC変換）。Google/Apple/Outlook 対応',
         ],
@@ -557,7 +560,7 @@ const SPEC_SECTIONS = [
           ['poical-short-sell-data', '24時間', '空売り比率JSONキャッシュ'],
           ['poical-ad-ratio-data', '24時間', '騰落レシオJSONキャッシュ'],
           ['poical-arbitrage-data', '24時間', '裁定買い残JSONキャッシュ'],
-          ['poical-quant-memo', '永続', 'データビュー エントリー分析レポートメモ（分析タブ右）'],
+          ['poical-quant-memo', '永続', 'エントリー分析レポートメモ（エンジン 分析タブ右）'],
           ['poical-auto-prompt-last-added', '永続', '週次自動メモ追加済みキー'],
           ['poical-chart-split', '永続', 'チャート分割設定'],
           ['poical-futures-participants-v2', '24時間', '先物投資部門別ネット枚数データ（先物タブ・週次）'],
@@ -574,7 +577,7 @@ const SPEC_SECTIONS = [
         items: [
           'スクリプト: `scripts/fetch-jpx.mjs`',
           '実行: `npm run fetch-data`',
-          'GitHub Actions: `.github/workflows/fetch-data.yml`（火 18:30 / 水 18:00 / 木 18:30 / 金 18:30 / 土 09:00 JST 自動実行 ＋ Vercel自動デプロイ）',
+          'GitHub Actions: `.github/workflows/fetch-data.yml`（火 18:30 / 水 18:30 / 木 18:30 / 金 18:30 / 土 09:00 JST 自動実行 ＋ Vercel自動デプロイ）',
           '出力先: `public/data/margin.json` / `public/data/investor.json` / `public/data/vix.json` / `public/data/usdjpy.json` / `public/data/nk_futures_price.json` / `public/data/advance_decline.json` / `public/data/short_sell.json` / `public/data/arbitrage.json`',
           '騰落レシオ・空売り比率・PCR: nikkei225jp.com daily2year.json（col[7]/col[11]/col[16]）を一括取得・キャッシュ共有',
           'PCR = プット/コールOI比（日次・値域0.75〜2.52）。オプション市場引け後更新のためOIより数時間遅れる場合あり',
@@ -802,6 +805,56 @@ const SPEC_SECTIONS = [
       },
     ],
   },
+  {
+    id: 'security',
+    icon: '🔒',
+    title: 'セキュリティ・品質',
+    content: [
+      {
+        type: 'para' as const,
+        text: 'Vercel サーバーレス API のセキュリティ対策、フロントエンドパフォーマンス最適化、およびアクセシビリティ対応の実施状況です。（★2026-05-28 対応）',
+      },
+      {
+        type: 'list' as const,
+        heading: 'API セキュリティ対策（api/*.js）',
+        items: [
+          'CORS: 全APIで ALLOWED_ORIGIN（https://pointlab.vercel.app）による Origin ヘッダー検証を実施',
+          'jitsi-token.js: 管理者判定をメールアドレス（クライアント入力・信頼不可）→ uid + ADMIN_UID 環境変数に変更。ADMIN_EMAIL のハードコードを削除',
+          'send-booking-email.js: escapeHtml() 関数でユーザー入力の HTML 特殊文字をエスケープ（XSS防止）。ADMIN_EMAIL を環境変数化',
+          'booking-ics.js: escapeIcs() 関数で RFC 5545 準拠の ICS フィールドエスケープ。date / startTime の書式バリデーション（正規表現 + 値域チェック）を追加',
+          'youtube-rss.js: AbortSignal.timeout(10000) でタイムアウト制御（Vercel Function の無限ハング防止）',
+          '全 API: エラーレスポンスから String(e) などの内部詳細を除去し、固定の日本語メッセージのみ返却',
+          'ADMIN_EMAIL 環境変数: Vercel production に設定済み',
+          'CRON_SECRET: Vercel production に設定済み（★2026-05-29）。cron-push-notifications.js の Authorization: Bearer 認証に使用',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'フロントエンドパフォーマンス最適化',
+        items: [
+          'exportJson の遅延計算: buildExportJson() を useMemo（全データソース変化で再計算）→ handlePromptCopy 内のみ実行に変更。初回ロード時の無駄な重複計算（最大14回）を排除',
+          'Firestore 遅延ロード: firebase.ts の getDb() で動的 import。認証後にのみ Firestore SDK がロードされる',
+          'バンドル分割: vite.config.ts の manualChunks で Firestore を専用チャンク "firestore"（gzip 86KB）に分離。初期ロード不要',
+          '遅延ロードビュー: 12 ビューを React.lazy() で分割。初回描画は CalendarHeader + DayView のみ',
+          'PWA precache: data/*.json・notes/*.webp を除外し、JS/CSS/HTML/アイコンのみキャッシュ（約 1780KB）',
+          'Console / debugger 削除: vite.config.ts の esbuild.drop で本番ビルドから自動除去',
+          'Cache-Control immutable: /calendar/assets/* に max-age=31536000, immutable 設定（ハッシュ付きファイル名のため安全）',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: 'アクセシビリティ（★2026-05-28 対応）',
+        items: [
+          '全モーダルに role="dialog" + aria-modal="true" を追加: AuthModal / SettingsPanel / StickyNoteModal / DayNotePanel / BookingModal',
+          'SettingsPanel / DayNotePanel: aria-labelledby でモーダルタイトルを参照（スクリーンリーダー対応）',
+          'アイコンボタンの aria-label: SettingsPanel / BookingModal の閉じるボタンに aria-label="閉じる" を追加',
+          'CalendarHeader: ナビゲーションボタンに aria-label={v.label}、ハンバーガーメニューに aria-label="メニュー" 設定済み',
+          'Escape キー: 全モーダルで keydown リスナーにより閉じる動作を実装済み',
+          '★2026-05-29 対応済み: Vitest 86テスト（sqCalendar / macroCalendar / dataCache / noteStorage / marketHolidays / anomalyCalendar / dividendCalendar）/ 全lazy ビュー（10ビュー）にErrorBoundary適用＋Sentry自動上報。Sentry DSN は .env.local + Vercel env に設定で有効化',
+        ],
+      },
+    ],
+  },
 ]
 
 // ── レンダラー ────────────────────────────────────────
@@ -1012,13 +1065,13 @@ export function SpecView({ theme, isMobile, onClose }: Props) {
                 {/* セクションタイトル */}
                 <h2 style={{
                   margin: '0 0 16px',
-                  fontSize: isMobile ? 16 : 17,
+                  fontSize: isMobile ? 14 : 15,
                   fontWeight: 700,
                   color: c.text,
                   display: 'flex', alignItems: 'center', gap: 8,
-                  letterSpacing: '-0.3px',
+                  letterSpacing: '0.03em',
                 }}>
-                  <span style={{ fontSize: 18 }}>{section.icon}</span>
+                  <span style={{ width: 4, height: 14, borderRadius: 2, background: c.accent, flexShrink: 0, boxShadow: D ? `0 0 6px ${c.accent}` : 'none' }} />
                   {section.title}
                 </h2>
 

@@ -10,6 +10,7 @@ type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user?: ConnectUser | null
+  authLoading?: boolean
   isConnected?: boolean
   onStartConnect?: () => void
   onOpenManual?: () => void
@@ -314,7 +315,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+export function SupportView({ theme, isMobile, user, authLoading = false, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -1158,7 +1159,7 @@ export function SupportView({ theme, isMobile, user, isConnected = false, onStar
                 <div className="poyon-text-sub">
                   {isAdmin ? '予約管理' : 'ぽいふる博士と接続'}
                 </div>
-                {!user && (
+                {!user && !authLoading && (
                   <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
                     Googleログインが必要です
                   </div>

@@ -1,7 +1,15 @@
 const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
-const ADMIN_EMAIL    = 'sushi.ramen.unajyu@gmail.com'
 
 const DAYS = ['日', '月', '火', '水', '木', '金', '土']
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 function formatDate(date, startTime) {
   const d = new Date(`${date}T${startTime}:00+09:00`)
@@ -32,7 +40,12 @@ async function sendMail(to, subject, html) {
   const key = process.env.RESEND_API_KEY
   if (!key) throw new Error('RESEND_API_KEY not set')
 
-  const fromDomain = process.env.RESEND_FROM_DOMAIN || 'onboarding@resend.dev'
+  // RESEND_FROM_EMAIL または後方互換で RESEND_FROM_DOMAIN を使用
+  // 値はメールアドレス形式（例: noreply@yourdomain.com）で設定すること
+  const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.RESEND_FROM_DOMAIN || 'onboarding@resend.dev'
+  if (!fromEmail.includes('@')) {
+    throw new Error(`送信元メールアドレスが不正です。RESEND_FROM_EMAIL に "noreply@yourdomain.com" 形式で設定してください。現在の値: "${fromEmail}"`)
+  }
 
   const res = await fetch('https://api.resend.com/emails', {
     method:  'POST',
@@ -40,7 +53,7 @@ async function sendMail(to, subject, html) {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: `ぽいロボ <${fromDomain}>`, to: [to], subject, html }),
+    body: JSON.stringify({ from: `ぽいロボ <${fromEmail}>`, to: [to], subject, html }),
   })
 
   if (!res.ok) {
@@ -49,7 +62,7 @@ async function sendMail(to, subject, html) {
   }
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const origin = req.headers.origin || ''
   if (origin === ALLOWED_ORIGIN) res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -73,7 +86,13 @@ module.exports = async (req, res) => {
   const { type, booking } = body
   if (!type || !booking) return res.status(400).json({ error: 'Missing fields' })
 
-  const label = formatDate(booking.date, booking.startTime)
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL
+  if (!ADMIN_EMAIL) return res.status(500).json({ error: 'ADMIN_EMAIL not configured' })
+
+  const label       = formatDate(booking.date, booking.startTime)
+  const safeName    = escapeHtml(booking.userDisplayName)
+  const safeEmail   = escapeHtml(booking.userEmail)
+  const safeMessage = escapeHtml(booking.adminMessage)
 
   try {
     if (type === 'request') {
@@ -82,7 +101,7 @@ module.exports = async (req, res) => {
         ADMIN_EMAIL,
         `【コネクト予約申請】${booking.userDisplayName} さん`,
         buildHtml('予約申請通知', [
-          `<strong>${booking.userDisplayName}</strong>（${booking.userEmail}）さんから予約申請が届きました。`,
+          `<strong>${safeName}</strong>（${safeEmail}）さんから予約申請が届きました。`,
           `日時：<strong>${label}</strong>`,
           `管理パネルで承認・却下をお願いします。`,
         ]),
@@ -92,7 +111,7 @@ module.exports = async (req, res) => {
         booking.userEmail,
         '【ぽいロボ コネクト】予約申請を受け付けました',
         buildHtml('予約申請受付', [
-          `${booking.userDisplayName} さん、ご予約申請ありがとうございます。`,
+          `${safeName} さん、ご予約申請ありがとうございます。`,
           `日時：<strong>${label}</strong>`,
           `ぽいふる博士が内容を確認し、承認メールをお送りします。今しばらくお待ちください。`,
         ]),
@@ -102,9 +121,9 @@ module.exports = async (req, res) => {
         booking.userEmail,
         '【ぽいロボ コネクト】予約が確定しました',
         buildHtml('予約確定', [
-          `${booking.userDisplayName} さん、予約が確定しました！`,
+          `${safeName} さん、予約が確定しました！`,
           `日時：<strong>${label}</strong>`,
-          booking.adminMessage ? `博士からのメッセージ：${booking.adminMessage}` : '',
+          booking.adminMessage ? `博士からのメッセージ：${safeMessage}` : '',
           `当日はぽいロボ コネクトボタンから接続してください。`,
         ].filter(Boolean)),
       )
@@ -113,7 +132,7 @@ module.exports = async (req, res) => {
         ADMIN_EMAIL,
         `【コネクト予約キャンセル】${booking.userDisplayName} さん`,
         buildHtml('キャンセル通知', [
-          `${booking.userDisplayName}（${booking.userEmail}）さんが予約をキャンセルしました。`,
+          `${safeName}（${safeEmail}）さんが予約をキャンセルしました。`,
           `日時：${label}`,
         ]),
       )
@@ -121,7 +140,7 @@ module.exports = async (req, res) => {
         booking.userEmail,
         '【ぽいロボ コネクト】予約をキャンセルしました',
         buildHtml('キャンセル完了', [
-          `${booking.userDisplayName} さん、予約のキャンセルを受け付けました。`,
+          `${safeName} さん、予約のキャンセルを受け付けました。`,
           `日時：${label}`,
           `またのご予約をお待ちしております。`,
         ]),
@@ -131,10 +150,10 @@ module.exports = async (req, res) => {
         booking.userEmail,
         '【ぽいロボ コネクト】予約がキャンセルされました',
         buildHtml('予約キャンセル', [
-          `${booking.userDisplayName} さん、大変申し訳ございません。`,
+          `${safeName} さん、大変申し訳ございません。`,
           `以下の予約がキャンセルされました。`,
           `日時：${label}`,
-          booking.adminMessage ? `博士からのメッセージ：${booking.adminMessage}` : '',
+          booking.adminMessage ? `博士からのメッセージ：${safeMessage}` : '',
           `改めてご予約ください。`,
         ].filter(Boolean)),
       )
@@ -142,7 +161,8 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ ok: true })
   } catch (e) {
-    console.error('[send-booking-email]', e)
-    return res.status(500).json({ error: String(e) })
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[send-booking-email]', msg)
+    return res.status(500).json({ error: `メール送信エラー: ${msg}` })
   }
 }

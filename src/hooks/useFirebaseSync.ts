@@ -83,6 +83,13 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
 
     const run = async () => {
       unsubAuth = onAuthStateChanged(auth, async (u) => {
+        // Google ログイン済みフラグを localStorage に記録（再訪問時のスピナー回避用）
+        if (u) {
+          localStorage.setItem('poical-was-google-authed', '1')
+        } else {
+          localStorage.removeItem('poical-was-google-authed')
+        }
+
         setAuthLoading(false)
         currentUserRef.current = u
 

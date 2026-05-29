@@ -45,7 +45,7 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
       style={{ ...styles.overlay, top: vvOffsetTop, height: vvHeight }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={styles.modal} className="glass">
+      <div style={styles.modal} className="glass" role="dialog" aria-modal="true" aria-label="メモを編集">
         {/* ツールバー */}
         <div style={styles.toolbar}>
           <span style={styles.hint}>Ctrl+S で保存 · Esc で閉じる</span>

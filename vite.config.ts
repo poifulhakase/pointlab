@@ -6,6 +6,10 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/calendar/',
+  esbuild: {
+    // 本番ビルドで console.log / debugger を全削除（バンドルサイズ削減 + 実行時オーバーヘッド低減）
+    drop: ['console', 'debugger'],
+  },
   build: {
     target: 'es2020',
     outDir: 'dist/calendar',
@@ -13,10 +17,8 @@ export default defineConfig({
       output: {
         manualChunks: (id: string) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react-vendor'
-          // firebase/firestore は動的インポートのため自動分割される
-          // firebase/auth と firebase/app のみ eager chunk に含める
           if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
-            if (id.includes('@firebase/firestore') || id.includes('/firestore/')) return undefined
+            if (id.includes('@firebase/firestore') || id.includes('/firestore/')) return 'firestore'
             return 'firebase'
           }
           if (id.includes('node_modules/@sentry')) return 'sentry'

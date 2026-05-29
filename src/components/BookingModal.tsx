@@ -193,6 +193,9 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
           overflow: 'hidden',
         }}
         onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="予約"
       >
         {/* Header */}
         <div style={{ padding: '14px 18px 12px', borderBottom: `1px solid ${CY_FAINT2}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -202,6 +205,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
           </div>
           <button
             onClick={onClose}
+            aria-label="閉じる"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 6, cursor: 'pointer', background: L ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)', border: `1px solid ${CY_FAINT2}`, color: CY_FAINT, padding: 0 }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">

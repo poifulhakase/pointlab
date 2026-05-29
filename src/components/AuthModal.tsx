@@ -25,7 +25,7 @@ export function AuthModal({ isOpen, isRequired, theme = 'dark', onClose, onUnloc
   return (
     <>
       <div style={styles.backdrop} onClick={handleClose} />
-      <div style={{ ...styles.modal, background: modalBg }} className="glass">
+      <div style={{ ...styles.modal, background: modalBg }} className="glass" role="dialog" aria-modal="true" aria-label={isRequired ? '認証' : 'アカウント'}>
         {!isRequired && (
           <button style={styles.closeBtn} onClick={handleClose} aria-label="閉じる">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">

@@ -32,6 +32,7 @@ module.exports = async (req, res) => {
         'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
         'Accept': 'application/xml, text/xml, */*',
       },
+      signal: AbortSignal.timeout(10000),
     })
 
     if (!response.ok) {
