@@ -12,6 +12,7 @@ type Props = {
   isMobile: boolean
   user?: ConnectUser | null
   authLoading?: boolean
+  isMember?: boolean
   previewAsNonMember?: boolean
   onTogglePreviewAsNonMember?: () => void
   isConnected?: boolean
@@ -318,7 +319,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdmin     = user?.email === ADMIN_EMAIL
 
@@ -326,6 +327,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, previe
   const [bookingOpen,   setBookingOpen]   = useState(false)
   const [adminOpen,     setAdminOpen]     = useState(false)
   const [communityOpen, setCommunityOpen] = useState(false)
+  const [memberLockOpen, setMemberLockOpen] = useState(false)
   const [ripples,       setRipples]       = useState<{ id: number; x: number; y: number }[]>([])
   const [activeDrawer,   setActiveDrawer]   = useState<'data' | 'contact' | 'settings' | null>(null)
   const [drawerVisible,  setDrawerVisible]  = useState(false)
@@ -904,6 +906,102 @@ export function SupportView({ theme, isMobile, user, authLoading = false, previe
         </Suspense>
       )}
 
+      {/* メンバー限定 案内モーダル（ぽいロボ コネクト用） */}
+      {memberLockOpen && (
+        <div
+          onClick={() => setMemberLockOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,5,16,0.78)',
+            backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: 360, width: '100%',
+              padding: '28px 24px 24px',
+              background: 'linear-gradient(160deg, rgba(0,12,30,0.98) 0%, rgba(0,6,18,0.98) 100%)',
+              border: '1px solid rgba(0,229,255,0.28)',
+              borderRadius: 12,
+              boxShadow: '0 0 30px rgba(0,229,255,0.12), 0 10px 40px rgba(0,0,0,0.6)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: 18, position: 'relative',
+            }}
+          >
+            <button
+              onClick={() => setMemberLockOpen(false)}
+              aria-label="閉じる"
+              style={{
+                position: 'absolute', top: 10, right: 12,
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: 'rgba(0,229,255,0.55)', fontSize: 18, lineHeight: 1, padding: 4,
+              }}
+            >×</button>
+
+            <img
+              src={`${import.meta.env.BASE_URL}poirobo.png`}
+              alt="ぽいロボ"
+              style={{
+                width: 64, height: 64, objectFit: 'contain',
+                filter: 'drop-shadow(0 0 16px rgba(0,229,255,0.45))',
+              }}
+            />
+
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: 9, fontWeight: 700, letterSpacing: '0.22em',
+                color: 'rgba(0,229,255,0.55)',
+                textShadow: '0 0 10px rgba(0,229,255,0.4)',
+              }}>
+                COMMUNITY ACCESS REQUIRED
+              </div>
+              <div style={{
+                fontSize: 16, fontWeight: 700, color: 'rgba(0,229,255,0.95)',
+                textShadow: '0 0 16px rgba(0,229,255,0.55)',
+              }}>
+                ぽいロボ コネクト
+              </div>
+            </div>
+
+            <div style={{
+              fontFamily: "'Courier New', Courier, monospace",
+              fontSize: 11, color: 'rgba(0,229,255,0.55)',
+              lineHeight: 1.85, textAlign: 'center', letterSpacing: '0.03em',
+              padding: '14px 12px',
+              border: '1px solid rgba(0,229,255,0.18)',
+              borderRadius: 8,
+              background: 'rgba(0,229,255,0.04)',
+            }}>
+              ぽいふる博士との<br />
+              通話・画面共有予約は<br />
+              <span style={{ color: 'rgba(0,229,255,0.95)' }}>ぽいんとらぼ</span>のメンバー限定です。<br /><br />
+              note コミュニティに参加後、<br />
+              ログインに使用する<span style={{ color: 'rgba(0,229,255,0.95)' }}>Googleアカウントの<br />
+              メールアドレス</span>を管理者にご連絡ください。
+            </div>
+
+            <button
+              onClick={() => setMemberLockOpen(false)}
+              style={{
+                padding: '8px 24px', borderRadius: 7,
+                background: 'rgba(0,229,255,0.12)',
+                border: '1px solid rgba(0,229,255,0.35)',
+                color: 'rgba(0,229,255,0.95)',
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.14em',
+                cursor: 'pointer',
+              }}
+            >
+              [ 閉じる ]
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ━━ DATA / CONTACT ドロワー ━━ */}
       {activeDrawer && (
         <div
@@ -1195,6 +1293,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, previe
             className="poyon-connect-area"
             onClick={() => {
               if (isAdmin) { setAdminOpen(true); return }
+              if (user && !isMember) { setMemberLockOpen(true); return }
               setBookingOpen(true)
             }}
           >
@@ -1211,6 +1310,11 @@ export function SupportView({ theme, isMobile, user, authLoading = false, previe
                 {!user && !authLoading && (
                   <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
                     Googleログインが必要です
+                  </div>
+                )}
+                {user && !isMember && (
+                  <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
+                    メンバー限定です
                   </div>
                 )}
               </div>
