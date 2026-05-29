@@ -993,11 +993,11 @@ export function SupportView({ theme, isMobile, user, authLoading = false, previe
                       <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '10px 14px', borderRadius: 10,
-                        background: previewAsNonMember ? 'rgba(251,191,36,0.08)' : 'var(--glass-bg)',
-                        border: previewAsNonMember ? '1px solid rgba(251,191,36,0.35)' : '1px solid var(--glass-border)',
+                        background: 'var(--glass-bg)',
+                        border: '1px solid var(--glass-border)',
                       }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: previewAsNonMember ? 'rgba(251,191,36,0.95)' : 'var(--text)' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                             {previewAsNonMember ? '非メンバーモード' : 'メンバーモード'}
                           </span>
                           <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
@@ -1008,9 +1008,9 @@ export function SupportView({ theme, isMobile, user, authLoading = false, previe
                           onClick={onTogglePreviewAsNonMember}
                           style={{
                             padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                            background: previewAsNonMember ? 'rgba(251,191,36,0.15)' : 'var(--glass-bg)',
-                            border: previewAsNonMember ? '1px solid rgba(251,191,36,0.45)' : '1px solid var(--glass-border)',
-                            color: previewAsNonMember ? 'rgba(251,191,36,0.95)' : 'var(--text-sub)',
+                            background: 'var(--bg-medium)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--text)',
                             cursor: 'pointer', whiteSpace: 'nowrap',
                           }}
                         >
