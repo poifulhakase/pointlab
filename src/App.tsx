@@ -545,7 +545,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           <div style={styles.mobileOverlay} onClick={handleOverlayClick} />
         )}
 
-        {isCalView && (
+        {isCalView && isMember && (
           <Sidebar
             isOpen={sidebarOpen}
             isMobile={isMobile}
