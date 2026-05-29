@@ -23,6 +23,7 @@ import { enablePush, disablePush, syncPushSettings } from './utils/fcmNotificati
 import { getUserActiveBooking, getAllBookings } from './utils/bookingApi'
 import type { BookingSlot } from './utils/bookingTypes'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
+import { PWAInstallBanner } from './components/PWAInstallBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
@@ -514,6 +515,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   return (
     <div style={styles.app}>
       <PWAUpdateBanner />
+      <PWAInstallBanner />
       <Suspense fallback={null}>
         <PoiroboAlertModal
           isOpen={poiroboAlertModalOpen}
