@@ -12,6 +12,8 @@ type Props = {
   isMobile: boolean
   user?: ConnectUser | null
   authLoading?: boolean
+  previewAsNonMember?: boolean
+  onTogglePreviewAsNonMember?: () => void
   isConnected?: boolean
   onStartConnect?: () => void
   onOpenManual?: () => void
@@ -316,19 +318,9 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
-  const ADMIN_EMAIL   = 'sushi.ramen.unajyu@gmail.com'
-  const isActualAdmin = user?.email === ADMIN_EMAIL
-  const [adminMode,   setAdminMode]   = useState<boolean>(() => {
-    try { return localStorage.getItem('poical-admin-mode') !== 'false' } catch { return true }
-  })
-  const isAdmin = isActualAdmin && adminMode
-
-  const toggleAdminMode = () => {
-    const next = !adminMode
-    setAdminMode(next)
-    try { localStorage.setItem('poical-admin-mode', String(next)) } catch {}
-  }
+export function SupportView({ theme, isMobile, user, authLoading = false, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
+  const isAdmin     = user?.email === ADMIN_EMAIL
 
   const [visible,       setVisible]       = useState(false)
   const [bookingOpen,   setBookingOpen]   = useState(false)
@@ -994,35 +986,35 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isConn
               {activeDrawer === 'settings' && (
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-                  {/* 管理者モード切り替え（管理者のみ表示） */}
-                  {isActualAdmin && (
+                  {/* 表示プレビュー切り替え（管理者のみ表示） */}
+                  {isAdmin && (
                     <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>管理者</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>表示プレビュー</div>
                       <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '10px 14px', borderRadius: 10,
-                        background: adminMode ? 'rgba(0,229,255,0.06)' : 'var(--glass-bg)',
-                        border: adminMode ? '1px solid rgba(0,229,255,0.25)' : '1px solid var(--glass-border)',
+                        background: previewAsNonMember ? 'rgba(251,191,36,0.08)' : 'var(--glass-bg)',
+                        border: previewAsNonMember ? '1px solid rgba(251,191,36,0.35)' : '1px solid var(--glass-border)',
                       }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: adminMode ? 'rgba(0,229,255,0.9)' : 'var(--text)' }}>
-                            {adminMode ? '管理者モード' : 'メンバーモード'}
+                          <span style={{ fontSize: 13, fontWeight: 600, color: previewAsNonMember ? 'rgba(251,191,36,0.95)' : 'var(--text)' }}>
+                            {previewAsNonMember ? '非メンバーモード' : 'メンバーモード'}
                           </span>
                           <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                            {adminMode ? '管理機能が有効です' : 'メンバーと同じ表示で確認中'}
+                            {previewAsNonMember ? 'ロック画面を確認中（管理機能は表示中）' : '通常表示（全機能アクセス可能）'}
                           </span>
                         </div>
                         <button
-                          onClick={toggleAdminMode}
+                          onClick={onTogglePreviewAsNonMember}
                           style={{
                             padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                            background: adminMode ? 'rgba(0,229,255,0.12)' : 'var(--glass-bg)',
-                            border: adminMode ? '1px solid rgba(0,229,255,0.35)' : '1px solid var(--glass-border)',
-                            color: adminMode ? 'rgba(0,229,255,0.9)' : 'var(--text-sub)',
+                            background: previewAsNonMember ? 'rgba(251,191,36,0.15)' : 'var(--glass-bg)',
+                            border: previewAsNonMember ? '1px solid rgba(251,191,36,0.45)' : '1px solid var(--glass-border)',
+                            color: previewAsNonMember ? 'rgba(251,191,36,0.95)' : 'var(--text-sub)',
                             cursor: 'pointer', whiteSpace: 'nowrap',
                           }}
                         >
-                          {adminMode ? 'メンバーモードへ' : '管理者モードへ戻る'}
+                          {previewAsNonMember ? 'メンバーモードへ戻す' : '非メンバーモードで確認'}
                         </button>
                       </div>
                     </section>

@@ -214,12 +214,23 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   } = useFirebaseSync(refreshNoteMap)
 
   // ── コミュニティアクセス ───────────────────────────────────────────────
-  // 管理者は常にメンバー扱い。adminMode はメンバー管理パネル等の表示制御のみに使用
+  // 管理者は常にメンバー扱い + 管理機能表示。
+  // 「非メンバーモード」ON時はロック画面確認用にメンバー扱いを外す
   const COMMUNITY_ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
   const isAdminUser = user?.email === COMMUNITY_ADMIN_EMAIL
   const [isCommunityMember, setIsCommunityMember] = useState(false)
   const [memberLoading,     setMemberLoading]     = useState(false)
-  const isMember = isCommunityMember || isAdminUser
+  const [previewAsNonMember, setPreviewAsNonMember] = useState<boolean>(() => {
+    try { return localStorage.getItem('poical-preview-non-member') === 'true' } catch { return false }
+  })
+  const togglePreviewAsNonMember = useCallback(() => {
+    setPreviewAsNonMember(prev => {
+      const next = !prev
+      try { localStorage.setItem('poical-preview-non-member', String(next)) } catch {}
+      return next
+    })
+  }, [])
+  const isMember = (isCommunityMember || isAdminUser) && !previewAsNonMember
 
   useEffect(() => {
     if (!user?.email) { setIsCommunityMember(false); return }
@@ -619,7 +630,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
               </Suspense>
             </ErrorBoundary>
           )}
