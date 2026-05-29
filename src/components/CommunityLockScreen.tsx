@@ -86,14 +86,14 @@ export function CommunityLockScreen({ user, authLoading, memberLoading }: Props)
             }}>
               {!user ? (
                 <>
-                  この機能は<span style={{ color: CY_ACCENT }}>ぽいロボ コミュニティ</span>の<br />
+                  この機能は<span style={{ color: CY_ACCENT }}>ぽいんとらぼ</span>の<br />
                   メンバー限定です。<br /><br />
                   右下の「ぽいロボ コネクト」から<br />
                   Googleログインしてください。
                 </>
               ) : (
                 <>
-                  この機能は<span style={{ color: CY_ACCENT }}>ぽいロボ コミュニティ</span>の<br />
+                  この機能は<span style={{ color: CY_ACCENT }}>ぽいんとらぼ</span>の<br />
                   メンバー限定です。<br /><br />
                   note コミュニティに参加後、<br />
                   管理者にメールアドレスをご連絡ください。
