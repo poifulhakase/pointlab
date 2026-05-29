@@ -25,7 +25,7 @@ export async function checkMembership(email: string): Promise<boolean> {
 export async function listMembers(): Promise<CommunityMember[]> {
   const docs = await restListDocs('community_members')
   return docs
-    .map(d => d.data() as CommunityMember)
+    .map(d => d.data() as unknown as CommunityMember)
     .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
 }
 
