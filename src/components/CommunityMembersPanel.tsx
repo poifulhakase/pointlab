@@ -67,9 +67,9 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
 
   return (
     <div style={{
-      position: 'absolute', inset: 0, zIndex: Z.engineModal,
-      background: CY_BG,
-      backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.012) 3px,rgba(0,229,255,0.012) 4px)',
+      position: 'fixed', inset: 0, zIndex: Z.popover,
+      background: '#000510',
+      backgroundImage: `${CY_BG}, repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.012) 3px,rgba(0,229,255,0.012) 4px)`,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* ヘッダー */}
