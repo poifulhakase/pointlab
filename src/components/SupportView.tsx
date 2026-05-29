@@ -1292,8 +1292,9 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
           <div
             className="poyon-connect-area"
             onClick={() => {
-              if (isAdmin) { setAdminOpen(true); return }
+              // 非メンバー（管理者の非メンバーモードプレビューも含む）はロック案内を優先
               if (user && !isMember) { setMemberLockOpen(true); return }
+              if (isAdmin) { setAdminOpen(true); return }
               setBookingOpen(true)
             }}
           >
@@ -1308,12 +1309,12 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                   {isAdmin ? '予約管理' : 'ぽいふる博士と接続'}
                 </div>
                 {!user && !authLoading && (
-                  <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
+                  <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em', textAlign: 'center' }}>
                     Googleログインが必要です
                   </div>
                 )}
                 {user && !isMember && (
-                  <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em' }}>
+                  <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em', textAlign: 'center' }}>
                     メンバー限定です
                   </div>
                 )}
