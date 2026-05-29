@@ -215,15 +215,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── コミュニティアクセス ───────────────────────────────────────────────
   // 管理者は常にメンバー扱い。adminMode はメンバー管理パネル等の表示制御のみに使用
-  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
-  const isAdminUser = user?.email === ADMIN_EMAIL
+  const COMMUNITY_ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
+  const isAdminUser = user?.email === COMMUNITY_ADMIN_EMAIL
   const [isCommunityMember, setIsCommunityMember] = useState(false)
   const [memberLoading,     setMemberLoading]     = useState(false)
   const isMember = isCommunityMember || isAdminUser
 
   useEffect(() => {
     if (!user?.email) { setIsCommunityMember(false); return }
-    if (user.email === ADMIN_EMAIL) { setIsCommunityMember(true); return } // 管理者は自動メンバー
+    if (user.email === COMMUNITY_ADMIN_EMAIL) { setIsCommunityMember(true); return } // 管理者は自動メンバー
     setMemberLoading(true)
     checkMembership(user.email)
       .then(result => setIsCommunityMember(result))
