@@ -3,14 +3,14 @@ name: データ自動更新
 on:
   schedule:
     # 各トリガーは全データソースを一括取得（fetch-jpx.mjs が全APIを呼び出す）
-    # 火曜 18:30 JST (09:30 UTC): 月曜分の先物日次データが主目的
-    - cron: '30 9 * * 2'
+    # 火曜 20:30 JST (11:30 UTC): 月曜分の先物日次データが主目的（JPX公表17:00頃の3.5h後）
+    - cron: '30 11 * * 2'
     # 水曜 18:30 JST (09:30 UTC): JPX信用残高・裁定残高（水曜16時公表の2.5h後）+ 火曜分先物も取得
     - cron: '30 9 * * 3'
-    # 木曜 18:30 JST (09:30 UTC): 水曜分の先物日次データが主目的
-    - cron: '30 9 * * 4'
-    # 金曜 18:30 JST (09:30 UTC): 木曜分の先物日次データが主目的
-    - cron: '30 9 * * 5'
+    # 木曜 20:30 JST (11:30 UTC): 水曜分の先物日次データが主目的（JPX公表17:00頃の3.5h後）
+    - cron: '30 11 * * 4'
+    # 金曜 20:30 JST (11:30 UTC): 木曜分の先物日次データが主目的（JPX公表17:00頃の3.5h後）
+    - cron: '30 11 * * 5'
     # 土曜 09:00 JST (00:00 UTC): 週次COT（CFTC金曜20:30UTC公表後）・週次集計・金曜分先物
     - cron: '0 0 * * 6'
   workflow_dispatch:
@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
 
     steps:
       - name: チェックアウト
@@ -75,6 +76,66 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: npx vercel --prod --token "$VERCEL_TOKEN"
+
+      - name: データ鮮度チェック
+        id: freshness_check
+        if: always()
+        run: |
+          node -e "
+          const fs = require('fs');
+          const today = new Date();
+          const todayStr = today.toISOString().slice(0, 10);
+          let hasWarning = false;
+
+          function daysDiff(dateStr) {
+            const d = new Date(dateStr.replace(/\//g, '-'));
+            return Math.floor((today - d) / 86400000);
+          }
+
+          // futures_daily チェック（直近4営業日以内）
+          try {
+            const fd = JSON.parse(fs.readFileSync('public/data/futures_daily.json', 'utf8'));
+            const arr = Array.isArray(fd) ? fd : fd.data;
+            const latest = arr[0]?.date;
+            const diff = latest ? daysDiff(latest) : 999;
+            if (diff > 4) {
+              console.warn('⚠ futures_daily が古い: 最新=' + latest + ' (' + diff + '日前)');
+              hasWarning = true;
+            } else {
+              console.log('✓ futures_daily: 最新=' + latest + ' (' + diff + '日前)');
+            }
+          } catch(e) { console.warn('⚠ futures_daily 読込エラー:', e.message); hasWarning = true; }
+
+          // investor チェック（直近10日以内）
+          try {
+            const inv = JSON.parse(fs.readFileSync('public/data/investor.json', 'utf8'));
+            const arr = Array.isArray(inv) ? inv : inv.data;
+            const latest = arr[0]?.date;
+            const diff = latest ? daysDiff(latest) : 999;
+            if (diff > 10) {
+              console.warn('⚠ investor が古い: 最新=' + latest + ' (' + diff + '日前)');
+              hasWarning = true;
+            } else {
+              console.log('✓ investor: 最新=' + latest + ' (' + diff + '日前)');
+            }
+          } catch(e) { console.warn('⚠ investor 読込エラー:', e.message); hasWarning = true; }
+
+          if (hasWarning) process.exit(1);
+          "
+        continue-on-error: true
+
+      - name: データ鮮度チェック失敗通知
+        if: always() && steps.freshness_check.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: '⚠️ データ鮮度チェック失敗 ' + new Date().toISOString().slice(0, 10),
+              body:  'データ鮮度チェックで古いデータを検出しました。\n\nワークフロー: ' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId,
+              labels: ['data-stale'],
+            });
 
       - name: データ更新通知を送信（土曜のみ・成功時）
         if: success() && github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * 6')
