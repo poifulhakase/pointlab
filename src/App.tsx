@@ -214,15 +214,20 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   } = useFirebaseSync(refreshNoteMap)
 
   // ── コミュニティアクセス ───────────────────────────────────────────────
-  const [isMember,       setIsMember]       = useState(false)
-  const [memberLoading,  setMemberLoading]  = useState(false)
+  // 管理者は常にメンバー扱い。adminMode はメンバー管理パネル等の表示制御のみに使用
+  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
+  const isAdminUser = user?.email === ADMIN_EMAIL
+  const [isCommunityMember, setIsCommunityMember] = useState(false)
+  const [memberLoading,     setMemberLoading]     = useState(false)
+  const isMember = isCommunityMember || isAdminUser
 
   useEffect(() => {
-    if (!user?.email) { setIsMember(false); return }
+    if (!user?.email) { setIsCommunityMember(false); return }
+    if (user.email === ADMIN_EMAIL) { setIsCommunityMember(true); return } // 管理者は自動メンバー
     setMemberLoading(true)
     checkMembership(user.email)
-      .then(result => setIsMember(result))
-      .catch(() => setIsMember(false))
+      .then(result => setIsCommunityMember(result))
+      .catch(() => setIsCommunityMember(false))
       .finally(() => setMemberLoading(false))
   }, [user])
 
