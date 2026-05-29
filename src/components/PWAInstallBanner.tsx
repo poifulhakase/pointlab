@@ -112,59 +112,64 @@ export function PWAInstallBanner() {
       </div>
 
       {/* 本体 */}
-      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {/* メインテキスト */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* 点滅ドット */}
-          <span style={{
-            width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-            background: CY_ACCENT,
-            boxShadow: `0 0 6px ${CY_ACCENT}`,
-          }} />
-          <span style={{
-            fontFamily: CY_FONT, fontSize: 12, fontWeight: 700,
-            color: CY_ACCENT, letterSpacing: '0.06em',
-            textShadow: `0 0 10px rgba(0,229,255,0.5)`,
-          }}>
-            アプリとして使う
-          </span>
-        </div>
+      <div style={{ padding: '12px 14px 14px', display: 'flex', gap: 12 }}>
+        {/* ロボ画像 */}
+        <img
+          src={`${import.meta.env.BASE_URL}poirobo.png`}
+          alt="ぽいロボ"
+          style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0, alignSelf: 'center' }}
+        />
 
-        {/* サブテキスト */}
-        <div style={{
-          fontFamily: CY_FONT, fontSize: 10, color: CY_DIM,
-          lineHeight: 1.65, letterSpacing: '0.03em',
-          paddingLeft: 14,
-        }}>
-          {ios ? (
-            <>
-              Safari 下部の <span style={{ color: CY_ACCENT }}>共有ボタン</span> をタップ<br />
-              →「ホーム画面に追加」を選択
-            </>
-          ) : (
-            <>ホーム画面に追加してアプリ感覚で利用できます。</>
+        {/* テキスト＋ボタン */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {/* メインテキスト */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+              background: CY_ACCENT, boxShadow: `0 0 6px ${CY_ACCENT}`,
+            }} />
+            <span style={{
+              fontFamily: CY_FONT, fontSize: 12, fontWeight: 700,
+              color: CY_ACCENT, letterSpacing: '0.06em',
+              textShadow: `0 0 10px rgba(0,229,255,0.5)`,
+            }}>
+              アプリとして使う
+            </span>
+          </div>
+
+          {/* サブテキスト */}
+          <div style={{
+            fontFamily: CY_FONT, fontSize: 10, color: CY_DIM,
+            lineHeight: 1.65, letterSpacing: '0.03em',
+          }}>
+            {ios ? (
+              <>
+                下部の<span style={{ color: CY_ACCENT }}>共有ボタン</span> →<br />
+                「ホーム画面に追加」を選択
+              </>
+            ) : (
+              <>ホーム画面に追加して<br />アプリ感覚で利用できます。</>
+            )}
+          </div>
+
+          {/* Android: 追加ボタン */}
+          {!ios && prompt && (
+            <button
+              onClick={handleAdd}
+              style={{
+                padding: '6px 0', borderRadius: 6,
+                background: CY_BTN_BG, border: `1px solid ${CY_BORDER}`,
+                color: CY_ACCENT, cursor: 'pointer',
+                fontFamily: CY_FONT, fontSize: 10, fontWeight: 700,
+                letterSpacing: '0.14em',
+                boxShadow: `0 0 10px rgba(0,229,255,0.08)`,
+                width: '100%',
+              }}
+            >
+              [ ホーム画面に追加 ]
+            </button>
           )}
         </div>
-
-        {/* Android: 追加ボタン */}
-        {!ios && prompt && (
-          <button
-            onClick={handleAdd}
-            style={{
-              marginTop: 2,
-              padding: '7px 0', borderRadius: 6,
-              background: CY_BTN_BG,
-              border: `1px solid ${CY_BORDER}`,
-              color: CY_ACCENT, cursor: 'pointer',
-              fontFamily: CY_FONT, fontSize: 11, fontWeight: 700,
-              letterSpacing: '0.14em',
-              boxShadow: `0 0 10px rgba(0,229,255,0.08)`,
-              width: '100%',
-            }}
-          >
-            [ ホーム画面に追加 ]
-          </button>
-        )}
       </div>
     </div>
   )
