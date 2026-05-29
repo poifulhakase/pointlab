@@ -628,26 +628,26 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'chart' && (
             isMember
               ? <ErrorBoundary label="チャート"><Suspense fallback={<ViewLoader />}><ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="chart" />
           )}
 
           {/* データ（需給） */}
           {cal.view === 'quant' && (
             isMember
               ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" />
           )}
 
           {/* シールド */}
           {cal.view === 'shield' && (
             isMember
               ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" />
           )}
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
           {isCalView && !isMember && (
-            <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
+            <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="calendar" />
           )}
           {isCalView && isMember && (
             <div style={carouselOuterStyle}>
