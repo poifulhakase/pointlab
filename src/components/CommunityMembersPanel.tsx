@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { listMembers, addMember, removeMember, type CommunityMember } from '../utils/communityAccess'
+import { Z } from '../utils/zIndex'
 
 type Props = { theme: 'dark' | 'light'; onClose?: () => void }
 
@@ -66,7 +67,7 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
 
   return (
     <div style={{
-      position: 'absolute', inset: 0, zIndex: 30,
+      position: 'absolute', inset: 0, zIndex: Z.engineModal,
       background: CY_BG,
       backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.012) 3px,rgba(0,229,255,0.012) 4px)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
