@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import type { ConnectUser }  from './JitsiPanel'
 
-const NoteView            = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
-const PoiroboAboutPanel   = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
-const BookingModal        = lazy(() => import('./BookingModal').then(m => ({ default: m.BookingModal })))
-const AdminBookingPanel   = lazy(() => import('./AdminBookingPanel').then(m => ({ default: m.AdminBookingPanel })))
+const NoteView                = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
+const PoiroboAboutPanel       = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
+const BookingModal            = lazy(() => import('./BookingModal').then(m => ({ default: m.BookingModal })))
+const AdminBookingPanel       = lazy(() => import('./AdminBookingPanel').then(m => ({ default: m.AdminBookingPanel })))
+const CommunityMembersPanel   = lazy(() => import('./CommunityMembersPanel').then(m => ({ default: m.CommunityMembersPanel })))
 
 type Props = {
   theme: 'dark' | 'light'
@@ -322,6 +323,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isConn
   const [visible,       setVisible]       = useState(false)
   const [bookingOpen,   setBookingOpen]   = useState(false)
   const [adminOpen,     setAdminOpen]     = useState(false)
+  const [communityOpen, setCommunityOpen] = useState(false)
   const [ripples,       setRipples]       = useState<{ id: number; x: number; y: number }[]>([])
   const [activeDrawer,   setActiveDrawer]   = useState<'data' | 'contact' | 'settings' | null>(null)
   const [drawerVisible,  setDrawerVisible]  = useState(false)
@@ -878,7 +880,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isConn
         </Suspense>
       )}
 
-      {/* 管理者パネル */}
+      {/* 管理者パネル（予約） */}
       {adminOpen && isAdmin && (
         <Suspense fallback={null}>
           <AdminBookingPanel
@@ -886,6 +888,16 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isConn
             theme={theme}
             onClose={() => setAdminOpen(false)}
             onConnectNow={() => { setAdminOpen(false); onStartConnect?.() }}
+          />
+        </Suspense>
+      )}
+
+      {/* 管理者パネル（コミュニティメンバー） */}
+      {communityOpen && isAdmin && (
+        <Suspense fallback={null}>
+          <CommunityMembersPanel
+            theme={theme}
+            onClose={() => setCommunityOpen(false)}
           />
         </Suspense>
       )}
@@ -962,6 +974,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isConn
                     onOpenEvals={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenEvals?.() }}
                     onOpenSpec={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenSpec?.() }}
                     onOpenOriginal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenOriginal?.() }}
+                    onOpenCommunity={() => { closeDrawer(); setCommunityOpen(true) }}
                   />
                 </Suspense>
               )}

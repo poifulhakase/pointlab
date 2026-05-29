@@ -10,6 +10,7 @@ type Props = {
   onOpenEvals?: () => void
   onOpenSpec?: () => void
   onOpenOriginal?: () => void
+  onOpenCommunity?: () => void
 }
 
 type Article = {
@@ -18,7 +19,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -50,13 +51,14 @@ const ARTICLES: Article[] = [
   // ── 管理者 ────────────────────────────────────────────────────
   { genre: '管理者', title: 'システム仕様', url: null, thumb: null, internalAction: 'spec' },
   { genre: '管理者', title: 'プロンプト Evals', url: null, thumb: null, internalAction: 'evals' },
+  { genre: '管理者', title: 'コミュニティメンバー', url: null, thumb: null, internalAction: 'community' },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
 ]
 
 const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理者']
 
-function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal }: {
+function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: {
   article: Article
   isMobile: boolean
   onOpenManual?: () => void
@@ -65,18 +67,20 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
   onOpenEvals?: () => void
   onOpenSpec?: () => void
   onOpenOriginal?: () => void
+  onOpenCommunity?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
 
   const handleClick = () => {
     if (isComingSoon) return
-    if (article.internalAction === 'manual')   { onOpenManual?.();   return }
-    if (article.internalAction === 'legal')    { onOpenLegal?.();    return }
-    if (article.internalAction === 'backtest') { onOpenBacktest?.(); return }
-    if (article.internalAction === 'evals')    { onOpenEvals?.();    return }
-    if (article.internalAction === 'spec')     { onOpenSpec?.();     return }
-    if (article.internalAction === 'original') { onOpenOriginal?.(); return }
+    if (article.internalAction === 'manual')    { onOpenManual?.();    return }
+    if (article.internalAction === 'legal')     { onOpenLegal?.();     return }
+    if (article.internalAction === 'backtest')  { onOpenBacktest?.();  return }
+    if (article.internalAction === 'evals')     { onOpenEvals?.();     return }
+    if (article.internalAction === 'spec')      { onOpenSpec?.();      return }
+    if (article.internalAction === 'original')  { onOpenOriginal?.();  return }
+    if (article.internalAction === 'community') { onOpenCommunity?.(); return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -120,8 +124,8 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal }: Props) {
-  const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals' && a.internalAction !== 'spec')
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: Props) {
+  const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals' && a.internalAction !== 'spec' && a.internalAction !== 'community')
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? 'transparent' : '#f4f6f9' }}>
@@ -137,7 +141,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} />
                   ))}
                 </div>
               </section>

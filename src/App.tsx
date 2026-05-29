@@ -25,6 +25,8 @@ import type { BookingSlot } from './utils/bookingTypes'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { PWAInstallBanner } from './components/PWAInstallBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { CommunityLockScreen } from './components/CommunityLockScreen'
+import { checkMembership } from './utils/communityAccess'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
 const ChartView         = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
@@ -210,6 +212,19 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     authLoading, stickyNotes, handleStickyNotesSaved,
     loginToast, clearLoginToast,
   } = useFirebaseSync(refreshNoteMap)
+
+  // ── コミュニティアクセス ───────────────────────────────────────────────
+  const [isMember,       setIsMember]       = useState(false)
+  const [memberLoading,  setMemberLoading]  = useState(false)
+
+  useEffect(() => {
+    if (!user?.email) { setIsMember(false); return }
+    setMemberLoading(true)
+    checkMembership(user.email)
+      .then(result => setIsMember(result))
+      .catch(() => setIsMember(false))
+      .finally(() => setMemberLoading(false))
+  }, [user])
 
   // ── プッシュ通知 ──────────────────────────────────────────────────────
   const [pushEnabled,     setPushEnabled]     = useState<boolean>(() => localStorage.getItem('poical-push-enabled') === 'true')
@@ -606,34 +621,30 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
           {/* チャート */}
           {cal.view === 'chart' && (
-            <ErrorBoundary label="チャート">
-              <Suspense fallback={<ViewLoader />}>
-                <ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} />
-              </Suspense>
-            </ErrorBoundary>
+            isMember
+              ? <ErrorBoundary label="チャート"><Suspense fallback={<ViewLoader />}><ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} /></Suspense></ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
           )}
-
 
           {/* データ（需給） */}
           {cal.view === 'quant' && (
-            <ErrorBoundary label="エンジン">
-              <Suspense fallback={<ViewLoader />}>
-                <QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} />
-              </Suspense>
-            </ErrorBoundary>
+            isMember
+              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
           )}
 
           {/* シールド */}
           {cal.view === 'shield' && (
-            <ErrorBoundary label="シールド">
-              <Suspense fallback={<ViewLoader />}>
-                <ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} />
-              </Suspense>
-            </ErrorBoundary>
+            isMember
+              ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
           )}
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
-          {isCalView && (
+          {isCalView && !isMember && (
+            <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} />
+          )}
+          {isCalView && isMember && (
             <div style={carouselOuterStyle}>
               {/* カレンダーサブバー */}
               <div style={{ ...styles.calSubBar, ...(isMobile && { padding: '10px 8px' }) }}>
