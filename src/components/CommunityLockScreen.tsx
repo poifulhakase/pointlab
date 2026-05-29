@@ -96,7 +96,8 @@ export function CommunityLockScreen({ user, authLoading, memberLoading }: Props)
                   この機能は<span style={{ color: CY_ACCENT }}>ぽいんとらぼ</span>の<br />
                   メンバー限定です。<br /><br />
                   note コミュニティに参加後、<br />
-                  管理者にメールアドレスをご連絡ください。
+                  ログインに使用する<span style={{ color: CY_ACCENT }}>Googleアカウントの<br />
+                  メールアドレス</span>を管理者にご連絡ください。
                 </>
               )}
             </div>
