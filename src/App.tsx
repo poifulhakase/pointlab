@@ -19,14 +19,15 @@ import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 import { Z } from './utils/zIndex'
 import { purgeStaleDataCaches } from './utils/dataCache'
-import { enablePush, disablePush, syncPushSettings } from './utils/fcmNotifications'
-import { getUserActiveBooking, getAllBookings } from './utils/bookingApi'
-import type { BookingSlot } from './utils/bookingTypes'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
 import { PWAInstallBanner } from './components/PWAInstallBanner'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { CommunityLockScreen } from './components/CommunityLockScreen'
-import { checkMembership } from './utils/communityAccess'
+import { MaintenanceScreen } from './components/MaintenanceScreen'
+import { useCommunityAccess } from './hooks/useCommunityAccess'
+import { usePushNotifications } from './hooks/usePushNotifications'
+import { useMaintenance } from './hooks/useMaintenance'
+import { useBooking } from './hooks/useBooking'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
 const ChartView         = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
@@ -40,7 +41,6 @@ const LegalModal        = lazy(() => import('./components/LegalModal').then(m =>
 const BacktestPanel     = lazy(() => import('./components/BacktestPanel').then(m => ({ default: m.BacktestPanel })))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
 const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
-const SettingsPanel     = lazy(() => import('./components/SettingsPanel').then(m => ({ default: m.SettingsPanel })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
 const PoiroboAlertModal = lazy(() => import('./components/PoiroboAlertModal').then(m => ({ default: m.PoiroboAlertModal })))
 const DayNotePanel      = lazy(() => import('./components/DayNotePanel').then(m => ({ default: m.DayNotePanel })))
@@ -81,7 +81,8 @@ const PushErrorToast = memo(({ message }: { message: string }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => getSettings().theme)
-  const [darkStyle, setDarkStyle] = useState<'neutral' | 'blue'>(() => getSettings().darkStyle ?? 'neutral')
+  // darkStyle（neutral/blue）は保存値を適用するのみ（旧 SettingsPanel の選択UIは廃止）
+  const [darkStyle] = useState<'neutral' | 'blue'>(() => getSettings().darkStyle ?? 'neutral')
 
   useEffect(() => { purgeStaleDataCaches() }, [])
 
@@ -96,7 +97,6 @@ export default function App() {
   }, [theme, darkStyle])
 
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
-  const handleDarkStyleChange = useCallback((s: 'neutral' | 'blue') => setDarkStyle(s), [])
   const cal = useCalendar()
 
   const setViewWithTransition = useCallback((view: Parameters<typeof cal.setView>[0]) => {
@@ -122,7 +122,6 @@ export default function App() {
   useEffect(() => { setSidebarOpen(isDesktop) }, [isDesktop])
 
   // ── モーダル類 ────────────────────────────────────────────────────────
-  const [settingsOpen,    setSettingsOpen]    = useState(false)
   const [authModalOpen,   setAuthModalOpen]   = useState(false)
   const [connectMode,     setConnectMode]     = useState(false)
   const [connectMinimized, setConnectMinimized] = useState(false)
@@ -149,7 +148,7 @@ export default function App() {
     footerAnimTimerRef.current = setTimeout(() => setFooterAnimating(false), 320)
     setFooterCollapsed(c => {
       const next = !c
-      try { localStorage.setItem('poical-footer-collapsed', String(next)) } catch {}
+      try { localStorage.setItem('poical-footer-collapsed', String(next)) } catch { /* noop */ }
       return next
     })
   }, [])
@@ -214,122 +213,21 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   } = useFirebaseSync(refreshNoteMap)
 
   // ── コミュニティアクセス ───────────────────────────────────────────────
-  // 管理者は常にメンバー扱い + 管理機能表示。
-  // 「非メンバーモード」ON時はロック画面確認用にメンバー扱いを外す
-  const COMMUNITY_ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
-  const isAdminUser = user?.email === COMMUNITY_ADMIN_EMAIL
-  const [isCommunityMember, setIsCommunityMember] = useState(false)
-  const [memberLoading,     setMemberLoading]     = useState(false)
-  const [previewAsNonMember, setPreviewAsNonMember] = useState<boolean>(() => {
-    try { return localStorage.getItem('poical-preview-non-member') === 'true' } catch { return false }
-  })
-  const togglePreviewAsNonMember = useCallback(() => {
-    setPreviewAsNonMember(prev => {
-      const next = !prev
-      try { localStorage.setItem('poical-preview-non-member', String(next)) } catch {}
-      return next
-    })
-  }, [])
-  const isMember = (isCommunityMember || isAdminUser) && !previewAsNonMember
-
-  useEffect(() => {
-    if (!user?.email) { setIsCommunityMember(false); return }
-    if (user.email === COMMUNITY_ADMIN_EMAIL) { setIsCommunityMember(true); return } // 管理者は自動メンバー
-    setMemberLoading(true)
-    checkMembership(user.email)
-      .then(result => setIsCommunityMember(result))
-      .catch(() => setIsCommunityMember(false))
-      .finally(() => setMemberLoading(false))
-  }, [user])
+  const {
+    isAdminUser, memberLoading, previewAsNonMember, togglePreviewAsNonMember, isMember,
+  } = useCommunityAccess(user)
 
   // ── プッシュ通知 ──────────────────────────────────────────────────────
-  const [pushEnabled,     setPushEnabled]     = useState<boolean>(() => localStorage.getItem('poical-push-enabled') === 'true')
-  const [notifyRadar,     setNotifyRadar]     = useState<boolean>(() => localStorage.getItem('poical-notify-radar') !== 'false')
-  const [notifyDataReady, setNotifyDataReady] = useState<boolean>(() => localStorage.getItem('poical-notify-data-ready') === 'true')
+  const {
+    pushEnabled, pushBusy, pushToast, notifyRadar, notifyDataReady,
+    handleTogglePush, handleToggleNotifyRadar, handleToggleNotifyDataReady,
+  } = usePushNotifications(user, poiroboAlertConfig)
 
-  const [pushToast, setPushToast] = useState<string | null>(null)
-  useEffect(() => {
-    if (!pushToast) return
-    const t = setTimeout(() => setPushToast(null), 4000)
-    return () => clearTimeout(t)
-  }, [pushToast])
-
-  const handleTogglePush = useCallback(async () => {
-    if (!user) return
-    if (pushEnabled) {
-      await disablePush(user.uid)
-      setPushEnabled(false)
-      localStorage.setItem('poical-push-enabled', 'false')
-    } else {
-      const result = await enablePush(user.uid, notifyRadar, notifyDataReady, getSettings().poiroboAlertConfig)
-      console.log('[Push] enablePush result:', result)
-      if (result === 'ok') {
-        setPushEnabled(true)
-        localStorage.setItem('poical-push-enabled', 'true')
-        console.log('[Push] setPushEnabled(true) called')
-      } else if (result === 'permission-denied') {
-        setPushToast('ブラウザの通知をブロックしています。アドレスバー左の🔒から「通知」を許可してください。')
-      } else if (result === 'no-token') {
-        setPushToast('FCMトークンの取得に失敗しました。しばらくしてから再試行してください。')
-      } else {
-        setPushToast('通知の登録に失敗しました。コンソールを確認してください。')
-      }
-    }
-  }, [user, pushEnabled, notifyRadar, notifyDataReady])
-
-  const handleToggleNotifyRadar = useCallback(() => {
-    if (!user || !pushEnabled) return
-    const next = !notifyRadar
-    setNotifyRadar(next)
-    localStorage.setItem('poical-notify-radar', String(next))
-    syncPushSettings(user.uid, next, notifyDataReady, poiroboAlertConfig).catch(() => {})
-  }, [user, pushEnabled, notifyRadar, notifyDataReady, poiroboAlertConfig])
-
-  const handleToggleNotifyDataReady = useCallback(() => {
-    if (!user || !pushEnabled) return
-    const next = !notifyDataReady
-    setNotifyDataReady(next)
-    localStorage.setItem('poical-notify-data-ready', String(next))
-    syncPushSettings(user.uid, notifyRadar, next, poiroboAlertConfig).catch(() => {})
-  }, [user, pushEnabled, notifyRadar, notifyDataReady, poiroboAlertConfig])
-
-  useEffect(() => {
-    if (pushEnabled && user) {
-      syncPushSettings(user.uid, notifyRadar, notifyDataReady, poiroboAlertConfig).catch(() => {})
-    }
-  }, [pushEnabled, user, notifyRadar, notifyDataReady, poiroboAlertConfig])
+  // ── メンテナンスモード ────────────────────────────────────────────────
+  const { maintenance, handleToggleMaintenance } = useMaintenance(user)
 
   // ── 予約カレンダー表示 ────────────────────────────────────────────────
-  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
-  const [bookingMap, setBookingMap] = useState<Map<string, BookingSlot[]>>(new Map())
-
-  useEffect(() => {
-    if (!user) { setBookingMap(new Map()); return }
-    const isAdm = user.email === ADMIN_EMAIL
-    const fetchFn = isAdm
-      ? getAllBookings()
-      : getUserActiveBooking(user.uid).then(b => b ? [b] : [])
-    fetchFn.then(bookings => {
-      const map = new Map<string, BookingSlot[]>()
-      for (const b of bookings) {
-        if (b.status !== 'pending' && b.status !== 'confirmed') continue
-        const slot: BookingSlot = {
-          startTime: b.startTime,
-          confirmed: b.status === 'confirmed',
-          label: b.status === 'confirmed' ? 'コネクト確定' : 'コネクト（仮）',
-        }
-        const existing = map.get(b.date) ?? []
-        existing.push(slot)
-        map.set(b.date, existing)
-      }
-      setBookingMap(map)
-    }).catch(() => {})
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const getBookingEvents = useCallback((d: Date): BookingSlot[] => {
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    return bookingMap.get(key) ?? []
-  }, [bookingMap])
+  const { getBookingEvents } = useBooking(user)
 
   // ── トースト ──────────────────────────────────────────────────────────
   const [saveToast,  setSaveToast]  = useState(false)
@@ -431,23 +329,23 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
   const backStateRef = useRef({
-    settingsOpen: false, authModalOpen: false,
+    authModalOpen: false,
     noteDate: null as Date | null, poiroboAlertModalOpen: false,
     chartSettingsOpen: false, view: 'month',
   })
   backStateRef.current = {
-    settingsOpen, authModalOpen, noteDate,
+    authModalOpen, noteDate,
     poiroboAlertModalOpen, chartSettingsOpen, view: cal.view,
   }
   const backActionsRef = useRef({
     closeNote: () => {}, setView: (_v: string) => {},
-    setSettingsOpen: (_v: boolean) => {}, setAuthModalOpen: (_v: boolean) => {},
+    setAuthModalOpen: (_v: boolean) => {},
     setPoiroboAlertModalOpen: (_v: boolean) => {},
     setChartSettingsOpen: (_v: boolean) => {},
   })
   backActionsRef.current = {
     closeNote, setView: cal.setView as (_v: string) => void,
-    setSettingsOpen, setAuthModalOpen, setPoiroboAlertModalOpen,
+    setAuthModalOpen, setPoiroboAlertModalOpen,
     setChartSettingsOpen,
   }
   useEffect(() => {
@@ -456,7 +354,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       history.pushState(null, '')
       const s = backStateRef.current
       const a = backActionsRef.current
-      if (s.settingsOpen)          { a.setSettingsOpen(false);                return }
       if (s.authModalOpen)         { a.setAuthModalOpen(false);               return }
       if (s.noteDate)              { a.closeNote();                           return }
       if (s.poiroboAlertModalOpen) { a.setPoiroboAlertModalOpen(false);       return }
@@ -471,7 +368,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     }
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])  
 
   // ── 日/週/月 スワイプ計算 ─────────────────────────────────────────────
   // Panel order: 0=月, 1=週, 2=日
@@ -543,8 +440,24 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     )
   }
 
+  // メンテナンスモード: 管理者以外（未ログイン含む）は全画面ブロック。
+  // 認証解決後（!authLoading）にのみ判定し、管理者へのフラッシュ表示を防ぐ。
+  if (maintenance.enabled && !authLoading && !isAdminUser) {
+    return <MaintenanceScreen theme={theme} message={maintenance.message} />
+  }
+
   return (
     <div style={styles.app}>
+      {maintenance.enabled && isAdminUser && (
+        <div style={{
+          flexShrink: 0, padding: '6px 12px', textAlign: 'center',
+          fontSize: 12, fontWeight: 700, letterSpacing: '0.04em',
+          background: 'rgba(245,158,11,0.95)', color: '#1a1205',
+          zIndex: Z.popover,
+        }}>
+          ⚠ メンテナンスモード中（管理者のみ閲覧可・一般ユーザーはブロック中）
+        </div>
+      )}
       <PWAUpdateBanner />
       <PWAInstallBanner />
       <Suspense fallback={null}>
@@ -630,7 +543,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenSettings={() => setSettingsOpen(true)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={() => setViewWithTransition('legal')} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -756,26 +669,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
       {/* モーダル類 */}
       <Suspense fallback={null}>
-        <SettingsPanel
-          isOpen={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          darkStyle={darkStyle}
-          onChangeDarkStyle={handleDarkStyleChange}
-          user={user}
-          syncStatus={syncStatus}
-          onOpenAccount={() => { setSettingsOpen(false); setAuthModalOpen(true) }}
-          pushEnabled={pushEnabled}
-          onTogglePush={handleTogglePush}
-          notifyRadar={notifyRadar}
-          onToggleNotifyRadar={handleToggleNotifyRadar}
-          notifyDataReady={notifyDataReady}
-          onToggleNotifyDataReady={handleToggleNotifyDataReady}
-        />
-      </Suspense>
-
-      <Suspense fallback={null}>
         <AuthModal
           isOpen={!isUnlocked && !showLoading} isRequired theme={theme}
           onClose={() => {}} onUnlock={() => setIsUnlocked(true)}
@@ -798,7 +691,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       </Suspense>
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {(isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'legal') && (
+      {/* コミュニティ限定ビュー（カレンダー/チャート/エンジン/シールド）は非メンバー時に非表示。legal は全員公開のため維持。 */}
+      {((((isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield') && isMember)) || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isLegalNeon ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isLegalNeon ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isLegalNeon ? undefined : 'glass'}>

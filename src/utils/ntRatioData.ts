@@ -2,6 +2,7 @@
 
 import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
+import { parseYahooChart } from './yahooChart'
 
 export interface NtRatioPoint {
   time:      string        // YYYY-MM-DD
@@ -25,10 +26,10 @@ function isJpMarketOpen(): boolean {
 }
 
 function parseYahooClose(json: unknown): Map<string, number> {
-  const r = (json as any)?.chart?.result?.[0]
-  if (!r) throw new Error('レスポンス形式が不正')
-  const ts: number[]          = r.timestamp ?? []
-  const cl: (number | null)[] = r.indicators?.quote?.[0]?.close ?? []
+  const parsed = parseYahooChart(json)
+  if (!parsed) throw new Error('レスポンス形式が不正')
+  const ts = parsed.timestamps
+  const cl = parsed.close
   const map = new Map<string, number>()
   for (let i = 0; i < ts.length; i++) {
     if (cl[i] == null) continue

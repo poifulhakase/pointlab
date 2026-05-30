@@ -8,11 +8,16 @@ service cloud.firestore {
 
     match /slots/{slotId} {
       allow read: if true;
+      // 書き込みは管理者のみ。予約作成/キャンセル時の isBooked 更新はサーバー API
+      // （Admin SDK・ルールをバイパス）が行う。以前の「認証ユーザーは isBooked のみ更新可」は
+      // 任意スロットの予約状態を改ざんできる穴だったため廃止（★2026-05-30）。
       allow write: if request.auth != null
         && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
-      // 認証済みユーザーは isBooked フィールドのみ更新可（予約キャンセル時のスロット解放用）
-      allow update: if request.auth != null
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isBooked']);
+    }
+
+    // レート制限カウンタ。サーバー（Admin SDK）専用。クライアントからは読み書き不可。
+    match /rateLimits/{id} {
+      allow read, write: if false;
     }
 
     match /pushSubscriptions/{uid} {
@@ -29,11 +34,23 @@ service cloud.firestore {
         && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
     }
 
+    // アプリ全体のメンテナンスモード状態。未ログイン含む全員が読み取り可、書き込みは管理者のみ。
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
+    }
+
     match /bookings/{bookingId} {
       allow read: if request.auth != null
         && (request.auth.token.email == 'sushi.ramen.unajyu@gmail.com'
             || resource.data.userId == request.auth.uid);
-      allow create: if request.auth != null;
+      // 正規の予約作成はサーバー API（Admin SDK・ルールをバイパス）経由。
+      // クライアント直書きは多層防御として厳格化: 本人の userId・status=pending・必須フィールドを要求。
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasAll(['userId', 'slotId', 'date', 'startTime', 'status']);
       allow update: if request.auth != null
         && (request.auth.token.email == 'sushi.ramen.unajyu@gmail.com'
             || resource.data.userId == request.auth.uid);

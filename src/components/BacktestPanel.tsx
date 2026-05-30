@@ -103,7 +103,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
         <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap', textShadow: c.L ? 'none' : '0 0 10px rgba(0,229,255,0.28)' }}>
-          ぽいロボ ▸ 需給エネルギーバックテスト
+          ぽいロボ ▸ バックテスト
         </span>
         <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>ベータ</span>
         <button onClick={onClose} style={{
@@ -127,6 +127,20 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
         padding: isMobile ? '12px 16px 14px' : '16px 28px 20px',
         gap: isMobile ? 10 : 14,
       }}>
+
+        {/* 注意書き：検証途上・サンプル不足である旨を明示（成績の誤解防止） */}
+        <div style={{
+          flexShrink: 0,
+          padding: isMobile ? '8px 12px' : '9px 14px',
+          borderRadius: 8,
+          border: `1px solid ${c.RULE}`,
+          background: c.L ? 'rgba(0,100,180,0.05)' : 'rgba(0,200,255,0.05)',
+          fontFamily: mono, fontSize: isMobile ? 10 : 11, lineHeight: 1.7,
+          color: c.DIM, letterSpacing: '0.02em',
+        }}>
+          ⚠ 検証期間が短く（約半年・下落相場が中心）、統計的に有意な結論を出すにはサンプルが不足しています。
+          これは手法の妥当性を継続検証するための研究用データであり、将来の成績や投資成果を示すものではありません（継続検証中）。
+        </div>
 
         {/* Loading */}
         {loading && (

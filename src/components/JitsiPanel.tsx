@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { isAdminEmail } from '../utils/admin'
 
 export type ConnectUser = { uid: string; displayName: string | null; email: string | null; photoURL?: string | null }
 
@@ -69,10 +70,10 @@ export function JitsiPanel({ user, isMobile, minimized, onMinimize, onExpand, on
       document.removeEventListener('touchmove', onTM)
       document.removeEventListener('touchend',  onTE)
     }
-  }, [minimized]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [minimized])  
 
   const shortRoom   = 'poirobo-connect'
-  const isAdmin     = user.email === 'sushi.ramen.unajyu@gmail.com'
+  const isAdmin     = isAdminEmail(user.email)
   const displayName = isAdmin ? 'ぽいふる博士' : (user.displayName ?? 'ユーザー')
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)

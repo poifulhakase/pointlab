@@ -1,5 +1,4 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
-import * as Sentry from '@sentry/react'
 
 type Props = { children: ReactNode; label?: string }
 type State = { error: Error | null }
@@ -12,7 +11,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    Sentry.captureException(error, { extra: { componentStack: info.componentStack ?? '', label: this.props.label } })
+    // Sentry SDK は初期ロードから外すため、エラー発生時に動的 import で送信する。
+    import('@sentry/react')
+      .then(Sentry => Sentry.captureException(error, { extra: { componentStack: info.componentStack ?? '', label: this.props.label } }))
+      .catch(() => { /* Sentry 取得失敗時は黙って無視 */ })
   }
 
   render() {

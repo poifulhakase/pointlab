@@ -322,6 +322,10 @@ async function main() {
   }
 
   const output = {
+    // シグナルロジック（computeTEV）の版。ロジックを変えた／バックテストに価格レジームゲートを
+    // 焼き込んだ時に上げる。「過去版の結果だけ削除」をきれいに行うための識別子。
+    // ※プロンプト（ライブAI側）の変更ではこの版は上げない（バックテストはプロンプト非依存のため）。
+    logic_version: 'v1-supply-demand-only',
     computed_at: new Date().toISOString(),
     data_range: {
       from: weeklyLog.length > 0 ? weeklyLog[weeklyLog.length - 1].week : null,

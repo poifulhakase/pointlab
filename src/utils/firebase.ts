@@ -20,6 +20,9 @@ let _db: Firestore | null = null
 export async function getDb(): Promise<Firestore> {
   if (!_db) {
     const { initializeFirestore } = await import('firebase/firestore')
+    // getDb は onSnapshot 読み取り専用。書き込みは REST（firestoreRest）に一本化している。
+    // ※2026-05-30 検証: forceLongPolling を試しても SDK の setDoc は依然ハング（書き込み経路は
+    //   REST が正解と確認）。読み取りは実績のある autoDetectLongPolling に戻している。
     _db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true })
   }
   return _db

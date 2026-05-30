@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef, lazy, Suspense } from 'react'
 import type { ConnectUser }  from './JitsiPanel'
+import { isAdminEmail } from '../utils/admin'
+import { NotificationSettings } from './NotificationSettings'
 
 const NoteView                = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const PoiroboAboutPanel       = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
@@ -15,6 +17,8 @@ type Props = {
   isMember?: boolean
   previewAsNonMember?: boolean
   onTogglePreviewAsNonMember?: () => void
+  maintenanceEnabled?: boolean
+  onToggleMaintenance?: (enabled: boolean) => void
   isConnected?: boolean
   onStartConnect?: () => void
   onOpenManual?: () => void
@@ -22,7 +26,6 @@ type Props = {
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant') => void
-  onOpenSettings?: () => void
   onOpenAccount?: () => void
   onToggleTheme?: () => void
   syncStatus?: string
@@ -30,6 +33,7 @@ type Props = {
   onOpenOriginal?: () => void
   onPoiroboChange?: (open: boolean) => void
   pushEnabled?: boolean
+  pushBusy?: boolean
   onTogglePush?: () => void
   notifyRadar?: boolean
   onToggleNotifyRadar?: () => void
@@ -319,9 +323,8 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSettings: _onOpenSettings, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, onTogglePush, notifyRadar = true, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
-  const ADMIN_EMAIL = 'sushi.ramen.unajyu@gmail.com'
-  const isAdmin     = user?.email === ADMIN_EMAIL
+export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+  const isAdmin     = isAdminEmail(user?.email)
 
   const [visible,       setVisible]       = useState(false)
   const [bookingOpen,   setBookingOpen]   = useState(false)
@@ -371,7 +374,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
       sessionStorage.removeItem(DATA_RETURN_KEY)
       openDrawer('data')
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])  
 
   const handleRipple = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isConnected) return
@@ -1084,40 +1087,6 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
               {activeDrawer === 'settings' && (
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-                  {/* 表示プレビュー切り替え（管理者のみ表示） */}
-                  {isAdmin && (
-                    <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>表示プレビュー</div>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '10px 14px', borderRadius: 10,
-                        background: 'var(--glass-bg)',
-                        border: '1px solid var(--glass-border)',
-                      }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-                            {previewAsNonMember ? '非メンバーモード' : 'メンバーモード'}
-                          </span>
-                          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                            {previewAsNonMember ? 'ロック画面を確認中（管理機能は表示中）' : '通常表示（全機能アクセス可能）'}
-                          </span>
-                        </div>
-                        <button
-                          onClick={onTogglePreviewAsNonMember}
-                          style={{
-                            padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                            background: 'var(--bg-medium)',
-                            border: '1px solid var(--glass-border)',
-                            color: 'var(--text)',
-                            cursor: 'pointer', whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {previewAsNonMember ? 'メンバーモードへ戻す' : '非メンバーモードで確認'}
-                        </button>
-                      </div>
-                    </section>
-                  )}
-
                   {/* アカウント */}
                   <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>アカウント</div>
@@ -1152,66 +1121,17 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                     </button>
                   </section>
 
-                  {/* 通知 */}
-                  <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>通知</div>
-                    <div
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '10px 14px', borderRadius: 10,
-                        cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5,
-                        background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
-                        transition: 'background 0.15s',
-                      }}
-                      onClick={user ? onTogglePush : undefined}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                        <span style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: pushEnabled && user ? 'rgba(96,165,250,0.15)' : 'var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={pushEnabled && user ? 'rgba(96,165,250,0.9)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                          </svg>
-                        </span>
-                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>プッシュ通知</span>
-                          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                            {!user ? 'ログインが必要です' : pushEnabled ? 'ON' : 'OFF'}
-                          </span>
-                        </span>
-                      </span>
-                      <span style={{
-                        width: 40, height: 22, borderRadius: 11, flexShrink: 0,
-                        background: pushEnabled && user ? 'rgba(96,165,250,0.85)' : 'var(--glass-border)',
-                        position: 'relative', transition: 'background 0.2s',
-                        display: 'inline-block',
-                      }}>
-                        <span style={{
-                          position: 'absolute', top: 3, left: pushEnabled && user ? 21 : 3,
-                          width: 16, height: 16, borderRadius: '50%',
-                          background: 'white', transition: 'left 0.2s',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                        }} />
-                      </span>
-                    </div>
-                    {pushEnabled && user && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 4 }}>
-                        {[
-                          { checked: notifyRadar, onToggle: onToggleNotifyRadar, label: 'ぽいロボ レーダー', sub: 'イベント前日 12:30' },
-                          { checked: notifyDataReady, onToggle: onToggleNotifyDataReady, label: 'データ更新通知', sub: '週次データ更新後（土曜）' },
-                        ].map(({ checked, onToggle, label, sub }) => (
-                          <div key={label} onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-                            <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{label}</span>
-                              <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub}</span>
-                            </span>
-                            <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? 'rgba(96,165,250,0.85)' : 'var(--glass-border)'}`, background: checked ? 'rgba(96,165,250,0.85)' : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-                              {checked && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
+                  {/* 通知（共通コンポーネント） */}
+                  <NotificationSettings
+                    user={user}
+                    pushEnabled={pushEnabled}
+                    pushBusy={pushBusy}
+                    onTogglePush={onTogglePush}
+                    notifyRadar={notifyRadar}
+                    onToggleNotifyRadar={onToggleNotifyRadar}
+                    notifyDataReady={notifyDataReady}
+                    onToggleNotifyDataReady={onToggleNotifyDataReady}
+                  />
 
                   {/* 表示 */}
                   <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1239,6 +1159,74 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                       ))}
                     </div>
                   </section>
+
+                  {/* 表示プレビュー切り替え（管理者のみ表示） */}
+                  {isAdmin && (
+                    <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>表示プレビュー</div>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: 10,
+                        background: 'var(--glass-bg)',
+                        border: '1px solid var(--glass-border)',
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                            {previewAsNonMember ? '非メンバーモード' : 'メンバーモード'}
+                          </span>
+                          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                            {previewAsNonMember ? 'ロック画面を確認中（管理機能は表示中）' : '通常表示（全機能アクセス可能）'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={onTogglePreviewAsNonMember}
+                          style={{
+                            padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            background: 'var(--bg-medium)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--text)',
+                            cursor: 'pointer', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {previewAsNonMember ? 'メンバーモードへ戻す' : '非メンバーモードで確認'}
+                        </button>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* メンテナンスモード（管理者のみ表示） */}
+                  {isAdmin && (
+                    <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>メンテナンスモード</div>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: 10,
+                        background: maintenanceEnabled ? 'rgba(245,158,11,0.12)' : 'var(--glass-bg)',
+                        border: `1px solid ${maintenanceEnabled ? 'rgba(245,158,11,0.5)' : 'var(--glass-border)'}`,
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                            {maintenanceEnabled ? 'メンテナンス中' : '通常稼働中'}
+                          </span>
+                          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                            {maintenanceEnabled ? '管理者以外は全員ブロック中' : 'ONにすると管理者以外を全画面ブロック'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => onToggleMaintenance?.(!maintenanceEnabled)}
+                          style={{
+                            padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            background: maintenanceEnabled ? '#b45309' : 'var(--bg-medium)',
+                            border: `1px solid ${maintenanceEnabled ? '#b45309' : 'var(--glass-border)'}`,
+                            color: maintenanceEnabled ? '#fff' : 'var(--text)',
+                            cursor: 'pointer', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {maintenanceEnabled ? 'メンテナンス解除' : 'メンテナンス開始'}
+                        </button>
+                      </div>
+                    </section>
+                  )}
 
                 </div>
               )}
@@ -1315,7 +1303,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                 )}
                 {user && !isMember && (
                   <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em', textAlign: 'center' }}>
-                    メンバー限定です
+                    メンバー限定
                   </div>
                 )}
               </div>

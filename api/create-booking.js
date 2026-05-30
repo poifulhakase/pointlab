@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+const rateLimit = require('./_ratelimit')
 
 const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
 
@@ -41,6 +42,10 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Invalid token' })
   }
   const userId = decoded.uid
+
+  // レート制限（uid あたり 60秒で最大8回）。予約/キャンセルの連打による濫用を防ぐ。
+  const allowed = await rateLimit(db, userId, 'create-booking', 8, 60_000)
+  if (!allowed) return res.status(429).json({ error: 'Too many requests' })
 
   try {
     let bookingId

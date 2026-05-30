@@ -110,7 +110,7 @@ function getSpringEquinox(year: number): Date {
 
 // 年内受渡最終日: TSE最終売買日（12/30 以前の最終取引日）- 2 営業日
 function getYearEndSettlement(year: number): Date {
-  let last = new Date(year, 11, 30) // Dec 30 から探索
+  const last = new Date(year, 11, 30) // Dec 30 から探索
   while (!isTradingDay(last)) last.setDate(last.getDate() - 1)
   return addTradingDays(last, -2)
 }

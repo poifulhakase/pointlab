@@ -1,5 +1,7 @@
 import { getDb } from './firebase'
 import { restGetDoc, restListDocs, restSetDoc, restDeleteDoc } from './firestoreRest'
+// 書き込みは全て REST（firestoreRest）に一本化。
+// ※2026-05-30 検証: SDK の setDoc は forceLongPolling を試してもハングするため REST が正解と確認。
 import type { DayNote } from './noteStorage'
 import { isPendingDelete, removePendingDelete } from './noteStorage'
 import { loadStickyNotes, saveStickyNotes, type StickyNote } from './stickyNotes'

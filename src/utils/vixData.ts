@@ -4,6 +4,7 @@
 
 import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
+import { parseYahooChart } from './yahooChart'
 
 export interface VixDayData {
   time:      string        // YYYY-MM-DD
@@ -36,10 +37,10 @@ async function fetchVixFromYahoo(): Promise<VixWeekData[]> {
     const target = `https://${base}.finance.yahoo.com/v8/finance/chart/${sym}?interval=1wk&range=1y`
     try {
       const json = await proxyFetch(target)
-      const r = (json as any)?.chart?.result?.[0]
-      if (!r) throw new Error('no result')
-      const ts: number[]          = r.timestamp ?? []
-      const cl: (number | null)[] = r.indicators?.quote?.[0]?.close ?? []
+      const parsed = parseYahooChart(json)
+      if (!parsed) throw new Error('no result')
+      const ts = parsed.timestamps
+      const cl = parsed.close
       const pts: VixWeekData[]    = []
       for (let j = 0; j < ts.length; j++) {
         if (cl[j] == null) continue
@@ -103,10 +104,10 @@ export async function fetchVixDailyData(force = false): Promise<VixDayData[]> {
         try {
           const target = `https://${base}.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=3mo`
           const json   = await proxyFetch(target)
-          const r      = (json as any)?.chart?.result?.[0]
-          if (!r) throw new Error('no result')
-          const ts: number[]          = r.timestamp ?? []
-          const cl: (number | null)[] = r.indicators?.quote?.[0]?.close ?? []
+          const parsed = parseYahooChart(json)
+          if (!parsed) throw new Error('no result')
+          const ts = parsed.timestamps
+          const cl = parsed.close
           const pts: VixDayData[]     = []
           for (let i = 0; i < ts.length; i++) {
             if (cl[i] == null) continue

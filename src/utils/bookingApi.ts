@@ -1,5 +1,5 @@
 import { auth } from './firebase'
-import type { Slot, Booking, BookingStatus } from './bookingTypes'
+import type { Slot, Booking } from './bookingTypes'
 
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`
@@ -54,15 +54,6 @@ function toFields(obj: Record<string, unknown>): Record<string, unknown> {
 }
 
 // ── Generic REST helpers ───────────────────────────────────────────────────
-
-async function getDoc(path: string): Promise<Record<string, unknown> | null> {
-  const t   = await token()
-  const res = await fetch(`${BASE}/${path}`, { headers: { Authorization: `Bearer ${t}` } })
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error(`Firestore GET ${res.status}: ${path}`)
-  const json = await res.json() as { fields?: Record<string, unknown> }
-  return fromFields(json.fields ?? {})
-}
 
 async function listDocs(col: string, noAuth = false): Promise<Array<{ id: string; data: Record<string, unknown> }>> {
   const headers: Record<string, string> = {}
@@ -236,21 +227,27 @@ export async function getAllBookings(): Promise<Booking[]> {
     .sort((a, b) => (b.requestedAt ?? '').localeCompare(a.requestedAt ?? ''))
 }
 
-/** User or admin: cancel a booking */
+/**
+ * User or admin: cancel a booking.
+ * スロット解放を含めサーバー側（Admin SDK）で実行する。
+ * 以前はクライアントが直接 slots.isBooked を書いていたため改ざんの穴があった。
+ */
 export async function cancelBooking(
   booking: Booking,
-  isAdmin: boolean,
+  _isAdmin: boolean,
 ): Promise<void> {
-  const newStatus: BookingStatus = isAdmin ? 'cancelled_admin' : 'cancelled_user'
-  await setDoc(`bookings/${booking.id}`, {
-    ...booking,
-    status:    newStatus,
-    updatedAt: new Date().toISOString(),
+  const user = auth.currentUser
+  if (!user) throw new Error('Not authenticated')
+  const idToken = await user.getIdToken()
+
+  const res = await fetch('/api/cancel-booking', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ idToken, bookingId: booking.id }),
   })
-  // Free up the slot
-  const slot = await getDoc(`slots/${booking.slotId}`)
-  if (slot) {
-    await setDoc(`slots/${booking.slotId}`, { ...slot, isBooked: false })
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(json.error ?? `HTTP ${res.status}`)
   }
 }
 

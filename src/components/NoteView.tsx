@@ -28,7 +28,7 @@ const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
   { genre: 'ぽいロボ', title: 'ぽいロボ独自機能', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'original' },
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
-  { genre: 'ぽいロボ', title: '需給エネルギーバックテスト', mobileTitle: 'エネルギーバックテスト', url: null, thumb: null, internalAction: 'backtest' },
+  { genre: 'ぽいロボ', title: 'バックテスト', url: null, thumb: null, internalAction: 'backtest' },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
@@ -58,9 +58,72 @@ const ARTICLES: Article[] = [
 
 const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理者']
 
-function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: {
+// サムネイル画像が未設定のカード用：全カード共通のプレースホルダー
+function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
+  const dark = theme === 'dark'
+  const bg = dark
+    ? 'linear-gradient(135deg, #0a1622 0%, #0d2233 58%, #07131f 100%)'
+    : 'linear-gradient(135deg, #eef7fb 0%, #d8eef6 58%, #f0f9fc 100%)'
+  const grid = dark ? 'rgba(0,229,255,0.07)' : 'rgba(3,105,161,0.08)'
+  const bracket = dark ? 'rgba(0,229,255,0.45)' : 'rgba(3,105,161,0.4)'
+  const sweep = dark ? 'rgba(0,229,255,0.18)' : 'rgba(3,105,161,0.12)'
+  const iconColor = dark ? 'rgba(0,229,255,0.92)' : 'rgba(3,105,161,0.92)'
+
+  return (
+    <div
+      className="note-thumb-ph"
+      style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: bg, overflow: 'hidden',
+      }}
+    >
+      {/* グリッド模様 */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `linear-gradient(${grid} 1px, transparent 1px), linear-gradient(90deg, ${grid} 1px, transparent 1px)`,
+        backgroundSize: '18px 18px',
+      }} />
+      {/* スキャンライン微光 */}
+      <div className="note-thumb-sweep" style={{
+        position: 'absolute', left: 0, right: 0, height: '40%',
+        background: `linear-gradient(180deg, transparent, ${sweep}, transparent)`,
+      }} />
+      {/* コーナーブラケット */}
+      <span style={{ position: 'absolute', top: 8, left: 8, width: 12, height: 12, borderTop: `1.5px solid ${bracket}`, borderLeft: `1.5px solid ${bracket}` }} />
+      <span style={{ position: 'absolute', top: 8, right: 8, width: 12, height: 12, borderTop: `1.5px solid ${bracket}`, borderRight: `1.5px solid ${bracket}` }} />
+      <span style={{ position: 'absolute', bottom: 8, left: 8, width: 12, height: 12, borderBottom: `1.5px solid ${bracket}`, borderLeft: `1.5px solid ${bracket}` }} />
+      <span style={{ position: 'absolute', bottom: 8, right: 8, width: 12, height: 12, borderBottom: `1.5px solid ${bracket}`, borderRight: `1.5px solid ${bracket}` }} />
+      {/* アイコン（グロー付き円） */}
+      <div style={{
+        position: 'relative',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: '40%', aspectRatio: '1 / 1', borderRadius: '50%',
+        border: `1px solid ${bracket}`,
+        background: dark ? 'rgba(0,229,255,0.05)' : 'rgba(3,105,161,0.05)',
+        boxShadow: dark ? `0 0 18px rgba(0,229,255,0.22), inset 0 0 14px rgba(0,229,255,0.1)` : 'none',
+      }}>
+        <svg width="34%" height="34%" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="note-thumb-icon">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+        </svg>
+      </div>
+      {/* ラベル */}
+      <span style={{
+        position: 'absolute', bottom: 9, left: 0, right: 0, textAlign: 'center',
+        fontSize: 8, fontWeight: 700, letterSpacing: '0.28em',
+        color: dark ? 'rgba(0,229,255,0.55)' : 'rgba(3,105,161,0.55)',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        textTransform: 'uppercase',
+      }}>POIROBO</span>
+    </div>
+  )
+}
+
+function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: {
   article: Article
   isMobile: boolean
+  theme: 'dark' | 'light'
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onOpenBacktest?: () => void
@@ -109,7 +172,7 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
       <div style={s.thumbWrap}>
         {article.thumb
           ? <img src={article.thumb} alt={article.title} style={s.thumb} loading="lazy" />
-          : <div style={s.thumbPlaceholder} />
+          : <PlaceholderThumb theme={theme} />
         }
         {isComingSoon && (
           <div style={s.comingSoonBadge}>近日公開</div>
@@ -125,7 +188,12 @@ function ArticleCard({ article, isMobile, onOpenManual, onOpenLegal, onOpenBackt
 }
 
 export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: Props) {
-  const visibleArticles = isAdmin ? ARTICLES : ARTICLES.filter(a => a.internalAction !== 'evals' && a.internalAction !== 'spec' && a.internalAction !== 'community')
+  // バックテストは検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
+  // サンプルが十分に揃ったら公開範囲を再検討する。
+  const visibleArticles = ARTICLES.filter(a => {
+    if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest') && !isAdmin) return false
+    return true
+  })
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? 'transparent' : '#f4f6f9' }}>
@@ -141,7 +209,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} />
                   ))}
                 </div>
               </section>
@@ -282,11 +350,6 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-  },
-  thumbPlaceholder: {
-    position: 'absolute',
-    inset: 0,
-    background: 'linear-gradient(135deg, rgba(80,80,100,0.3) 0%, rgba(40,40,60,0.5) 100%)',
   },
   comingSoonBadge: {
     position: 'absolute',

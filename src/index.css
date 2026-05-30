@@ -54,6 +54,22 @@
   animation: today-pulse-light 2.8s ease-out infinite;
 }
 
+/* DATA カード サムネイル未設定時のスキャンライン微光（ぽいロボ系） */
+@keyframes note-thumb-sweep {
+  0%   { transform: translateY(-120%); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+.note-thumb-ph .note-thumb-sweep {
+  animation: note-thumb-sweep 4.5s ease-in-out infinite;
+}
+.note-thumb-ph .note-thumb-icon {
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+.note-thumb-ph:hover .note-thumb-icon {
+  transform: scale(1.08);
+}
+
 img {
   -webkit-user-drag: none;
   user-select: none;

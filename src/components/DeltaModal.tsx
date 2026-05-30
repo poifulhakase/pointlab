@@ -265,7 +265,7 @@ export function DeltaModal({ type, marData, arbData, ssData, adData, futuresDail
               {cfg.title}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
-              {SUB_LABEL[type]}　直近{(type === 'futures_oi' || type === 'pcr') ? '13営業日' : '13週'}
+              {SUB_LABEL[type]}{'　'}直近{(type === 'futures_oi' || type === 'pcr') ? '13営業日' : '13週'}
             </div>
           </div>
           <button

@@ -507,6 +507,20 @@ function buildExportJson(
   const nkPos52w     = nkCur != null && nkHigh52w != null && nkLow52w != null && nkHigh52w > nkLow52w
     ? r2((nkCur - nkLow52w) / (nkHigh52w - nkLow52w) * 100) : null
 
+  // ── 価格レジーム判定（★2026-05-30 追加：需給逆張りのトレンド/レンジ ゲート用）──
+  // MA60 の傾き（20営業日前との比較）＋ 価格・MA20・MA60 の並びで分類。
+  // 需給シグナルがトレンドに逆らう場合の「待機」判断に使う（レンジ型エンジンの弱点対策）。
+  const nkMa60Prev   = nkPrices.length > 80 ? maL(nkPrices.slice(0, nkPrices.length - 20), 60) : null
+  const nkMa60Slope  = (nkMa60 != null && nkMa60Prev != null)
+    ? (nkMa60 > nkMa60Prev ? 'rising' : nkMa60 < nkMa60Prev ? 'falling' : 'flat')
+    : null
+  let nkRegime: 'uptrend' | 'downtrend' | 'range' = 'range'
+  if (nkCur != null && nkMa20 != null && nkMa60 != null) {
+    if (nkCur > nkMa20 && nkMa20 > nkMa60 && nkMa60Slope === 'rising')        nkRegime = 'uptrend'
+    else if (nkCur < nkMa20 && nkMa20 < nkMa60 && nkMa60Slope === 'falling')  nkRegime = 'downtrend'
+    else                                                                      nkRegime = 'range'
+  }
+
   const fxPrices = usdjpyData.map(d => d.close)
   const fxMa20   = maL(fxPrices, 20)
 
@@ -953,6 +967,9 @@ function buildExportJson(
         high_52w:      nkHigh52w,
         low_52w:       nkLow52w,
         pos_in_52w_pct: nkPos52w,
+        ma60_slope:    nkMa60Slope,
+        regime:        nkRegime,
+        regime_note:   'uptrend/downtrend=明確なトレンド（需給逆張りの本命エントリーは見送り推奨）/ range=レンジ（需給逆張りの本領）',
       },
       usdjpy: {
         ma20_dev_pct:  fxMa20 && fx ? r2((fx.close - fxMa20) / fxMa20 * 100) : null,

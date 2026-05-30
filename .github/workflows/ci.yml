@@ -25,5 +25,9 @@ jobs:
       - name: 型チェック
         run: npx tsc --noEmit -p tsconfig.app.json
 
+      # ★2026-05-30 エラー0件化達成によりブロッキング化。warning は許容（error のみ失敗）。
+      - name: Lint
+        run: npm run lint
+
       - name: テスト実行
         run: npm test

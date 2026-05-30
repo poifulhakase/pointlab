@@ -1,5 +1,6 @@
 import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
+import { parseYahooChart } from './yahooChart'
 
 export interface NkFuturesDayData {
   date:       string        // YYYY-MM-DD
@@ -29,15 +30,14 @@ function isMarketOpen(): boolean {
 type OhlcvRaw = { date: string; open: number; high: number; low: number; close: number; volume: number | null }
 
 function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
-  const r = (json as any)?.chart?.result?.[0]
-  if (!r) throw new Error('レスポンス形式が不正')
-  const ts:      number[]          = r.timestamp ?? []
-  const q                           = r.indicators?.quote?.[0] ?? {}
-  const opens:   (number | null)[] = q.open   ?? []
-  const highs:   (number | null)[] = q.high   ?? []
-  const lows:    (number | null)[] = q.low    ?? []
-  const closes:  (number | null)[] = q.close  ?? []
-  const volumes: (number | null)[] = q.volume ?? []
+  const parsed = parseYahooChart(json)
+  if (!parsed) throw new Error('レスポンス形式が不正')
+  const ts      = parsed.timestamps
+  const opens   = parsed.open
+  const highs   = parsed.high
+  const lows    = parsed.low
+  const closes  = parsed.close
+  const volumes = parsed.volume
 
   const valid: OhlcvRaw[] = []
   for (let i = 0; i < ts.length; i++) {

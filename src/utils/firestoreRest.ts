@@ -26,7 +26,8 @@ function fromValue(v: Record<string, unknown>): unknown {
   return null
 }
 
-function fromFields(fields: Record<string, unknown>): Record<string, unknown> {
+// テスト用にエクスポート（Firestore REST の値表現 ⇔ JS 値の変換）
+export function fromFields(fields: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(fields).map(([k, val]) => [k, fromValue(val as Record<string, unknown>)])
   )
@@ -81,7 +82,7 @@ function toValue(v: unknown): unknown {
   return { nullValue: null }
 }
 
-function toFields(obj: Record<string, unknown>): Record<string, unknown> {
+export function toFields(obj: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, toValue(v)]))
 }
 

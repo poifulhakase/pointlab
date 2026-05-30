@@ -1,4 +1,5 @@
 {
+  "logic_version": "v1-supply-demand-only",
   "computed_at": "2026-05-26T14:24:58.364Z",
   "data_range": {
     "from": "2025-11-14",

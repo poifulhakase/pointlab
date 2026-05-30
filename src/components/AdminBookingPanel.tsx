@@ -13,6 +13,7 @@ import {
   sendBookingPush,
 } from '../utils/bookingApi'
 import { formatBookingLabel, statusLabel, getCancelPolicy } from '../utils/bookingTypes'
+import { jstTodayKey } from '../utils/jstDate'
 
 type Props = {
   isOpen:       boolean
@@ -45,7 +46,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
   const [isWide,   setIsWide]   = useState(window.innerWidth >= 640)
 
   // new slot form
-  const todayStr = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10)
+  const todayStr = jstTodayKey()
   const [newDate,  setNewDate]  = useState(todayStr)
   const [newTimes, setNewTimes] = useState<string[]>([])
   const [calYear,  setCalYear]  = useState(parseInt(todayStr.slice(0, 4)))
@@ -62,7 +63,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
   useEffect(() => {
     if (!isOpen) return
     load()
-  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen])  
 
   useEffect(() => {
     const fn = () => setIsWide(window.innerWidth >= 640)
