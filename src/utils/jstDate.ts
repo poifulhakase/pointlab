@@ -10,6 +10,15 @@ export function jstTodayKey(): string {
   }).format(new Date())
 }
 
+/**
+ * 任意の Date のローカル日付を "YYYY-MM-DD" に整形する。
+ * カレンダーセルのように「特定の日」を表す Date を、その日付成分のまま
+ * キー化する用途（≠「今日」を求める用途）に使う。今日が欲しい場合は jstTodayKey()。
+ */
+export function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 /** JST の現在時刻 "YYYY-MM-DD HH:MM:SS"。 */
 export function jstTimestamp(): string {
   const parts = new Intl.DateTimeFormat('en-CA', {

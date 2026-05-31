@@ -3,6 +3,7 @@ import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
+import { jstTodayKey } from '../utils/jstDate'
 import type { CotNikkeiWeekData } from '../utils/cotNikkeiData'
 
 type Props = {
@@ -175,12 +176,6 @@ function loadHistoryLocal(): MemoSnapshot[] {
 function saveHistoryLocal(h: MemoSnapshot[]): void {
   localStorage.setItem(QUANT_MEMO_HISTORY_KEY, JSON.stringify(h))
 }
-function todayStr(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-
 
 const QUANT_HL_PATTERNS = [
   /(?:\*\*)?確信度(?:\*\*)?：[\d.]+%/g,
@@ -303,7 +298,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             setSelectedDate(latest.date)
           } else if (typeof d.text === 'string' && d.text) {
             // 旧フォーマット移行: { text, updatedAt } → snapshots[]
-            const today = todayStr()
+            const today = jstTodayKey()
             const migrated: MemoSnapshot[] = [{ date: today, text: d.text }]
             setHistory(migrated)
             saveHistoryLocal(migrated)
@@ -319,7 +314,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
           } else {
             const legacy = localStorage.getItem(QUANT_MEMO_KEY) ?? ''
             if (legacy) {
-              const today = todayStr()
+              const today = jstTodayKey()
               const migrated: MemoSnapshot[] = [{ date: today, text: legacy }]
               setHistory(migrated)
               saveHistoryLocal(migrated)
@@ -335,7 +330,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
   // スナップショット保存（ログイン時・今日の日付で保存・ログ日付を自動更新）
   const handleSnapSave = useCallback(() => {
     if (!user) return
-    const today = todayStr()
+    const today = jstTodayKey()
     const updatedMemo = updateLogDate(quantMemo, today)
     const newSnap: MemoSnapshot = { date: today, text: updatedMemo }
     const filtered = history.filter(s => s.date !== today)

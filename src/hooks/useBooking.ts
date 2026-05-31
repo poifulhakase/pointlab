@@ -3,6 +3,7 @@ import type { User } from 'firebase/auth'
 import { getUserActiveBooking, getAllBookings } from '../utils/bookingApi'
 import type { BookingSlot } from '../utils/bookingTypes'
 import { isAdminEmail } from '../utils/admin'
+import { dateKey } from '../utils/jstDate'
 
 /**
  * カレンダーに表示する予約（ぽいロボ コネクト）スロットの取得。
@@ -34,8 +35,7 @@ export function useBooking(user: User | null) {
   }, [user])  
 
   const getBookingEvents = useCallback((d: Date): BookingSlot[] => {
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    return bookingMap.get(key) ?? []
+    return bookingMap.get(dateKey(d)) ?? []
   }, [bookingMap])
 
   return { getBookingEvents }
