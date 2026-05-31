@@ -548,11 +548,10 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             </ErrorBoundary>
           )}
 
-          {/* チャート */}
+          {/* チャート（TradingView 埋め込み）は無料公開。TradingView のアトリビューションを
+              保ったまま誰でも閲覧できるようコミュニティゲートから除外（規約上の曖昧さ回避） */}
           {cal.view === 'chart' && (
-            isMember
-              ? <ErrorBoundary label="チャート"><Suspense fallback={<ViewLoader />}><ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="chart" />
+            <ErrorBoundary label="チャート"><Suspense fallback={<ViewLoader />}><ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} /></Suspense></ErrorBoundary>
           )}
 
           {/* データ（需給） */}
@@ -691,8 +690,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       </Suspense>
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {/* コミュニティ限定ビュー（カレンダー/チャート/エンジン/シールド）は非メンバー時に非表示。legal は全員公開のため維持。 */}
-      {((((isCalView || cal.view === 'chart' || cal.view === 'quant' || cal.view === 'shield') && isMember)) || cal.view === 'legal') && (
+      {/* コミュニティ限定ビュー（カレンダー/エンジン/シールド）は非メンバー時に非表示。
+          chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
+      {(((isCalView || cal.view === 'quant' || cal.view === 'shield') && isMember) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isLegalNeon ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isLegalNeon ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isLegalNeon ? undefined : 'glass'}>
