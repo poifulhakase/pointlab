@@ -87,7 +87,7 @@ export function CommunityLockScreen({ user, authLoading, memberLoading, view = '
         <>
           {/* ぽいロボ画像 */}
           <img
-            src={`${import.meta.env.BASE_URL}poirobo.png`}
+            src={`${import.meta.env.BASE_URL}poirobo.webp`}
             alt="ぽいロボ"
             style={{
               width: 80, height: 80, objectFit: 'contain',

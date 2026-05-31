@@ -945,7 +945,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
             >×</button>
 
             <img
-              src={`${import.meta.env.BASE_URL}poirobo.png`}
+              src={`${import.meta.env.BASE_URL}poirobo.webp`}
               alt="ぽいロボ"
               style={{
                 width: 64, height: 64, objectFit: 'contain',

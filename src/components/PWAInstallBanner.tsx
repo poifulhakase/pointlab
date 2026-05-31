@@ -115,7 +115,7 @@ export function PWAInstallBanner() {
       <div style={{ padding: '12px 14px 14px', display: 'flex', gap: 12 }}>
         {/* ロボ画像 */}
         <img
-          src={`${import.meta.env.BASE_URL}poirobo.png`}
+          src={`${import.meta.env.BASE_URL}poirobo.webp`}
           alt="ぽいロボ"
           style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0, alignSelf: 'center' }}
         />
