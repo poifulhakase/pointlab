@@ -12,6 +12,18 @@ const RED       = 'rgba(255,120,100,0.5)'
 const GREEN     = 'rgba(96,200,140,0.5)'
 const MONO      = "'Courier New', Courier, monospace" as const
 
+// 装飾用ローソク足スケルトンの幾何を一度だけ生成（描画中の Math.random はレンダー毎に
+// 再ランダム化され純粋でないため、モジュールロード時に固定する）
+const CHART_SKELETON_CANDLES = [...Array(28)].map((_, i) => {
+  const x = i * 22 + 8
+  const center = 100 + Math.sin(i * 0.5) * 30 + (Math.random() - 0.5) * 10
+  const open = center + (Math.random() - 0.5) * 18
+  const close = center + (Math.random() - 0.5) * 18
+  const high = Math.min(open, close) - 8 - Math.random() * 10
+  const low = Math.max(open, close) + 8 + Math.random() * 10
+  return { x, high, low, top: Math.min(open, close), height: Math.abs(close - open) || 1, col: close < open ? GREEN : RED }
+})
+
 // ── 共通パーツ ─────────────────────────────────────────
 
 function Panel({ children, style }: { children?: React.ReactNode; style?: React.CSSProperties }) {
@@ -187,22 +199,12 @@ export function ChartSkeleton() {
           }} />
           <svg viewBox="0 0 600 200" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
             {/* ローソク足風 */}
-            {[...Array(28)].map((_, i) => {
-              const x = i * 22 + 8
-              const center = 100 + Math.sin(i * 0.5) * 30 + (Math.random() - 0.5) * 10
-              const open = center + (Math.random() - 0.5) * 18
-              const close = center + (Math.random() - 0.5) * 18
-              const high = Math.min(open, close) - 8 - Math.random() * 10
-              const low = Math.max(open, close) + 8 + Math.random() * 10
-              const isUp = close < open
-              const col = isUp ? GREEN : RED
-              return (
-                <g key={i}>
-                  <line x1={x} y1={high} x2={x} y2={low} stroke={col} strokeWidth="1.5" />
-                  <rect x={x - 5} y={Math.min(open, close)} width={10} height={Math.abs(close - open) || 1} fill={col} stroke={col} />
-                </g>
-              )
-            })}
+            {CHART_SKELETON_CANDLES.map((c, i) => (
+              <g key={i}>
+                <line x1={c.x} y1={c.high} x2={c.x} y2={c.low} stroke={c.col} strokeWidth="1.5" />
+                <rect x={c.x - 5} y={c.top} width={10} height={c.height} fill={c.col} stroke={c.col} />
+              </g>
+            ))}
             {/* MA曲線 */}
             <path
               d="M0,140 Q60,120 120,125 T240,110 T360,90 T480,70 T600,80"
