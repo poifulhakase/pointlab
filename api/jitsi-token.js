@@ -1,5 +1,41 @@
 import { SignJWT, importPKCS8 } from 'jose'
 import { createPrivateKey } from 'crypto'
+import admin from 'firebase-admin'
+
+// Firebase Admin 初期化（idToken 検証＋レート制限ストア用）。
+if (!admin.apps.length) {
+  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')
+  admin.initializeApp({ credential: admin.credential.cert(sa) })
+}
+const db   = admin.firestore()
+const auth = admin.auth()
+
+// Firestore ベースの簡易レート制限（per uid + action）。
+// api/_ratelimit.js と同一ロジックだが、当ファイルは jose のため ESM 固定で、
+// CJS(_ratelimit.js)を "type":"module" 下で default import できないためインラインで持つ。
+async function rateLimit(uid, action, maxPerWindow, windowMs) {
+  if (!uid) return true
+  const ref = db.collection('rateLimits').doc(`${uid}__${action}`)
+  const now = Date.now()
+  try {
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref)
+      let count = 0
+      let windowStart = now
+      if (snap.exists) {
+        const d = snap.data() || {}
+        count = typeof d.count === 'number' ? d.count : 0
+        windowStart = typeof d.windowStart === 'number' ? d.windowStart : now
+      }
+      if (now - windowStart > windowMs) { count = 0; windowStart = now }
+      count++
+      tx.set(ref, { count, windowStart, updatedAt: now })
+      return count <= maxPerWindow
+    })
+  } catch {
+    return true // 判定失敗時はフェイルオープン（正規利用を阻害しない）
+  }
+}
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
@@ -7,8 +43,27 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' })
 
-  const { room, name, email, uid } = req.query ?? {}
-  if (!room || !uid) return res.status(400).json({ error: 'Missing parameters' })
+  // 認証: idToken は Authorization ヘッダーで受け取る（URL ログへの漏洩を避ける）。
+  const authHeader = req.headers.authorization || ''
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!idToken) return res.status(401).json({ error: 'Unauthorized' })
+
+  let decoded
+  try {
+    decoded = await auth.verifyIdToken(idToken)
+  } catch {
+    return res.status(401).json({ error: 'Invalid token' })
+  }
+  // uid / email はクエリではなく検証済みトークンから採用（なりすまし防止）。
+  const uid   = decoded.uid
+  const email = decoded.email ?? ''
+
+  const { room, name } = req.query ?? {}
+  if (!room) return res.status(400).json({ error: 'Missing parameters' })
+
+  // レート制限（uid あたり 60秒で最大20回。入退室・再接続を考慮した上限）。
+  const ok = await rateLimit(uid, 'jitsi-token', 20, 60_000)
+  if (!ok) return res.status(429).json({ error: 'Too many requests' })
 
   const appId  = process.env.JAAS_APP_ID
   const keyId  = process.env.JAAS_KEY_ID
@@ -31,9 +86,12 @@ export default async function handler(req, res) {
     // 形式: "vpaas-magic-cookie-xxx/uuid" — appId プレフィックスがなければ補完
     const kid = keyId.includes('/') ? keyId : `${appId}/${keyId}`
 
-    // uid で管理者判定（email クエリパラメータは信頼しない）
-    const adminUid = process.env.ADMIN_UID ?? ''
-    const isModerator = adminUid !== '' && uid === adminUid
+    // 管理者判定は検証済み uid（ADMIN_UID）または検証済み email（ADMIN_EMAIL）で行う。
+    const adminUid   = process.env.ADMIN_UID ?? ''
+    const adminEmail = process.env.ADMIN_EMAIL ?? ''
+    const isModerator =
+      (adminUid !== '' && uid === adminUid) ||
+      (adminEmail !== '' && email === adminEmail)
 
     const token = await new SignJWT({
       aud: 'jitsi',
@@ -44,7 +102,7 @@ export default async function handler(req, res) {
         user: {
           moderator: isModerator,
           name:  name  ?? 'ユーザー',
-          email: email ?? '',
+          email,
           id:    uid,
         },
         features: {

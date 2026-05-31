@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { isAdminEmail } from '../utils/admin'
+import { auth } from '../utils/firebase'
 
 export type ConnectUser = { uid: string; displayName: string | null; email: string | null; photoURL?: string | null }
 
@@ -98,13 +99,16 @@ export function JitsiPanel({ user, isMobile, minimized, onMinimize, onExpand, on
       }
       if (cancelled || !containerRef.current) return
 
+      // uid/email はサーバーで idToken から導出するため送らない（なりすまし防止）。
       const params = new URLSearchParams({
         room:  shortRoom,
         name:  displayName,
-        email: user.email ?? '',
-        uid:   user.uid,
       })
-      const res = await fetch(`/api/jitsi-token?${params}`)
+      const idToken = await auth.currentUser?.getIdToken()
+      if (!idToken) throw new Error('Not authenticated')
+      const res = await fetch(`/api/jitsi-token?${params}`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
       if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`)
       const { token } = await res.json() as { token: string }
       if (cancelled || !containerRef.current) return
