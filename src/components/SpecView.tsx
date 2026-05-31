@@ -881,6 +881,22 @@ const SPEC_SECTIONS = [
           'テスト追加（計117）: firestoreRest 往復・maintenanceState・admin・newsPrompt・validate・jstDate',
         ],
       },
+      {
+        type: 'list' as const,
+        heading: 'セキュリティ・品質・パフォーマンス改善（★2026-05-31 第12セッション）',
+        items: [
+          'カレンダー月送りバグ修正: 月末(31日等)に居る状態で「>」を押すと setMonth の繰り上がりで翌月を飛ばしていた（例 5/31→7月）。月送り前に日を1日へ固定。ロジックを純粋関数 stepDate に抽出し回帰テスト6件追加',
+          'buildExportJson を分離: QuantView の約760行・15引数関数を純粋モジュール utils/engineExport.ts へ抽出（EngineExport 型をエクスポート）。構造検証テスト12件を追加',
+          'JST 日付キー集約: MicroQuantView の todayStr() を jstTodayKey() に置換（深夜境界の off-by-one 解消）。任意 Date を YYYY-MM-DD 化する dateKey(d) を jstDate.ts に追加し useBooking と共通化',
+          '管理者は単一運用に戻した: 副管理者(ADMIN_EMAILS配列)を廃止し ADMIN_EMAIL 単一定数に（配列に足しても firestore.rules/API は主管理者しか認識せず誤解の元のため）',
+          'チャート(TradingView)を無料公開化: 無料ウィジェットをメンバー限定(ペイウォール)内に置く規約上の曖昧さ回避。アトリビューション(ロゴ・リンク)は保持。チャート本体とフローティングサブバーを isMember 条件の外へ（legal と同扱い）。有料価値の本体=エンジン/需給/シールドは限定継続',
+          'jitsi-token のセキュリティ強化: 従来はクエリの uid/email を信頼し誰でもトークン生成可だった。Admin SDK で idToken を検証し uid/email は検証済みトークンから採用（Authorization:Bearer で受領）。moderator 判定に ADMIN_EMAIL も追加。uid あたり 60秒20回のレート制限',
+          'lint warning 0 件化（37→0）: no-explicit-any は実型付け、exhaustive-deps は依存追加 or useCallback 安定化、only-export-components は理由付き disable、LockSkeletons の描画中 Math.random をモジュール定数化（再ランダム化バグも修正）。残る React Compiler 助言(set-state-in-effect/refs/preserve-manual-memoization)は未導入のため off（purity/exhaustive-deps は実バグ捕捉のため維持）',
+          'Lighthouse 実測（本番モバイル）: Performance 77 / LCP 4.8s / TBT 200ms / CLS 0。最大転送 poirobo.png 247KB を webp 49KB に切替（研究室・ロック画面・PWAバナーの小サムネが webp 未使用だった）。残課題は Firebase Auth iframe(90KB)・firebase SDK の削減',
+          'テスト計136件（+19）: engineExport(12)・jstDate dateKey・useCalendar stepDate(6) を追加。lint error 0/warning 0・tsc 0',
+          'グローバルナビ順変更: チャートを「研究室の左隣」へ移動（カレンダー→エンジン→シールド→チャート→研究室）。CalendarHeader の MAIN_VIEWS が単一情報源',
+        ],
+      },
     ],
   },
 ]

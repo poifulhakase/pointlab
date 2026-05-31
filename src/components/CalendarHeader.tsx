@@ -68,9 +68,9 @@ function ShieldIcon() {
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
   { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
-  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: 'エンジン',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <RobotIcon /> },
   { label: 'シールド',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <ShieldIcon /> },
+  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 
