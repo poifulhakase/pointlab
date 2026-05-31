@@ -875,7 +875,7 @@ const SPEC_SECTIONS = [
           'CI lint をブロッキング化（★2026-05-30 エラー0件化）: 本物の指摘（no-empty/no-irregular-whitespace/ban-ts-comment）を修正、hakaseAI（別プロジェクト）を eslint 対象外に、React Compiler 系ルール（set-state-in-effect/purity/refs/preserve-manual-memoization）と react-refresh/only-export-components は最適化助言のため warn に格下げ。error 0・warning 37',
           'a11y: 通知トグル/チェックボックスに role/aria/キーボード操作を付与',
           '表示速度: Sentry を初期ロードから除外（sentry.ts は動的 import + requestIdleCallback で遅延 init、ErrorBoundary もエラー時に動的 import）。gzip 約46KB を初回描画クリティカルパスから外した',
-          '管理者の複数化: admin.ts を ADMIN_EMAILS 配列に対応（bus factor 対策・副管理者を追記可能）。ADMIN_EMAIL は後方互換で先頭を返す',
+          '管理者は単一運用（★2026-05-31 整理）: 一時的に ADMIN_EMAILS 配列化したが、firestore.rules/API env まで一貫配線しないと中途半端になり誤解の元のため単一 ADMIN_EMAIL 定数に戻した。副管理者が必要になれば全層をまとめて対応する',
           'JST 日付の正確化: utils/jstDate.ts（jstTodayKey/jstTimestamp）。手動 +9h オフセットを Intl の Asia/Tokyo に置換し日付境界の off-by-one を解消',
           'アプリアイコン: インストール後表示アイコン（icon-192/512/maskable/apple-touch）のロゴを 1.1倍にズーム（scripts/zoom-icons.cjs・キャンバス寸法は維持）',
           'テスト追加（計117）: firestoreRest 往復・maintenanceState・admin・newsPrompt・validate・jstDate',
