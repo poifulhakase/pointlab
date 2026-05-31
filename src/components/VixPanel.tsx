@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { createChart, LineSeries, HistogramSeries, ColorType, CrosshairMode, type ISeriesApi } from 'lightweight-charts'
+import { createChart, LineSeries, HistogramSeries, ColorType, CrosshairMode, type ISeriesApi, type Time } from 'lightweight-charts'
 import { fetchVixData, type VixWeekData } from '../utils/vixData'
 import { proxyFetch } from '../utils/proxyFetch'
 
@@ -40,8 +40,12 @@ function writeVixCache(data: Point[]) {
   } catch { /* ignore */ }
 }
 
+type YahooChartResult = {
+  timestamp?: number[]
+  indicators?: { quote?: Array<{ close?: (number | null)[] }> }
+}
 function parseYahooVix(json: unknown): Point[] {
-  const r = (json as any)?.chart?.result?.[0]
+  const r = (json as { chart?: { result?: YahooChartResult[] } })?.chart?.result?.[0]
   if (!r) throw new Error('レスポンス形式が不正')
   const ts: number[]          = r.timestamp ?? []
   const cl: (number | null)[] = r.indicators?.quote?.[0]?.close ?? []
@@ -125,7 +129,7 @@ function VixDeltaHistogram({ data, theme }: { data: VixWeekData[]; theme: 'dark'
 
     const hist = chart.addSeries(HistogramSeries, { base: 0, priceLineVisible: false, lastValueVisible: true })
     hist.setData(pts.map(d => ({
-      time: d.date.replace(/\//g, '-') as any,
+      time: d.date.replace(/\//g, '-') as Time,
       value: d.changePct!,
       color: d.changePct! >= 0
         ? (isDark ? 'rgba(255,100,80,0.85)' : 'rgba(200,50,30,0.80)')

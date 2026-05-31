@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
-import { createChart, HistogramSeries, LineSeries, ColorType, CrosshairMode } from 'lightweight-charts'
+import { createChart, HistogramSeries, LineSeries, ColorType, CrosshairMode, type Time } from 'lightweight-charts'
 import { type MarginWeekData } from '../utils/jpxMarginData'
 import { type ArbitrageWeekData } from '../utils/arbitrageData'
 import { type ShortSellWeekData } from '../utils/shortSellData'
@@ -155,7 +155,7 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
       : (isDark ? 'rgba(248,113,113,0.85)' : 'rgba(200,50,30,0.82)')
 
     const hist = chart.addSeries(HistogramSeries, { base: 0, priceLineVisible: false, lastValueVisible: true })
-    hist.setData(deltas.map(d => ({ time: d.time as any, value: d.value, color: d.value >= 0 ? posColor : negColor })))
+    hist.setData(deltas.map(d => ({ time: d.time as Time, value: d.value, color: d.value >= 0 ? posColor : negColor })))
 
     if (type === 'short_sell' || type === 'advance_decline') {
       const maData = computeMA4(deltas)
@@ -167,7 +167,7 @@ function DeltaChart({ type, deltas, theme }: { type: DeltaModalType; deltas: { t
           priceLineVisible: false,
           lastValueVisible: false,
         })
-        ma.setData(maData.map(d => ({ time: d.time as any, value: d.value })))
+        ma.setData(maData.map(d => ({ time: d.time as Time, value: d.value })))
       }
     }
 
