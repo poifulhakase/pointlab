@@ -28,13 +28,15 @@ export default defineConfig([
       // 型のみインポートは import type を使う
       '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports', fixStyle: 'inline-type-imports' }],
       // ── React Compiler 系ルール（eslint-plugin-react-hooks v6）──
-      // 本アプリは React Compiler 未導入。これらは「最適化の助言」であり実行時バグではないため
-      // error→warn に格下げ（可視化は維持）。該当箇所: effect内setState・装飾用Math.random・
-      // Android戻るボタンの ref パターン等、いずれも意図的で動作上は正常。
-      'react-hooks/set-state-in-effect': 'warn',
+      // 本アプリは React Compiler 未導入。下記3つは「最適化の助言」であり実行時バグではなく、
+      // 該当箇所（effect内の非同期ロード後 setState・prop同期、Android戻るボタンの ref 同期パターン、
+      // 手動 useMemo）はいずれも意図的で動作上正常なため off にする。
+      // React Compiler を導入する際は再度 warn/error に戻して見直すこと。
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      // purity は描画中の Math.random 等の実バグ（再ランダム化）を捕まえるため warn を維持。
       'react-hooks/purity': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/preserve-manual-memoization': 'warn',
       // Fast Refresh（開発時のみ）の制約。util と component を同居させたファイルがあるため warn。
       'react-refresh/only-export-components': 'warn',
     },
