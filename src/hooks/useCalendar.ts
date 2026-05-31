@@ -6,6 +6,25 @@ const VIEW_SESSION_KEY = 'poical-view-session'
 const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original']
 const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
+/**
+ * 現在日付をビュー単位で delta 分だけ進める/戻す純粋関数。
+ * month は月初(1日)に固定してから月を加減算する。月末(31日等)に居る状態で
+ * setMonth すると遷移先の月に同じ日が無い場合に翌月へ繰り上がるため
+ * （例: 5/31 → setMonth(5)=6月だが6月は30日まで → 7/1）。
+ */
+export function stepDate(prev: Date, view: ViewMode, delta: number): Date {
+  const d = new Date(prev)
+  if (view === 'month') {
+    d.setDate(1)
+    d.setMonth(d.getMonth() + delta)
+  } else if (view === 'week') {
+    d.setDate(d.getDate() + delta * 7)
+  } else {
+    d.setDate(d.getDate() + delta)
+  }
+  return d
+}
+
 function loadView(): ViewMode {
   // 管理画面から ?from=admin で遷移してきた場合の初回ウェルカム処理
   const params = new URLSearchParams(window.location.search)
@@ -40,13 +59,7 @@ export function useCalendar() {
   const goToDate  = useCallback((date: Date) => setCurrent(new Date(date)), [])
 
   const go = useCallback((delta: number) => {
-    setCurrent(prev => {
-      const d = new Date(prev)
-      if (view === 'month') d.setMonth(d.getMonth() + delta)
-      else if (view === 'week') d.setDate(d.getDate() + delta * 7)
-      else d.setDate(d.getDate() + delta)
-      return d
-    })
+    setCurrent(prev => stepDate(prev, view, delta))
   }, [view])
 
   /** 月ビュー用：その月のカレンダーグリッド（前後月を含む6週×7日） */
