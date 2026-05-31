@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+   定数(SHIELD_AI_LINKS)とコンポーネント(AILaunchRow)を凝集モジュールとして同居。
+   HMR(Fast Refresh)専用の警告で実行時影響なし。分割すると関連コードが断片化するため許容 */
 import { cy } from '../utils/cyberTheme'
 
 // ── AI リンク定義（ぽいロボ シールド / イベント 共通）─────────────────

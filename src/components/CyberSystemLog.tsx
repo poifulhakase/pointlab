@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+   フック(useSystemLog)とコンポーネント(CyberSystemLog)を凝集モジュールとして同居。
+   HMR(Fast Refresh)専用の警告で実行時影響なし。分割すると関連コードが断片化するため許容 */
 import { useState, useEffect, useRef } from 'react'
 import { cy } from '../utils/cyberTheme'
 

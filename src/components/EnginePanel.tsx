@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+   定数(STATUS_LINES)・フック(useEngineSystemLog)・コンポーネント(EngineSystemLog/EnginePanel)を
+   凝集モジュールとして同居。HMR(Fast Refresh)専用の警告で実行時影響なし。分割は断片化するため許容 */
 import { useState, useEffect, useRef } from 'react'
 import type React from 'react'
 
