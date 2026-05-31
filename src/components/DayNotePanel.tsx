@@ -26,6 +26,8 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
   const [titleFocused, setTitleFocused] = useState(false)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
+  // 同じ「日」を指す Date を再生成して渡されても再初期化しないよう、日付文字列をキーにする
+  const dateDayKey = date?.toDateString()
   useEffect(() => {
     if (!date) return
     const note = getNote(date)
@@ -53,9 +55,11 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     setSchedules(scheds)
     setIsDirty(prefillTime ? true : false)
     setTimeout(() => titleInputRef.current?.focus(), 20)
-  }, [date?.toDateString(), prefillTime])
+    // date は dateDayKey 経由で監視（同一日の再生成 Date では再初期化しない意図）。getNote/saveNote は安定参照
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateDayKey, prefillTime])
 
-  const persist = (t: string, m: string, schs: ScheduleEntry[]) => {
+  const persist = useCallback((t: string, m: string, schs: ScheduleEntry[]) => {
     if (!date) return
     setIsDirty(true)
     const savedSchs = schs.filter(s => s.title.trim())
@@ -63,7 +67,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
     saveNote(date, note)
     onSave()
     onAfterSave?.(date, note)
-  }
+  }, [date, onSave, onAfterSave])
 
   // ── ノートフィールド ──
   const handleTitle = (v: string) => { setTitle(v); persist(v, memo, schedules) }
@@ -108,7 +112,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
       persist(title, memo, cleaned)
     }
     onClose()
-  }, [schedules, title, memo, onClose])
+  }, [schedules, title, memo, onClose, persist])
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }

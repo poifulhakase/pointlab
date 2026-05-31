@@ -64,6 +64,8 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
       : 12 * 60
     const timePx = (minutes / (24 * 60)) * HOUR_HEIGHT * 24
     el.scrollTop = timePx - el.clientHeight / 2
+    // 日付切替時のみ現在時刻位置へスクロール。now/td は毎レンダー算出のため deps に入れると毎回再スクロールしてしまう
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date])
   const nowMinutes = td ? now.getHours() * 60 + now.getMinutes() : -1
   const closed    = isMarketClosed(date)

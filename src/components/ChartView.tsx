@@ -130,7 +130,7 @@ function ChartSettingsModal({ isOpen, onClose, split, isMobile, onApply }: Modal
 
   useEffect(() => {
     if (isOpen) { setLocalSplit(split) }
-  }, [isOpen])
+  }, [isOpen, split])
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }

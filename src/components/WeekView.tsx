@@ -72,6 +72,8 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
       : 12 * 60
     const timePx = (minutes / (24 * 60)) * HOUR_HEIGHT * 24
     el.scrollTop = timePx - el.clientHeight / 2
+    // 週切替時のみ現在時刻位置へスクロール。now/days/isToday は毎レンダー算出のため deps に入れると毎回再スクロールしてしまう
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current])
 
   const visibleDays = isMobile
