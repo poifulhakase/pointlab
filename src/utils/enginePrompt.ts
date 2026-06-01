@@ -99,7 +99,7 @@ const PROMPT_DATA_MAPPING = `# データ → 物理法則 変換ガイド
 - positioning.credit_margin.dead_mass_risk.phase が「高危険」の場合、上昇反転時の「やれやれ売り（塩漬け株解消）」が慣性を打ち消す「死せる質量」として機能する。dead_mass_risk.score が 70 以上なら上昇エネルギーの変換効率が低下すると解釈する
 
 【復元力（弾性）の計算根拠】
-- price_structure.nikkei225（ma20_dev_pct / ma60_dev_pct）→ MA乖離が大きいほど復元力大
+- price_structure.nikkei225（ma25_dev_pct / ma20_dev_pct / ma60_dev_pct）→ MA乖離が大きいほど復元力（弾性）大。特に ma25_dev_pct（25日線乖離率＝日本株の定番過熱指標）は ±5%=注意 / ±7%以上=過熱(+)・過冷(-) を目安に評価する（ただしトレンド時はバンドウォークで高止まりするため単独の逆張り根拠にはしない）
 - deviation_score.score（= 0.30×Z_USDJPY + 0.25×Z_NAS100 + 0.20×Z_VIX⁻¹ + 0.15×Z_OI の合成済みスコア）→ 正値=過熱・負値=売られすぎ
 - futures.nk_futures_ohlcv_10d → 直近10日の高値・安値レンジで支持・抵抗を把握
 

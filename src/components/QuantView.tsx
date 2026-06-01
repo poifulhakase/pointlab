@@ -949,6 +949,25 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
               if (pct > 0) return theme === 'dark' ? 'rgba(52,211,153,0.15)' : 'rgba(5,150,105,0.10)'
               return theme === 'dark' ? 'rgba(248,113,113,0.15)' : 'rgba(185,28,28,0.10)'
             }
+            // 25日MA乖離率の色分け: |乖離|≧7%=過熱(赤)/過冷(青)、5%≦|乖離|<7%=注意(黄)、それ未満=通常
+            const ma25DevColor = (dev: number | null) => {
+              if (dev == null) return 'var(--text-dim)'
+              const a = Math.abs(dev)
+              if (a >= 7) return dev > 0
+                ? (theme === 'dark' ? 'rgba(248,113,113,0.98)' : 'rgba(185,28,28,0.98)')   // 過熱=赤
+                : (theme === 'dark' ? 'rgba(96,165,250,0.98)' : 'rgba(37,99,235,0.98)')     // 過冷=青
+              if (a >= 5) return theme === 'dark' ? 'rgba(251,191,36,0.98)' : 'rgba(180,83,9,0.98)' // 注意=黄
+              return 'var(--text)'
+            }
+            const ma25DevBg = (dev: number | null) => {
+              if (dev == null) return 'transparent'
+              const a = Math.abs(dev)
+              if (a >= 7) return dev > 0
+                ? (theme === 'dark' ? 'rgba(248,113,113,0.16)' : 'rgba(185,28,28,0.10)')
+                : (theme === 'dark' ? 'rgba(96,165,250,0.16)' : 'rgba(37,99,235,0.10)')
+              if (a >= 5) return theme === 'dark' ? 'rgba(251,191,36,0.15)' : 'rgba(180,83,9,0.10)'
+              return 'transparent'
+            }
 
             return (
               <div style={isMobile
@@ -1118,9 +1137,9 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                                 <td style={{ ...s.td, ...s.tdNum }}>
                                   <span style={{ fontWeight: 600 }}>{row.close.toLocaleString()}</span>
                                 </td>
-                                <td style={{ ...s.td, ...s.tdNum }}>
+                                <td style={{ ...s.td, ...s.tdNum, background: ma25DevBg(row.ma25_dev) }}>
                                   {row.ma25_dev != null ? (
-                                    <span style={{ fontWeight: 600, color: changePctColor(row.ma25_dev) }}>
+                                    <span style={{ fontWeight: 600, color: ma25DevColor(row.ma25_dev) }}>
                                       {row.ma25_dev > 0 ? '+' : ''}{row.ma25_dev.toFixed(2)}%
                                     </span>
                                   ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}

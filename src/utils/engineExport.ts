@@ -776,6 +776,9 @@ export function buildExportJson(
         ma200:         nkMa200,
         ma5_dev_pct:   nkMa5  && nkCur ? r2((nkCur - nkMa5)  / nkMa5  * 100) : null,
         ma20_dev_pct:  nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
+        // 25日線乖離率（日本株の定番過熱指標）。先物日足の最新終値基準で全系列から算出済みの値を引用。
+        // 目安: ±5%=注意 / ±7%以上=過熱(+)・過冷(-)。±5%未満は中立。
+        ma25_dev_pct:  nkFuturesPriceData[0]?.ma25_dev ?? null,
         ma60_dev_pct:  nkMa60 && nkCur ? r2((nkCur - nkMa60) / nkMa60 * 100) : null,
         high_52w:      nkHigh52w,
         low_52w:       nkLow52w,
