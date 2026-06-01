@@ -829,7 +829,7 @@ const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['エンジン', '環境', '現物', '先物'] as const
 const SHIELD_TABS   = ['shield', 'news'] as const
-const SHIELD_LABELS = ['シールド', 'イベント'] as const
+const SHIELD_LABELS = ['シールド', 'イベント予想'] as const
 const LEGAL_TABS    = ['privacy', 'disclaimer'] as const
 const LEGAL_LABELS  = ['プライバシー', '免責事項'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
