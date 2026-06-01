@@ -31,6 +31,8 @@ export interface ShieldMktData {
     ma20_weekly:   number | null  // 週足MA20（週足中央線）
     high_20d:      number | null
     low_20d:       number | null
+    high_5d:       number | null  // 直近5日高値（緊急撤退モードのタイトトレール用）
+    low_5d:        number | null  // 直近5日安値（同上）
     macd:          number | null  // 日足MACD(12,26)
     macd_signal:   number | null  // 日足MACDシグナル(9)
     macd_hist:     number | null  // MACDヒストグラム
@@ -139,10 +141,13 @@ export async function buildShieldData(): Promise<ShieldMktData> {
       const closes      = days.map(d => d.close)
       const latest      = days[days.length - 1]
       const prev        = days[days.length - 2]
+      const recent5     = days.slice(-5)
       const recent10    = days.slice(-10)
       const recent20    = days.slice(-20)
       const high20d     = recent20.length > 0 ? Math.max(...recent20.map(d => d.high)) : null
       const low20d      = recent20.length > 0 ? Math.min(...recent20.map(d => d.low))  : null
+      const high5d      = recent5.length  > 0 ? Math.max(...recent5.map(d => d.high))  : null
+      const low5d       = recent5.length  > 0 ? Math.min(...recent5.map(d => d.low))   : null
       const ohlcvRecent = recent10.map((d, i) => {
         const p = recent10[i - 1]
         return { ...d, change_pct: p ? Math.round((d.close - p.close) / p.close * 10000) / 100 : null }
@@ -184,6 +189,8 @@ export async function buildShieldData(): Promise<ShieldMktData> {
           ma20_weekly:   ma20w,
           high_20d:      high20d,
           low_20d:       low20d,
+          high_5d:       high5d,
+          low_5d:        low5d,
           macd:          macdRes.macd,
           macd_signal:   macdRes.signal,
           macd_hist:     macdRes.hist,
