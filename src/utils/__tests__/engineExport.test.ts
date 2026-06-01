@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildExportJson, type EngineExport } from '../engineExport'
+import { buildExportJson, businessDaysBetween, type EngineExport } from '../engineExport'
 import type { InvestorWeekData } from '../jpxInvestorData'
 import type { MarginWeekData } from '../jpxMarginData'
 import type { VixWeekData, VixDayData } from '../vixData'
@@ -195,5 +195,31 @@ describe('buildExportJson — 代表データ', () => {
 
   it('futures.recent_10d は最大10件', () => {
     expect(out.futures.recent_10d.length).toBeLessThanOrEqual(10)
+  })
+})
+
+describe('businessDaysBetween（価格鮮度チェックの営業日数）', () => {
+  const D = (s: string) => new Date(s).getTime()
+
+  it('週末を挟む金→月は1営業日（誤発火しない＝閾値2未満）', () => {
+    // MA基準=金(米国市場ゲート) vs 先物JST=月。3カレンダー日だが構造的な1営業日。
+    expect(businessDaysBetween(D('2026-05-29'), D('2026-06-01'))).toBe(1)
+  })
+
+  it('通常の連続営業日（火→水）は1営業日', () => {
+    expect(businessDaysBetween(D('2026-05-26'), D('2026-05-27'))).toBe(1)
+  })
+
+  it('同日は0営業日', () => {
+    expect(businessDaysBetween(D('2026-06-01'), D('2026-06-01'))).toBe(0)
+  })
+
+  it('真の陳腐化（水→月の3営業日）は閾値2以上で検出される', () => {
+    expect(businessDaysBetween(D('2026-05-27'), D('2026-06-01'))).toBeGreaterThanOrEqual(2)
+  })
+
+  it('引数の順序に依存しない（絶対値）', () => {
+    expect(businessDaysBetween(D('2026-06-01'), D('2026-05-29')))
+      .toBe(businessDaysBetween(D('2026-05-29'), D('2026-06-01')))
   })
 })

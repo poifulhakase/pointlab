@@ -19,6 +19,22 @@ import type { NtRatioPoint } from './ntRatioData'
 function toDate(s: string) { return (s ?? '').replace(/\//g, '-') }
 const r2 = (n: number) => Math.round(n * 100) / 100
 
+// 2つの日付(ms)間の営業日数(土日除外)を数える。
+// 価格鮮度チェックでカレンダー日数を使うと、週末を挟む月曜は MA基準(米国市場ゲートで金曜) と
+// 先物価格JST(月曜) が3カレンダー日=1営業日となり毎週月曜に誤発火するため、営業日数で測る。
+// 日付文字列は UTC午前0時基準でパースされるため getUTCDay() で曜日判定する。祝日は未考慮
+// （閾値2営業日に対し祝日1日の誤差は実害が小さい）。
+export function businessDaysBetween(ms1: number, ms2: number): number {
+  const start = Math.min(ms1, ms2)
+  const end   = Math.max(ms1, ms2)
+  let count = 0
+  for (let t = start + 86400000; t <= end; t += 86400000) {
+    const wd = new Date(t).getUTCDay()
+    if (wd !== 0 && wd !== 6) count++
+  }
+  return count
+}
+
 function getUpcomingEvents(days = 28): { date: string; day: string; events: string[] }[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -548,16 +564,18 @@ export function buildExportJson(
   // ── TEV 整合性検証 ───────────────────────────────
   const tev_sanityWarnings: string[] = []
 
-  // 価格基準日チェック: 1日差は構造的制限（市場時間中は当日終値が未確定）→ 2日以上の乖離のみ警告
+  // 価格基準日チェック: 1営業日差は構造的制限（市場時間中は当日終値が未確定／MA基準は米国市場ゲートで
+  // 先物JSTより1営業日遅れる）→ 2営業日以上の乖離のみ警告。
+  // カレンダー日数だと週末を挟む月曜(金曜 vs 月曜=3カレンダー日)で毎週誤発火するため営業日数で測る。
   const ntBaseDate  = nk?.time ?? null
   const futLatDate  = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].date : null
   const futLatClose = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].close : null
   const daysDiff    = ntBaseDate && futLatDate
-    ? Math.round(Math.abs(new Date(ntBaseDate).getTime() - new Date(futLatDate).getTime()) / 86400000)
+    ? businessDaysBetween(new Date(ntBaseDate).getTime(), new Date(futLatDate).getTime())
     : 0
   if (daysDiff >= 2) {
     tev_sanityWarnings.push(
-      `価格データ陳腐化: MA計算基準=${ntBaseDate} 先物JSON最新=${futLatDate}（${daysDiff}日乖離）。静的JSONの更新失敗の可能性あり`
+      `価格データ陳腐化: MA計算基準=${ntBaseDate} 先物JSON最新=${futLatDate}（${daysDiff}営業日乖離）。静的JSONの更新失敗の可能性あり`
     )
   }
   // 価格急変動チェック: ≥3%のみ（1-2%の日中変動は構造的なため除外）
