@@ -931,6 +931,7 @@ const SPEC_SECTIONS = [
           '🔴 データ自動更新が本番に届かない問題を根治: 週次データ更新ワークフローが2つ併存（update-data.yml と fetch-data.yml）し、土曜0:00 UTC で重複実行してレース。さらに update-data.yml が「[skip ci]」付きでコミットしており、これが Vercel のGitHub連携デプロイもスキップさせ本番が更新されなかった。update-data.yml を削除し fetch-data.yml に一本化。冗長で失敗していた明示 vercel --prod step も撤去し、main への push をトリガーに Vercel Git連携が本番自動デプロイする構成に統一（[skip ci] は今後付けない）',
           '本番データ最新化: 先物日次を 5/29（PCR 復活）・COT を 5/26 週まで反映。投資主体別（5/22 週）は JPX が翌週木曜公表のため公表待ちで正常と確認',
           'リポジトリ整合: 直接デプロイ運用で未push/未コミットだった過去セッション分を origin/main に集約（以後はデプロイ＝push＝Git連携自動デプロイの単一経路）',
+          'マクロイベント刷新（カレンダー・ぽいロボレーダー）: 米GDP速報値を削除し、ADP雇用統計（雇用統計（NFP）の2営業日前・水曜を自動導出）と ISM製造業景気指数（毎月第1営業日を自動算出）を追加。「雇用統計」表示を「雇用統計（NFP）」に改称。macroCalendar.ts / settingsStorage.ts(PoiroboAlertConfig) / PoiroboAlertModal / ClockWidget / cron-push-notifications.js を同期。既存設定は移行不要（adp/ism 未定義→OFF・旧 gdp キーは無害）。ADP/ISM のテストを追加（計156テスト）。ISM は祝日事情で稀に1日ずれるため年次更新で要確認',
         ],
       },
     ],
