@@ -949,23 +949,26 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
               if (pct > 0) return theme === 'dark' ? 'rgba(52,211,153,0.15)' : 'rgba(5,150,105,0.10)'
               return theme === 'dark' ? 'rgba(248,113,113,0.15)' : 'rgba(185,28,28,0.10)'
             }
-            // 25日MA乖離率の色分け: |乖離|≧7%=過熱(赤)/過冷(青)、5%≦|乖離|<7%=注意(黄)、それ未満=通常
+            // 25日MA乖離率の色分け（日経の実分布20年は非対称＝上は+13%が天井／下は-28%まで伸びる）:
+            //  +側: +7%以上=過熱(赤) / +5〜+7%=注意(黄)
+            //  −側: -5〜-7%=注意(黄) / -7〜-10%=過冷(青) / -10%以下=暴落・最終局面(紫)
+            //  |乖離|<5%=通常
             const ma25DevColor = (dev: number | null) => {
               if (dev == null) return 'var(--text-dim)'
-              const a = Math.abs(dev)
-              if (a >= 7) return dev > 0
-                ? (theme === 'dark' ? 'rgba(248,113,113,0.98)' : 'rgba(185,28,28,0.98)')   // 過熱=赤
-                : (theme === 'dark' ? 'rgba(96,165,250,0.98)' : 'rgba(37,99,235,0.98)')     // 過冷=青
-              if (a >= 5) return theme === 'dark' ? 'rgba(251,191,36,0.98)' : 'rgba(180,83,9,0.98)' // 注意=黄
+              if (dev >= 7)   return theme === 'dark' ? 'rgba(248,113,113,0.98)' : 'rgba(185,28,28,0.98)'   // 過熱=赤
+              if (dev >= 5)   return theme === 'dark' ? 'rgba(251,191,36,0.98)'  : 'rgba(180,83,9,0.98)'    // 注意=黄
+              if (dev <= -10) return theme === 'dark' ? 'rgba(192,132,252,0.98)' : 'rgba(124,58,237,0.98)'  // 暴落・極限=紫
+              if (dev <= -7)  return theme === 'dark' ? 'rgba(96,165,250,0.98)'  : 'rgba(37,99,235,0.98)'   // 過冷=青
+              if (dev <= -5)  return theme === 'dark' ? 'rgba(251,191,36,0.98)'  : 'rgba(180,83,9,0.98)'    // 注意=黄
               return 'var(--text)'
             }
             const ma25DevBg = (dev: number | null) => {
               if (dev == null) return 'transparent'
-              const a = Math.abs(dev)
-              if (a >= 7) return dev > 0
-                ? (theme === 'dark' ? 'rgba(248,113,113,0.16)' : 'rgba(185,28,28,0.10)')
-                : (theme === 'dark' ? 'rgba(96,165,250,0.16)' : 'rgba(37,99,235,0.10)')
-              if (a >= 5) return theme === 'dark' ? 'rgba(251,191,36,0.15)' : 'rgba(180,83,9,0.10)'
+              if (dev >= 7)   return theme === 'dark' ? 'rgba(248,113,113,0.16)' : 'rgba(185,28,28,0.10)'
+              if (dev >= 5)   return theme === 'dark' ? 'rgba(251,191,36,0.15)'  : 'rgba(180,83,9,0.10)'
+              if (dev <= -10) return theme === 'dark' ? 'rgba(192,132,252,0.20)' : 'rgba(124,58,237,0.12)'
+              if (dev <= -7)  return theme === 'dark' ? 'rgba(96,165,250,0.16)'  : 'rgba(37,99,235,0.10)'
+              if (dev <= -5)  return theme === 'dark' ? 'rgba(251,191,36,0.15)'  : 'rgba(180,83,9,0.10)'
               return 'transparent'
             }
 
@@ -1123,8 +1126,8 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                             <tr>
                               <th style={{ ...s.th, ...s.thDate }}>日付</th>
                               <th style={s.th}><div style={s.thLabel}>終値</div><div style={s.thSub}>円</div></th>
-                              <th style={s.th}><div style={s.thLabel}>乖離率</div><div style={s.thSub}>25日MA%</div></th>
                               <th style={s.th}><div style={s.thLabel}>前日比</div><div style={s.thSub}>%</div></th>
+                              <th style={s.th}><div style={s.thLabel}>乖離率</div><div style={s.thSub}>25日MA%</div></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1137,17 +1140,17 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                                 <td style={{ ...s.td, ...s.tdNum }}>
                                   <span style={{ fontWeight: 600 }}>{row.close.toLocaleString()}</span>
                                 </td>
-                                <td style={{ ...s.td, ...s.tdNum, background: ma25DevBg(row.ma25_dev) }}>
-                                  {row.ma25_dev != null ? (
-                                    <span style={{ fontWeight: 600, color: ma25DevColor(row.ma25_dev) }}>
-                                      {row.ma25_dev > 0 ? '+' : ''}{row.ma25_dev.toFixed(2)}%
-                                    </span>
-                                  ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
-                                </td>
                                 <td style={{ ...s.td, ...s.tdNum, background: changePctBg(row.change_pct) }}>
                                   {row.change_pct != null ? (
                                     <span style={{ fontWeight: 600, color: changePctColor(row.change_pct) }}>
                                       {row.change_pct > 0 ? '+' : ''}{row.change_pct.toFixed(2)}%
+                                    </span>
+                                  ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum, background: ma25DevBg(row.ma25_dev) }}>
+                                  {row.ma25_dev != null ? (
+                                    <span style={{ fontWeight: 600, color: ma25DevColor(row.ma25_dev) }}>
+                                      {row.ma25_dev > 0 ? '+' : ''}{row.ma25_dev.toFixed(2)}%
                                     </span>
                                   ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                                 </td>
