@@ -148,7 +148,7 @@ describe('buildExportJson — 代表データ', () => {
   // nkFuturesPriceData は降順（最新が先頭）
   const nkPrice: NkFuturesDayData[] = Array.from({ length: 12 }, (_, i) => ({
     date: dayDate(D - 1 - i), open: 39_000, high: 39_200, low: 38_800, close: 39_100,
-    volume: 10_000, prev_close: 39_050, change: 50, change_pct: 0.12,
+    volume: 10_000, prev_close: 39_050, change: 50, change_pct: 0.12, ma25_dev: 0.5,
   }))
   const stocks: StocksDailyData = {
     contribution: {

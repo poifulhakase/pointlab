@@ -1103,9 +1103,8 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                           <thead>
                             <tr>
                               <th style={{ ...s.th, ...s.thDate }}>日付</th>
-                              <th style={s.th}><div style={s.thLabel}>高値</div><div style={s.thSub}>円</div></th>
-                              <th style={s.th}><div style={s.thLabel}>安値</div><div style={s.thSub}>円</div></th>
                               <th style={s.th}><div style={s.thLabel}>終値</div><div style={s.thSub}>円</div></th>
+                              <th style={s.th}><div style={s.thLabel}>乖離率</div><div style={s.thSub}>25日MA%</div></th>
                               <th style={s.th}><div style={s.thLabel}>前日比</div><div style={s.thSub}>%</div></th>
                             </tr>
                           </thead>
@@ -1117,13 +1116,14 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                                   <div style={s.dateSub}>{row.date.slice(0, 4)}</div>
                                 </td>
                                 <td style={{ ...s.td, ...s.tdNum }}>
-                                  <span style={{ fontSize: 11 }}>{row.high.toLocaleString()}</span>
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum }}>
-                                  <span style={{ fontSize: 11 }}>{row.low.toLocaleString()}</span>
-                                </td>
-                                <td style={{ ...s.td, ...s.tdNum }}>
                                   <span style={{ fontWeight: 600 }}>{row.close.toLocaleString()}</span>
+                                </td>
+                                <td style={{ ...s.td, ...s.tdNum }}>
+                                  {row.ma25_dev != null ? (
+                                    <span style={{ fontWeight: 600, color: changePctColor(row.ma25_dev) }}>
+                                      {row.ma25_dev > 0 ? '+' : ''}{row.ma25_dev.toFixed(2)}%
+                                    </span>
+                                  ) : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                                 </td>
                                 <td style={{ ...s.td, ...s.tdNum, background: changePctBg(row.change_pct) }}>
                                   {row.change_pct != null ? (

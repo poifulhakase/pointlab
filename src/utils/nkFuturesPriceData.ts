@@ -12,6 +12,20 @@ export interface NkFuturesDayData {
   prev_close: number | null // 前日終値
   change:     number | null // 前日比（円）
   change_pct: number | null // 前日比（%）
+  ma25_dev:   number | null // 25日移動平均乖離率（%）。全系列から算出（直近24日未満はnull）
+}
+
+// 25日MA乖離率を日付→乖離率(%)のMapで返す。rows は昇順（古→新）前提。
+// (close - 25日SMA) / 25日SMA * 100。直近24日分が揃わない行はMapに含めない（=null扱い）。
+function buildMa25DevMap(rows: { date: string; close: number }[]): Map<string, number> {
+  const map = new Map<string, number>()
+  for (let i = 24; i < rows.length; i++) {
+    let sum = 0
+    for (let j = i - 24; j <= i; j++) sum += rows[j].close
+    const ma = sum / 25
+    if (ma > 0) map.set(rows[i].date, Math.round((rows[i].close - ma) / ma * 10000) / 100)
+  }
+  return map
 }
 
 const CACHE_KEY        = 'poical-nk-futures-price-v4'
@@ -56,6 +70,9 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
 
   valid.sort((a, b) => a.date.localeCompare(b.date))
 
+  // 25日MA乖離率は切り詰め前の全系列（約3ヶ月）から算出して各行に付与する
+  const devMap = buildMa25DevMap(valid)
+
   // +1 item buffer to compute prev_close for the oldest output row
   const buf      = valid.slice(-(NK_FUTURES_DAYS + 1))
   const startIdx = buf.length > NK_FUTURES_DAYS ? 1 : 0
@@ -77,6 +94,7 @@ function parseYahooOhlcv(json: unknown): NkFuturesDayData[] {
       prev_close: prev?.close ?? null,
       change,
       change_pct: changePct,
+      ma25_dev:   devMap.get(d.date) ?? null,
     })
   }
   result.sort((a, b) => b.date.localeCompare(a.date)) // 降順（最新が先頭）

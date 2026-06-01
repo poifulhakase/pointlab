@@ -762,6 +762,17 @@ async function fetchNkFuturePriceData() {
 
   // 昇順ソート → 前日比計算
   valid.sort((a, b) => a.date.localeCompare(b.date))
+
+  // 25日MA乖離率は切り詰め前の全系列（約3ヶ月）から算出して各行に付与する。
+  // (close - 25日SMA) / 25日SMA * 100。直近24日分が揃わない行は null。
+  const devMap = new Map()
+  for (let i = 24; i < valid.length; i++) {
+    let sum = 0
+    for (let j = i - 24; j <= i; j++) sum += valid[j].close
+    const ma = sum / 25
+    if (ma > 0) devMap.set(valid[i].date, Math.round((valid[i].close - ma) / ma * 10000) / 100)
+  }
+
   const buf = valid.slice(-(NK_DAYS + 1))
   const startIdx = buf.length > NK_DAYS ? 1 : 0
   const rows = []
@@ -782,6 +793,7 @@ async function fetchNkFuturePriceData() {
       prev_close: prev?.close ?? null,
       change,
       change_pct: changePct,
+      ma25_dev:   devMap.get(d.date) ?? null,
     })
   }
   // 降順（最新が先頭）

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-01T07:28:56.153Z",
+  "updatedAt": "2026-06-01T10:51:11.770Z",
   "data": [
     {
       "date": "2026-06-01",
@@ -10,7 +10,8 @@
       "volume": 0,
       "prev_close": 66330,
       "change": 604,
-      "change_pct": 0.91
+      "change_pct": 0.91,
+      "ma25_dev": 7.61
     },
     {
       "date": "2026-05-29",
@@ -21,7 +22,8 @@
       "volume": 295100000,
       "prev_close": 64693,
       "change": 1637,
-      "change_pct": 2.53
+      "change_pct": 2.53,
+      "ma25_dev": 7.16
     },
     {
       "date": "2026-05-28",
@@ -32,7 +34,8 @@
       "volume": 176600000,
       "prev_close": 64999,
       "change": -306,
-      "change_pct": -0.47
+      "change_pct": -0.47,
+      "ma25_dev": 5.02
     },
     {
       "date": "2026-05-27",
@@ -43,7 +46,8 @@
       "volume": 163500000,
       "prev_close": 64996,
       "change": 3,
-      "change_pct": 0
+      "change_pct": 0,
+      "ma25_dev": 5.95
     },
     {
       "date": "2026-05-26",
@@ -54,7 +58,8 @@
       "volume": 157200000,
       "prev_close": 65158,
       "change": -162,
-      "change_pct": -0.25
+      "change_pct": -0.25,
+      "ma25_dev": 6.32
     },
     {
       "date": "2026-05-25",
@@ -65,7 +70,8 @@
       "volume": 161100000,
       "prev_close": 63339,
       "change": 1819,
-      "change_pct": 2.87
+      "change_pct": 2.87,
+      "ma25_dev": 7.07
     },
     {
       "date": "2026-05-22",
@@ -76,7 +82,8 @@
       "volume": 158800000,
       "prev_close": 61684,
       "change": 1655,
-      "change_pct": 2.68
+      "change_pct": 2.68,
+      "ma25_dev": 4.58
     },
     {
       "date": "2026-05-21",
@@ -87,7 +94,8 @@
       "volume": 166600000,
       "prev_close": 59804,
       "change": 1880,
-      "change_pct": 3.14
+      "change_pct": 3.14,
+      "ma25_dev": 2.31
     },
     {
       "date": "2026-05-20",
@@ -98,7 +106,8 @@
       "volume": 182500000,
       "prev_close": 60551,
       "change": -747,
-      "change_pct": -1.23
+      "change_pct": -1.23,
+      "ma25_dev": -0.49
     },
     {
       "date": "2026-05-19",
@@ -109,7 +118,8 @@
       "volume": 175800000,
       "prev_close": 60816,
       "change": -265,
-      "change_pct": -0.44
+      "change_pct": -0.44,
+      "ma25_dev": 1.01
     },
     {
       "date": "2026-05-18",
@@ -120,7 +130,8 @@
       "volume": 168100000,
       "prev_close": 61409,
       "change": -593,
-      "change_pct": -0.97
+      "change_pct": -0.97,
+      "ma25_dev": 1.74
     },
     {
       "date": "2026-05-15",
@@ -131,7 +142,8 @@
       "volume": 213900000,
       "prev_close": 62654,
       "change": -1245,
-      "change_pct": -1.99
+      "change_pct": -1.99,
+      "ma25_dev": 3.24
     },
     {
       "date": "2026-05-14",
@@ -142,7 +154,8 @@
       "volume": 207700000,
       "prev_close": 63272,
       "change": -618,
-      "change_pct": -0.98
+      "change_pct": -0.98,
+      "ma25_dev": 5.91
     },
     {
       "date": "2026-05-13",
@@ -153,7 +166,8 @@
       "volume": 181000000,
       "prev_close": 62743,
       "change": 529,
-      "change_pct": 0.84
+      "change_pct": 0.84,
+      "ma25_dev": 7.65
     },
     {
       "date": "2026-05-12",
@@ -164,7 +178,8 @@
       "volume": 189200000,
       "prev_close": 62418,
       "change": 325,
-      "change_pct": 0.52
+      "change_pct": 0.52,
+      "ma25_dev": 7.54
     }
   ]
 }
