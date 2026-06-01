@@ -26,11 +26,12 @@ const GROUPS: GroupDef[] = [
   {
     label: '米国イベント',
     items: [
-      { key: 'fomc',   label: 'FOMC',    sub: 'FRB政策金利決定（年8回）' },
-      { key: 'nfp',    label: '雇用統計', sub: '非農業部門雇用者数（毎月第1金曜）' },
-      { key: 'cpi',    label: 'CPI',     sub: '消費者物価指数（毎月中旬）' },
-      { key: 'pce',    label: 'PCE',     sub: '個人消費支出（毎月下旬）' },
-      { key: 'gdp',    label: 'GDP',     sub: 'GDP速報値（四半期）' },
+      { key: 'fomc',   label: 'FOMC',          sub: 'FRB政策金利決定（年8回）' },
+      { key: 'nfp',    label: '雇用統計（NFP）', sub: '非農業部門雇用者数（毎月第1金曜）' },
+      { key: 'adp',    label: 'ADP雇用統計',    sub: '米民間雇用（NFPの2営業日前・水曜）' },
+      { key: 'cpi',    label: 'CPI',           sub: '消費者物価指数（毎月中旬）' },
+      { key: 'pce',    label: 'PCE',           sub: '個人消費支出（毎月下旬）' },
+      { key: 'ism',    label: 'ISM製造業',      sub: '製造業景気指数（毎月第1営業日）' },
     ],
   },
   {

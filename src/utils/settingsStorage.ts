@@ -4,9 +4,10 @@ export type PoiroboAlertConfig = {
   fomc:            boolean
   boj:             boolean
   nfp:             boolean
+  adp:             boolean
   cpi:             boolean
   pce:             boolean
-  gdp:             boolean
+  ism:             boolean
   tankan:          boolean
   saishu:          boolean
   ochi:            boolean
@@ -28,9 +29,10 @@ export const POIROBO_ALERT_CONFIG_DEFAULT: PoiroboAlertConfig = {
   fomc:            false,
   boj:             false,
   nfp:             false,
+  adp:             false,
   cpi:             false,
   pce:             false,
-  gdp:             false,
+  ism:             false,
   tankan:          false,
   saishu:          false,
   ochi:            false,

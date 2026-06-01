@@ -24,10 +24,11 @@ const EVENT_LABELS = {
   miniSq:          'ミニSQ',
   fomc:            'FOMC（声明発表）',
   boj:             '日銀政策決定会合',
-  nfp:             '米雇用統計',
+  nfp:             '米雇用統計（NFP）',
+  adp:             '米ADP雇用統計',
   cpi:             '米CPI',
   pce:             '米PCE',
-  gdp:             '米GDP速報値',
+  ism:             '米ISM製造業景気指数',
   tankan:          '日銀短観',
   saishu:          '権利付最終日',
   ochi:            '権利落ち日',
@@ -187,13 +188,33 @@ const MACRO_DATES = {
     [2026,0,30],[2026,1,27],[2026,2,27],[2026,3,30],[2026,4,29],[2026,5,26],[2026,6,31],
     [2026,7,28],[2026,8,25],[2026,9,30],[2026,10,25],[2026,11,18],
   ],
-  gdp: [
-    [2026,0,29],[2026,3,29],[2026,6,29],[2026,9,29],
-  ],
   tankan: [
     [2026,3,1],[2026,6,1],[2026,9,1],[2026,11,11],
     [2027,3,1],[2027,6,1],[2027,9,1],[2027,11,10],
   ],
+}
+
+// ADP雇用統計: 雇用統計（NFP）の2営業日前（水曜）。nfp から自動導出（macroCalendar.ts と同ロジック）
+MACRO_DATES.adp = MACRO_DATES.nfp.map(([y, m, d]) => {
+  const dt = new Date(Date.UTC(y, m, d))
+  dt.setUTCDate(dt.getUTCDate() - 2)
+  return [dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()]
+})
+
+// ISM製造業景気指数: 毎月第1営業日（土日・元日を除く）。macroCalendar.ts と同ロジック
+MACRO_DATES.ism = []
+for (let yr = 2026; yr <= 2027; yr++) {
+  for (let mo = 0; mo < 12; mo++) {
+    const dt = new Date(Date.UTC(yr, mo, 1))
+    for (;;) {
+      const wd = dt.getUTCDay()
+      const isWeekend = wd === 0 || wd === 6
+      const isNewYear = dt.getUTCMonth() === 0 && dt.getUTCDate() === 1
+      if (!isWeekend && !isNewYear) break
+      dt.setUTCDate(dt.getUTCDate() + 1)
+    }
+    MACRO_DATES.ism.push([dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()])
+  }
 }
 
 function isMacroDate(date, type) {
@@ -273,7 +294,7 @@ function getTomorrowEvents(tomorrow) {
   hit.majorSq = isSqDate(tomorrow, 'majorSq')
   hit.miniSq  = isSqDate(tomorrow, 'miniSq')
   // マクロ
-  for (const type of ['fomc','boj','nfp','cpi','pce','gdp','tankan']) {
+  for (const type of ['fomc','boj','nfp','adp','cpi','pce','ism','tankan']) {
     hit[type] = isMacroDate(tomorrow, type)
   }
   // 権利日

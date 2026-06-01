@@ -27,8 +27,24 @@ describe('getMacroEventsForDate', () => {
     expect(events.map(e => e.type)).toContain('cpi')
   })
 
+  it('returns ADP for 2026-02-04 (NFPの2営業日前・水曜)', () => {
+    const events = getMacroEventsForDate(new Date(2026, 1, 4), ALL)
+    expect(events.map(e => e.type)).toContain('adp')
+  })
+
+  it('returns ISM for 2026-02-02 (2月第1営業日)', () => {
+    const events = getMacroEventsForDate(new Date(2026, 1, 2), ALL)
+    expect(events.map(e => e.type)).toContain('ism')
+  })
+
+  it('no longer returns GDP (旧2026-01-29 は無イベント化)', () => {
+    const events = getMacroEventsForDate(new Date(2026, 0, 29), ALL)
+    expect(events.map(e => e.type)).not.toContain('gdp')
+    expect(events).toHaveLength(0)
+  })
+
   it('returns empty array for non-event day', () => {
-    const events = getMacroEventsForDate(new Date(2026, 0, 2), ALL)
+    const events = getMacroEventsForDate(new Date(2026, 0, 20), ALL)
     expect(events).toHaveLength(0)
   })
 

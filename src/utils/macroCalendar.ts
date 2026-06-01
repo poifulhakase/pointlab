@@ -1,4 +1,4 @@
-export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'cpi' | 'pce' | 'gdp' | 'tankan'
+export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'adp' | 'cpi' | 'pce' | 'ism' | 'tankan'
 
 export type MacroFilter = { us: boolean; jp: boolean }
 
@@ -9,14 +9,16 @@ export const MACRO_META: Record<MacroEventType, { short: string; label: string; 
     desc: 'FRB（連邦準備制度理事会）が年8回開催する金融政策会合。政策金利の変更・維持を決定し声明文を発表。株・債券・為替すべてに大きな影響を与える。' },
   boj:    { short: '日銀',    label: '日銀政策決定会合',         category: 'jp',
     desc: '日本銀行が年8回開催する金融政策決定会合。政策金利や資産買い入れ方針を決定。円相場・日本株に直接影響する。' },
-  nfp:    { short: '雇用統計', label: '米雇用統計発表',          category: 'us',
+  nfp:    { short: '雇用統計（NFP）', label: '米雇用統計（NFP）',  category: 'us',
     desc: '米労働省が毎月第1金曜日に発表する非農業部門雇用者数（NFP）。米国経済の健全性を示す最重要指標のひとつ。予想との乖離で相場が急変動しやすい。' },
+  adp:    { short: 'ADP',     label: 'ADP雇用統計',              category: 'us',
+    desc: 'ADP社が公表する米民間部門の雇用者数。政府の雇用統計（NFP）の2営業日前（水曜）に発表され、NFPの先行指標として注目される。' },
   cpi:    { short: 'CPI',     label: '米CPI（消費者物価指数）',  category: 'us',
     desc: '米労働省が発表する消費者物価指数。インフレの代表的指標でFRBの金融政策判断に直結。コアCPI（食品・エネルギー除く）も注目される。' },
   pce:    { short: 'PCE',     label: '米PCE（個人消費支出）',    category: 'us',
     desc: 'FRBが最重視するインフレ指標。個人消費支出に含まれる物価変動を測定し、CPIより幅広い品目をカバー。FRBの目標インフレ率2%の基準となる。' },
-  gdp:    { short: 'GDP',     label: '米GDP速報値',              category: 'us',
-    desc: '米商務省が四半期ごとに発表するGDP速報値。米国経済の成長率を示す最重要統計。景気後退（2四半期連続マイナス）の判断基準にもなる。' },
+  ism:    { short: 'ISM製造', label: 'ISM製造業景気指数',        category: 'us',
+    desc: 'ISM（全米供給管理協会）が毎月第1営業日に発表する製造業の景況感指数。50が好不況の分かれ目で、米景気の先行指標として重視される。' },
   tankan: { short: '短観',    label: '日銀短観',                 category: 'jp',
     desc: '日本銀行が四半期ごとに発表する企業短期経済観測調査。大企業・中小企業の景況感（DI）を数値化。日本経済の体温計として機関投資家が注目する。' },
 }
@@ -89,16 +91,6 @@ const PCE_DATES: [number, number, number][] = [
   [2026, 8, 25], [2026, 9, 30], [2026, 10, 25], [2026, 11, 18],
 ]
 
-// 米GDP速報値発表日（四半期）
-const GDP_DATES: [number, number, number][] = [
-  // 2024
-  [2024, 0, 25], [2024, 3, 25], [2024, 6, 25], [2024, 9, 30],
-  // 2025
-  [2025, 0, 30], [2025, 3, 30], [2025, 6, 30], [2025, 9, 30],
-  // 2026（推定）
-  [2026, 0, 29], [2026, 3, 29], [2026, 6, 29], [2026, 9, 29],
-]
-
 // 米国雇用統計発表日（原則：毎月第1金曜日）
 const NFP_DATES: [number, number, number][] = [
   // 2024
@@ -118,6 +110,33 @@ const NFP_DATES: [number, number, number][] = [
 const _fixNFP2026Jul = NFP_DATES.find(d => d[0] === 2026 && d[1] === 6)
 if (_fixNFP2026Jul) _fixNFP2026Jul[2] = 3
 
+// ADP雇用統計発表日: 雇用統計（NFP）の2営業日前（＝NFPが金曜のため水曜）。NFP_DATES から自動導出。
+// 月跨ぎ（NFPが月初の場合）も Date 演算で正しく前月日付になる。
+const ADP_DATES: [number, number, number][] = NFP_DATES.map(([y, m, d]) => {
+  const dt = new Date(Date.UTC(y, m, d))
+  dt.setUTCDate(dt.getUTCDate() - 2)
+  return [dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()]
+})
+
+// ISM製造業景気指数発表日: 毎月第1営業日（土日・元日を除く）。
+// ※第1営業日が原則だが、米国の祝日事情で稀に1日ずれる月がある。年次更新（docs/maintenance/
+//   calendar-dates-check.md）で実日程を確認・補正すること。
+function firstBusinessDay(year: number, month: number): [number, number, number] {
+  const dt = new Date(Date.UTC(year, month, 1))
+  for (;;) {
+    const wd = dt.getUTCDay()
+    const isWeekend = wd === 0 || wd === 6
+    const isNewYear = dt.getUTCMonth() === 0 && dt.getUTCDate() === 1
+    if (!isWeekend && !isNewYear) break
+    dt.setUTCDate(dt.getUTCDate() + 1)
+  }
+  return [dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()]
+}
+const ISM_DATES: [number, number, number][] = []
+for (let yr = 2024; yr <= 2026; yr++) {
+  for (let mo = 0; mo < 12; mo++) ISM_DATES.push(firstBusinessDay(yr, mo))
+}
+
 
 export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEvent[] {
   const y = date.getFullYear()
@@ -134,9 +153,10 @@ export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEve
   if (filter.us) {
     check(FOMC_DATES, 'fomc')
     check(NFP_DATES, 'nfp')
+    check(ADP_DATES, 'adp')
     check(CPI_DATES, 'cpi')
     check(PCE_DATES, 'pce')
-    check(GDP_DATES, 'gdp')
+    check(ISM_DATES, 'ism')
   }
   if (filter.jp) {
     check(BOJ_DATES, 'boj')

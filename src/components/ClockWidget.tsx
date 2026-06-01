@@ -70,9 +70,10 @@ const MACRO_TIMES: Partial<Record<string, [number, number]>> = {
   fomc:   [3,  0],   // 3:00 JST（2 PM ET 翌朝）
   boj:    [12, 0],   // 正午ごろ
   nfp:    [22, 30],  // 22:30 JST（8:30 AM ET）
+  adp:    [22, 15],  // 22:15 JST（8:15 AM ET）
   cpi:    [22, 30],
   pce:    [22, 30],
-  gdp:    [22, 30],
+  ism:    [23, 0],   // 23:00 JST（10:00 AM ET）
   tankan: [8,  50],  // 8:50 JST
 }
 
