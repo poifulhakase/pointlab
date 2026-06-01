@@ -655,6 +655,8 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
 
   const handlePromptCopy = useCallback(async () => {
     if (isBuilding) return
+    // 今後のイベント（影響寿命付き）は同期・ローカル生成なので、データ取得の成否に関わらず付与する
+    const eventSection = `\n---\n# 今後のイベント（5営業日以内・影響寿命付き）\n${buildUpcomingEventsText(5)}\n`
     setIsBuilding(true)
     try {
       // 15秒でタイムアウト（プロキシが応答しない場合の保険）
@@ -677,6 +679,7 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
         + '\n---\n# 市場データ（自動取得）\n```json\n'
         + JSON.stringify(mktData, null, 2)
         + '\n```\n'
+        + eventSection
         + engineSection
       try {
         await navigator.clipboard.writeText(fullText)
@@ -692,9 +695,9 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
       setCopyStatus('shield')
       setTimeout(() => setCopyStatus(''), 2500)
     } catch {
-      // データ取得失敗時はプロンプトのみコピー
+      // データ取得失敗時はプロンプト＋イベント（ローカル生成）をコピー
       try {
-        await navigator.clipboard.writeText(SHIELD_PROMPT_TEMPLATE)
+        await navigator.clipboard.writeText(SHIELD_PROMPT_TEMPLATE + eventSection)
       } catch { /* noop */ }
       setCopyStatus('shield')
       setTimeout(() => setCopyStatus(''), 2500)
