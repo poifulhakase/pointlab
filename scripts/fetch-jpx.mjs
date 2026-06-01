@@ -55,6 +55,17 @@ function parseCSVLine(line) {
   return result
 }
 
+// nikkei225jp.com の `var DAILY = [...]` 配列は空要素(配列hole "[..,,..]")を含むことがある。
+// JS リテラルとしては有効だが JSON では不正で、JSON.parse が配列全体で失敗し、
+// PCR・騰落レシオ・空売り比率・信用残などが丸ごと取得できなくなる。
+// hole を null に補完し末尾カンマを除去してから安全にパースする。
+function parseDailyArray(arrayLiteral) {
+  const normalized = arrayLiteral
+    .replace(/,(?=\s*,)/g, ',null')  // 連続カンマ(空要素hole)を null で補完
+    .replace(/,(\s*\])/g, '$1')      // 末尾カンマを除去
+  return JSON.parse(normalized)
+}
+
 function serialToDateStr(serial) {
   const d = XLSX.SSF.parse_date_code(serial)
   if (!d) return ''
@@ -299,7 +310,7 @@ async function fetchNikkeiJpMetrics() {
   const m = text.match(/var DAILY\s*=\s*(\[[\s\S]*?\])\s*;/)
   if (!m) throw new Error('DAILYデータが見つかりません')
 
-  const rows = JSON.parse(m[1])
+  const rows = parseDailyArray(m[1])
   console.log(`  → ${rows.length}行取得`)
 
   const evalRatioMap = new Map()
@@ -348,7 +359,7 @@ async function fetchDaily2YearMetrics() {
   const m = text.match(/var DAILY\s*=\s*(\[[\s\S]*?\])\s*;/)
   if (!m) throw new Error('DAILYデータが見つかりません')
 
-  const rows = JSON.parse(m[1])
+  const rows = parseDailyArray(m[1])
   console.log(`  → ${rows.length}行取得`)
 
   if (rows.length > 0) {
@@ -421,7 +432,7 @@ async function fetchNikkeiJpPageData(pageUrl, referer) {
     const m = text.match(pat)
     if (m) {
       try {
-        return JSON.parse(m[1])
+        return parseDailyArray(m[1])
       } catch { /* continue */ }
     }
   }
@@ -815,7 +826,7 @@ async function buildArbitrageData() {
 
   const m = text.match(/var DAILY\s*=\s*(\[[\s\S]*\])\s*;?\s*$/)
   if (!m) throw new Error('DAILY データが見つかりません')
-  const rows = JSON.parse(m[1])
+  const rows = parseDailyArray(m[1])
   console.log(`  → ${rows.length}行取得`)
 
   const longBalMap  = new Map()
