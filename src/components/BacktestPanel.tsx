@@ -121,9 +121,11 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
       </div>
 
       {/* ── Body（スクロールなし・フル画面） ── */}
+      {/* ワイド画面で横長になりすぎるため最大幅で中央寄せ（ヘッダーは全幅のまま） */}
       <div style={{
         flex: 1, overflow: 'hidden', zIndex: 1,
         display: 'flex', flexDirection: 'column',
+        width: '100%', maxWidth: isMobile ? '100%' : 1150, alignSelf: 'center',
         padding: isMobile ? '12px 16px 14px' : '16px 28px 20px',
         gap: isMobile ? 10 : 14,
       }}>
