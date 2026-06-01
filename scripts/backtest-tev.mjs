@@ -134,9 +134,12 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
 
   const tev_fInertia = r2(tev_fInertiaRaw * tev_decay)
 
-  const inner      = creditRatioPct + (100 - ssPct)
-  const tev_rResist = inner >= 0 ? r2(-8 * Math.sqrt(inner)) : null
-  if (tev_rResist == null) return null
+  // R_resistance（弾性・両側 / v2-symmetric-restoring）: 中立(信用%ile=50, 空売り%ile=50)を
+  // ゼロに再センタリングし上下両方向に効かせる。旧式 -8√(credit+(100-ss)) は中立でも−80の
+  // 恒常ドラッグが残りBULLを構造的に出せなかった（半年BULLゼロの主因）。
+  //   信用厚い＋空売り薄い → signedLoad>0 → 下押し / 信用薄い＋空売り厚い → signedLoad<0 → 上押し
+  const signedLoad  = creditRatioPct - ssPct   // −100..+100, 中立=0
+  const tev_rResist = r2(-8 * Math.sign(signedLoad) * Math.sqrt(Math.abs(signedLoad)))
 
   const tev_value = Math.round(tev_fInertia + tev_rResist)
 
@@ -325,7 +328,7 @@ async function main() {
     // シグナルロジック（computeTEV）の版。ロジックを変えた／バックテストに価格レジームゲートを
     // 焼き込んだ時に上げる。「過去版の結果だけ削除」をきれいに行うための識別子。
     // ※プロンプト（ライブAI側）の変更ではこの版は上げない（バックテストはプロンプト非依存のため）。
-    logic_version: 'v1-supply-demand-only',
+    logic_version: 'v2-symmetric-restoring',
     computed_at: new Date().toISOString(),
     data_range: {
       from: weeklyLog.length > 0 ? weeklyLog[weeklyLog.length - 1].week : null,

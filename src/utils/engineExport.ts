@@ -527,9 +527,13 @@ export function buildExportJson(
 
     tev_fInertia = r2(tev_fInertiaRaw * tev_decay)
 
-    // R_resistance = -8 × √(P_credit + P_short)
-    const inner = tev_pCredit + tev_pShort
-    tev_rResist = inner >= 0 ? r2(-8 * Math.sqrt(inner)) : null
+    // R_resistance（弾性・両側）: 中立点(P_credit=50, P_short=50 → 和=100)をゼロに
+    // 再センタリングし、上下両方向に効く本物の復元力にする（v2-symmetric-restoring）。
+    //   信用買い残厚い＋空売り薄い → signedLoad>0 → 戻り売りの重し（下押し）
+    //   信用買い残薄い＋空売り厚い → signedLoad<0 → 踏み上げバネ（上押し）
+    // 旧式 -8×√(P_credit+P_short) は中立でも−80の恒常ドラッグが残りBULLを構造的に出せなかった。
+    const signedLoad = (tev_pCredit + tev_pShort) - 100   // −100..+100, 中立=0
+    tev_rResist = r2(-8 * Math.sign(signedLoad) * Math.sqrt(Math.abs(signedLoad)))
 
     if (tev_rResist != null) {
       tev_value = Math.round(tev_fInertia + tev_rResist)
@@ -598,9 +602,7 @@ export function buildExportJson(
   }
 
   if (tev_value !== null && tev_rResist !== null && tev_status !== null && tev_confidence !== null) {
-    // R_resistance は -8√x の公式上、常に負値
-    if (tev_rResist > 0)
-      tev_sanityWarnings.push(`r_resistance>0（常に負であるべき: ${tev_rResist}）`)
+    // R_resistance は両側に効く（signedLoad<0=踏み上げバネで正値もとる）→ 符号チェックは廃止（v2）
     // decay_factor は 0〜1.0 の範囲
     if (tev_decay < 0 || tev_decay > 1.0)
       tev_sanityWarnings.push(`decay_factor範囲外（${r2(tev_decay)}）`)
