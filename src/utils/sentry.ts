@@ -18,6 +18,16 @@ export function initSentry() {
             'ResizeObserver loop limit exceeded',
             'ResizeObserver loop completed with undelivered notifications',
             /^Cannot redefine property: ethereum/,
+            // 旧ブラウザ/注入スクリプト特有の "Object [object Object] has no method 'x'" 系。
+            // モダン V8 は "is not a function" を出すため、この語は自前コード由来ではない。
+            /has no method/,
+          ],
+          // 自前ドメイン外（ブラウザ拡張機能の注入スクリプト等）由来のエラーは報告しない
+          denyUrls: [
+            /^chrome-extension:\/\//i,
+            /^moz-extension:\/\//i,
+            /^safari-(web-)?extension:\/\//i,
+            /extensions?\//i,
           ],
         })
       })

@@ -1,4 +1,4 @@
-import { app } from './firebase'
+import { getApp } from './firebase'
 import { restSetDoc } from './firestoreRest'
 import type { PoiroboAlertConfig } from './settingsStorage'
 
@@ -36,7 +36,7 @@ export async function enablePush(
     console.log('[FCM] requestPermission result:', permission)
     if (permission !== 'granted') return 'permission-denied'
 
-    const { getMessaging, getToken } = await getMessagingModule()
+    const [{ getMessaging, getToken }, app] = await Promise.all([getMessagingModule(), getApp()])
     const messaging = getMessaging(app)
     console.log('[FCM] vapidKey present:', !!VAPID_KEY)
     const token = await getToken(messaging, { vapidKey: VAPID_KEY })
@@ -64,7 +64,7 @@ export async function enablePush(
 /** 通知を無効化 */
 export async function disablePush(uid: string): Promise<void> {
   try {
-    const { getMessaging, deleteToken } = await getMessagingModule()
+    const [{ getMessaging, deleteToken }, app] = await Promise.all([getMessagingModule(), getApp()])
     await deleteToken(getMessaging(app))
   } catch { /* token削除失敗は無視 */ }
 

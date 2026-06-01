@@ -1,10 +1,11 @@
-import { auth } from './firebase'
+import { getAuthInstance } from './firebase'
 import type { Slot, Booking } from './bookingTypes'
 
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`
 
 async function token(): Promise<string> {
+  const auth = await getAuthInstance()
   const user = auth.currentUser
   if (!user) throw new Error('Not authenticated')
   return user.getIdToken()
@@ -138,6 +139,7 @@ async function queryDocs(
 
 /** Fetch all available (unbooked) slots within the next 2 weeks — works without login */
 export async function getAvailableSlots(): Promise<Slot[]> {
+  const auth = await getAuthInstance()
   const docs = await listDocs('slots', !auth.currentUser)
   const now   = new Date()
   const limit = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
@@ -186,6 +188,7 @@ export async function requestBooking(
   userDisplayName: string,
   userEmail: string,
 ): Promise<string> {
+  const auth = await getAuthInstance()
   const user = auth.currentUser
   if (!user) throw new Error('Not authenticated')
   const idToken = await user.getIdToken()
@@ -236,6 +239,7 @@ export async function cancelBooking(
   booking: Booking,
   _isAdmin: boolean,
 ): Promise<void> {
+  const auth = await getAuthInstance()
   const user = auth.currentUser
   if (!user) throw new Error('Not authenticated')
   const idToken = await user.getIdToken()

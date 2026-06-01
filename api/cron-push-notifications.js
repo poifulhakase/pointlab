@@ -3,13 +3,20 @@
 
 import admin from 'firebase-admin'
 
-// ── Firebase Admin 初期化 ───────────────────────────────────────────────
-if (!admin.apps.length) {
-  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')
-  admin.initializeApp({ credential: admin.credential.cert(sa) })
+// ── Firebase Admin 初期化（遅延・env 不備でモジュール読み込み時にクラッシュさせない）──
+let _admin = null
+function getAdmin() {
+  if (!_admin) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT
+    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT is not set')
+    const sa = JSON.parse(raw)
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(sa) })
+    }
+    _admin = { db: admin.firestore(), fcm: admin.messaging() }
+  }
+  return _admin
 }
-const db  = admin.firestore()
-const fcm = admin.messaging()
 
 // ── イベントラベル ─────────────────────────────────────────────────────
 const EVENT_LABELS = {
@@ -300,6 +307,15 @@ export default async function handler(req, res) {
   // 明日イベントなし → スキップ
   if (!Object.values(tomorrowHit).some(Boolean)) {
     return res.status(200).json({ sent: 0, reason: 'no events tomorrow' })
+  }
+
+  // Firebase Admin の遅延初期化。env 不備でもクラッシュさせず 503 を返す。
+  let db, fcm
+  try {
+    ({ db, fcm } = getAdmin())
+  } catch (e) {
+    console.error('[cron-push] admin init failed:', e)
+    return res.status(503).json({ error: 'Push service unavailable (server misconfiguration)' })
   }
 
   // pushEnabled のユーザーを取得（notifyRadar / 旧 poiroboAlertEnabled の絞り込みはループ内で行う）

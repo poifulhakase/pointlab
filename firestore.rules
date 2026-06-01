@@ -51,9 +51,12 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.keys().hasAll(['userId', 'slotId', 'date', 'startTime', 'status']);
+      // 更新は管理者のみ（confirm/complete）。本人の cancel はサーバー API
+      // （Admin SDK・ルールをバイパス）が行う。本人のクライアント直更新を許すと
+      // status を自己承認(confirmed)へ書き換えてコネクト権限を不正取得できる穴になるため、
+      // 本人句を廃止（★2026-06-01）。
       allow update: if request.auth != null
-        && (request.auth.token.email == 'sushi.ramen.unajyu@gmail.com'
-            || resource.data.userId == request.auth.uid);
+        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
     }
 
   }

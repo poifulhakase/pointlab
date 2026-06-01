@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { isAdminEmail } from '../utils/admin'
-import { auth } from '../utils/firebase'
+import { getAuthInstance } from '../utils/firebase'
 
 export type ConnectUser = { uid: string; displayName: string | null; email: string | null; photoURL?: string | null }
 
@@ -104,6 +104,7 @@ export function JitsiPanel({ user, isMobile, minimized, onMinimize, onExpand, on
         room:  shortRoom,
         name:  displayName,
       })
+      const auth = await getAuthInstance()
       const idToken = await auth.currentUser?.getIdToken()
       if (!idToken) throw new Error('Not authenticated')
       const res = await fetch(`/api/jitsi-token?${params}`, {

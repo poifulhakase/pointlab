@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, lazy, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
+import { lazyWithReload as lazy } from '../utils/lazyWithReload'
 import type { ConnectUser }  from './JitsiPanel'
 import { isAdminEmail } from '../utils/admin'
 import { NotificationSettings } from './NotificationSettings'

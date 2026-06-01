@@ -4,12 +4,20 @@
 
 import admin from 'firebase-admin'
 
-if (!admin.apps.length) {
-  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')
-  admin.initializeApp({ credential: admin.credential.cert(sa) })
+// Firebase Admin は遅延初期化（env 不備でモジュール読み込み時にクラッシュさせない）。
+let _admin = null
+function getAdmin() {
+  if (!_admin) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT
+    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT is not set')
+    const sa = JSON.parse(raw)
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(sa) })
+    }
+    _admin = { db: admin.firestore(), fcm: admin.messaging() }
+  }
+  return _admin
 }
-const db  = admin.firestore()
-const fcm = admin.messaging()
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,6 +27,14 @@ export default async function handler(req, res) {
   const secret = process.env.NOTIFY_SECRET
   if (!secret || req.headers['x-notify-secret'] !== secret) {
     return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  let db, fcm
+  try {
+    ({ db, fcm } = getAdmin())
+  } catch (e) {
+    console.error('[notify-data-ready] admin init failed:', e)
+    return res.status(503).json({ error: 'Notify service unavailable (server misconfiguration)' })
   }
 
   const snap = await db.collection('pushSubscriptions')

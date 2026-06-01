@@ -1,7 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+
+// Sentry ソースマップのアップロードはビルド時にトークンがある場合のみ有効化する。
+// org / project / authToken は環境変数（Vercel に設定）から読む。コードにスラッグを埋め込まない。
+//   SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN
+// トークン未設定（ローカル開発など）では disable=true となりアップロードをスキップする。
+const SENTRY_AUTH_TOKEN = process.env.SENTRY_AUTH_TOKEN
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,12 +20,20 @@ export default defineConfig({
   build: {
     target: 'es2020',
     outDir: 'dist/calendar',
+    // Sentry へアップロードするためソースマップを生成する。'hidden' は .map を出力しつつ
+    // 配信 JS には sourceMappingURL コメントを付けない（公開 JS から .map を参照させない）。
+    // アップロード後は sentryVitePlugin が .map を削除するため公開ディレクトリには残らない。
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'react-vendor'
           if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
             if (id.includes('@firebase/firestore') || id.includes('/firestore/')) return 'firestore'
+            // firebase/auth は動的 import 専用なので独立チャンクに分離する。
+            // firebase/app（initializeApp）は eager だが、同じ 'firebase' チャンクに混ぜると
+            // auth まで eager に巻き込まれてしまうため分ける。
+            if (id.includes('@firebase/auth') || id.includes('/auth/')) return 'firebase-auth'
             return 'firebase'
           }
           if (id.includes('node_modules/@sentry')) return 'sentry'
@@ -137,6 +152,19 @@ export default defineConfig({
             },
           },
         ],
+      },
+    }),
+    // ★ 最後に配置：ビルド済みアセットのソースマップを Sentry にアップロードし、
+    //    Debug ID を注入したうえで公開ディレクトリの .map を削除する。
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: SENTRY_AUTH_TOKEN,
+      // トークンが無ければアップロードをスキップ（ローカルビルドを壊さない）
+      disable: !SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        // アップロード後に .map を削除（公開ディレクトリに残さない）
+        filesToDeleteAfterUpload: ['./dist/calendar/assets/**/*.map'],
       },
     }),
   ],

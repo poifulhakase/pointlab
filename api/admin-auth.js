@@ -4,7 +4,7 @@
  */
 const ALLOWED_ORIGIN = "https://pointlab.vercel.app";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const origin = req.headers.origin || "";
   if (origin === ALLOWED_ORIGIN) {
     res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);

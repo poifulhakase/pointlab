@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import {
-  onAuthStateChanged, GoogleAuthProvider,
-  signInWithPopup, signOut as firebaseSignOut,
-} from 'firebase/auth'
 import type { User } from 'firebase/auth'
-import { auth, getDb } from '../utils/firebase'
+import { getAuthInstance, getDb } from '../utils/firebase'
 import {
   initialSync, saveNoteToFirestore, subscribeToNotes,
   syncStickyNotesOnLogin, saveStickyNotesToFirestore, subscribeToStickyNotes,
@@ -82,6 +78,12 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
     let unsubAuth: (() => void) | null = null
 
     const run = async () => {
+      // firebase/auth（SDK 約57KB）はここで初めて動的ロードする。useEffect は初回描画後に
+      // 走るため、認証 SDK が初期描画（LCP）をブロックしなくなる。
+      const [{ onAuthStateChanged }, auth] = await Promise.all([
+        import('firebase/auth'),
+        getAuthInstance(),
+      ])
       unsubAuth = onAuthStateChanged(auth, async (u) => {
         // Google ログイン済みフラグを localStorage に記録（再訪問時のスピナー回避用）
         if (u) {
@@ -127,11 +129,17 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
 
   const signIn = async () => {
     newLoginRef.current = true
+    const [{ GoogleAuthProvider, signInWithPopup, browserPopupRedirectResolver }, auth] =
+      await Promise.all([import('firebase/auth'), getAuthInstance()])
     const provider = new GoogleAuthProvider()
-    await signInWithPopup(auth, provider)
+    // auth は initializeAuth(resolver なし)で生成しているため、ここで明示的に resolver を渡す。
+    // これによりサインイン時に初めて gapi iframe がロードされる（初期ロードから除外）。
+    await signInWithPopup(auth, provider, browserPopupRedirectResolver)
   }
 
   const signOut = async () => {
+    const [{ signOut: firebaseSignOut }, auth] =
+      await Promise.all([import('firebase/auth'), getAuthInstance()])
     await firebaseSignOut(auth)
   }
 

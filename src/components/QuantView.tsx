@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+﻿import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
+import { lazyWithReload as lazy } from '../utils/lazyWithReload'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'

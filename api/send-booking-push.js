@@ -1,19 +1,27 @@
-const admin = require('firebase-admin')
+import admin from 'firebase-admin'
 
 const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
 
-if (!admin.apps.length) {
-  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')
-  admin.initializeApp({ credential: admin.credential.cert(sa) })
+// Firebase Admin は遅延初期化（env 不備でモジュール読み込み時にクラッシュさせない）。
+let _admin = null
+function getAdmin() {
+  if (!_admin) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT
+    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT is not set')
+    const sa = JSON.parse(raw)
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(sa) })
+    }
+    _admin = { db: admin.firestore(), fcm: admin.messaging() }
+  }
+  return _admin
 }
-const db  = admin.firestore()
-const fcm = admin.messaging()
 
 const APP_URL  = 'https://pointlab.vercel.app/stock-calendar'
 const ICON_URL = 'https://pointlab.vercel.app/calendar/icon-192.png'
 
 /** pushSubscriptions/{uid} から有効な FCM トークンを取得。未登録/無効なら null */
-async function getToken(uid) {
+async function getToken(db, uid) {
   if (!uid) return null
   const doc = await db.collection('pushSubscriptions').doc(uid).get()
   if (!doc.exists) return null
@@ -22,7 +30,7 @@ async function getToken(uid) {
   return data.fcmToken
 }
 
-async function sendPush(token, title, body) {
+async function sendPush(fcm, token, title, body) {
   await fcm.send({
     token,
     notification: { title, body },
@@ -38,7 +46,7 @@ async function sendPush(token, title, body) {
   })
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const origin = req.headers.origin || ''
   if (origin === ALLOWED_ORIGIN) res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -47,6 +55,14 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' })
   if (origin !== ALLOWED_ORIGIN) return res.status(403).json({ error: 'Forbidden' })
+
+  let db, fcm
+  try {
+    ({ db, fcm } = getAdmin())
+  } catch (e) {
+    console.error('[send-booking-push] admin init failed:', e)
+    return res.status(503).json({ error: 'Push service unavailable (server misconfiguration)' })
+  }
 
   let body = req.body
   if (!body || typeof body !== 'object') {
@@ -68,27 +84,27 @@ module.exports = async (req, res) => {
   try {
     if (type === 'request') {
       // ユーザー申請 → 管理者に通知
-      const token = await getToken(ADMIN_UID)
+      const token = await getToken(db, ADMIN_UID)
       if (token) {
-        await sendPush(token, 'ぽいロボ コネクト', `新規予約申請：${booking.userDisplayName} さん / ${dateLabel}`)
+        await sendPush(fcm, token, 'ぽいロボ コネクト',`新規予約申請：${booking.userDisplayName} さん / ${dateLabel}`)
       }
     } else if (type === 'confirm') {
       // 管理者承認 → ユーザーに通知
-      const token = await getToken(booking.userId)
+      const token = await getToken(db, booking.userId)
       if (token) {
-        await sendPush(token, 'ぽいロボ コネクト', `予約が確定しました：${dateLabel}`)
+        await sendPush(fcm, token, 'ぽいロボ コネクト',`予約が確定しました：${dateLabel}`)
       }
     } else if (type === 'cancel_admin') {
       // 管理者キャンセル → ユーザーに通知
-      const token = await getToken(booking.userId)
+      const token = await getToken(db, booking.userId)
       if (token) {
-        await sendPush(token, 'ぽいロボ コネクト', `予約がキャンセルされました：${dateLabel}`)
+        await sendPush(fcm, token, 'ぽいロボ コネクト',`予約がキャンセルされました：${dateLabel}`)
       }
     } else if (type === 'cancel_user') {
       // ユーザーキャンセル → 管理者に通知
-      const token = await getToken(ADMIN_UID)
+      const token = await getToken(db, ADMIN_UID)
       if (token) {
-        await sendPush(token, 'ぽいロボ コネクト', `予約キャンセル：${booking.userDisplayName} さん / ${dateLabel}`)
+        await sendPush(fcm, token, 'ぽいロボ コネクト',`予約キャンセル：${booking.userDisplayName} さん / ${dateLabel}`)
       }
     }
 

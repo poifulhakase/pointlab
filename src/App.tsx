@@ -1,5 +1,7 @@
-import { lazy, Suspense, memo, useMemo, useState, useEffect, useCallback, useRef } from 'react'
+import { Suspense, memo, useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { flushSync } from 'react-dom'
+// 旧チャンク 404（デプロイでハッシュ変化）時に一度だけ自動リロードする lazy ラッパー
+import { lazyWithReload as lazy } from './utils/lazyWithReload'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'

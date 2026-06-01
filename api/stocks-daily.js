@@ -222,6 +222,6 @@ export default async function handler(req, res) {
     })
   } catch (e) {
     console.error('[stocks-daily]', e)
-    return res.status(500).json({ error: String(e) })
+    return res.status(500).json({ error: 'データ取得に失敗しました' })
   }
 }

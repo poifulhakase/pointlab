@@ -284,7 +284,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
         )}
         {activeBooking.status === 'pending' && (
           <div style={{ fontSize: 12, color: L ? 'rgba(140,100,0,0.80)' : 'rgba(251,191,36,0.80)', textAlign: 'center', lineHeight: 1.7 }}>
-            ぽいふる博士の承認をお待ちください。<br />承認されるとメールでお知らせします。
+            ぽいふる博士の承認をお待ちください。<br />承認されるとこの画面に反映されます。
           </div>
         )}
 
@@ -407,7 +407,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
         </div>
         <div style={{ fontSize: 12, color: L ? 'rgba(30,60,120,0.65)' : 'rgba(180,210,240,0.65)', lineHeight: 1.7, textAlign: 'center' }}>
           申請後、ぽいふる博士が内容を確認して承認します。<br />
-          承認されるとメールでお知らせします。
+          承認状況はこのコネクト画面で確認できます。
         </div>
         {!userId && (
           <div style={{ fontSize: 12, color: L ? 'rgba(180,120,0,0.85)' : 'rgba(251,191,36,0.85)', textAlign: 'center', lineHeight: 1.6, padding: '8px 12px', border: `1px solid ${L ? 'rgba(180,120,0,0.20)' : 'rgba(251,191,36,0.20)'}`, borderRadius: 8 }}>
@@ -453,7 +453,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
           <div style={{ fontSize: 15, fontWeight: 700, color: CY_ACCENT, fontFamily: CY_FONT, marginBottom: 8 }}>予約申請を受け付けました</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: L ? 'rgba(0,60,140,0.90)' : 'rgba(180,220,255,0.90)', fontFamily: CY_FONT }}>{formatBookingLabel(activeBooking)}</div>
           <div style={{ fontSize: 12, color: CY_FAINT, marginTop: 8, lineHeight: 1.7 }}>
-            承認メールをお待ちください。<br />カレンダーに追加しておくと便利です。
+            承認をお待ちください。<br />承認されるとこの画面に反映されます。カレンダーに追加しておくと便利です。
           </div>
         </div>
         <button

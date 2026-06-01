@@ -1,9 +1,10 @@
-import { auth } from './firebase'
+import { getAuthInstance } from './firebase'
 
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`
 
 async function getToken(): Promise<string> {
+  const auth = await getAuthInstance()
   const user = auth.currentUser
   if (!user) throw new Error('Not authenticated')
   return user.getIdToken()

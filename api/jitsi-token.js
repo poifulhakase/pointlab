@@ -2,18 +2,28 @@ import { SignJWT, importPKCS8 } from 'jose'
 import { createPrivateKey } from 'crypto'
 import admin from 'firebase-admin'
 
-// Firebase Admin 初期化（idToken 検証＋レート制限ストア用）。
-if (!admin.apps.length) {
-  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')
-  admin.initializeApp({ credential: admin.credential.cert(sa) })
+// Firebase Admin は遅延初期化する。以前はモジュール読み込み時に初期化していたため、
+// FIREBASE_SERVICE_ACCOUNT 未設定/不正だと cert() が throw → 関数全体が
+// FUNCTION_INVOCATION_FAILED でクラッシュし、原因の見えない 500 になっていた。
+// handler 内で getAdmin() を try/catch し、不備時は 503 を返して原因を明示する。
+let _admin = null
+function getAdmin() {
+  if (!_admin) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT
+    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT is not set')
+    const sa = JSON.parse(raw) // 不正 JSON はここで throw → handler が 503 を返す
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(sa) })
+    }
+    _admin = { db: admin.firestore(), auth: admin.auth() }
+  }
+  return _admin
 }
-const db   = admin.firestore()
-const auth = admin.auth()
 
 // Firestore ベースの簡易レート制限（per uid + action）。
 // api/_ratelimit.js と同一ロジックだが、当ファイルは jose のため ESM 固定で、
 // CJS(_ratelimit.js)を "type":"module" 下で default import できないためインラインで持つ。
-async function rateLimit(uid, action, maxPerWindow, windowMs) {
+async function rateLimit(db, uid, action, maxPerWindow, windowMs) {
   if (!uid) return true
   const ref = db.collection('rateLimits').doc(`${uid}__${action}`)
   const now = Date.now()
@@ -43,6 +53,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET')     return res.status(405).json({ error: 'Method not allowed' })
 
+  // Firebase Admin の遅延初期化。env 不備でもクラッシュさせず 503 を返す。
+  let db, auth
+  try {
+    ({ db, auth } = getAdmin())
+  } catch (e) {
+    console.error('[jitsi-token] admin init failed:', e)
+    return res.status(503).json({ error: 'Auth service unavailable (server misconfiguration)' })
+  }
+
   // 認証: idToken は Authorization ヘッダーで受け取る（URL ログへの漏洩を避ける）。
   const authHeader = req.headers.authorization || ''
   const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
@@ -62,7 +81,7 @@ export default async function handler(req, res) {
   if (!room) return res.status(400).json({ error: 'Missing parameters' })
 
   // レート制限（uid あたり 60秒で最大20回。入退室・再接続を考慮した上限）。
-  const ok = await rateLimit(uid, 'jitsi-token', 20, 60_000)
+  const ok = await rateLimit(db, uid, 'jitsi-token', 20, 60_000)
   if (!ok) return res.status(429).json({ error: 'Too many requests' })
 
   const appId  = process.env.JAAS_APP_ID

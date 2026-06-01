@@ -5,7 +5,7 @@
 //
 // 返り値: true=許可 / false=上限超過（呼び出し側で 429 を返す）
 
-module.exports = async function rateLimit(db, uid, action, maxPerWindow, windowMs) {
+export default async function rateLimit(db, uid, action, maxPerWindow, windowMs) {
   if (!uid) return true // uid 不明時はこのガードでは弾かない（別途認証で弾く）
   const ref = db.collection('rateLimits').doc(`${uid}__${action}`)
   const now = Date.now()
