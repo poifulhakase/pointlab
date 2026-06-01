@@ -28,7 +28,7 @@ function buildMa25DevMap(rows: { date: string; close: number }[]): Map<string, n
   return map
 }
 
-const CACHE_KEY        = 'poical-nk-futures-price-v4'
+const CACHE_KEY        = 'poical-nk-futures-price-v5'  // v5: ma25_dev（25日MA乖離率）フィールド追加でスキーマ変更
 const CACHE_TTL_OPEN   = 30 * 60 * 1000
 const CACHE_TTL_CLOSED = 2  * 60 * 60 * 1000
 const NK_FUTURES_DAYS  = 10
