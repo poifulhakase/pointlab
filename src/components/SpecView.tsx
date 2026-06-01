@@ -922,6 +922,17 @@ const SPEC_SECTIONS = [
           '本番 env の改行混入を清掃: ADMIN_EMAIL / VITE_FIREBASE_API_KEY / VITE_FIREBASE_PROJECT_ID / VITE_FIREBASE_STORAGE_BUCKET / VITE_FIREBASE_MESSAGING_SENDER_ID の末尾 \\r\\n（過去の echo/貼り付け由来）を除いて実値で再設定（node -e write で改行なし）→ 再デプロイ・ログイン/同期 実機OK。E2E スクリプトは API キーを AIza+35文字 正規表現で抽出し保険化',
         ],
       },
+      {
+        type: 'list' as const,
+        heading: 'データ鮮度・パイプライン修正（★2026-06-01 第14セッション）',
+        items: [
+          '🔴 PCR・騰落レシオ・空売り比率の欠落バグ修正: 取得元 nikkei225jp.com の var DAILY 配列に空要素（配列hole「,,」）が混入することがあり、JS では有効でも JSON.parse が配列全体で失敗していた。PCR 等が丸ごとサイレント欠落（「PCR取得失敗（スキップ）」）。scripts/fetch-jpx.mjs に parseDailyArray()（hole→null 補完・末尾カンマ除去してからパース）を追加し、DAILY を読む4箇所を統一',
+          'エンジン価格鮮度チェックを営業日数判定に変更: engineExport.ts の価格データ陳腐化チェックがカレンダー日数で乖離を測っていたため、週末を挟む月曜は MA計算基準日（NS倍率=^N225÷^GSPC の最新ペアで、S&P500 にゲートされ金曜）と 先物価格JSON（日経単独で月曜）が3カレンダー日＝実質1営業日となり毎週月曜に誤発火し、tev_for_execution が不要に null 化されていた。businessDaysBetween()（土日除外・getUTCDay）で営業日数判定へ。金→月＝1営業日で無警告、真の陳腐化（2営業日以上）は従来通り検出。回帰テスト5件追加（engineExport 計17件）',
+          '🔴 データ自動更新が本番に届かない問題を根治: 週次データ更新ワークフローが2つ併存（update-data.yml と fetch-data.yml）し、土曜0:00 UTC で重複実行してレース。さらに update-data.yml が「[skip ci]」付きでコミットしており、これが Vercel のGitHub連携デプロイもスキップさせ本番が更新されなかった。update-data.yml を削除し fetch-data.yml に一本化。冗長で失敗していた明示 vercel --prod step も撤去し、main への push をトリガーに Vercel Git連携が本番自動デプロイする構成に統一（[skip ci] は今後付けない）',
+          '本番データ最新化: 先物日次を 5/29（PCR 復活）・COT を 5/26 週まで反映。投資主体別（5/22 週）は JPX が翌週木曜公表のため公表待ちで正常と確認',
+          'リポジトリ整合: 直接デプロイ運用で未push/未コミットだった過去セッション分を origin/main に集約（以後はデプロイ＝push＝Git連携自動デプロイの単一経路）',
+        ],
+      },
     ],
   },
 ]
