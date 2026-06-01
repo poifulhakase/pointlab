@@ -70,12 +70,10 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Vercel デプロイ
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel --prod --token "$VERCEL_TOKEN"
+      # 本番デプロイは Vercel の GitHub 連携が main への push をトリガーに自動実行する。
+      # （以前はここで明示的に `vercel --prod` を実行していたが、Git連携と二重になり
+      #  かつ失敗時に本番へ届かない原因になっていたため撤去。コミットに [skip ci] を
+      #  付けないこと＝付けると Vercel 連携デプロイもスキップされる。）
 
       - name: データ鮮度チェック
         id: freshness_check
