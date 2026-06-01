@@ -1225,7 +1225,8 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   tableWrap: { flex: 1, overflowY: 'auto', overflowX: 'auto', padding: '0 0 16px' },
-  table:     { width: '100%', borderCollapse: 'collapse', minWidth: 220 },
+  // table-layout: fixed で日付列(width:80)以外の3データ列を均等幅にする
+  table:     { width: '100%', borderCollapse: 'collapse', minWidth: 220, tableLayout: 'fixed' as const },
   th:        {
     position: 'sticky', top: 0, zIndex: 2,
     padding: '9px 14px', textAlign: 'right',
