@@ -31,51 +31,63 @@ function makeC(theme: 'dark' | 'light'): C {
   }
 }
 
-// ── 採用エッジ（検証済み・使う）──────────────────────────────
-type Edge = { name: string; aim: string; trigger: string; hold: string; ev: string; dd: string; verdict: string }
+// ── やること（初心者向け・3つだけ）──
+const ACTIONS = [
+  { n: '1', t: '大きく下げたら買う', s: 'ただし下落が続いている最中は手を出さない（落ちるナイフを避ける）' },
+  { n: '2', t: '上げている間は乗る／下げ続けたら降りる', s: '暴落を避ける装置。トレンドが続く限り持つ' },
+  { n: '3', t: '3月と12月は買う', s: '3月＝配当の権利確定前／12月＝年末。上がりやすい季節' },
+]
+
+// ── 現実解（CAGR×DDのトレードオフ・20年BT・2倍）──
+const FRONTIER = [
+  { label: '濾し無し（旧・全部乗せ）', cagr: 14.4, dd: 62, main: false },
+  { label: '押し目だけ濾す（v4a）',   cagr: 13.0, dd: 53, main: false },
+  { label: '押し目＋季節性を濾す（v5a）', cagr: 10.2, dd: 38, main: true },
+]
+const CAGR_MAX = 15, DD_MAX = 65
+
+// ── 採用エッジ（検証済み・使う）──
+type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; aim: string; trigger: string; hold: string; ev: string; dd: string }
 const ADOPTED: Edge[] = [
-  {
-    name: 'トレンドフィルター（DD制御）',
-    aim: '確定下落で降りて暴落を回避する',
-    trigger: '過去50日の高値を上抜けたら買い／過去25日の安値を割れたら撤退（ロングのみ・ドンチャン）',
-    hold: 'トレンドが続く限り',
-    ev: 'CAGR 約10%（2倍）',
-    dd: '−39%（常時ロング−88%を半減）',
-    verdict: '◎ DD制御の要',
-  },
-  {
-    name: '売られすぎ買い（押し目）',
-    aim: '売られすぎの反発を取る',
-    trigger: '25日線乖離 ≤ −10%。🔴確定下落トレンド中（ドンチャン50/25ベア）は発火させない＝落ちるナイフを避ける（v4採用の濾し）',
-    hold: '5営業日で機械的に降りる（v4採用・最適日数は決め打たない＝過学習回避）',
-    ev: '−10%で +1.8%（3日先・勝率66%）',
-    dd: '単体−57%（濾すとDDは下がる・v4）',
-    verdict: '△ 玉は希少だがDDは下がる',
-  },
-  {
-    name: '季節性：権利確定ブル',
-    aim: '配当の権利確定に向けた買い需要',
-    trigger: '3/15頃エントリー → 3/27頃エグジット（🔴確定下落トレンド中は見送り＝v5a）',
-    hold: '約2週間（年1回）',
-    ev: '+3.2%（勝率70%／2倍で約+6.4%）',
-    dd: '窓 −37%',
-    verdict: '○ 最強の季節性',
-  },
-  {
-    name: '季節性：年末ラリー',
-    aim: '年末の買い需要',
-    trigger: '12/15頃エントリー → 12/30頃エグジット（🔴確定下落トレンド中は見送り＝v5a）',
-    hold: '約2週間（年1回）',
-    ev: '+0.95%（勝率75%）',
-    dd: '低',
-    verdict: '○ 高勝率・小さめ',
-  },
+  { name: 'トレンドフィルター', grade: '◎', gradeLabel: 'DD制御の要', aim: '暴落を回避してドローダウンを抑える', trigger: '50日高値を上抜けで買い／25日安値割れで撤退（ロングのみ）', hold: 'トレンドが続く限り', ev: 'CAGR 約10%（2倍）', dd: '−39%（常時ロング−88%の半分）' },
+  { name: '売られすぎ買い（押し目）', grade: '△', gradeLabel: '玉は希少だがDDは下がる', aim: '売られすぎの反発を取る', trigger: '25日線 ≤ −10%。下落トレンド中は見送り（落ちるナイフ回避）', hold: '5営業日で機械的に降りる', ev: '−10%で +1.8%（勝率66%）', dd: '単体−57%（濾すと改善）' },
+  { name: '季節性：権利確定ブル', grade: '○', gradeLabel: '最強の季節性', aim: '配当の権利確定に向けた買い需要', trigger: '3/15頃 → 3/27頃', hold: '約2週間（年1回）', ev: '+3.2%（勝率70%）', dd: '窓 −37%' },
+  { name: '季節性：年末ラリー', grade: '○', gradeLabel: '高勝率・小さめ', aim: '年末の買い需要', trigger: '12/15頃 → 12/30頃', hold: '約2週間（年1回）', ev: '+0.95%（勝率75%）', dd: '低' },
 ]
 
 export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
-  const th: React.CSSProperties = { padding: isMobile ? '7px 8px' : '8px 12px', textAlign: 'left', fontSize: isMobile ? 9 : 10, fontWeight: 800, letterSpacing: '0.08em', color: c.ACCENT, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap', fontFamily: mono }
-  const td: React.CSSProperties = { padding: isMobile ? '8px 8px' : '10px 12px', fontSize: isMobile ? 10 : 12, color: c.TEXT, borderBottom: `1px solid ${c.RULE}`, lineHeight: 1.6, verticalAlign: 'top' }
+
+  // セクション見出し（左アクセントバー）
+  const sectionTitle = (text: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
+      <span style={{ width: 3, height: 16, borderRadius: 2, background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 6px ${c.ACCENT}` }} />
+      <span style={{ fontSize: isMobile ? 12.5 : 14, fontWeight: 800, color: c.ACCENT, letterSpacing: '0.1em', fontFamily: mono }}>{text}</span>
+    </div>
+  )
+
+  // カード内のラベル:値 行
+  const kv = (label: string, value: string, color?: string) => (
+    <div style={{ display: 'flex', gap: 9, alignItems: 'baseline' }}>
+      <span style={{ flexShrink: 0, width: isMobile ? 46 : 52, fontSize: isMobile ? 9 : 10, color: c.DIM, fontWeight: 700, fontFamily: mono, letterSpacing: '0.03em', lineHeight: 1.6 }}>{label}</span>
+      <span style={{ fontSize: isMobile ? 11 : 12.5, color: color || c.TEXT, lineHeight: 1.6, fontWeight: color ? 700 : 400 }}>{value}</span>
+    </div>
+  )
+
+  // 現実解のバー（CAGR=緑 / DD=赤）
+  const bar = (caption: string, value: string, widthPct: number, color: string) => (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: isMobile ? 9 : 10, marginBottom: 4, fontFamily: mono }}>
+        <span style={{ color: c.DIM }}>{caption}</span>
+        <span style={{ color, fontWeight: 800, fontSize: isMobile ? 11 : 12.5 }}>{value}</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 5, background: c.L ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${Math.min(100, widthPct)}%`, background: color, borderRadius: 5, transition: 'width .3s' }} />
+      </div>
+    </div>
+  )
+
+  const gradeColor = (g: Edge['grade']) => g === '◎' ? c.WIN : g === '△' ? c.WARN : c.ACCENT
 
   return (
     <div style={{
@@ -111,97 +123,103 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       </div>
 
       {/* ── Body（全幅・スクロール）── */}
-      <div style={{ flex: 1, overflowY: 'auto', zIndex: 1, width: '100%', padding: isMobile ? '14px 14px 32px' : '20px 28px 40px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', zIndex: 1, width: '100%', maxWidth: 1080, margin: '0 auto', padding: isMobile ? '16px 14px 36px' : '24px 28px 48px' }}>
 
-        {/* ── やさしいまとめ（初心者向け・上層）── */}
-        <div style={{ padding: isMobile ? '14px 16px' : '18px 22px', borderRadius: 10, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 18, lineHeight: 1.95, color: c.TEXT, fontSize: isMobile ? 12 : 13.5 }}>
-          <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 14 : 16, marginBottom: 10 }}>▸ ひとことで言うと（初心者向け）</div>
-          <div style={{ marginBottom: 14 }}>基本は<b>「買い」だけ</b>。大きく下げたところを買って、上げが続く間は持ち、下げが続いたら降りる。<b>売り（ショート）は原則しない</b>。目標は年+15〜20%だが、<b style={{ color: c.WIN }}>暴落で退場しないこと（DDを浅く）を最優先</b>＝本線は<b>年 約+10%・最大の落ち込み−38%</b>に落ち着いた。</div>
+        {/* ════ ① やることは3つだけ ════ */}
+        <div style={{ padding: isMobile ? '16px 16px' : '20px 24px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 24 }}>
+          <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 16 : 18, marginBottom: 8, letterSpacing: '0.02em' }}>やることは3つだけ</div>
+          <div style={{ marginBottom: 16, fontSize: isMobile ? 11.5 : 13, color: c.TEXT, lineHeight: 1.8 }}>
+            基本は<b>「買い」だけ・2倍まで</b>。目標は年+15〜20%だが、<b style={{ color: c.WIN }}>暴落で退場しないこと（DDを浅く）を最優先</b>＝本線は<b>年 約+10%・最大DD −38%</b>。
+          </div>
 
-          <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 13 : 15, marginBottom: 10 }}>▸ 実際にやることは3つだけ</div>
-          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { n: '1', t: '大きく下げたら買う', s: 'ただし下落が続いている最中は手を出さない（落ちるナイフを避ける）' },
-              { n: '2', t: '上げている間は乗る／下げ続けたら降りる', s: '暴落を避ける装置。トレンドが続く限り持つ' },
-              { n: '3', t: '3月と12月は買う', s: '3月＝配当の権利確定前／12月＝年末。上がりやすい季節' },
-            ].map(a => (
-              <div key={a.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: isMobile ? '9px 11px' : '11px 14px', borderRadius: 9, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(255,255,255,0.45)' : 'rgba(0,229,255,0.05)' }}>
-                <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{a.n}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 14 }}>
+            {ACTIONS.map(a => (
+              <div key={a.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: isMobile ? '10px 12px' : '13px 16px', borderRadius: 10, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(255,255,255,0.5)' : 'rgba(0,229,255,0.05)' }}>
+                <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}55` }}>{a.n}</span>
                 <span>
-                  <b style={{ fontSize: isMobile ? 12.5 : 14 }}>{a.t}</b>
-                  <span style={{ display: 'block', marginTop: 2, fontSize: isMobile ? 11 : 12, color: c.SUB }}>{a.s}</span>
+                  <b style={{ fontSize: isMobile ? 13 : 14.5 }}>{a.t}</b>
+                  <span style={{ display: 'block', marginTop: 3, fontSize: isMobile ? 11 : 12, color: c.SUB, lineHeight: 1.55 }}>{a.s}</span>
                 </span>
               </div>
             ))}
           </div>
-          <div style={{ marginBottom: 14, fontSize: isMobile ? 11 : 12.5, color: c.SUB }}>これを<b>「買い」だけ・2倍まで</b>で回す。普段は何も持たない時間（フラット）があってよい。</div>
 
-          <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>やらないこと</div>
-          <div style={{ marginBottom: 14, paddingLeft: 2 }}>
-            ・売り（ショート）＝日経は下げても戻るので負けやすい<br />
-            ・毎日売買＝エッジの無い日に張ると、手数料負けする<br />
-            ・機械的な損切りの連発＝押し目買いと相性が悪い（底で投げる）
+          {/* やらないこと（ピル） */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+            <span style={{ fontSize: isMobile ? 10 : 11, color: c.DIM, fontWeight: 700, fontFamily: mono, marginRight: 2 }}>やらない：</span>
+            {['売り（ショート）', '毎日売買', '損切りの連発'].map(x => (
+              <span key={x} style={{ fontSize: isMobile ? 10.5 : 11.5, color: c.LOSS, border: `1px solid ${c.L ? 'rgba(220,38,38,0.3)' : 'rgba(248,113,113,0.3)'}`, background: c.L ? 'rgba(220,38,38,0.05)' : 'rgba(248,113,113,0.07)', borderRadius: 999, padding: '3px 10px', fontWeight: 600 }}>✕ {x}</span>
+            ))}
           </div>
 
-          <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>用語（この下の表で使う言葉）</div>
-          <div style={{ paddingLeft: 2, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.85 }}>
-            ・<b>CAGR</b>＝1年で平均何％増えたか（複利の年率）<br />
-            ・<b>DD（ドローダウン）</b>＝一番高かった時から最大何％下がったか（＝痛みの大きさ。深いほど危険）<br />
-            ・<b>乖離（かいり）</b>＝価格が移動平均線からどれだけ離れたか（離れすぎ＝行きすぎ）<br />
-            ・<b>勝率</b>＝勝ったトレードの割合 ／ <b>期待値</b>＝1回あたり平均で何％取れるか
+          {/* 用語（折りたたみ） */}
+          <details>
+            <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 10.5 : 11.5, color: c.SUB, fontFamily: mono, userSelect: 'none' }}>
+              ▸ 用語（CAGR / DD / 乖離 / 勝率）
+            </summary>
+            <div style={{ paddingLeft: 4, marginTop: 8, fontSize: isMobile ? 11 : 12, color: c.SUB, lineHeight: 1.85 }}>
+              ・<b>CAGR</b>＝1年で平均何％増えたか（複利の年率）<br />
+              ・<b>DD（ドローダウン）</b>＝一番高かった所から最大何％下がったか（痛みの大きさ）<br />
+              ・<b>乖離（かいり）</b>＝価格が移動平均線からどれだけ離れたか<br />
+              ・<b>勝率</b>＝勝ったトレードの割合 ／ <b>期待値</b>＝1回平均で何％取れるか
+            </div>
+          </details>
+        </div>
+
+        {/* ════ ② 目標と現実解（ビジュアル）════ */}
+        {sectionTitle('目標と現実解（20年バックテスト・2倍）')}
+        <div style={{ padding: isMobile ? '14px 14px' : '18px 22px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 28 }}>
+          <div style={{ fontSize: isMobile ? 11.5 : 13, color: c.TEXT, lineHeight: 1.75, marginBottom: 16 }}>
+            目標 <b>年利50%</b> は <span style={{ color: c.WARN, fontWeight: 700 }}>生存可能なレバでは願望</span>。同じエッジでも“置き場所”でCAGRとDDは下のように動く。<b>CAGRを上げるとDDも深くなる＝両立しない。</b>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {FRONTIER.map(f => (
+              <div key={f.label} style={{
+                padding: isMobile ? '11px 12px' : '13px 16px', borderRadius: 10,
+                border: f.main ? `1.5px solid ${c.WIN}` : `1px solid ${c.RULE}`,
+                background: f.main ? (c.L ? 'rgba(21,128,61,0.07)' : 'rgba(74,222,128,0.08)') : 'transparent',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontWeight: 800, fontSize: isMobile ? 11.5 : 13, color: f.main ? c.WIN : c.TEXT }}>{f.label}</span>
+                  {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.WIN, borderRadius: 999, padding: '2px 9px', letterSpacing: '0.06em' }}>本線</span>}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 12 : 20 }}>
+                  {bar('CAGR（年利）', `${f.cagr}%`, f.cagr / CAGR_MAX * 100, c.WIN)}
+                  {bar('最大DD（痛み）', `−${f.dd}%`, f.dd / DD_MAX * 100, c.LOSS)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 14, fontSize: isMobile ? 10.5 : 11.5, color: c.SUB, lineHeight: 1.7 }}>
+            🔴 <b style={{ color: c.WIN }}>本線＝v5a（生存最優先）</b>。DDを−40%圏に抑える代わりにCAGRは約10%（≒現物B&H並みだが、2倍常時ロングの−88%より遥かに浅い）。
           </div>
         </div>
 
-        {/* 目標と現実解（詳細層の入口）*/}
-        <div style={{ padding: isMobile ? '10px 12px' : '12px 16px', borderRadius: 8, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 20, fontFamily: mono, fontSize: isMobile ? 10 : 11.5, lineHeight: 1.9, color: c.TEXT }}>
-          <div style={{ color: c.ACCENT, fontWeight: 800, letterSpacing: '0.1em', marginBottom: 6 }}>目標と現実解（20年バックテスト）</div>
-          <div>目標：<b>年利50%（税引前）</b> → 検証の結論：<span style={{ color: c.WARN }}>生存可能なレバでは“願望”</span>（全部乗せ3倍でもCAGR22%・最大DD−80%＝退場）</div>
-          <div style={{ marginTop: 6 }}>v4精査の発見：<b>CAGR15〜20% と DD−40%圏は両立しない</b>（トレードオフ）。同じエッジでも置き場所で↓のように動く（2倍）：</div>
-          <div style={{ paddingLeft: 2, marginTop: 2 }}>・濾し無し（旧・全部乗せ）：CAGR <b>14.4%</b> ／ DD <span style={{ color: c.LOSS }}>−62%</span></div>
-          <div style={{ paddingLeft: 2 }}>・押し目だけ濾す（v4a）：CAGR <b>13.0%</b> ／ DD <span style={{ color: c.LOSS }}>−53%</span></div>
-          <div style={{ paddingLeft: 2 }}>・押し目＋季節性を濾す（<b>v5a＝本線</b>）：CAGR <b style={{ color: c.WIN }}>10.2%</b> ／ DD <b style={{ color: c.WIN }}>−38%</b></div>
-          <div style={{ marginTop: 6 }}>🔴 <b>本線＝v5a（生存最優先）</b>：DDを−40%圏に抑える代わりにCAGRは約10%（≒現物B&H並みだが、2倍常時ロングの−88%より遥かに浅い）。CAGRを15%級にしたければDDは−55〜62%を受け入れる、という地図。</div>
-          <div style={{ marginTop: 6 }}>システムの形：<b>トレンドフィルター（DD制御）＋ 売られすぎ買い＋ 季節性 ／ 全部を“確定下落トレンドでない時だけ”発火 ／ ショートなし ／ 2倍</b></div>
+        {/* ════ ③ 採用エッジ（カード）════ */}
+        {sectionTitle('採用エッジ（検証済み・使う）')}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 26 }}>
+          {ADOPTED.map(e => (
+            <div key={e.name} style={{ padding: isMobile ? '14px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(255,255,255,0.4)' : 'rgba(0,229,255,0.035)', display: 'flex', flexDirection: 'column', gap: 11 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <span style={{ flexShrink: 0, fontSize: isMobile ? 12 : 13, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: gradeColor(e.grade), borderRadius: 7, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{e.grade}</span>
+                <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 14, color: c.ACCENT }}>{e.name}</span>
+              </div>
+              <div style={{ fontSize: isMobile ? 10.5 : 11.5, color: gradeColor(e.grade), fontWeight: 700, marginTop: -4 }}>{e.gradeLabel}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, borderTop: `1px solid ${c.RULE}`, paddingTop: 11 }}>
+                {kv('狙い', e.aim)}
+                {kv('トリガー', e.trigger)}
+                {kv('保有', e.hold)}
+                {kv('期待値', e.ev, c.WIN)}
+                {kv('DD', e.dd, c.LOSS)}
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* 採用エッジ */}
-        <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 800, color: c.ACCENT, letterSpacing: '0.08em', marginBottom: 8, fontFamily: mono }}>■ 採用エッジ（検証済み・使う）</div>
-        <div style={{ overflowX: 'auto', marginBottom: 24 }}>
-          <table style={{ width: '100%', minWidth: isMobile ? 720 : 980, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-            <colgroup>
-              <col style={{ width: isMobile ? 100 : 130 }} />
-              <col style={{ width: isMobile ? 90 : 120 }} />
-              <col style={{ width: isMobile ? 150 : 230 }} />
-              <col style={{ width: isMobile ? 90 : 130 }} />
-              <col style={{ width: isMobile ? 90 : 120 }} />
-              <col style={{ width: isMobile ? 90 : 130 }} />
-              <col style={{ width: isMobile ? 70 : 100 }} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th style={th}>エッジ</th><th style={th}>狙い</th><th style={th}>トリガー（どこで）</th><th style={th}>保有</th><th style={th}>期待値</th><th style={th}>DD</th><th style={th}>判定</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ADOPTED.map(e => (
-                <tr key={e.name}>
-                  <td style={{ ...td, fontWeight: 700, color: c.ACCENT }}>{e.name}</td>
-                  <td style={td}>{e.aim}</td>
-                  <td style={td}>{e.trigger}</td>
-                  <td style={td}>{e.hold}</td>
-                  <td style={{ ...td, color: c.WIN, fontWeight: 700 }}>{e.ev}</td>
-                  <td style={{ ...td, color: c.LOSS }}>{e.dd}</td>
-                  <td style={{ ...td, fontWeight: 700 }}>{e.verdict}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div style={{ marginTop: 20, fontSize: isMobile ? 9 : 10, color: c.SUB, fontFamily: mono, lineHeight: 1.8 }}>
-          ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。
-          押し目買いの保有日数は結果に効き、最良日数はサンプル依存（−10%は短期/−7%は長期が有利と真逆）＝特定日数を最適化しない。
-          大数の法則の正しい適用＝「+EVが現れるたび（年十数回）に、生存できるサイズで張る」。毎週張る・無エッジ帯で張るは損失に収束。
+        {/* ════ 注意書き ════ */}
+        <div style={{ padding: isMobile ? '11px 13px' : '13px 16px', borderRadius: 10, border: `1px solid ${c.RULE}`, fontSize: isMobile ? 9.5 : 10.5, color: c.SUB, fontFamily: mono, lineHeight: 1.85 }}>
+          ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。<br />
+          押し目買いの保有日数は最良がサンプル依存＝最適化しない。「+EVが出るたび（年十数回）に生存サイズで張る」が正解で、毎週張る・無エッジ帯で張るは損失に収束。
         </div>
       </div>
     </div>
