@@ -44,7 +44,7 @@ const ADOPTED: Edge[] = [
     verdict: '◎ DD制御の要',
   },
   {
-    name: '−極限買い（押し目）',
+    name: '売られすぎ買い（押し目）',
     aim: '売られすぎの反発を取る',
     trigger: '25日線乖離 ≤ −7%（強め ≤ −10%）／🔴下落トレンド中は見送り（要トレンド濾し）',
     hold: '3〜10営業日で機械的に降りる（最適日数は決め打たない＝過学習回避・出口ルールはv4で精査）',
@@ -78,8 +78,12 @@ const REJECTED: Rejected[] = [
   { name: '配当落ち（権利落ち）ベア', reason: '20年実測(^N225現物)で3/27→4/3=勝率50%・+0.1%＝方向エッジなし。現物指数は権利落ちで実際に下げるが、その下げは配当と相殺＝“価値移転”で取れる利益ではない（空売りは配当支払い義務／下げは予測可能で先回り済み）。先物は予め織り込むのでそもそも下げない' },
   { name: '買われすぎ売り（+7%）', reason: '期待値ほぼ0（+9%でやっと微プラス）。バンドウォークで踏まれる' },
   { name: 'トレンド追随（両方向）', reason: 'ロング/ショートは CAGR −3〜−7%・DD −90%。ショートがV字反発に轢かれる' },
-  { name: 'SQ（メジャー/ミニ）', reason: '日足では無エッジ。全部乗せに足すと悪化（17.5→15.9%・DD−62→−73%）を実証' },
-  { name: '裁定解消', reason: 'SQファミリー／ショート発想／データ1年／日中microstructure＝日足スイングでは取れない' },
+  { name: 'SQ（メジャー/ミニ）', reason: '20年で全角度×：当日(終値)無エッジ／当日(寄り)も寄りギャップ≒0・下落率<50%／向かう数日もベース比較で地以下。足すと悪化(17.5→15.9%)も実証。条件付き(裁定買い残で層別)だけ1年壁で未検証' },
+  { name: '裁定解消', reason: 'SQファミリー。寄りで測り直しても系統的売り圧なし（向きが裁定買い残次第で平均相殺）。日中microstructure＋データ1年＝日足スイングでは取れない' },
+  { name: 'セルインメイ・ベア', reason: '相対効果は本物（冬+7%>夏+3.3%・20年）。でも夏も平均+3.3%の“プラス”＝空売りは平均−3.3%/勝率43%の負け。「夏は軽く」のロング濃淡なら可、ベアは×' },
+  { name: '1月効果', reason: '日経225(大型)では存在せず。1月フルはベース比−1.36pt＝むしろ地より弱い。学術的1月効果は小型株現象。真の季節性は12月後半(年末ラリー)で1月持ち越しは削られる' },
+  { name: '投資の日(10/4)・NISAの日(2/13)', reason: '語呂合わせのPR記念日＝実需メカニズム無し。NISAの日は先20日ベース−1.34pt。投資の日の先20日+0.89ptは“10月入りの秋季節性”の別名（n=20）' },
+  { name: '信用評価損益率の高水準ベア', reason: '高水準(0〜−3%)=天井警告は相場観として正しいが：+10%は非現実的(実際は0〜−3%)・1年データで検証不能・1年実測ではむしろ上昇・天井は希少。ベア引き金でなくリスク警告(サイズ落とす)に使う' },
   { name: 'TOPIX・日経組換', reason: '個別株の話。指数・先物・2倍ETFには出ない（別トラック）' },
   { name: '需給（信用/COT/騰落）', reason: '1年・1局面では検証不能。方向でなくリスク計器。フォワード蓄積で再評価' },
   { name: 'always-in・毎週張る・損切徹底', reason: '無エッジ帯で張る＝損失に収束。損切は平均回帰で底投げの罠。データが否定' },
@@ -126,12 +130,40 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       {/* ── Body（全幅・スクロール）── */}
       <div style={{ flex: 1, overflowY: 'auto', zIndex: 1, width: '100%', padding: isMobile ? '14px 14px 32px' : '20px 28px 40px' }}>
 
-        {/* 目標と現実解 */}
+        {/* ── やさしいまとめ（初心者向け・上層）── */}
+        <div style={{ padding: isMobile ? '14px 16px' : '18px 22px', borderRadius: 10, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 18, lineHeight: 1.95, color: c.TEXT, fontSize: isMobile ? 12 : 13.5 }}>
+          <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 14 : 16, marginBottom: 10 }}>▸ ひとことで言うと（初心者向け）</div>
+          <div style={{ marginBottom: 14 }}>基本は<b>「買い」だけ</b>。大きく下げたところを買って、上げが続く間は持ち、下げが続いたら降りる。<b>売り（ショート）は原則しない</b>。目標は<b style={{ color: c.WIN }}>年 +15〜20%</b>。</div>
+
+          <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>使う「買い場」は3つ</div>
+          <div style={{ marginBottom: 14, paddingLeft: 2 }}>
+            ① 大きく下げた時に買う（売られすぎは戻りやすい）<br />
+            ② 上げが続く間は乗り、下げ続きになったら降りる（＝暴落を避ける装置）<br />
+            ③ 3月（配当の権利確定前）と12月（年末）は上がりやすいので買う
+          </div>
+
+          <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>やらないこと</div>
+          <div style={{ marginBottom: 14, paddingLeft: 2 }}>
+            ・売り（ショート）＝日経は下げても戻るので負けやすい<br />
+            ・毎日売買＝エッジの無い日に張ると、手数料負けする<br />
+            ・機械的な損切りの連発＝押し目買いと相性が悪い（底で投げる）
+          </div>
+
+          <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>用語（この下の表で使う言葉）</div>
+          <div style={{ paddingLeft: 2, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.85 }}>
+            ・<b>CAGR</b>＝1年で平均何％増えたか（複利の年率）<br />
+            ・<b>DD（ドローダウン）</b>＝一番高かった時から最大何％下がったか（＝痛みの大きさ。深いほど危険）<br />
+            ・<b>乖離（かいり）</b>＝価格が移動平均線からどれだけ離れたか（離れすぎ＝行きすぎ）<br />
+            ・<b>勝率</b>＝勝ったトレードの割合 ／ <b>期待値</b>＝1回あたり平均で何％取れるか
+          </div>
+        </div>
+
+        {/* 目標と現実解（詳細層の入口）*/}
         <div style={{ padding: isMobile ? '10px 12px' : '12px 16px', borderRadius: 8, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 20, fontFamily: mono, fontSize: isMobile ? 10 : 11.5, lineHeight: 1.9, color: c.TEXT }}>
           <div style={{ color: c.ACCENT, fontWeight: 800, letterSpacing: '0.1em', marginBottom: 6 }}>目標と現実解（20年バックテスト）</div>
           <div>目標：<b>年利50%（税引前）</b> → 検証の結論：<span style={{ color: c.WARN }}>生存可能なレバでは“願望”</span>（全部乗せ3倍でもCAGR22%・最大DD−80%＝退場）</div>
           <div>現実解：<b style={{ color: c.WIN }}>CAGR 15〜20% × 最大DD −40%圏（2倍）</b> ＝ 市場B&H（8.8%）の約2倍を、管理可能なDDで。</div>
-          <div style={{ marginTop: 6 }}>システムの形：<b>トレンドフィルター（DD制御）＋ −極限買い（要トレンド濾し）＋ 季節性 ／ ショートなし ／ 2倍</b></div>
+          <div style={{ marginTop: 6 }}>システムの形：<b>トレンドフィルター（DD制御）＋ 売られすぎ買い（要トレンド濾し）＋ 季節性 ／ ショートなし ／ 2倍</b></div>
         </div>
 
         {/* 採用エッジ */}
