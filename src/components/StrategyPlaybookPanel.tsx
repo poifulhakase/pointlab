@@ -191,23 +191,27 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           </table>
         </div>
 
-        {/* 不採用 */}
-        <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 800, color: c.SUB, letterSpacing: '0.08em', marginBottom: 8, fontFamily: mono }}>■ 不採用（検証で落とした）</div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', minWidth: isMobile ? 560 : 0, borderCollapse: 'collapse' }}>
-            <thead>
-              <tr><th style={th}>候補</th><th style={th}>理由</th></tr>
-            </thead>
-            <tbody>
-              {REJECTED.map(r => (
-                <tr key={r.name}>
-                  <td style={{ ...td, fontWeight: 700, color: c.SUB, whiteSpace: 'nowrap' }}>{r.name}</td>
-                  <td style={td}>{r.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* 不採用（開閉式・デフォルト閉じ）*/}
+        <details>
+          <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 11 : 13, fontWeight: 800, color: c.SUB, letterSpacing: '0.08em', fontFamily: mono, padding: '8px 10px', borderRadius: 8, border: `1px solid ${c.RULE}`, background: c.TAGBG, userSelect: 'none' }}>
+            ▸ 不採用（検証で落とした）— タップで開く（{REJECTED.length}件）
+          </summary>
+          <div style={{ overflowX: 'auto', marginTop: 8 }}>
+            <table style={{ width: '100%', minWidth: isMobile ? 560 : 0, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr><th style={th}>候補</th><th style={th}>理由</th></tr>
+              </thead>
+              <tbody>
+                {REJECTED.map(r => (
+                  <tr key={r.name}>
+                    <td style={{ ...td, fontWeight: 700, color: c.SUB, whiteSpace: 'nowrap' }}>{r.name}</td>
+                    <td style={td}>{r.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
 
         <div style={{ marginTop: 20, fontSize: isMobile ? 9 : 10, color: c.SUB, fontFamily: mono, lineHeight: 1.8 }}>
           ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。
