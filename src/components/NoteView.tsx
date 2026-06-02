@@ -11,6 +11,7 @@ type Props = {
   onOpenSpec?: () => void
   onOpenOriginal?: () => void
   onOpenCommunity?: () => void
+  onOpenPlaybook?: () => void
 }
 
 type Article = {
@@ -19,7 +20,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -52,6 +53,7 @@ const ARTICLES: Article[] = [
   { genre: '管理者', title: 'システム仕様', url: null, thumb: null, internalAction: 'spec' },
   { genre: '管理者', title: 'プロンプト Evals', url: null, thumb: null, internalAction: 'evals' },
   { genre: '管理者', title: 'コミュニティメンバー', url: null, thumb: null, internalAction: 'community' },
+  { genre: '管理者', title: '戦略プレイブック', url: null, thumb: null, internalAction: 'playbook' },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
 ]
@@ -120,7 +122,7 @@ function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
-function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: {
+function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook }: {
   article: Article
   isMobile: boolean
   theme: 'dark' | 'light'
@@ -131,6 +133,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   onOpenSpec?: () => void
   onOpenOriginal?: () => void
   onOpenCommunity?: () => void
+  onOpenPlaybook?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -144,6 +147,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
     if (article.internalAction === 'spec')      { onOpenSpec?.();      return }
     if (article.internalAction === 'original')  { onOpenOriginal?.();  return }
     if (article.internalAction === 'community') { onOpenCommunity?.(); return }
+    if (article.internalAction === 'playbook')  { onOpenPlaybook?.();  return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -187,11 +191,11 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook }: Props) {
   // バックテストは検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
   // サンプルが十分に揃ったら公開範囲を再検討する。
   const visibleArticles = ARTICLES.filter(a => {
-    if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest') && !isAdmin) return false
+    if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest' || a.internalAction === 'playbook') && !isAdmin) return false
     return true
   })
 
@@ -209,7 +213,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} />
                   ))}
                 </div>
               </section>
