@@ -49,7 +49,7 @@ const ADOPTED: Edge[] = [
     trigger: '25日線乖離 ≤ −10%。🔴確定下落トレンド中（ドンチャン50/25ベア）は発火させない＝落ちるナイフを避ける（v4採用の濾し）',
     hold: '5営業日で機械的に降りる（v4採用・最適日数は決め打たない＝過学習回避）',
     ev: '−10%で +1.8%（3日先・勝率66%）',
-    dd: '単体−57%。🔴v4実測：濾すと玉が0.76→0.05回/年に激減＝−10%押し目はほぼ全て下落トレンド中だった（“上げ/レンジ中の−10%”はほぼ無い）',
+    dd: '単体−57%（濾すとDDは下がる・v4）',
     verdict: '△ 玉は希少だがDDは下がる',
   },
   {
@@ -173,7 +173,16 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         {/* 採用エッジ */}
         <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 800, color: c.ACCENT, letterSpacing: '0.08em', marginBottom: 8, fontFamily: mono }}>■ 採用エッジ（検証済み・使う）</div>
         <div style={{ overflowX: 'auto', marginBottom: 24 }}>
-          <table style={{ width: '100%', minWidth: isMobile ? 720 : 0, borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', minWidth: isMobile ? 720 : 980, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: isMobile ? 100 : 130 }} />
+              <col style={{ width: isMobile ? 90 : 120 }} />
+              <col style={{ width: isMobile ? 150 : 230 }} />
+              <col style={{ width: isMobile ? 90 : 130 }} />
+              <col style={{ width: isMobile ? 90 : 120 }} />
+              <col style={{ width: isMobile ? 90 : 130 }} />
+              <col style={{ width: isMobile ? 70 : 100 }} />
+            </colgroup>
             <thead>
               <tr>
                 <th style={th}>エッジ</th><th style={th}>狙い</th><th style={th}>トリガー（どこで）</th><th style={th}>保有</th><th style={th}>期待値</th><th style={th}>DD</th><th style={th}>判定</th>
@@ -182,13 +191,13 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             <tbody>
               {ADOPTED.map(e => (
                 <tr key={e.name}>
-                  <td style={{ ...td, fontWeight: 700, color: c.ACCENT, whiteSpace: 'nowrap' }}>{e.name}</td>
+                  <td style={{ ...td, fontWeight: 700, color: c.ACCENT }}>{e.name}</td>
                   <td style={td}>{e.aim}</td>
                   <td style={td}>{e.trigger}</td>
-                  <td style={{ ...td, whiteSpace: 'nowrap' }}>{e.hold}</td>
+                  <td style={td}>{e.hold}</td>
                   <td style={{ ...td, color: c.WIN, fontWeight: 700 }}>{e.ev}</td>
-                  <td style={{ ...td, color: c.LOSS, whiteSpace: 'nowrap' }}>{e.dd}</td>
-                  <td style={{ ...td, fontWeight: 700, whiteSpace: 'nowrap' }}>{e.verdict}</td>
+                  <td style={{ ...td, color: c.LOSS }}>{e.dd}</td>
+                  <td style={{ ...td, fontWeight: 700 }}>{e.verdict}</td>
                 </tr>
               ))}
             </tbody>
