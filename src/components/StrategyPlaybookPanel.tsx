@@ -72,23 +72,6 @@ const ADOPTED: Edge[] = [
   },
 ]
 
-// ── 不採用（検証で落とした）──────────────────────────────
-type Rejected = { name: string; reason: string }
-const REJECTED: Rejected[] = [
-  { name: '配当落ち（権利落ち）ベア', reason: '20年実測(^N225現物)で3/27→4/3=勝率50%・+0.1%＝方向エッジなし。現物指数は権利落ちで実際に下げるが、その下げは配当と相殺＝“価値移転”で取れる利益ではない（空売りは配当支払い義務／下げは予測可能で先回り済み）。先物は予め織り込むのでそもそも下げない' },
-  { name: '買われすぎ売り（+7%）', reason: '期待値ほぼ0（+9%でやっと微プラス）。バンドウォークで踏まれる' },
-  { name: 'トレンド追随（両方向）', reason: 'ロング/ショートは CAGR −3〜−7%・DD −90%。ショートがV字反発に轢かれる' },
-  { name: 'SQ（メジャー/ミニ）', reason: '20年で全角度×：当日(終値)無エッジ／当日(寄り)も寄りギャップ≒0・下落率<50%／向かう数日もベース比較で地以下。足すと悪化(17.5→15.9%)も実証。条件付き(裁定買い残で層別)だけ1年壁で未検証' },
-  { name: '裁定解消', reason: 'SQファミリー。寄りで測り直しても系統的売り圧なし（向きが裁定買い残次第で平均相殺）。日中microstructure＋データ1年＝日足スイングでは取れない' },
-  { name: 'セルインメイ・ベア', reason: '相対効果は本物（冬+7%>夏+3.3%・20年）。でも夏も平均+3.3%の“プラス”＝空売りは平均−3.3%/勝率43%の負け。「夏は軽く」のロング濃淡なら可、ベアは×' },
-  { name: '1月効果', reason: '日経225(大型)では存在せず。1月フルはベース比−1.36pt＝むしろ地より弱い。学術的1月効果は小型株現象。真の季節性は12月後半(年末ラリー)で1月持ち越しは削られる' },
-  { name: '投資の日(10/4)・NISAの日(2/13)', reason: '語呂合わせのPR記念日＝実需メカニズム無し。NISAの日は先20日ベース−1.34pt。投資の日の先20日+0.89ptは“10月入りの秋季節性”の別名（n=20）' },
-  { name: '信用評価損益率の高水準ベア', reason: '高水準(0〜−3%)=天井警告は相場観として正しいが：+10%は非現実的(実際は0〜−3%)・1年データで検証不能・1年実測ではむしろ上昇・天井は希少。ベア引き金でなくリスク警告(サイズ落とす)に使う' },
-  { name: 'TOPIX・日経組換', reason: '個別株の話。指数・先物・2倍ETFには出ない（別トラック）' },
-  { name: '需給（信用/COT/騰落）', reason: '1年・1局面では検証不能。方向でなくリスク計器。フォワード蓄積で再評価' },
-  { name: 'always-in・毎週張る・損切徹底', reason: '無エッジ帯で張る＝損失に収束。損切は平均回帰で底投げの罠。データが否定' },
-]
-
 export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
   const th: React.CSSProperties = { padding: isMobile ? '7px 8px' : '8px 12px', textAlign: 'left', fontSize: isMobile ? 9 : 10, fontWeight: 800, letterSpacing: '0.08em', color: c.ACCENT, borderBottom: `1px solid ${c.RULE}`, whiteSpace: 'nowrap', fontFamily: mono }
@@ -135,12 +118,23 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 14 : 16, marginBottom: 10 }}>▸ ひとことで言うと（初心者向け）</div>
           <div style={{ marginBottom: 14 }}>基本は<b>「買い」だけ</b>。大きく下げたところを買って、上げが続く間は持ち、下げが続いたら降りる。<b>売り（ショート）は原則しない</b>。目標は年+15〜20%だが、<b style={{ color: c.WIN }}>暴落で退場しないこと（DDを浅く）を最優先</b>＝本線は<b>年 約+10%・最大の落ち込み−38%</b>に落ち着いた。</div>
 
-          <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>使う「買い場」は3つ</div>
-          <div style={{ marginBottom: 14, paddingLeft: 2 }}>
-            ① 大きく下げた時に買う（売られすぎは戻りやすい）<br />
-            ② 上げが続く間は乗り、下げ続きになったら降りる（＝暴落を避ける装置）<br />
-            ③ 3月（配当の権利確定前）と12月（年末）は上がりやすいので買う
+          <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 13 : 15, marginBottom: 10 }}>▸ 実際にやることは3つだけ</div>
+          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { n: '1', t: '大きく下げたら買う', s: 'ただし下落が続いている最中は手を出さない（落ちるナイフを避ける）' },
+              { n: '2', t: '上げている間は乗る／下げ続けたら降りる', s: '暴落を避ける装置。トレンドが続く限り持つ' },
+              { n: '3', t: '3月と12月は買う', s: '3月＝配当の権利確定前／12月＝年末。上がりやすい季節' },
+            ].map(a => (
+              <div key={a.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: isMobile ? '9px 11px' : '11px 14px', borderRadius: 9, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(255,255,255,0.45)' : 'rgba(0,229,255,0.05)' }}>
+                <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{a.n}</span>
+                <span>
+                  <b style={{ fontSize: isMobile ? 12.5 : 14 }}>{a.t}</b>
+                  <span style={{ display: 'block', marginTop: 2, fontSize: isMobile ? 11 : 12, color: c.SUB }}>{a.s}</span>
+                </span>
+              </div>
+            ))}
           </div>
+          <div style={{ marginBottom: 14, fontSize: isMobile ? 11 : 12.5, color: c.SUB }}>これを<b>「買い」だけ・2倍まで</b>で回す。普段は何も持たない時間（フラット）があってよい。</div>
 
           <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>やらないこと</div>
           <div style={{ marginBottom: 14, paddingLeft: 2 }}>
@@ -203,28 +197,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             </tbody>
           </table>
         </div>
-
-        {/* 不採用（開閉式・デフォルト閉じ）*/}
-        <details>
-          <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 11 : 13, fontWeight: 800, color: c.SUB, letterSpacing: '0.08em', fontFamily: mono, padding: '8px 10px', borderRadius: 8, border: `1px solid ${c.RULE}`, background: c.TAGBG, userSelect: 'none' }}>
-            ▸ 不採用（検証で落とした）— タップで開く（{REJECTED.length}件）
-          </summary>
-          <div style={{ overflowX: 'auto', marginTop: 8 }}>
-            <table style={{ width: '100%', minWidth: isMobile ? 560 : 0, borderCollapse: 'collapse' }}>
-              <thead>
-                <tr><th style={th}>候補</th><th style={th}>理由</th></tr>
-              </thead>
-              <tbody>
-                {REJECTED.map(r => (
-                  <tr key={r.name}>
-                    <td style={{ ...td, fontWeight: 700, color: c.SUB, whiteSpace: 'nowrap' }}>{r.name}</td>
-                    <td style={td}>{r.reason}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </details>
 
         <div style={{ marginTop: 20, fontSize: isMobile ? 9 : 10, color: c.SUB, fontFamily: mono, lineHeight: 1.8 }}>
           ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。
