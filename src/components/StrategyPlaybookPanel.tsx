@@ -46,16 +46,16 @@ const ADOPTED: Edge[] = [
   {
     name: '売られすぎ買い（押し目）',
     aim: '売られすぎの反発を取る',
-    trigger: '25日線乖離 ≤ −7%（強め ≤ −10%）／🔴下落トレンド中は見送り（要トレンド濾し）',
-    hold: '3〜10営業日で機械的に降りる（最適日数は決め打たない＝過学習回避・出口ルールはv4で精査）',
-    ev: '−10%で +1.8%（3日先・勝率66%／2倍で約+3.6%）※日数で変動',
-    dd: '単体−57%（トレンド濾しで改善）',
-    verdict: '◎ リターンの本命',
+    trigger: '25日線乖離 ≤ −10%。🔴確定下落トレンド中（ドンチャン50/25ベア）は発火させない＝落ちるナイフを避ける（v4採用の濾し）',
+    hold: '5営業日で機械的に降りる（v4採用・最適日数は決め打たない＝過学習回避）',
+    ev: '−10%で +1.8%（3日先・勝率66%）',
+    dd: '単体−57%。🔴v4実測：濾すと玉が0.76→0.05回/年に激減＝−10%押し目はほぼ全て下落トレンド中だった（“上げ/レンジ中の−10%”はほぼ無い）',
+    verdict: '△ 玉は希少だがDDは下がる',
   },
   {
     name: '季節性：権利確定ブル',
     aim: '配当の権利確定に向けた買い需要',
-    trigger: '3/15頃エントリー → 3/27頃エグジット',
+    trigger: '3/15頃エントリー → 3/27頃エグジット（🔴確定下落トレンド中は見送り＝v5a）',
     hold: '約2週間（年1回）',
     ev: '+3.2%（勝率70%／2倍で約+6.4%）',
     dd: '窓 −37%',
@@ -64,7 +64,7 @@ const ADOPTED: Edge[] = [
   {
     name: '季節性：年末ラリー',
     aim: '年末の買い需要',
-    trigger: '12/15頃エントリー → 12/30頃エグジット',
+    trigger: '12/15頃エントリー → 12/30頃エグジット（🔴確定下落トレンド中は見送り＝v5a）',
     hold: '約2週間（年1回）',
     ev: '+0.95%（勝率75%）',
     dd: '低',
@@ -133,7 +133,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         {/* ── やさしいまとめ（初心者向け・上層）── */}
         <div style={{ padding: isMobile ? '14px 16px' : '18px 22px', borderRadius: 10, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 18, lineHeight: 1.95, color: c.TEXT, fontSize: isMobile ? 12 : 13.5 }}>
           <div style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 14 : 16, marginBottom: 10 }}>▸ ひとことで言うと（初心者向け）</div>
-          <div style={{ marginBottom: 14 }}>基本は<b>「買い」だけ</b>。大きく下げたところを買って、上げが続く間は持ち、下げが続いたら降りる。<b>売り（ショート）は原則しない</b>。目標は<b style={{ color: c.WIN }}>年 +15〜20%</b>。</div>
+          <div style={{ marginBottom: 14 }}>基本は<b>「買い」だけ</b>。大きく下げたところを買って、上げが続く間は持ち、下げが続いたら降りる。<b>売り（ショート）は原則しない</b>。目標は年+15〜20%だが、<b style={{ color: c.WIN }}>暴落で退場しないこと（DDを浅く）を最優先</b>＝本線は<b>年 約+10%・最大の落ち込み−38%</b>に落ち着いた。</div>
 
           <div style={{ color: c.ACCENT, fontWeight: 700, marginBottom: 5 }}>使う「買い場」は3つ</div>
           <div style={{ marginBottom: 14, paddingLeft: 2 }}>
@@ -162,8 +162,12 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ padding: isMobile ? '10px 12px' : '12px 16px', borderRadius: 8, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 20, fontFamily: mono, fontSize: isMobile ? 10 : 11.5, lineHeight: 1.9, color: c.TEXT }}>
           <div style={{ color: c.ACCENT, fontWeight: 800, letterSpacing: '0.1em', marginBottom: 6 }}>目標と現実解（20年バックテスト）</div>
           <div>目標：<b>年利50%（税引前）</b> → 検証の結論：<span style={{ color: c.WARN }}>生存可能なレバでは“願望”</span>（全部乗せ3倍でもCAGR22%・最大DD−80%＝退場）</div>
-          <div>現実解：<b style={{ color: c.WIN }}>CAGR 15〜20% × 最大DD −40%圏（2倍）</b> ＝ 市場B&H（8.8%）の約2倍を、管理可能なDDで。</div>
-          <div style={{ marginTop: 6 }}>システムの形：<b>トレンドフィルター（DD制御）＋ 売られすぎ買い（要トレンド濾し）＋ 季節性 ／ ショートなし ／ 2倍</b></div>
+          <div style={{ marginTop: 6 }}>v4精査の発見：<b>CAGR15〜20% と DD−40%圏は両立しない</b>（トレードオフ）。同じエッジでも置き場所で↓のように動く（2倍）：</div>
+          <div style={{ paddingLeft: 2, marginTop: 2 }}>・濾し無し（旧・全部乗せ）：CAGR <b>14.4%</b> ／ DD <span style={{ color: c.LOSS }}>−62%</span></div>
+          <div style={{ paddingLeft: 2 }}>・押し目だけ濾す（v4a）：CAGR <b>13.0%</b> ／ DD <span style={{ color: c.LOSS }}>−53%</span></div>
+          <div style={{ paddingLeft: 2 }}>・押し目＋季節性を濾す（<b>v5a＝本線</b>）：CAGR <b style={{ color: c.WIN }}>10.2%</b> ／ DD <b style={{ color: c.WIN }}>−38%</b></div>
+          <div style={{ marginTop: 6 }}>🔴 <b>本線＝v5a（生存最優先）</b>：DDを−40%圏に抑える代わりにCAGRは約10%（≒現物B&H並みだが、2倍常時ロングの−88%より遥かに浅い）。CAGRを15%級にしたければDDは−55〜62%を受け入れる、という地図。</div>
+          <div style={{ marginTop: 6 }}>システムの形：<b>トレンドフィルター（DD制御）＋ 売られすぎ買い＋ 季節性 ／ 全部を“確定下落トレンドでない時だけ”発火 ／ ショートなし ／ 2倍</b></div>
         </div>
 
         {/* 採用エッジ */}
