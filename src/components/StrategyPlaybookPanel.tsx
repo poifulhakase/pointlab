@@ -47,8 +47,8 @@ const ADOPTED: Edge[] = [
     name: '−極限買い（押し目）',
     aim: '売られすぎの反発を取る',
     trigger: '25日線乖離 ≤ −7%（強め ≤ −10%）／🔴下落トレンド中は見送り（要トレンド濾し）',
-    hold: '3〜5営業日で機械的に手仕舞い',
-    ev: '−10%で +1.8%（3日・勝率66%／2倍で約+3.6%）',
+    hold: '3〜10営業日で機械的に降りる（最適日数は決め打たない＝過学習回避・出口ルールはv4で精査）',
+    ev: '−10%で +1.8%（3日先・勝率66%／2倍で約+3.6%）※日数で変動',
     dd: '単体−57%（トレンド濾しで改善）',
     verdict: '◎ リターンの本命',
   },
@@ -123,8 +123,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </button>
       </div>
 
-      {/* ── Body（最大幅・中央寄せ・スクロール）── */}
-      <div style={{ flex: 1, overflowY: 'auto', zIndex: 1, width: '100%', maxWidth: isMobile ? '100%' : 1150, alignSelf: 'center', padding: isMobile ? '14px 14px 32px' : '20px 28px 40px' }}>
+      {/* ── Body（全幅・スクロール）── */}
+      <div style={{ flex: 1, overflowY: 'auto', zIndex: 1, width: '100%', padding: isMobile ? '14px 14px 32px' : '20px 28px 40px' }}>
 
         {/* 目標と現実解 */}
         <div style={{ padding: isMobile ? '10px 12px' : '12px 16px', borderRadius: 8, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, marginBottom: 20, fontFamily: mono, fontSize: isMobile ? 10 : 11.5, lineHeight: 1.9, color: c.TEXT }}>
@@ -179,6 +179,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
         <div style={{ marginTop: 20, fontSize: isMobile ? 9 : 10, color: c.SUB, fontFamily: mono, lineHeight: 1.8 }}>
           ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。
+          押し目買いの保有日数は結果に効き、最良日数はサンプル依存（−10%は短期/−7%は長期が有利と真逆）＝特定日数を最適化しない。
           大数の法則の正しい適用＝「+EVが現れるたび（年十数回）に、生存できるサイズで張る」。毎週張る・無エッジ帯で張るは損失に収束。
         </div>
       </div>
