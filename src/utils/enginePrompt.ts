@@ -195,6 +195,7 @@ const PROMPT_OUTPUT_FORMAT = `# 出力形式
 確信度：[tev_analysis.confidence_pct]%[tev_analysis.confidence_pct_is_fixedがtrueの場合のみ「（限界膨張による固定値）」を付記]
 推進力の減衰：×[tev_analysis.decay_factor]（理由：[tev_analysis.decay_reasons の各要素を列挙。なければ「なし」]）
 慣性持続性：[強持続 / 中持続 / 枯渇圏]（根拠：[判定の主要2〜3点を「・」区切りで簡潔に列挙]）
+需給×価格セル：[supply_price_cell.label]（[supply_price_cell.note]）※supply_price_cell が null の場合はこの行を省略する。このセルは価格(regime)と需給(TEV符号)の交点を表し、「需給ステータスが下落系（真空落下等）なのに価格は高値圏」といった名前と値の食い違いを一目で解消する。価格レジームの一致/逆行と矛盾しないよう整合させること
 
 【1. 市場の状態診断】
 売り圧・買い残：（信用買い残・裁定買い残の数値を引用しつつ物理的に記述）

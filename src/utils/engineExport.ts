@@ -507,21 +507,22 @@ export function buildExportJson(
     const tev_fInertiaRaw  = r2(tev_fBase * (foreign4wPct / 100))
 
     // 天井の失速: V > 0 かつ A ≤ 0 → ×0.25
+    // ※減衰理由は出力にそのまま載るため、英語変数名・数式記号を使わず日本語で記述する（出力制約②対応）
     if (tev_V > 0 && tev_A <= 0) {
       tev_decay *= 0.25
-      tev_decayReasons.push('天井の失速（V>0かつA≤0）→75%減衰')
+      tev_decayReasons.push('天井の失速（上昇速度はあるが加速度が頭打ち）→75%減衰')
     }
     // 燃料漏れ: COT BEAR → ×0.5
     if (sig(cotLfPct) === 'BEAR') {
       tev_decay *= 0.5
-      tev_decayReasons.push('燃料漏れ（COT BEAR）→50%減衰')
+      tev_decayReasons.push('燃料漏れ（ヘッジファンドのネットが売り越し方向）→50%減衰')
     }
     // 燃料漏れ: 先物volume 直近3日連続減少 → ×0.5
     if (futuresDailyData.length >= 3) {
       const [fv0, fv1, fv2] = [futuresDailyData[0].volume, futuresDailyData[1].volume, futuresDailyData[2].volume]
       if (fv0 < fv1 && fv1 < fv2) {
         tev_decay *= 0.5
-        tev_decayReasons.push('燃料漏れ（先物volume3日連続減少）→50%減衰')
+        tev_decayReasons.push('燃料漏れ（先物の出来高が3日連続減少）→50%減衰')
       }
     }
 
@@ -572,8 +573,12 @@ export function buildExportJson(
   // 先物JSTより1営業日遅れる）→ 2営業日以上の乖離のみ警告。
   // カレンダー日数だと週末を挟む月曜(金曜 vs 月曜=3カレンダー日)で毎週誤発火するため営業日数で測る。
   const ntBaseDate  = nk?.time ?? null
-  const futLatDate  = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].date : null
-  const futLatClose = nkFuturesPriceData.length > 0 ? nkFuturesPriceData[0].close : null
+  // 出来高0の未確定バー（当日ザラ場）は確定値でないため、最新の「確定済み」バー（volume>0）を採用する。
+  // これにより price_as_of と MA乖離の基準日が一致し、「6/02終値ベース」表示なのに ma25_dev が
+  // 6/03ザラ場値（8.18）になる不整合を防ぐ（Yahoo の当日未確定バー対策）。
+  const nkFutConfirmed = nkFuturesPriceData.find(d => d.volume != null && d.volume > 0) ?? nkFuturesPriceData[0] ?? null
+  const futLatDate  = nkFutConfirmed?.date  ?? null
+  const futLatClose = nkFutConfirmed?.close ?? null
   const daysDiff    = ntBaseDate && futLatDate
     ? businessDaysBetween(new Date(ntBaseDate).getTime(), new Date(futLatDate).getTime())
     : 0
@@ -619,6 +624,23 @@ export function buildExportJson(
   }
   const tev_sanityOk: boolean | null = tev_value === null ? null : tev_sanityWarnings.length === 0
   const confidence_pct_is_fixed      = tev_status !== null && tev_status.startsWith('限界膨張')
+
+  // ── 需給×価格の2軸セル（computeTEV非依存の導出層）──
+  // 価格(regime)と需給(TEV符号)を1つに潰さず「交点」で読む＝「束ねるな、地図にしろ」。
+  // 「真空落下」なのに価格は高値圏…という名前と値の食い違いを、セル名で一目で解消する。
+  let supply_price_cell: { label: string; price_axis: string; demand_axis: string; note: string } | null = null
+  if (tev_value != null) {
+    const demandUp = tev_value > 5, demandDown = tev_value < -5
+    const pAxis = nkRegime === 'uptrend' ? '上昇' : nkRegime === 'downtrend' ? '下落' : 'レンジ'
+    const dAxis = demandUp ? '需給は買い' : demandDown ? '需給は脆弱/売り' : '需給は中立'
+    let label: string, note: string
+    if (nkRegime === 'uptrend' && demandDown)        { label = 'メルトアップ（脆弱な上昇）';       note = '価格は上げるが需給が伴わない。追わず守り、反転に備える（本命ベアは価格がトレンドを割ってから）' }
+    else if (nkRegime === 'uptrend' && demandUp)     { label = '順行ブル（追随）';               note = '価格・需給が一致。トレンド追随の本領' }
+    else if (nkRegime === 'downtrend' && demandUp)   { label = '売られすぎ（落ちるナイフ注意）';   note = '需給は買いだが価格は下落トレンド。落ちるナイフを避け、反転確認まで待つ' }
+    else if (nkRegime === 'downtrend' && demandDown) { label = '順行ベア（追随）';               note = '価格・需給が一致。下落追随の対象' }
+    else                                             { label = 'レンジ（需給逆張りの本領）';     note = '明確なトレンドなし。需給逆張りが最も効く局面' }
+    supply_price_cell = { label, price_axis: pAxis, demand_axis: dAxis, note }
+  }
 
   // ── 組立 ─────────────────────────────────────────
   const generated_at = new Date().toISOString().slice(0, 19).replace('T', ' ')
@@ -780,7 +802,7 @@ export function buildExportJson(
         ma20_dev_pct:  nkMa20 && nkCur ? r2((nkCur - nkMa20) / nkMa20 * 100) : null,
         // 25日線乖離率（日本株の定番過熱指標）。先物日足の最新終値基準で全系列から算出済みの値を引用。
         // 目安: ±5%=注意 / ±7%以上=過熱(+)・過冷(-)。±5%未満は中立。
-        ma25_dev_pct:  nkFuturesPriceData[0]?.ma25_dev ?? null,
+        ma25_dev_pct:  nkFutConfirmed?.ma25_dev ?? null,
         ma60_dev_pct:  nkMa60 && nkCur ? r2((nkCur - nkMa60) / nkMa60 * 100) : null,
         high_52w:      nkHigh52w,
         low_52w:       nkLow52w,
@@ -822,6 +844,8 @@ export function buildExportJson(
       sanity_ok:             tev_sanityOk,
       sanity_warnings:       tev_sanityWarnings,
     },
+
+    supply_price_cell,
 
     events: {
       sq: {
