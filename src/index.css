@@ -1,3 +1,12 @@
+/* デジタル時計向けフォント（等幅・テック調 / OFL）。自己ホストで CSP(font-src 'self') 準拠 */
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/share-tech-mono.woff2') format('woff2');
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

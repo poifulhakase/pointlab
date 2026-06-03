@@ -151,7 +151,7 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
 
       {/* 現在時刻 */}
       <div style={{
-        fontFamily: '"SF Mono", "Fira Code", Consolas, monospace',
+        fontFamily: '"Share Tech Mono", "SF Mono", "Fira Code", Consolas, monospace',
         fontSize: sz.time, fontWeight: 700, letterSpacing: '0.02em',
         color: 'var(--text)', lineHeight: 1, marginBottom: 8,
       }}>
@@ -199,7 +199,7 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
                 {item.label}
               </span>
               <span style={{
-                fontFamily: '"SF Mono", "Fira Code", Consolas, monospace',
+                fontFamily: '"Share Tech Mono", "SF Mono", "Fira Code", Consolas, monospace',
                 fontSize: sz.cdVal, fontWeight: 600, color: 'var(--text-sub)',
                 letterSpacing: '0.03em',
               }}>
