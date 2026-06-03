@@ -151,8 +151,8 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
 
       {/* 現在時刻 */}
       <div style={{
-        fontFamily: '"Share Tech Mono", "SF Mono", "Fira Code", Consolas, monospace',
-        fontSize: sz.time, fontWeight: 700, letterSpacing: '0.02em',
+        fontFamily: '"DSEG7 Classic", "Share Tech Mono", Consolas, monospace',
+        fontSize: sz.time, fontWeight: 700, letterSpacing: '0.04em',
         color: 'var(--text)', lineHeight: 1, marginBottom: 8,
       }}>
         {timeStr}
