@@ -1,10 +1,10 @@
-/* 時計の時刻表示用：DSEG7（本格7セグ液晶・数字と記号のみ / OFL）。自己ホストで CSP(font-src 'self') 準拠 */
+/* 時計の時刻表示用：Orbitron（幾何学的なデジタル/SF調・見やすい / OFL）。自己ホストで CSP(font-src 'self') 準拠 */
 @font-face {
-  font-family: 'DSEG7 Classic';
+  font-family: 'Orbitron';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('./assets/fonts/dseg7-classic.woff2') format('woff2');
+  src: url('./assets/fonts/orbitron-700.woff2') format('woff2');
 }
 
 /* カウントダウン等の数値向け（等幅・テック調 / OFL）。漢字「分」はフォールバックで描画 */
