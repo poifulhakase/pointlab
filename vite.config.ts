@@ -110,11 +110,14 @@ export default defineConfig({
         globIgnores: ['**/data/**', '**/notes/**'],
         runtimeCaching: [
           {
-            // 市場データ JSON（頻繁に更新）— 古いキャッシュで即表示しつつバックグラウンド更新
+            // 市場データ JSON（頻繁に更新）— ネット優先で常に最新を取得。
+            // 旧 StaleWhileRevalidate は「古い表示→裏で更新→次回反映」で常に1リロード遅れたため NetworkFirst に変更。
+            // ネットが3秒で応答しない/オフライン時のみキャッシュにフォールバック。
             urlPattern: /\/calendar\/data\//,
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'market-data',
+              networkTimeoutSeconds: 3,
               expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
