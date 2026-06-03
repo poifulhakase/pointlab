@@ -138,8 +138,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </button>
       </div>
 
-      {/* ── Body（全幅・スクロール）── */}
-      <div style={{ flex: 1, overflowY: 'auto', zIndex: 1, width: '100%', maxWidth: 1040, margin: '0 auto', padding: isMobile ? '18px 14px 44px' : '30px 30px 56px' }}>
+      {/* ── Body（スクロールは全幅＝バーを画面右端に。中身だけ中央寄せ。説明書と同構造）── */}
+      <div style={{ flex: 1, overflowY: 'auto', zIndex: 1 }}>
+       <div style={{ maxWidth: 1040, margin: '0 auto', padding: isMobile ? '18px 14px 44px' : '30px 30px 56px' }}>
 
         {/* ════ 表紙 ════ */}
         <div style={{ marginBottom: isMobile ? 22 : 30, padding: isMobile ? '4px 2px' : '8px 4px' }}>
@@ -249,6 +250,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。<br />
           押し目買いの保有日数は最良がサンプル依存＝最適化しない。「+EVが出るたび（年十数回）に生存サイズで張る」が正解で、毎週張る・無エッジ帯で張るは損失に収束。
         </div>
+       </div>
       </div>
     </div>
   )
