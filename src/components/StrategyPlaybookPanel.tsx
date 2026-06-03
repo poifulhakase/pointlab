@@ -150,9 +150,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             生存を最優先に、<b style={{ color: c.WIN }}>年 約+10% ／ 最大ドローダウン −38%</b> を狙う。
           </div>
           <div style={{ display: 'flex', gap: isMobile ? 8 : 14, flexWrap: 'wrap' }}>
-            {stat('狙い（リターン）', '年+15〜20%', c.ACCENT)}
-            {stat('本線 CAGR', '約+10%', c.WIN)}
+            {stat('本線 CAGR（年利）', '約+10%', c.WIN)}
             {stat('本線 最大DD', '−38%', c.LOSS)}
+            {stat('売買ルール', '買い専・2倍', c.ACCENT)}
           </div>
         </div>
 
