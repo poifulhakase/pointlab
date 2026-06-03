@@ -146,13 +146,13 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, letterSpacing: '0.28em', color: c.ACCENT, fontFamily: mono, marginBottom: 10 }}>POIROBO STRATEGY</div>
           <div style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: c.TEXT, lineHeight: 1.15, letterSpacing: '0.01em', marginBottom: 12 }}>戦略プレイブック</div>
           <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.7, marginBottom: isMobile ? 18 : 22, maxWidth: 720 }}>
-            日経225を<b style={{ color: c.TEXT }}>「買い」だけ・2倍まで</b>で回す短期スイング。<br />
+            日経225の<b style={{ color: c.TEXT }}>ブル/ベア 1倍2倍ETF（現物）</b>で回す短期スイング。<b>信用・空売り・追証なし</b>（2倍は“ブル2倍ETFを現物で持つ”の意味）。<br />
             生存を最優先に、<b style={{ color: c.WIN }}>年 約+10% ／ 最大ドローダウン −38%</b> を狙う。
           </div>
           <div style={{ display: 'flex', gap: isMobile ? 8 : 14, flexWrap: 'wrap' }}>
             {stat('本線 CAGR（年利）', '約+10%', c.WIN)}
             {stat('本線 最大DD', '−38%', c.LOSS)}
-            {stat('売買ルール', '買い専・2倍', c.ACCENT)}
+            {stat('使う商品（信用なし）', '現物ETF', c.ACCENT)}
           </div>
         </div>
 
@@ -173,7 +173,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: isMobile ? 10 : 11.5, color: c.DIM, fontWeight: 700, fontFamily: mono, marginRight: 2 }}>やらない：</span>
-              {['売り（ショート）', '毎日売買', '損切りの連発'].map(x => (
+              {['信用・空売り', '毎日売買', '損切りの連発'].map(x => (
                 <span key={x} style={{ fontSize: isMobile ? 10.5 : 12, color: c.LOSS, border: `1px solid ${c.L ? 'rgba(220,38,38,0.3)' : 'rgba(248,113,113,0.3)'}`, background: c.L ? 'rgba(220,38,38,0.05)' : 'rgba(248,113,113,0.07)', borderRadius: 999, padding: '4px 12px', fontWeight: 600 }}>✕ {x}</span>
               ))}
             </div>
@@ -193,7 +193,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         ))}
 
         {/* ════ スライド2：目標と現実解 ════ */}
-        {slide('2', '目標と現実解', '20年バックテスト・2倍・REALITY', (
+        {slide('2', '目標と現実解', '20年BT・ブル2倍ETF(現物)想定・REALITY', (
           <>
             <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.TEXT, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22 }}>
               目標 <b>年利50%</b> は <span style={{ color: c.WARN, fontWeight: 700 }}>生存可能なレバでは願望</span>。同じエッジでも“置き場所”でCAGRとDDは下のように動く。<b style={{ color: c.TEXT }}>CAGRを上げるとDDも深くなる＝両立しない。</b>
@@ -217,7 +217,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
               ))}
             </div>
             <div style={{ marginTop: 18, padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, background: c.L ? 'rgba(21,128,61,0.06)' : 'rgba(74,222,128,0.06)', border: `1px solid ${c.L ? 'rgba(21,128,61,0.25)' : 'rgba(74,222,128,0.22)'}`, fontSize: isMobile ? 11 : 12.5, color: c.TEXT, lineHeight: 1.7 }}>
-              🔴 <b style={{ color: c.WIN }}>本線＝v5a（生存最優先）</b>。DDを−40%圏に抑える代わりにCAGRは約10%（≒現物B&H並みだが、2倍常時ロングの−88%より遥かに浅い）。
+              🔴 <b style={{ color: c.WIN }}>本線＝v5a（生存最優先）</b>。DDを−40%圏に抑える代わりにCAGRは約10%（≒現物B&H並みだが、ブル2倍ETFを常に持つ−88%より遥かに浅い）。
             </div>
           </>
         ))}
