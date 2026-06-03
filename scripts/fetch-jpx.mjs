@@ -66,6 +66,34 @@ function parseDailyArray(arrayLiteral) {
   return JSON.parse(normalized)
 }
 
+// Yahoo Finance は稀に単日の close を null で返す（直近営業日が一時的に欠けることがある）。
+// 各 Yahoo 系列は「null日スキップ＋丸ごと上書き」で保存していたため、その日が欠落したまま
+// 固着し（例: USD/JPY で 6/2 が抜ける）、Yahoo 自身が埋め戻すまで穴が残っていた。
+// 既存JSONの良データ(raw)を土台に、今回取得分(fresh)を上書きマージすることで単日ホールを自己補完する。
+//   - fresh に存在する日付 → fresh 優先（Yahoo の事後修正に追随）
+//   - fresh に無い日付      → 既存値を保持（単日ホール補完）
+// 既存JSONは enrich 済みだが、base フィールド(valueFields)のみ抽出して再 enrich するため整合は崩れない。
+function mergeYahooRaw(filename, dateField, valueFields, freshRows) {
+  const map = new Map()
+  try {
+    const json = JSON.parse(readFileSync(join(OUT_DIR, filename), 'utf8'))
+    for (const row of json.data ?? []) {
+      const d = row[dateField]
+      if (d == null) continue
+      const c = row.close
+      if (c == null || isNaN(c)) continue  // 過去に欠落保存された行は土台にしない
+      const raw = { [dateField]: d }
+      for (const f of valueFields) raw[f] = row[f]
+      map.set(d, raw)
+    }
+  } catch { /* 既存なし/壊れ → fresh のみで構築 */ }
+  for (const r of freshRows) {
+    if (r[dateField] == null) continue
+    map.set(r[dateField], r)
+  }
+  return [...map.values()].sort((a, b) => String(a[dateField]).localeCompare(String(b[dateField])))
+}
+
 function serialToDateStr(serial) {
   const d = XLSX.SSF.parse_date_code(serial)
   if (!d) return ''
@@ -628,8 +656,8 @@ async function fetchVixDailyData() {
     const time = new Date(timestamps[i] * 1000).toISOString().slice(0, 10)
     rows.push({ time, close: Math.round(close * 100) / 100 })
   }
-  rows.sort((a, b) => a.time.localeCompare(b.time))
-  return rows.map((r, i, arr) => {
+  const merged = mergeYahooRaw('vix_daily.json', 'time', ['close'], rows)
+  return merged.map((r, i, arr) => {
     const prev = arr[i - 1]?.close ?? null
     const changePct = prev != null ? Math.round((r.close - prev) / prev * 10000) / 100 : null
     return { time: r.time, close: r.close, changePct }
@@ -658,8 +686,8 @@ async function fetchNas100DailyData() {
     const time = new Date(timestamps[i] * 1000).toISOString().slice(0, 10)
     rows.push({ time, close: Math.round(close * 100) / 100 })
   }
-  rows.sort((a, b) => a.time.localeCompare(b.time))
-  return rows.map((r, i, arr) => {
+  const merged = mergeYahooRaw('nas100_daily.json', 'time', ['close'], rows)
+  return merged.map((r, i, arr) => {
     const prev = arr[i - 1]?.close ?? null
     const changePct = prev != null ? Math.round((r.close - prev) / prev * 10000) / 100 : null
     return { time: r.time, close: r.close, changePct }
@@ -696,17 +724,17 @@ async function fetchUsdjpyData() {
     rows.push({ time, close: Math.round(close * 100) / 100 })
   }
 
-  // 昇順ソート（MA計算）
-  rows.sort((a, b) => a.time.localeCompare(b.time))
+  // 既存JSONとマージ（単日ホール補完）→ 昇順（MA計算）
+  const merged = mergeYahooRaw('usdjpy.json', 'time', ['close'], rows)
 
   // 前日比・MA5・MA5乖離率を付与
-  const enriched = rows.map((r, i) => {
-    const prev     = i > 0 ? rows[i - 1].close : null
+  const enriched = merged.map((r, i) => {
+    const prev     = i > 0 ? merged[i - 1].close : null
     const change   = prev != null ? Math.round((r.close - prev) * 100) / 100 : null
     const changePct = prev != null ? Math.round((r.close - prev) / prev * 10000) / 100 : null
     let ma5 = null
     if (i >= 4) {
-      const sum = rows.slice(i - 4, i + 1).reduce((acc, d) => acc + d.close, 0)
+      const sum = merged.slice(i - 4, i + 1).reduce((acc, d) => acc + d.close, 0)
       ma5 = Math.round(sum / 5 * 100) / 100
     }
     const ma5dev = ma5 != null ? Math.round((r.close - ma5) / ma5 * 10000) / 100 : null
@@ -760,20 +788,21 @@ async function fetchNkFuturePriceData() {
   }
   if (valid.length === 0) throw new Error('有効データなし')
 
-  // 昇順ソート → 前日比計算
-  valid.sort((a, b) => a.date.localeCompare(b.date))
+  // 既存JSONとマージ（単日ホール補完）→ 昇順 → 前日比計算
+  const merged = mergeYahooRaw('nk_futures_price.json', 'date',
+    ['open', 'high', 'low', 'close', 'volume'], valid)
 
   // 25日MA乖離率は切り詰め前の全系列（約3ヶ月）から算出して各行に付与する。
   // (close - 25日SMA) / 25日SMA * 100。直近24日分が揃わない行は null。
   const devMap = new Map()
-  for (let i = 24; i < valid.length; i++) {
+  for (let i = 24; i < merged.length; i++) {
     let sum = 0
-    for (let j = i - 24; j <= i; j++) sum += valid[j].close
+    for (let j = i - 24; j <= i; j++) sum += merged[j].close
     const ma = sum / 25
-    if (ma > 0) devMap.set(valid[i].date, Math.round((valid[i].close - ma) / ma * 10000) / 100)
+    if (ma > 0) devMap.set(merged[i].date, Math.round((merged[i].close - ma) / ma * 10000) / 100)
   }
 
-  const buf = valid.slice(-(NK_DAYS + 1))
+  const buf = merged.slice(-(NK_DAYS + 1))
   const startIdx = buf.length > NK_DAYS ? 1 : 0
   const rows = []
   for (let i = startIdx; i < buf.length; i++) {
