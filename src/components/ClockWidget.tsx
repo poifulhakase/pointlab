@@ -143,8 +143,8 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
   const timeStr  = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
 
   const sz = isMobile
-    ? { time: 28, status: 11, cdLabel: 10, cdVal: 11, pad: '14px 16px 12px', gap: 4, ptop: 8 }
-    : { time: 34, status: 13, cdLabel: 12, cdVal: 13, pad: '18px 18px 14px', gap: 6, ptop: 10 }
+    ? { time: 34, status: 13, cdLabel: 12, cdVal: 13, pad: '14px 16px 12px', gap: 5, ptop: 9 }
+    : { time: 42, status: 15, cdLabel: 14, cdVal: 15, pad: '18px 18px 14px', gap: 7, ptop: 12 }
 
   return (
     <div style={{ padding: sz.pad, borderBottom: '1px solid var(--border-dim)', cursor: onGoToday ? 'pointer' : undefined }} onClick={onGoToday}>
