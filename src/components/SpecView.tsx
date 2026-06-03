@@ -950,6 +950,8 @@ const SPEC_SECTIONS = [
           'R&Dバックテスト追加（scripts/・内部）: backtest-system-v4（押し目×トレンド濾し）/ analyze-frequency-edges（短期乖離）/ analyze-multi-market（日経/TOPIX/S&P）/ model-portfolio-v2。主要結論=CAGR15-20%とDD-40%は両立せず・単一日経ロング系は生存可能レバで20%不達（ceiling約13-15%）・TOPIXは日経と相関0.95で分散効かず',
           'データ鮮度①（PWA SW）: vite.config.ts の /calendar/data/ を StaleWhileRevalidate→NetworkFirst（networkTimeoutSeconds:3）。旧SWRは「古い表示→裏で更新→次回反映」で常に1リロード遅れていた。NetworkFirstでオンライン初回リロードで最新・オフライン時のみキャッシュ',
           'データ鮮度②（取得スケジュール）: fetch-data.yml を 平日毎日2回（19:30+保険21:30 JST）+土曜 に変更。旧（火〜土）は金曜分が火曜まで来ない穴+月曜実行なし+cron遅延に脆弱だった。Yahoo ^N225 が時々返す単日nullも頻繁な再取得で自然に補完',
+          'PWA更新の確実化（★2026-06-03）: main.tsx で前面復帰(visibilitychange)+focus+1時間ごとに registration.update() を呼びSW更新を検知。autoUpdate は再読み込み時しか検知せず、スマホPWAはバックグラウンド復帰で更新が来ない問題に対処。固着した端末は一度だけサイトデータ削除（=SW登録解除）が必要（キャッシュ削除では消えない）',
+          'エンジン ドッグフーディング修正3点（★2026-06-03・開発者が実データでengineを通して発見）: ①需給×価格の2軸セル supply_price_cell を導出層として追加（価格regime×需給TEV符号の交点を「メルトアップ(脆弱な上昇)/順行ブル/売られすぎ/順行ベア/レンジ」で命名＝「真空落下なのに価格は高値圏」の名前と値の食い違いを解消・規律フラグ層の第一弾・computeTEV非依存）。プロンプト需給サマリーに「需給×価格セル：」行を追加 ②減衰理由(decay_reasons)を日本語化（英語/数式の出力漏れを根絶＝出力制約②対応） ③ma25_dev/price基準日が出来高0の当日未確定バーを使う不整合を修正し、volume>0の最新確定バーを採用',
         ],
       },
     ],
