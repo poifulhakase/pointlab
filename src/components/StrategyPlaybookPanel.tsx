@@ -100,6 +100,22 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     </div>
   )
 
+  // ポイント枠（左にシアンの細線）
+  const point = (label: string, text: React.ReactNode) => (
+    <div style={{ padding: isMobile ? '13px 15px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.8 }}>
+      <span style={{ display: 'block', fontSize: isMobile ? 9.5 : 10.5, fontWeight: 700, color: c.ACCENT, fontFamily: mono, letterSpacing: '0.1em', marginBottom: 7 }}>{label}</span>
+      {text}
+    </div>
+  )
+
+  // 道具スライドの本体（説明文＋ポイント枠）
+  const toolBody = (intro: React.ReactNode, pointLabel: string, pointText: React.ReactNode) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18 }}>
+      <div style={{ fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>{intro}</div>
+      {point(pointLabel, pointText)}
+    </div>
+  )
+
   // ── スライド本体（1枚ずつ切替）──
   const slides: { id: string; node: React.ReactNode }[] = [
     // ════ 表紙 ════
@@ -116,7 +132,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           filter: c.L ? 'none' : 'drop-shadow(0 0 18px rgba(0,229,255,0.22))', width: 'fit-content',
         }}>戦略プレイブック</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 14, fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 26 : 40, maxWidth: 640 }}>
-          <p style={{ margin: 0 }}>「どう売買するか」をまとめた、ぽいロボの作戦書です。</p>
+          <p style={{ margin: 0 }}>ぽいロボを使って<b style={{ color: c.TEXT }}>「どう売買し、どう運用していくか」</b>をまとめた作戦書です。</p>
           <p style={{ margin: 0 }}>使うのは、ふつうに買える<b style={{ color: c.TEXT }}>日経225のETF</b>だけ。<b style={{ color: c.TEXT }}>信用取引・空売り・追証はなし</b>です。</p>
           <p style={{ margin: 0 }}>ルールはシンプル。<b style={{ color: c.TEXT }}>下げたら買い、上げている間は持つ</b>。</p>
           <p style={{ margin: 0 }}>大もうけより、<b style={{ color: c.TEXT }}>「大きく負けないこと」を最優先</b>にします。</p>
@@ -132,8 +148,84 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       </div>
     ) },
 
-    // ════ スライド1：やることは3つだけ ════
-    { id: 's1', node: slide('やることは3つだけ', 'WHAT TO DO', (
+    // ════ 全体像 ════
+    { id: 'overview', node: slide('ぽいロボでの運用', '全体像・OVERVIEW', (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18 }}>
+        <div style={{ fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>
+          ぽいロボは「相場のいま」を読む<b style={{ color: c.TEXT }}>3つの道具</b>と、迷ったとき頼れる<b style={{ color: c.TEXT }}>伴走</b>でできています。やることは、<b style={{ color: c.TEXT }}>道具で“いまの地合い”を確かめ、ルールどおり淡々と動く</b>だけです。
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 14 }}>
+          {([
+            ['🗓', 'ぽいロボ カレンダー', 'この先「何が起きるか」を知る（＋レーダー通知）'],
+            ['⚙', 'ぽいロボ エンジン', 'いま「買っていい地合いか」を需給で確かめる'],
+            ['🛡', 'ぽいロボ シールド', '持っているものを「いつ手放すか」を決める'],
+            ['🤝', 'ぽいロボ コネクト', '迷ったら「博士に相談」できる（伴走）'],
+          ] as const).map(([ic, nm, ds]) => (
+            <div key={nm} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+              <span style={{ fontSize: isMobile ? 20 : 24, flexShrink: 0, lineHeight: 1.1 }}>{ic}</span>
+              <span>
+                <b style={{ fontSize: isMobile ? 13 : 14.5, color: c.ACCENT }}>{nm}</b>
+                <span style={{ display: 'block', marginTop: 4, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.55 }}>{ds}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )) },
+
+    // ════ 1週間の流れ ════
+    { id: 'week', node: slide('1週間の流れ', '土曜起点・ROUTINE', (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 14 }}>
+        {([
+          ['1', '土曜（週の準備）', '金曜までの需給データが出そろう日。エンジンで最新の地合いを確認し、カレンダーで来週の予定（イベント・季節）をチェック。レーダー通知をONに。'],
+          ['2', '平日（実行）', '重要イベントの前は控えめに。チャンスがルールに合えば買う。合わなければ何もしないのも仕事。'],
+          ['3', '持っている間（管理）', 'シールドで出口（利確・損切り）を見守る。'],
+          ['4', '迷ったら（伴走）', 'コネクトで博士に相談。ひとりで抱えない。'],
+        ] as const).map(([n, h, d]) => (
+          <div key={n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+            <span style={{ flexShrink: 0, width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: isMobile ? 14 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}55` }}>{n}</span>
+            <span style={{ paddingTop: 2 }}>
+              <b style={{ fontSize: isMobile ? 13.5 : 15 }}>{h}</b>
+              <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.6 }}>{d}</span>
+            </span>
+          </div>
+        ))}
+        <div style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.8, marginTop: 4 }}>
+          毎日張りつく必要はありません。<b style={{ color: c.TEXT }}>「土曜に整える → 平日に動く → 出口を守る → 迷えば相談」</b>の繰り返しです。
+        </div>
+      </div>
+    )) },
+
+    // ════ 道具：ぽいロボ レーダー（カレンダー）════
+    { id: 'radar', node: slide('📡 ぽいロボ レーダー', 'いつを知る・CALENDAR', toolBody(
+      <>配当落ち日・SQ・FOMC・雇用統計・休場日が<b style={{ color: c.TEXT }}>自動で並ぶ</b>カレンダーです。重要イベントの前は値が荒れやすいので<b style={{ color: c.TEXT }}>新規は控えめ</b>に。<b style={{ color: c.TEXT }}>3月（権利確定前）・12月（年末）は季節の追い風</b>です。</>,
+      '使い方の主役＝レーダー通知',
+      <>気になるイベント（FOMC・雇用統計・SQ など）を選んでおくと、<b style={{ color: c.TEXT }}>前日のお昼（12:30）にスマホへ通知</b>が届きます。受け取る種別は設定で選べるので、見たいイベントだけを逃さずキャッチできます。</>,
+    )) },
+
+    // ════ 道具：ぽいロボ エンジン ════
+    { id: 'engine', node: slide('⚙ ぽいロボ エンジン', '買っていい地合いか・ENGINE', toolBody(
+      <>需給を物理にたとえて、相場のエネルギー（TEV）を診断します。「<b style={{ color: c.TEXT }}>需給×価格セル</b>」「<b style={{ color: c.TEXT }}>慣性持続性</b>」で、いまが<b style={{ color: c.TEXT }}>順行・売られすぎ・限界</b>のどれかがひと目で分かります。</>,
+      '基本の使い方',
+      <>ボタン一つでAI用プロンプトをコピーでき、AIに<b style={{ color: c.TEXT }}>確信度つきの判定</b>を出してもらえます。<b style={{ color: c.TEXT }}>“枯渇圏”のときは本命の買いを控える</b>——これが基本です。</>,
+    )) },
+
+    // ════ 道具：ぽいロボ シールド ════
+    { id: 'shield-tool', node: slide('🛡 ぽいロボ シールド', 'いつ手放すか・SHIELD', toolBody(
+      <>持っているポジション専用の道具です。証券口座の<b style={{ color: c.TEXT }}>保有画面のスクショ</b>を撮り、シールドの市場データ＋プロンプトと一緒にAIへ。<b style={{ color: c.TEXT }}>持ち続ける／利確／損切り</b>の出口を相談できます。</>,
+      '「守り」の道具',
+      <>エントリー（買い）ではなく、買ったあとの<b style={{ color: c.TEXT }}>出口</b>を整える道具。持っている間の不安をここで整理します。</>,
+    )) },
+
+    // ════ 道具：ぽいロボ コネクト ════
+    { id: 'connect', node: slide('🤝 ぽいロボ コネクト', 'ひとりで悩まない・CONNECT', toolBody(
+      <>研究室の右下から、<b style={{ color: c.TEXT }}>ぽいふる博士と30分の通話</b>を予約できます。空き枠を選んで申請し、承認されると画面から接続。「自分の運用を見てほしい」「判断に迷っている」——そんなときの<b style={{ color: c.TEXT }}>伴走</b>の場です。</>,
+      '次は「取引のルール」へ',
+      <>道具で地合いを見たら、あとは次のルールで淡々と動くだけ。下の矢印で取引パートへ進みましょう。</>,
+    )) },
+
+    // ════ 取引パート（PART 2）════
+    { id: 's1', node: slide('やることは3つだけ', 'PART 2 ─ 取引のルール', (
       <>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 11 : 14, marginBottom: isMobile ? 16 : 20 }}>
           {ACTIONS.map(a => (
