@@ -155,7 +155,7 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
         fontFamily: '"Cherry Bomb One", Consolas, monospace',
         fontVariantNumeric: 'tabular-nums',
         fontSize: sz.time, fontWeight: 400, letterSpacing: '0.02em',
-        color: 'var(--text)', lineHeight: 1, marginBottom: 16,
+        color: 'var(--clock-main)', lineHeight: 1, marginBottom: 16,
       }}>
         {hhmm}
         <span style={{ color: 'var(--clock-sec-tens)' }}>{ss[0]}</span>

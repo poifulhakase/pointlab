@@ -136,6 +136,7 @@ img {
   --text-sub: rgba(255, 255, 255, 0.55);
   --text-dim: rgba(255, 255, 255, 0.28);
   --clock-sec-tens: #FECAC9;  /* メイン時計 秒の十の位（ブランドカラー・ダーク） */
+  --clock-main: var(--text);  /* メイン時計 本体（ダークは --text=白を継承＝変更なし） */
   --color-sun: rgba(255, 130, 130, 0.90);
   --color-sat: rgba(130, 185, 255, 0.90);
   --grid-line: rgba(255, 255, 255, 0.07);
@@ -180,8 +181,8 @@ img {
   /* ── Badge chips ──────────────────────────────────────── */
   /* イベントラベル：ライトモードは青系をやめグレー〜黒に（視認性向上・月/週/日 全ビュー共通） */
   --badge-color:  #374151;
-  --badge-bg:     rgba(31, 41, 55, 0.06);
-  --badge-border: rgba(31, 41, 55, 0.16);
+  --badge-bg:     rgba(31, 41, 55, 0.04);
+  --badge-border: rgba(31, 41, 55, 0.10);
   --badge-text:   #1f2937;
   --badge-shadow: none;
   /* ── Season banner ────────────────────────────────────── */
@@ -217,6 +218,7 @@ img {
   --text-sub: #4b5563;       /*  7.3:1 on white */
   --text-dim: #6b7280;       /*  4.6:1 on white */
   --clock-sec-tens: #7A9FCC; /* メイン時計 秒の十の位（ブランドカラー・ライト） */
+  --clock-main: #1f2937;     /* メイン時計 本体：黒(#111827)が強すぎるので僅かにグレー寄せ */
   /* 曜日カラー */
   --color-sun: #b91c1c;      /*  6.2:1 on white */
   --color-sat: #1d4ed8;      /*  6.0:1 on white */
