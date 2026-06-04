@@ -311,7 +311,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
         {/* 簡易グラフ（資産の動きイメージ） */}
         <div style={{ padding: isMobile ? '14px 12px' : '18px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
-          <svg viewBox="0 0 320 165" style={{ width: '100%', height: 'auto', display: 'block' }}>
+          <svg viewBox="0 48 320 120" style={{ width: '100%', height: 'auto', display: 'block' }}>
             <line x1="8" y1="120" x2="312" y2="120" stroke={c.RULE} strokeWidth="1" strokeDasharray="3 4" />
             <polyline points="8,120 52,98 92,72 118,152 158,152 198,148 248,118 312,96" fill="none" stroke={c.DIM} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             <polyline points="8,122 56,100 100,84 128,106 170,86 230,80 312,74" fill="none" stroke={c.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
