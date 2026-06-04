@@ -193,7 +193,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             { icon: <CalIcon />,         nm: 'ぽいロボ レーダー',   ds: 'この先「何が起きるか」を知り、大事な日は前日に通知' },
             { icon: <EngineIcon />,       nm: 'ぽいロボ エンジン',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
             { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ シールド',   ds: '持っているものを「いつ手放すか」を決める' },
-            { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「博士に相談」できる（伴走）' },
+            { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「ぽいふる博士に相談」できる' },
           ].map(({ icon, nm, ds }) => (
             <div key={nm} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, flexShrink: 0, color: c.ACCENT, background: c.L ? 'rgba(3,105,161,0.08)' : 'rgba(0,229,255,0.08)', border: `1px solid ${c.TAGBDR}`, overflow: 'hidden' }}>{icon}</span>
