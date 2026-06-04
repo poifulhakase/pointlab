@@ -198,7 +198,7 @@ export default function App() {
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
   const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro'>('bunseki')
   const [shieldTab,         setShieldTab]         = useState<'shield' | 'news'>('shield')
-  const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer'>('privacy')
+  const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── ノートパネル ──────────────────────────────────────────────────────
@@ -838,8 +838,8 @@ const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['エンジン', '環境', '現物', '先物'] as const
 const SHIELD_TABS   = ['shield', 'news'] as const
 const SHIELD_LABELS = ['シールド', 'イベント予想'] as const
-const LEGAL_TABS    = ['privacy', 'disclaimer'] as const
-const LEGAL_LABELS  = ['プライバシー', '免責事項'] as const
+const LEGAL_TABS    = ['privacy', 'disclaimer', 'terms'] as const
+const LEGAL_LABELS  = ['プライバシー', '免責事項', '利用規約'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
 const carouselOuterStyle: React.CSSProperties = { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }
 const carouselWrapStyle:  React.CSSProperties = { flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }
