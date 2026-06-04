@@ -106,7 +106,7 @@ export function useCalendar() {
     if (view === 'spec')    return 'システム仕様'
     if (view === 'support') return '研究室'
     if (view === 'manual')   return '説明書'
-    if (view === 'legal')    return 'プライバシー・免責事項'
+    if (view === 'legal')    return '利用規約・免責・プライバシー'
     if (view === 'backtest') return 'TEVバックテスト'
 if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
