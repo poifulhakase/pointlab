@@ -237,8 +237,7 @@ img {
   --toggle-track: rgba(0, 0, 0, 0.14);
   --view-btn-active-bg: rgba(37, 99, 235, 0.12);
   --view-btn-active-color: #1d4ed8;
-  /* カレンダー 月/週 トグル：ライトモードは青系をやめグレー〜黒に（視認性向上） */
-  --cal-view-active-bg: rgba(17, 24, 39, 0.10);
+  /* カレンダー 月/週 トグル：ライトモードは文字色のみ青系→グレー〜黒（背景は共通値のまま＝据置） */
   --cal-view-active-color: #1f2937;
   /* イベントバッジ */
   --event-bg: rgba(37, 99, 235, 0.07);
