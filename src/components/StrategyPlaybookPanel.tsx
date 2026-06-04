@@ -433,9 +433,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           ['株式担保信用は短期スイング限定', '2倍ETFは長期保有しない（持ちっぱなしは減価でじわじわ目減り）'],
           ['担保は常に余裕', 'フルレバはかけない。優待・高配当の現物は担保にしすぎない（土台を守る）'],
         ] as const).map(([h, d]) => (
-          <div key={h} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+          <div key={h} style={{ display: 'flex', gap: 14, alignItems: 'center', padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
             <span style={{ flexShrink: 0, width: isMobile ? 26 : 30, height: isMobile ? 26 : 30, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: isMobile ? 14 : 16, boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}55` }}>✓</span>
-            <span style={{ paddingTop: 2 }}>
+            <span>
               <b style={{ fontSize: isMobile ? 13.5 : 15 }}>{h}</b>
               <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.6 }}>{d}</span>
             </span>
