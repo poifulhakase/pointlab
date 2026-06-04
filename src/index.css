@@ -27,6 +27,10 @@
   to { transform: rotate(360deg); }
 }
 
+/* 戦略プレイブック：スライド切替アニメ（下=次 / 上=前） */
+@keyframes pbInUp   { from { opacity: 0; transform: translate3d(0, 46px, 0) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes pbInDown { from { opacity: 0; transform: translate3d(0,-46px, 0) scale(0.98); } to { opacity: 1; transform: none; } }
+
 /* ── View Transitions API ─────────────────────────────── */
 @keyframes vt-fade-out {
   to { opacity: 0; }
