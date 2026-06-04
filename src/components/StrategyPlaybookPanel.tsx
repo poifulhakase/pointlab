@@ -153,13 +153,13 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     // ════ スライド1：やることは3つだけ ════
     { id: 's1', node: slide('1', 'やることは3つだけ', 'WHAT TO DO', (
       <>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 14, marginBottom: isMobile ? 16 : 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 11 : 14, marginBottom: isMobile ? 16 : 20 }}>
           {ACTIONS.map(a => (
-            <div key={a.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: isMobile ? '13px 14px' : '18px 22px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+            <div key={a.n} style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: 'flex-start', gap: isMobile ? 14 : 12, padding: isMobile ? '13px 14px' : '20px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
               <span style={{ flexShrink: 0, width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: isMobile ? 15 : 17, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}55` }}>{a.n}</span>
-              <span style={{ paddingTop: 2 }}>
-                <b style={{ fontSize: isMobile ? 14 : 16 }}>{a.t}</b>
-                <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.6 }}>{a.s}</span>
+              <span style={{ paddingTop: isMobile ? 2 : 0 }}>
+                <b style={{ fontSize: isMobile ? 14 : 15 }}>{a.t}</b>
+                <span style={{ display: 'block', marginTop: 6, fontSize: isMobile ? 11.5 : 12.5, color: c.SUB, lineHeight: 1.6 }}>{a.s}</span>
               </span>
             </div>
           ))}
