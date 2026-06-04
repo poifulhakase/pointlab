@@ -312,12 +312,13 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       <>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 24 }}>
           <p style={{ margin: 0 }}>「年+10%」は少なく感じるかもしれません。</p>
-          <p style={{ margin: 0 }}>でも<b style={{ color: c.TEXT }}>もうけを大きく狙うほど、負けたときの痛みも深くなります</b>。両方を同時に良くすることはできません。</p>
-          <p style={{ margin: 0 }}>下のグラフは、100万円を10年つみ上げたらいくらになるか（と、途中の一番きつい谷）を過去20年で試したもの。<b style={{ color: c.TEXT }}>だから欲ばらず、まず「生き残ること」を優先します。</b></p>
+          <p style={{ margin: 0 }}>でも、ねらうリターンが大きいほど<b style={{ color: c.TEXT }}>途中の「谷」（最大の下げ）も深くなります</b>。大事なのは増える額より、<b style={{ color: c.TEXT }}>その谷に耐えて最後まで続けられるか</b>。</p>
+          <p style={{ margin: 0 }}>下は<b style={{ color: c.TEXT }}>「最悪のとき、100万円がいくらまで残るか」</b>を過去20年で見たもの。<b style={{ color: c.TEXT }}>残りが多い＝谷が浅い＝続けやすい</b>です。</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {FRONTIER.map(f => {
-            const result = Math.round(100 * Math.pow(1 + f.cagr / 100, 10))
+            const remain = Math.round(100 * (1 - f.dd / 100))
+            const grow = (Math.pow(1 + f.cagr / 100, 10)).toFixed(1)
             return (
               <div key={f.label} style={{
                 padding: isMobile ? '15px 16px' : '18px 22px', borderRadius: 12,
@@ -329,22 +330,22 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
                   {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.ACCENT, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7, fontFamily: mono }}>
-                  <span style={{ color: c.DIM, fontSize: isMobile ? 10 : 11 }}>100万円が10年後（毎年つみ上げ）</span>
-                  <span style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 16 : 19 }}>約{result}万円</span>
+                  <span style={{ color: c.DIM, fontSize: isMobile ? 10 : 11 }}>最悪の谷：−{f.dd}%</span>
+                  <span style={{ color: f.main ? c.ACCENT : c.TEXT, fontWeight: 800, fontSize: isMobile ? 16 : 19 }}>約{remain}万円 残る</span>
                 </div>
                 <div style={{ height: 10, borderRadius: 5, background: c.L ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${result / 400 * 100}%`, background: c.WIN, borderRadius: 5, transition: 'width .4s' }} />
+                  <div style={{ height: '100%', width: `${remain}%`, background: f.main ? c.ACCENT : c.DIM, borderRadius: 5, transition: 'width .4s', boxShadow: f.main && !c.L ? `0 0 10px ${c.ACCENT}55` : 'none' }} />
                 </div>
-                <div style={{ marginTop: 11, fontSize: isMobile ? 10.5 : 11.5, color: c.SUB }}>
-                  途中の一番きつい谷（一時的）：<b style={{ color: c.TEXT }}>−{f.dd}%</b>
+                <div style={{ marginTop: 11, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono }}>
+                  10年後の増え方：約{grow}倍
                 </div>
               </div>
             )
           })}
         </div>
         <div style={{ marginTop: 20, padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: 9 }}>
-          <p style={{ margin: 0 }}>ふえる「額」だけ見れば、上の作戦ほど大きく見えます。でも上ほど<b style={{ color: c.TEXT }}>途中で −62% 〜（2倍を持ちっぱなしなら −88%）の深い谷</b>が来ます。多くの人はそこで耐えられず、売って退場します。</p>
-          <p style={{ margin: 0 }}><b style={{ color: c.TEXT }}>本線（v5a）は約2.6倍までふえつつ、谷は一番浅い −38%</b>。だから<b style={{ color: c.TEXT }}>最後まで持ち続けられる</b>——これが選ぶ理由です。</p>
+          <p style={{ margin: 0 }}>増え方（約3.8倍〜）だけなら上の作戦が大きい。でも上ほど谷が深く、最悪のとき<b style={{ color: c.TEXT }}>100万円が38万・47万…（2倍を持ちっぱなしなら12万）</b>まで沈みます。多くの人はそこで耐えられず売って退場＝<b style={{ color: c.TEXT }}>紙の上のもうけは手に入りません</b>。</p>
+          <p style={{ margin: 0 }}><b style={{ color: c.TEXT }}>本線（v5a）は谷が一番浅く、最悪でも約62万円が残る</b>。だから<b style={{ color: c.TEXT }}>最後まで持ち続けられる</b>——これが選ぶ理由です。</p>
         </div>
       </>
     )) },
