@@ -71,6 +71,14 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
           const noted      = hasNote(d)
           const noteTitle  = noted ? getNoteTitle(d) : ''
           const bookingEvts = getBookingEvents ? getBookingEvents(d) : []
+          // ぽいロボ レーダー該当日（赤パネル）。本日（白パネル）と重なっても両方分かるようにする
+          const isRadar = !!showPoiroboAlert && !dim && (
+            (poiroboAlertConfig.majorSq && sqMarkers.includes('sq-major')) ||
+            (poiroboAlertConfig.miniSq  && sqMarkers.includes('sq-mini'))  ||
+            macroEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
+            anomalyEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
+            markers.some(m => poiroboAlertConfig[m as keyof typeof poiroboAlertConfig])
+          )
 
           return (
             <div
@@ -82,18 +90,15 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 opacity: dim ? 0.35 : 1,
                 background: td && !dim
                   ? isLight ? 'rgba(37,99,235,0.09)' : 'rgba(255,255,255,0.26)'
-                  : showPoiroboAlert && !dim && (
-                      (poiroboAlertConfig.majorSq && sqMarkers.includes('sq-major')) ||
-                      (poiroboAlertConfig.miniSq  && sqMarkers.includes('sq-mini'))  ||
-                      macroEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
-                      anomalyEvts.some(e => poiroboAlertConfig[e.type as keyof typeof poiroboAlertConfig]) ||
-                      markers.some(m => poiroboAlertConfig[m as keyof typeof poiroboAlertConfig])
-                    )
+                  : isRadar
                     ? 'rgba(248,113,113,0.18)'
                     : closed && !dim ? 'var(--closed-cell-bg)' : undefined,
                 borderTop: td && !dim
                   ? isLight ? '3px solid #3b82f6' : '3px solid rgba(255,255,255,0.82)'
                   : undefined,
+                // 本日（白）かつレーダー日（赤）が重なる場合：白セルに赤い枠線を重ねて両方分かるようにする
+                outline: td && !dim && isRadar ? '2px solid rgba(248,113,113,0.85)' : undefined,
+                outlineOffset: td && !dim && isRadar ? '-2px' : undefined,
                 cursor: 'pointer',
                 position: 'relative',
                 isolation: 'isolate',
