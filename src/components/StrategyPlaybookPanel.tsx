@@ -173,7 +173,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </div>
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('目標リターン（1年）', '約+10%', c.WIN)}
-          {stat('使うもの（信用なし）', '日経平均 ブル/ベア2倍 ETF', c.TEXT, true)}
+          {stat('使うもの（信用なし）', '日経平均 ブル/ベア1倍2倍 ETF', c.TEXT, true)}
         </div>
         <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
           ↓ 下の矢印で1枚ずつめくれます
@@ -189,7 +189,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 14 }}>
           {[
-            { icon: <CalIcon />,         nm: 'ぽいロボ カレンダー', ds: 'この先「何が起きるか」を知る（＋レーダー通知）' },
+            { icon: <CalIcon />,         nm: 'ぽいロボ レーダー',   ds: 'この先「何が起きるか」を知り、大事な日は前日に通知' },
             { icon: <EngineIcon />,       nm: 'ぽいロボ エンジン',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
             { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ シールド',   ds: '持っているものを「いつ手放すか」を決める' },
             { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「博士に相談」できる（伴走）' },
@@ -402,8 +402,25 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </div>
 
         {point('リスクと安定性', (
-          <>担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。無理なレバはかけないこと。</>
+          <>担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。</>
         ))}
+
+        {/* 安全に回すコツ */}
+        <div style={{ padding: isMobile ? '13px 15px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}` }}>
+          <span style={{ display: 'block', fontSize: isMobile ? 9.5 : 10.5, fontWeight: 700, color: c.ACCENT, fontFamily: mono, letterSpacing: '0.1em', marginBottom: 11 }}>安全に回すコツ</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {([
+              ['ベアを保険に', '暴落ではロングの損をベアで相殺し、追証・退場を回避する'],
+              ['B は短期スイング限定', '2倍ETFは長期保有しない（持ちっぱなしは減価でじわじわ目減り）'],
+              ['担保は常に余裕', 'フルレバはかけない。優待・高配当の現物は担保にしすぎない（土台を守る）'],
+            ] as const).map(([h, d]) => (
+              <div key={h} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: isMobile ? 11.5 : 12.5, lineHeight: 1.65 }}>
+                <span style={{ color: c.ACCENT, flexShrink: 0, fontWeight: 800 }}>✓</span>
+                <span style={{ color: c.SUB }}><b style={{ color: c.TEXT }}>{h}</b>：{d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )) },
 

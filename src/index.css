@@ -7,15 +7,6 @@
   src: url('./assets/fonts/cherry-bomb-one.woff2') format('woff2');
 }
 
-/* カウントダウン等の数値向け（等幅・テック調 / OFL）。漢字「分」はフォールバックで描画 */
-@font-face {
-  font-family: 'Share Tech Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./assets/fonts/share-tech-mono.woff2') format('woff2');
-}
-
 * {
   box-sizing: border-box;
   margin: 0;

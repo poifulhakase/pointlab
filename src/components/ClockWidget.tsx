@@ -151,7 +151,7 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
 
       {/* 現在時刻 */}
       <div style={{
-        fontFamily: '"Cherry Bomb One", "Share Tech Mono", Consolas, monospace',
+        fontFamily: '"Cherry Bomb One", Consolas, monospace',
         fontVariantNumeric: 'tabular-nums',
         fontSize: sz.time, fontWeight: 400, letterSpacing: '0.02em',
         color: 'var(--text)', lineHeight: 1, marginBottom: 16,
@@ -200,9 +200,8 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
                 {item.label}
               </span>
               <span style={{
-                fontFamily: '"Share Tech Mono", "SF Mono", "Fira Code", Consolas, monospace',
                 fontSize: sz.cdVal, fontWeight: 600, color: 'var(--text-sub)',
-                letterSpacing: '0.03em',
+                letterSpacing: '0.02em',
               }}>
                 {fmtCd(item.sec)}
               </span>
