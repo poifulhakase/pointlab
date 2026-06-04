@@ -174,7 +174,10 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('使うもの', '日経平均 ブル/ベア1倍2倍 ETF', c.TEXT, true)}
         </div>
-        <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
+        <div style={{ marginTop: isMobile ? 22 : 30, fontSize: isMobile ? 10 : 11, color: c.DIM, lineHeight: 1.7, maxWidth: 640 }}>
+          ※ 本書は過去データにもとづく一般的な手法の解説（教育）です。投資助言・売買の推奨ではなく、最終判断はご自身の責任で行ってください。
+        </div>
+        <div style={{ marginTop: 10, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
           ↓ 下の矢印で1枚ずつめくれます
         </div>
       </div>
@@ -267,6 +270,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     // ════ 取引パート（PART 2）════
     { id: 's1', node: slide('やることは3つだけ', 'PART 2 ─ 取引のルール', (
       <>
+        <div style={{ fontSize: isMobile ? 10.5 : 12, color: c.DIM, lineHeight: 1.7, marginBottom: isMobile ? 14 : 16 }}>
+          ※ 以下は過去データにもとづく手法の考え方です（投資助言・売買の推奨ではありません）。
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 11 : 14, marginBottom: isMobile ? 16 : 20 }}>
           {ACTIONS.map(a => (
             <div key={a.n} style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: 'flex-start', gap: isMobile ? 14 : 12, padding: isMobile ? '13px 14px' : '20px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
@@ -448,6 +454,10 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ padding: isMobile ? '16px 18px' : '22px 26px', borderRadius: 16, border: `1px solid ${c.RULE}`, borderLeft: `3px solid ${c.ACCENT}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
           <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.TEXT, marginBottom: 12 }}>リスクと安定性</div>
           担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。<b style={{ color: c.TEXT }}>無理なレバはかけないこと。</b>
+        </div>
+
+        <div style={{ fontSize: isMobile ? 10 : 11, color: c.DIM, lineHeight: 1.8 }}>
+          ※ 本書は過去データにもとづく一般的な手法の解説（教育）であり、投資助言・売買シグナルの配信ではありません。当方は金融商品取引業（投資助言・代理業）の登録を受けていません。投資の判断と責任はご自身に帰属します。
         </div>
       </div>
     ) },
