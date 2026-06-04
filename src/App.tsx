@@ -711,7 +711,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 {CAL_VIEW_TABS.filter(([key]) => isMobile || key !== 'day').map(([key, label]) => (
                   <button
                     key={key}
-                    style={{ ...styles.floatTab, ...(cal.view === key ? styles.floatTabActiveCal : {}) }}
+                    style={{ ...styles.floatTab, ...(cal.view === key ? styles.floatTabActive : {}) }}
                     onClick={() => cal.setView(key)}
                   >{label}</button>
                 ))}
@@ -905,7 +905,5 @@ const styles: Record<string, React.CSSProperties> = {
   floatDivider:    { width: 1, height: 16, background: 'var(--border-dim)', alignSelf: 'center', flexShrink: 0, margin: '0 1px' },
   floatTab:        { padding: '5px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s' },
   floatTabActive:  { background: 'var(--view-btn-active-bg)', color: 'var(--view-btn-active-color)', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' },
-  // カレンダー 月/週 トグル専用（ライトモードのみグレー〜黒。ダークは共通値を継承） boxShadow は共通＝ダーク変化なし
-  floatTabActiveCal: { background: 'var(--cal-view-active-bg)', color: 'var(--cal-view-active-color)', boxShadow: '0 2px 8px rgba(100,120,200,0.15)' },
   floatIconBtn:    { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 7, color: 'var(--text-sub)', cursor: 'pointer', transition: 'background 0.15s, color 0.15s', flexShrink: 0 },
 }
