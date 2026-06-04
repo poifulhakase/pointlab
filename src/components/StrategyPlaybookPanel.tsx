@@ -172,7 +172,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           <p style={{ margin: 0 }}>大もうけより、<b style={{ color: c.TEXT }}>「大きく負けないこと」を最優先</b>にします。</p>
         </div>
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
-          {stat('目標リターン（1年）', '約+10%', c.WIN)}
           {stat('使うもの', '日経平均 ブル/ベア1倍2倍 ETF', c.TEXT, true)}
         </div>
         <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
