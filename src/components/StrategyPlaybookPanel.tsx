@@ -84,9 +84,14 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
   // KPIスタット
   const stat = (label: string, value: string, color: string) => (
-    <div style={{ flex: 1, minWidth: isMobile ? 0 : 130, padding: isMobile ? '13px 14px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+    <div style={{
+      flex: 1, minWidth: isMobile ? 0 : 130, padding: isMobile ? '13px 14px' : '18px 20px',
+      borderRadius: 14, border: `1px solid ${c.TAGBDR}`, borderTop: `2px solid ${color}`,
+      background: `linear-gradient(165deg, ${color}14, ${c.TAGBG} 62%)`,
+      boxShadow: c.L ? '0 1px 6px rgba(0,50,110,0.05)' : `0 0 18px ${color}10`,
+    }}>
       <div style={{ fontSize: isMobile ? 9 : 10.5, color: c.DIM, fontFamily: mono, letterSpacing: '0.08em', marginBottom: 7 }}>{label}</div>
-      <div style={{ fontSize: isMobile ? 19 : 26, fontWeight: 800, color, lineHeight: 1, letterSpacing: '0.01em' }}>{value}</div>
+      <div style={{ fontSize: isMobile ? 19 : 26, fontWeight: 800, color, lineHeight: 1, letterSpacing: '0.01em', textShadow: c.L ? 'none' : `0 0 16px ${color}55` }}>{value}</div>
     </div>
   )
 
@@ -152,8 +157,16 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
         {/* ════ 表紙 ════ */}
         <div style={{ marginBottom: isMobile ? 22 : 30, padding: isMobile ? '4px 2px' : '8px 4px' }}>
-          <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, letterSpacing: '0.28em', color: c.ACCENT, fontFamily: mono, marginBottom: 10 }}>POIROBO STRATEGY</div>
-          <div style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: c.TEXT, lineHeight: 1.15, letterSpacing: '0.01em', marginBottom: 12 }}>戦略プレイブック</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={{ width: 24, height: 2, borderRadius: 2, background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}` }} />
+            <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, letterSpacing: '0.28em', color: c.ACCENT, fontFamily: mono }}>POIROBO STRATEGY</span>
+          </div>
+          <div style={{
+            fontSize: isMobile ? 27 : 40, fontWeight: 800, lineHeight: 1.15, letterSpacing: '0.01em', marginBottom: 12,
+            background: c.L ? 'linear-gradient(92deg,#0c4a6e,#0369a1)' : 'linear-gradient(92deg,#ffffff 35%,#00e5ff)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: c.TEXT,
+            filter: c.L ? 'none' : 'drop-shadow(0 0 18px rgba(0,229,255,0.22))', width: 'fit-content',
+          }}>戦略プレイブック</div>
           <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22, maxWidth: 720 }}>
             このページは、ぽいロボの「どう売買するか」の作戦書です。<b style={{ color: c.TEXT }}>むずかしい信用取引や空売りは使いません</b>。買うのは、ふつうに買える日経225の<b style={{ color: c.TEXT }}>ETF（上場投資信託）</b>だけ。<br />
             やることはシンプルで、<b style={{ color: c.TEXT }}>下げたら買う・上げている間は持つ</b>をルールにします。大もうけより<b style={{ color: c.WIN }}>「大きく負けないこと」を最優先</b>にして、<b style={{ color: c.WIN }}>1年で +10%くらい</b>を、<b style={{ color: c.LOSS }}>負けても −38%まで</b>に抑えるのが目標です。
