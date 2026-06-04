@@ -385,7 +385,10 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
         {/* A：土台 */}
         <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
-          <div style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT, marginBottom: 11 }}>A. 現物を長期保有（土台）</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 11 }}>
+            <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT }}>A. 現物を長期保有（土台）</span>
+            <span style={{ flexShrink: 0, fontSize: isMobile ? 12 : 13.5, fontWeight: 800, color: c.WIN, fontFamily: mono }}>年 約+10%</span>
+          </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 9 }}>
             {['高配当', '株主優待', 'キャピタルゲイン'].map(x => (
               <span key={x} style={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, color: c.ACCENT, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', borderRadius: 999, padding: '4px 12px' }}>{x}</span>
@@ -398,14 +401,25 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
         {/* B：応用 */}
         <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
-          <div style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT, marginBottom: 9 }}>B. 株式担保信用でスイング</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 9 }}>
+            <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT }}>B. 株式担保信用でスイング</span>
+            <span style={{ flexShrink: 0, fontSize: isMobile ? 12 : 13.5, fontWeight: 800, color: c.WIN, fontFamily: mono }}>年 約+10%</span>
+          </div>
           <div style={{ fontSize: isMobile ? 12 : 13, color: c.SUB, lineHeight: 1.7 }}>その現物を<b style={{ color: c.TEXT }}>担保</b>に、ぽいロボ戦略を<b style={{ color: c.TEXT }}>信用で回す</b>。同じ資産でトレードも働かせます。</div>
         </div>
 
-        {/* ＝ 結論 */}
-        <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1.5px solid ${c.ACCENT}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', textAlign: 'center' }}>
-          <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.ACCENT }}>＝ 同じ資産から A も B も</span>
-          <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.TEXT }}>長期投資（A だけ）より<b>上</b>を狙えます</span>
+        {/* ＝ 結論（式のイメージ） */}
+        <div style={{ padding: isMobile ? '16px 16px' : '20px 22px', borderRadius: 14, border: `1.5px solid ${c.ACCENT}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', flexWrap: 'wrap', gap: isMobile ? 6 : 9, fontWeight: 800 }}>
+            <span style={{ fontSize: isMobile ? 16 : 20, color: c.TEXT }}>約+10%</span>
+            <span style={{ fontSize: isMobile ? 10 : 12, color: c.DIM, fontFamily: mono }}>(A)</span>
+            <span style={{ fontSize: isMobile ? 16 : 20, color: c.ACCENT }}>＋</span>
+            <span style={{ fontSize: isMobile ? 16 : 20, color: c.TEXT }}>約+10%</span>
+            <span style={{ fontSize: isMobile ? 10 : 12, color: c.DIM, fontFamily: mono }}>(B)</span>
+            <span style={{ fontSize: isMobile ? 16 : 20, color: c.ACCENT }}>＝</span>
+            <span style={{ fontSize: isMobile ? 23 : 30, color: c.WIN, letterSpacing: '0.01em' }}>年利 約20%</span>
+          </div>
+          <span style={{ display: 'block', marginTop: 10, fontSize: isMobile ? 11 : 12.5, color: c.SUB }}>同じ資産から A も B も受け取る。長期投資（A だけ）より<b style={{ color: c.TEXT }}>上</b>を狙えます。<span style={{ color: c.DIM }}>※ あくまで例（イメージ）</span></span>
         </div>
 
       </div>
@@ -417,7 +431,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.85 }}>担保信用を“応用”で使うとき、退場せず続けるための<b style={{ color: c.TEXT }}>3つの約束</b>です。</div>
         {([
           ['ベアを保険に', '暴落ではロングの損をベアで相殺し、追証・退場を回避する'],
-          ['B は短期スイング限定', '2倍ETFは長期保有しない（持ちっぱなしは減価でじわじわ目減り）'],
+          ['株式担保信用は短期スイング限定', '2倍ETFは長期保有しない（持ちっぱなしは減価でじわじわ目減り）'],
           ['担保は常に余裕', 'フルレバはかけない。優待・高配当の現物は担保にしすぎない（土台を守る）'],
         ] as const).map(([h, d]) => (
           <div key={h} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
