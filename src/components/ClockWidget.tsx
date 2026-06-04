@@ -140,7 +140,8 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
   const usPhase  = getUSPhase(now, jst.dateObj)
   const usMeta   = US_PHASE_META[usPhase]
   const countdowns = getCountdowns(now)
-  const timeStr  = `${jst.h}:${String(jst.mi).padStart(2, '0')}:${String(jst.s).padStart(2, '0')}`
+  const hhmm     = `${jst.h}:${String(jst.mi).padStart(2, '0')}:`
+  const ss       = String(jst.s).padStart(2, '0')  // 秒（十の位はブランドカラー）
 
   const sz = isMobile
     ? { time: 34, status: 13, cdLabel: 12, cdVal: 13, pad: '14px 16px 12px', gap: 5, ptop: 9 }
@@ -156,7 +157,9 @@ export function ClockWidget({ isMobile = false, onGoToday }: { isMobile?: boolea
         fontSize: sz.time, fontWeight: 400, letterSpacing: '0.02em',
         color: 'var(--text)', lineHeight: 1, marginBottom: 16,
       }}>
-        {timeStr}
+        {hhmm}
+        <span style={{ color: 'var(--clock-sec-tens)' }}>{ss[0]}</span>
+        {ss[1]}
       </div>
 
       {/* 市場ステータス */}

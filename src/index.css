@@ -135,6 +135,7 @@ img {
   --text: rgba(255, 255, 255, 0.95);
   --text-sub: rgba(255, 255, 255, 0.55);
   --text-dim: rgba(255, 255, 255, 0.28);
+  --clock-sec-tens: #FECAC9;  /* メイン時計 秒の十の位（ブランドカラー・ダーク） */
   --color-sun: rgba(255, 130, 130, 0.90);
   --color-sat: rgba(130, 185, 255, 0.90);
   --grid-line: rgba(255, 255, 255, 0.07);
@@ -152,6 +153,9 @@ img {
   --toggle-track: rgba(255, 255, 255, 0.15);
   --view-btn-active-bg: rgba(255, 255, 255, 0.70);
   --view-btn-active-color: rgba(15, 15, 17, 0.90);
+  /* カレンダー 月/週 トグル専用（ダークは共通値を継承＝変更なし。ライトのみ上書き） */
+  --cal-view-active-bg: var(--view-btn-active-bg);
+  --cal-view-active-color: var(--view-btn-active-color);
   --event-bg: rgba(96, 165, 250, 0.15);
   --event-border: rgba(96, 165, 250, 0.40);
   --float-bar-bg: rgba(14, 14, 16, 0.97);
@@ -214,6 +218,7 @@ img {
   --text: #111827;           /* 16.7:1 on white */
   --text-sub: #4b5563;       /*  7.3:1 on white */
   --text-dim: #6b7280;       /*  4.6:1 on white */
+  --clock-sec-tens: #7A9FCC; /* メイン時計 秒の十の位（ブランドカラー・ライト） */
   /* 曜日カラー */
   --color-sun: #b91c1c;      /*  6.2:1 on white */
   --color-sat: #1d4ed8;      /*  6.0:1 on white */
@@ -232,6 +237,9 @@ img {
   --toggle-track: rgba(0, 0, 0, 0.14);
   --view-btn-active-bg: rgba(37, 99, 235, 0.12);
   --view-btn-active-color: #1d4ed8;
+  /* カレンダー 月/週 トグル：ライトモードは青系をやめグレー〜黒に（視認性向上） */
+  --cal-view-active-bg: rgba(17, 24, 39, 0.10);
+  --cal-view-active-color: #1f2937;
   /* イベントバッジ */
   --event-bg: rgba(37, 99, 235, 0.07);
   --event-border: rgba(37, 99, 235, 0.30);
