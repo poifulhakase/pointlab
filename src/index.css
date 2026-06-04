@@ -1,10 +1,10 @@
-/* 時計の時刻表示用：Orbitron（幾何学的なデジタル/SF調・見やすい / OFL）。自己ホストで CSP(font-src 'self') 準拠 */
+/* 時計の時刻表示用：Cherry Bomb One（丸くポップな表示用フォント / OFL）。自己ホストで CSP(font-src 'self') 準拠。latinサブセット＝数字と記号 */
 @font-face {
-  font-family: 'Orbitron';
+  font-family: 'Cherry Bomb One';
   font-style: normal;
-  font-weight: 700;
+  font-weight: 400;
   font-display: swap;
-  src: url('./assets/fonts/orbitron-700.woff2') format('woff2');
+  src: url('./assets/fonts/cherry-bomb-one.woff2') format('woff2');
 }
 
 /* カウントダウン等の数値向け（等幅・テック調 / OFL）。漢字「分」はフォールバックで描画 */
