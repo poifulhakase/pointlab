@@ -4,7 +4,6 @@ type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   isAdmin?: boolean
-  isMember?: boolean
   onOpenManual?: () => void
   onOpenLegal?: () => void
   onOpenBacktest?: () => void
@@ -191,12 +190,11 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook }: Props) {
   // バックテスト等は検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
-  // 戦略プレイブックはぽいんとらぼ会員向けに公開（管理者も閲覧可）。
+  // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
     if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest') && !isAdmin) return false
-    if (a.internalAction === 'playbook' && !(isMember || isAdmin)) return false
     return true
   })
 
