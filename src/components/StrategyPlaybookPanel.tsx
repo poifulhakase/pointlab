@@ -382,14 +382,14 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 11 }}>
             <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT }}>A. 現物を長期保有（土台）</span>
-            <span style={{ flexShrink: 0, fontSize: isMobile ? 12 : 13.5, fontWeight: 800, color: c.WIN, fontFamily: mono }}>年 約+10%</span>
+            <span style={{ flexShrink: 0, fontSize: isMobile ? 12 : 13.5, fontWeight: 800, color: c.WIN, fontFamily: mono }}>年 約+15%</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 9 }}>
             {['高配当', '株主優待', 'キャピタルゲイン'].map(x => (
               <span key={x} style={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, color: c.ACCENT, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', borderRadius: 999, padding: '4px 12px' }}>{x}</span>
             ))}
           </div>
-          <div style={{ fontSize: isMobile ? 11 : 12, color: c.SUB }}>持っているだけでもらえる（＝ふつうの長期投資）</div>
+          <div style={{ fontSize: isMobile ? 11 : 12, color: c.SUB, lineHeight: 1.7 }}>持っているだけでもらえる（＝ふつうの長期投資）。日本の現物株は成長率が高めで配当も厚く、円安による底上げや株主優待の非課税メリットも乗るため、土台でも年 約+15% が狙えます。</div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', color: c.ACCENT, fontSize: 22, fontWeight: 800, fontFamily: mono, lineHeight: 1 }}>＋</div>
@@ -406,13 +406,13 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         {/* ＝ 結論（式のイメージ） */}
         <div style={{ padding: isMobile ? '16px 16px' : '20px 22px', borderRadius: 14, border: `1.5px solid ${c.ACCENT}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', flexWrap: 'wrap', gap: isMobile ? 6 : 9, fontWeight: 800 }}>
-            <span style={{ fontSize: isMobile ? 16 : 20, color: c.TEXT }}>約+10%</span>
+            <span style={{ fontSize: isMobile ? 16 : 20, color: c.TEXT }}>約+15%</span>
             <span style={{ fontSize: isMobile ? 10 : 12, color: c.DIM, fontFamily: mono }}>(A)</span>
             <span style={{ fontSize: isMobile ? 16 : 20, color: c.ACCENT }}>＋</span>
             <span style={{ fontSize: isMobile ? 16 : 20, color: c.TEXT }}>約+10%</span>
             <span style={{ fontSize: isMobile ? 10 : 12, color: c.DIM, fontFamily: mono }}>(B)</span>
             <span style={{ fontSize: isMobile ? 16 : 20, color: c.ACCENT }}>＝</span>
-            <span style={{ fontSize: isMobile ? 23 : 30, color: c.WIN, letterSpacing: '0.01em' }}>年利 約20%</span>
+            <span style={{ fontSize: isMobile ? 23 : 30, color: c.WIN, letterSpacing: '0.01em' }}>年利 約25%</span>
           </div>
           <span style={{ display: 'block', marginTop: 10, fontSize: isMobile ? 11 : 12.5, color: c.SUB }}>同じ資産から A も B も受け取る。長期投資（A だけ）より<b style={{ color: c.TEXT }}>上</b>を狙えます。<span style={{ color: c.DIM }}>※ あくまで例（イメージ）</span></span>
         </div>
