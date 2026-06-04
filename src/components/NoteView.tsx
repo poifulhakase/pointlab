@@ -266,11 +266,11 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
             </a>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 0 }}>
-            <button onClick={() => onOpenLegal?.('privacy')} style={s.footerLink}>プライバシーポリシー</button>
+            <button onClick={() => onOpenLegal?.('terms')} style={s.footerLink}>利用規約</button>
             <span style={s.footerSep}>・</span>
             <button onClick={() => onOpenLegal?.('disclaimer')} style={s.footerLink}>免責事項</button>
             <span style={s.footerSep}>・</span>
-            <button onClick={() => onOpenLegal?.('terms')} style={s.footerLink}>利用規約</button>
+            <button onClick={() => onOpenLegal?.('privacy')} style={s.footerLink}>プライバシーポリシー</button>
           </div>
         </div>
       </div>
