@@ -41,19 +41,27 @@ const ACTIONS = [
 
 // ── 現実解（CAGR×DDのトレードオフ・20年BT・2倍）──
 const FRONTIER = [
-  { label: '濾し無し（旧・全部乗せ）', cagr: 14.4, dd: 62, main: false },
-  { label: '押し目だけ濾す（v4a）',   cagr: 13.0, dd: 53, main: false },
-  { label: '押し目＋季節性を濾す（v5a）', cagr: 10.2, dd: 38, main: true },
+  { label: '全部のせ（むかしのやり方）',       cagr: 14.4, dd: 62, main: false },
+  { label: '暴落よけを少しだけ',             cagr: 13.0, dd: 53, main: false },
+  { label: '本線：暴落よけを徹底（v5a）',     cagr: 10.2, dd: 38, main: true },
 ]
 const CAGR_MAX = 15, DD_MAX = 65
 
-// ── 採用エッジ（検証済み・使う）──
-type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; aim: string; trigger: string; hold: string; ev: string; dd: string }
+// ── 採用エッジ（検証済み・使う）── plain=やさしい説明 / 以下は折りたたみ内の詳細
+type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; plain: string; aim: string; trigger: string; hold: string; ev: string; dd: string }
 const ADOPTED: Edge[] = [
-  { name: 'トレンドフィルター', grade: '◎', gradeLabel: 'DD制御の要', aim: '暴落を回避してドローダウンを抑える', trigger: '50日高値を上抜けで買い／25日安値割れで撤退（ロングのみ）', hold: 'トレンドが続く限り', ev: 'CAGR 約10%（2倍）', dd: '−39%（常時ロング−88%の半分）' },
-  { name: '売られすぎ買い（押し目）', grade: '△', gradeLabel: '玉は希少だがDDは下がる', aim: '売られすぎの反発を取る', trigger: '25日線 ≤ −10%。下落トレンド中は見送り（落ちるナイフ回避）', hold: '5営業日で機械的に降りる', ev: '−10%で +1.8%（勝率66%）', dd: '単体−57%（濾すと改善）' },
-  { name: '季節性：権利確定ブル', grade: '○', gradeLabel: '最強の季節性', aim: '配当の権利確定に向けた買い需要', trigger: '3/15頃 → 3/27頃', hold: '約2週間（年1回）', ev: '+3.2%（勝率70%）', dd: '窓 −37%' },
-  { name: '季節性：年末ラリー', grade: '○', gradeLabel: '高勝率・小さめ', aim: '年末の買い需要', trigger: '12/15頃 → 12/30頃', hold: '約2週間（年1回）', ev: '+0.95%（勝率75%）', dd: '低' },
+  { name: 'トレンドフィルター', grade: '◎', gradeLabel: '暴落よけの“お守り”（一番だいじ）',
+    plain: '上がっている相場のときだけ乗る仕組み。高値を更新したら買い、下がり始めたら降りる。これで大きな暴落をよけられます。',
+    aim: '暴落を回避してドローダウンを抑える', trigger: '50日高値を上抜けで買い／25日安値割れで撤退（ロングのみ）', hold: 'トレンドが続く限り', ev: 'CAGR 約10%（2倍）', dd: '−39%（常時ロング−88%の半分）' },
+  { name: '売られすぎ買い（押し目）', grade: '△', gradeLabel: 'チャンスは少なめ',
+    plain: '大きく下げたところを買って、反発をねらいます。ただし下げ続けている最中は手を出しません（落ちるナイフを避ける）。',
+    aim: '売られすぎの反発を取る', trigger: '25日線 ≤ −10%。下落トレンド中は見送り（落ちるナイフ回避）', hold: '5営業日で機械的に降りる', ev: '−10%で +1.8%（勝率66%）', dd: '単体−57%（濾すと改善）' },
+  { name: '季節性：3月の権利確定', grade: '○', gradeLabel: '一番つよい季節',
+    plain: '3月は配当をもらう権利を取りにいく買いが入りやすい時期。3月中旬から月末まで持ちます（年1回）。',
+    aim: '配当の権利確定に向けた買い需要', trigger: '3/15頃 → 3/27頃', hold: '約2週間（年1回）', ev: '+3.2%（勝率70%）', dd: '窓 −37%' },
+  { name: '季節性：年末ラリー', grade: '○', gradeLabel: '当たりやすい・小さめ',
+    plain: '12月末は上がりやすい時期。12月中旬から年末まで持ちます（年1回）。',
+    aim: '年末の買い需要', trigger: '12/15頃 → 12/30頃', hold: '約2週間（年1回）', ev: '+0.95%（勝率75%）', dd: '低' },
 ]
 
 export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
@@ -146,14 +154,14 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ marginBottom: isMobile ? 22 : 30, padding: isMobile ? '4px 2px' : '8px 4px' }}>
           <div style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, letterSpacing: '0.28em', color: c.ACCENT, fontFamily: mono, marginBottom: 10 }}>POIROBO STRATEGY</div>
           <div style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: c.TEXT, lineHeight: 1.15, letterSpacing: '0.01em', marginBottom: 12 }}>戦略プレイブック</div>
-          <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.7, marginBottom: isMobile ? 18 : 22, maxWidth: 720 }}>
-            日経225の<b style={{ color: c.TEXT }}>ブル/ベア 1倍2倍ETF（現物）</b>で回す短期スイング。<b>信用・空売り・追証なし</b>（2倍は“ブル2倍ETFを現物で持つ”の意味）。<br />
-            生存を最優先に、<b style={{ color: c.WIN }}>年 約+10% ／ 最大ドローダウン −38%</b> を狙う。
+          <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22, maxWidth: 720 }}>
+            このページは、ぽいロボの「どう売買するか」の作戦書です。<b style={{ color: c.TEXT }}>むずかしい信用取引や空売りは使いません</b>。買うのは、ふつうに買える日経225の<b style={{ color: c.TEXT }}>ETF（上場投資信託）</b>だけ。<br />
+            やることはシンプルで、<b style={{ color: c.TEXT }}>下げたら買う・上げている間は持つ</b>をルールにします。大もうけより<b style={{ color: c.WIN }}>「大きく負けないこと」を最優先</b>にして、<b style={{ color: c.WIN }}>1年で +10%くらい</b>を、<b style={{ color: c.LOSS }}>負けても −38%まで</b>に抑えるのが目標です。
           </div>
           <div style={{ display: 'flex', gap: isMobile ? 8 : 14, flexWrap: 'wrap' }}>
-            {stat('本線 CAGR（年利）', '約+10%', c.WIN)}
-            {stat('本線 最大DD', '−38%', c.LOSS)}
-            {stat('使う商品（信用なし）', '現物ETF', c.ACCENT)}
+            {stat('目標リターン（1年）', '約+10%', c.WIN)}
+            {stat('覚悟する最大の負け', '−38%', c.LOSS)}
+            {stat('使うもの（信用なし）', '現物ETF', c.ACCENT)}
           </div>
         </div>
 
@@ -194,10 +202,11 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         ))}
 
         {/* ════ スライド2：目標と現実解 ════ */}
-        {slide('2', '目標と現実解', '20年BT・ブル2倍ETF(現物)想定・REALITY', (
+        {slide('2', 'なぜ「年+10%」なの？', 'よくばらない理由・REALITY', (
           <>
-            <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.TEXT, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22 }}>
-              目標 <b>年利50%</b> は <span style={{ color: c.WARN, fontWeight: 700 }}>生存可能なレバでは願望</span>。同じエッジでも“置き場所”でCAGRとDDは下のように動く。<b style={{ color: c.TEXT }}>CAGRを上げるとDDも深くなる＝両立しない。</b>
+            <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.TEXT, lineHeight: 1.85, marginBottom: isMobile ? 18 : 22 }}>
+              「年+10%」は少なく感じるかもしれません。でも、<b style={{ color: c.TEXT }}>もうけを大きく狙うほど、負けるときの痛み（最大の下げ）も深くなります</b>。両方をいっぺんに良くすることはできません。<br />
+              下のグラフは、同じ作戦でも“どこまで暴落をよけるか”でどう変わるかを、過去20年で試したものです。<b style={{ color: c.WIN }}>だから欲ばらず、まず「生き残ること」を優先します。</b>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {FRONTIER.map(f => (
@@ -211,35 +220,41 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
                     {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.WIN, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 14 : 24 }}>
-                    {bar('CAGR（年利）', `${f.cagr}%`, f.cagr / CAGR_MAX * 100, c.WIN)}
-                    {bar('最大DD（痛み）', `−${f.dd}%`, f.dd / DD_MAX * 100, c.LOSS)}
+                    {bar('もうけ（1年）', `+${f.cagr}%`, f.cagr / CAGR_MAX * 100, c.WIN)}
+                    {bar('最大の負け', `−${f.dd}%`, f.dd / DD_MAX * 100, c.LOSS)}
                   </div>
                 </div>
               ))}
             </div>
             <div style={{ marginTop: 18, padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, background: c.L ? 'rgba(21,128,61,0.06)' : 'rgba(74,222,128,0.06)', border: `1px solid ${c.L ? 'rgba(21,128,61,0.25)' : 'rgba(74,222,128,0.22)'}`, fontSize: isMobile ? 11 : 12.5, color: c.TEXT, lineHeight: 1.7 }}>
-              🔴 <b style={{ color: c.WIN }}>本線＝v5a（生存最優先）</b>。DDを−40%圏に抑える代わりにCAGRは約10%（≒現物B&H並みだが、ブル2倍ETFを常に持つ−88%より遥かに浅い）。
+              🔴 <b style={{ color: c.WIN }}>採用するのは一番下（v5a）</b>。もうけは年+10%くらいに下がりますが、そのぶん<b>最大の負けを−38%に抑えられます</b>。ちなみに「2倍ETFをただ持ちっぱなし」だと最大−88%まで下がるので、それよりずっと浅い負けで済みます。
             </div>
           </>
         ))}
 
         {/* ════ スライド3：採用エッジ ════ */}
-        {slide('3', '採用エッジ', '検証済み・使う4本・ADOPTED EDGES', (
+        {slide('3', '勝てる4つの理由', '使う作戦・ADOPTED', (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16 }}>
             {ADOPTED.map(e => (
-              <div key={e.name} style={{ padding: isMobile ? '15px 15px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div key={e.name} style={{ padding: isMobile ? '15px 15px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 11 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ flexShrink: 0, fontSize: isMobile ? 13 : 14, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: gradeColor(e.grade), borderRadius: 8, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{e.grade}</span>
                   <span style={{ fontWeight: 800, fontSize: isMobile ? 13.5 : 15, color: c.ACCENT }}>{e.name}</span>
                 </div>
-                <div style={{ fontSize: isMobile ? 10.5 : 11.5, color: gradeColor(e.grade), fontWeight: 700, marginTop: -5 }}>{e.gradeLabel}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: `1px solid ${c.RULE}`, paddingTop: 12 }}>
-                  {kv('狙い', e.aim)}
-                  {kv('トリガー', e.trigger)}
-                  {kv('保有', e.hold)}
-                  {kv('期待値', e.ev, c.WIN)}
-                  {kv('DD', e.dd, c.LOSS)}
-                </div>
+                <div style={{ fontSize: isMobile ? 10.5 : 11.5, color: gradeColor(e.grade), fontWeight: 700, marginTop: -4 }}>{e.gradeLabel}</div>
+                <div style={{ fontSize: isMobile ? 12 : 13, color: c.TEXT, lineHeight: 1.7 }}>{e.plain}</div>
+                <details>
+                  <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, userSelect: 'none', paddingTop: 2 }}>
+                    ▸ くわしい数字でみる
+                  </summary>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: `1px solid ${c.RULE}`, paddingTop: 12, marginTop: 8 }}>
+                    {kv('狙い', e.aim)}
+                    {kv('合図', e.trigger)}
+                    {kv('持つ期間', e.hold)}
+                    {kv('1回の見込み', e.ev, c.WIN)}
+                    {kv('最大の負け', e.dd, c.LOSS)}
+                  </div>
+                </details>
               </div>
             ))}
           </div>
@@ -247,8 +262,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
         {/* ════ 注意書き ════ */}
         <div style={{ padding: isMobile ? '13px 15px' : '16px 20px', borderRadius: 12, border: `1px solid ${c.RULE}`, background: c.CARD, fontSize: isMobile ? 9.5 : 10.5, color: c.SUB, fontFamily: mono, lineHeight: 1.9 }}>
-          ⚠ 20年イン・サンプル（2013〜24の大相場を含む）・季節性はn=20。「ルール通りの過去」であり将来を保証しない。<br />
-          押し目買いの保有日数は最良がサンプル依存＝最適化しない。「+EVが出るたび（年十数回）に生存サイズで張る」が正解で、毎週張る・無エッジ帯で張るは損失に収束。
+          ⚠ これは過去20年のデータで「ルール通りに売買したらこうなった」という結果です。未来を約束するものではありません。季節性は年1回なので、試せた回数（20回ぶん）も少なめです。<br />
+          基本は「チャンス（+の見込み）が来たときだけ、無理のない金額で買う」。毎回むやみに売り買いしたり、根拠がないのに張ると、かえって減りやすくなります。
         </div>
        </div>
       </div>
