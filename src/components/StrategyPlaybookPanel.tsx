@@ -305,7 +305,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       <>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22 }}>
           <p style={{ margin: 0 }}>「長期投資（買って持ちっぱなし）でいいのでは？」——いい質問です。</p>
-          <p style={{ margin: 0 }}>上げ相場では長期投資は強い。でも弱点は<b style={{ color: c.TEXT }}>暴落をまるごと食らうこと</b>。日経平均は過去に<b style={{ color: c.TEXT }}>最悪−80%、高値を取り戻すのに約34年</b>かかりました。</p>
+          <p style={{ margin: 0 }}>上げ相場では長期投資は強い。でも弱点は<b style={{ color: c.TEXT }}>暴落をまるごと食らうこと</b>。</p>
+          <p style={{ margin: 0 }}>日経平均は過去に<b style={{ color: c.TEXT }}>最悪−80%、高値を取り戻すのに約34年</b>かかりました。</p>
         </div>
 
         {/* 簡易グラフ（資産の動きイメージ） */}
@@ -317,7 +318,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           </svg>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 10 : 18, marginTop: 10, fontSize: isMobile ? 10 : 11, fontFamily: mono }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.DIM }} />長期投資（買い持ち）</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT }} />ぽいロボ流（v5a）</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT }} />ぽいロボ流</span>
           </div>
           <div style={{ marginTop: 8, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.04em' }}>※ 過去の日経平均をもとにした動きのイメージ図です</div>
         </div>
@@ -342,6 +343,10 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
     // ════ スライド3：勝てる4つの理由 ════
     { id: 's3', node: slide('勝てる4つの理由', '使う作戦・ADOPTED', (
+      <>
+      <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.85, marginBottom: isMobile ? 16 : 20 }}>
+        使うと決めた4つの作戦です。各カードの<b style={{ color: c.TEXT }}>「▸ くわしい数字でみる」</b>を開くと、<b style={{ color: c.TEXT }}>過去20年のバックテスト（検証）</b>での合図・勝率・1回の見込み・最大の下げが見られます。
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16 }}>
         {ADOPTED.map(e => (
           <div key={e.name} style={{ padding: isMobile ? '16px 16px' : '22px 22px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -366,6 +371,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           </div>
         ))}
       </div>
+      </>
     )) },
 
     // ════ 応用：資産を二重に働かせる（A＋B）════
@@ -392,7 +398,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         {/* B：応用 */}
         <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
           <div style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT, marginBottom: 9 }}>B. 株式担保信用でスイング</div>
-          <div style={{ fontSize: isMobile ? 12 : 13, color: c.SUB, lineHeight: 1.7 }}>その現物を<b style={{ color: c.TEXT }}>担保</b>に、ぽいロボ戦略（v5a）を<b style={{ color: c.TEXT }}>信用で回す</b>。同じ資産でトレードも働かせます。</div>
+          <div style={{ fontSize: isMobile ? 12 : 13, color: c.SUB, lineHeight: 1.7 }}>その現物を<b style={{ color: c.TEXT }}>担保</b>に、ぽいロボ戦略を<b style={{ color: c.TEXT }}>信用で回す</b>。同じ資産でトレードも働かせます。</div>
         </div>
 
         {/* ＝ 結論 */}
@@ -400,10 +406,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.ACCENT }}>＝ 同じ資産から A も B も</span>
           <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.TEXT }}>長期投資（A だけ）より<b>上</b>を狙えます</span>
         </div>
-
-        {point('リスクと安定性', (
-          <>担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。</>
-        ))}
 
         {/* 安全に回すコツ */}
         <div style={{ padding: isMobile ? '13px 15px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}` }}>
@@ -426,12 +428,19 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
     // ════ 注意書き ════
     { id: 'note', node: (
-      <div style={{ padding: isMobile ? '16px 18px' : '22px 26px', borderRadius: 16, border: `1px solid ${c.RULE}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
-        <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.TEXT, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>⚠</span>最後に大事なこと
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18 }}>
+        <div style={{ padding: isMobile ? '16px 18px' : '22px 26px', borderRadius: 16, border: `1px solid ${c.RULE}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
+          <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.TEXT, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>⚠</span>最後に大事なこと
+          </div>
+          これは過去20年のデータで「ルール通りに売買したらこうなった」という結果です。<b style={{ color: c.TEXT }}>未来を約束するものではありません</b>。季節性は年1回なので、試せた回数（20回ぶん）も少なめです。<br /><br />
+          基本は<b style={{ color: c.TEXT }}>「チャンス（+の見込み）が来たときだけ、無理のない金額で買う」</b>。毎回むやみに売り買いしたり、根拠がないのに張ると、かえって減りやすくなります。
         </div>
-        これは過去20年のデータで「ルール通りに売買したらこうなった」という結果です。<b style={{ color: c.TEXT }}>未来を約束するものではありません</b>。季節性は年1回なので、試せた回数（20回ぶん）も少なめです。<br /><br />
-        基本は<b style={{ color: c.TEXT }}>「チャンス（+の見込み）が来たときだけ、無理のない金額で買う」</b>。毎回むやみに売り買いしたり、根拠がないのに張ると、かえって減りやすくなります。
+
+        <div style={{ padding: isMobile ? '16px 18px' : '22px 26px', borderRadius: 16, border: `1px solid ${c.RULE}`, borderLeft: `3px solid ${c.ACCENT}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
+          <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.TEXT, marginBottom: 12 }}>リスクと安定性</div>
+          担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。<b style={{ color: c.TEXT }}>無理なレバはかけないこと。</b>
+        </div>
       </div>
     ) },
   ]
