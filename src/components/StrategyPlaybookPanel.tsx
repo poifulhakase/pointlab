@@ -167,13 +167,13 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         }}>戦略プレイブック</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 14, fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 26 : 40, maxWidth: 640 }}>
           <p style={{ margin: 0 }}>ぽいロボを使って<b style={{ color: c.TEXT }}>「どう売買し、どう運用していくか」</b>をまとめた作戦書です。</p>
-          <p style={{ margin: 0 }}>使うのは、ふつうに買える<b style={{ color: c.TEXT }}>日経225のETF</b>だけ。<b style={{ color: c.TEXT }}>信用取引・空売り・追証はなし</b>です。</p>
+          <p style={{ margin: 0 }}>使うのは、ふつうに買える<b style={{ color: c.TEXT }}>日経225のETF</b>です。</p>
           <p style={{ margin: 0 }}>ルールはシンプル。<b style={{ color: c.TEXT }}>下げたら買い、上げている間は持つ</b>。</p>
           <p style={{ margin: 0 }}>大もうけより、<b style={{ color: c.TEXT }}>「大きく負けないこと」を最優先</b>にします。</p>
         </div>
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('目標リターン（1年）', '約+10%', c.WIN)}
-          {stat('使うもの（信用なし）', '日経平均 ブル/ベア1倍2倍 ETF', c.TEXT, true)}
+          {stat('使うもの', '日経平均 ブル/ベア1倍2倍 ETF', c.TEXT, true)}
         </div>
         <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
           ↓ 下の矢印で1枚ずつめくれます
@@ -184,8 +184,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     // ════ 全体像 ════
     { id: 'overview', node: slide('ぽいロボでの運用', '全体像・OVERVIEW', (
       <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18 }}>
-        <div style={{ fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>
-          ぽいロボは「相場のいま」を読む<b style={{ color: c.TEXT }}>3つの道具</b>と、迷ったとき頼れる<b style={{ color: c.TEXT }}>伴走</b>でできています。やることは、<b style={{ color: c.TEXT }}>道具で“いまの地合い”を確かめ、ルールどおり淡々と動く</b>だけです。
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 10, fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>
+          <p style={{ margin: 0 }}>ぽいロボは「相場のいま」を読む<b style={{ color: c.TEXT }}>3つの道具</b>と、迷ったとき頼れる<b style={{ color: c.TEXT }}>伴走</b>でできています。</p>
+          <p style={{ margin: 0 }}>やることは、<b style={{ color: c.TEXT }}>道具で“いまの地合い”を確かめ、ルールどおり淡々と動く</b>だけです。</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 14 }}>
           {[
