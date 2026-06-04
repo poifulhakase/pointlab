@@ -41,13 +41,6 @@ const ACTIONS = [
   { n: '3', t: '3月と12月は買う', s: '3月＝配当の権利確定前／12月＝年末。上がりやすい季節' },
 ]
 
-// ── 現実解（CAGR×DDのトレードオフ・20年BT・2倍）──
-const FRONTIER = [
-  { label: '全部のせ（むかしのやり方）',       cagr: 14.4, dd: 62, main: false },
-  { label: '暴落よけを少しだけ',             cagr: 13.0, dd: 53, main: false },
-  { label: '本線：暴落よけを徹底（v5a）',     cagr: 10.2, dd: 38, main: true },
-]
-
 // ── 採用エッジ（検証済み・使う）── plain=やさしい説明 / 以下は折りたたみ内の詳細
 type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; plain: string; aim: string; trigger: string; hold: string; ev: string; dd: string }
 const ADOPTED: Edge[] = [
@@ -307,45 +300,42 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       </>
     )) },
 
-    // ════ スライド2：なぜ「年+10%」なの？ ════
-    { id: 's2', node: slide('なぜ「年+10%」なの？', 'よくばらない理由・REALITY', (
+    // ════ スライド2：長期投資と何が違う？ ════
+    { id: 's2', node: slide('長期投資と何が違う？', 'なぜ“買い持ち”だけじゃないか・VS BUY&HOLD', (
       <>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 24 }}>
-          <p style={{ margin: 0 }}>「年+10%」は少なく感じるかもしれません。</p>
-          <p style={{ margin: 0 }}>でも、ねらうリターンが大きいほど<b style={{ color: c.TEXT }}>途中の「谷」（最大の下げ）も深くなります</b>。大事なのは増える額より、<b style={{ color: c.TEXT }}>その谷に耐えて最後まで続けられるか</b>。</p>
-          <p style={{ margin: 0 }}>下は<b style={{ color: c.TEXT }}>「最悪のとき、100万円がいくらまで残るか」</b>を過去20年で見たもの。<b style={{ color: c.TEXT }}>残りが多い＝谷が浅い＝続けやすい</b>です。</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22 }}>
+          <p style={{ margin: 0 }}>「長期投資（買って持ちっぱなし）でいいのでは？」——いい質問です。</p>
+          <p style={{ margin: 0 }}>上げ相場では長期投資は強い。でも弱点は<b style={{ color: c.TEXT }}>暴落をまるごと食らうこと</b>。日経平均は過去に<b style={{ color: c.TEXT }}>最悪−80%、高値を取り戻すのに約34年</b>かかりました。</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {FRONTIER.map(f => {
-            const remain = Math.round(100 * (1 - f.dd / 100))
-            const grow = (Math.pow(1 + f.cagr / 100, 10)).toFixed(1)
-            return (
-              <div key={f.label} style={{
-                padding: isMobile ? '15px 16px' : '18px 22px', borderRadius: 12,
-                border: f.main ? `1.5px solid ${c.ACCENT}` : `1px solid ${c.RULE}`,
-                background: f.main ? (c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)') : c.TAGBG,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-                  <span style={{ fontWeight: 800, fontSize: isMobile ? 12 : 13.5, color: f.main ? c.ACCENT : c.TEXT }}>{f.label}</span>
-                  {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.ACCENT, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7, fontFamily: mono }}>
-                  <span style={{ color: c.DIM, fontSize: isMobile ? 10 : 11 }}>最悪の谷：−{f.dd}%</span>
-                  <span style={{ color: f.main ? c.ACCENT : c.TEXT, fontWeight: 800, fontSize: isMobile ? 16 : 19 }}>約{remain}万円 残る</span>
-                </div>
-                <div style={{ height: 10, borderRadius: 5, background: c.L ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${remain}%`, background: f.main ? c.ACCENT : c.DIM, borderRadius: 5, transition: 'width .4s', boxShadow: f.main && !c.L ? `0 0 10px ${c.ACCENT}55` : 'none' }} />
-                </div>
-                <div style={{ marginTop: 11, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono }}>
-                  10年後の増え方：約{grow}倍
-                </div>
-              </div>
-            )
-          })}
+
+        {/* 簡易グラフ（資産の動きイメージ） */}
+        <div style={{ padding: isMobile ? '14px 12px' : '18px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+          <svg viewBox="0 0 320 165" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            <line x1="8" y1="120" x2="312" y2="120" stroke={c.RULE} strokeWidth="1" strokeDasharray="3 4" />
+            <polyline points="8,120 52,98 92,72 118,152 158,152 198,148 248,118 312,96" fill="none" stroke={c.DIM} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="8,122 56,100 100,84 128,106 170,86 230,80 312,74" fill="none" stroke={c.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 10 : 18, marginTop: 10, fontSize: isMobile ? 10 : 11, fontFamily: mono }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.DIM }} />長期投資（買い持ち）</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT }} />ぽいロボ流（v5a）</span>
+          </div>
+          <div style={{ marginTop: 8, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.04em' }}>※ 過去の日経平均をもとにした動きのイメージ図です</div>
         </div>
-        <div style={{ marginTop: 20, padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: 9 }}>
-          <p style={{ margin: 0 }}>増え方（約3.8倍〜）だけなら上の作戦が大きい。でも上ほど谷が深く、最悪のとき<b style={{ color: c.TEXT }}>100万円が38万・47万…（2倍を持ちっぱなしなら12万）</b>まで沈みます。多くの人はそこで耐えられず売って退場＝<b style={{ color: c.TEXT }}>紙の上のもうけは手に入りません</b>。</p>
-          <p style={{ margin: 0 }}><b style={{ color: c.TEXT }}>本線（v5a）は谷が一番浅く、最悪でも約62万円が残る</b>。だから<b style={{ color: c.TEXT }}>最後まで持ち続けられる</b>——これが選ぶ理由です。</p>
+
+        {/* 比較2行 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, border: `1px solid ${c.RULE}`, background: c.TAGBG }}>
+            <span style={{ width: 16, height: 3, borderRadius: 2, background: c.DIM, marginTop: 7, flexShrink: 0 }} />
+            <span style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.7 }}><b style={{ color: c.TEXT }}>長期投資</b>：暴落をまるごと（2008年 −60%／最悪 −80%・高値回復に約34年）。相場まかせで下げに無力。</span>
+          </div>
+          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, border: `1.5px solid ${c.ACCENT}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)' }}>
+            <span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT, marginTop: 7, flexShrink: 0 }} />
+            <span style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.7 }}><b style={{ color: c.ACCENT }}>ぽいロボ流</b>：谷を <b style={{ color: c.TEXT }}>−38%</b> に抑え、下げ続けるトレンドでは<b style={{ color: c.TEXT }}>降りる</b>。だから生き残れる。</span>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 18, padding: isMobile ? '14px 16px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.8 }}>
+          長期投資は“上げ相場専用”で、暴落と長い低迷をそのまま受けます。<b style={{ color: c.TEXT }}>ぽいロボ流は谷を浅く抑えて「生き残りながら続ける」</b>。年+10%を目標にするのは、欲張らず最後まで走り切るためです。
         </div>
       </>
     )) },
@@ -374,6 +364,45 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
               </div>
             </details>
           </div>
+        ))}
+      </div>
+    )) },
+
+    // ════ 応用：資産を二重に働かせる（A＋B）════
+    { id: 'advanced', node: slide('応用：資産を二重に働かせる', '長期投資を超える・ADVANCED', (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 13 : 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 10, fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>
+          <p style={{ margin: 0 }}>長期投資（現物を持つ）でも、配当・優待・値上がりはもらえます。でも資産は<b style={{ color: c.TEXT }}>“それだけ”</b>。</p>
+          <p style={{ margin: 0 }}>ぽいロボ流は、その<b style={{ color: c.TEXT }}>現物を「担保」にして、同じ資産でトレード（スイング）も重ねます</b>。</p>
+        </div>
+
+        {/* A：土台 */}
+        <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+          <div style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT, marginBottom: 11 }}>A. 現物を長期保有（土台）</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 9 }}>
+            {['高配当', '株主優待', 'キャピタルゲイン'].map(x => (
+              <span key={x} style={{ fontSize: isMobile ? 11 : 12, fontWeight: 700, color: c.ACCENT, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', borderRadius: 999, padding: '4px 12px' }}>{x}</span>
+            ))}
+          </div>
+          <div style={{ fontSize: isMobile ? 11 : 12, color: c.SUB }}>持っているだけでもらえる（＝ふつうの長期投資）</div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', color: c.ACCENT, fontSize: 22, fontWeight: 800, fontFamily: mono, lineHeight: 1 }}>＋</div>
+
+        {/* B：応用 */}
+        <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+          <div style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.TEXT, marginBottom: 9 }}>B. 株式担保信用でスイング</div>
+          <div style={{ fontSize: isMobile ? 12 : 13, color: c.SUB, lineHeight: 1.7 }}>その現物を<b style={{ color: c.TEXT }}>担保</b>に、ぽいロボ戦略（v5a）を<b style={{ color: c.TEXT }}>信用で回す</b>。同じ資産でトレードも働かせます。</div>
+        </div>
+
+        {/* ＝ 結論 */}
+        <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1.5px solid ${c.ACCENT}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)', textAlign: 'center' }}>
+          <span style={{ fontWeight: 800, fontSize: isMobile ? 13 : 15, color: c.ACCENT }}>＝ 同じ資産から A も B も</span>
+          <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.TEXT }}>長期投資（A だけ）より<b>上</b>を狙えます</span>
+        </div>
+
+        {point('リスクと安定性', (
+          <>担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。無理なレバはかけないこと。</>
         ))}
       </div>
     )) },
