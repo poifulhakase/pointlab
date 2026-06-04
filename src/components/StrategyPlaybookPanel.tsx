@@ -47,7 +47,6 @@ const FRONTIER = [
   { label: '暴落よけを少しだけ',             cagr: 13.0, dd: 53, main: false },
   { label: '本線：暴落よけを徹底（v5a）',     cagr: 10.2, dd: 38, main: true },
 ]
-const CAGR_MAX = 15, DD_MAX = 65
 
 // ── 採用エッジ（検証済み・使う）── plain=やさしい説明 / 以下は折りたたみ内の詳細
 type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; plain: string; aim: string; trigger: string; hold: string; ev: string; dd: string }
@@ -82,14 +81,14 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   )
 
   // KPIスタット
-  const stat = (label: string, value: string, color: string) => (
+  const stat = (label: string, value: string, color: string, small = false) => (
     <div style={{
       flex: 1, minWidth: isMobile ? 0 : 130, padding: isMobile ? '16px 18px' : '24px 26px',
       borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG,
       boxShadow: c.L ? '0 1px 6px rgba(0,50,110,0.05)' : 'none',
     }}>
       <div style={{ fontSize: isMobile ? 9 : 10.5, color: c.DIM, fontFamily: mono, letterSpacing: '0.08em', marginBottom: 13 }}>{label}</div>
-      <div style={{ fontSize: isMobile ? 20 : 27, fontWeight: 800, color, lineHeight: 1, letterSpacing: '0.01em' }}>{value}</div>
+      <div style={{ fontSize: small ? (isMobile ? 14 : 17) : (isMobile ? 20 : 27), fontWeight: 800, color, lineHeight: small ? 1.4 : 1, letterSpacing: '0.01em' }}>{value}</div>
     </div>
   )
 
@@ -98,19 +97,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     <div style={{ display: 'flex', gap: 11, alignItems: 'baseline' }}>
       <span style={{ flexShrink: 0, width: isMobile ? 48 : 54, fontSize: isMobile ? 9 : 10, color: c.DIM, fontWeight: 700, fontFamily: mono, letterSpacing: '0.03em', lineHeight: 1.6 }}>{label}</span>
       <span style={{ fontSize: isMobile ? 11 : 12.5, color: color || c.TEXT, lineHeight: 1.65, fontWeight: color ? 700 : 400 }}>{value}</span>
-    </div>
-  )
-
-  // 現実解のバー（CAGR=緑 / DD=赤）
-  const bar = (caption: string, value: string, widthPct: number, color: string) => (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: isMobile ? 9 : 10.5, marginBottom: 5, fontFamily: mono }}>
-        <span style={{ color: c.DIM }}>{caption}</span>
-        <span style={{ color, fontWeight: 800, fontSize: isMobile ? 12 : 14 }}>{value}</span>
-      </div>
-      <div style={{ height: 9, borderRadius: 5, background: c.L ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${Math.min(100, widthPct)}%`, background: color, borderRadius: 5, transition: 'width .3s' }} />
-      </div>
     </div>
   )
 
@@ -138,7 +124,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('目標リターン（1年）', '約+10%', c.WIN)}
           {stat('覚悟する最大の負け', '−38%', c.LOSS)}
-          {stat('使うもの（信用なし）', '現物ETF', c.TEXT)}
+          {stat('使うもの（信用なし）', '日経平均 ブル/ベア2倍 ETF', c.TEXT, true)}
         </div>
         <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
           ↓ 下の矢印で1枚ずつめくれます
@@ -188,28 +174,38 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 24 }}>
           <p style={{ margin: 0 }}>「年+10%」は少なく感じるかもしれません。</p>
           <p style={{ margin: 0 }}>でも<b style={{ color: c.TEXT }}>もうけを大きく狙うほど、負けたときの痛みも深くなります</b>。両方を同時に良くすることはできません。</p>
-          <p style={{ margin: 0 }}>下のグラフは、“どこまで暴落をよけるか”で結果がどう変わるかを過去20年で試したもの。<b style={{ color: c.TEXT }}>だから欲ばらず、まず「生き残ること」を優先します。</b></p>
+          <p style={{ margin: 0 }}>下のグラフは、100万円を10年つみ上げたらいくらになるか（と、途中の一番きつい谷）を過去20年で試したもの。<b style={{ color: c.TEXT }}>だから欲ばらず、まず「生き残ること」を優先します。</b></p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {FRONTIER.map(f => (
-            <div key={f.label} style={{
-              padding: isMobile ? '14px 16px' : '18px 22px', borderRadius: 12,
-              border: f.main ? `1.5px solid ${c.ACCENT}` : `1px solid ${c.RULE}`,
-              background: f.main ? (c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)') : c.TAGBG,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
-                <span style={{ fontWeight: 800, fontSize: isMobile ? 12 : 13.5, color: f.main ? c.ACCENT : c.TEXT }}>{f.label}</span>
-                {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.ACCENT, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {FRONTIER.map(f => {
+            const result = Math.round(100 * Math.pow(1 + f.cagr / 100, 10))
+            return (
+              <div key={f.label} style={{
+                padding: isMobile ? '15px 16px' : '18px 22px', borderRadius: 12,
+                border: f.main ? `1.5px solid ${c.ACCENT}` : `1px solid ${c.RULE}`,
+                background: f.main ? (c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)') : c.TAGBG,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
+                  <span style={{ fontWeight: 800, fontSize: isMobile ? 12 : 13.5, color: f.main ? c.ACCENT : c.TEXT }}>{f.label}</span>
+                  {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.ACCENT, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7, fontFamily: mono }}>
+                  <span style={{ color: c.DIM, fontSize: isMobile ? 10 : 11 }}>100万円が10年後（毎年つみ上げ）</span>
+                  <span style={{ color: c.WIN, fontWeight: 800, fontSize: isMobile ? 16 : 19 }}>約{result}万円</span>
+                </div>
+                <div style={{ height: 10, borderRadius: 5, background: c.L ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${result / 400 * 100}%`, background: c.WIN, borderRadius: 5, transition: 'width .4s' }} />
+                </div>
+                <div style={{ marginTop: 11, fontSize: isMobile ? 10.5 : 11.5, color: c.SUB }}>
+                  途中の一番きつい谷（一時的）：<b style={{ color: c.TEXT }}>−{f.dd}%</b>
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 14 : 24 }}>
-                {bar('もうけ（1年）', `+${f.cagr}%`, f.cagr / CAGR_MAX * 100, c.WIN)}
-                {bar('最大の負け', `−${f.dd}%`, f.dd / DD_MAX * 100, c.LOSS)}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
-        <div style={{ marginTop: 20, padding: isMobile ? '14px 16px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.TEXT, lineHeight: 1.8 }}>
-          <b style={{ color: c.TEXT }}>採用するのは一番下（v5a）</b>。もうけは年+10%くらいに下がりますが、そのぶん<b>最大の負けを−38%に抑えられます</b>。ちなみに「2倍ETFをただ持ちっぱなし」だと最大−88%まで下がるので、それよりずっと浅い負けで済みます。
+        <div style={{ marginTop: 20, padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <p style={{ margin: 0 }}>ふえる「額」だけ見れば、上の作戦ほど大きく見えます。でも上ほど<b style={{ color: c.TEXT }}>途中で −62% 〜（2倍を持ちっぱなしなら −88%）の深い谷</b>が来ます。多くの人はそこで耐えられず、売って退場します。</p>
+          <p style={{ margin: 0 }}><b style={{ color: c.TEXT }}>本線（v5a）は約2.6倍までふえつつ、谷は一番浅い −38%</b>。だから<b style={{ color: c.TEXT }}>最後まで持ち続けられる</b>——これが選ぶ理由です。</p>
         </div>
       </>
     )) },
