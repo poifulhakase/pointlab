@@ -23,7 +23,7 @@ type Props = {
   isConnected?: boolean
   onStartConnect?: () => void
   onOpenManual?: () => void
-  onOpenLegal?: () => void
+  onOpenLegal?: (tab?: 'privacy' | 'disclaimer' | 'terms') => void
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
   onOpenPlaybook?: () => void
@@ -1074,7 +1074,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                   <NoteView theme={theme} isMobile={isMobile}
                     isAdmin={isAdmin}
                     onOpenManual={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenManual?.() }}
-                    onOpenLegal={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.() }}
+                    onOpenLegal={(tab) => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.(tab) }}
                     onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}
                     onOpenEvals={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenEvals?.() }}
                     onOpenSpec={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenSpec?.() }}

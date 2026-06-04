@@ -5,7 +5,7 @@ type Props = {
   isMobile: boolean
   isAdmin?: boolean
   onOpenManual?: () => void
-  onOpenLegal?: () => void
+  onOpenLegal?: (tab?: 'privacy' | 'disclaimer' | 'terms') => void
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
   onOpenSpec?: () => void
@@ -126,7 +126,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   isMobile: boolean
   theme: 'dark' | 'light'
   onOpenManual?: () => void
-  onOpenLegal?: () => void
+  onOpenLegal?: (tab?: 'privacy' | 'disclaimer' | 'terms') => void
   onOpenBacktest?: () => void
   onOpenEvals?: () => void
   onOpenSpec?: () => void
@@ -265,9 +265,13 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
               X
             </a>
           </div>
-          <button onClick={onOpenLegal} style={s.footerLink}>
-            プライバシーポリシー・免責事項
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 0 }}>
+            <button onClick={() => onOpenLegal?.('privacy')} style={s.footerLink}>プライバシーポリシー</button>
+            <span style={s.footerSep}>・</span>
+            <button onClick={() => onOpenLegal?.('disclaimer')} style={s.footerLink}>免責事項</button>
+            <span style={s.footerSep}>・</span>
+            <button onClick={() => onOpenLegal?.('terms')} style={s.footerLink}>利用規約</button>
+          </div>
         </div>
       </div>
     </div>
@@ -395,5 +399,11 @@ const s: Record<string, React.CSSProperties> = {
     textUnderlineOffset: 3,
     padding: '4px 8px',
     borderRadius: 4,
+  },
+  footerSep: {
+    fontSize: 11,
+    color: 'var(--text-dim)',
+    opacity: 0.5,
+    userSelect: 'none' as const,
   },
 }
