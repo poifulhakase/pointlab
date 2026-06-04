@@ -106,7 +106,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   // KPIスタット
   const stat = (label: string, value: string, color: string, small = false) => (
     <div style={{
-      flex: 1, minWidth: isMobile ? 0 : 130, padding: isMobile ? '16px 18px' : '24px 26px',
+      flex: '0 0 auto', minWidth: isMobile ? 0 : 130, padding: isMobile ? '16px 18px' : '24px 26px',
       borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG,
       boxShadow: c.L ? '0 1px 6px rgba(0,50,110,0.05)' : 'none',
     }}>
