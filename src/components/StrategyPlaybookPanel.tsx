@@ -65,16 +65,46 @@ const ADOPTED: Edge[] = [
     aim: '年末の買い需要', trigger: '12/15頃 → 12/30頃', hold: '約2週間（年1回）', ev: '+0.95%（勝率75%）', dd: '低' },
 ]
 
+// アプリ内（フッターナビ）と同一のアイコン
+function CalIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  )
+}
+function EngineIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
+      <path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+    </svg>
+  )
+}
+function ShieldGuardIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  )
+}
+
 export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
   const PAD = isMobile ? '26px 20px' : '42px 46px'
 
   // スライド枠
-  const slide = (title: string, subtitle: string, body: React.ReactNode) => (
+  const slide = (title: string, subtitle: string, body: React.ReactNode, icon?: React.ReactNode) => (
     <section style={{ borderRadius: 18, border: `1px solid ${c.TAGBDR}`, background: c.CARD, padding: PAD, boxShadow: c.L ? '0 2px 10px rgba(0,50,110,0.06)' : '0 2px 16px rgba(0,0,0,0.25)' }}>
-      <div style={{ marginBottom: isMobile ? 22 : 30, paddingBottom: isMobile ? 16 : 22, borderBottom: `1px solid ${c.RULE}` }}>
-        <div style={{ fontSize: isMobile ? 17 : 23, fontWeight: 800, color: c.TEXT, letterSpacing: '0.01em', lineHeight: 1.2 }}>{title}</div>
-        {subtitle && <div style={{ fontSize: isMobile ? 9.5 : 11, color: c.DIM, marginTop: 6, fontFamily: mono, letterSpacing: '0.12em' }}>{subtitle}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 14, marginBottom: isMobile ? 22 : 30, paddingBottom: isMobile ? 16 : 22, borderBottom: `1px solid ${c.RULE}` }}>
+        {icon && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: isMobile ? 36 : 42, height: isMobile ? 36 : 42, borderRadius: 11, flexShrink: 0, color: c.ACCENT, background: c.L ? 'rgba(3,105,161,0.08)' : 'rgba(0,229,255,0.08)', border: `1px solid ${c.TAGBDR}`, overflow: 'hidden', boxShadow: c.L ? 'none' : `0 0 10px ${c.ACCENT}22` }}>{icon}</span>
+        )}
+        <div>
+          <div style={{ fontSize: isMobile ? 17 : 23, fontWeight: 800, color: c.TEXT, letterSpacing: '0.01em', lineHeight: 1.2 }}>{title}</div>
+          {subtitle && <div style={{ fontSize: isMobile ? 9.5 : 11, color: c.DIM, marginTop: 6, fontFamily: mono, letterSpacing: '0.12em' }}>{subtitle}</div>}
+        </div>
       </div>
       {body}
     </section>
@@ -108,9 +138,20 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     </div>
   )
 
-  // 道具スライドの本体（説明文＋ポイント枠）
+  // 使い方動画の埋め込み枠（後で iframe / video を差し込む。現状はプレースホルダー）
+  const videoFrame = (
+    <div style={{ width: '100%', maxWidth: isMobile ? '100%' : 560, margin: '0 auto', aspectRatio: '16 / 9', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.L ? 'rgba(3,105,161,0.05)' : 'rgba(0,229,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+      <span style={{ width: 52, height: 52, borderRadius: '50%', border: `1.5px solid ${c.ACCENT}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: c.ACCENT, background: c.L ? 'rgba(255,255,255,0.5)' : 'rgba(0,229,255,0.06)', boxShadow: c.L ? 'none' : `0 0 14px ${c.ACCENT}33` }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </span>
+      <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: mono, color: c.DIM, letterSpacing: '0.12em' }}>使い方動画（準備中）</span>
+    </div>
+  )
+
+  // 道具スライドの本体（使い方動画＋説明文＋ポイント枠）
   const toolBody = (intro: React.ReactNode, pointLabel: string, pointText: React.ReactNode) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18 }}>
+      {videoFrame}
       <div style={{ fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>{intro}</div>
       {point(pointLabel, pointText)}
     </div>
@@ -139,7 +180,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </div>
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('目標リターン（1年）', '約+10%', c.WIN)}
-          {stat('覚悟する最大の負け', '−38%', c.LOSS)}
           {stat('使うもの（信用なし）', '日経平均 ブル/ベア2倍 ETF', c.TEXT, true)}
         </div>
         <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
@@ -155,14 +195,14 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           ぽいロボは「相場のいま」を読む<b style={{ color: c.TEXT }}>3つの道具</b>と、迷ったとき頼れる<b style={{ color: c.TEXT }}>伴走</b>でできています。やることは、<b style={{ color: c.TEXT }}>道具で“いまの地合い”を確かめ、ルールどおり淡々と動く</b>だけです。
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 14 }}>
-          {([
-            ['🗓', 'ぽいロボ カレンダー', 'この先「何が起きるか」を知る（＋レーダー通知）'],
-            ['⚙', 'ぽいロボ エンジン', 'いま「買っていい地合いか」を需給で確かめる'],
-            ['🛡', 'ぽいロボ シールド', '持っているものを「いつ手放すか」を決める'],
-            ['🤝', 'ぽいロボ コネクト', '迷ったら「博士に相談」できる（伴走）'],
-          ] as const).map(([ic, nm, ds]) => (
+          {[
+            { icon: <CalIcon />,         nm: 'ぽいロボ カレンダー', ds: 'この先「何が起きるか」を知る（＋レーダー通知）' },
+            { icon: <EngineIcon />,       nm: 'ぽいロボ エンジン',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
+            { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ シールド',   ds: '持っているものを「いつ手放すか」を決める' },
+            { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「博士に相談」できる（伴走）' },
+          ].map(({ icon, nm, ds }) => (
             <div key={nm} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
-              <span style={{ fontSize: isMobile ? 20 : 24, flexShrink: 0, lineHeight: 1.1 }}>{ic}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 10, flexShrink: 0, color: c.ACCENT, background: c.L ? 'rgba(3,105,161,0.08)' : 'rgba(0,229,255,0.08)', border: `1px solid ${c.TAGBDR}`, overflow: 'hidden' }}>{icon}</span>
               <span>
                 <b style={{ fontSize: isMobile ? 13 : 14.5, color: c.ACCENT }}>{nm}</b>
                 <span style={{ display: 'block', marginTop: 4, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.55 }}>{ds}</span>
@@ -175,54 +215,61 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
     // ════ 1週間の流れ ════
     { id: 'week', node: slide('1週間の流れ', '土曜起点・ROUTINE', (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {([
           ['1', '土曜（週の準備）', '金曜までの需給データが出そろう日。エンジンで最新の地合いを確認し、カレンダーで来週の予定（イベント・季節）をチェック。レーダー通知をONに。'],
           ['2', '平日（実行）', '重要イベントの前は控えめに。チャンスがルールに合えば買う。合わなければ何もしないのも仕事。'],
           ['3', '持っている間（管理）', 'シールドで出口（利確・損切り）を見守る。'],
           ['4', '迷ったら（伴走）', 'コネクトで博士に相談。ひとりで抱えない。'],
-        ] as const).map(([n, h, d]) => (
-          <div key={n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
-            <span style={{ flexShrink: 0, width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: isMobile ? 14 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}55` }}>{n}</span>
-            <span style={{ paddingTop: 2 }}>
-              <b style={{ fontSize: isMobile ? 13.5 : 15 }}>{h}</b>
-              <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.6 }}>{d}</span>
-            </span>
+        ] as const).map(([n, h, d], i, arr) => (
+          <div key={n}>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 20px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
+              <span style={{ flexShrink: 0, width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, borderRadius: '50%', background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: isMobile ? 14 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}55` }}>{n}</span>
+              <span style={{ paddingTop: 2 }}>
+                <b style={{ fontSize: isMobile ? 13.5 : 15 }}>{h}</b>
+                <span style={{ display: 'block', marginTop: 5, fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.6 }}>{d}</span>
+              </span>
+            </div>
+            {i < arr.length - 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: isMobile ? '7px 0' : '9px 0', color: c.ACCENT }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>
+              </div>
+            )}
           </div>
         ))}
-        <div style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.8, marginTop: 4 }}>
+        <div style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.8, marginTop: isMobile ? 16 : 20 }}>
           毎日張りつく必要はありません。<b style={{ color: c.TEXT }}>「土曜に整える → 平日に動く → 出口を守る → 迷えば相談」</b>の繰り返しです。
         </div>
       </div>
     )) },
 
     // ════ 道具：ぽいロボ レーダー（カレンダー）════
-    { id: 'radar', node: slide('📡 ぽいロボ レーダー', 'いつを知る・CALENDAR', toolBody(
+    { id: 'radar', node: slide('ぽいロボ レーダー', 'いつを知る・CALENDAR', toolBody(
       <>配当落ち日・SQ・FOMC・雇用統計・休場日が<b style={{ color: c.TEXT }}>自動で並ぶ</b>カレンダーです。重要イベントの前は値が荒れやすいので<b style={{ color: c.TEXT }}>新規は控えめ</b>に。<b style={{ color: c.TEXT }}>3月（権利確定前）・12月（年末）は季節の追い風</b>です。</>,
       '使い方の主役＝レーダー通知',
       <>気になるイベント（FOMC・雇用統計・SQ など）を選んでおくと、<b style={{ color: c.TEXT }}>前日のお昼（12:30）にスマホへ通知</b>が届きます。受け取る種別は設定で選べるので、見たいイベントだけを逃さずキャッチできます。</>,
-    )) },
+    ), <CalIcon />) },
 
     // ════ 道具：ぽいロボ エンジン ════
-    { id: 'engine', node: slide('⚙ ぽいロボ エンジン', '買っていい地合いか・ENGINE', toolBody(
+    { id: 'engine', node: slide('ぽいロボ エンジン', '買っていい地合いか・ENGINE', toolBody(
       <>需給を物理にたとえて、相場のエネルギー（TEV）を診断します。「<b style={{ color: c.TEXT }}>需給×価格セル</b>」「<b style={{ color: c.TEXT }}>慣性持続性</b>」で、いまが<b style={{ color: c.TEXT }}>順行・売られすぎ・限界</b>のどれかがひと目で分かります。</>,
       '基本の使い方',
       <>ボタン一つでAI用プロンプトをコピーでき、AIに<b style={{ color: c.TEXT }}>確信度つきの判定</b>を出してもらえます。<b style={{ color: c.TEXT }}>“枯渇圏”のときは本命の買いを控える</b>——これが基本です。</>,
-    )) },
+    ), <EngineIcon />) },
 
     // ════ 道具：ぽいロボ シールド ════
-    { id: 'shield-tool', node: slide('🛡 ぽいロボ シールド', 'いつ手放すか・SHIELD', toolBody(
+    { id: 'shield-tool', node: slide('ぽいロボ シールド', 'いつ手放すか・SHIELD', toolBody(
       <>持っているポジション専用の道具です。証券口座の<b style={{ color: c.TEXT }}>保有画面のスクショ</b>を撮り、シールドの市場データ＋プロンプトと一緒にAIへ。<b style={{ color: c.TEXT }}>持ち続ける／利確／損切り</b>の出口を相談できます。</>,
       '「守り」の道具',
       <>エントリー（買い）ではなく、買ったあとの<b style={{ color: c.TEXT }}>出口</b>を整える道具。持っている間の不安をここで整理します。</>,
-    )) },
+    ), <ShieldGuardIcon />) },
 
     // ════ 道具：ぽいロボ コネクト ════
-    { id: 'connect', node: slide('🤝 ぽいロボ コネクト', 'ひとりで悩まない・CONNECT', toolBody(
+    { id: 'connect', node: slide('ぽいロボ コネクト', 'ひとりで悩まない・CONNECT', toolBody(
       <>研究室の右下から、<b style={{ color: c.TEXT }}>ぽいふる博士と30分の通話</b>を予約できます。空き枠を選んで申請し、承認されると画面から接続。「自分の運用を見てほしい」「判断に迷っている」——そんなときの<b style={{ color: c.TEXT }}>伴走</b>の場です。</>,
       '次は「取引のルール」へ',
       <>道具で地合いを見たら、あとは次のルールで淡々と動くだけ。下の矢印で取引パートへ進みましょう。</>,
-    )) },
+    ), <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />) },
 
     // ════ 取引パート（PART 2）════
     { id: 's1', node: slide('やることは3つだけ', 'PART 2 ─ 取引のルール', (
