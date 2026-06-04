@@ -316,23 +316,17 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             <polyline points="8,120 52,98 92,72 118,152 158,152 198,148 248,118 312,96" fill="none" stroke={c.DIM} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             <polyline points="8,122 56,100 100,84 128,106 170,86 230,80 312,74" fill="none" stroke={c.ACCENT} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 10 : 18, marginTop: 10, fontSize: isMobile ? 10 : 11, fontFamily: mono }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.DIM }} />長期投資（買い持ち）</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: c.SUB }}><span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT }} />ぽいロボ流</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 9 : 11, marginTop: isMobile ? 10 : 14 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ width: 16, height: 3, borderRadius: 2, background: c.DIM, marginTop: isMobile ? 6 : 7, flexShrink: 0 }} />
+              <span style={{ fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.65 }}><b style={{ color: c.TEXT }}>長期投資</b>：暴落をまるごと（2008年 −60%／最悪 −80%・高値回復に約34年）。相場まかせで下げに無力。</span>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT, marginTop: isMobile ? 6 : 7, flexShrink: 0 }} />
+              <span style={{ fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.65 }}><b style={{ color: c.ACCENT }}>ぽいロボ流</b>：谷を <b style={{ color: c.TEXT }}>−38%</b> に抑え、下げ続けるトレンドでは<b style={{ color: c.TEXT }}>降りる</b>。だから生き残れる。</span>
+            </div>
           </div>
-          <div style={{ marginTop: 8, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.04em' }}>※ 過去の日経平均をもとにした動きのイメージ図です</div>
-        </div>
-
-        {/* 比較2行 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
-          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, border: `1px solid ${c.RULE}`, background: c.TAGBG }}>
-            <span style={{ width: 16, height: 3, borderRadius: 2, background: c.DIM, marginTop: 7, flexShrink: 0 }} />
-            <span style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.7 }}><b style={{ color: c.TEXT }}>長期投資</b>：暴落をまるごと（2008年 −60%／最悪 −80%・高値回復に約34年）。相場まかせで下げに無力。</span>
-          </div>
-          <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, border: `1.5px solid ${c.ACCENT}`, background: c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)' }}>
-            <span style={{ width: 16, height: 3, borderRadius: 2, background: c.ACCENT, marginTop: 7, flexShrink: 0 }} />
-            <span style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.7 }}><b style={{ color: c.ACCENT }}>ぽいロボ流</b>：谷を <b style={{ color: c.TEXT }}>−38%</b> に抑え、下げ続けるトレンドでは<b style={{ color: c.TEXT }}>降りる</b>。だから生き残れる。</span>
-          </div>
+          <div style={{ marginTop: isMobile ? 8 : 10, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.04em' }}>※ 過去の日経平均をもとにした動きのイメージ図です</div>
         </div>
       </>
     )) },
