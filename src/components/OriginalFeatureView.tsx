@@ -14,7 +14,7 @@ export function OriginalFeatureView({ theme, isMobile, onClose }: Props) {
 
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: c.bg, backgroundImage: c.scan }}>
-      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
+      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1, display: 'flex', flexDirection: 'column' }}>
 
         <div style={{
           position: 'sticky', top: 0, zIndex: 5,
@@ -48,7 +48,7 @@ export function OriginalFeatureView({ theme, isMobile, onClose }: Props) {
           )}
         </div>
 
-        <div style={{ maxWidth: 780, margin: '0 auto', padding: isMobile ? '40px 16px 80px' : '60px 32px 100px', textAlign: 'center' }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '24px 16px' : '32px', textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 16 }}>🔬</div>
           <p style={{ fontSize: 14, color: c.dim, fontFamily: mono, letterSpacing: '0.08em' }}>準備中</p>
         </div>
