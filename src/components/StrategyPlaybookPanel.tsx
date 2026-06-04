@@ -87,13 +87,12 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   // KPIスタット
   const stat = (label: string, value: string, color: string) => (
     <div style={{
-      flex: 1, minWidth: isMobile ? 0 : 130, padding: isMobile ? '15px 16px' : '20px 22px',
-      borderRadius: 14, border: `1px solid ${c.TAGBDR}`, borderTop: `2px solid ${color}`,
-      background: `linear-gradient(165deg, ${color}0e, ${c.TAGBG} 60%)`,
+      flex: 1, minWidth: isMobile ? 0 : 130, padding: isMobile ? '16px 18px' : '24px 26px',
+      borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG,
       boxShadow: c.L ? '0 1px 6px rgba(0,50,110,0.05)' : 'none',
     }}>
-      <div style={{ fontSize: isMobile ? 9 : 10.5, color: c.DIM, fontFamily: mono, letterSpacing: '0.08em', marginBottom: 10 }}>{label}</div>
-      <div style={{ fontSize: isMobile ? 20 : 27, fontWeight: 800, color, lineHeight: 1, letterSpacing: '0.01em', textShadow: c.L ? 'none' : `0 0 14px ${color}3a` }}>{value}</div>
+      <div style={{ fontSize: isMobile ? 9 : 10.5, color: c.DIM, fontFamily: mono, letterSpacing: '0.08em', marginBottom: 13 }}>{label}</div>
+      <div style={{ fontSize: isMobile ? 20 : 27, fontWeight: 800, color, lineHeight: 1, letterSpacing: '0.01em' }}>{value}</div>
     </div>
   )
 
@@ -118,33 +117,31 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     </div>
   )
 
-  const gradeColor = (g: Edge['grade']) => g === '◎' ? c.WIN : g === '△' ? c.WARN : c.ACCENT
-
   // ── スライド本体（1枚ずつ切替）──
   const slides: { id: string; node: React.ReactNode }[] = [
     // ════ 表紙 ════
     { id: 'cover', node: (
       <div style={{ padding: isMobile ? '4px 2px' : '8px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <span style={{ width: 24, height: 2, borderRadius: 2, background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}` }} />
           <span style={{ fontSize: isMobile ? 10 : 11, fontWeight: 700, letterSpacing: '0.28em', color: c.ACCENT, fontFamily: mono }}>POIROBO STRATEGY</span>
         </div>
         <div style={{
-          fontSize: isMobile ? 27 : 42, fontWeight: 800, lineHeight: 1.15, letterSpacing: '0.01em', marginBottom: 14,
+          fontSize: isMobile ? 27 : 42, fontWeight: 800, lineHeight: 1.15, letterSpacing: '0.01em', marginBottom: 18,
           background: c.L ? 'linear-gradient(92deg,#0c4a6e,#0369a1)' : 'linear-gradient(92deg,#ffffff 35%,#00e5ff)',
           WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: c.TEXT,
           filter: c.L ? 'none' : 'drop-shadow(0 0 18px rgba(0,229,255,0.22))', width: 'fit-content',
         }}>戦略プレイブック</div>
-        <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.95, marginBottom: isMobile ? 22 : 32, maxWidth: 700 }}>
+        <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 2.05, marginBottom: isMobile ? 26 : 42, maxWidth: 680 }}>
           このページは、ぽいロボの「どう売買するか」の作戦書です。<b style={{ color: c.TEXT }}>むずかしい信用取引や空売りは使いません</b>。買うのは、ふつうに買える日経225の<b style={{ color: c.TEXT }}>ETF（上場投資信託）</b>だけ。<br />
-          やることはシンプルで、<b style={{ color: c.TEXT }}>下げたら買う・上げている間は持つ</b>をルールにします。大もうけより<b style={{ color: c.WIN }}>「大きく負けないこと」を最優先</b>にして、<b style={{ color: c.WIN }}>1年で +10%くらい</b>を、<b style={{ color: c.LOSS }}>負けても −38%まで</b>に抑えるのが目標です。
+          やることはシンプルで、<b style={{ color: c.TEXT }}>下げたら買う・上げている間は持つ</b>をルールにします。大もうけより<b style={{ color: c.TEXT }}>「大きく負けないこと」を最優先</b>にして、<b style={{ color: c.TEXT }}>1年で +10%くらい</b>を、<b style={{ color: c.TEXT }}>負けても −38%まで</b>に抑えるのが目標です。
         </div>
-        <div style={{ display: 'flex', gap: isMobile ? 10 : 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('目標リターン（1年）', '約+10%', c.WIN)}
           {stat('覚悟する最大の負け', '−38%', c.LOSS)}
-          {stat('使うもの（信用なし）', '現物ETF', c.ACCENT)}
+          {stat('使うもの（信用なし）', '現物ETF', c.TEXT)}
         </div>
-        <div style={{ marginTop: isMobile ? 22 : 30, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
+        <div style={{ marginTop: isMobile ? 26 : 38, fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, letterSpacing: '0.06em' }}>
           ↓ 下の矢印で1枚ずつめくれます
         </div>
       </div>
@@ -168,7 +165,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: isMobile ? 10 : 11.5, color: c.DIM, fontWeight: 700, fontFamily: mono, marginRight: 2 }}>やらない：</span>
           {['信用・空売り', '毎日売買', '損切りの連発'].map(x => (
-            <span key={x} style={{ fontSize: isMobile ? 10.5 : 12, color: c.LOSS, border: `1px solid ${c.L ? 'rgba(220,38,38,0.3)' : 'rgba(248,113,113,0.3)'}`, background: c.L ? 'rgba(220,38,38,0.05)' : 'rgba(248,113,113,0.07)', borderRadius: 999, padding: '4px 12px', fontWeight: 600 }}>✕ {x}</span>
+            <span key={x} style={{ fontSize: isMobile ? 10.5 : 12, color: c.SUB, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, borderRadius: 999, padding: '4px 12px', fontWeight: 600 }}>✕ {x}</span>
           ))}
         </div>
 
@@ -191,18 +188,18 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       <>
         <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.TEXT, lineHeight: 1.85, marginBottom: isMobile ? 18 : 22 }}>
           「年+10%」は少なく感じるかもしれません。でも、<b style={{ color: c.TEXT }}>もうけを大きく狙うほど、負けるときの痛み（最大の下げ）も深くなります</b>。両方をいっぺんに良くすることはできません。<br />
-          下のグラフは、同じ作戦でも“どこまで暴落をよけるか”でどう変わるかを、過去20年で試したものです。<b style={{ color: c.WIN }}>だから欲ばらず、まず「生き残ること」を優先します。</b>
+          下のグラフは、同じ作戦でも“どこまで暴落をよけるか”でどう変わるかを、過去20年で試したものです。<b style={{ color: c.TEXT }}>だから欲ばらず、まず「生き残ること」を優先します。</b>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {FRONTIER.map(f => (
             <div key={f.label} style={{
-              padding: isMobile ? '13px 14px' : '16px 20px', borderRadius: 12,
-              border: f.main ? `1.5px solid ${c.WIN}` : `1px solid ${c.RULE}`,
-              background: f.main ? (c.L ? 'rgba(21,128,61,0.07)' : 'rgba(74,222,128,0.08)') : c.TAGBG,
+              padding: isMobile ? '14px 16px' : '18px 22px', borderRadius: 12,
+              border: f.main ? `1.5px solid ${c.ACCENT}` : `1px solid ${c.RULE}`,
+              background: f.main ? (c.L ? 'rgba(3,105,161,0.06)' : 'rgba(0,229,255,0.06)') : c.TAGBG,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
-                <span style={{ fontWeight: 800, fontSize: isMobile ? 12 : 13.5, color: f.main ? c.WIN : c.TEXT }}>{f.label}</span>
-                {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.WIN, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
+                <span style={{ fontWeight: 800, fontSize: isMobile ? 12 : 13.5, color: f.main ? c.ACCENT : c.TEXT }}>{f.label}</span>
+                {f.main && <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.ACCENT, borderRadius: 999, padding: '2px 10px', letterSpacing: '0.06em' }}>本線</span>}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 14 : 24 }}>
                 {bar('もうけ（1年）', `+${f.cagr}%`, f.cagr / CAGR_MAX * 100, c.WIN)}
@@ -211,8 +208,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 18, padding: isMobile ? '12px 14px' : '14px 18px', borderRadius: 12, background: c.L ? 'rgba(21,128,61,0.06)' : 'rgba(74,222,128,0.06)', border: `1px solid ${c.L ? 'rgba(21,128,61,0.25)' : 'rgba(74,222,128,0.22)'}`, fontSize: isMobile ? 11 : 12.5, color: c.TEXT, lineHeight: 1.7 }}>
-          🔴 <b style={{ color: c.WIN }}>採用するのは一番下（v5a）</b>。もうけは年+10%くらいに下がりますが、そのぶん<b>最大の負けを−38%に抑えられます</b>。ちなみに「2倍ETFをただ持ちっぱなし」だと最大−88%まで下がるので、それよりずっと浅い負けで済みます。
+        <div style={{ marginTop: 20, padding: isMobile ? '14px 16px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.TEXT, lineHeight: 1.8 }}>
+          <b style={{ color: c.TEXT }}>採用するのは一番下（v5a）</b>。もうけは年+10%くらいに下がりますが、そのぶん<b>最大の負けを−38%に抑えられます</b>。ちなみに「2倍ETFをただ持ちっぱなし」だと最大−88%まで下がるので、それよりずっと浅い負けで済みます。
         </div>
       </>
     )) },
@@ -221,12 +218,12 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     { id: 's3', node: slide('3', '勝てる4つの理由', '使う作戦・ADOPTED', (
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16 }}>
         {ADOPTED.map(e => (
-          <div key={e.name} style={{ padding: isMobile ? '15px 15px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 11 }}>
+          <div key={e.name} style={{ padding: isMobile ? '16px 16px' : '22px 22px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ flexShrink: 0, fontSize: isMobile ? 13 : 14, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: gradeColor(e.grade), borderRadius: 8, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{e.grade}</span>
+              <span style={{ flexShrink: 0, fontSize: isMobile ? 13 : 14, fontWeight: 800, color: c.L ? '#fff' : '#04101a', background: c.ACCENT, borderRadius: 8, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{e.grade}</span>
               <span style={{ fontWeight: 800, fontSize: isMobile ? 13.5 : 15, color: c.ACCENT }}>{e.name}</span>
             </div>
-            <div style={{ fontSize: isMobile ? 10.5 : 11.5, color: gradeColor(e.grade), fontWeight: 700, marginTop: -4 }}>{e.gradeLabel}</div>
+            <div style={{ fontSize: isMobile ? 10.5 : 11.5, color: c.SUB, fontWeight: 700, marginTop: -4 }}>{e.gradeLabel}</div>
             <div style={{ fontSize: isMobile ? 12 : 13, color: c.TEXT, lineHeight: 1.7 }}>{e.plain}</div>
             <details>
               <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, userSelect: 'none', paddingTop: 2 }}>
@@ -341,7 +338,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ position: 'relative', zIndex: 1, height: `${total * 100}%`, transform: `translateY(-${idx * (100 / total)}%)`, transition: 'transform .52s cubic-bezier(.22,1,.36,1)' }}>
           {slides.map(s => (
             <div key={s.id} style={pageStyle}>
-              <div style={{ width: '100%', maxWidth: 1040, margin: 'auto', padding: isMobile ? '22px 16px' : '36px 40px' }}>
+              <div style={{ width: '100%', maxWidth: 1040, margin: 'auto', padding: isMobile ? '26px 18px' : '44px 52px' }}>
                 {s.node}
               </div>
             </div>
