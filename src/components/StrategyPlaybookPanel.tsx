@@ -334,10 +334,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             <span style={{ fontSize: isMobile ? 11.5 : 13, color: c.SUB, lineHeight: 1.7 }}><b style={{ color: c.ACCENT }}>ぽいロボ流</b>：谷を <b style={{ color: c.TEXT }}>−38%</b> に抑え、下げ続けるトレンドでは<b style={{ color: c.TEXT }}>降りる</b>。だから生き残れる。</span>
           </div>
         </div>
-
-        <div style={{ marginTop: 18, padding: isMobile ? '14px 16px' : '16px 20px', borderRadius: 12, background: c.TAGBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.8 }}>
-          長期投資は“上げ相場専用”で、暴落と長い低迷をそのまま受けます。<b style={{ color: c.TEXT }}>ぽいロボ流は谷を浅く抑えて「生き残りながら続ける」</b>。年+10%を目標にするのは、欲張らず最後まで走り切るためです。
-        </div>
       </>
     )) },
 
