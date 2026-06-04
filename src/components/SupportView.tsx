@@ -1127,6 +1127,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                   {/* 通知（共通コンポーネント） */}
                   <NotificationSettings
                     user={user}
+                    isMember={isMember}
                     pushEnabled={pushEnabled}
                     pushBusy={pushBusy}
                     onTogglePush={onTogglePush}
