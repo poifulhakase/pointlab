@@ -100,7 +100,7 @@ type MenuItem = { id: string; label: string; sub: string; accent: string; glow: 
 
 const MENU_ITEMS: MenuItem[] = [
   { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボとは？', accent: '#34d399', glow: 'rgba(52,211,153,0.45)',  view: null, icon: <RobotMenuIcon /> },
-  { id: 'data',     label: 'Data',     sub: '資料',           accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: null, icon: <DataIcon />      },
+  { id: 'data',     label: 'Data',     sub: '研究資料',         accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: null, icon: <DataIcon />      },
   { id: 'settings', label: 'Settings', sub: '設定',           accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null, icon: <GearIcon />      },
   { id: 'contact',  label: 'Contact',  sub: 'お問い合わせ',   accent: '#f472b6', glow: 'rgba(244,114,182,0.45)', view: null, icon: <MailIcon />      },
 ]
@@ -1046,7 +1046,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme === 'light' ? 'rgba(0,100,200,0.7)' : 'rgba(0,220,255,0.7)', boxShadow: theme === 'light' ? '0 0 7px rgba(0,100,200,0.5)' : '0 0 7px rgba(0,220,255,0.9)', flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: theme === 'light' ? 'rgba(0,60,140,0.80)' : 'rgba(80,200,255,0.85)', letterSpacing: '0.22em' }}>
-                {activeDrawer === 'data' ? 'DATA / 資料'
+                {activeDrawer === 'data' ? 'DATA / 研究資料'
                   : activeDrawer === 'contact' ? 'CONTACT / お問い合わせ'
                   : 'SETTINGS / 設定'}
               </span>
