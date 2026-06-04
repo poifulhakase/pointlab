@@ -71,14 +71,11 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   const PAD = isMobile ? '26px 20px' : '42px 46px'
 
   // スライド枠
-  const slide = (num: string, title: string, subtitle: string, body: React.ReactNode) => (
+  const slide = (title: string, subtitle: string, body: React.ReactNode) => (
     <section style={{ borderRadius: 18, border: `1px solid ${c.TAGBDR}`, background: c.CARD, padding: PAD, boxShadow: c.L ? '0 2px 10px rgba(0,50,110,0.06)' : '0 2px 16px rgba(0,0,0,0.25)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: isMobile ? 22 : 30, paddingBottom: isMobile ? 16 : 22, borderBottom: `1px solid ${c.RULE}` }}>
-        <span style={{ flexShrink: 0, width: isMobile ? 32 : 40, height: isMobile ? 32 : 40, borderRadius: 11, background: c.ACCENT, color: c.L ? '#fff' : '#04101a', fontWeight: 800, fontSize: isMobile ? 15 : 19, fontFamily: mono, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: c.L ? 'none' : `0 0 12px ${c.ACCENT}55` }}>{num}</span>
-        <div>
-          <div style={{ fontSize: isMobile ? 17 : 23, fontWeight: 800, color: c.TEXT, letterSpacing: '0.01em', lineHeight: 1.2 }}>{title}</div>
-          {subtitle && <div style={{ fontSize: isMobile ? 9.5 : 11, color: c.DIM, marginTop: 5, fontFamily: mono, letterSpacing: '0.12em' }}>{subtitle}</div>}
-        </div>
+      <div style={{ marginBottom: isMobile ? 22 : 30, paddingBottom: isMobile ? 16 : 22, borderBottom: `1px solid ${c.RULE}` }}>
+        <div style={{ fontSize: isMobile ? 17 : 23, fontWeight: 800, color: c.TEXT, letterSpacing: '0.01em', lineHeight: 1.2 }}>{title}</div>
+        {subtitle && <div style={{ fontSize: isMobile ? 9.5 : 11, color: c.DIM, marginTop: 6, fontFamily: mono, letterSpacing: '0.12em' }}>{subtitle}</div>}
       </div>
       {body}
     </section>
@@ -132,9 +129,11 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: c.TEXT,
           filter: c.L ? 'none' : 'drop-shadow(0 0 18px rgba(0,229,255,0.22))', width: 'fit-content',
         }}>戦略プレイブック</div>
-        <div style={{ fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 2.05, marginBottom: isMobile ? 26 : 42, maxWidth: 680 }}>
-          このページは、ぽいロボの「どう売買するか」の作戦書です。<b style={{ color: c.TEXT }}>むずかしい信用取引や空売りは使いません</b>。買うのは、ふつうに買える日経225の<b style={{ color: c.TEXT }}>ETF（上場投資信託）</b>だけ。<br />
-          やることはシンプルで、<b style={{ color: c.TEXT }}>下げたら買う・上げている間は持つ</b>をルールにします。大もうけより<b style={{ color: c.TEXT }}>「大きく負けないこと」を最優先</b>にして、<b style={{ color: c.TEXT }}>1年で +10%くらい</b>を、<b style={{ color: c.TEXT }}>負けても −38%まで</b>に抑えるのが目標です。
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 14, fontSize: isMobile ? 12.5 : 15, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 26 : 40, maxWidth: 640 }}>
+          <p style={{ margin: 0 }}>「どう売買するか」をまとめた、ぽいロボの作戦書です。</p>
+          <p style={{ margin: 0 }}>使うのは、ふつうに買える<b style={{ color: c.TEXT }}>日経225のETF</b>だけ。<b style={{ color: c.TEXT }}>信用取引・空売り・追証はなし</b>です。</p>
+          <p style={{ margin: 0 }}>ルールはシンプル。<b style={{ color: c.TEXT }}>下げたら買い、上げている間は持つ</b>。</p>
+          <p style={{ margin: 0 }}>大もうけより、<b style={{ color: c.TEXT }}>「大きく負けないこと」を最優先</b>にします。</p>
         </div>
         <div style={{ display: 'flex', gap: isMobile ? 10 : 18, flexWrap: 'wrap' }}>
           {stat('目標リターン（1年）', '約+10%', c.WIN)}
@@ -148,7 +147,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     ) },
 
     // ════ スライド1：やることは3つだけ ════
-    { id: 's1', node: slide('1', 'やることは3つだけ', 'WHAT TO DO', (
+    { id: 's1', node: slide('やることは3つだけ', 'WHAT TO DO', (
       <>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 11 : 14, marginBottom: isMobile ? 16 : 20 }}>
           {ACTIONS.map(a => (
@@ -184,11 +183,12 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     )) },
 
     // ════ スライド2：なぜ「年+10%」なの？ ════
-    { id: 's2', node: slide('2', 'なぜ「年+10%」なの？', 'よくばらない理由・REALITY', (
+    { id: 's2', node: slide('なぜ「年+10%」なの？', 'よくばらない理由・REALITY', (
       <>
-        <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.TEXT, lineHeight: 1.85, marginBottom: isMobile ? 18 : 22 }}>
-          「年+10%」は少なく感じるかもしれません。でも、<b style={{ color: c.TEXT }}>もうけを大きく狙うほど、負けるときの痛み（最大の下げ）も深くなります</b>。両方をいっぺんに良くすることはできません。<br />
-          下のグラフは、同じ作戦でも“どこまで暴落をよけるか”でどう変わるかを、過去20年で試したものです。<b style={{ color: c.TEXT }}>だから欲ばらず、まず「生き残ること」を優先します。</b>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 24 }}>
+          <p style={{ margin: 0 }}>「年+10%」は少なく感じるかもしれません。</p>
+          <p style={{ margin: 0 }}>でも<b style={{ color: c.TEXT }}>もうけを大きく狙うほど、負けたときの痛みも深くなります</b>。両方を同時に良くすることはできません。</p>
+          <p style={{ margin: 0 }}>下のグラフは、“どこまで暴落をよけるか”で結果がどう変わるかを過去20年で試したもの。<b style={{ color: c.TEXT }}>だから欲ばらず、まず「生き残ること」を優先します。</b></p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {FRONTIER.map(f => (
@@ -215,7 +215,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     )) },
 
     // ════ スライド3：勝てる4つの理由 ════
-    { id: 's3', node: slide('3', '勝てる4つの理由', '使う作戦・ADOPTED', (
+    { id: 's3', node: slide('勝てる4つの理由', '使う作戦・ADOPTED', (
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16 }}>
         {ADOPTED.map(e => (
           <div key={e.name} style={{ padding: isMobile ? '16px 16px' : '22px 22px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 12 }}>
