@@ -219,6 +219,23 @@ function makeC(theme: 'dark' | 'light'): C {
   }
 }
 
+// タイトルに「」がある時だけ、鉤括弧の前後にのみ改行機会(<wbr>)を挿入する。
+// word-break:keep-all と併用し、変な位置での折り返しを防いで「」境界で改行させる。
+function renderTitle(title: string): React.ReactNode {
+  if (!title.includes('「') || !title.includes('」')) return title
+  const nodes: React.ReactNode[] = []
+  let buf = ''
+  let k = 0
+  const flush = () => { if (buf) { nodes.push(<span key={`s${k++}`}>{buf}</span>); buf = '' } }
+  for (const ch of title) {
+    if (ch === '「') { flush(); nodes.push(<wbr key={`b${k++}`} />); buf += ch }
+    else if (ch === '」') { buf += ch; flush(); nodes.push(<wbr key={`b${k++}`} />) }
+    else buf += ch
+  }
+  flush()
+  return nodes
+}
+
 export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
   const total = STORIES.length
@@ -384,9 +401,11 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
           <h2 style={{
             fontSize: isMobile ? 24 : 38, fontWeight: 800, lineHeight: 1.25, color: c.TEXT,
             margin: 0, letterSpacing: '0.01em',
+            wordBreak: s.title.includes('「') ? 'keep-all' : undefined,
+            overflowWrap: 'anywhere',
             textShadow: c.L ? 'none' : '0 2px 24px rgba(0,0,0,0.4)',
             animation: 'tm-up .9s ease-out .28s both',
-          }}>{s.title}</h2>
+          }}>{renderTitle(s.title)}</h2>
 
           <p style={{
             fontSize: isMobile ? 13.5 : 16.5, lineHeight: 1.95, color: c.SUB,
