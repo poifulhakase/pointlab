@@ -616,7 +616,7 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: 'シールド画面構成 ★2026-05-27 イベントタブ追加・ニュース→イベント改称',
         items: [
-          'タブ切り替え: 右下フローティングpill（App.tsx の floatSubBar に統合）でシールド / イベント を切り替え。cal.view === "shield" のときのみ表示',
+          'タブ切り替え: 右下フローティングpill（App.tsx の floatSubBar に統合）でシールド / イベント予想 を切り替え。cal.view === "shield" のときのみ表示',
           '【シールドタブ】SHIELD_STATUS_LINES: ターミナル風ステータスログ（12行）をタイプライターアニメーションで表示',
           '【シールドタブ】マーケットデータカード: 日付・終値・前日比・MA20/MA60/MA200・20日高値/安値・建玉残高・PCR・VIXを表示',
           '【シールドタブ】直近OHLCV テーブル（10件）: 日付 / 始値 / 高値 / 安値 / 終値 / 前日比%',

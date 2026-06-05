@@ -25,3 +25,6 @@ dist-ssr
 
 .vercel
 .env*.local
+
+# 動画編集プロジェクト（VOICEVOX 等・大容量素材。リポジトリに含めない）
+説明動画/
