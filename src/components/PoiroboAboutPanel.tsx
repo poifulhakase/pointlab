@@ -149,7 +149,7 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
           if (e.isIntersecting) { e.target.classList.add('pab-in'); io.unobserve(e.target) }
         }
       },
-      { root: scrollRef.current, rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+      { root: scrollRef.current, rootMargin: '0px 0px -22% 0px', threshold: 0.12 },
     )
     els.forEach(el => io.observe(el))
     return () => io.disconnect()
@@ -166,7 +166,7 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
       <style>{`
         @keyframes pabSweep  { from { transform:translateY(-100%); } to { transform:translateY(250%); } }
         @keyframes pabBlink  { 0%,44%{ opacity:1; } 46%,100%{ opacity:0.15; } }
-        .pab-reveal { opacity:0; transform:translateY(26px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); will-change: opacity, transform; }
+        .pab-reveal { opacity:0; transform:translateY(30px); transition: opacity 1.1s cubic-bezier(.16,1,.3,1), transform 1.1s cubic-bezier(.16,1,.3,1); will-change: opacity, transform; }
         .pab-reveal.pab-in { opacity:1; transform:none; }
         @media (prefers-reduced-motion: reduce) { .pab-reveal { opacity:1 !important; transform:none !important; transition:none; } }
       `}</style>
