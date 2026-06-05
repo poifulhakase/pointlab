@@ -14,7 +14,7 @@ type Story = { id: string; title: string; era: string; eraJa: string; body: stri
 const STORIES: Story[] = [
   {
     id: 'shoeshine',
-    title: '「靴磨きの少年」の法則',
+    title: '靴磨きの少年',
     era: '1929 · WALL STREET', eraJa: '1920年代 アメリカ',
     body: 'ケネディ大統領の父ジョセフ・ケネディが、ウォール街で靴を磨いてもらっていた時のこと。靴磨きの少年までもが「この株がいい」と銘柄を勧めてきた。彼はその足で持ち株をすべて売り払い、直後に訪れた世界大恐慌を回避したと伝わる。',
     lesson: '株に縁のない人まで熱狂し始めたら、それは天井のサイン。',
@@ -105,7 +105,7 @@ const STORIES: Story[] = [
   },
   {
     id: 'hetty',
-    title: '「ウォール街の魔女」ヘティ・グリーン',
+    title: '「ウォール街の魔女」\nヘティ・グリーン',
     era: '19–20C · USA', eraJa: '19〜20世紀 アメリカ',
     body: '当時世界一の女富豪ヘティ・グリーンは、皆が熱狂する時に売り、皆が恐怖で投げ売る時に買った。暖房さえ惜しむ徹底した倹約家。彼女は言う——「安く買って高く売る。誰もがそう口にするが、実際にやり通せる者は少ない」。',
     lesson: '逆張りと倹約。地味な規律こそ、富を残す。',
@@ -222,13 +222,14 @@ function makeC(theme: 'dark' | 'light'): C {
 // タイトルに「」がある時だけ、鉤括弧の前後にのみ改行機会(<wbr>)を挿入する。
 // word-break:keep-all と併用し、変な位置での折り返しを防いで「」境界で改行させる。
 function renderTitle(title: string): React.ReactNode {
-  if (!title.includes('「') || !title.includes('」')) return title
+  if (!title.includes('「') && !title.includes('\n')) return title
   const nodes: React.ReactNode[] = []
   let buf = ''
   let k = 0
   const flush = () => { if (buf) { nodes.push(<span key={`s${k++}`}>{buf}</span>); buf = '' } }
   for (const ch of title) {
-    if (ch === '「') { flush(); nodes.push(<wbr key={`b${k++}`} />); buf += ch }
+    if (ch === '\n') { flush(); nodes.push(<br key={`n${k++}`} />) }       // 明示改行（強制）
+    else if (ch === '「') { flush(); nodes.push(<wbr key={`b${k++}`} />); buf += ch }
     else if (ch === '」') { buf += ch; flush(); nodes.push(<wbr key={`b${k++}`} />) }
     else buf += ch
   }
