@@ -1,6 +1,6 @@
 """
 PWA アイコン生成スクリプト
-poirobo.png を背景 #141623 に合成して各サイズのアイコンを生成する。
+poirobo.png を背景 白(#ffffff) に合成して各サイズのアイコンを生成する。
 CHARACTER_SCALE: キャンバスに対するキャラクター画像の割合（0.0〜1.0）
 """
 from PIL import Image
@@ -8,7 +8,7 @@ import os
 
 SRC      = os.path.join(os.path.dirname(__file__), '..', 'public', 'poirobo.png')
 OUT_DIR  = os.path.join(os.path.dirname(__file__), '..', 'public')
-BG_COLOR = (20, 22, 35, 255)   # #141623
+BG_COLOR = (255, 255, 255, 255)   # #ffffff（スマホ ホーム/ランチャーアイコンの背景は白）
 
 # キャラクターをキャンバスの何割に収めるか
 CHARACTER_SCALE = 0.80   # 旧: 約0.62 → 1.3倍 ≈ 0.80
