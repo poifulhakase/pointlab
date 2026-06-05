@@ -634,11 +634,11 @@ export function buildExportJson(
     const pAxis = nkRegime === 'uptrend' ? '上昇' : nkRegime === 'downtrend' ? '下落' : 'レンジ'
     const dAxis = demandUp ? '需給は買い' : demandDown ? '需給は脆弱/売り' : '需給は中立'
     let label: string, note: string
-    if (nkRegime === 'uptrend' && demandDown)        { label = 'メルトアップ（脆弱な上昇）';       note = '価格は上げるが需給が伴わない。追わず守り、反転に備える（本命ベアは価格がトレンドを割ってから）' }
-    else if (nkRegime === 'uptrend' && demandUp)     { label = '順行ブル（追随）';               note = '価格・需給が一致。トレンド追随の本領' }
-    else if (nkRegime === 'downtrend' && demandUp)   { label = '売られすぎ（落ちるナイフ注意）';   note = '需給は買いだが価格は下落トレンド。落ちるナイフを避け、反転確認まで待つ' }
-    else if (nkRegime === 'downtrend' && demandDown) { label = '順行ベア（追随）';               note = '価格・需給が一致。下落追随の対象' }
-    else                                             { label = 'レンジ（需給逆張りの本領）';     note = '明確なトレンドなし。需給逆張りが最も効く局面' }
+    if (nkRegime === 'uptrend' && demandDown)        { label = 'メルトアップ（脆弱な上昇）';       note = '価格は上げるが需給が伴わない脆弱な上昇。需給面では反転リスクが意識される状態（ベア方向が強い兆候となるのは価格がトレンドを割ってから）' }
+    else if (nkRegime === 'uptrend' && demandUp)     { label = '順行ブル';                     note = '価格・需給が一致。上昇トレンドが需給に支えられた状態' }
+    else if (nkRegime === 'downtrend' && demandUp)   { label = '売られすぎ（落ちるナイフ注意）';   note = '需給は買いだが価格は下落トレンド。反転未確認で逆行リスクが意識される状態' }
+    else if (nkRegime === 'downtrend' && demandDown) { label = '順行ベア';                     note = '価格・需給が一致。下落トレンドが需給に裏付けられた状態' }
+    else                                             { label = 'レンジ（需給の振れが効きやすい）'; note = '明確なトレンドなし。需給逆張りの読みが当てはまりやすい状態' }
     supply_price_cell = { label, price_axis: pAxis, demand_axis: dAxis, note }
   }
 
@@ -809,7 +809,7 @@ export function buildExportJson(
         pos_in_52w_pct: nkPos52w,
         ma60_slope:    nkMa60Slope,
         regime:        nkRegime,
-        regime_note:   'uptrend/downtrend=明確なトレンド（需給逆張りの本命エントリーは見送り推奨）/ range=レンジ（需給逆張りの本領）',
+        regime_note:   'uptrend/downtrend=明確なトレンド（需給逆張りは強い兆候とせず中立寄りに記述）/ range=レンジ（需給の振れが価格に反映されやすい）',
       },
       usdjpy: {
         ma20_dev_pct:  fxMa20 && fx ? r2((fx.close - fxMa20) / fxMa20 * 100) : null,
@@ -833,7 +833,7 @@ export function buildExportJson(
     },
 
     tev_analysis: {
-      note:                  'tev_for_execution=nullなら定性バックアップモード。sanity_ok=true時のみtev値を執行根拠に使用可',
+      note:                  'tev_for_execution=nullなら定性バックアップモード。sanity_ok=true時のみtev値を状態判定の根拠に使用可',
       tev:                   tev_value,
       tev_for_execution:     tev_sanityOk === true ? tev_value : null,
       status:                tev_status,

@@ -247,15 +247,15 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     ), <CalIcon />) },
 
     // ════ 道具：ぽいロボ エンジン ════
-    { id: 'engine', node: slide('ぽいロボ エンジン', '買っていい地合いか・ENGINE', toolBody(
+    { id: 'engine', node: slide('ぽいロボ エンジン', '地合いのエネルギーを見る・ENGINE', toolBody(
       <>需給を物理にたとえて、相場のエネルギー（TEV）を診断します。「<b style={{ color: c.TEXT }}>需給×価格セル</b>」「<b style={{ color: c.TEXT }}>慣性持続性</b>」で、いまが<b style={{ color: c.TEXT }}>順行・売られすぎ・限界</b>のどれかがひと目で分かります。</>,
       '基本の使い方',
-      <>ボタン一つでAI用プロンプトをコピーでき、AIに<b style={{ color: c.TEXT }}>確信度つきの判定</b>を出してもらえます。<b style={{ color: c.TEXT }}>“枯渇圏”のときは本命の買いを控える</b>——これが基本です。</>,
+      <>ボタン一つでAI用プロンプトをコピーでき、AIに<b style={{ color: c.TEXT }}>確信度つきの状態診断</b>を出してもらえます。<b style={{ color: c.TEXT }}>“枯渇圏”のときは勢いが切れかけと読む</b>——これが基本です。最終的な判断はご自身で。</>,
     ), <EngineIcon />) },
 
     // ════ 道具：ぽいロボ シールド ════
     { id: 'shield-tool', node: slide('ぽいロボ シールド', 'いつ手放すか・SHIELD', toolBody(
-      <>持っているポジション専用の道具です。証券口座の<b style={{ color: c.TEXT }}>保有画面のスクショ</b>を撮り、シールドの市場データ＋プロンプトと一緒にAIへ。<b style={{ color: c.TEXT }}>持ち続ける／利確／損切り</b>の出口を相談できます。</>,
+      <>持っているポジション専用の道具です。証券口座の<b style={{ color: c.TEXT }}>保有画面のスクショ</b>を撮り、シールドの市場データ＋プロンプトと一緒にAIへ。<b style={{ color: c.TEXT }}>持ち続ける／利確／損切り</b>の出口の考え方を整理できます。</>,
       '「守り」の道具',
       <>エントリー（買い）ではなく、買ったあとの<b style={{ color: c.TEXT }}>出口</b>を整える道具。持っている間の不安をここで整理します。</>,
     ), <ShieldGuardIcon />) },

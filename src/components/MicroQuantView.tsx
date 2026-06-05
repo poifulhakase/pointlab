@@ -179,8 +179,9 @@ function saveHistoryLocal(h: MemoSnapshot[]): void {
 
 const QUANT_HL_PATTERNS = [
   /(?:\*\*)?確信度(?:\*\*)?：[\d.]+%/g,
-  /(?:\*\*)?判定(?:\*\*)?：[^（(\n]+/g,
-  /(?:\*\*)?指令(?:\*\*)?：[^（(\n]+/g,
+  /(?:\*\*)?需給状態(?:\*\*)?：[^（(\n]+/g,
+  /(?:\*\*)?上昇圧力(?:\*\*)?：[^（(\n]+/g,
+  /(?:\*\*)?下落圧力(?:\*\*)?：[^（(\n]+/g,
   /(?:\*\*)?エネルギー減衰(?:\*\*)?：[^\n]+/g,
 ]
 
@@ -224,10 +225,10 @@ function cyColors(theme: 'dark' | 'light') {
   }
 }
 
-// 本文中の「## 需給物理・執行ログ：YYYY-MM-DD」の日付を指定日付に置換
+// 本文中の「## 需給物理・観測ログ：YYYY-MM-DD」の日付を指定日付に置換
 function updateLogDate(text: string, date: string): string {
   return text.replace(
-    /^(## 需給物理・執行ログ：)\d{4}-\d{2}-\d{2}/m,
+    /^(## 需給物理・観測ログ：)\d{4}-\d{2}-\d{2}/m,
     `$1${date}`,
   )
 }

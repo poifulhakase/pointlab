@@ -194,13 +194,13 @@ const SCENARIOS: Scenario[] = [
     badge: '慣性航行中',
     badgeColor: '#4ade80',
     description: 'TEV+42・確信度72%・外国人4週+1.4兆・評価損益-3.8%（健全）。典型的な上昇継続局面。',
-    expectedBehavior: 'ブル：打診 or 本命 / ベア：購入禁止',
+    expectedBehavior: 'ブル方向の上昇圧力：弱い or 強い or 持続',
     json: SCENARIO_1_JSON,
     specificCheck: (output) => {
       const bullSection = output.split('■ ベア')[0] ?? ''
-      const bullDecision = bullSection.match(/判定：(.+)/)?.[1] ?? ''
-      const pass = /打診|本命|継続保持/.test(bullDecision)
-      return { label: 'ブル判定が打診/本命/継続保持になっているか', pass }
+      const bullPressure = bullSection.match(/上昇圧力：(.+)/)?.[1] ?? ''
+      const pass = /弱い|強い|持続/.test(bullPressure)
+      return { label: 'ブル方向の上昇圧力が弱い/強い/持続になっているか', pass }
     },
   },
   {
@@ -209,13 +209,13 @@ const SCENARIOS: Scenario[] = [
     badge: '真空落下',
     badgeColor: '#f87171',
     description: 'TEV-61・確信度78%・評価損益-14.2%（臨界）・外国人4週-2.1兆・SQ残6日。',
-    expectedBehavior: 'ベア：打診 or 本命 / ブル：購入禁止',
+    expectedBehavior: 'ベア方向の下落圧力：弱い or 強い or 持続',
     json: SCENARIO_2_JSON,
     specificCheck: (output) => {
       const bearSection = output.split('■ ベア')[1] ?? ''
-      const bearDecision = bearSection.match(/判定：(.+)/)?.[1] ?? ''
-      const pass = /打診|本命|継続保持/.test(bearDecision)
-      return { label: 'ベア判定が打診/本命/継続保持になっているか', pass }
+      const bearPressure = bearSection.match(/下落圧力：(.+)/)?.[1] ?? ''
+      const pass = /弱い|強い|持続/.test(bearPressure)
+      return { label: 'ベア方向の下落圧力が弱い/強い/持続になっているか', pass }
     },
   },
   {
@@ -223,14 +223,14 @@ const SCENARIOS: Scenario[] = [
     name: 'データ品質問題',
     badge: 'tev=null',
     badgeColor: '#fbbf24',
-    description: 'TEV計算不能・sanity_warnings 2件（価格乖離・ドル円鮮度）。執行停止局面。',
-    expectedBehavior: '執行停止宣言 + 【データメモ】両方出力',
+    description: 'TEV計算不能・sanity_warnings 2件（価格乖離・ドル円鮮度）。状態判定保留局面。',
+    expectedBehavior: '状態判定保留宣言 + 【データメモ】両方出力',
     json: SCENARIO_3_JSON,
     specificCheck: (output) => {
-      const hasStop = /需給推進力・執行停止/.test(output)
+      const hasStop = /需給推進力・状態判定保留/.test(output)
       const hasMemo = /【データメモ】/.test(output)
       const pass = hasStop && hasMemo
-      return { label: '執行停止宣言と【データメモ】が両方出力されているか', pass }
+      return { label: '状態判定保留宣言と【データメモ】が両方出力されているか', pass }
     },
   },
 ]
@@ -258,8 +258,8 @@ function scoreOutput(output: string, scenario: Scenario): ScoreResult {
       pass: /需給ステータス[：:]/.test(output),
     },
     {
-      label: '「指令：」が出力されているか',
-      pass: /指令[：:]/.test(output),
+      label: '「需給状態：」が出力されているか',
+      pass: /需給状態[：:]/.test(output),
     },
     {
       label: '「■ ブル」と「■ ベア」の両セクションが含まれるか',
