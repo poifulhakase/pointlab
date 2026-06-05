@@ -104,11 +104,35 @@ export default defineConfig({
       },
       workbox: {
         clientsClaim: true,
-        // JS/CSS/HTML とコアアイコンのみプリキャッシュ。
-        // data/*.json（頻繁に更新）と notes/*.webp（多数・大容量）は除外してランタイムキャッシュへ
-        globPatterns: ['**/*.{js,css,html,svg,woff2}', 'favicon*.{ico,png}', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'logo.svg'],
+        // アプリの骨格（HTML/CSS/フォント/コアアイコン＋初期JS=index・react-vendor）のみプリキャッシュ。
+        // firestore/firebase-auth/sentry/lightweight-charts/各ビュー等の遅延チャンクは
+        // プリキャッシュに含めず（初回の裏ダウンロード約1MB超を削減）、初回アクセス時に
+        // ランタイムキャッシュ（app-chunks）で取得・以降は即時提供する。
+        // data/*.json（頻繁に更新）と notes/*.webp（多数・大容量）も除外してランタイムキャッシュへ。
+        globPatterns: ['**/*.{css,html,woff2}', 'assets/index-*.js', 'assets/react-vendor-*.js', 'favicon*.{ico,png,svg}', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png', 'logo.svg'],
         globIgnores: ['**/data/**', '**/notes/**'],
         runtimeCaching: [
+          {
+            // 遅延ロードされる JS/CSS チャンク（ファイル名に内容ハッシュ付き＝不変）。
+            // 初回アクセス時にネットワーク取得→以降はキャッシュから即時提供。
+            // 新デプロイでは index.html が新ハッシュ名を参照するため、古いチャンクは自然に使われなくなる。
+            urlPattern: /\/calendar\/assets\/.*\.(?:js|css)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'app-chunks',
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            // アプリ画像（poirobo/support-room 等）— 変更まれ → オンデマンドでキャッシュ。
+            // notes/*.webp は下の note-images ルール（先に評価される）が担当。
+            urlPattern: /\/calendar\/(?!.*\/notes\/).*\.(?:png|jpe?g|webp)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'app-images',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
           {
             // 市場データ JSON（頻繁に更新）— ネット優先で常に最新を取得。
             // 旧 StaleWhileRevalidate は「古い表示→裏で更新→次回反映」で常に1リロード遅れたため NetworkFirst に変更。
