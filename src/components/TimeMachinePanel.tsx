@@ -291,8 +291,19 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
         @keyframes tm-ghost   { 0%{transform:translate(-50%,-50%) scale(2.7);opacity:0;filter:blur(16px)} 60%{opacity:1} 100%{transform:translate(-50%,-50%) scale(1);opacity:1;filter:blur(0)} }
         @keyframes tm-up      { 0%{opacity:0;transform:translateY(24px)} 100%{opacity:1;transform:translateY(0)} }
         @keyframes tm-drift   { 0%{transform:scale(1)} 100%{transform:scale(1.18)} }
+        @keyframes tm-nebula  { 0%{transform:translate3d(-3%,-2%,0) scale(1.05) rotate(0deg);opacity:.7} 50%{transform:translate3d(3%,2%,0) scale(1.16) rotate(7deg);opacity:1} 100%{transform:translate3d(-2%,3%,0) scale(1.09) rotate(-5deg);opacity:.78} }
         @keyframes tm-prog    { 0%{transform:scaleX(0)} 100%{transform:scaleX(1)} }
       `}</style>
+
+      {/* ── 星雲（かすかに漂う宇宙グラデーション・最背面）── */}
+      <div style={{
+        position: 'absolute', inset: '-20%', zIndex: 0, pointerEvents: 'none',
+        filter: 'blur(40px)',
+        background: c.L
+          ? 'radial-gradient(40% 50% at 25% 30%, rgba(80,140,255,0.10), transparent 70%), radial-gradient(45% 45% at 76% 34%, rgba(150,120,255,0.08), transparent 70%), radial-gradient(50% 50% at 55% 82%, rgba(3,105,161,0.07), transparent 70%)'
+          : 'radial-gradient(40% 50% at 25% 30%, rgba(0,150,255,0.20), transparent 70%), radial-gradient(45% 45% at 76% 34%, rgba(120,40,255,0.17), transparent 70%), radial-gradient(50% 50% at 55% 82%, rgba(0,229,255,0.14), transparent 70%)',
+        animation: 'tm-nebula 34s ease-in-out infinite alternate',
+      }} />
 
       {/* ── 星空（常時ゆっくりドリフト）── */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'tm-drift 18s ease-in-out infinite alternate', pointerEvents: 'none' }}>
