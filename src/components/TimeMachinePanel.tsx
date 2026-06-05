@@ -277,6 +277,16 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
     return m ? m[0] : '∞'
   }, [s.era])
 
+  // 低スペック端末 or 動きを減らす設定なら、常時アニメを止めて軽量化
+  const lite = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
+    const cores = navigator.hardwareConcurrency
+    const lowSpec = (typeof mem === 'number' && mem <= 4) || (typeof cores === 'number' && cores <= 2)
+    return Boolean(reduce || lowSpec)
+  }, [])
+
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 30,
@@ -298,21 +308,22 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
       {/* ── 星雲（かすかに漂う宇宙グラデーション・最背面）── */}
       <div style={{
         position: 'absolute', inset: '-20%', zIndex: 0, pointerEvents: 'none',
-        filter: 'blur(40px)',
+        filter: `blur(${lite ? 14 : 24}px)`,
         background: c.L
           ? 'radial-gradient(40% 50% at 25% 30%, rgba(80,140,255,0.10), transparent 70%), radial-gradient(45% 45% at 76% 34%, rgba(150,120,255,0.08), transparent 70%), radial-gradient(50% 50% at 55% 82%, rgba(3,105,161,0.07), transparent 70%)'
           : 'radial-gradient(40% 50% at 25% 30%, rgba(0,150,255,0.20), transparent 70%), radial-gradient(45% 45% at 76% 34%, rgba(120,40,255,0.17), transparent 70%), radial-gradient(50% 50% at 55% 82%, rgba(0,229,255,0.14), transparent 70%)',
-        animation: 'tm-nebula 34s ease-in-out infinite alternate',
+        animation: lite ? 'none' : 'tm-nebula 34s ease-in-out infinite alternate',
       }} />
 
       {/* ── 星空（常時ゆっくりドリフト）── */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: 'tm-drift 18s ease-in-out infinite alternate', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0, animation: lite ? 'none' : 'tm-drift 18s ease-in-out infinite alternate', pointerEvents: 'none' }}>
         {STARS.map((st, i) => (
           <span key={i} style={{
             position: 'absolute', left: `${st.x}%`, top: `${st.y}%`,
             width: st.r, height: st.r, borderRadius: '50%', background: c.STAR,
             boxShadow: c.L ? 'none' : `0 0 ${st.r * 2}px ${c.STAR}`,
-            animation: `tm-twinkle ${st.d}s ease-in-out ${st.delay}s infinite`,
+            opacity: lite ? 0.7 : undefined,
+            animation: lite ? 'none' : `tm-twinkle ${st.d}s ease-in-out ${st.delay}s infinite`,
           }} />
         ))}
       </div>
