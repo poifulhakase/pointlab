@@ -7,7 +7,7 @@ type Props = {
 }
 
 const mono = "'Courier New', Courier, monospace" as const
-const AUTOPLAY_MS = 9000
+const AUTOPLAY_MS = 13000
 
 // ── 物語データ（タイトル / 年号 / 物語 / 教訓）──────────────────────
 type Story = { id: string; title: string; era: string; eraJa: string; body: string; lesson: string }
