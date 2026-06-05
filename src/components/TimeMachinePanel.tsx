@@ -7,7 +7,7 @@ type Props = {
 }
 
 const mono = "'Courier New', Courier, monospace" as const
-const AUTOPLAY_MS = 13000
+const AUTOPLAY_MS = 15000
 
 // ── 物語データ（タイトル / 年号 / 物語 / 教訓）──────────────────────
 type Story = { id: string; title: string; era: string; eraJa: string; body: string; lesson: string }
@@ -218,7 +218,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
         <div style={{
           position: 'absolute', left: '50%', top: '46%', width: isMobile ? 120 : 200, height: isMobile ? 120 : 200,
           borderRadius: '50%', background: `radial-gradient(circle, ${c.ACCENT}cc 0%, ${c.ACCENT}33 40%, transparent 70%)`,
-          animation: 'tm-flash .7s ease-out forwards',
+          animation: 'tm-flash 1.1s ease-out forwards',
         }} />
         {/* 放射状のワープ線 */}
         {STREAKS.map((deg, i) => (
@@ -226,7 +226,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
             position: 'absolute', left: '50%', top: '46%', width: 2, height: 0,
             transformOrigin: 'top center', transform: `rotate(${deg}deg)`,
             background: `linear-gradient(to bottom, ${c.ACCENT}, transparent)`,
-            animation: `tm-streak .72s cubic-bezier(.2,.7,.3,1) ${(i % 4) * 0.02}s forwards`,
+            animation: `tm-streak 1.1s cubic-bezier(.2,.7,.3,1) ${(i % 4) * 0.03}s forwards`,
           }} />
         ))}
       </div>
@@ -289,7 +289,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
           position: 'absolute', left: '50%', top: '44%', zIndex: 0,
           fontSize: isMobile ? 120 : 260, fontWeight: 800, fontFamily: mono, lineHeight: 1,
           color: c.GHOST, pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap',
-          animation: 'tm-ghost .9s cubic-bezier(.2,.8,.2,1) forwards',
+          animation: 'tm-ghost 1.4s cubic-bezier(.2,.8,.2,1) forwards',
         }}>{ghostNum}</div>
 
         {/* テキスト（タイトル / 年号 / 物語 / 教訓）── idx でリマウントしフェードイン */}
@@ -301,20 +301,20 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
             fontSize: isMobile ? 10 : 12, fontFamily: mono, letterSpacing: '0.26em', color: c.ACCENT,
             fontWeight: 700, marginBottom: isMobile ? 14 : 18,
             textShadow: c.L ? 'none' : `0 0 12px ${c.ACCENT}66`,
-            animation: 'tm-up .6s ease-out .05s both',
+            animation: 'tm-up .9s ease-out .1s both',
           }}>{s.era}<span style={{ margin: '0 10px', opacity: 0.6 }}>·</span>{s.eraJa}</div>
 
           <h2 style={{
             fontSize: isMobile ? 24 : 38, fontWeight: 800, lineHeight: 1.25, color: c.TEXT,
             margin: 0, letterSpacing: '0.01em',
             textShadow: c.L ? 'none' : '0 2px 24px rgba(0,0,0,0.4)',
-            animation: 'tm-up .6s ease-out .14s both',
+            animation: 'tm-up .9s ease-out .28s both',
           }}>{s.title}</h2>
 
           <p style={{
             fontSize: isMobile ? 13.5 : 16.5, lineHeight: 1.95, color: c.SUB,
             margin: isMobile ? '20px auto 0' : '28px auto 0', maxWidth: 640, textAlign: 'left',
-            animation: 'tm-up .7s ease-out .26s both',
+            animation: 'tm-up 1s ease-out .5s both',
           }}>{s.body}</p>
 
           <div style={{
@@ -322,7 +322,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
             padding: isMobile ? '11px 18px' : '13px 24px', borderRadius: 12,
             background: c.LESSONBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`,
             fontSize: isMobile ? 12.5 : 14.5, fontWeight: 700, color: c.TEXT, lineHeight: 1.6,
-            animation: 'tm-up .7s ease-out .4s both',
+            animation: 'tm-up 1s ease-out .75s both',
           }}>
             <span style={{ color: c.ACCENT, fontFamily: mono, fontSize: isMobile ? 9.5 : 10.5, letterSpacing: '0.14em', marginRight: 10 }}>教訓</span>
             {s.lesson}
