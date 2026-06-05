@@ -112,7 +112,7 @@ const STORIES: Story[] = [
   },
   {
     id: 'mrmarket',
-    title: 'グレアムと「ミスター・マーケット」',
+    title: 'グレアムと\n「ミスター・マーケット」',
     era: '1949 · USA', eraJa: '1949年 アメリカ',
     body: 'バフェットの師ベンジャミン・グレアムは、市場をこう例えた。あなたの事業の共同経営者「ミスター・マーケット」は気分屋で、毎日やって来ては値段を叫ぶ。ある日は熱狂して高値を、ある日は絶望して投げ売り値を。彼に従う必要はない。気が向いた時だけ利用すればいい。',
     lesson: '市場の気分は、従う相手ではなく利用する道具。',
@@ -438,6 +438,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
 
           <div style={{
             display: 'inline-block', marginTop: isMobile ? 22 : 30,
+            textAlign: isMobile ? 'left' : undefined,
             padding: isMobile ? '11px 18px' : '13px 24px', borderRadius: 12,
             background: c.LESSONBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`,
             fontSize: isMobile ? 12.5 : 14.5, fontWeight: 700, color: c.TEXT, lineHeight: 1.6,
@@ -455,16 +456,22 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(90deg)' }}><path d="M6 9l6 6 6-6"/></svg>
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {order.map((storyIdx, i) => (
-            <button key={STORIES[storyIdx].id} onClick={() => go(i)} aria-label={`${i + 1}番目へ`} style={{
-              width: i === idx ? 24 : 8, height: 8, borderRadius: 999, border: 'none', padding: 0,
-              background: i === idx ? c.ACCENT : c.TAGBDR, cursor: 'pointer',
-              boxShadow: i === idx && !c.L ? `0 0 8px ${c.ACCENT}` : 'none',
-              transition: 'all .4s cubic-bezier(.22,1,.36,1)',
-            }} />
-          ))}
-        </div>
+        {isMobile ? (
+          <div style={{ minWidth: 72, textAlign: 'center', fontFamily: mono, fontSize: 14, fontWeight: 700, color: c.ACCENT, letterSpacing: '0.08em' }}>
+            {idx + 1}<span style={{ color: c.DIM, fontWeight: 400 }}> / {total}</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            {order.map((storyIdx, i) => (
+              <button key={STORIES[storyIdx].id} onClick={() => go(i)} aria-label={`${i + 1}番目へ`} style={{
+                width: i === idx ? 24 : 8, height: 8, borderRadius: 999, border: 'none', padding: 0,
+                background: i === idx ? c.ACCENT : c.TAGBDR, cursor: 'pointer',
+                boxShadow: i === idx && !c.L ? `0 0 8px ${c.ACCENT}` : 'none',
+                transition: 'all .4s cubic-bezier(.22,1,.36,1)',
+              }} />
+            ))}
+          </div>
+        )}
 
         <button onClick={() => go(idx + 1)} aria-label="次の物語" style={ctrlBtn(c, true)}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-90deg)' }}><path d="M6 9l6 6 6-6"/></svg>
