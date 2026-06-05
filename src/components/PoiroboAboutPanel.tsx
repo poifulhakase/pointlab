@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import { useEffect, useRef, type FC } from 'react'
 
 type Props = {
   theme: 'dark' | 'light'
@@ -132,6 +132,29 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
   const mono = "'Courier New', Courier, monospace" as const
   const numSize = isMobile ? 88 : 120
 
+  // ── スクロール連動のふわっと表示（IntersectionObserver） ──
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  useEffect(() => {
+    const els = sectionRefs.current.filter(Boolean) as HTMLDivElement[]
+    // モーション低減設定では即時表示（アニメーションなし）
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(el => el.classList.add('pab-in'))
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) { e.target.classList.add('pab-in'); io.unobserve(e.target) }
+        }
+      },
+      { root: scrollRef.current, rootMargin: '0px 0px -12% 0px', threshold: 0.12 },
+    )
+    els.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
   return (
     <div style={{
       position:'absolute', inset:0, zIndex:30,
@@ -141,10 +164,11 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
       backdropFilter:'blur(2px)', WebkitBackdropFilter:'blur(2px)',
     }}>
       <style>{`
-        @keyframes pabFadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pabSweep  { from { transform:translateY(-100%); } to { transform:translateY(250%); } }
         @keyframes pabBlink  { 0%,44%{ opacity:1; } 46%,100%{ opacity:0.15; } }
-        .pab-s { opacity:0; animation: pabFadeUp .60s cubic-bezier(.16,1,.3,1) forwards; }
+        .pab-reveal { opacity:0; transform:translateY(26px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); will-change: opacity, transform; }
+        .pab-reveal.pab-in { opacity:1; transform:none; }
+        @media (prefers-reduced-motion: reduce) { .pab-reveal { opacity:1 !important; transform:none !important; transition:none; } }
       `}</style>
 
       {/* Scan sweep (dark only) */}
@@ -159,7 +183,7 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
       )}
 
       {/* Scroll container */}
-      <div style={{ position:'absolute', inset:0, overflowY:'auto', zIndex:1 }}>
+      <div ref={scrollRef} style={{ position:'absolute', inset:0, overflowY:'auto', zIndex:1 }}>
 
         {/* ── Sticky header ── */}
         <div style={{
@@ -206,8 +230,8 @@ export const PoiroboAboutPanel: FC<Props> = ({ theme, isMobile, onBack }) => {
           {SECTIONS.map((sec, i) => (
             <div
               key={sec.num}
-              className="pab-s"
-              style={{ animationDelay:`${i * 48}ms` }}
+              ref={el => { sectionRefs.current[i] = el }}
+              className="pab-reveal"
             >
               {/* ── Section header block ── */}
               <div style={{
