@@ -86,7 +86,7 @@ export function NotificationSettings({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 4 }}>
           {[
             { checked: notifyRadar, onToggle: onToggleNotifyRadar, label: 'ぽいロボ レーダー', sub: 'イベント前日 12:30' },
-            { checked: notifyDataReady, onToggle: onToggleNotifyDataReady, label: 'データ更新通知', sub: '週次データ更新後（土曜）' },
+            { checked: notifyDataReady, onToggle: onToggleNotifyDataReady, label: '需給データ更新通知', sub: '週次データ更新後（土曜）' },
           ].map(({ checked, onToggle, label, sub }) => (
             <div
               key={label}

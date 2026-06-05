@@ -408,7 +408,7 @@ const SPEC_SECTIONS = [
           'セクション順: アカウント → 通知 → 表示 → 表示プレビュー（管理者）→ メンテナンスモード（管理者）',
           'アカウントセクション: Googleログイン / ログアウト（AuthModal を開く）・同期ステータス表示',
           '通知セクション: 共通コンポーネント NotificationSettings（src/components/NotificationSettings.tsx）。プッシュ通知 ON/OFF トグル＋種別チェックボックス。未ログイン時はグレーアウト。★2026-05-30 共通部品化（以前は2箇所に重複実装されチェックボックス欠落バグの原因だった）',
-          '通知種別: ① ぽいロボ レーダー（イベント前日 12:30）② データ更新通知（週次・土曜）。localStorage: poical-notify-radar / poical-notify-data-ready',
+          '通知種別: ① ぽいロボ レーダー（イベント前日 12:30）② 需給データ更新通知（週次・土曜）。localStorage: poical-notify-radar / poical-notify-data-ready',
           '表示セクション: ライト / ダーク テーマ切り替え（segmented buttons）。dark の neutral/blue 切替UIは SettingsPanel 削除に伴い廃止（保存値は引き続き適用）',
           '表示プレビュー（管理者のみ）: メンバー/非メンバーモード切替でロック画面を確認',
           'メンテナンスモード（管理者のみ・★2026-05-30）: トグルで全ユーザー（管理者以外）を全画面ブロック。Firestore config/maintenance に保存・即時反映',
@@ -419,7 +419,7 @@ const SPEC_SECTIONS = [
         heading: 'プッシュ通知（FCM）★2026-05-28 種別選択追加',
         items: [
           '通知種別① ぽいロボ レーダー: 選択イベントの前日 12:30 JST に通知。Vercel Cron `api/cron-push-notifications.js`（毎日 03:30 UTC）',
-          '通知種別② データ更新通知: 週次需給データ更新後（土曜）に通知。GitHub Actions 成功後 `api/notify-data-ready.js` を POST 呼び出し',
+          '通知種別② 需給データ更新通知: 週次需給データ更新後（土曜）に通知。GitHub Actions 成功後 `api/notify-data-ready.js` を POST 呼び出し',
           'Firestore スキーマ: pushSubscriptions/{uid} に pushEnabled / notifyRadar / notifyDataReady / fcmToken / poiroboAlertConfig を保存',
           'notify-data-ready.js 認証: x-notify-secret ヘッダー（NOTIFY_SECRET 環境変数）で保護。Vercel + GitHub Secrets に登録済み',
           'フロー: ブラウザ通知許可 → VAPID キーで FCM トークン取得 → firestoreRest.ts の restSetDoc() で保存',
