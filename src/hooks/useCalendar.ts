@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from 'react'
 
-export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook'
+export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook' | 'timemachine'
 
 const VIEW_SESSION_KEY = 'poical-view-session'
-const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original', 'playbook']
+const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original', 'playbook', 'timemachine']
 const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
 /**
@@ -108,6 +108,7 @@ export function useCalendar() {
     if (view === 'manual')   return '説明書'
     if (view === 'legal')    return '利用規約・免責・プライバシー'
     if (view === 'backtest') return 'TEVバックテスト'
+    if (view === 'timemachine') return 'タイムマシン'
 if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
       const week = getWeekDays()

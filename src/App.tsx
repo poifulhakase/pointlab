@@ -42,6 +42,7 @@ const ShieldView        = lazy(() => import('./components/ShieldView').then(m =>
 const LegalModal        = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
 const BacktestPanel     = lazy(() => import('./components/BacktestPanel').then(m => ({ default: m.BacktestPanel })))
 const StrategyPlaybookPanel = lazy(() => import('./components/StrategyPlaybookPanel').then(m => ({ default: m.StrategyPlaybookPanel })))
+const TimeMachinePanel  = lazy(() => import('./components/TimeMachinePanel').then(m => ({ default: m.TimeMachinePanel })))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
 const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
@@ -548,12 +549,19 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               </Suspense>
             </ErrorBoundary>
           )}
+          {cal.view === 'timemachine' && (
+            <ErrorBoundary label="タイムマシン">
+              <Suspense fallback={<ViewLoader />}>
+                <TimeMachinePanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
+          )}
 
           {/* 研究室 */}
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={(tab) => { setLegalTab(tab ?? 'privacy'); setViewWithTransition('legal') }} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onOpenPlaybook={() => setViewWithTransition('playbook')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={(tab) => { setLegalTab(tab ?? 'privacy'); setViewWithTransition('legal') }} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onOpenPlaybook={() => setViewWithTransition('playbook')} onOpenTimeMachine={() => setViewWithTransition('timemachine')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
               </Suspense>
             </ErrorBoundary>
           )}

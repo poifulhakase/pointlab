@@ -12,6 +12,7 @@ type Props = {
   onOpenOriginal?: () => void
   onOpenCommunity?: () => void
   onOpenPlaybook?: () => void
+  onOpenTimeMachine?: () => void
 }
 
 type Article = {
@@ -20,7 +21,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -55,6 +56,7 @@ const ARTICLES: Article[] = [
   { genre: '管理メニュー', title: 'バックテスト', url: null, thumb: null, internalAction: 'backtest' },
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
+  { genre: '未来ガジェット', title: 'タイムマシン', url: null, thumb: null, internalAction: 'timemachine' },
 ]
 
 const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
@@ -121,7 +123,7 @@ function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
-function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook }: {
+function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine }: {
   article: Article
   isMobile: boolean
   theme: 'dark' | 'light'
@@ -133,6 +135,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   onOpenOriginal?: () => void
   onOpenCommunity?: () => void
   onOpenPlaybook?: () => void
+  onOpenTimeMachine?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -147,6 +150,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
     if (article.internalAction === 'original')  { onOpenOriginal?.();  return }
     if (article.internalAction === 'community') { onOpenCommunity?.(); return }
     if (article.internalAction === 'playbook')  { onOpenPlaybook?.();  return }
+    if (article.internalAction === 'timemachine') { onOpenTimeMachine?.(); return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -190,7 +194,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine }: Props) {
   // バックテスト等は検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
   // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
@@ -212,7 +216,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} />
                   ))}
                 </div>
               </section>
