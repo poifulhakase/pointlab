@@ -373,7 +373,7 @@ const SPEC_SECTIONS = [
         headers: ['パネル', '内容'],
         rows: [
           ['研究室', 'メニュー（4ボタン）: POIROBO（ぽいロボとは？）/ 資料（DATA）/ 設定（SETTINGS）/ お問い合わせ（CONTACT）'],
-          ['資料', 'NoteView — 記事一覧（基礎・インジケーター・イベントドリブン・未来ガジェット）。特殊カード: バックテスト・システム仕様・プロンプト Evals（いずれも管理者のみ）。DATAドロワー幅: PC時 1000px（★2026-05-27 500px→1000px に拡大）。「← 研究室」ボタンで研究室へ戻れる'],
+          ['資料', 'NoteView — 記事一覧（基礎・インジケーター・イベントドリブン・未来ガジェット）。特殊カード: バックテスト・システム仕様・プロンプト Evals（いずれも管理者のみ）。DATAドロワー幅: PC時 1000px（★2026-05-27 500px→1000px に拡大）。「← 研究室」ボタンで研究室へ戻れる。★2026-06-06 未来ガジェットに「タイムマシン」追加＝株式の有名逸話22話を時空ワープ演出で1話ずつ表示する全画面ビュー（年号/タイトル/物語/教訓・自動再生18s＋手動・マウント毎シャッフル・全員閲覧可）'],
           ['使い方', 'ManualView — アプリ説明書（研究室 > 資料 > 使い方ガイドカードからアクセス）。★2026-05-27 PC2カラムレイアウト・サブセクション構造に改善（maxWidth: 1000、エンジン/研究室は gridColumn: 1/-1 でフル幅）'],
         ],
       },
@@ -446,9 +446,9 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: 'ぽいロボ コネクト（右下ボタン）★2026-05-18 予約システム実装',
         items: [
-          '研究室ビュー右下に配置（position: absolute, bottom: 20-28px, right: 16-28px, zIndex: 20）・transform: scale(1.2) で 1.2 倍表示',
+          '配置: PC=研究室ビュー右下（scale 1.2）/ スマホ=中央下部（left:50%+translateX(-50%)・scale 1.44）★2026-06-06 スマホは中央下に変更',
           '博士画像（hakase.webp）＋「ぽいロボ コネクト」テキスト',
-          'ユーザー: ボタン押下 → BookingModal（予約UI）が開く（未ログインでも空き枠閲覧可）',
+          'メンバー: ボタン押下 → BookingModal（予約UI）が開く。★2026-06-06 非メンバー（未ログイン含む）はコネクト全体を会員限定化＝会員案内モーダルを表示し BookingModal は開かない（予約導線に進めない）',
           '管理者（sushi.ramen.unajyu@gmail.com）: ボタン押下 → AdminBookingPanel（予約管理UI）が開く。サブテキストは「予約管理」と表示',
           'ホバー時（PC）: POIROBO_CONNECT_v2.0 HUDパネルを表示',
         ],
@@ -465,7 +465,7 @@ const SPEC_SECTIONS = [
           '.ics ダウンロード: 予約申請後・状態確認画面からカレンダー追加ファイルをDL可（Google/Apple/Outlook 対応）',
           'BookingModal スクリーン遷移: loading → has_booking（既存予約あり）or slot_list（枠選択）→ confirm_book → booked',
           'セッション開始5分前〜終了まで「今すぐ接続する」ボタンが表示され JitsiPanel に接続',
-          '未ログイン: 空き枠一覧は閲覧可。「予約を申請する」押下時にログイン画面へ誘導',
+          '★2026-06-06 予約導線はメンバー限定化: コネクトボタン押下時、非メンバー（未ログイン含む）は会員案内モーダルを表示し BookingModal（空き枠閲覧）は開かない（旧: 未ログインも枠閲覧可・予約申請時にログイン誘導だった）',
         ],
       },
       {
@@ -874,6 +874,8 @@ const SPEC_SECTIONS = [
           'API レート制限: api/_ratelimit.js（Firestore ベース・per uid/action）を create-booking / cancel-booking に適用（連打濫用の抑止）',
           'データ境界パーサ集約: utils/yahooChart.ts（parseYahooChart）。vix/nas100/ntRatio/usdjpy/nkFuturesPrice/shield の Yahoo パースを統一し as any を排除',
           'コミュニティ非メンバー時はフローティングサブバー（月/週等）も非表示（legal は全員公開のため維持）',
+          '★2026-06-06 入場ゲート（ゲストID/PWログイン）廃止: 誰でもログインなしでアプリに入れる。会員限定コンテンツ（カレンダー/エンジン/シールド/コネクト）は各ビューの CommunityLockScreen で制御し、Googleログインは研究室の設定からの任意モーダル（クラウド同期・会員判定用）に限定。guestAuth.ts 削除・AuthModal の GateView/isRequired 撤去・App.tsx の isUnlocked ゲート撤去',
+          '★2026-06-06 Android 戻るボタン拡充: 開いているモーダル/オーバーレイ（コネクト/各モーダル/研究室内ドロワー・予約・メンバー案内・コミュニティ）と内部ビュー（タイムマシン/プレイブック/バックテスト/Evals/独自機能→研究室、チャート/エンジン→カレンダー）を1段ずつ閉じる。SupportView は onRegisterBack で最前面モーダルの閉じ関数を App に登録',
           'CI lint をブロッキング化（★2026-05-30 エラー0件化）: 本物の指摘（no-empty/no-irregular-whitespace/ban-ts-comment）を修正、hakaseAI（別プロジェクト）を eslint 対象外に、React Compiler 系ルール（set-state-in-effect/purity/refs/preserve-manual-memoization）と react-refresh/only-export-components は最適化助言のため warn に格下げ。error 0・warning 37',
           'a11y: 通知トグル/チェックボックスに role/aria/キーボード操作を付与',
           '表示速度: Sentry を初期ロードから除外（sentry.ts は動的 import + requestIdleCallback で遅延 init、ErrorBoundary もエラー時に動的 import）。gzip 約46KB を初回描画クリティカルパスから外した',
