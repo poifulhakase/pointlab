@@ -1254,7 +1254,10 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
 
       {/* コネクトボタン（接続中・ぽいロボページ表示中は非表示） */}
       {!isConnected && !showPoirobo && (
-        <div className={theme === 'light' ? 'poyon-light' : undefined} style={{ position: 'absolute', bottom: isMobile ? 20 : 28, right: isMobile ? 16 : 28, zIndex: 20, transform: isMobile ? 'scale(1.44)' : 'scale(1.2)', transformOrigin: 'bottom right' }}>
+        <div className={theme === 'light' ? 'poyon-light' : undefined} style={isMobile
+          ? { position: 'absolute', bottom: 20, left: '50%', zIndex: 20, transform: 'translateX(-50%) scale(1.44)', transformOrigin: 'bottom center' }
+          : { position: 'absolute', bottom: 28, right: 28, zIndex: 20, transform: 'scale(1.2)', transformOrigin: 'bottom right' }
+        }>
           {!isMobile && <div style={{
             position: 'absolute', bottom: 'calc(100% + 12px)', right: 0, width: 220,
             padding: '14px 16px',
