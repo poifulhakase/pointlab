@@ -1303,8 +1303,8 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
           <div
             className="poyon-connect-area"
             onClick={() => {
-              // 非メンバー（管理者の非メンバーモードプレビューも含む）はロック案内を優先
-              if (user && !isMember) { setMemberLockOpen(true); return }
+              // 非メンバー（未ログイン・管理者の非メンバーモードプレビュー含む）はロック案内。予約モーダルは開かせない
+              if (!isMember) { setMemberLockOpen(true); return }
               if (isAdmin) { setAdminOpen(true); return }
               setBookingOpen(true)
             }}
