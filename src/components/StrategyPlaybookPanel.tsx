@@ -310,7 +310,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     { id: 's2', node: slide('長期投資と何が違う？', 'なぜ“買い持ち”だけじゃないか・VS BUY&HOLD', (
       <>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13, fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.8, marginBottom: isMobile ? 18 : 22 }}>
-          <p style={{ margin: 0 }}>「長期投資（買って持ちっぱなし）でいいのでは？」——いい質問です。</p>
           <p style={{ margin: 0 }}>上げ相場では長期投資は強い。でも弱点は<b style={{ color: c.TEXT }}>暴落をまるごと食らうこと</b>。</p>
           <p style={{ margin: 0 }}>日経平均は過去に<b style={{ color: c.TEXT }}>最悪−80%、高値を取り戻すのに約34年</b>かかりました。</p>
         </div>
