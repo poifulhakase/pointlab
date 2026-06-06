@@ -373,11 +373,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     // ════ 応用：資産を二重に働かせる（A＋B）════
     { id: 'advanced', node: slide('応用：資産を二重に働かせる', '長期投資を超える・ADVANCED', (
       <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 13 : 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 10, fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.9 }}>
-          <p style={{ margin: 0 }}>長期投資（現物を持つ）でも、配当・優待・値上がりはもらえます。でも資産は<b style={{ color: c.TEXT }}>“それだけ”</b>。</p>
-          <p style={{ margin: 0 }}>ぽいロボ流は、その<b style={{ color: c.TEXT }}>現物を「担保」にして、同じ資産でトレード（スイング）も重ねます</b>。</p>
-        </div>
-
         {/* A：土台 */}
         <div style={{ padding: isMobile ? '14px 16px' : '18px 20px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 11 }}>
