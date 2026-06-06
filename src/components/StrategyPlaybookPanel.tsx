@@ -437,15 +437,18 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     // ════ 注意書き ════
     { id: 'note', node: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18 }}>
-        <div style={{ padding: isMobile ? '16px 18px' : '22px 26px', borderRadius: 16, border: `1px solid ${c.RULE}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
+        <div style={{ padding: isMobile ? '18px 18px' : '26px 28px', borderRadius: 16, border: `1px solid ${c.RULE}`, borderLeft: `3px solid ${c.ACCENT}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
+          {/* 最後に大事なこと */}
           <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.TEXT, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>⚠</span>最後に大事なこと
           </div>
           これは過去20年のデータで「ルール通りに売買したらこうなった」という結果です。<b style={{ color: c.TEXT }}>未来を約束するものではありません</b>。季節性は年1回なので、試せた回数（20回ぶん）も少なめです。<br /><br />
           基本は<b style={{ color: c.TEXT }}>「チャンス（+の見込み）が来たときだけ、無理のない金額で買う」</b>。毎回むやみに売り買いしたり、根拠がないのに張ると、かえって減りやすくなります。
-        </div>
 
-        <div style={{ padding: isMobile ? '16px 18px' : '22px 26px', borderRadius: 16, border: `1px solid ${c.RULE}`, borderLeft: `3px solid ${c.ACCENT}`, background: c.CARD, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.95 }}>
+          {/* 区切り */}
+          <div style={{ height: 1, background: c.RULE, margin: isMobile ? '18px 0' : '22px 0' }} />
+
+          {/* リスクと安定性 */}
           <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.TEXT, marginBottom: 12 }}>リスクと安定性</div>
           担保信用は暴落時に<b style={{ color: c.TEXT }}>追証・強制決済</b>の危険があります。ただし対象は<b style={{ color: c.TEXT }}>1倍/2倍のETF（指数連動）</b>で、個別株のような<b style={{ color: c.TEXT }}>倒産リスクはありません</b>。谷を浅く抑えるルールと合わせれば、比較的安定して回せます。<b style={{ color: c.TEXT }}>無理なレバはかけないこと。</b>
         </div>
