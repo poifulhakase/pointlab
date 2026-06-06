@@ -11,7 +11,7 @@ OUT_DIR  = os.path.join(os.path.dirname(__file__), '..', 'public')
 BG_COLOR = (255, 255, 255, 255)   # #ffffff（スマホ ホーム/ランチャーアイコンの背景は白）
 
 # キャラクターをキャンバスの何割に収めるか
-CHARACTER_SCALE = 0.88   # 旧: 0.80 → 10%拡大 ≈ 0.88
+CHARACTER_SCALE = 0.97   # 0.80 →(10%)→ 0.88 →(さらに10%)→ 0.97
 
 def make_icon(src_img: Image.Image, canvas_size: int, scale: float, round_corners=False) -> Image.Image:
     """src_img を scale 割合に縮小して canvas_size の正方形背景に中央配置"""
