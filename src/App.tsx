@@ -332,13 +332,18 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   }, [cal.view])
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
+  // SupportView（研究室）内部のモーダル（予約/管理/メンバー案内/各ドロワー等）の
+  // 「最前面を閉じる」関数を SupportView 側から登録してもらう。開いていなければ null。
+  const supportBackRef = useRef<(() => void) | null>(null)
+  const registerSupportBack = useRef((fn: (() => void) | null) => { supportBackRef.current = fn }).current
+
   const backStateRef = useRef({
-    authModalOpen: false,
+    connectMode: false, authModalOpen: false,
     noteDate: null as Date | null, poiroboAlertModalOpen: false,
     chartSettingsOpen: false, view: 'month',
   })
   backStateRef.current = {
-    authModalOpen, noteDate,
+    connectMode, authModalOpen, noteDate,
     poiroboAlertModalOpen, chartSettingsOpen, view: cal.view,
   }
   const backActionsRef = useRef({
@@ -358,15 +363,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       history.pushState(null, '')
       const s = backStateRef.current
       const a = backActionsRef.current
+      if (s.connectMode)           { setConnectMode(false); setConnectMinimized(false); return }
       if (s.authModalOpen)         { a.setAuthModalOpen(false);               return }
       if (s.noteDate)              { a.closeNote();                           return }
       if (s.poiroboAlertModalOpen) { a.setPoiroboAlertModalOpen(false);       return }
       if (s.chartSettingsOpen)     { a.setChartSettingsOpen(false);           return }
+      if (supportBackRef.current)  { supportBackRef.current();                return }   // 研究室内モーダル
       const v = s.view
-      if (v === 'spec' || v === 'legal' || v === 'manual') { a.setView('support'); return }
-      if (v === 'support') { a.setView('month'); return }
-      if (v === 'shield')  { a.setView('month'); return }
-
+      if (v === 'spec' || v === 'legal' || v === 'manual' || v === 'backtest' || v === 'evals' || v === 'playbook' || v === 'original' || v === 'timemachine') { a.setView('support'); return }
+      if (v === 'support' || v === 'shield' || v === 'chart' || v === 'quant') { a.setView('month'); return }
       if (v === 'day')     { a.setView('week');  return }
       if (v === 'week')    { a.setView('month'); return }
     }
@@ -561,7 +566,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={(tab) => { setLegalTab(tab ?? 'privacy'); setViewWithTransition('legal') }} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onOpenPlaybook={() => setViewWithTransition('playbook')} onOpenTimeMachine={() => setViewWithTransition('timemachine')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={(tab) => { setLegalTab(tab ?? 'privacy'); setViewWithTransition('legal') }} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onOpenPlaybook={() => setViewWithTransition('playbook')} onOpenTimeMachine={() => setViewWithTransition('timemachine')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} onRegisterBack={registerSupportBack} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
               </Suspense>
             </ErrorBoundary>
           )}

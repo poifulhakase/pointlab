@@ -35,6 +35,7 @@ type Props = {
   onOpenSpec?: () => void
   onOpenOriginal?: () => void
   onPoiroboChange?: (open: boolean) => void
+  onRegisterBack?: (fn: (() => void) | null) => void
   pushEnabled?: boolean
   pushBusy?: boolean
   onTogglePush?: () => void
@@ -326,7 +327,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const isAdmin     = isAdminEmail(user?.email)
 
   const [visible,       setVisible]       = useState(false)
@@ -370,6 +371,19 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
     setDrawerVisible(false)
     setTimeout(() => setActiveDrawer(null), 320)
   }
+
+  // Android 戻るボタン用: 開いている最前面モーダルの「閉じる」関数を App に登録（無ければ null）
+  useEffect(() => {
+    let fn: (() => void) | null = null
+    if (memberLockOpen)      fn = () => setMemberLockOpen(false)
+    else if (communityOpen)  fn = () => setCommunityOpen(false)
+    else if (adminOpen)      fn = () => setAdminOpen(false)
+    else if (bookingOpen)    fn = () => setBookingOpen(false)
+    else if (activeDrawer)   fn = () => { setDrawerVisible(false); setTimeout(() => setActiveDrawer(null), 320) }
+    else if (showPoirobo)    fn = () => { setShowPoirobo(false); onPoiroboChange?.(false) }
+    onRegisterBack?.(fn)
+    return () => onRegisterBack?.(null)
+  }, [memberLockOpen, communityOpen, adminOpen, bookingOpen, activeDrawer, showPoirobo, onRegisterBack, onPoiroboChange])
 
   // DATA ドロワー経由でサブページに遷移した場合、戻ったときに DATA ドロワーを再表示
   useEffect(() => {
