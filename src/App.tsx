@@ -17,7 +17,6 @@ import { getSqDates, getSqMarkersForDate, type SqDate } from './utils/sqCalendar
 import { getMacroEventsForDate, type MacroFilter } from './utils/macroCalendar'
 import { getAllNoteData, dateKey, type NoteMapEntry, type ScheduleEntry } from './utils/noteStorage'
 import { getSettings, saveSettings, type PoiroboAlertConfig } from './utils/settingsStorage'
-import { isGuestAuthed } from './utils/guestAuth'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
 import { Z } from './utils/zIndex'
 import { purgeStaleDataCaches } from './utils/dataCache'
@@ -259,19 +258,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     return () => clearTimeout(t)
   }, [saveToast])
 
-  // ── 認証ゲート ────────────────────────────────────────────────────────
-  const [isUnlocked, setIsUnlocked] = useState(() =>
-    isGuestAuthed() || localStorage.getItem('poical-was-google-authed') === '1'
-  )
-  useEffect(() => {
-    if (user) {
-      setIsUnlocked(true)
-    } else if (!authLoading && !isGuestAuthed()) {
-      // Google ログアウト確定（optimistic フラグ起因のケースも含む）
-      setIsUnlocked(false)
-    }
-  }, [user, authLoading])
-  const showLoading = authLoading && !isUnlocked
+  // ── 認証ゲートは廃止（誰でもアクセス可。会員限定コンテンツは各ビューの
+  //     CommunityLockScreen で制御。Googleログインは研究室の設定から任意で行う）──
 
   // ── カレンダーイベント系 ──────────────────────────────────────────────
   const year = cal.current.getFullYear()
@@ -440,14 +428,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   }, [calPanelIndex, cal])
 
   const isCalView = cal.view === 'day' || cal.view === 'week' || cal.view === 'month'
-
-  if (showLoading) {
-    return (
-      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
-        <span style={spinnerStyle} />
-      </div>
-    )
-  }
 
   // メンテナンスモード: 管理者以外（未ログイン含む）は全画面ブロック。
   // 認証解決後（!authLoading）にのみ判定し、管理者へのフラッシュ表示を防ぐ。
@@ -692,13 +672,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* モーダル類 */}
       <Suspense fallback={null}>
         <AuthModal
-          isOpen={!isUnlocked && !showLoading} isRequired theme={theme}
-          onClose={() => {}} onUnlock={() => setIsUnlocked(true)}
-          user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
-        />
-        <AuthModal
-          isOpen={authModalOpen && isUnlocked} theme={theme}
-          onClose={() => setAuthModalOpen(false)} onUnlock={() => {}}
+          isOpen={authModalOpen} theme={theme}
+          onClose={() => setAuthModalOpen(false)}
           user={user} syncStatus={syncStatus} onSignIn={signIn} onSignOut={signOut} onRetry={retrySync}
         />
       </Suspense>

@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import type { User } from 'firebase/auth'
 import type { SyncStatus } from '../hooks/useFirebaseSync'
-import { guestLogin } from '../utils/guestAuth'
 
 type Props = {
   isOpen: boolean
-  isRequired?: boolean
   theme?: 'dark' | 'light'
   onClose: () => void
-  onUnlock: () => void
   user: User | null
   syncStatus: SyncStatus
   onSignIn: () => Promise<void>
@@ -16,114 +13,28 @@ type Props = {
   onRetry?: () => void
 }
 
-export function AuthModal({ isOpen, isRequired, theme = 'dark', onClose, onUnlock, user, syncStatus, onSignIn, onSignOut, onRetry }: Props) {
+/** アカウント管理（研究室の設定から）: Google ログイン/ログアウト・クラウド同期 */
+export function AuthModal({ isOpen, theme = 'dark', onClose, user, syncStatus, onSignIn, onSignOut, onRetry }: Props) {
   if (!isOpen) return null
 
-  const handleClose = () => { if (!isRequired) onClose() }
   const modalBg = theme === 'dark' ? '#111115' : 'rgba(255,255,255,0.98)'
 
   return (
     <>
-      <div style={styles.backdrop} onClick={handleClose} />
-      <div style={{ ...styles.modal, background: modalBg }} className="glass" role="dialog" aria-modal="true" aria-label={isRequired ? '認証' : 'アカウント'}>
-        {!isRequired && (
-          <button style={styles.closeBtn} onClick={handleClose} aria-label="閉じる">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        )}
+      <div style={styles.backdrop} onClick={onClose} />
+      <div style={{ ...styles.modal, background: modalBg }} className="glass" role="dialog" aria-modal="true" aria-label="アカウント">
+        <button style={styles.closeBtn} onClick={onClose} aria-label="閉じる">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
 
-        {/* ゲート（isRequired）: ID/PW のみ */}
-        {isRequired && <GateView onUnlock={onUnlock} />}
-
-        {/* アカウント管理（歯車から）: Google ログイン/ログアウト */}
-        {!isRequired && (
-          user
-            ? <LoggedInView user={user} syncStatus={syncStatus} onSignOut={async () => { await onSignOut(); onClose() }} onRetry={onRetry} />
-            : <SyncView onSignIn={onSignIn} onClose={onClose} />
-        )}
+        {user
+          ? <LoggedInView user={user} syncStatus={syncStatus} onSignOut={async () => { await onSignOut(); onClose() }} onRetry={onRetry} />
+          : <SyncView onSignIn={onSignIn} onClose={onClose} />
+        }
       </div>
     </>
-  )
-}
-
-/** アプリへの入場ゲート: ID + パスワード */
-function GateView({ onUnlock }: { onUnlock: () => void }) {
-  const [id, setId]           = useState('')
-  const [pw, setPw]           = useState('')
-  const [error, setError]     = useState('')
-  const [showPw, setShowPw]   = useState(false)
-  const [savePw, setSavePw]   = useState(true)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (guestLogin(id, pw)) {
-      onUnlock()
-    } else {
-      setError('IDまたはパスワードが違います')
-    }
-  }
-
-  return (
-    <div style={styles.body}>
-      <div style={styles.logoWrap}>
-        <picture>
-          <source srcSet={`${import.meta.env.BASE_URL}poirobo.webp`} type="image/webp" />
-          <img src={`${import.meta.env.BASE_URL}poirobo.png`} alt="ぽいロボ" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-        </picture>
-      </div>
-      <h2 style={styles.title}>ぽいロボ</h2>
-      <p style={styles.subtitle}>IDとパスワードを入力してください</p>
-
-      <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <input
-          value={id}
-          onChange={e => { setId(e.target.value); setError('') }}
-          placeholder="ID"
-          autoComplete="username"
-          name="username"
-          style={styles.input}
-        />
-        <div style={styles.pwWrap}>
-          <input
-            value={pw}
-            onChange={e => { setPw(e.target.value); setError('') }}
-            placeholder="パスワード"
-            type={showPw ? 'text' : 'password'}
-            autoComplete={savePw ? 'current-password' : 'off'}
-            name="password"
-            style={{ ...styles.input, paddingRight: 40 }}
-          />
-          <button style={styles.eyeBtn} onClick={() => setShowPw(v => !v)} type="button">
-            {showPw
-              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            }
-          </button>
-        </div>
-
-        {/* パスワード保存チェックボックス */}
-        <label style={styles.checkLabel}>
-          <input
-            type="checkbox"
-            checked={savePw}
-            onChange={e => setSavePw(e.target.checked)}
-            style={styles.checkbox}
-          />
-          <span>パスワードをブラウザに保存</span>
-        </label>
-
-        {error && <p style={styles.error}>{error}</p>}
-        <button
-          type="submit"
-          style={{ ...styles.loginBtn, opacity: !id || !pw ? 0.5 : 1 }}
-          disabled={!id || !pw}
-        >
-          ログイン
-        </button>
-      </form>
-    </div>
   )
 }
 
