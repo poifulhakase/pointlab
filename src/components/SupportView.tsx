@@ -121,7 +121,7 @@ const RADIO_OPTIONS = [
 type RadioValue = typeof RADIO_OPTIONS[number]['value'] | ''
 
 function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
-  const [customerType, setCustomerType] = useState<RadioValue>('')
+  const [customerType, setCustomerType] = useState<RadioValue>('individual')
   const [otherText,    setOtherText]    = useState('')
   const [content,      setContent]      = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
