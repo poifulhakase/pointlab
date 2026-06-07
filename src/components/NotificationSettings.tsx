@@ -81,9 +81,13 @@ export function NotificationSettings({
         </span>
       </div>
 
-      {/* 通知種別チェックボックス（プッシュ通知 ON のときのみ表示） */}
+      {/* 通知種別（プッシュ通知 ON のときのみ表示）
+          親トグルの「子オプション」として入れ子表示する。
+          ・左レール（borderLeft）＋インデントで親への従属を明示
+          ・子カードはフラット（背景・枠なし）にして親トグルカードを「容器」として際立たせる
+          ・コントロールはチェックボックス（種別の多選択）＝親トグル(マスター)との型差が階層を表す */}
       {pushEnabled && canUse && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: -2, marginLeft: 16, paddingLeft: 14, borderLeft: '1.5px solid var(--glass-border)' }}>
           {[
             { checked: notifyRadar, onToggle: onToggleNotifyRadar, label: 'ぽいロボ レーダー', sub: 'イベント前日 12:30' },
             { checked: notifyDataReady, onToggle: onToggleNotifyDataReady, label: '需給データ更新通知', sub: '週次データ更新後（土曜）' },
@@ -96,10 +100,10 @@ export function NotificationSettings({
               tabIndex={0}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle?.() } }}
               onClick={onToggle}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 8px', borderRadius: 8, cursor: 'pointer', background: 'transparent' }}
             >
               <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{label}</span>
                 <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub}</span>
               </span>
               <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${checked ? 'rgba(96,165,250,0.85)' : 'var(--glass-border)'}`, background: checked ? 'rgba(96,165,250,0.85)' : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
