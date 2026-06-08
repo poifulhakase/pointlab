@@ -10,9 +10,41 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 // トークン未設定（ローカル開発など）では disable=true となりアップロードをスキップする。
 const SENTRY_AUTH_TOKEN = process.env.SENTRY_AUTH_TOKEN
 
+const BASE = '/calendar/'
+
+// 時計フォント（Cherry Bomb One）の preload を index.html に注入する。
+// 画面最上部の大きな時計が使う表示用フォントを早期にDLし、font-display:swap の
+// フォールバック→入替のチラつきを抑える。ハッシュ付きファイル名に追従するため、
+// ビルド成果物（ctx.bundle）から実ファイル名を探して href を生成する。
+function preloadClockFont() {
+  return {
+    name: 'preload-clock-font',
+    enforce: 'post' as const,
+    transformIndexHtml(html: string, ctx: { bundle?: Record<string, unknown> }) {
+      if (!ctx.bundle) return html // dev サーバーでは bundle が無い
+      const fontFile = Object.keys(ctx.bundle).find(f => /cherry-bomb-one.*\.woff2$/.test(f))
+      if (!fontFile) return html
+      return {
+        html,
+        tags: [{
+          tag: 'link',
+          attrs: {
+            rel: 'preload',
+            as: 'font',
+            type: 'font/woff2',
+            href: `${BASE}${fontFile}`,
+            crossorigin: '',
+          },
+          injectTo: 'head-prepend' as const,
+        }],
+      }
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/calendar/',
+  base: BASE,
   esbuild: {
     // 本番ビルドで console.log / debugger を全削除（バンドルサイズ削減 + 実行時オーバーヘッド低減）
     drop: ['console', 'debugger'],
@@ -70,6 +102,7 @@ export default defineConfig({
       },
     },
     react(),
+    preloadClockFont(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'favicon.svg', 'apple-touch-icon.png', 'logo.svg'],

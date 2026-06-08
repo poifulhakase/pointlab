@@ -9,8 +9,6 @@ import { CalendarHeader, MonitorIcon, ChevronLeft, ChevronRight } from './compon
 const AuthModal         = lazy(() => import('./components/AuthModal').then(m => ({ default: m.AuthModal })))
 import { Sidebar } from './components/Sidebar'
 import { MonthView } from './components/MonthView'
-import { WeekView } from './components/WeekView'
-import { DayView } from './components/DayView'
 import { getDividendDates, getMarkersForDate, type DividendDateSet } from './utils/dividendCalendar'
 import { isMarketClosed, getClosedReason } from './utils/marketHolidays'
 import { getSqDates, getSqMarkersForDate, type SqDate } from './utils/sqCalendar'
@@ -31,6 +29,10 @@ import { useMaintenance } from './hooks/useMaintenance'
 import { useBooking } from './hooks/useBooking'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
+// 週/日ビューは初期表示（月）では画面外。lazy 化して初期バンドルから外し、
+// マウント後に requestIdleCallback で裏プリフェッチ（切替時にはDL済み＝チラつきなし）。
+const WeekView          = lazy(() => import('./components/WeekView').then(m => ({ default: m.WeekView })))
+const DayView           = lazy(() => import('./components/DayView').then(m => ({ default: m.DayView })))
 const ChartView         = lazy(() => import('./components/ChartView').then(m => ({ default: m.ChartView })))
 const QuantView         = lazy(() => import('./components/QuantView').then(m => ({ default: m.QuantView })))
 const SpecView          = lazy(() => import('./components/SpecView').then(m => ({ default: m.SpecView })))
@@ -89,6 +91,17 @@ export default function App() {
 
   useEffect(() => { purgeStaleDataCaches() }, [])
 
+  // 週/日ビューのチャンクをアイドル時に裏プリフェッチ（ユーザーが切り替える前にDL済みにする）
+  useEffect(() => {
+    const ric = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 200))
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout
+    const id = ric(() => {
+      import('./components/WeekView')
+      import('./components/DayView')
+    })
+    return () => cancel(id as number)
+  }, [])
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     saveSettings({ ...getSettings(), theme })
@@ -145,6 +158,9 @@ export default function App() {
   })
   const [footerAnimating, setFooterAnimating] = useState(false)
   const footerAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // collapseFooter を安定化（[isMobile] のみ依存）するため、最新の折りたたみ状態を ref で保持
+  const footerCollapsedRef = useRef(footerCollapsed)
+  useEffect(() => { footerCollapsedRef.current = footerCollapsed }, [footerCollapsed])
   const toggleFooter = useCallback(() => {
     setFooterAnimating(true)
     if (footerAnimTimerRef.current) clearTimeout(footerAnimTimerRef.current)
@@ -155,15 +171,17 @@ export default function App() {
       return next
     })
   }, [])
-  // コンテンツエリアのクリックで開いているフッターを閉じる（PC のみ）
+  // 開いているフッターを閉じる（PC のみ）。コンテンツクリック / ぽいロボページ表示で使用
   const collapseFooter = useCallback(() => {
-    if (isMobile || footerCollapsed) return
+    if (isMobile || footerCollapsedRef.current) return
     setFooterAnimating(true)
     if (footerAnimTimerRef.current) clearTimeout(footerAnimTimerRef.current)
     footerAnimTimerRef.current = setTimeout(() => setFooterAnimating(false), 320)
     setFooterCollapsed(true)
     try { localStorage.setItem('poical-footer-collapsed', 'true') } catch { /* noop */ }
-  }, [isMobile, footerCollapsed])
+  }, [isMobile])
+  // ぽいロボとは？ページを開いたらフッターを閉じた状態にする（ハンドルは残り、展開で移動可）
+  useEffect(() => { if (poiroboPageOpen) collapseFooter() }, [poiroboPageOpen, collapseFooter])
 
   // ── マクロフィルター ──────────────────────────────────────────────────
   const [macroFilter, setMacroFilter] = useState<MacroFilter>({ us: true, jp: true })
@@ -631,31 +649,35 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                     />
                   </div>
 
-                  {/* Panel 1: 週 */}
+                  {/* Panel 1: 週（lazy・初期は画面外なので fallback は不可視）*/}
                   <div style={calPanelStyle}>
-                    <WeekView
-                      days={cal.getWeekDays()} current={cal.current} isToday={cal.isToday}
-                      getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
-                      getAnomalyEvents={getAnomalyEvents}
-                      isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-                      onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-                      getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
-                      showPoiroboAlert={showPoiroboAlert}
-                      poiroboAlertConfig={poiroboAlertConfig}
-                      getBookingEvents={getBookingEvents}
-                    />
+                    <Suspense fallback={<ViewLoader />}>
+                      <WeekView
+                        days={cal.getWeekDays()} current={cal.current} isToday={cal.isToday}
+                        getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
+                        getAnomalyEvents={getAnomalyEvents}
+                        isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
+                        onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
+                        getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
+                        showPoiroboAlert={showPoiroboAlert}
+                        poiroboAlertConfig={poiroboAlertConfig}
+                        getBookingEvents={getBookingEvents}
+                      />
+                    </Suspense>
                   </div>
 
-                  {/* Panel 2: 日 */}
+                  {/* Panel 2: 日（lazy・初期は画面外なので fallback は不可視）*/}
                   <div style={calPanelStyle}>
-                    <DayView
-                      date={cal.current} isToday={cal.isToday}
-                      getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
-                      isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
-                      onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-                      getScheduledEvents={getScheduledEvents} theme={theme}
-                      getBookingEvents={getBookingEvents}
-                    />
+                    <Suspense fallback={<ViewLoader />}>
+                      <DayView
+                        date={cal.current} isToday={cal.isToday}
+                        getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
+                        isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
+                        onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
+                        getScheduledEvents={getScheduledEvents} theme={theme}
+                        getBookingEvents={getBookingEvents}
+                      />
+                    </Suspense>
                   </div>
                 </div>
               </div>
@@ -779,7 +801,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
         </div>
       )}
 
-      <div style={{ position: 'relative', zIndex: Z.footer, flexShrink: 0, display: poiroboPageOpen ? 'none' : undefined }}>
+      <div style={{ position: 'relative', zIndex: Z.footer, flexShrink: 0 }}>
           {/* つまみ（フッター開閉）— PC のみ表示 */}
           {!isMobile && <button
             onClick={toggleFooter}
