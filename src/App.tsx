@@ -155,6 +155,15 @@ export default function App() {
       return next
     })
   }, [])
+  // コンテンツエリアのクリックで開いているフッターを閉じる（PC のみ）
+  const collapseFooter = useCallback(() => {
+    if (isMobile || footerCollapsed) return
+    setFooterAnimating(true)
+    if (footerAnimTimerRef.current) clearTimeout(footerAnimTimerRef.current)
+    footerAnimTimerRef.current = setTimeout(() => setFooterAnimating(false), 320)
+    setFooterCollapsed(true)
+    try { localStorage.setItem('poical-footer-collapsed', 'true') } catch { /* noop */ }
+  }, [isMobile, footerCollapsed])
 
   // ── マクロフィルター ──────────────────────────────────────────────────
   const [macroFilter, setMacroFilter] = useState<MacroFilter>({ us: true, jp: true })
@@ -458,7 +467,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           onClose={() => setPoiroboAlertModalOpen(false)}
         />
       </Suspense>
-      <div style={styles.body}>
+      <div style={styles.body} onClick={collapseFooter}>
         {isMobile && sidebarOpen && (
           <div style={styles.mobileOverlay} onClick={handleOverlayClick} />
         )}
