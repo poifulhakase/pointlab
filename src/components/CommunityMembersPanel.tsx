@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { listMembers, addMember, removeMember, type CommunityMember } from '../utils/communityAccess'
-import { Z } from '../utils/zIndex'
 
 type Props = { theme: 'dark' | 'light'; onClose?: () => void }
 
@@ -67,7 +66,9 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: Z.popover,
+      // SupportView ルート内に absolute で収め、下のフッターを隠さない（ぽいロボページと同じ方式）。
+      // z-index は SupportView 内のローカル値（背景0-2/コンテンツ10/コネクト20/ぽいロボ30/ドロワー40）より前面。
+      position: 'absolute', inset: 0, zIndex: 50,
       background: '#000510',
       backgroundImage: `${CY_BG}, repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.012) 3px,rgba(0,229,255,0.012) 4px)`,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -95,8 +96,9 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
         )}
       </div>
 
-      {/* スクロール領域 */}
+      {/* スクロール領域（PC では横に広がりすぎないよう中身を最大幅で中央寄せ） */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+       <div style={{ maxWidth: 880, margin: '0 auto', width: '100%' }}>
 
         {/* 追加フォーム */}
         <div style={{
@@ -210,6 +212,7 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
             ))}
           </div>
         )}
+       </div>
       </div>
     </div>
   )

@@ -376,7 +376,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
   useEffect(() => {
     let fn: (() => void) | null = null
     if (memberLockOpen)      fn = () => setMemberLockOpen(false)
-    else if (communityOpen)  fn = () => setCommunityOpen(false)
+    else if (communityOpen)  fn = () => { setCommunityOpen(false); openDrawer('data') }
     else if (adminOpen)      fn = () => setAdminOpen(false)
     else if (bookingOpen)    fn = () => setBookingOpen(false)
     else if (activeDrawer)   fn = () => { setDrawerVisible(false); setTimeout(() => setActiveDrawer(null), 320) }
@@ -921,7 +921,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
         <Suspense fallback={null}>
           <CommunityMembersPanel
             theme={theme}
-            onClose={() => setCommunityOpen(false)}
+            onClose={() => { setCommunityOpen(false); openDrawer('data') }}
           />
         </Suspense>
       )}
