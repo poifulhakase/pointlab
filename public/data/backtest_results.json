@@ -1,6 +1,6 @@
 {
   "logic_version": "v2-symmetric-restoring",
-  "computed_at": "2026-06-06T02:28:06.791Z",
+  "computed_at": "2026-06-08T06:24:53.804Z",
   "data_range": {
     "from": "2025-11-28",
     "to": "2026-05-29"
@@ -15,20 +15,20 @@
   ],
   "summary": {
     "total_weeks": 27,
-    "signal_weeks": 16,
+    "signal_weeks": 15,
     "bull_signals": 5,
-    "bear_signals": 11,
-    "neutral_signals": 10,
+    "bear_signals": 10,
+    "neutral_signals": 11,
     "bull_wins": 3,
     "bear_wins": 5,
     "bull_win_rate": 0.6,
-    "bear_win_rate": 0.45,
-    "overall_win_rate": 0.5,
+    "bear_win_rate": 0.5,
+    "overall_win_rate": 0.53,
     "by_status": {
       "重力反転中": {
-        "n": 4,
+        "n": 3,
         "wins": 1,
-        "win_rate": 0.25
+        "win_rate": 0.33
       },
       "真空落下": {
         "n": 7,
@@ -50,9 +50,9 @@
       },
       "mid": {
         "label": "中（50-69%）",
-        "n": 12,
+        "n": 11,
         "wins": 6,
-        "win_rate": 0.5
+        "win_rate": 0.55
       }
     }
   },
@@ -87,10 +87,10 @@
     },
     {
       "week": "2026-05-15",
-      "tev": -58,
+      "tev": -60,
       "status": "真空落下",
-      "confidence": 52,
-      "decay": 0.125,
+      "confidence": 57,
+      "decay": 0.25,
       "acc": -35,
       "foreign4w_pct": 81,
       "cot_pct": 38,
@@ -101,24 +101,24 @@
     },
     {
       "week": "2026-05-08",
-      "tev": -30,
-      "status": "重力反転中",
-      "confidence": 56,
-      "decay": 0.5,
+      "tev": -14,
+      "status": "限界膨張",
+      "confidence": 50,
+      "decay": 1,
       "acc": 31,
       "foreign4w_pct": 90,
       "cot_pct": 36,
-      "signal": "bear",
+      "signal": "neutral",
       "nk_close": 61409,
       "price_change_pct": 3.14,
-      "win": false
+      "win": null
     },
     {
       "week": "2026-05-01",
-      "tev": -20,
+      "tev": -18,
       "status": "限界膨張",
       "confidence": 50,
-      "decay": 0.5,
+      "decay": 1,
       "acc": 2,
       "foreign4w_pct": 95,
       "cot_pct": 39,
@@ -131,7 +131,7 @@
       "week": "2026-04-24",
       "tev": -42,
       "status": "真空落下",
-      "confidence": 65,
+      "confidence": 60,
       "decay": 0.25,
       "acc": -22,
       "foreign4w_pct": 100,
@@ -187,7 +187,7 @@
       "week": "2026-03-27",
       "tev": 62,
       "status": "慣性航行中",
-      "confidence": 74,
+      "confidence": 70,
       "decay": 1,
       "acc": 14,
       "foreign4w_pct": 0,
@@ -229,7 +229,7 @@
       "week": "2026-03-06",
       "tev": -39,
       "status": "真空落下",
-      "confidence": 55,
+      "confidence": 54,
       "decay": 1,
       "acc": -71,
       "foreign4w_pct": 91,
@@ -269,10 +269,10 @@
     },
     {
       "week": "2026-02-13",
-      "tev": 63,
+      "tev": 84,
       "status": "慣性航行中",
-      "confidence": 54,
-      "decay": 0.5,
+      "confidence": 60,
+      "decay": 1,
       "acc": 73,
       "foreign4w_pct": 63,
       "cot_pct": 37,
@@ -299,7 +299,7 @@
       "week": "2026-01-30",
       "tev": -35,
       "status": "真空落下",
-      "confidence": 61,
+      "confidence": 57,
       "decay": 0.5,
       "acc": -17,
       "foreign4w_pct": 100,
@@ -341,7 +341,7 @@
       "week": "2026-01-09",
       "tev": 60,
       "status": "慣性航行中",
-      "confidence": 53,
+      "confidence": 51,
       "decay": 0.5,
       "acc": 195,
       "foreign4w_pct": 100,

@@ -6,6 +6,8 @@
 import { readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+// TEV 物理式と正準シグナル閾値（65/35）は engineExport.ts と共有の単一情報源。
+import { computeTevPhysics, sig } from '../src/utils/tevCore.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT     = join(__dirname, '..')
@@ -18,10 +20,6 @@ const r2 = v => Math.round(v * 100) / 100
 function pctRank(arr, val) {
   if (!arr.length) return 50
   return Math.round(arr.filter(v => v < val).length / arr.length * 100)
-}
-
-function sig(pct) {
-  return pct >= 60 ? 'BULL' : pct <= 40 ? 'BEAR' : 'NEUTRAL'
 }
 
 /** arr[0] を arr[1..] と比較した Z スコア */
@@ -123,35 +121,7 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
   const cotLfNets = cotSlice.slice(0, 52).map(d => d.nonCommNet)
   const cotLfPct  = cotLfNets.length > 1 ? pctRank(cotLfNets.slice(1), cotLfNets[0]) : 50
 
-  // TEV 計算（本番と同一式）
-  const tev_fBase     = r2(0.3 * tev_V + 0.7 * tev_A)
-  const tev_fInertiaRaw = r2(tev_fBase * (foreign4wPct / 100))
-
-  let tev_decay = 1.0
-  if (tev_V > 0 && tev_A <= 0) tev_decay *= 0.25   // 天井の失速
-  if (sig(cotLfPct) === 'BEAR') tev_decay *= 0.5    // 燃料漏れ（COT BEAR）
-  // 先物出来高減少チェック: スキップ（日次出来高の週次過去データなし）
-
-  const tev_fInertia = r2(tev_fInertiaRaw * tev_decay)
-
-  // R_resistance（弾性・両側 / v2-symmetric-restoring）: 中立(信用%ile=50, 空売り%ile=50)を
-  // ゼロに再センタリングし上下両方向に効かせる。旧式 -8√(credit+(100-ss)) は中立でも−80の
-  // 恒常ドラッグが残りBULLを構造的に出せなかった（半年BULLゼロの主因）。
-  //   信用厚い＋空売り薄い → signedLoad>0 → 下押し / 信用薄い＋空売り厚い → signedLoad<0 → 上押し
-  const signedLoad  = creditRatioPct - ssPct   // −100..+100, 中立=0
-  const tev_rResist = r2(-8 * Math.sign(signedLoad) * Math.sqrt(Math.abs(signedLoad)))
-
-  const tev_value = Math.round(tev_fInertia + tev_rResist)
-
-  // ステータス判定（底打ち反転はスキップ: 10日安値圏データなし）
-  let tev_status
-  if      (tev_value >= 25 && tev_A > 0)  tev_status = '慣性航行中'
-  else if (tev_value <= -25 && tev_A < 0) tev_status = '真空落下'
-  else if (tev_value <= -25 && tev_A >= 0) tev_status = '重力反転中'
-  else if (tev_value >= 25)                tev_status = '限界膨張（慣性失速）'
-  else                                     tev_status = '限界膨張'
-
-  // composite score（確信度計算用）
+  // composite score（確信度計算用・物理コアに渡す）
   const vixCloses52 = vixSlice.slice(0, 52).map(d => d.close)
   const vixPct      = vixCloses52.length > 1 ? pctRank(vixCloses52.slice(1), vixCloses52[0]) : 50
   const arbLongs    = arbSlice.slice(0, 26).map(d => d.longBal / 1_000_000)
@@ -159,6 +129,8 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
   const adRatios    = adSlice.slice(0, 26).map(d => d.ratio25)
   const adPct       = adRatios.length > 1 ? pctRank(adRatios.slice(1), adRatios[0]) : 50
 
+  // backtest は PCR/USD-JPY のヒストリカルデータを持たないため7項目（実エンジンは9項目）。
+  // データ制約による差として許容（★2026-06-08 ユーザー判断）。sig 閾値は共有コアの 65/35。
   const items = [
     { signal: sig(foreign4wPct),       w: 0.25 },
     { signal: sig(cotLfPct),           w: 0.15 },
@@ -172,11 +144,25 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
   const rawScore     = items.reduce((s, i) => s + (i.signal === 'BULL' ? 1 : i.signal === 'BEAR' ? -1 : 0) * i.w, 0)
   const compositeScore = r2(rawScore / totalW * 100)
 
-  const tev_confidence = tev_status.startsWith('限界膨張')
-    ? 50
-    : Math.min(95, Math.round(Math.abs(compositeScore) * 0.5 + 50))
+  // 物理計算は共有コア（engineExport.ts と同一式・単一情報源）。
+  // backtest は先物出来高の週次過去データ・10日安値圏データを持たないため両フラグは false
+  // （= 先物出来高減衰・底打ち反転ステータスは構造的にスキップ）。
+  const phys = computeTevPhysics({
+    tev_V, tev_A, foreign4wPct, cotLfPct, creditRatioPct, ssPct, compositeScore,
+    futuresVolumeDecline: false,
+    is10dLow: false,
+  })
+  if (!phys) return null
 
-  return { tev_value, tev_status, tev_confidence, tev_decay, tev_acc: tev_A, foreign4w_pct: foreign4wPct, cot_pct: cotLfPct }
+  return {
+    tev_value: phys.tev_value,
+    tev_status: phys.tev_status,
+    tev_confidence: phys.tev_confidence,
+    tev_decay: phys.tev_decay,
+    tev_acc: tev_A,
+    foreign4w_pct: foreign4wPct,
+    cot_pct: cotLfPct,
+  }
 }
 
 // ── メイン ──────────────────────────────────────────────

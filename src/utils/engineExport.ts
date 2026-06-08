@@ -14,6 +14,8 @@ import type { Nas100DayData } from './nas100Data'
 import type { NkFuturesDayData } from './nkFuturesPriceData'
 import type { StocksDailyData } from './stocksDailyData'
 import type { NtRatioPoint } from './ntRatioData'
+// TEV 物理式と正準シグナル閾値（65/35）は backtest-tev.mjs と共有の単一情報源。
+import { computeTevPhysics, sig } from './tevCore.mjs'
 
 // ── エクスポート用データ構築 ──────────────────────
 function toDate(s: string) { return (s ?? '').replace(/\//g, '-') }
@@ -129,9 +131,7 @@ export function buildExportJson(
     if (series.length === 0) return 50
     return Math.round(series.filter(v => v < val).length / series.length * 100)
   }
-  function sig(bullPct: number): 'BULL' | 'NEUTRAL' | 'BEAR' {
-    return bullPct >= 65 ? 'BULL' : bullPct <= 35 ? 'BEAR' : 'NEUTRAL'
-  }
+  // sig（65/35）は共有コア tevCore.mjs から import（backtest と単一情報源）
   function hvol(prices: number[], window: number): number | null {
     if (prices.length < window + 1) return null
     const sl   = prices.slice(-(window + 1))
@@ -490,81 +490,29 @@ export function buildExportJson(
   // ── TEV（トータル物理エネルギーベクトル）計算 ───────────
   const tev_V       = score_today != null ? r2(score_today * 100) : null
   const tev_A       = score_today != null && score_3d != null ? r2((score_today - score_3d) * 100) : null
-  const tev_pCredit = creditRatioPct
-  const tev_pShort  = 100 - ssPct
-
-  let tev_fBase:        number | null = null
-  let tev_fInertia:     number | null = null
-  let tev_decay                       = 1.0
-  const tev_decayReasons: string[]    = []
-  let tev_rResist:      number | null = null
-  let tev_value:        number | null = null
-  let tev_status:       string | null = null
-  let tev_confidence:   number | null = null
-
-  if (tev_V != null && tev_A != null) {
-    tev_fBase              = r2((0.3 * tev_V) + (0.7 * tev_A))
-    const tev_fInertiaRaw  = r2(tev_fBase * (foreign4wPct / 100))
-
-    // 天井の失速: V > 0 かつ A ≤ 0 → ×0.25
-    // ※減衰理由は出力にそのまま載るため、英語変数名・数式記号を使わず日本語で記述する（出力制約②対応）
-    if (tev_V > 0 && tev_A <= 0) {
-      tev_decay *= 0.25
-      tev_decayReasons.push('天井の失速（上昇速度はあるが加速度が頭打ち）→75%減衰')
-    }
-    // 燃料漏れ: COT BEAR → ×0.5
-    if (sig(cotLfPct) === 'BEAR') {
-      tev_decay *= 0.5
-      tev_decayReasons.push('燃料漏れ（ヘッジファンドのネットが売り越し方向）→50%減衰')
-    }
-    // 燃料漏れ: 先物volume 直近3日連続減少 → ×0.5
-    if (futuresDailyData.length >= 3) {
-      const [fv0, fv1, fv2] = [futuresDailyData[0].volume, futuresDailyData[1].volume, futuresDailyData[2].volume]
-      if (fv0 < fv1 && fv1 < fv2) {
-        tev_decay *= 0.5
-        tev_decayReasons.push('燃料漏れ（先物の出来高が3日連続減少）→50%減衰')
-      }
-    }
-
-    tev_fInertia = r2(tev_fInertiaRaw * tev_decay)
-
-    // R_resistance（弾性・両側）: 中立点(P_credit=50, P_short=50 → 和=100)をゼロに
-    // 再センタリングし、上下両方向に効く本物の復元力にする（v2-symmetric-restoring）。
-    //   信用買い残厚い＋空売り薄い → signedLoad>0 → 戻り売りの重し（下押し）
-    //   信用買い残薄い＋空売り厚い → signedLoad<0 → 踏み上げバネ（上押し）
-    // 旧式 -8×√(P_credit+P_short) は中立でも−80の恒常ドラッグが残りBULLを構造的に出せなかった。
-    const signedLoad = (tev_pCredit + tev_pShort) - 100   // −100..+100, 中立=0
-    tev_rResist = r2(-8 * Math.sign(signedLoad) * Math.sqrt(Math.abs(signedLoad)))
-
-    if (tev_rResist != null) {
-      tev_value = Math.round(tev_fInertia + tev_rResist)
-
-      // 底打ち反転: 直近10日安値圏（安値の1.02倍以内）かつ A ≥ +50
-      const lows10d  = nkFuturesPriceData.slice(0, 10).map(d => d.low).filter(v => v > 0)
-      const low10d   = lows10d.length > 0 ? Math.min(...lows10d) : null
-      const is10dLow = low10d != null && nkCur != null && nkCur <= low10d * 1.02
-
-      // ステータス判定（優先順位: 底打ち反転 > 慣性航行中 > 真空落下 > 重力反転中 > 限界膨張）
-      if (tev_value >= -24 && tev_A >= 50 && is10dLow) {
-        tev_status = '底打ち反転'
-      } else if (tev_value >= 25 && tev_A > 0) {
-        tev_status = '慣性航行中'
-      } else if (tev_value <= -25 && tev_A < 0) {
-        tev_status = '真空落下'
-      } else if (tev_value <= -25 && tev_A >= 0) {
-        tev_status = '重力反転中'
-      } else if (tev_value >= 25) {
-        tev_status = '限界膨張（慣性失速）'
-      } else {
-        tev_status = '限界膨張'
-      }
-
-      // 確信度: 限界膨張系は50%固定
-      tev_confidence = tev_status.startsWith('限界膨張')
-        ? 50
-        : Math.min(95, Math.round(Math.abs(compositeScore) * 0.5 + 50))
-    }
+  // 先物volume 直近3日連続減少 → 追加減衰（データがある時のみ判定）
+  let futuresVolumeDecline = false
+  if (futuresDailyData.length >= 3) {
+    const [fv0, fv1, fv2] = [futuresDailyData[0].volume, futuresDailyData[1].volume, futuresDailyData[2].volume]
+    futuresVolumeDecline = fv0 < fv1 && fv1 < fv2
   }
+  // 底打ち反転判定: 直近10日安値圏（安値の1.02倍以内）
+  const lows10d  = nkFuturesPriceData.slice(0, 10).map(d => d.low).filter(v => v > 0)
+  const low10d   = lows10d.length > 0 ? Math.min(...lows10d) : null
+  const is10dLow = low10d != null && nkCur != null && nkCur <= low10d * 1.02
+
+  // TEV 物理計算は共有コア（backtest-tev.mjs と同一式・単一情報源 tevCore.mjs）。
+  // データ可用性の差（先物volume減衰・底打ち反転）はフラグで吸収する。
+  const tev_phys = computeTevPhysics({
+    tev_V, tev_A, foreign4wPct, cotLfPct, creditRatioPct, ssPct, compositeScore,
+    futuresVolumeDecline, is10dLow,
+  })
+  const tev_decay        = tev_phys?.tev_decay ?? 1.0
+  const tev_decayReasons = tev_phys?.tev_decayReasons ?? []
+  const tev_rResist      = tev_phys?.tev_rResist ?? null
+  const tev_value        = tev_phys?.tev_value ?? null
+  const tev_status       = tev_phys?.tev_status ?? null
+  const tev_confidence   = tev_phys?.tev_confidence ?? null
 
   // ── TEV 整合性検証 ───────────────────────────────
   const tev_sanityWarnings: string[] = []
