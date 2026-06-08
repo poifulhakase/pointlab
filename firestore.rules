@@ -2,6 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // 管理者判定の単一情報源（このファイル内）。
+    // Firestore ルールは環境変数を参照できないためメールはリテラル必須だが、
+    // 重複を避けここ1箇所に集約する。クライアントは src/utils/admin.ts、
+    // サーバーは Vercel env ADMIN_EMAIL/ADMIN_UID が別の情報源。
+    // admin.ts ↔ このファイルの齟齬は admin-drift テストが検知する。
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
+    }
+
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
@@ -11,8 +21,7 @@ service cloud.firestore {
       // 書き込みは管理者のみ。予約作成/キャンセル時の isBooked 更新はサーバー API
       // （Admin SDK・ルールをバイパス）が行う。以前の「認証ユーザーは isBooked のみ更新可」は
       // 任意スロットの予約状態を改ざんできる穴だったため廃止（★2026-05-30）。
-      allow write: if request.auth != null
-        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
+      allow write: if isAdmin();
     }
 
     // レート制限カウンタ。サーバー（Admin SDK）専用。クライアントからは読み書き不可。
@@ -26,25 +35,22 @@ service cloud.firestore {
 
     match /community_members/{email} {
       // 本人確認（メールアドレスのURLデコード後と一致）または管理者のみ読み取り可
-      allow read: if request.auth != null
-        && (request.auth.token.email == 'sushi.ramen.unajyu@gmail.com'
-            || request.auth.token.email.lower() == email.lower());
+      allow read: if isAdmin()
+        || (request.auth != null
+            && request.auth.token.email.lower() == email.lower());
       // 書き込みは管理者のみ
-      allow write: if request.auth != null
-        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
+      allow write: if isAdmin();
     }
 
     // アプリ全体のメンテナンスモード状態。未ログイン含む全員が読み取り可、書き込みは管理者のみ。
     match /config/{doc} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
+      allow write: if isAdmin();
     }
 
     match /bookings/{bookingId} {
-      allow read: if request.auth != null
-        && (request.auth.token.email == 'sushi.ramen.unajyu@gmail.com'
-            || resource.data.userId == request.auth.uid);
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.userId == request.auth.uid);
       // 正規の予約作成はサーバー API（Admin SDK・ルールをバイパス）経由。
       // クライアント直書きは多層防御として厳格化: 本人の userId・status=pending・必須フィールドを要求。
       allow create: if request.auth != null
@@ -55,8 +61,7 @@ service cloud.firestore {
       // （Admin SDK・ルールをバイパス）が行う。本人のクライアント直更新を許すと
       // status を自己承認(confirmed)へ書き換えてコネクト権限を不正取得できる穴になるため、
       // 本人句を廃止（★2026-06-01）。
-      allow update: if request.auth != null
-        && request.auth.token.email == 'sushi.ramen.unajyu@gmail.com';
+      allow update: if isAdmin();
     }
 
   }
