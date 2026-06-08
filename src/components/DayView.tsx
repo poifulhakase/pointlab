@@ -118,16 +118,16 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {band ? band.items.map((item, i) => (
               item.url ? (
                 <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  style={{ fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  style={styles.seasonLink}>
                   {item.label}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={styles.extLinkIcon}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span key={i} style={{ fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px' }}>
+                <span key={i} style={styles.seasonLabel}>
                   {item.label}
                 </span>
               )
-            )) : <span style={{ fontSize: 11, padding: '2px 8px' }}>&nbsp;</span>}
+            )) : <span style={styles.seasonEmpty}>&nbsp;</span>}
           </span>
           <DividendMarker markers={markers} size="md" />
           <SqMarkerBadge markers={sqMarkers} size="md" />
@@ -243,6 +243,11 @@ const styles: Record<string, React.CSSProperties> = {
   dowLabel: { fontSize: 12, fontWeight: 600, letterSpacing: '0.04em' },
   dateNum: { width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontSize: 22, fontWeight: 500 },
   closedBadge: { fontSize: 11, fontWeight: 700, color: 'rgba(255,200,100,0.9)', background: 'rgba(255,180,50,0.15)', border: '1px solid rgba(255,180,50,0.3)', borderRadius: 6, padding: '3px 10px' },
+  // 季節バナー（完全静的なインラインを定数化）
+  seasonLink: { fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 },
+  seasonLabel: { fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px' },
+  seasonEmpty: { fontSize: 11, padding: '2px 8px' },
+  extLinkIcon: { opacity: 0.7, flexShrink: 0 },
   noteBtn: {
     display: 'flex', alignItems: 'center', gap: 6,
     padding: '6px 14px', borderRadius: 20, marginTop: 4,

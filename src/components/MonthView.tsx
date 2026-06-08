@@ -99,9 +99,6 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                 // 本日（白）かつレーダー日（赤）が重なる場合：白セルに赤い枠線を重ねて両方分かるようにする
                 outline: td && !dim && isRadar ? '2px solid rgba(248,113,113,0.85)' : undefined,
                 outlineOffset: td && !dim && isRadar ? '-2px' : undefined,
-                cursor: 'pointer',
-                position: 'relative',
-                isolation: 'isolate',
               }}
               className={`glass${td && !dim ? ' today-pulse' : ''}`}
             >
@@ -113,8 +110,6 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
                     width: isMobile ? 22 : 26, height: isMobile ? 22 : 26,
                     fontSize: isMobile ? 11 : 13,
                     color: td ? (isLight ? '#1d4ed8' : 'rgba(255,255,255,0.95)') : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
-                    background: 'transparent',
-                    boxShadow: 'none',
                     fontWeight: td ? 700 : undefined,
                   }}
                   onClick={e => { e.stopPropagation(); onClickDay(d) }}
@@ -178,23 +173,23 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
         visibility: band ? 'visible' : 'hidden',
       }}>
         <span style={{ ...styles.seasonDot, background: 'var(--banner-color)', flexShrink: 0 }} />
-        <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0 6px', minWidth: 0 }}>
+        <span style={styles.seasonItems}>
           {band && band.items.map((item, i) => (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span key={i} style={styles.seasonItem}>
               {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: isMobile ? 9 : 10 }}>／</span>}
               {item.url ? (
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: 'var(--banner-color)', fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  style={styles.seasonLink}
                   onClick={e => e.stopPropagation()}
                 >
                   {item.label}
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={styles.extLinkIcon}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               ) : (
-                <span style={{ color: 'var(--banner-color)', fontWeight: 400, whiteSpace: 'nowrap' }}>{item.label}</span>
+                <span style={styles.seasonLabel}>{item.label}</span>
               )}
             </span>
           ))}
@@ -226,14 +221,22 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'background 0.12s',
     display: 'flex', flexDirection: 'column', overflow: 'hidden',
     minHeight: 0,
+    // 全セル共通の静的プロパティ（毎セルのインライン生成を避け定数化）
+    cursor: 'pointer', position: 'relative', isolation: 'isolate',
   },
   dateNumWrap: { display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' as const },
   dateNum: {
     width: 26, height: 26, display: 'flex', flexShrink: 0,
     alignItems: 'center', justifyContent: 'center',
     borderRadius: '50%', fontSize: 13, fontWeight: 500,
-    cursor: 'pointer',
+    cursor: 'pointer', background: 'transparent', boxShadow: 'none',
   },
+  // 季節バナー（完全静的なインラインを定数化）
+  seasonItems: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0 6px', minWidth: 0 },
+  seasonItem: { display: 'flex', alignItems: 'center', gap: 6 },
+  seasonLink: { color: 'var(--banner-color)', fontWeight: 400, textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 3 },
+  seasonLabel: { color: 'var(--banner-color)', fontWeight: 400, whiteSpace: 'nowrap' },
+  extLinkIcon: { opacity: 0.7, flexShrink: 0 },
   closedBadge: {
     fontSize: 10, fontWeight: 500,
     borderRadius: 3, padding: '1px 4px', whiteSpace: 'nowrap',

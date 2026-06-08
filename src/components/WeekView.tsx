@@ -281,16 +281,15 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? 'var(--banner-border)' : 'transparent'}`, background: band ? 'var(--banner-bg)' : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: band ? 'var(--banner-color)' : 'transparent', flexShrink: 0 }} />
         {band ? band.items.map((item, i) => (
-          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span key={i} style={styles.seasonItem}>
             {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>／</span>}
             {item.url ? (
-              <a href={item.url} target="_blank" rel="noopener noreferrer"
-                style={{ color: 'var(--banner-color)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <a href={item.url} target="_blank" rel="noopener noreferrer" style={styles.seasonLink}>
                 {item.label}
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7, flexShrink: 0 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={styles.extLinkIcon}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </a>
             ) : (
-              <span style={{ color: 'var(--banner-color)', fontWeight: 700 }}>{item.label}</span>
+              <span style={styles.seasonLabel}>{item.label}</span>
             )}
           </span>
         )) : <span>&nbsp;</span>}
@@ -303,6 +302,11 @@ const styles: Record<string, React.CSSProperties> = {
   wrap: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 8px 8px' },
   header: { display: 'flex', borderBottom: '1px solid var(--grid-line)', flexShrink: 0 },
   timeGutter: { width: 52, flexShrink: 0 },
+  // 季節バナー（完全静的なインラインを定数化）
+  seasonItem: { display: 'flex', alignItems: 'center', gap: 6 },
+  seasonLink: { color: 'var(--banner-color)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 },
+  seasonLabel: { color: 'var(--banner-color)', fontWeight: 700 },
+  extLinkIcon: { opacity: 0.7, flexShrink: 0 },
   dayHeader: { flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0 8px', gap: 3, borderRadius: 6, transition: 'background 0.12s' },
   dowLabel: { fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' },
   dateNum: { width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', fontSize: 16, fontWeight: 500 },
