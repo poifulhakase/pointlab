@@ -806,7 +806,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {!isMobile && <button
             onClick={toggleFooter}
             aria-label={footerCollapsed ? 'ナビを開く' : 'ナビを閉じる'}
-            style={styles.footerTsumami}
+            style={{ ...styles.footerTsumami, ...(footerCollapsed ? { width: 78, gap: 5 } : null) }}
           >
             <svg
               width="12" height="7" viewBox="0 0 10 6" fill="none"
@@ -819,6 +819,11 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             >
               <path d="M1 5L5 1L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+            {footerCollapsed && (
+              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-sub)', opacity: 0.7, lineHeight: 1 }}>
+                メニュー
+              </span>
+            )}
           </button>}
           {/* フッター本体（折りたたみ） */}
           <div style={{
