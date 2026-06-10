@@ -244,7 +244,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // ── コミュニティアクセス ───────────────────────────────────────────────
   const {
-    isAdminUser, memberLoading, previewAsNonMember, togglePreviewAsNonMember, isMember,
+    isAdminUser, memberLoading, membershipResolved, previewAsNonMember, togglePreviewAsNonMember, isMember,
   } = useCommunityAccess(user)
 
   // ── プッシュ通知 ──────────────────────────────────────────────────────
@@ -278,6 +278,22 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       setViewWithTransition('support')
     }
   }, [loginToast]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 非メンバーの「初期表示」は会員限定ビューのロック画面ではなく研究室を出す。
+  // 新規セッション（sessionStorage に保存ビューが無い＝デフォルト着地）のときだけ働き、
+  // ユーザーが自分でカレンダー等へ遷移した場合は尊重する（マウント毎に一度だけ）。
+  const [wasFreshLoad] = useState(() => {
+    try { return !sessionStorage.getItem('poical-view-session') } catch { return false }
+  })
+  const initialMemberRedirectDone = useRef(false)
+  useEffect(() => {
+    if (initialMemberRedirectDone.current) return
+    if (authLoading || !membershipResolved) return // 認証・会員判定の確定を待つ
+    initialMemberRedirectDone.current = true
+    if (!wasFreshLoad) return
+    const memberOnly = ['month', 'week', 'day', 'quant', 'shield'].includes(cal.view)
+    if (memberOnly && !isMember) setViewWithTransition('support')
+  }, [authLoading, membershipResolved, isMember]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!saveToast) return
