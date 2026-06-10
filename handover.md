@@ -9,13 +9,14 @@
 
 ## 🟢 現在の状態
 
-**ブランチ**: `main` ／ **最新コミット**: `5c84a66`（push 後はこの一帯が本番反映）
+**ブランチ**: `main` ／ **最新コミット**: `8ec8a23`（origin/main と同期・本番反映済み）
 
-本日のエンジン作業はコミット済み。push すると Vercel Git 連携で自動デプロイされる。
+直近の作業はすべて push 済み（Vercel Git 連携で自動デプロイ）。
 
+- `8ec8a23` NoteView: 基礎カードのタイトルを「レジサポ・移動平均線」に短縮（改行防止）
 - `1a1ec2b` エンジン: トレンド整合ゲートで逆張り確信度を抑制（自信過剰の是正）
 - `5c84a66` タイムマシン: NoteView 参照画像の欠落アセット補完
-- （別途）ドキュメント運用システム `CLAUDE.md` / `handover.md` / `requirements.md` を追加
+- `d11f648` ドキュメント運用システム `CLAUDE.md` / `handover.md` / `requirements.md` を追加
 
 ### トレンド整合ゲートの要点（`1a1ec2b`）
 - `tevCore.mjs`: `priceTrend` 逆行時のみ `tev_confidence` を最大 **55%** に抑制（`tev_counterTrend` 付与）。**シグナル方向（`tev_value` 符号）は変えない**保守設計＝極限が反転に先行する余地を残す。
