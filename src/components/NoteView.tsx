@@ -31,7 +31,7 @@ const ARTICLES: Article[] = [
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
   { genre: 'ぽいロボ', title: '戦略プレイブック', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'playbook' },
   // ── 基礎 ──────────────────────────────────────────────────────
-  { genre: '基礎',           title: 'レジスタンスサポート・移動平均線', mobileTitle: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
+  { genre: '基礎',           title: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
   { genre: '基礎',           title: '時間軸',          url: 'https://note.com/pointlab/n/nd74fce56edcc', thumb: BASE + 'Stock_Trade_Lab_Timeframe.webp' },
   { genre: '基礎',           title: '分割エントリー',   url: 'https://note.com/pointlab/n/nb16ef04958ae', thumb: BASE + 'Stock_Trade_Lab_SplitEntry.webp' },
