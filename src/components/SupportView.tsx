@@ -3,6 +3,7 @@ import { lazyWithReload as lazy } from '../utils/lazyWithReload'
 import type { ConnectUser }  from './JitsiPanel'
 import { isAdminEmail } from '../utils/admin'
 import { NotificationSettings } from './NotificationSettings'
+import { forceAppUpdate } from '../utils/forceUpdate'
 
 const NoteView                = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const PoiroboAboutPanel       = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
@@ -339,6 +340,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
   const [activeDrawer,   setActiveDrawer]   = useState<'data' | 'contact' | 'settings' | null>(null)
   const [drawerVisible,  setDrawerVisible]  = useState(false)
   const [showPoirobo,   setShowPoirobo]   = useState(false)
+  const [forceUpdating, setForceUpdating] = useState(false)
 
   const rippleIdRef = useRef(0)
   const menuRef     = useRef<HTMLDivElement>(null)
@@ -1247,6 +1249,39 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                       </div>
                     </section>
                   )}
+
+                  {/* アプリ更新（全ユーザー・SW固着の逃げ道） */}
+                  <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>アプリ更新</div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                      padding: '10px 14px', borderRadius: 10,
+                      background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>最新版に更新</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>表示が古いまま直らない時に。メモなどのデータは消えません</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (forceUpdating) return
+                          if (window.confirm('アプリを最新版に更新します（再読み込みされます）。メモなどのデータは消えません。よろしいですか？')) {
+                            setForceUpdating(true)
+                            void forceAppUpdate()
+                          }
+                        }}
+                        disabled={forceUpdating}
+                        style={{
+                          padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                          background: 'var(--bg-medium)', border: '1px solid var(--glass-border)',
+                          color: 'var(--text)', cursor: forceUpdating ? 'default' : 'pointer',
+                          whiteSpace: 'nowrap', opacity: forceUpdating ? 0.6 : 1,
+                        }}
+                      >
+                        {forceUpdating ? '更新中…' : '今すぐ更新'}
+                      </button>
+                    </div>
+                  </section>
 
                 </div>
               )}

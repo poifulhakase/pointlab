@@ -1018,6 +1018,18 @@ const SPEC_SECTIONS = [
           'コミュニティメンバーページの横幅上限: PC で横長になりすぎないよう、スクロール内容を最大幅 880px・中央寄せに（狭い画面では自然にフル幅）',
         ],
       },
+      {
+        type: 'list' as const,
+        heading: '設定drift解消・TEV単一情報源化・PWA固着の逃げ道・セキュリティ点検（★2026-06-10 第23セッション）',
+        items: [
+          '管理者メールの単一情報源化: firestore.rules に集約した isAdmin() 関数（メールリテラル1箇所）へ統一し、6箇所に散っていたリテラル重複を解消。admin.ts ↔ rules の齟齬を検知する admin-drift テストを追加（rules を ?raw import してメール文字列を突合）。クライアント=admin.ts／サーバー=Vercel env ADMIN_EMAIL／ルール=このファイル、の三者は別情報源のまま、それぞれが齟齬らないことをテストで保証',
+          'TEV 計算式の単一情報源化: 物理式（質量/弾性/復元力/推進力）が backtest スクリプトと engineExport.ts に二重定義され、片方だけ変えると乖離する保守リスクがあった。共通モジュール tevCore.mjs に式を集約し両者で共有。シグナル閾値も 65/35 に統一',
+          '🔴 PWA Service Worker キャッシュ固着の逃げ道: registerType:autoUpdate では needRefresh が発火せず PWAUpdateBanner（今すぐ更新バナー）が実質表示されない＝手動の更新手段がなかった。代替として forceUpdate.ts（SW登録解除＋全Cacheストレージ削除＋リロード＝「サイトデータ削除」相当・localStorage/Firestore のユーザーデータは非破壊）を新設し、研究室>SETTINGS の「アプリ更新＞今すぐ更新」（全ユーザー向け・確認ダイアログ付き）から実行できるようにした',
+          'PWA 固着のネットワーク層対策: vercel.json で /calendar/sw.js と /calendar/index.html に Cache-Control: public, max-age=0, must-revalidate を付与（SWスクリプトとHTMLを常時再検証＝古いSWがHTTPキャッシュに固着するのを防ぐ）。assets は従来どおり immutable・長期キャッシュ',
+          'セキュリティ点検（機密面の横断レビュー）: firestore.rules（自己承認穴の閉鎖・rateLimits封鎖・bookings/slots/community_members の権限）・予約系API（origin/method検証・idToken検証・固定エラーメッセージ）・jitsi-token（idToken を URL でなく Authorization ヘッダーで受領）・cron-push/notify-data-ready（CRON_SECRET/NOTIFY_SECRET でガード・未設定時401のフェイルクローズ）はいずれも堅牢と確認',
+          '点検で見つけた是正（1件）: rainviewer-weather-maps.js が catch で e.message をクライアントへ返していた → 固定メッセージへ変更し内部エラー詳細を出さないよう統一（第13セッションの stocks-daily.js と同方針）',
+        ],
+      },
     ],
   },
 ]

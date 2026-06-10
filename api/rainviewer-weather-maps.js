@@ -15,6 +15,8 @@ export default async function handler(req, res) {
     const data = await r.json();
     res.status(200).json(data);
   } catch (e) {
-    res.status(502).json({ error: e.message || "RainViewer API への接続に失敗しました" });
+    // 内部エラー詳細はクライアントへ返さない（他APIの方針に統一・第13セッション）
+    console.error("[rainviewer-weather-maps]", e);
+    res.status(502).json({ error: "RainViewer API への接続に失敗しました" });
   }
 };
