@@ -242,6 +242,90 @@ const MAXIMS: Maxim[] = [
     meaning: '大きく駆け上がった相場ほど、その反動の下落もまた深い。高い山の麓には、深い谷がある。',
     apply: '急騰の後ほど深い調整を覚悟する。上げ過ぎた所では深追いせず、谷に備えて身軽にしておく。',
   },
+  {
+    id: 'konoito',
+    text: '相場の金と凧の糸は出し切るな',
+    source: '相場格言',
+    meaning: '凧の糸を全部出すと凧は落ちる。資金も同じで、余力を残さず全部つぎ込むと、いざという時に動けず破綻する。',
+    apply: '常に余力（現金）を残す。フルポジションは、不測の事態で身動きが取れなくなる。',
+  },
+  {
+    id: 'tenjo3',
+    text: '天井三日、底百日',
+    source: '相場格言',
+    meaning: '天井は一瞬（三日）で過ぎ、底値圏は長く続く（百日）。高値で売る好機は短く、安く仕込む好機は意外と長い。',
+    apply: '天井を逃しても気に病まない。底値圏ではじっくり仕込む時間がある、と心得る。',
+  },
+  {
+    id: 'setsubun',
+    text: '節分天井、彼岸底',
+    source: '相場格言',
+    meaning: '2月の節分頃に高値をつけ、3月の彼岸頃に安値をつけやすい、という季節的な経験則。',
+    apply: '季節性のアノマリーを頭の片隅に置く。ただし絶対ではなく、あくまで傾向として参照する。',
+  },
+  {
+    id: 'kansan',
+    text: '閑散に売りなし',
+    source: '相場格言',
+    meaning: '出来高が細り閑散としている時は、売り方も力を失っている。そんな場面でむやみに売り込んではいけない。',
+    apply: '商いが薄く方向感のない局面では、安易に売り込まない。動きが出るまで待つ。',
+  },
+  {
+    id: 'oshime',
+    text: '押目待ちに押目なし',
+    source: '相場格言',
+    meaning: '「下がったら買おう」と押し目を待っていると、結局下がらずに上昇し、買えないまま終わる。',
+    apply: '強い相場では理想の押し目は来ない。待ちすぎもまた、機会損失になりうる。',
+  },
+  {
+    id: 'sanwari',
+    text: '三割高下に向かえ',
+    source: '相場格言',
+    meaning: '約3割上げたら売り、約3割下げたら買う。行き過ぎた値動きの反動を取るための、ひとつの目安。',
+    apply: '行き過ぎた値動きには逆らう。幅を決めて機械的に判断する一助とする。',
+  },
+  {
+    id: 'mayoi',
+    text: '迷いたる時は休むべし',
+    source: '相場格言',
+    meaning: '判断に迷う時は、無理に売買せず、いったん手仕舞って休むのがよい。',
+    apply: '確信が持てない時はポジションを持たない。「休むも相場」、休むこともひとつの戦略。',
+  },
+  {
+    id: 'rikui',
+    text: '利食い千人力',
+    source: '相場格言',
+    meaning: '含み益はいくら大きくても、所詮は幻。利益を確定させて初めて、千人力の自分の力になる。',
+    apply: '含み益に酔わない。あらかじめ決めた所で、淡々と利益を確定する。',
+  },
+  {
+    id: 'hanne',
+    text: '半値八掛け二割引',
+    source: '相場格言',
+    meaning: '高値から下落した株の下値メド。高値 ×0.5×0.8×0.8 ≒ 高値の約32%まで下げることがある、という経験則。',
+    apply: '暴落局面での下値メドの目安に。安易に「もう底だろう」と決めつけるのを戒める。',
+  },
+  {
+    id: 'mochi',
+    text: '餅は餅屋',
+    source: '相場格言',
+    meaning: '専門のことは専門家に任せよ。相場もまた、自分が理解できる土俵でこそ勝負すべきである。',
+    apply: '理解できない対象には手を出さない。自分の得意分野・分かる範囲で戦う。',
+  },
+  {
+    id: 'buffett_fear',
+    text: '他人が貪欲な時に恐れ、他人が恐れる時に貪欲であれ',
+    source: 'W・バフェット',
+    meaning: '群衆が強欲に買い上がる時こそ慎重に、皆が恐怖で投げ売る時こそ大胆に買え、という逆張りの心得。',
+    apply: '感情の逆を行く。総楽観の中で警戒し、総悲観の中で勇気を出す。',
+  },
+  {
+    id: 'buffett_wonderful',
+    text: '素晴らしい企業を適正な価格で買う方が、\n平凡な企業を格安で買うよりはるかに良い',
+    source: 'W・バフェット',
+    meaning: '安さだけで選ぶより、優れた企業を妥当な値段で買って長く持つ方が、はるかに報われる。',
+    apply: '「安い」だけで飛びつかない。価格より質を重視し、長く持てる優良企業を選ぶ。',
+  },
 ]
 
 // 格言を物語スライドの共通形に変換（era は MAXIM 表記・出典を eraJa 位置へ）
@@ -398,6 +482,31 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
         @keyframes tm-drift   { 0%{transform:scale(1)} 100%{transform:scale(1.18)} }
         @keyframes tm-nebula  { 0%{transform:translate3d(-3%,-2%,0) scale(1.05) rotate(0deg);opacity:.7} 50%{transform:translate3d(3%,2%,0) scale(1.16) rotate(7deg);opacity:1} 100%{transform:translate3d(-2%,3%,0) scale(1.09) rotate(-5deg);opacity:.78} }
         @keyframes tm-prog    { 0%{transform:scaleX(0)} 100%{transform:scaleX(1)} }
+        @keyframes tm-rotate  { to { transform: rotate(360deg); } }
+        .tmrobo-area { position:absolute; right:${isMobile ? 10 : 22}px; bottom:${isMobile ? 70 : 84}px; z-index:7;
+          width:${isMobile ? 104 : 132}px; height:${isMobile ? 104 : 132}px;
+          display:flex; justify-content:center; align-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+        .tmrobo-ring { position:absolute; width:110%; height:110%; border-radius:50%; pointer-events:none;
+          border:1px solid ${c.L ? 'rgba(0,100,180,0.28)' : 'rgba(0,242,255,0.22)'};
+          animation:tm-rotate 15s linear infinite; }
+        .tmrobo-core { position:relative; width:90%; height:90%; border-radius:50%; overflow:hidden;
+          display:flex; flex-direction:column; justify-content:center; align-items:center;
+          background:${c.L ? 'rgba(230,243,255,0.90)' : 'rgba(8,12,16,0.92)'};
+          border:1px solid ${c.L ? 'rgba(0,100,180,0.50)' : 'rgba(0,242,255,0.45)'};
+          box-shadow:inset 0 0 25px ${c.L ? 'rgba(0,100,180,0.12)' : 'rgba(0,242,255,0.30)'};
+          backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+          transition:all .4s cubic-bezier(.175,.885,.32,1.275); }
+        .tmrobo-area:hover .tmrobo-core { transform:scale(1.05); border-color:${c.ACCENT};
+          box-shadow:0 0 30px ${c.L ? 'rgba(0,120,200,0.28)' : 'rgba(0,242,255,0.40)'}, inset 0 0 20px ${c.L ? 'rgba(0,100,180,0.14)' : 'rgba(0,242,255,0.30)'}; }
+        .tmrobo-area:active .tmrobo-core { transform:scale(.92) translateY(3px); filter:brightness(1.15); transition:.1s; }
+        .tmrobo-mask { width:46%; height:46%; border-radius:50%; overflow:hidden; margin-bottom:4px; transform:translateY(-2px);
+          display:flex; align-items:center; justify-content:center;
+          background:${c.L ? 'rgba(210,232,255,0.85)' : '#080c10'}; }
+        .tmrobo-img { width:auto; height:112%; opacity:.92; transition:.4s ease; ${c.L ? '' : 'filter:drop-shadow(0 0 5px rgba(0,242,255,0.35));'} }
+        .tmrobo-area:hover .tmrobo-img { opacity:1; transform:scale(1.05); }
+        .tmrobo-main { font-size:${isMobile ? 11 : 13}px; font-weight:900; line-height:1;
+          color:${c.L ? '#0b3a66' : '#f0f8ff'}; text-shadow:${c.L ? 'none' : '0 0 10px #00f2ff'}; }
+        .tmrobo-sub  { font-size:${isMobile ? 7.5 : 8.5}px; font-weight:bold; margin-top:3px; letter-spacing:.08em; color:${c.ACCENT}; }
       `}</style>
 
       {/* ── 星雲（かすかに漂う宇宙グラデーション・最背面）── */}
@@ -532,7 +641,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
 
           <div style={{
             display: 'inline-block', marginTop: isMobile ? 22 : 30,
-            textAlign: isMobile ? 'left' : undefined,
+            textAlign: 'left',
             padding: isMobile ? '11px 18px' : '13px 24px', borderRadius: 12,
             background: c.LESSONBG, border: `1px solid ${c.TAGBDR}`, borderLeft: `3px solid ${c.ACCENT}`,
             fontSize: isMobile ? 12.5 : 14.5, fontWeight: 700, color: c.TEXT, lineHeight: 1.6,
@@ -572,39 +681,24 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
         </button>
       </div>
 
-      {/* ── 右下: ロボ風 逸話/格言 切り替え丸ボタン ── */}
-      <button
-        onClick={() => switchMode(mode === 'story' ? 'maxim' : 'story')}
+      {/* ── 右下: ぽいロボ 逸話/格言 切り替えボタン（研究室コネクトと同デザイン）── */}
+      <div
+        className="tmrobo-area"
+        role="button" tabIndex={0}
         aria-label={mode === 'story' ? '格言に切り替え' : '逸話に切り替え'}
         title={mode === 'story' ? '格言に切り替え' : '逸話に切り替え'}
-        style={{
-          position: 'absolute', right: isMobile ? 16 : 24, bottom: isMobile ? 78 : 90, zIndex: 7,
-          width: isMobile ? 56 : 62, height: isMobile ? 56 : 62, borderRadius: '50%', padding: 0,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
-          cursor: 'pointer',
-          border: `1.5px solid ${c.ACCENT}`,
-          background: c.L ? 'rgba(255,255,255,0.90)' : 'rgba(2,16,28,0.82)',
-          color: c.ACCENT,
-          backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-          boxShadow: c.L ? '0 6px 18px rgba(3,105,161,0.28)' : `0 0 20px ${c.ACCENT}55, inset 0 0 12px ${c.ACCENT}1f`,
-          transition: 'transform .18s ease, box-shadow .18s ease',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)' }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'none' }}
+        onClick={() => switchMode(mode === 'story' ? 'maxim' : 'story')}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchMode(mode === 'story' ? 'maxim' : 'story') } }}
       >
-        {/* ロボの顔 */}
-        <svg width={isMobile ? 22 : 24} height={isMobile ? 22 : 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="8" width="16" height="11" rx="3" />
-          <path d="M12 4.5V8" /><circle cx="12" cy="3.2" r="1.1" fill="currentColor" stroke="none" />
-          <circle cx="9" cy="13.5" r="1.25" fill="currentColor" stroke="none" />
-          <circle cx="15" cy="13.5" r="1.25" fill="currentColor" stroke="none" />
-          <path d="M9.5 16.5h5" />
-          <path d="M2.5 11.5v3" /><path d="M21.5 11.5v3" />
-        </svg>
-        <span style={{ fontSize: isMobile ? 8.5 : 9.5, fontWeight: 800, fontFamily: mono, letterSpacing: '0.04em', lineHeight: 1, marginTop: 1 }}>
-          {mode === 'story' ? '格言' : '逸話'}
-        </span>
-      </button>
+        <div className="tmrobo-ring" />
+        <div className="tmrobo-core">
+          <div className="tmrobo-mask">
+            <img src={`${import.meta.env.BASE_URL}poirobo.webp`} className="tmrobo-img" alt="ぽいロボ" draggable={false} />
+          </div>
+          <div className="tmrobo-main">{mode === 'story' ? '格言へ' : '逸話へ'}</div>
+          <div className="tmrobo-sub">タップで切替</div>
+        </div>
+      </div>
     </div>
   )
 }
