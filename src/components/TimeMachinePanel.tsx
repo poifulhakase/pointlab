@@ -168,6 +168,87 @@ const STORIES: Story[] = [
   },
 ]
 
+// ── 相場格言データ（格言 / 出典 / 意味 / 活かし方）──────────────────
+// title=格言そのもの, source=出典, meaning=意味, apply=投資への活かし方
+type Maxim = { id: string; text: string; source: string; meaning: string; apply: string }
+const MAXIMS: Maxim[] = [
+  {
+    id: 'ura',
+    text: '人の行く裏に道あり花の山',
+    source: '相場格言',
+    meaning: '皆と同じ行動をしても大きな果実は得にくい。人が群がる道ではなく、人が避ける裏道にこそ、満開の花の山（好機）が待っている。',
+    apply: '皆が熱狂して買う時ほど慎重に、皆が恐れて投げ売る時にこそ目を向ける。多数派の逆に妙味がある。',
+  },
+  {
+    id: 'rumor',
+    text: '噂で買って事実で売れ',
+    source: '相場格言 / Buy the rumor',
+    meaning: '期待（噂）の段階で価格は先回りして上がり、好材料が事実として出る頃には織り込み済みで、むしろ売られやすい。',
+    apply: '良いニュースの「発表」を利益確定の合図と捉える。期待で上げた相場は、事実が出ると出尽くしになりやすい。',
+  },
+  {
+    id: 'matsu',
+    text: '待つも相場',
+    source: '相場格言',
+    meaning: '売ったり買ったり動くことだけが相場ではない。好機が来るまで何もせず待つことも、立派な投資行動である。',
+    apply: '無理に毎日売買しない。条件が揃わない局面では、現金で待つこと自体が一つの戦略。',
+  },
+  {
+    id: 'mikiri',
+    text: '見切り千両、損切り万両',
+    source: '相場格言',
+    meaning: '早めに見切る判断には千両の価値があり、損失を確定させて切る決断には、それ以上（万両）の価値がある。',
+    apply: '損が小さいうちに切る。「いつか戻る」と握り続けないことこそが、資産を守る最大の技術。',
+  },
+  {
+    id: 'eggs',
+    text: '卵は一つの籠に盛るな',
+    source: "投資の鉄則 / Don't put all your eggs in one basket",
+    meaning: '全資産を一つの対象に集中させると、その籠を落とした時にすべてを失う。',
+    apply: '銘柄・資産・買う時期を分散する。一点集中の大勝負は、当たれば大きいが致命傷にもなりうる。',
+  },
+  {
+    id: 'atama',
+    text: '頭と尻尾はくれてやれ',
+    source: '相場格言',
+    meaning: '最安値で買い最高値で売ろうと欲張ると、かえって動けず機会を逃す。天井と底は他人にくれてやり、美味しい胴体だけ取ればよい。',
+    apply: '完璧なタイミングを狙わない。ほどほどの位置で利益を確定する方が、結局は報われる。',
+  },
+  {
+    id: 'mouhamada',
+    text: 'もうはまだなり、まだはもうなり',
+    source: '相場格言',
+    meaning: '「もう天井（底）だろう」と思う時はまだ続き、「まだ続く」と油断した時には、もう転換している。',
+    apply: '自分の決めつけを疑う。「もう十分」という諦めと「まだいける」という油断、その両方を戒める。',
+  },
+  {
+    id: 'knife',
+    text: '落ちてくるナイフはつかむな',
+    source: "投資の戒め / Don't catch a falling knife",
+    meaning: '急落の最中に「安い」と飛びつくと、さらに下げて大怪我をする。落下中のナイフは、床に刺さってから拾え。',
+    apply: '下落が止まり、値動きが落ち着いて（底を確認して）から拾う。勢いのある下げには逆らわない。',
+  },
+  {
+    id: 'templeton',
+    text: '強気相場は悲観の中に生まれ、懐疑の中で育ち、楽観の中で成熟し、幸福感の中で消えていく',
+    source: 'J・テンプルトン',
+    meaning: '強気相場の一生を表した言葉。最も悲観的な時こそ始まりで、誰もが幸福に酔いしれる絶頂こそ終わりである。',
+    apply: '総悲観こそ仕込み時、総楽観こそ警戒時。今が「悲観・懐疑・楽観・幸福感」のどの段階かを常に問う。',
+  },
+  {
+    id: 'yamadani',
+    text: '山高ければ谷深し',
+    source: '相場格言',
+    meaning: '大きく駆け上がった相場ほど、その反動の下落もまた深い。高い山の麓には、深い谷がある。',
+    apply: '急騰の後ほど深い調整を覚悟する。上げ過ぎた所では深追いせず、谷に備えて身軽にしておく。',
+  },
+]
+
+// 格言を物語スライドの共通形に変換（era は MAXIM 表記・出典を eraJa 位置へ）
+const MAXIM_STORIES: Story[] = MAXIMS.map(m => ({
+  id: m.id, era: 'MAXIM', eraJa: m.source, title: m.text, body: m.meaning, lesson: m.apply,
+}))
+
 // ── 背景の星（モジュール定数＝再レンダーで再ランダム化しない）────────
 function mulberry32(seed: number) {
   return () => {
@@ -239,13 +320,25 @@ function renderTitle(title: string): React.ReactNode {
 
 export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
-  const total = STORIES.length
-  // マウントごとにシャッフルした表示順（idx は order 上の位置）
-  const [order] = useState(() => shuffle(STORIES.map((_, i) => i)))
+  const [mode, setMode] = useState<'story' | 'maxim'>('story')  // 逸話（デフォルト）/ 格言
+  const data = mode === 'story' ? STORIES : MAXIM_STORIES
+  const total = data.length
+  // マウント／モード切替ごとにシャッフルした表示順（idx は order 上の位置）
+  const [order, setOrder] = useState<number[]>(() => shuffle(STORIES.map((_, i) => i)))
   const [idx, setIdx] = useState(0)
   const [pulse, setPulse] = useState(0)     // ワープ演出のリプレイ用キー
   const [playing, setPlaying] = useState(true)
   const touchX = useRef<number | null>(null)
+
+  // 逸話 ⇄ 格言 の切り替え（順番を新しくシャッフルして先頭へ・ワープ演出をリプレイ）
+  const switchMode = useCallback((next: 'story' | 'maxim') => {
+    if (next === mode) return
+    const len = next === 'story' ? STORIES.length : MAXIM_STORIES.length
+    setMode(next)
+    setOrder(shuffle(Array.from({ length: len }, (_, i) => i)))
+    setIdx(0)
+    setPulse(p => p + 1)
+  }, [mode])
 
   const go = useCallback((n: number) => {
     const next = ((n % total) + total) % total
@@ -271,12 +364,13 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
     return () => clearTimeout(t)
   }, [idx, playing, go])
 
-  const s = STORIES[order[idx]]
-  // 年号背景に流す巨大数字（年号文字列から数字部分を抽出）
+  const s = data[order[idx]]
+  // 背景に流す巨大文字（逸話=年号の数字 / 格言=「格」）
   const ghostNum = useMemo(() => {
+    if (mode === 'maxim') return '格'
     const m = s.era.match(/\d{3,4}/)
     return m ? m[0] : '∞'
-  }, [s.era])
+  }, [s.era, mode])
 
   // 低スペック端末 or 動きを減らす設定なら、常時アニメを止めて軽量化
   const lite = useMemo(() => {
@@ -356,8 +450,8 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
         borderBottom: `1px solid ${c.RULE}`,
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: c.L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
-        <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap' }}>
-          ぽいロボ ▸ タイムマシン
+        <span style={{ flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          ぽいロボ ▸ タイムマシン ▸ {mode === 'story' ? '逸話' : '格言'}
         </span>
         <button onClick={() => setPlaying(p => !p)} aria-label={playing ? '一時停止' : '再生'} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 7,
@@ -444,7 +538,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
             fontSize: isMobile ? 12.5 : 14.5, fontWeight: 700, color: c.TEXT, lineHeight: 1.6,
             animation: 'tm-up 1s ease-out .75s both',
           }}>
-            <span style={{ color: c.ACCENT, fontFamily: mono, fontSize: isMobile ? 9.5 : 10.5, letterSpacing: '0.14em', marginRight: 10 }}>教訓</span>
+            <span style={{ color: c.ACCENT, fontFamily: mono, fontSize: isMobile ? 9.5 : 10.5, letterSpacing: '0.14em', marginRight: 10 }}>{mode === 'story' ? '教訓' : '活かし方'}</span>
             {s.lesson}
           </div>
         </div>
@@ -463,7 +557,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
             {order.map((storyIdx, i) => (
-              <button key={STORIES[storyIdx].id} onClick={() => go(i)} aria-label={`${i + 1}番目へ`} style={{
+              <button key={data[storyIdx].id} onClick={() => go(i)} aria-label={`${i + 1}番目へ`} style={{
                 width: i === idx ? 24 : 8, height: 8, borderRadius: 999, border: 'none', padding: 0,
                 background: i === idx ? c.ACCENT : c.TAGBDR, cursor: 'pointer',
                 boxShadow: i === idx && !c.L ? `0 0 8px ${c.ACCENT}` : 'none',
@@ -477,6 +571,40 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-90deg)' }}><path d="M6 9l6 6 6-6"/></svg>
         </button>
       </div>
+
+      {/* ── 右下: ロボ風 逸話/格言 切り替え丸ボタン ── */}
+      <button
+        onClick={() => switchMode(mode === 'story' ? 'maxim' : 'story')}
+        aria-label={mode === 'story' ? '格言に切り替え' : '逸話に切り替え'}
+        title={mode === 'story' ? '格言に切り替え' : '逸話に切り替え'}
+        style={{
+          position: 'absolute', right: isMobile ? 16 : 24, bottom: isMobile ? 78 : 90, zIndex: 7,
+          width: isMobile ? 56 : 62, height: isMobile ? 56 : 62, borderRadius: '50%', padding: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+          cursor: 'pointer',
+          border: `1.5px solid ${c.ACCENT}`,
+          background: c.L ? 'rgba(255,255,255,0.90)' : 'rgba(2,16,28,0.82)',
+          color: c.ACCENT,
+          backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+          boxShadow: c.L ? '0 6px 18px rgba(3,105,161,0.28)' : `0 0 20px ${c.ACCENT}55, inset 0 0 12px ${c.ACCENT}1f`,
+          transition: 'transform .18s ease, box-shadow .18s ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'none' }}
+      >
+        {/* ロボの顔 */}
+        <svg width={isMobile ? 22 : 24} height={isMobile ? 22 : 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="8" width="16" height="11" rx="3" />
+          <path d="M12 4.5V8" /><circle cx="12" cy="3.2" r="1.1" fill="currentColor" stroke="none" />
+          <circle cx="9" cy="13.5" r="1.25" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="13.5" r="1.25" fill="currentColor" stroke="none" />
+          <path d="M9.5 16.5h5" />
+          <path d="M2.5 11.5v3" /><path d="M21.5 11.5v3" />
+        </svg>
+        <span style={{ fontSize: isMobile ? 8.5 : 9.5, fontWeight: 800, fontFamily: mono, letterSpacing: '0.04em', lineHeight: 1, marginTop: 1 }}>
+          {mode === 'story' ? '格言' : '逸話'}
+        </span>
+      </button>
     </div>
   )
 }
