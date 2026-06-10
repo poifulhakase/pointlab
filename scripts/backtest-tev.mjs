@@ -295,6 +295,31 @@ async function main() {
     b.win_rate = b.n > 0 ? r2(b.wins / b.n) : null
   }
 
+  // キャリブレーション: 確信度を10%刻みでビン化し「言った確率（平均確信度）vs 実勝率」を出す。
+  // 理想は avg_confidence ≒ win_rate_pct（確信度が正直）。標本が増えるほど意味を持つ。
+  const calibDefs = [
+    { range: '<50%',    lo: 0,  hi: 50 },
+    { range: '50-59%',  lo: 50, hi: 60 },
+    { range: '60-69%',  lo: 60, hi: 70 },
+    { range: '70-79%',  lo: 70, hi: 80 },
+    { range: '80-89%',  lo: 80, hi: 90 },
+    { range: '90%+',    lo: 90, hi: 101 },
+  ].map(b => ({ ...b, n: 0, wins: 0, confSum: 0 }))
+  for (const w of valid) {
+    if (w.confidence == null) continue
+    const b = calibDefs.find(d => w.confidence >= d.lo && w.confidence < d.hi)
+    if (!b) continue
+    b.n++; b.confSum += w.confidence; if (w.win) b.wins++
+  }
+  const calibration = calibDefs.filter(b => b.n > 0).map(b => ({
+    range:          b.range,
+    n:              b.n,
+    wins:           b.wins,
+    avg_confidence: r2(b.confSum / b.n),   // 言った確率（平均確信度）%
+    win_rate_pct:   r2(b.wins / b.n * 100), // 実勝率 %
+    gap:            r2(b.wins / b.n * 100 - b.confSum / b.n), // 実勝率 − 確信度（負=自信過剰）
+  }))
+
   const summary = {
     total_weeks:     weeklyLog.length,
     signal_weeks:    valid.length,
@@ -308,6 +333,7 @@ async function main() {
     overall_win_rate: valid.length > 0 ? r2((bWins + eWins) / valid.length) : null,
     by_status: byStatus,
     by_confidence: byConf,
+    calibration,
   }
 
   const output = {

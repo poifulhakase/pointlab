@@ -159,11 +159,13 @@ async function fetchInvestorData() {
   }
 
   if (urls.length === 0) throw new Error('stock_val_ リンクが見つかりません')
-  console.log(`[investor] ${urls.length}件のファイルを発見（最大26件処理）`)
+  console.log(`[investor] ${urls.length}件のファイルを発見（最大55件処理）`)
 
   const combined = []
 
-  for (const url of urls.slice(0, 26)) {  // 26ファイル × 2週 = 最大52週
+  // 1ファイル≒1週。最大52週（最後に slice(0,52)）を満たすため余裕をみて55件処理する。
+  // （旧26件は「1ファイル2週」想定の誤りで27週しか取れずバックテストの律速だった）
+  for (const url of urls.slice(0, 55)) {
     try {
       const buf  = await fetchBinary(url)
       const wb   = XLSX.read(buf, { type: 'array' })

@@ -70,6 +70,8 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
     if (rate == null) return c.SUB
     return rate >= 0.5 ? c.WIN : rate <= 0.35 ? c.LOSS : c.TEXT
   }
+  // キャリブレーションの差（実勝率−確信度）の色: 概ね一致=緑 / 大きく下回る(自信過剰)=赤
+  const gapColor = (gap: number) => gap >= -10 ? c.WIN : gap <= -25 ? c.LOSS : c.TEXT
 
   return (
     <div style={{
@@ -234,21 +236,36 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
                   />
                 </div>
 
-                {/* 信頼度別 */}
+                {/* 確信度キャリブレーション（言った確率 vs 実勝率）*/}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
-                  <Label text="信頼度別" c={c} />
-                  <CyberTable
-                    head={['区分', '回数', '勝率']}
-                    aligns={['left', 'right', 'right']}
-                    rows={(['high', 'mid'] as const).map(k => {
-                      const b = summary.by_confidence[k]
-                      return [b.label, `${b.n}回`, pctStr(b.win_rate)]
-                    })}
-                    rowColors={(['high', 'mid'] as const).map(k =>
-                      [null, null, winColor(summary.by_confidence[k].win_rate)]
-                    )}
-                    c={c} isMobile={isMobile}
-                  />
+                  <Label text="確信度キャリブレーション" c={c} />
+                  {summary.calibration && summary.calibration.length > 0 ? (
+                    <>
+                      <CyberTable
+                        head={['言った', '実勝率', '回']}
+                        aligns={['left', 'right', 'right']}
+                        rows={summary.calibration.map(b => [b.range, `${Math.round(b.win_rate_pct)}%`, `${b.n}`])}
+                        rowColors={summary.calibration.map(b => [null, gapColor(b.gap), null])}
+                        c={c} isMobile={isMobile}
+                      />
+                      <div style={{ fontSize: isMobile ? 9 : 10, color: c.SUB, lineHeight: 1.5 }}>
+                        「言った」確信度に実勝率が届かない＝自信過剰。緑＝概ね一致／赤＝過信。
+                      </div>
+                    </>
+                  ) : (
+                    <CyberTable
+                      head={['区分', '回数', '勝率']}
+                      aligns={['left', 'right', 'right']}
+                      rows={(['high', 'mid'] as const).map(k => {
+                        const b = summary.by_confidence[k]
+                        return [b.label, `${b.n}回`, pctStr(b.win_rate)]
+                      })}
+                      rowColors={(['high', 'mid'] as const).map(k =>
+                        [null, null, winColor(summary.by_confidence[k].win_rate)]
+                      )}
+                      c={c} isMobile={isMobile}
+                    />
+                  )}
                 </div>
 
                 {/* 慣性フィルター */}

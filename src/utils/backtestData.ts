@@ -28,6 +28,15 @@ type StatusBucket = {
   win_rate: number | null
 }
 
+export type CalibrationBin = {
+  range: string          // 例 '70-79%'
+  n: number
+  wins: number
+  avg_confidence: number // 言った確率（平均確信度）%
+  win_rate_pct: number   // 実勝率 %
+  gap: number            // 実勝率 − 確信度（負＝自信過剰）
+}
+
 export type BacktestSummary = {
   total_weeks: number
   signal_weeks: number
@@ -41,6 +50,7 @@ export type BacktestSummary = {
   overall_win_rate: number | null
   by_status: Record<string, StatusBucket>
   by_confidence: { high: ConfBucket; mid: ConfBucket }
+  calibration?: CalibrationBin[]   // 確信度キャリブレーション（10%刻み・★2026-06-10追加）
 }
 
 export type BacktestResult = {
