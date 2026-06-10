@@ -506,6 +506,8 @@ export function buildExportJson(
   const tev_phys = computeTevPhysics({
     tev_V, tev_A, foreign4wPct, cotLfPct, creditRatioPct, ssPct, compositeScore,
     futuresVolumeDecline, is10dLow,
+    // 価格トレンド（MA20/MA60ベースの nkRegime）逆行時に確信度を抑制（★2026-06-10 トレンド整合ゲート）
+    priceTrend: nkRegime === 'uptrend' ? 'up' : nkRegime === 'downtrend' ? 'down' : null,
   })
   const tev_decay        = tev_phys?.tev_decay ?? 1.0
   const tev_decayReasons = tev_phys?.tev_decayReasons ?? []

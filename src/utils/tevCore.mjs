@@ -33,6 +33,7 @@ export function computeTevPhysics({
   compositeScore,
   futuresVolumeDecline = false,
   is10dLow = false,
+  priceTrend = null,
 }) {
   if (tev_V == null || tev_A == null) return null
 
@@ -79,9 +80,24 @@ export function computeTevPhysics({
   //   小標本(n=27)のため観測値へのフィッティング（反転の打ち消し）はせず、原理的なシュリンクに留める。
   //   範囲は 50〜70%。70 を上限＝バンド境界（弱い〜59/明確60-69/強い共振70）と一致させる。
   //   enginePrompt の確信度バンド閾値も同時に再設定済み。⚠70%でも「当たる」保証ではない。
-  const tev_confidence = tev_status.startsWith('限界膨張')
+  let tev_confidence = tev_status.startsWith('限界膨張')
     ? 50
     : Math.min(70, Math.round(Math.abs(compositeScore) * 0.3 + 50))
 
-  return { tev_fBase, tev_fInertia, tev_decay, tev_decayReasons, tev_rResist, tev_value, tev_status, tev_confidence }
+  // ★2026-06-10 トレンド整合ゲート: シグナルが価格トレンドに逆行する時は確信度を抑制（最大55%）。
+  //   52週検証で逆張りシグナルが順張りに大きく劣後（順張り56% vs 逆張り36%）し、確信度の「反転」
+  //   （高確信度ほど実勝率↓）の主因が上昇相場への逆張り bear だったため。20年R&D（トレンドフィルター
+  //   必須）とも整合し、プロンプトの「価格レジーム逆行時は確信度を引き下げ」を数値側でも一貫させる。
+  //   🔴 シグナル方向（tev_value の符号）は変えない＝極限が反転に先行する可能性を完全には捨てない保守設計。
+  //   priceTrend は呼び出し側がデータ可用性に応じて与える（backtest=週次close 8週前比 / engine=nkRegime）。
+  let tev_counterTrend = false
+  if (priceTrend === 'up' || priceTrend === 'down') {
+    const dir = tev_status.startsWith('限界膨張') ? 'neutral' : tev_value > 0 ? 'bull' : tev_value < 0 ? 'bear' : 'neutral'
+    if ((dir === 'bull' && priceTrend === 'down') || (dir === 'bear' && priceTrend === 'up')) {
+      tev_counterTrend = true
+      tev_confidence = Math.min(tev_confidence, 55)
+    }
+  }
+
+  return { tev_fBase, tev_fInertia, tev_decay, tev_decayReasons, tev_rResist, tev_value, tev_status, tev_confidence, tev_counterTrend }
 }

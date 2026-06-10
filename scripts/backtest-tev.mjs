@@ -99,7 +99,7 @@ function computeScore(invSlice, vixSlice, oiSlice) {
 
 // ── TEV 計算（本番ロジックに準拠・簡略化あり） ─────────
 
-function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice, adSlice, oiSlice, score_today, score_prev }) {
+function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice, adSlice, oiSlice, score_today, score_prev, priceTrend = null }) {
   if (score_today == null || score_prev == null) return null
 
   const tev_V = r2(score_today * 100)
@@ -151,6 +151,7 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
     tev_V, tev_A, foreign4wPct, cotLfPct, creditRatioPct, ssPct, compositeScore,
     futuresVolumeDecline: false,
     is10dLow: false,
+    priceTrend,
   })
   if (!phys) return null
 
@@ -225,7 +226,13 @@ async function main() {
         )
       : null
 
-    const tev = computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice, adSlice, oiSlice, score_today, score_prev })
+    // 価格トレンド（8週前比）: timeline は降順なので timeline[i+8] が8週前。逆張り確信度ゲート用。
+    const nkNow = nearest(nkMap, week)
+    const wk8   = timeline[i + 8] ?? null
+    const nk8   = wk8 ? nearest(nkMap, wk8) : null
+    const priceTrend = (nkNow != null && nk8 != null) ? (nkNow > nk8 ? 'up' : nkNow < nk8 ? 'down' : null) : null
+
+    const tev = computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice, adSlice, oiSlice, score_today, score_prev, priceTrend })
 
     // 翌週（現実時間で1週後 = timeline[i-1]）の価格変化
     const nextWeekDate = i > 0 ? timeline[i - 1] : null

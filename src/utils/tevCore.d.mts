@@ -23,6 +23,8 @@ export interface TevPhysicsInput {
   futuresVolumeDecline?: boolean
   /** 直近10日安値圏（底打ち反転判定）。データがなければ false。 */
   is10dLow?: boolean
+  /** 価格トレンド（'up'|'down'）。シグナル逆行時に確信度を抑制する。null/未指定でゲート無効。 */
+  priceTrend?: 'up' | 'down' | null
 }
 
 export interface TevPhysicsResult {
@@ -34,6 +36,8 @@ export interface TevPhysicsResult {
   tev_value: number
   tev_status: string
   tev_confidence: number
+  /** シグナルが価格トレンドに逆行し確信度を抑制したか（★2026-06-10） */
+  tev_counterTrend: boolean
 }
 
 export function computeTevPhysics(input: TevPhysicsInput): TevPhysicsResult | null
