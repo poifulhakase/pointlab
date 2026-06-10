@@ -40,8 +40,8 @@ describe('computeTevPhysics', () => {
     expect(r.tev_rResist).toBe(r2(-8 * Math.sqrt(40)))
     // tev_value = round(18.4 + (-50.6)) = round(-32.2) = -32
     expect(r.tev_value).toBe(Math.round(18.4 + r2(-8 * Math.sqrt(40))))
-    // confidence = min(95, round(|40|*0.5+50)) = 70
-    expect(r.tev_confidence).toBe(70)
+    // confidence = min(70, round(|40|*0.3+50)) = 62（★2026-06-10 再キャリブレーション後）
+    expect(r.tev_confidence).toBe(62)
   })
 
   it('天井の失速（V>0,A<=0）で 75%減衰＋理由が付く', () => {

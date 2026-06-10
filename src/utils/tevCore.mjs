@@ -73,10 +73,15 @@ export function computeTevPhysics({
   else if (tev_value >= 25) tev_status = '限界膨張（慣性失速）'
   else tev_status = '限界膨張'
 
-  // 確信度: 限界膨張系は50%固定、他は合成スコアの絶対値ベース
+  // 確信度: 限界膨張系は50%固定、他は合成スコアの絶対値ベース。
+  // ★2026-06-10 再キャリブレーション: 52週バックテストで確信度が自信過剰（むしろ高確信度帯
+  //   ほど実勝率が下がる「反転」傾向）と判明。傾き0.5→0.3・上限95→70に圧縮して過信を削った。
+  //   小標本(n=27)のため観測値へのフィッティング（反転の打ち消し）はせず、原理的なシュリンクに留める。
+  //   範囲は 50〜70%。70 を上限＝バンド境界（弱い〜59/明確60-69/強い共振70）と一致させる。
+  //   enginePrompt の確信度バンド閾値も同時に再設定済み。⚠70%でも「当たる」保証ではない。
   const tev_confidence = tev_status.startsWith('限界膨張')
     ? 50
-    : Math.min(95, Math.round(Math.abs(compositeScore) * 0.5 + 50))
+    : Math.min(70, Math.round(Math.abs(compositeScore) * 0.3 + 50))
 
   return { tev_fBase, tev_fInertia, tev_decay, tev_decayReasons, tev_rResist, tev_value, tev_status, tev_confidence }
 }
