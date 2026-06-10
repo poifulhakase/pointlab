@@ -7,7 +7,8 @@ type Props = {
 }
 
 const mono = "'Courier New', Courier, monospace" as const
-const AUTOPLAY_MS = 18000
+const STORY_MS = 18000   // 逸話の自動再生間隔
+const MAXIM_MS = 12000   // 格言の自動再生間隔（短め）
 
 // ── 物語データ（タイトル / 年号 / 物語 / 教訓）──────────────────────
 type Story = { id: string; title: string; era: string; eraJa: string; body: string; lesson: string }
@@ -413,6 +414,7 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
   const c = makeC(theme)
   const [mode, setMode] = useState<'story' | 'maxim'>('story')  // 逸話（デフォルト）/ 格言
   const data = mode === 'story' ? STORIES : MAXIM_STORIES
+  const autoplayMs = mode === 'story' ? STORY_MS : MAXIM_MS
   const total = data.length
   // マウント／モード切替ごとにシャッフルした表示順（idx は order 上の位置）
   const [order, setOrder] = useState<number[]>(() => shuffle(STORIES.map((_, i) => i)))
@@ -451,17 +453,17 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
   // 自動再生
   useEffect(() => {
     if (!playing) return
-    const t = setTimeout(() => go(idx + 1), AUTOPLAY_MS)
+    const t = setTimeout(() => go(idx + 1), autoplayMs)
     return () => clearTimeout(t)
-  }, [idx, playing, go])
+  }, [idx, playing, go, autoplayMs])
 
   const s = data[order[idx]]
-  // 背景に流す巨大文字（逸話=年号の数字 / 格言=「格」）
+  // 背景に流す巨大文字（逸話=年号の数字 / 格言=その格言の頭文字）
   const ghostNum = useMemo(() => {
-    if (mode === 'maxim') return '格'
+    if (mode === 'maxim') return [...s.title][0] ?? '格'
     const m = s.era.match(/\d{3,4}/)
     return m ? m[0] : '∞'
-  }, [s.era, mode])
+  }, [s.era, s.title, mode])
 
   // 低スペック端末 or 動きを減らす設定なら、常時アニメを止めて軽量化
   const lite = useMemo(() => {
@@ -592,10 +594,10 @@ export function TimeMachinePanel({ theme, isMobile, onClose }: Props) {
 
       {/* ── 自動再生プログレスバー ── */}
       <div style={{ position: 'relative', zIndex: 6, flexShrink: 0, height: 2, background: c.RULE }}>
-        <div key={`${idx}-${pulse}-${playing}`} style={{
+        <div key={`${mode}-${idx}-${pulse}-${playing}`} style={{
           height: '100%', background: c.ACCENT, transformOrigin: 'left center',
           boxShadow: c.L ? 'none' : `0 0 8px ${c.ACCENT}`,
-          animation: playing ? `tm-prog ${AUTOPLAY_MS}ms linear forwards` : 'none',
+          animation: playing ? `tm-prog ${autoplayMs}ms linear forwards` : 'none',
           transform: playing ? undefined : 'scaleX(0)',
         }} />
       </div>
