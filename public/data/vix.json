@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-06-10T07:46:07.818Z",
+  "updatedAt": "2026-06-10T13:56:24.771Z",
   "data": [
     {
       "date": "2026/06/10",
-      "close": 20.24,
-      "change": 1.32,
-      "changePct": 6.98
+      "close": 20.61,
+      "change": 0.74,
+      "changePct": 3.72
     },
     {
       "date": "2026/06/08",
-      "close": 18.92,
-      "change": -2.59,
-      "changePct": -12.04
+      "close": 19.87,
+      "change": -1.64,
+      "changePct": -7.62
     },
     {
       "date": "2026/06/01",
