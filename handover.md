@@ -3,26 +3,30 @@
 > セッションをまたぐ「直近状態」の正。作業完了時に**先頭の「現在の状態」を更新**し、古い分は「履歴」に1〜2行で畳む。
 > 背景・経緯の深掘りは `~/.claude` メモリ（第1〜25セッションの詳細ログ）。
 
-最終更新: 2026-06-10
+最終更新: 2026-06-11
 
 ---
 
 ## 🟢 現在の状態
 
-**ブランチ**: `main` ／ **最新コミット**: `8ec8a23`（origin/main と同期・本番反映済み）
+**ブランチ**: `main` ／ **最新コミット**: `7a19f1a`（origin/main へ push・本番反映）
 
 直近の作業はすべて push 済み（Vercel Git 連携で自動デプロイ）。
 
+- `7a19f1a` 非メンバーの初期表示を会員限定ロック画面ではなく研究室にする
 - `8ec8a23` NoteView: 基礎カードのタイトルを「レジサポ・移動平均線」に短縮（改行防止）
 - `1a1ec2b` エンジン: トレンド整合ゲートで逆張り確信度を抑制（自信過剰の是正）
-- `5c84a66` タイムマシン: NoteView 参照画像の欠落アセット補完
-- `d11f648` ドキュメント運用システム `CLAUDE.md` / `handover.md` / `requirements.md` を追加
+
+### 非メンバー初期表示の研究室化（`7a19f1a`）
+- 新規セッションのデフォルト着地で非メンバーが会員限定ビュー（`month/week/day/quant/shield`）に来た場合、`CommunityLockScreen` ではなく研究室（`support`）へ遷移。ユーザーが自分で遷移した場合（`sessionStorage` に保存ビューあり）は尊重。
+- `App.tsx`: マウント毎に一度だけ・`!authLoading && membershipResolved` 確定後に判定（`wasFreshLoad` + `initialMemberRedirectDone` ref）。
+- `useCommunityAccess.ts`: `membershipResolved`（`checkedEmail === user.email`／logout 時 true）を追加。**非同期の会員判定が確定する前のリダイレクト誤発火（レース）を防止**（メンバーを誤って研究室へ飛ばさない）。
+- 検証: tsc(app)=0 / lint=0 / vitest 167 pass。
 
 ### トレンド整合ゲートの要点（`1a1ec2b`）
 - `tevCore.mjs`: `priceTrend` 逆行時のみ `tev_confidence` を最大 **55%** に抑制（`tev_counterTrend` 付与）。**シグナル方向（`tev_value` 符号）は変えない**保守設計＝極限が反転に先行する余地を残す。
 - 供給元: backtest=週次close 8週前比 / 本番=`nkRegime`（MA20/60）。
 - 背景: 52週検証で期間の日経 +76% の大相場に対しエンジンが逆張り bear を量産し負け（順張り56% vs 逆張り36%）。確信度の「反転」（高確信度ほど実勝率↓）の主因がこれ。第15-16の20年R&D（トレンドフィルター必須）と整合。
-- 検証: tsc(app)=0 / vitest 167 pass / lint=0 / backtest 全体44%（方向不変・想定通り）。
 
 ---
 
@@ -36,6 +40,7 @@
 
 ## ✅ 直近の完了済み（履歴・新しい順）
 
+- **第26 (2026-06-11)**: 非メンバーの初期表示を会員限定ロック画面（`CommunityLockScreen`）→ 研究室（`support`）に変更 `7a19f1a`。`useCommunityAccess` に `membershipResolved` を追加し非同期会員判定のレースを回避。検証 tsc/lint/test=167pass。push 済み（自動データ更新 `f152233` 等の上に rebase）。
 - **第25 後半 (2026-06-10)**: トレンド整合ゲート（逆張り確信度を最大55%に抑制・方向は不変）を本番反映 `1a1ec2b`。資料カード「基礎」のタイトルを「レジサポ・移動平均線」に短縮（折返し防止）`8ec8a23`。ファイルベース引継ぎ運用（`CLAUDE.md`/`handover.md`/`requirements.md`）導入 `d11f648`＋本番反映ルーティン「D」をメモリ登録。SpecView 第25節追記。検証 tsc/lint/test=167pass。最新 `aa7d20c` 以降に push 済み。
 - **第25 (2026-06-10)**: バックテスト期間を 52週へ拡張（`fetch-jpx` の investor 取得上限 26→55 是正）。確信度キャリブレーション機能追加（10%刻みで予想確率 vs 実勝率）。発見=確信度が自信過剰かつ反転。`tevCore.mjs` で確信度を再キャリブレーション（傾き0.5→0.3・上限95→70・範囲50-70%）。push済 `640c563`。
 - **第24**: タイムマシンに逸話/格言の2モード追加（相場格言23個）。push済 `ec31844`。
