@@ -39,6 +39,7 @@ export function CommunityLockScreen({ user, authLoading, memberLoading, view = '
       padding: '40px 24px',
       gap: 28,
       overflow: 'hidden',
+      userSelect: 'none', WebkitUserSelect: 'none',
     }}>
       {/* ── 背景：実UIスケルトン（ぼかし） ──────────────────── */}
       {!loading && (

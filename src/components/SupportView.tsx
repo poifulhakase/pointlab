@@ -1356,7 +1356,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                 </div>
                 {!user && !authLoading && (
                   <div style={{ fontSize: 9, color: 'rgba(0,242,255,0.55)', marginTop: 3, letterSpacing: '0.05em', textAlign: 'center' }}>
-                    Googleログインが必要です
+                    Googleログイン必須
                   </div>
                 )}
                 {user && !isMember && (
