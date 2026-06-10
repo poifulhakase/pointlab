@@ -604,19 +604,19 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'quant' && (
             isMember
               ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" />
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {/* シールド */}
           {cal.view === 'shield' && (
             isMember
               ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" />
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
           {isCalView && !isMember && (
-            <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="calendar" />
+            <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="calendar" onGoToConnect={() => setViewWithTransition('support')} />
           )}
           {isCalView && isMember && (
             <div style={carouselOuterStyle}>
@@ -852,6 +852,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               isMobile={isMobile} isTablet={isTablet}
               sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
               theme={theme}
+              forceNeon={!isMember && (isCalView || cal.view === 'quant' || cal.view === 'shield')}
             />
           </div>
       </div>

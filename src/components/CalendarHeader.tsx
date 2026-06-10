@@ -10,6 +10,8 @@ type Props = {
   sidebarOpen: boolean
   onMenuClick: () => void
   theme?: 'dark' | 'light'
+  /** ロック画面表示中など、研究室と同じサイバー調フッターを強制する */
+  forceNeon?: boolean
 }
 
 const isCalendarView = (v: ViewMode) => v === 'day' || v === 'week' || v === 'month'
@@ -75,12 +77,12 @@ const MAIN_VIEWS = [
 ]
 
 // ── コンポーネント ────────────────────────────────────
-export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, onMenuClick, theme = 'dark' }: Props) {
+export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, onMenuClick, theme = 'dark', forceNeon = false }: Props) {
   const showMenu = isMobile
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
   const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal' || view === 'playbook' || view === 'original' || view === 'timemachine'
-  const useNeon  = isLab && theme === 'dark'
+  const useNeon  = (isLab || forceNeon) && theme === 'dark'
   const neonColor      = '#00e5ff'
   const neonDim        = 'rgba(0,229,255,0.42)'
   const neonActiveBg   = 'rgba(0,229,255,0.12)'

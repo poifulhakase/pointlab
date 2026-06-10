@@ -8,6 +8,8 @@ type Props = {
   authLoading:   boolean
   memberLoading: boolean
   view?:         LockedView
+  /** 未ログイン時に「研究室でログイン」ボタンから呼ぶ（研究室へ遷移） */
+  onGoToConnect?: () => void
 }
 
 const CY_BG     = 'linear-gradient(160deg, rgba(0,10,26,0.98) 0%, rgba(0,5,16,0.98) 100%)'
@@ -25,7 +27,7 @@ function SkeletonFor({ view }: { view: LockedView }) {
   }
 }
 
-export function CommunityLockScreen({ user, authLoading, memberLoading, view = 'quant' }: Props) {
+export function CommunityLockScreen({ user, authLoading, memberLoading, view = 'quant', onGoToConnect }: Props) {
   const loading = authLoading || memberLoading
 
   return (
@@ -142,7 +144,7 @@ export function CommunityLockScreen({ user, authLoading, memberLoading, view = '
                 <>
                   この機能は<span style={{ color: CY_ACCENT }}>ぽいんとらぼ</span>の<br />
                   メンバー限定です。<br /><br />
-                  右下の「ぽいロボ コネクト」から<br />
+                  下の<span style={{ color: CY_ACCENT }}>「研究室でログイン」</span>から<br />
                   Googleログインしてください。
                 </>
               ) : (
@@ -156,6 +158,28 @@ export function CommunityLockScreen({ user, authLoading, memberLoading, view = '
               )}
             </div>
           </div>
+
+          {/* 研究室へのログイン導線（未ログイン時のみ） */}
+          {!user && onGoToConnect && (
+            <button
+              onClick={onGoToConnect}
+              style={{
+                zIndex: 2, cursor: 'pointer',
+                fontFamily: CY_FONT, fontSize: 12, fontWeight: 700,
+                letterSpacing: '0.06em', color: CY_ACCENT,
+                padding: '10px 22px', borderRadius: 8,
+                background: 'rgba(0,229,255,0.10)',
+                border: `1px solid ${CY_DIM}`,
+                textShadow: `0 0 10px rgba(0,229,255,0.5)`,
+                boxShadow: `0 0 16px rgba(0,229,255,0.18)`,
+                transition: 'background 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,229,255,0.18)'; e.currentTarget.style.boxShadow = '0 0 22px rgba(0,229,255,0.32)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,229,255,0.10)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(0,229,255,0.18)' }}
+            >
+              研究室でログイン →
+            </button>
+          )}
 
           {/* ステータス */}
           <div style={{
