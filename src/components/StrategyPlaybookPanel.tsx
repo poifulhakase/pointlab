@@ -44,8 +44,8 @@ const ACTIONS = [
 // ── 採用エッジ（検証済み・使う）── plain=やさしい説明 / 以下は折りたたみ内の詳細
 type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; plain: string; aim: string; trigger: string; hold: string; ev: string; dd: string }
 const ADOPTED: Edge[] = [
-  { name: 'トレンドフィルター', grade: '◎', gradeLabel: '暴落よけの“お守り”（一番だいじ）',
-    plain: '上がっている相場のときだけ乗る仕組み。高値を更新したら買い、下がり始めたら降りる。これで大きな暴落をよけられます。',
+  { name: 'トレンドフィルター', grade: '◎', gradeLabel: '暴落よけの“お守り”',
+    plain: '上がっている相場のときだけ乗る仕組み。高値を更新したら買い、下がり始めたら降りる。',
     aim: '暴落を避けて、下げを浅くする', trigger: '直近50日の高値を超えたら買い／直近25日の安値を割ったら降りる（買いのみ）', hold: '上昇が続くかぎり', ev: '1年あたり 約+10%（2倍ETF）', dd: '−39%（持ちっぱなしの−88%の半分）' },
   { name: '売られすぎ買い（押し目）', grade: '△', gradeLabel: 'チャンスは少なめ',
     plain: '大きく下げたところを買って、反発をねらいます。ただし下げ続けている最中は手を出しません（落ちるナイフを避ける）。',
@@ -449,6 +449,11 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
   const total = slides.length
   const [idx, setIdx] = useState(0)
   const touchY = useRef<number | null>(null)
+  // スワイプ開始時に、表示中スライドの内部スクロールが端に達しているかを記録する。
+  // 端に達している方向にだけスワイプでスライドを切り替え、途中ではスライド内スクロールを優先する。
+  const touchAtTop = useRef(true)
+  const touchAtBottom = useRef(true)
+  const trackRef = useRef<HTMLDivElement>(null)
 
   const go = useCallback((n: number) => setIdx(Math.max(0, Math.min(total - 1, n))), [total])
 
@@ -513,12 +518,25 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       {/* ── ステージ（1枚ずつ縦スライド）── */}
       <div
         style={{ position: 'relative', flex: 1, overflow: 'hidden', zIndex: 1, minHeight: 0 }}
-        onTouchStart={e => { touchY.current = e.touches[0].clientY }}
+        onTouchStart={e => {
+          touchY.current = e.touches[0].clientY
+          const el = trackRef.current?.children[idx] as HTMLElement | undefined
+          if (el) {
+            touchAtTop.current = el.scrollTop <= 1
+            touchAtBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+          } else {
+            touchAtTop.current = true; touchAtBottom.current = true
+          }
+        }}
         onTouchEnd={e => {
           if (touchY.current == null) return
           const d = touchY.current - e.changedTouches[0].clientY
-          if (Math.abs(d) > 50) go(idx + (d > 0 ? 1 : -1))
           touchY.current = null
+          if (Math.abs(d) <= 50) return
+          // 上スワイプ＝次へ（内部が下端のときだけ）／下スワイプ＝前へ（内部が上端のときだけ）。
+          // 途中ではスライド内スクロールを優先し、切り替えない。
+          if (d > 0) { if (touchAtBottom.current) go(idx + 1) }
+          else       { if (touchAtTop.current)    go(idx - 1) }
         }}
       >
         {/* 大きな番号（ダイナミックな背景） */}
@@ -527,7 +545,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         </div>
 
         {/* スライドトラック */}
-        <div style={{ position: 'relative', zIndex: 1, height: `${total * 100}%`, transform: `translateY(-${idx * (100 / total)}%)`, transition: 'transform .52s cubic-bezier(.22,1,.36,1)' }}>
+        <div ref={trackRef} style={{ position: 'relative', zIndex: 1, height: `${total * 100}%`, transform: `translateY(-${idx * (100 / total)}%)`, transition: 'transform .52s cubic-bezier(.22,1,.36,1)' }}>
           {slides.map(s => (
             <div key={s.id} style={pageStyle}>
               <div style={{ width: '100%', maxWidth: 1040, margin: 'auto', padding: isMobile ? '26px 18px' : '44px 52px' }}>
