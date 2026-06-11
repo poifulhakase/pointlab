@@ -1,4 +1,6 @@
-/* 時計の時刻表示用：Cherry Bomb One（丸くポップな表示用フォント / OFL）。自己ホストで CSP(font-src 'self') 準拠。latinサブセット＝数字と記号 */
+/* 時計の時刻表示用：Cherry Bomb One（丸くポップな表示用フォント / OFL）。自己ホストで CSP(font-src 'self') 準拠。
+   時計は数字とコロンしか描画しないため "0123456789:" の11グリフだけにサブセット済み（pyftsubset, woff2 1.5KB）。
+   文字を増やす場合は src/assets/fonts の元フォントから再サブセットすること。 */
 @font-face {
   font-family: 'Cherry Bomb One';
   font-style: normal;

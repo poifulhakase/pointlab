@@ -46,16 +46,16 @@ type Edge = { name: string; grade: '◎' | '○' | '△'; gradeLabel: string; pl
 const ADOPTED: Edge[] = [
   { name: 'トレンドフィルター', grade: '◎', gradeLabel: '暴落よけの“お守り”（一番だいじ）',
     plain: '上がっている相場のときだけ乗る仕組み。高値を更新したら買い、下がり始めたら降りる。これで大きな暴落をよけられます。',
-    aim: '暴落を回避してドローダウンを抑える', trigger: '50日高値を上抜けで買い／25日安値割れで撤退（ロングのみ）', hold: 'トレンドが続く限り', ev: 'CAGR 約10%（2倍）', dd: '−39%（常時ロング−88%の半分）' },
+    aim: '暴落を避けて、下げを浅くする', trigger: '直近50日の高値を超えたら買い／直近25日の安値を割ったら降りる（買いのみ）', hold: '上昇が続くかぎり', ev: '1年あたり 約+10%（2倍ETF）', dd: '−39%（持ちっぱなしの−88%の半分）' },
   { name: '売られすぎ買い（押し目）', grade: '△', gradeLabel: 'チャンスは少なめ',
     plain: '大きく下げたところを買って、反発をねらいます。ただし下げ続けている最中は手を出しません（落ちるナイフを避ける）。',
-    aim: '売られすぎの反発を取る', trigger: '25日線 ≤ −10%。下落トレンド中は見送り（落ちるナイフ回避）', hold: '5営業日で機械的に降りる', ev: '−10%で +1.8%（勝率66%）', dd: '単体−57%（濾すと改善）' },
+    aim: '下がりすぎの反発をねらう', trigger: '25日平均より10%以上 下げたら買い／下げ続けている間は見送り', hold: '5営業日で必ず降りる', ev: '1回 平均+1.8%（勝率66%）', dd: '−57%（トレンドフィルター併用で軽くなる）' },
   { name: '季節性：3月の権利確定', grade: '○', gradeLabel: '一番つよい季節',
     plain: '3月は配当をもらう権利を取りにいく買いが入りやすい時期。3月中旬から月末まで持ちます（年1回）。',
-    aim: '配当の権利確定に向けた買い需要', trigger: '3/15頃 → 3/27頃', hold: '約2週間（年1回）', ev: '+3.2%（勝率70%）', dd: '窓 −37%' },
+    aim: '配当の権利取りで買いが増える', trigger: '3/15頃 〜 3/27頃', hold: '約2週間（年1回）', ev: '1回 平均+3.2%（勝率70%）', dd: '−37%' },
   { name: '季節性：年末ラリー', grade: '○', gradeLabel: '当たりやすい・小さめ',
     plain: '12月末は上がりやすい時期。12月中旬から年末まで持ちます（年1回）。',
-    aim: '年末の買い需要', trigger: '12/15頃 → 12/30頃', hold: '約2週間（年1回）', ev: '+0.95%（勝率75%）', dd: '低' },
+    aim: '年末にかけて買いが増えやすい', trigger: '12/15頃 〜 12/30頃', hold: '約2週間（年1回）', ev: '1回 平均+0.95%（勝率75%）', dd: '小さい' },
 ]
 
 // アプリ内（フッターナビ）と同一のアイコン
@@ -292,17 +292,6 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           ))}
         </div>
 
-        <details style={{ marginTop: 16 }}>
-          <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 10.5 : 12, color: c.SUB, fontFamily: mono, userSelect: 'none' }}>
-            ▸ 用語（CAGR / DD / 乖離 / 勝率）
-          </summary>
-          <div style={{ paddingLeft: 4, marginTop: 10, fontSize: isMobile ? 11 : 12.5, color: c.SUB, lineHeight: 1.9 }}>
-            ・<b>CAGR</b>＝1年で平均何％増えたか（複利の年率）<br />
-            ・<b>DD（ドローダウン）</b>＝一番高かった所から最大何％下がったか（痛みの大きさ）<br />
-            ・<b>乖離（かいり）</b>＝価格が移動平均線からどれだけ離れたか<br />
-            ・<b>勝率</b>＝勝ったトレードの割合 ／ <b>期待値</b>＝1回平均で何％取れるか
-          </div>
-        </details>
       </>
     )) },
 
@@ -336,12 +325,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       </>
     )) },
 
-    // ════ スライド3：勝てる4つの理由 ════
-    { id: 's3', node: slide('勝てる4つの理由', '使う作戦・ADOPTED', (
+    // ════ スライド3：期待値が高い4つの作戦 ════
+    { id: 's3', node: slide('期待値が高い4つの作戦', '使う作戦・ADOPTED', (
       <>
-      <div style={{ fontSize: isMobile ? 12 : 13.5, color: c.SUB, lineHeight: 1.85, marginBottom: isMobile ? 16 : 20 }}>
-        使うと決めた4つの作戦です。各カードの<b style={{ color: c.TEXT }}>「▸ くわしい数字でみる」</b>を開くと、<b style={{ color: c.TEXT }}>過去20年のバックテスト（検証）</b>での合図・勝率・1回の見込み・最大の下げが見られます。
-      </div>
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16 }}>
         {ADOPTED.map(e => (
           <div key={e.name} style={{ padding: isMobile ? '16px 16px' : '22px 22px', borderRadius: 14, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -353,7 +339,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
             <div style={{ fontSize: isMobile ? 12 : 13, color: c.TEXT, lineHeight: 1.7 }}>{e.plain}</div>
             <details>
               <summary style={{ cursor: 'pointer', listStyle: 'none', fontSize: isMobile ? 10 : 11, color: c.DIM, fontFamily: mono, userSelect: 'none', paddingTop: 2 }}>
-                ▸ くわしい数字でみる
+                ▸ 過去20年のバックテスト
               </summary>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: `1px solid ${c.RULE}`, paddingTop: 12, marginTop: 8 }}>
                 {kv('狙い', e.aim)}
@@ -414,8 +400,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       </div>
     )) },
 
-    // ════ 安全に回すコツ ════
-    { id: 'tips', node: slide('安全に回すコツ', '無理なく続けるために・SAFETY', (
+    // ════ リスクを抑えるには？ ════
+    { id: 'tips', node: slide('リスクを抑えるには？', '無理なく続けるために・SAFETY', (
       <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}>
         <div style={{ fontSize: isMobile ? 12.5 : 14, color: c.SUB, lineHeight: 1.85 }}>担保信用を“応用”で使うとき、退場せず続けるための<b style={{ color: c.TEXT }}>3つの約束</b>です。</div>
         {([
