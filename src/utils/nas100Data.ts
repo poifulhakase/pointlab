@@ -13,6 +13,9 @@ const CACHE_TTL_OPEN     = 30 * 60 * 1000
 const CACHE_TTL_CLOSED   = 2  * 60 * 60 * 1000
 const STATIC_JSON_URL    = `${import.meta.env.BASE_URL}data/nas100_daily.json`
 const STATIC_MAX_AGE_MS  = 12 * 60 * 60 * 1000
+// ★2026-06-15 市場休場日（週末/祝日）は静的JSONの最終終値が「現在値」なのでライブ取得しない。
+// 旧仕様では週末に静的JSONが>12hになり不安定な公開CORSプロキシへ一斉フォールバック→日次系列が短縮しTEV nullの一因に。
+const STATIC_MAX_AGE_CLOSED_MS = 4 * 24 * 60 * 60 * 1000
 
 function isMarketOpen(): boolean {
   const day = new Date().getUTCDay()
@@ -55,7 +58,8 @@ export async function fetchNas100Data(force = false): Promise<Nas100DayData[]> {
         if (res.ok) {
           const json = await res.json() as { updatedAt: string; data: Nas100DayData[] }
           const age = Date.now() - new Date(json.updatedAt).getTime()
-          if (age < STATIC_MAX_AGE_MS && json.data?.length > 0)
+          const maxAge = isMarketOpen() ? STATIC_MAX_AGE_MS : STATIC_MAX_AGE_CLOSED_MS
+          if (age < maxAge && json.data?.length > 0)
             return { data: json.data }
         }
       } catch { /* fall through */ }

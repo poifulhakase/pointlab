@@ -17,7 +17,11 @@ const CACHE_KEY         = 'poical-usdjpy-data'
 const CACHE_TTL_OPEN    = 30 * 60 * 1000
 const CACHE_TTL_CLOSED  = 2  * 60 * 60 * 1000
 const STATIC_JSON_URL   = `${import.meta.env.BASE_URL}data/usdjpy.json`
-const STATIC_MAX_AGE_MS = 12 * 60 * 60 * 1000  // 12時間以内なら静的JSONを使用（日本市場時間帯は自動的にliveへ）
+const STATIC_MAX_AGE_MS = 12 * 60 * 60 * 1000  // 場中は12時間以内なら静的JSONを使用（日本市場時間帯は自動的にliveへ）
+// ★2026-06-15 市場休場日（週末/祝日）は静的JSONの最終終値が「現在値」なので、12hを過ぎてもライブ取得しない。
+// 週末はfetchワークフローが止まり静的JSONが必ず>12hになるため、旧仕様では不安定な公開CORSプロキシへ一斉フォールバック
+// → 日次モメンタム系列が短縮/空になり TEV が null に落ちていた（週次データは無制限なので残る非対称が混乱の元）。
+const STATIC_MAX_AGE_CLOSED_MS = 4 * 24 * 60 * 60 * 1000  // 休場日は最大4日まで静的JSONを信頼（連休跨ぎを許容しつつ、長期停止は検知してライブへ）
 
 function isForexOpen(): boolean {
   const now = new Date()
@@ -78,7 +82,8 @@ export async function fetchUsdjpyData(force = false): Promise<UsdjpyDayData[]> {
         if (res.ok) {
           const json = await res.json() as { updatedAt: string; data: UsdjpyDayData[] }
           const age = Date.now() - new Date(json.updatedAt).getTime()
-          if (age < STATIC_MAX_AGE_MS && json.data?.length > 0) {
+          const maxAge = isForexOpen() ? STATIC_MAX_AGE_MS : STATIC_MAX_AGE_CLOSED_MS
+          if (age < maxAge && json.data?.length > 0) {
             // 静的JSONは降順保存のため昇順に変換（buildPoints と同一順序に統一）
             const sorted = [...json.data].sort((a, b) => a.time.localeCompare(b.time))
             return { data: sorted }

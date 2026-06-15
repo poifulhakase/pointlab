@@ -138,7 +138,7 @@ const SCENARIO_3_JSON = {
     decay_factor: 1.0,
     decay_reasons: [],
     sanity_warnings: [
-      "価格基準日乖離: 先物終値と分析基準日の乖離が5%超",
+      "需給推進力(TEV)計算不能の真因: 日次モメンタム系列が不足し速度(V)を算出できない（USD/JPY=2日 / NAS100=0日 / VIX=1日 / 先物OI=0日・各最低3日必要）。為替/米株/VIX/先物の日次フィード欠損が原因であり、信用残など週次データの鮮度とは無関係。",
       "USD/JPY 鮮度注意: ドル円データが48時間以上前の値",
     ],
     sanity_ok: false,
@@ -223,14 +223,17 @@ const SCENARIOS: Scenario[] = [
     name: 'データ品質問題',
     badge: 'tev=null',
     badgeColor: '#fbbf24',
-    description: 'TEV計算不能・sanity_warnings 2件（価格乖離・ドル円鮮度）。状態判定保留局面。',
-    expectedBehavior: '状態判定保留宣言 + 【データメモ】両方出力',
+    description: 'TEV計算不能・sanity_warnings に真因（日次フィード欠損）＋ドル円鮮度。状態判定保留局面。null理由の創作禁止を検証。',
+    expectedBehavior: '状態判定保留宣言 +【データメモ】両方出力。null理由はsanity_warningsの真因（日次フィード欠損）を引用し、信用データ起因と創作しない。',
     json: SCENARIO_3_JSON,
     specificCheck: (output) => {
-      const hasStop = /需給推進力・状態判定保留/.test(output)
+      const hasStop = /需給推進力・状態判定保留|計算不能/.test(output)
       const hasMemo = /【データメモ】/.test(output)
-      const pass = hasStop && hasMemo
-      return { label: '状態判定保留宣言と【データメモ】が両方出力されているか', pass }
+      // 創作禁止: TEV null を「信用(残)データが古い/無い」起因に誤って結びつけていないか（近接判定）
+      const blamesCredit = /信用[^。]{0,15}(古い|無い|ない|欠損|不足)[^。]{0,30}(計算不能|null|算出できない|推進力|TEV)/.test(output)
+        || /(計算不能|算出できない|推進力|TEV)[^。]{0,30}信用[^。]{0,15}(古い|無い|ない|欠損|不足)/.test(output)
+      const pass = hasStop && hasMemo && !blamesCredit
+      return { label: '状態判定保留＋データメモを出力し、TEV nullを信用データ起因と創作していないか', pass }
     },
   },
 ]

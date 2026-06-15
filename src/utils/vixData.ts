@@ -82,6 +82,9 @@ export async function fetchVixData(): Promise<VixWeekData[]> {
 
 const STATIC_DAILY_URL   = `${import.meta.env.BASE_URL}data/vix_daily.json`
 const STATIC_DAILY_MAX_AGE = 12 * 60 * 60 * 1000
+// ★2026-06-15 市場休場日（週末/祝日）は静的JSONの最終終値が「現在値」なのでライブ取得しない。
+// 旧仕様では週末に静的JSONが>12hになり不安定な公開CORSプロキシへ一斉フォールバック→日次系列が短縮しTEV nullの一因に。
+const STATIC_DAILY_MAX_AGE_CLOSED = 4 * 24 * 60 * 60 * 1000
 
 export async function fetchVixDailyData(force = false): Promise<VixDayData[]> {
   return fetchWithCache({
@@ -95,7 +98,8 @@ export async function fetchVixDailyData(force = false): Promise<VixDayData[]> {
         if (res.ok) {
           const json = await res.json() as { updatedAt: string; data: VixDayData[] }
           const age = Date.now() - new Date(json.updatedAt).getTime()
-          if (age < STATIC_DAILY_MAX_AGE && json.data?.length > 0)
+          const maxAge = isMarketOpen() ? STATIC_DAILY_MAX_AGE : STATIC_DAILY_MAX_AGE_CLOSED
+          if (age < maxAge && json.data?.length > 0)
             return { data: json.data }
         }
       } catch { /* fall through */ }

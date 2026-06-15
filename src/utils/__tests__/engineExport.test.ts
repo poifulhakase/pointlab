@@ -198,6 +198,35 @@ describe('buildExportJson — 代表データ', () => {
   })
 })
 
+describe('TEV null/近似時の真因明示（★2026-06-15 日次フィード欠損対応）', () => {
+  const usd = (n: number): UsdjpyDayData[] => Array.from({ length: n }, (_, i) => ({
+    time: dayDate(i), close: 150 + Math.sin(i), change: 0.1, changePct: 0.07, ma5: 150, ma5dev: 0.1,
+  }))
+  const vd = (n: number): VixDayData[] => Array.from({ length: n }, (_, i) => ({
+    time: dayDate(i), close: 18 + Math.cos(i), changePct: -0.5,
+  }))
+  // usdjpy=pos9, vixDaily=pos12（他は空）で日次系列だけを短くする
+  const build = (usdjpy: UsdjpyDayData[], vixDaily: VixDayData[]) =>
+    buildExportJson([], [], [], [], [], [], [], [], [], usdjpy, [], [], vixDaily, [], null)
+
+  it('日次系列が2日しかないとTEVはnull、かつ真因がsanity_warningsに入る（信用データ起因と混同しない）', () => {
+    const out = build(usd(2), vd(2))
+    expect(out.tev_analysis.tev).toBeNull()
+    const w = out.tev_analysis.sanity_warnings
+    expect(w.length).toBeGreaterThan(0)
+    expect(w.some(s => /真因|日次モメンタム|日次フィード/.test(s))).toBe(true)
+    // null の真因を「信用残（週次データ）」起因として説明していない
+    expect(w.some(s => /無関係/.test(s))).toBe(true)
+  })
+
+  it('日次系列が4日なら加速度を近似してTEVを算出し、近似警告で実行用は保留にする', () => {
+    const out = build(usd(4), vd(4))
+    expect(out.tev_analysis.tev).not.toBeNull()
+    expect(out.tev_analysis.sanity_warnings.some(s => /近似/.test(s))).toBe(true)
+    expect(out.tev_analysis.tev_for_execution).toBeNull()
+  })
+})
+
 describe('businessDaysBetween（価格鮮度チェックの営業日数）', () => {
   const D = (s: string) => new Date(s).getTime()
 

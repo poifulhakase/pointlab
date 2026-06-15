@@ -488,8 +488,22 @@ export function buildExportJson(
   }
 
   // ── TEV（トータル物理エネルギーベクトル）計算 ───────────
+  // 速度(V)＝当日の偏差スコア（USD/JPY・NAS100・VIX・先物OIのZスコア合成）。信用残など週次データは一切含まない。
   const tev_V       = score_today != null ? r2(score_today * 100) : null
-  const tev_A       = score_today != null && score_3d != null ? r2((score_today - score_3d) * 100) : null
+  // 加速度(A)＝3日前スコアとの差。日次履歴が3日に満たない時は取れる最大オフセット(2→1日)で近似し、
+  // 「Vは出るがAが出ずTEVだけnull」に落ちる脆さを緩和する（★2026-06-15 短系列頑健化）。
+  let tev_A: number | null = null
+  let tev_A_approx = false
+  if (score_today != null) {
+    if (score_3d != null) {
+      tev_A = r2((score_today - score_3d) * 100)
+    } else {
+      for (const off of [2, 1]) {
+        const sBack = scoreAtOffset(off)
+        if (sBack != null) { tev_A = r2((score_today - sBack) * 100); tev_A_approx = true; break }
+      }
+    }
+  }
   // 先物volume 直近3日連続減少 → 追加減衰（データがある時のみ判定）
   let futuresVolumeDecline = false
   if (futuresDailyData.length >= 3) {
@@ -557,6 +571,9 @@ export function buildExportJson(
   }
 
   if (tev_value !== null && tev_rResist !== null && tev_status !== null && tev_confidence !== null) {
+    // 加速度を近似した場合は数値の信頼度を下げ、状態判定の主根拠にしない（tev_for_execution=null に落とす）
+    if (tev_A_approx)
+      tev_sanityWarnings.push(`加速度(A)は日次履歴が${MIN_Z + 1}日に満たないため${MIN_Z}日未満のオフセットで近似。需給推進力は参考値とし、状態判定の主根拠にはしない。`)
     // R_resistance は両側に効く（signedLoad<0=踏み上げバネで正値もとる）→ 符号チェックは廃止（v2）
     // decay_factor は 0〜1.0 の範囲
     if (tev_decay < 0 || tev_decay > 1.0)
@@ -571,6 +588,15 @@ export function buildExportJson(
       tev_sanityWarnings.push(`真空落下だがTEV/A条件不一致（tev=${tev_value} A=${tev_A}）`)
     if (tev_status === '重力反転中' && !(tev_value <= -25 && tev_A != null && tev_A >= 0))
       tev_sanityWarnings.push(`重力反転中だがTEV/A条件不一致（tev=${tev_value} A=${tev_A}）`)
+  } else if (tev_value === null) {
+    // ★2026-06-15 TEV null の真因を明示し、AI が誤った理由（信用残データの欠損 等）を創作するのを防ぐ。
+    // TEV の V/A は日次モメンタム系列（USD/JPY 30%・NAS100 25%・VIX 20%・先物OI 15%）から作られ、
+    // 週次の信用残・投資主体別データの鮮度とは無関係。どの日次系列が何本かを必ず添える。
+    const dailyDiag = `USD/JPY=${fxSeries.length}日 / NAS100=${nasSeries.length}日 / VIX=${vixInvSeries.length}日 / 先物OI=${oiDeltas.length}日`
+    if (score_today == null)
+      tev_sanityWarnings.push(`需給推進力(TEV)計算不能の真因: 日次モメンタム系列が不足し速度(V)を算出できない（${dailyDiag}・各最低${MIN_Z}日必要）。為替/米株/VIX/先物の日次フィード欠損が原因であり、信用残など週次データの鮮度とは無関係。`)
+    else
+      tev_sanityWarnings.push(`需給推進力(TEV)計算不能の真因: 日次履歴が不足し加速度(A)を算出できない（${dailyDiag}・加速度には最低${MIN_Z + 1}日必要）。速度(V)は算出可だが加速度欠測のためTEV保留。信用残など週次データとは無関係。`)
   }
   const tev_sanityOk: boolean | null = tev_value === null ? null : tev_sanityWarnings.length === 0
   const confidence_pct_is_fixed      = tev_status !== null && tev_status.startsWith('限界膨張')
