@@ -1,6 +1,12 @@
 {
-  "updatedAt": "2026-06-16T17:34:19.341Z",
+  "updatedAt": "2026-06-17T14:08:30.786Z",
   "data": [
+    {
+      "date": "2026/06/12",
+      "label": "6月第2週",
+      "longBal": 2228469,
+      "shortBal": 179043
+    },
     {
       "date": "2026/06/05",
       "label": "6月第1週",
@@ -281,37 +287,31 @@
       "date": "2025/07/18",
       "label": "7月第3週",
       "longBal": 1246647,
-      "shortBal": 96040
+      "shortBal": 0
     },
     {
       "date": "2025/07/11",
       "label": "7月第2週",
       "longBal": 1249384,
-      "shortBal": 96040
+      "shortBal": 0
     },
     {
       "date": "2025/07/04",
       "label": "7月第1週",
       "longBal": 1390454,
-      "shortBal": 96040
+      "shortBal": 0
     },
     {
       "date": "2025/06/27",
       "label": "6月第5週",
       "longBal": 1490994,
-      "shortBal": 96040
+      "shortBal": 0
     },
     {
       "date": "2025/06/20",
       "label": "6月第4週",
       "longBal": 1638170,
-      "shortBal": 96040
-    },
-    {
-      "date": "2025/06/13",
-      "label": "6月第3週",
-      "longBal": 1714667,
-      "shortBal": 96040
+      "shortBal": 0
     }
   ]
 }
