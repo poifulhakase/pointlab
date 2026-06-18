@@ -85,7 +85,7 @@ const PushErrorToast = memo(({ message }: { message: string }) => (
 //   （カレンダー/エンジン/シールド）を「閲覧」できる（ロック画面・研究室への
 //   自動リダイレクトをバイパス）。コネクト予約・プッシュ通知などのアクションは
 //   従来どおりメンバー限定のまま。元に戻すときは false にするだけ。
-const TEMP_PUBLIC_ALL_PAGES = true
+const TEMP_PUBLIC_ALL_PAGES = false
 
 // ─────────────────────────────────────────────────────────────────────────────
 // メインコンポーネント
