@@ -23,6 +23,8 @@
 - **変更ファイル**: `ntRatioData.ts`(NT化+APIフォールバック) / `NtRatioPanel.tsx`(ラベル/配色/TOPIX表示) / `QuantView.tsx`(見出し) / `api/stocks-daily.js`(?only=topix+kabutan) / `scripts/fetch-jpx.mjs`(buildTopixData=kabutan) / `public/data/topix.json`(seed) / SpecView/ManualView/VixPanel/LockSkeletons/requirements/dataCache(キー `poical-nt-ratio-v1`)。
 - **本番検証済**: `/api/stocks-daily?only=topix`=200(30件・TOPIX4068.18) / 静的=200(90件) / tsc=0 / lint=0 / vitest 169 pass / build=0 / Vercel READY(alias済)。
 - 🔴 **残注意**: ①kabutanはVercelからは可だが**CI(Actions)からは未確認**＝静的topix.jsonがCIで更新できない可能性（その場合も①APIが主なので表示は維持）。②kabutanは~30〜90日のみで旧NSの1年チャートより短い。③より堅牢にするなら **J-Quants(無料登録・JPX公式でTOPIX有)** へ移行が本筋（メモリ`reference_stock_calendar_data_apis`参照）。
+- **追補①（同日）**: デプロイ直後にNT倍率が一瞬出なかったのは **CDNエッジ/PWAキャッシュの伝播ラグ**（コード/データは正常・伝播完了で表示）。※ローカル(Win)とVercel(Linux)でビルドハッシュが異なる点に注意＝バンドル確認は実チャンクを辿ること。
+- **追補②（同日 `4dbb382`）**: 🔴 **スマホで VIX / NT倍率 チャートが非表示**だった問題を修正。両パネルは lightweight-charts 描画でチャート領域が `flex:1;minHeight:0`→高さ未指定の `panelMobile` 内で**高さ0に潰れていた**（建玉残高等はテーブルで自然高さなので表示できていた）。**モバイル時はチャート領域を固定高さ200pxに**＋`NtRatioPanel` に `isMobile` を配線。本番チャンクで `height:200` 反映確認済。
 
 ### 第28 (2026-06-18): 一時的に全ページ公開 → 同日撤回（`TEMP_PUBLIC_ALL_PAGES=false`・`src/App.tsx`冒頭・再ONで一時公開可）。コネクト/通知は据え置きでメンバー限定。検証 tsc/lint/test=169pass。
 
