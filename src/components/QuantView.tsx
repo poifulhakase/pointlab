@@ -617,7 +617,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
               <span style={s.panelSub}>日経225 ÷ TOPIX（日足）</span>
             </div>
           </div>
-          <Suspense fallback={null}><NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} /></Suspense>
+          <Suspense fallback={null}><NtRatioPanel theme={theme} isMobile={isMobile} onDataLoaded={handleNtDataLoaded} /></Suspense>
         </div>
 
         <div style={isMobile ? s.dividerH : s.divider} />

@@ -331,9 +331,10 @@ export function VixPanel({ theme, isMobile }: Props) {
         ) : null}
       </div>
 
-      {/* ── チャートエリア ── */}
+      {/* ── チャートエリア ──（モバイルは固定高さ。flex:1 だと高さ0で潰れて非表示になる） */}
       <div style={{
-        flex: 1, minHeight: 0, position: 'relative',
+        ...(isMobile ? { height: 200 } : { flex: 1, minHeight: 0 }),
+        position: 'relative',
         background: isDark
           ? 'linear-gradient(to bottom, rgba(255,60,60,0.10) 0%, rgba(37,99,235,0.10) 100%)'
           : 'linear-gradient(to bottom, rgba(255,60,60,0.06) 0%, rgba(37,99,235,0.06) 100%)',

@@ -4,6 +4,7 @@ import { fetchNtRatioData, type NtRatioPoint } from '../utils/ntRatioData'
 
 type Props = {
   theme: 'dark' | 'light'
+  isMobile?: boolean
   onDataLoaded?: (data: NtRatioPoint[]) => void
 }
 
@@ -27,7 +28,7 @@ function fmtNum(v: number): string {
 }
 
 // ── メインコンポーネント ──────────────────────────
-export function NtRatioPanel({ theme, onDataLoaded }: Props) {
+export function NtRatioPanel({ theme, isMobile, onDataLoaded }: Props) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef          = useRef<ReturnType<typeof createChart> | null>(null)
   const seriesRef         = useRef<ISeriesApi<'Line'> | null>(null)
@@ -175,8 +176,8 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
         ) : null}
       </div>
 
-      {/* ── チャートエリア ── */}
-      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+      {/* ── チャートエリア ──（モバイルは固定高さ。flex:1 だと高さ0で潰れて非表示になる） */}
+      <div style={isMobile ? { height: 200, position: 'relative' } : { flex: 1, minHeight: 0, position: 'relative' }}>
         <div ref={chartContainerRef} style={{ position: 'absolute', inset: 0 }} />
         {loading && (
           <div style={{
