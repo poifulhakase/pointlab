@@ -81,6 +81,12 @@ const PushErrorToast = memo(({ message }: { message: string }) => (
 ))
 
 
+// 🚧 一時的な全ページ公開フラグ。true の間は非メンバーでも会員限定ページ
+//   （カレンダー/エンジン/シールド）を「閲覧」できる（ロック画面・研究室への
+//   自動リダイレクトをバイパス）。コネクト予約・プッシュ通知などのアクションは
+//   従来どおりメンバー限定のまま。元に戻すときは false にするだけ。
+const TEMP_PUBLIC_ALL_PAGES = true
+
 // ─────────────────────────────────────────────────────────────────────────────
 // メインコンポーネント
 // ─────────────────────────────────────────────────────────────────────────────
@@ -247,6 +253,10 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     isAdminUser, memberLoading, membershipResolved, previewAsNonMember, togglePreviewAsNonMember, isMember,
   } = useCommunityAccess(user)
 
+  // 🚧 ページ「閲覧」用のゲート。一時公開フラグが立っている間は非メンバー
+  //   （管理者の「非メンバーとして確認」中も含む）でも会員限定ページを閲覧可。
+  const canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES
+
   // ── プッシュ通知 ──────────────────────────────────────────────────────
   const {
     pushEnabled, pushBusy, pushToast, notifyRadar, notifyDataReady,
@@ -292,8 +302,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     initialMemberRedirectDone.current = true
     if (!wasFreshLoad) return
     const memberOnly = ['month', 'week', 'day', 'quant', 'shield'].includes(cal.view)
-    if (memberOnly && !isMember) setViewWithTransition('support')
-  }, [authLoading, membershipResolved, isMember]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (memberOnly && !canViewMemberPages) setViewWithTransition('support')
+  }, [authLoading, membershipResolved, canViewMemberPages]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!saveToast) return
@@ -506,7 +516,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           <div style={styles.mobileOverlay} onClick={handleOverlayClick} />
         )}
 
-        {isCalView && isMember && (
+        {isCalView && canViewMemberPages && (
           <Sidebar
             isOpen={sidebarOpen}
             isMobile={isMobile}
@@ -602,23 +612,23 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
           {/* データ（需給） */}
           {cal.view === 'quant' && (
-            isMember
+            canViewMemberPages
               ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {/* シールド */}
           {cal.view === 'shield' && (
-            isMember
+            canViewMemberPages
               ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
-          {isCalView && !isMember && (
+          {isCalView && !canViewMemberPages && (
             <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="calendar" onGoToConnect={() => setViewWithTransition('support')} />
           )}
-          {isCalView && isMember && (
+          {isCalView && canViewMemberPages && (
             <div style={carouselOuterStyle}>
               {/* カレンダーサブバー */}
               <div style={{ ...styles.calSubBar, ...(isMobile && { padding: '10px 8px' }) }}>
@@ -737,7 +747,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {/* コミュニティ限定ビュー（カレンダー/エンジン/シールド）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
-      {(((isCalView || cal.view === 'quant' || cal.view === 'shield') && isMember) || cal.view === 'chart' || cal.view === 'legal') && (
+      {(((isCalView || cal.view === 'quant' || cal.view === 'shield') && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isLegalNeon ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isLegalNeon ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isLegalNeon ? undefined : 'glass'}>
@@ -852,7 +862,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               isMobile={isMobile} isTablet={isTablet}
               sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
               theme={theme}
-              forceNeon={!isMember && (isCalView || cal.view === 'quant' || cal.view === 'shield')}
+              forceNeon={!canViewMemberPages && (isCalView || cal.view === 'quant' || cal.view === 'shield')}
             />
           </div>
       </div>
