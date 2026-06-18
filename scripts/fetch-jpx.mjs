@@ -1097,9 +1097,9 @@ async function buildCotNikkeiData() {
 // TOPIX指数(^TPX)はYahoo欠損・stooqは全方面ブロックのため kabutan(code=0010)を主とする。
 async function buildTopixData() {
   console.log('\n[topix] kabutan から TOPIX日次データ取得...')
-  // 直近数ページを取得して結合（1ページ≒30営業日）
+  // 1ページ≒30営業日。10ページで全履歴（約300営業日＝~15ヶ月）。チャート期間を約1年確保。
   const map = new Map()
-  for (const page of [1, 2, 3]) {
+  for (const page of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
     try {
       const res = await fetch(`https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page=${page}`, {
         headers: {

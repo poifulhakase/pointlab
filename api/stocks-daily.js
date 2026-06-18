@@ -8,7 +8,10 @@ const NK_DAYS     = 10
 // 時系列ページ（code=0010）をサーバー側でスクレイプし、同一オリジン JSON で返す。
 // Hobby プランの 12 Functions 上限のため専用ルートは作らず本ルートに相乗り
 // （?only=topix で重いスクレイプ前に短絡。他の取得失敗に巻き込まれない）。
-const KABUTAN_TOPIX_URL = 'https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page=1'
+// kabutan は 1ページ≒30営業日。10ページで全履歴（約300営業日＝~15ヶ月）に到達し、
+// それ以上は新規データ無し。チャート期間を約1年確保するため複数ページを並列取得する。
+const KABUTAN_PAGES     = 10
+const kabutanTopixUrl   = (p) => `https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page=${p}`
 const STOOQ_TOPIX_URLS  = [
   'https://stooq.com/q/d/l/?s=%5Etpx&i=d',
   'https://stooq.pl/q/d/l/?s=%5Etpx&i=d',
@@ -48,20 +51,32 @@ function parseStooqCsv(text) {
   return points.slice(-252)
 }
 
-async function fetchTopix() {
-  // ① kabutan（主・信頼）
+async function fetchKabutanPage(page) {
   try {
-    const res = await fetch(KABUTAN_TOPIX_URL, {
+    const res = await fetch(kabutanTopixUrl(page), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept-Language': 'ja,en;q=0.8',
       },
     })
-    if (res.ok) {
-      const data = parseKabutan(await res.text())
-      if (data.length > 0) return data
-    }
-  } catch { /* stooq へフォールバック */ }
+    if (!res.ok) return []
+    return parseKabutan(await res.text())
+  } catch { return [] }
+}
+
+async function fetchTopix() {
+  // ① kabutan（主・信頼）: 複数ページを並列取得して結合（約1年）
+  const pages = await Promise.all(
+    Array.from({ length: KABUTAN_PAGES }, (_, i) => fetchKabutanPage(i + 1))
+  )
+  const map = new Map()
+  for (const rows of pages) for (const p of rows) map.set(p.time, p.close)
+  if (map.size > 0) {
+    return [...map.entries()]
+      .map(([time, close]) => ({ time, close }))
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .slice(-252)
+  }
 
   // ② stooq（副・ブロックされがちだが念のため）
   for (const url of STOOQ_TOPIX_URLS) {
