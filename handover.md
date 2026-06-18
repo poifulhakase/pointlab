@@ -11,16 +11,20 @@
 
 **ブランチ**: `main`（origin/main へ push・本番反映済）
 
-### 第28 (2026-06-18): 🚧 一時的に全ページを非メンバーへ公開 → 同日 **撤回（OFF）**
-- 🔴 **現状＝`TEMP_PUBLIC_ALL_PAGES = false`（会員限定に戻済み）**。依頼で一旦ONにしたが同日OFFに戻した。再度ONにすれば一時公開できる（仕組みは下記のまま残置）。
-- 依頼により、**一時的に**会員限定ページ（カレンダー/エンジン/シールド）を非メンバーでも**閲覧**できるようにした（その後OFF）。
-- 実装＝`src/App.tsx` 冒頭に **`TEMP_PUBLIC_ALL_PAGES = true`**（モジュール定数）。`canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES` を導入し、**ページ閲覧系ゲートのみ**置換（ロック画面の出し分け／非メンバーの研究室リダイレクト／フローティングサブバー表示／フッターのネオン化）。
-- **意図的に据え置き**＝ぽいロボコネクト（予約・通話）とプッシュ通知は従来どおり**メンバー限定**（`SupportView` には実 `isMember` を渡したまま）。匿名の予約スパム等を防止。
-- 当初は `&& !previewAsNonMember` で管理者のロック検証を残していたが、プレビュー中に解除されない混乱があったため**単純化して撤去**（公開中はプレビューでも解除）。
-- 🔴 **元に戻すとき**＝`TEMP_PUBLIC_ALL_PAGES` を `false` にするだけ。
-- 検証: tsc(app)=0 / lint=0 / vitest 169 pass。
+### 第29 (2026-06-18): 環境タブ NS倍率 → **NT倍率（日経÷TOPIX）** へ変更 ✅本番反映済（`a8c7809` ほか）
+- **概要**: 環境タブの倍率指標を NS倍率（日経÷S&P500）から **NT倍率（日経÷TOPIX）** に変更。ファイル名は元から `NtRatio*` だったが中身がNSのままだった配線を完成させた。
+- **データソース（重要・難所だった）**:
+  - 日経=Yahoo `^N225`（ライブ・既存プロキシ）。
+  - 🔴 **TOPIX指数は無料で取りにくい**＝`^TPX` はYahoo欠損、`stooq ^tpx` は residential/公開プロキシ/**GitHub Actions/Vercel すべてでJSチャレンジによりブロック**（topix.jsonがgit履歴に一度も無いのが証拠）。ETF(1306.T等)は指数と水準ズレで不採用。
+  - ✅ **解決＝kabutan の TOPIX時系列をスクレイプ**（`code=0010`・`/stock/kabuka`）。**Vercel egress IP からは200で取得可**を本番で実測確認。
+  - 配線＝フロントは **①`/api/stocks-daily?only=topix`**（Vercel側でkabutan・🔴Hobby12 Functions上限のため専用ルートは作らず stocks-daily に相乗り・重いスクレイプ前に短絡）→ **②静的 `/calendar/data/topix.json`**（`fetch-jpx.mjs buildTopixData` がkabutanで生成・90日シード済）の順にフォールバック。
+- **しきい値**: NT倍率の水準ラベル（酷暑/真夏日/適温/冷え込みの温度メタファー）を**実測レンジに較正**。本環境の実NT倍率は **≈17.5**（Nikkei71,053÷TOPIX4,068。直近90日 min14.5/中央15.2/max17.5）。`≥16.5酷暑 / ≥15.5真夏日 / ≥14.8適温 / <14.8冷え込み`（現状=酷暑＝値がさ過熱）。※ユーザー選択は「直近レンジ基準」（real world前提の13〜15）だったが、本環境のNikkei高値圏では常時"酷暑"固定になるため、intentを汲んで実データ四分位へ較正した。
+- **エンジン非影響**: `engineExport.ts` は `NtRatioPoint.nikkei` のみ参照（ratio/benchmark不使用）＝TEV/エンジン計算に影響なし。需給プロンプト(`enginePrompt.ts`)/EvalsにもNS/NT倍率の参照は無く改修不要（「倍率」の語は全て『信用倍率』）。
+- **変更ファイル**: `ntRatioData.ts`(NT化+APIフォールバック) / `NtRatioPanel.tsx`(ラベル/配色/TOPIX表示) / `QuantView.tsx`(見出し) / `api/stocks-daily.js`(?only=topix+kabutan) / `scripts/fetch-jpx.mjs`(buildTopixData=kabutan) / `public/data/topix.json`(seed) / SpecView/ManualView/VixPanel/LockSkeletons/requirements/dataCache(キー `poical-nt-ratio-v1`)。
+- **本番検証済**: `/api/stocks-daily?only=topix`=200(30件・TOPIX4068.18) / 静的=200(90件) / tsc=0 / lint=0 / vitest 169 pass / build=0 / Vercel READY(alias済)。
+- 🔴 **残注意**: ①kabutanはVercelからは可だが**CI(Actions)からは未確認**＝静的topix.jsonがCIで更新できない可能性（その場合も①APIが主なので表示は維持）。②kabutanは~30〜90日のみで旧NSの1年チャートより短い。③より堅牢にするなら **J-Quants(無料登録・JPX公式でTOPIX有)** へ移行が本筋（メモリ`reference_stock_calendar_data_apis`参照）。
 
-### 第27 (2026-06-15): 需給推進力(TEV)=null の真因対応 ✅push済 `c5e58c1`
+### 第28 (2026-06-18): 一時的に全ページ公開 → 同日撤回（`TEMP_PUBLIC_ALL_PAGES=false`・`src/App.tsx`冒頭・再ONで一時公開可）。コネクト/通知は据え置きでメンバー限定。検証 tsc/lint/test=169pass。
 
 ### 第27 (2026-06-15): 需給推進力(TEV)=null の真因対応 ✅push済 `c5e58c1`
 **事象**: 日曜にエンジン出力で「需給推進力：計算不能（データ不足）」となり、AIが「最新の信用データが無いからnull」と**誤った理由を創作**していた。
@@ -72,6 +76,7 @@
 1. エンジン本番プロンプト側の「価格レジーム逆行時は確信度を引き下げ」文言と、数値側ゲートの一貫性を最終確認。
 2. 残課題: 高確信度帯（順張り）も n が小さく正の識別力は未確証。勝率を上げる「逆張りシグナルの中立化」は**下落相場のデータが揃うまで保留**（現在は確信度抑制のみで方向は据え置き）。
 3. ローンチ前法務（`docs/legal/` の専門家レビュー）— `~/.claude` メモリ「残タスク一覧」参照。
+4. NT倍率データの堅牢化: ①次回 fetch-data ワークフロー後に `topix.json` がCIで更新できたか確認（kabutanがActions IPから取れるか未確認）。②長期チャート/恒久安定を狙うなら **J-Quants（無料登録・TOPIX公式）** へ移行検討。
 
 ---
 
