@@ -2,6 +2,48 @@ const CONTRIB_URL = 'https://nikkeiyosoku.com/nikkei225_kiyodo/'
 const SECTOR_URL  = 'https://nikkeiyosoku.com/stock/sector/ranking_rateup/'
 const NK_DAYS     = 10
 
+// ── TOPIX 日足（NT倍率用） ─────────────────────────────────────
+// stooq ^tpx をサーバー側（Vercel egress IP）で取得し同一オリジン JSON で返す。
+// Hobby プランの 12 Functions 上限のため専用ルートを作らず本ルートに相乗り
+// （?only=topix で重いスクレイプ前に短絡。他の取得失敗に巻き込まれない）。
+const STOOQ_TOPIX_URLS = [
+  'https://stooq.com/q/d/l/?s=%5Etpx&i=d',
+  'https://stooq.pl/q/d/l/?s=%5Etpx&i=d',
+]
+
+function parseStooqCsv(text) {
+  const lines = text.trim().split('\n')
+  if (!/^Date,/i.test(lines[0] || '')) return [] // チャレンジHTML等はヘッダ不一致で弾く
+  const points = []
+  for (const line of lines.slice(1)) {
+    const cols = line.split(',')
+    const date  = cols[0]?.trim()
+    const close = parseFloat(cols[4])
+    if (!date || isNaN(close) || close <= 0) continue
+    points.push({ time: date, close: Math.round(close * 100) / 100 })
+  }
+  points.sort((a, b) => a.time.localeCompare(b.time))
+  return points.slice(-252)
+}
+
+async function fetchTopix() {
+  for (const url of STOOQ_TOPIX_URLS) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/csv,text/plain,*/*',
+          'Referer': 'https://stooq.com/',
+        },
+      })
+      if (!res.ok) continue
+      const data = parseStooqCsv(await res.text())
+      if (data.length > 0) return data
+    } catch { /* 次のミラーへ */ }
+  }
+  return []
+}
+
 const FETCH_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -184,6 +226,20 @@ export default async function handler(req, res) {
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // NT倍率用 TOPIX のみ（軽量・独立）。重いスクレイプ前に短絡。
+  if (req.query?.only === 'topix') {
+    try {
+      const data = await fetchTopix()
+      if (data.length === 0) {
+        return res.status(502).json({ error: 'TOPIXデータを取得できませんでした' })
+      }
+      return res.status(200).json({ updatedAt: new Date().toISOString(), data })
+    } catch (e) {
+      console.error('[stocks-daily?only=topix]', e)
+      return res.status(500).json({ error: 'TOPIXデータの取得に失敗しました' })
+    }
   }
 
   try {

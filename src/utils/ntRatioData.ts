@@ -1,9 +1,10 @@
 // NT倍率 = 日経平均 ÷ TOPIX（日足）
 //  ・日経225: Yahoo Finance ^N225（ライブ・プロキシ経由）
-//  ・TOPIX  : ①/api/topix（Vercel Functions が stooq ^tpx をサーバー側取得）→ ②静的 /data/topix.json
+//  ・TOPIX  : ①/api/stocks-daily?only=topix（Vercel Functions が stooq ^tpx をサーバー側取得）→ ②静的 /data/topix.json
 //    指数 ^TPX は Yahoo で欠損し、stooq はブラウザCORS不可かつJSチャレンジを返すため、
 //    TOPIX指数はサーバー側経由でしか取れない。ETF(1306.T等)は指数と水準がずれて倍率が
 //    ぶれるため代用しない。①が落ちても②（fetch-jpx が生成）で表示を維持する。
+//    （専用 /api/topix を作らないのは Hobby プランの 12 Functions 上限のため stocks-daily に相乗り）
 
 import { fetchWithCache } from './dataCache'
 import { proxyFetch } from './proxyFetch'
@@ -20,7 +21,7 @@ export interface NtRatioPoint {
 const NT_CACHE_KEY        = 'poical-nt-ratio-v1'
 const NT_CACHE_TTL_OPEN   = 30 * 60 * 1000
 const NT_CACHE_TTL_CLOSED = 2 * 60 * 60 * 1000
-const API_TOPIX_URL       = '/api/topix'
+const API_TOPIX_URL       = '/api/stocks-daily?only=topix'
 const STATIC_TOPIX_URL    = `${import.meta.env.BASE_URL}data/topix.json`
 
 function isJpMarketOpen(): boolean {

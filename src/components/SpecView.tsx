@@ -219,7 +219,7 @@ const SPEC_SECTIONS = [
         heading: '環境タブ ─ VIX / NT倍率チャート',
         items: [
           'VIXチャート: Yahoo Finance から ^VIX 日足データを取得。市場時間中は5分ごと自動更新',
-          'NT倍率チャート: 日経225 ÷ TOPIX の比率チャート（日経=Yahoo ^N225 ライブ / TOPIX=①/api/topix〔Vercel Functions が stooq ^tpx をサーバー側取得〕→②静的 public/data/topix.json の順にフォールバック）',
+          'NT倍率チャート: 日経225 ÷ TOPIX の比率チャート（日経=Yahoo ^N225 ライブ / TOPIX=①/api/stocks-daily?only=topix〔Vercel Functions が stooq ^tpx をサーバー側取得・Hobby12関数枠のため相乗り〕→②静的 public/data/topix.json の順にフォールバック）',
           '温度計カラー配色: 上=赤（過熱）/ 下=青（冷静）のグラデーション背景',
           'キャッシュTTL: 日本市場オープン時30分 / クローズ時2時間（レート制限対策）',
         ],
