@@ -7,18 +7,18 @@ type Props = {
   onDataLoaded?: (data: NtRatioPoint[]) => void
 }
 
-// ── NT倍率 水準ラベル・配色（日経÷TOPIX、直近レンジ 13〜15）──
-// 高い＝値がさ・ハイテク主導 / 低い＝内需・広範物色
+// ── NT倍率 水準ラベル・配色（日経÷TOPIX、直近90日レンジ実測 約14.5〜17.5）──
+// 高い＝値がさ・ハイテク主導 / 低い＝内需・広範物色。しきい値は実データの四分位に整合。
 function ntLabel(val: number): string {
-  if (val >= 14.5) return '酷暑（値がさ過熱）'
-  if (val >= 14.0) return '真夏日'
-  if (val >= 13.0) return '適温'
+  if (val >= 16.5) return '酷暑（値がさ過熱）'
+  if (val >= 15.5) return '真夏日'
+  if (val >= 14.8) return '適温'
   return '冷え込み（広範物色）'
 }
 function ntColor(val: number, isDark: boolean): string {
-  if (val >= 14.5) return isDark ? 'rgba(255,80,60,0.95)'   : 'rgba(200,30,30,0.95)'
-  if (val >= 14.0) return isDark ? 'rgba(255,155,50,0.95)'  : 'rgba(190,100,0,0.95)'
-  if (val >= 13.0) return isDark ? 'rgba(255,235,150,0.95)' : 'rgba(140,110,0,0.95)'
+  if (val >= 16.5) return isDark ? 'rgba(255,80,60,0.95)'   : 'rgba(200,30,30,0.95)'
+  if (val >= 15.5) return isDark ? 'rgba(255,155,50,0.95)'  : 'rgba(190,100,0,0.95)'
+  if (val >= 14.8) return isDark ? 'rgba(255,235,150,0.95)' : 'rgba(140,110,0,0.95)'
   return isDark ? 'rgba(96,165,250,0.95)' : 'rgba(37,99,235,0.95)'
 }
 
