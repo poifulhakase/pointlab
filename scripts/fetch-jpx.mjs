@@ -1091,38 +1091,44 @@ async function buildCotNikkeiData() {
     .slice(0, 52)
 }
 
-// ── TOPIX日次（NT倍率用） ──────────────────────────
-// データソース: stooq.com ^tpx 日足CSV（サーバーサイドのみ直接アクセス可）
-
+// ── TOPIX日次（NT倍率用・静的JSONフォールバック） ──────────────────────────
+// 本番のフロントは /api/stocks-daily?only=topix（Vercel側でkabutanスクレイプ）が主。
+// ここで生成する topix.json は①が落ちた時の静的フォールバック。
+// TOPIX指数(^TPX)はYahoo欠損・stooqは全方面ブロックのため kabutan(code=0010)を主とする。
 async function buildTopixData() {
-  console.log('\n[topix] stooq から TOPIX日次データ取得...')
-  const url = 'https://stooq.com/q/d/l/?s=%5Etpx&i=d'
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'text/csv,text/plain,*/*',
-      'Referer': 'https://stooq.com/',
-    },
-    signal: AbortSignal.timeout(20000),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const text = await res.text()
-
-  // CSV: Date,Open,High,Low,Close,Volume
-  const lines = text.trim().split('\n').slice(1)
-  const points = []
-  for (const line of lines) {
-    const cols = line.split(',')
-    const date  = cols[0]?.trim()
-    const close = parseFloat(cols[4])
-    if (!date || isNaN(close) || close <= 0) continue
-    points.push({ time: date, close: Math.round(close * 100) / 100 })
+  console.log('\n[topix] kabutan から TOPIX日次データ取得...')
+  // 直近数ページを取得して結合（1ページ≒30営業日）
+  const map = new Map()
+  for (const page of [1, 2, 3]) {
+    try {
+      const res = await fetch(`https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page=${page}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept-Language': 'ja,en;q=0.8',
+        },
+        signal: AbortSignal.timeout(20000),
+      })
+      if (!res.ok) continue
+      const html = await res.text()
+      const rowRe = /<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"[^>]*>[\s\S]*?<\/time>([\s\S]*?)<\/tr>/g
+      let m
+      while ((m = rowRe.exec(html)) !== null) {
+        const nums = [...m[2].matchAll(/<td[^>]*>([\d,]+\.\d+|[\d,]{4,})/g)]
+          .map(x => parseFloat(x[1].replace(/,/g, '')))
+        if (nums.length < 4 || !(nums[3] > 0)) continue
+        map.set(m[1], Math.round(nums[3] * 100) / 100)
+      }
+    } catch (e) {
+      console.warn(`  ⚠ page ${page}: ${e.message}`)
+    }
   }
 
-  if (points.length === 0) throw new Error('TOPIXデータが空です')
-  points.sort((a, b) => a.time.localeCompare(b.time))
+  if (map.size === 0) throw new Error('TOPIXデータが空です')
+  const points = [...map.entries()]
+    .map(([time, close]) => ({ time, close }))
+    .sort((a, b) => a.time.localeCompare(b.time))
   console.log(`  → ${points.length}件取得`)
-  return points.slice(-252) // 約1年分
+  return points.slice(-252) // 最大約1年分
 }
 
 // ── 先物日次OI・取引高（PDF抽出） ────────────────────────────────

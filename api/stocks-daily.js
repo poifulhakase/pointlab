@@ -3,13 +3,35 @@ const SECTOR_URL  = 'https://nikkeiyosoku.com/stock/sector/ranking_rateup/'
 const NK_DAYS     = 10
 
 // ── TOPIX 日足（NT倍率用） ─────────────────────────────────────
-// stooq ^tpx をサーバー側（Vercel egress IP）で取得し同一オリジン JSON で返す。
-// Hobby プランの 12 Functions 上限のため専用ルートを作らず本ルートに相乗り
+// TOPIX指数(^TPX)はYahooで欠損、stooqはCORS不可かつJSチャレンジで全方面ブロック
+// （ローカル/公開プロキシ/CI/Vercel いずれも不可を確認）。そこで kabutan の TOPIX
+// 時系列ページ（code=0010）をサーバー側でスクレイプし、同一オリジン JSON で返す。
+// Hobby プランの 12 Functions 上限のため専用ルートは作らず本ルートに相乗り
 // （?only=topix で重いスクレイプ前に短絡。他の取得失敗に巻き込まれない）。
-const STOOQ_TOPIX_URLS = [
+const KABUTAN_TOPIX_URL = 'https://kabutan.jp/stock/kabuka?code=0010&ashi=day&page=1'
+const STOOQ_TOPIX_URLS  = [
   'https://stooq.com/q/d/l/?s=%5Etpx&i=d',
   'https://stooq.pl/q/d/l/?s=%5Etpx&i=d',
 ]
+
+// kabutan 時系列テーブル: 日付 | 始値 | 高値 | 安値 | 終値 | 出来高 | 前日比 | 前日比%
+// → 各 <tr> の <time datetime> と数値セル群を抽出し、終値（4番目の数値）を採用。
+function parseKabutan(html) {
+  const out = []
+  const rowRe = /<time[^>]*datetime="(\d{4}-\d{2}-\d{2})"[^>]*>[\s\S]*?<\/time>([\s\S]*?)<\/tr>/g
+  let m
+  while ((m = rowRe.exec(html)) !== null) {
+    const nums = [...m[2].matchAll(/<td[^>]*>([\d,]+\.\d+|[\d,]{4,})/g)]
+      .map(x => parseFloat(x[1].replace(/,/g, '')))
+    if (nums.length < 4) continue            // 始/高/安/終 が揃う行のみ（要約行を除外）
+    const close = nums[3]
+    if (!(close > 0)) continue
+    out.push({ time: m[1], close: Math.round(close * 100) / 100 })
+  }
+  // 日付で重複排除 → 昇順
+  const map = new Map(out.map(p => [p.time, p.close]))
+  return [...map.entries()].map(([time, close]) => ({ time, close })).sort((a, b) => a.time.localeCompare(b.time))
+}
 
 function parseStooqCsv(text) {
   const lines = text.trim().split('\n')
@@ -27,6 +49,21 @@ function parseStooqCsv(text) {
 }
 
 async function fetchTopix() {
+  // ① kabutan（主・信頼）
+  try {
+    const res = await fetch(KABUTAN_TOPIX_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'ja,en;q=0.8',
+      },
+    })
+    if (res.ok) {
+      const data = parseKabutan(await res.text())
+      if (data.length > 0) return data
+    }
+  } catch { /* stooq へフォールバック */ }
+
+  // ② stooq（副・ブロックされがちだが念のため）
   for (const url of STOOQ_TOPIX_URLS) {
     try {
       const res = await fetch(url, {
