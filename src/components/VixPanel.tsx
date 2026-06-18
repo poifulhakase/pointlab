@@ -212,7 +212,7 @@ export function VixPanel({ theme, isMobile }: Props) {
     const chart = createChart(el, {
       layout: {
         background: {
-          // 上=赤（高恐怖・過熱）/ 下=青（低恐怖・冷静） — NS倍率と共通の温度計配色
+          // 上=赤（高恐怖・過熱）/ 下=青（低恐怖・冷静） — NT倍率と共通の温度計配色
           type: ColorType.VerticalGradient,
           topColor:    isDark ? 'rgba(255,60,60,0.18)'  : 'rgba(255,60,60,0.11)',
           bottomColor: isDark ? 'rgba(37,99,235,0.18)'  : 'rgba(37,99,235,0.11)',

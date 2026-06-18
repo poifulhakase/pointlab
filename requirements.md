@@ -41,7 +41,7 @@
 - **ぽいロボレーダー**: 選択したイベント種別の日付セルをハイライト（デフォルトOFF・localStorage永続化）。
 
 ### エンジン（需給分析）
-- 4タブ: 分析 / 環境 / 現物 / 先物。VIX・NS倍率・信用倍率・投資主体別・先物手口・PCR 等を表示。
+- 4タブ: 分析 / 環境 / 現物 / 先物。VIX・NT倍率（日経÷TOPIX）・信用倍率・投資主体別・先物手口・PCR 等を表示。
 - **TEV（需給エネルギー）**: `src/utils/tevCore.mjs` が計算式の単一情報源（logic_version `v2-symmetric-restoring`）。
 - **AI連携プロンプト出力** (`engineExport.ts` / `buildExportJson`): 需給データ＋プロンプトをコピーし Claude/Gemini/ChatGPT/DeepSeek へ。出力は状態記述型。
 - **バックテスト** (`backtest-tev.mjs` / BacktestPanel): TEVシグナルの過去勝率を検証。確信度キャリブレーション付き。

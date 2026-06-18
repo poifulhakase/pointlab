@@ -7,17 +7,18 @@ type Props = {
   onDataLoaded?: (data: NtRatioPoint[]) => void
 }
 
-// ── NS倍率 水準ラベル・配色（日経÷S&P500、範囲 7〜9）──
-function nsLabel(val: number): string {
-  if (val >= 8.5) return '酷暑（オーバーヒート）'
-  if (val >= 8.0) return '真夏日'
-  if (val >= 7.5) return '適温'
-  return '冷え込み'
+// ── NT倍率 水準ラベル・配色（日経÷TOPIX、直近レンジ 13〜15）──
+// 高い＝値がさ・ハイテク主導 / 低い＝内需・広範物色
+function ntLabel(val: number): string {
+  if (val >= 14.5) return '酷暑（値がさ過熱）'
+  if (val >= 14.0) return '真夏日'
+  if (val >= 13.0) return '適温'
+  return '冷え込み（広範物色）'
 }
-function nsColor(val: number, isDark: boolean): string {
-  if (val >= 8.5) return isDark ? 'rgba(255,80,60,0.95)'   : 'rgba(200,30,30,0.95)'
-  if (val >= 8.0) return isDark ? 'rgba(255,155,50,0.95)'  : 'rgba(190,100,0,0.95)'
-  if (val >= 7.5) return isDark ? 'rgba(255,235,150,0.95)' : 'rgba(140,110,0,0.95)'
+function ntColor(val: number, isDark: boolean): string {
+  if (val >= 14.5) return isDark ? 'rgba(255,80,60,0.95)'   : 'rgba(200,30,30,0.95)'
+  if (val >= 14.0) return isDark ? 'rgba(255,155,50,0.95)'  : 'rgba(190,100,0,0.95)'
+  if (val >= 13.0) return isDark ? 'rgba(255,235,150,0.95)' : 'rgba(140,110,0,0.95)'
   return isDark ? 'rgba(96,165,250,0.95)' : 'rgba(37,99,235,0.95)'
 }
 
@@ -143,7 +144,7 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
         ) : latest != null ? (
           <>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: nsColor(latest.ratio, isDark) }}>
+              <span style={{ fontSize: 26, fontWeight: 700, lineHeight: 1, color: ntColor(latest.ratio, isDark) }}>
                 {latest.ratio.toFixed(2)}
               </span>
               {latest.change != null && (
@@ -153,8 +154,8 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
                 </span>
               )}
               <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 4,
-                color: nsColor(latest.ratio, isDark), opacity: 0.85 }}>
-                {nsLabel(latest.ratio)}
+                color: ntColor(latest.ratio, isDark), opacity: 0.85 }}>
+                {ntLabel(latest.ratio)}
               </span>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
@@ -162,7 +163,7 @@ export function NtRatioPanel({ theme, onDataLoaded }: Props) {
                 日経 {fmtNum(latest.nikkei)}
               </span>
               <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
-                S&P {fmtNum(latest.benchmark)}
+                TOPIX {fmtNum(latest.benchmark)}
               </span>
               {updatedAt && (
                 <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 'auto' }}>

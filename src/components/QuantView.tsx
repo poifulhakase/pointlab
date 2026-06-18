@@ -604,7 +604,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
 
         <div style={isMobile ? s.dividerH : s.divider} />
 
-        {/* NS倍率 */}
+        {/* NT倍率 */}
         <div style={isMobile ? s.panelMobile : s.panel}>
           <div style={{ ...s.panelHead, minHeight: 36 }}>
             <div style={s.panelTitle}>
@@ -613,8 +613,8 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
                 <line x1="12" y1="20" x2="12" y2="4"/>
                 <line x1="6"  y1="20" x2="6"  y2="14"/>
               </svg>
-              NS倍率
-              <span style={s.panelSub}>日経225 ÷ S&amp;P500（日足・約15分遅延）</span>
+              NT倍率
+              <span style={s.panelSub}>日経225 ÷ TOPIX（日足）</span>
             </div>
           </div>
           <Suspense fallback={null}><NtRatioPanel theme={theme} onDataLoaded={handleNtDataLoaded} /></Suspense>

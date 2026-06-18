@@ -143,7 +143,7 @@ describe('buildExportJson — 代表データ', () => {
   }))
   // ntData は昇順（最新が末尾）
   const nt: NtRatioPoint[] = Array.from({ length: D }, (_, i) => ({
-    time: dayDate(i), nikkei: 39_000 + i * 5, benchmark: 5_000, ratio: 7.8, change: 0.01,
+    time: dayDate(i), nikkei: 39_000 + i * 5, benchmark: 2_750, ratio: 14.18, change: 0.01,
   }))
   // nkFuturesPriceData は降順（最新が先頭）
   const nkPrice: NkFuturesDayData[] = Array.from({ length: 12 }, (_, i) => ({

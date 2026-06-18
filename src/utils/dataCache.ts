@@ -20,7 +20,8 @@ const DATA_CACHE_KEYS = [
   'poical-vix-data',
   'poical-vix-daily-data',
   'poical-nk-futures-price-v4',
-  'poical-ns-ratio-v2',
+  'poical-nt-ratio-v1',
+  'poical-ns-ratio-v2', // 旧NS倍率キャッシュ（NT倍率移行で廃止・purge対象として残置）
   'poical-nhk-news',
   'poical-stocks-daily-v3',
   'poical-shield-mkt-data-v2',

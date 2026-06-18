@@ -107,7 +107,7 @@ export function QuantSkeleton() {
         <FakeRow cols={[30, 20, 20, 30]} variant="mixed" />
       </Panel>
 
-      {/* NS倍率 */}
+      {/* NT倍率 */}
       <Panel>
         <PanelHeader label="N/SP RATIO" />
         <div style={{ fontFamily: MONO, fontSize: 11, color: CY_ACCENT, fontWeight: 700 }}>7.85 ▼ -0.03</div>
