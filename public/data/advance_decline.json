@@ -1,6 +1,13 @@
 {
-  "updatedAt": "2026-07-04T02:06:06.742Z",
+  "updatedAt": "2026-07-06T14:07:07.920Z",
   "data": [
+    {
+      "date": "2026/07/06",
+      "label": "7月第2週",
+      "ratio25": 116.37,
+      "advances": null,
+      "declines": null
+    },
     {
       "date": "2026/07/03",
       "label": "7月第1週",
@@ -355,13 +362,6 @@
       "date": "2025/07/18",
       "label": "7月第3週",
       "ratio25": 120.6,
-      "advances": null,
-      "declines": null
-    },
-    {
-      "date": "2025/07/11",
-      "label": "7月第2週",
-      "ratio25": 116.45,
       "advances": null,
       "declines": null
     }
