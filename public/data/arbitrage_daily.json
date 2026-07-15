@@ -1,6 +1,11 @@
 {
-  "updatedAt": "2026-07-14T14:26:07.594Z",
+  "updatedAt": "2026-07-15T11:59:10.559Z",
   "data": [
+    {
+      "date": "2026/07/10",
+      "longBal": 2520351,
+      "longBalDelta": 55133
+    },
     {
       "date": "2026/07/03",
       "longBal": 2465218,
@@ -145,11 +150,6 @@
       "date": "2025/12/19",
       "longBal": 2511026,
       "longBalDelta": 12713
-    },
-    {
-      "date": "2025/12/12",
-      "longBal": 2498313,
-      "longBalDelta": 144183
     }
   ]
 }
