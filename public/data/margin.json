@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-15T14:22:13.174Z",
+  "updatedAt": "2026-07-16T12:01:16.181Z",
   "data": [
     {
       "date": "2026/07/10",
@@ -7,7 +7,7 @@
       "longBal": 6732228,
       "shortBal": 795524,
       "ratio": 8.46,
-      "evalRatio": null
+      "evalRatio": -4.95
     },
     {
       "date": "2026/07/03",
@@ -15,7 +15,7 @@
       "longBal": 6745211,
       "shortBal": 785272,
       "ratio": 8.59,
-      "evalRatio": null
+      "evalRatio": -2.78
     },
     {
       "date": "2026/06/26",
@@ -23,7 +23,7 @@
       "longBal": 7016733,
       "shortBal": 1053736,
       "ratio": 6.66,
-      "evalRatio": null
+      "evalRatio": -3.09
     },
     {
       "date": "2026/06/19",
@@ -31,7 +31,7 @@
       "longBal": 6475640,
       "shortBal": 1016129,
       "ratio": 6.37,
-      "evalRatio": null
+      "evalRatio": 1.47
     },
     {
       "date": "2026/06/12",
@@ -39,7 +39,7 @@
       "longBal": 6373312,
       "shortBal": 874200,
       "ratio": 7.29,
-      "evalRatio": null
+      "evalRatio": -3.86
     },
     {
       "date": "2026/06/05",
@@ -47,7 +47,7 @@
       "longBal": 6695866,
       "shortBal": 888275,
       "ratio": 7.54,
-      "evalRatio": null
+      "evalRatio": -0.68
     },
     {
       "date": "2026/05/29",
@@ -55,7 +55,7 @@
       "longBal": 6391535,
       "shortBal": 902824,
       "ratio": 7.08,
-      "evalRatio": null
+      "evalRatio": -0.36
     },
     {
       "date": "2026/05/22",
@@ -63,7 +63,7 @@
       "longBal": 6079329,
       "shortBal": 912756,
       "ratio": 6.66,
-      "evalRatio": null
+      "evalRatio": -1.38
     },
     {
       "date": "2026/05/15",
@@ -71,7 +71,7 @@
       "longBal": 6011376,
       "shortBal": 878954,
       "ratio": 6.84,
-      "evalRatio": null
+      "evalRatio": -4.47
     },
     {
       "date": "2026/05/01",
@@ -79,7 +79,7 @@
       "longBal": 5754752,
       "shortBal": 840675,
       "ratio": 6.85,
-      "evalRatio": null
+      "evalRatio": -4.82
     },
     {
       "date": "2026/04/24",
@@ -87,7 +87,7 @@
       "longBal": 5623290,
       "shortBal": 980144,
       "ratio": 5.74,
-      "evalRatio": null
+      "evalRatio": -5.45
     },
     {
       "date": "2026/04/17",
@@ -95,7 +95,7 @@
       "longBal": 5485965,
       "shortBal": 943439,
       "ratio": 5.81,
-      "evalRatio": null
+      "evalRatio": -4.46
     },
     {
       "date": "2026/04/10",
@@ -103,7 +103,7 @@
       "longBal": 5156513,
       "shortBal": 973312,
       "ratio": 5.3,
-      "evalRatio": null
+      "evalRatio": -6.59
     },
     {
       "date": "2026/04/03",
@@ -111,7 +111,7 @@
       "longBal": 5270469,
       "shortBal": 867952,
       "ratio": 6.07,
-      "evalRatio": null
+      "evalRatio": -7.67
     },
     {
       "date": "2026/03/27",
@@ -119,7 +119,7 @@
       "longBal": 5441948,
       "shortBal": 1542042,
       "ratio": 3.53,
-      "evalRatio": null
+      "evalRatio": -6.9
     },
     {
       "date": "2026/03/19",
@@ -127,7 +127,7 @@
       "longBal": 5802582,
       "shortBal": 1021970,
       "ratio": 5.68,
-      "evalRatio": null
+      "evalRatio": -5.97
     },
     {
       "date": "2026/03/13",
@@ -135,7 +135,7 @@
       "longBal": 5719487,
       "shortBal": 1001233,
       "ratio": 5.71,
-      "evalRatio": null
+      "evalRatio": -5.69
     },
     {
       "date": "2026/03/06",
@@ -143,7 +143,7 @@
       "longBal": 5718133,
       "shortBal": 979359,
       "ratio": 5.84,
-      "evalRatio": null
+      "evalRatio": -4.42
     },
     {
       "date": "2026/02/27",
@@ -151,7 +151,7 @@
       "longBal": 5540554,
       "shortBal": 1003420,
       "ratio": 5.52,
-      "evalRatio": null
+      "evalRatio": -0.13
     },
     {
       "date": "2026/02/20",
@@ -159,7 +159,7 @@
       "longBal": 5583035,
       "shortBal": 1062099,
       "ratio": 5.26,
-      "evalRatio": null
+      "evalRatio": -2.15
     },
     {
       "date": "2026/02/13",
@@ -167,7 +167,7 @@
       "longBal": 5285335,
       "shortBal": 1022829,
       "ratio": 5.17,
-      "evalRatio": null
+      "evalRatio": -2.02
     },
     {
       "date": "2026/02/06",
@@ -175,7 +175,7 @@
       "longBal": 5355280,
       "shortBal": 929926,
       "ratio": 5.76,
-      "evalRatio": null
+      "evalRatio": -3.06
     },
     {
       "date": "2026/01/30",
@@ -183,7 +183,7 @@
       "longBal": 5386720,
       "shortBal": 881619,
       "ratio": 6.11,
-      "evalRatio": null
+      "evalRatio": -3.52
     },
     {
       "date": "2026/01/23",
@@ -191,7 +191,7 @@
       "longBal": 5116197,
       "shortBal": 912210,
       "ratio": 5.61,
-      "evalRatio": null
+      "evalRatio": -1.64
     },
     {
       "date": "2026/01/16",
@@ -199,7 +199,7 @@
       "longBal": 4854198,
       "shortBal": 927850,
       "ratio": 5.23,
-      "evalRatio": null
+      "evalRatio": -1.21
     },
     {
       "date": "2026/01/09",
@@ -207,7 +207,7 @@
       "longBal": 4804466,
       "shortBal": 862486,
       "ratio": 5.57,
-      "evalRatio": null
+      "evalRatio": -3.04
     },
     {
       "date": "2025/12/26",
@@ -215,7 +215,7 @@
       "longBal": 4797627,
       "shortBal": 1144402,
       "ratio": 4.19,
-      "evalRatio": null
+      "evalRatio": -5.85
     },
     {
       "date": "2025/12/19",
@@ -223,7 +223,7 @@
       "longBal": 4901194,
       "shortBal": 916258,
       "ratio": 5.35,
-      "evalRatio": null
+      "evalRatio": -8.1
     },
     {
       "date": "2025/12/12",
@@ -231,7 +231,7 @@
       "longBal": 4762519,
       "shortBal": 914726,
       "ratio": 5.21,
-      "evalRatio": null
+      "evalRatio": -7.56
     },
     {
       "date": "2025/12/05",
@@ -239,7 +239,7 @@
       "longBal": 4782877,
       "shortBal": 900561,
       "ratio": 5.31,
-      "evalRatio": null
+      "evalRatio": -8.13
     },
     {
       "date": "2025/11/28",
@@ -247,7 +247,7 @@
       "longBal": 4701279,
       "shortBal": 873348,
       "ratio": 5.38,
-      "evalRatio": null
+      "evalRatio": -7.11
     },
     {
       "date": "2025/11/21",
@@ -255,7 +255,7 @@
       "longBal": 4732095,
       "shortBal": 805991,
       "ratio": 5.87,
-      "evalRatio": null
+      "evalRatio": -8.66
     },
     {
       "date": "2025/11/14",
@@ -263,7 +263,7 @@
       "longBal": 4834887,
       "shortBal": 849712,
       "ratio": 5.69,
-      "evalRatio": null
+      "evalRatio": -7.14
     },
     {
       "date": "2025/11/07",
@@ -271,7 +271,7 @@
       "longBal": 4735565,
       "shortBal": 816132,
       "ratio": 5.8,
-      "evalRatio": null
+      "evalRatio": -7.19
     },
     {
       "date": "2025/10/31",
@@ -279,7 +279,7 @@
       "longBal": 4502572,
       "shortBal": 950342,
       "ratio": 4.74,
-      "evalRatio": null
+      "evalRatio": -6.95
     },
     {
       "date": "2025/10/24",
@@ -287,7 +287,7 @@
       "longBal": 4437823,
       "shortBal": 975221,
       "ratio": 4.55,
-      "evalRatio": null
+      "evalRatio": -6.88
     },
     {
       "date": "2025/10/17",
@@ -295,7 +295,7 @@
       "longBal": 4498422,
       "shortBal": 918202,
       "ratio": 4.9,
-      "evalRatio": null
+      "evalRatio": -8.94
     },
     {
       "date": "2025/10/10",
@@ -303,7 +303,7 @@
       "longBal": 4362357,
       "shortBal": 937565,
       "ratio": 4.65,
-      "evalRatio": null
+      "evalRatio": -7.88
     },
     {
       "date": "2025/10/03",
@@ -311,7 +311,7 @@
       "longBal": 4284864,
       "shortBal": 932192,
       "ratio": 4.6,
-      "evalRatio": null
+      "evalRatio": -7.75
     },
     {
       "date": "2025/09/26",
@@ -319,7 +319,7 @@
       "longBal": 4211057,
       "shortBal": 1514772,
       "ratio": 2.78,
-      "evalRatio": null
+      "evalRatio": -6.68
     },
     {
       "date": "2025/09/19",
@@ -327,7 +327,7 @@
       "longBal": 4189138,
       "shortBal": 1122901,
       "ratio": 3.73,
-      "evalRatio": null
+      "evalRatio": -6.22
     },
     {
       "date": "2025/09/12",
@@ -335,7 +335,7 @@
       "longBal": 4151132,
       "shortBal": 1090238,
       "ratio": 3.81,
-      "evalRatio": null
+      "evalRatio": -5.29
     },
     {
       "date": "2025/09/05",
@@ -343,7 +343,7 @@
       "longBal": 4232466,
       "shortBal": 956644,
       "ratio": 4.42,
-      "evalRatio": null
+      "evalRatio": -5.96
     },
     {
       "date": "2025/08/29",
@@ -351,7 +351,7 @@
       "longBal": 4147587,
       "shortBal": 939527,
       "ratio": 4.41,
-      "evalRatio": null
+      "evalRatio": -5.9
     },
     {
       "date": "2025/08/22",
@@ -359,7 +359,7 @@
       "longBal": 3987911,
       "shortBal": 1056741,
       "ratio": 3.77,
-      "evalRatio": null
+      "evalRatio": -5.54
     },
     {
       "date": "2025/08/15",
@@ -367,7 +367,7 @@
       "longBal": 3778620,
       "shortBal": 1105158,
       "ratio": 3.42,
-      "evalRatio": null
+      "evalRatio": -5.48
     },
     {
       "date": "2025/08/08",
@@ -375,7 +375,7 @@
       "longBal": 3890503,
       "shortBal": 1003278,
       "ratio": 3.88,
-      "evalRatio": null
+      "evalRatio": -5.41
     },
     {
       "date": "2025/08/01",
@@ -383,7 +383,7 @@
       "longBal": 3898717,
       "shortBal": 927427,
       "ratio": 4.2,
-      "evalRatio": null
+      "evalRatio": -6.25
     },
     {
       "date": "2025/07/25",
@@ -391,7 +391,7 @@
       "longBal": 3827469,
       "shortBal": 957614,
       "ratio": 4,
-      "evalRatio": null
+      "evalRatio": -6.56
     },
     {
       "date": "2025/07/18",
@@ -399,7 +399,7 @@
       "longBal": 4033086,
       "shortBal": 872237,
       "ratio": 4.62,
-      "evalRatio": null
+      "evalRatio": -7.79
     },
     {
       "date": "2025/07/11",
@@ -407,7 +407,7 @@
       "longBal": 4004074,
       "shortBal": 860855,
       "ratio": 4.65,
-      "evalRatio": null
+      "evalRatio": -7.13
     },
     {
       "date": "2025/07/04",
@@ -415,7 +415,7 @@
       "longBal": 3941122,
       "shortBal": 841712,
       "ratio": 4.68,
-      "evalRatio": null
+      "evalRatio": -8.44
     }
   ]
 }
