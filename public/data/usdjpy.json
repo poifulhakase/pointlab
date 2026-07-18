@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-07-17T14:13:50.087Z",
+  "updatedAt": "2026-07-18T01:45:28.445Z",
   "data": [
     {
       "time": "2026-07-17",
       "close": 162.35,
-      "change": -0.01,
-      "changePct": -0.01,
+      "change": -0.03,
+      "changePct": -0.02,
       "ma5": 162.28,
       "ma5dev": 0.04
     },
     {
       "time": "2026-07-16",
-      "close": 162.36,
-      "change": 0.29,
-      "changePct": 0.18,
+      "close": 162.38,
+      "change": 0.31,
+      "changePct": 0.19,
       "ma5": 162.19,
-      "ma5dev": 0.1
+      "ma5dev": 0.12
     },
     {
       "time": "2026-07-15",

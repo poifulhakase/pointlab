@@ -1,6 +1,20 @@
 {
-  "updatedAt": "2026-07-17T14:14:01.659Z",
+  "updatedAt": "2026-07-18T01:45:39.568Z",
   "data": [
+    {
+      "date": "2026-07-14",
+      "label": "7月第3週",
+      "openInterest": 28740,
+      "nonCommLong": 6108,
+      "nonCommShort": 3120,
+      "nonCommNet": 2988,
+      "commLong": 17027,
+      "commShort": 9990,
+      "commNet": 7037,
+      "nonReptLong": 23467,
+      "nonReptShort": 13442,
+      "nonReptNet": 10025
+    },
     {
       "date": "2026-07-07",
       "label": "7月第2週",
@@ -714,20 +728,6 @@
       "nonReptLong": 21064,
       "nonReptShort": 13877,
       "nonReptNet": 7187
-    },
-    {
-      "date": "2025-07-15",
-      "label": "7月第3週",
-      "openInterest": 29322,
-      "nonCommLong": 5809,
-      "nonCommShort": 4630,
-      "nonCommNet": 1179,
-      "commLong": 15184,
-      "commShort": 8046,
-      "commNet": 7138,
-      "nonReptLong": 24214,
-      "nonReptShort": 15570,
-      "nonReptNet": 8644
     }
   ]
 }
