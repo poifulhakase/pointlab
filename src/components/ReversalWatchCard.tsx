@@ -28,14 +28,18 @@ export function ReversalWatchCard({ theme }: Props) {
     let alive = true
     ;(async () => {
       try {
+        // 🔴 force=true でキャッシュを無視する。
+        //    localStorage のキャッシュが残っていると、日足だけ数日前の版が返り
+        //    「基準日が項目ごとにズレる」ことが実機で起きた（2026-07-28）。
+        //    このカードは管理者1人しか開かないため、毎回取り直しても負荷にならない。
         const [daily, margin, ss, vix, inv, nt, ad] = await Promise.all([
-          fetchNkFuturesPriceData(),
-          fetchMarginData(),
-          fetchShortSellData(),
-          fetchVixDailyData(),
-          fetchInvestorData(),
-          fetchNtRatioData(),
-          fetchAdvanceDeclineData(),
+          fetchNkFuturesPriceData(true),
+          fetchMarginData(true),
+          fetchShortSellData(true),
+          fetchVixDailyData(true),
+          fetchInvestorData(true),
+          fetchNtRatioData(true),
+          fetchAdvanceDeclineData(true),
         ])
         if (alive) setWatch(buildReversalWatch(daily, margin, ss, vix, inv, nt, ad))
       } catch {
@@ -110,8 +114,15 @@ export function ReversalWatchCard({ theme }: Props) {
 
           <div style={{ color: sub, fontSize: 11 }}>
             {watch.trendNote}
-            {watch.asOf ? `／データ ${watch.asOf}` : ''}
+            {watch.asOf ? `／日足 ${watch.asOf}` : ''}
           </div>
+
+          {/* 🔴 日足が古いと、トレンド判定と価格構造が過去の姿のままになる。黙って古くならないよう明示する */}
+          {watch.staleDays !== null && watch.staleDays >= 4 && (
+            <div style={{ color: '#ff6b6b', fontSize: 11, marginTop: 2 }}>
+              ⚠ 日足データが {watch.staleDays}日前のままです（トレンド判定・価格構造が古い可能性）
+            </div>
+          )}
 
           {/* 点灯状況のドット（閉じている時の要約） */}
           <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>

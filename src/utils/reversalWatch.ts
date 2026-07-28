@@ -47,8 +47,14 @@ export interface ReversalWatch {
   items:    WatchItem[]
   lit:      number
   total:    number
-  /** 参照したデータの最終更新日（最も古いものを表示して鮮度の目安にする） */
+  /** 日足データの基準日（価格・トレンド判定・価格構造はこの日付基準） */
   asOf:     string | null
+  /**
+   * 日足データが基準日から何日経っているか。
+   * 🔴 このプロジェクトは「データが静かに古くなる」事故を繰り返しているため（topix.json が2週間停止、
+   *    localStorageキャッシュで日足だけ数日前に固着）、鮮度を数値で持って表示側で警告できるようにする。
+   */
+  staleDays: number | null
 }
 
 // ── 小さなヘルパー ──────────────────────────────────────────────
@@ -341,6 +347,7 @@ export function buildReversalWatch(
   inv:    InvestorWeekData[],
   nt:     NtRatioPoint[] = [],
   ad:     AdvanceDeclineWeekData[] = [],
+  today:  Date = new Date(),
 ): ReversalWatch {
   const { trend, note } = detectTrend(daily)
 
@@ -355,12 +362,18 @@ export function buildReversalWatch(
     advanceDeclineItem(ad, trend),
   ]
 
+  const asOf = daily[0]?.date ?? null
+  const staleDays = asOf
+    ? Math.floor((Date.parse(`${today.toISOString().slice(0, 10)}T00:00:00Z`) - Date.parse(`${asOf}T00:00:00Z`)) / 86400000)
+    : null
+
   return {
     trend,
     trendNote: note,
     items,
     lit:   items.filter(i => i.lit).length,
     total: items.length,
-    asOf:  daily[0]?.date ?? null,
+    asOf,
+    staleDays,
   }
 }

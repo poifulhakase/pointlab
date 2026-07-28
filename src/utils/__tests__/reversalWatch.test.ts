@@ -172,7 +172,26 @@ describe('buildReversalWatch — 欠損に強いこと', () => {
     expect(w.total).toBe(8)
     expect(w.lit).toBe(0)
     expect(w.asOf).toBeNull()
+    expect(w.staleDays).toBeNull()
     expect(w.items.every(i => typeof i.value === 'string')).toBe(true)
+  })
+})
+
+describe('日足データの鮮度', () => {
+  // days() は 2026-01-01 から連番で作るので、最新は 2026-01-30
+  const daily = days(30, i => 200 - i, { ma25_dev: -5.65 })
+
+  it('基準日からの経過日数を返す', () => {
+    const w = buildReversalWatch(daily, [], [], [], [], [], [], new Date('2026-02-05T09:00:00Z'))
+
+    expect(w.asOf).toBe('2026-01-30')
+    expect(w.staleDays).toBe(6)
+  })
+
+  it('当日ぶんが入っていれば0日', () => {
+    const w = buildReversalWatch(daily, [], [], [], [], [], [], new Date('2026-01-30T15:00:00Z'))
+
+    expect(w.staleDays).toBe(0)
   })
 })
 
