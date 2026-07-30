@@ -1,23 +1,23 @@
 {
-  "updatedAt": "2026-07-29T14:53:16.308Z",
+  "updatedAt": "2026-07-30T12:12:22.866Z",
   "data": [
     {
-      "date": "2026/07/29",
-      "close": 19.64,
-      "change": 0.97,
-      "changePct": 5.2
+      "date": "2026/07/30",
+      "close": 19.09,
+      "change": -1.57,
+      "changePct": -7.6
     },
     {
       "date": "2026/07/27",
-      "close": 18.67,
-      "change": -0.03,
-      "changePct": -0.16
+      "close": 20.66,
+      "change": 2.08,
+      "changePct": 11.19
     },
     {
       "date": "2026/07/20",
-      "close": 18.7,
-      "change": -0.07,
-      "changePct": -0.37
+      "close": 18.58,
+      "change": -0.19,
+      "changePct": -1.01
     },
     {
       "date": "2026/07/13",
