@@ -13,7 +13,8 @@
     "add-participant": "node scripts/add-participants.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e:booking": "node --env-file-if-exists=.env.e2e.local scripts/e2e-booking.mjs"
+    "e2e:booking": "node --env-file-if-exists=.env.e2e.local scripts/e2e-booking.mjs",
+    "check-freshness": "node scripts/check-freshness.mjs"
   },
   "dependencies": {
     "@sentry/react": "^10.53.1",

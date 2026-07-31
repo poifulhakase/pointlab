@@ -1123,12 +1123,49 @@ async function buildTopixData() {
     }
   }
 
-  if (map.size === 0) throw new Error('TOPIXデータが空です')
+  // 🔴 kabutan は GitHub Actions の IP からは取れない（2026-07-13 以降、CI では
+  //    topix.json が一度も更新できていなかった。ローカルからは200で取れるため気づきにくい）。
+  //    自前の Vercel API は同じ kabutan を **Vercel の egress IP** で叩くので通る。
+  //    ＝ CI から見れば「自分のサイトのAPIを読むだけ」になり、IP遮断を回避できる。
+  if (map.size === 0) {
+    console.warn('  ⚠ kabutan から直接取得できず（CIのIPが弾かれている可能性）。自前APIへフォールバックします')
+    const fallback = await fetchTopixFromOwnApi()
+    if (fallback.length) return fallback
+    throw new Error('TOPIXデータが空です（kabutan直・自前APIとも失敗）')
+  }
+
   const points = [...map.entries()]
     .map(([time, close]) => ({ time, close }))
     .sort((a, b) => a.time.localeCompare(b.time))
   console.log(`  → ${points.length}件取得`)
   return points.slice(-252) // 最大約1年分
+}
+
+/**
+ * 自前の Vercel API（/api/stocks-daily?only=topix）から TOPIX を取る。
+ * 中身は同じ kabutan スクレイプだが、実行されるのが Vercel 側なので取得元にブロックされない。
+ * 返す形は buildTopixData と同じ [{time, close}]。
+ */
+async function fetchTopixFromOwnApi() {
+  const url = 'https://pointlab.vercel.app/api/stocks-daily?only=topix'
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30000) })
+    if (!res.ok) {
+      console.warn(`  ⚠ 自前API: HTTP ${res.status}`)
+      return []
+    }
+    const j = await res.json()
+    const arr = Array.isArray(j?.data) ? j.data : []
+    const points = arr
+      .filter(p => p && typeof p.time === 'string' && Number(p.close) > 0)
+      .map(p => ({ time: p.time, close: Number(p.close) }))
+      .sort((a, b) => a.time.localeCompare(b.time))
+    console.log(`  → 自前APIから ${points.length}件取得`)
+    return points.slice(-252)
+  } catch (e) {
+    console.warn(`  ⚠ 自前API: ${e.message}`)
+    return []
+  }
 }
 
 // ── 先物日次OI・取引高（PDF抽出） ────────────────────────────────
