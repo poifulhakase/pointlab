@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-07-31T12:26:48.119Z",
+  "updatedAt": "2026-07-31T15:01:10.682Z",
   "data": [
     {
       "date": "2026/07/31",
-      "close": 17.09,
-      "change": 0,
-      "changePct": 0
+      "close": 17.53,
+      "change": 0.44,
+      "changePct": 2.57
     },
     {
       "date": "2026/07/27",
