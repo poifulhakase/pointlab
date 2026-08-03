@@ -1,8 +1,25 @@
-export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'adp' | 'cpi' | 'pce' | 'ism' | 'tankan'
+export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'adp' | 'cpi' | 'pce' | 'ism' | 'tankan' | 'intervention'
 
 export type MacroFilter = { us: boolean; jp: boolean }
 
-export type MacroEvent = { type: MacroEventType }
+/**
+ * 実績としての補足（この日に**何が起きたか**）。
+ *
+ * 🔴 なぜ要るか：この表はもともと「予定日」しか持っていなかった。
+ *    しかし後から「この形は過去どうなったか」を測るとき、効くのは**結果**の方
+ *    （日銀が動いたのか据え置いたのか／介入が単独か協調か）。
+ *    日付だけ貯めても、あとで一件ずつ調べ直す羽目になる。
+ *
+ * 🔵 予定しか無いイベント（将来のFOMC等）には付かない。**確定した過去にだけ付く**。
+ */
+export type MacroEventDetail = {
+  /** バッジの脇に出す1行（例「据え置き」「日米協調」） */
+  headline: string
+  /** ポップアップに出す説明。**出典が言えることだけ書く**（推測を混ぜない） */
+  note: string
+}
+
+export type MacroEvent = { type: MacroEventType; detail?: MacroEventDetail }
 
 export const MACRO_META: Record<MacroEventType, { short: string; label: string; category: 'us' | 'jp'; desc: string }> = {
   fomc:   { short: 'FOMC',    label: 'FOMC（声明発表）',         category: 'us',
@@ -21,6 +38,10 @@ export const MACRO_META: Record<MacroEventType, { short: string; label: string; 
     desc: 'ISM（全米供給管理協会）が毎月第1営業日に発表する製造業の景況感指数。50が好不況の分かれ目で、米景気の先行指標として重視される。' },
   tankan: { short: '短観',    label: '日銀短観',                 category: 'jp',
     desc: '日本銀行が四半期ごとに発表する企業短期経済観測調査。大企業・中小企業の景況感（DI）を数値化。日本経済の体温計として機関投資家が注目する。' },
+  intervention: { short: '為替介入', label: '為替介入（実施実績）', category: 'jp',
+    desc: '財務省が円相場の過度な変動に対処するため実施した外国為替平衡操作。'
+      + '🔴 介入は事前に日程が公表されない。ここに載るのは**実施後に確認された実績**だけで、予定ではない。'
+      + '介入は水準を作れるが金利差そのものは動かさないため、日銀・FOMCの結果と並べて見ると効き方の違いが分かる。' },
 }
 
 // FOMC声明発表日（会合2日目）
@@ -138,15 +159,58 @@ for (let yr = 2024; yr <= 2026; yr++) {
 }
 
 
+// ── 実績として貯めるデータ ────────────────────────────────
+//
+// 🔴 ここは「予定」ではなく**起きたことの記録**。事前に日程が決まらない介入と、
+//    日付だけでは意味が取れない日銀の結果を残す。後から
+//    「介入だけの時／金利差が動いた時で、その後どうなったか」を測れるようにするのが目的。
+//
+// 🔴 **確認できた出典があるものだけ入れる**。推測で埋めない（埋めると検証の土台が壊れる）。
+//    追加するときは実施額・単独/協調まで分かる資料（財務省の公表、日経・時事等）を確認する。
+
+/** キーは 'YYYY-MM-DD'（ローカル日付）。 */
+const INTERVENTION_RESULTS: Record<string, MacroEventDetail> = {
+  // 2022年（24年ぶりの円買い介入。合計 約9兆1,880億円・いずれも単独）
+  '2022-09-22': { headline: '単独・約2.8兆円', note: '24年ぶりの円買い介入（単独）。約2兆8,382億円。当日は5円以上下げたが、翌月には150円台に戻り効果が疑問視された。' },
+  '2022-10-21': { headline: '単独・約5.6兆円', note: '覆面介入（単独）。約5兆6,202億円。151円台での実施。この後ドル円は下落に転じ、一定の成果を上げたとされる。' },
+  '2022-10-24': { headline: '単独・約0.7兆円', note: '覆面介入（単独）。約7,296億円。' },
+
+  // 2024年（4-5月で約9.8兆円、7月で約5.5兆円。いずれも単独）
+  '2024-04-29': { headline: '単独', note: '円買い介入（単独）。4/29と5/2で合計 約9.8兆円。' },
+  '2024-05-02': { headline: '単独', note: '円買い介入（単独）。4/29と5/2で合計 約9.8兆円。' },
+  '2024-07-11': { headline: '単独', note: '円買い介入（単独）。7/11と7/12で合計 約5.5兆円。この後、日銀利上げと米利下げ観測が重なりトレンドが転換した。' },
+  '2024-07-12': { headline: '単独', note: '円買い介入（単独）。7/11と7/12で合計 約5.5兆円。' },
+
+  // 2026年
+  '2026-07-30': { headline: '単独', note: '約3ヶ月ぶりの円買い介入（単独）。米当局はレートチェックを実施。162円台後半から157円台へ約5円上昇したが、その後160円超へ戻された。' },
+  '2026-07-31': { headline: '🔴 日米協調', note: '日米協調の円買い介入。日本はドル売り・円買い、米当局はユーロ売り・円買いで共同歩調。協調介入は2011年の東日本大震災直後以来15年ぶり、円買いでは1998年以来28年ぶり。2025年9月の日米財務大臣共同声明に基づく。米国が加わったのは、日本の通貨安・債券安が米長期金利の上昇に波及するのを懸念したため。8/3に片山財務相が談話で公表し「更なる協調介入も躊躇しない」と表明した。' },
+}
+
+/**
+ * 日銀会合の結果。**日付だけでは「動いたのか」が分からない**ので結果を残す。
+ * 🔴 分かっている回だけ入れる。空欄＝未記録であって「据え置き」ではない。
+ */
+const BOJ_RESULTS: Record<string, MacroEventDetail> = {
+  '2026-07-31': { headline: '据え置き', note: '政策金利を据え置き。利上げ継続の姿勢は維持し、利上げ加速は9月以降に「しっかり議論」するとした。🔴 同じ日に日米協調介入が行われており、**介入はあったが金利差は動いていない**局面。次回会合は2026-09-18。' },
+}
+
+/** ローカル日付を 'YYYY-MM-DD' にする（UTC変換を挟むと日付がずれるため自前で組む）。 */
+function dateKey(y: number, m: number, d: number): string {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
 export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEvent[] {
   const y = date.getFullYear()
   const m = date.getMonth()
   const d = date.getDate()
   const events: MacroEvent[] = []
 
-  const check = (list: [number, number, number][], type: MacroEventType) => {
+  const key = dateKey(y, m, d)
+
+  const check = (list: [number, number, number][], type: MacroEventType, results?: Record<string, MacroEventDetail>) => {
     if (list.some(([ly, lm, ld]) => ly === y && lm === m && ld === d)) {
-      events.push({ type })
+      // 結果が記録されている日だけ detail を付ける（予定日には付かない）
+      events.push(results?.[key] ? { type, detail: results[key] } : { type })
     }
   }
 
@@ -159,9 +223,21 @@ export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEve
     check(ISM_DATES, 'ism')
   }
   if (filter.jp) {
-    check(BOJ_DATES, 'boj')
+    check(BOJ_DATES, 'boj', BOJ_RESULTS)
     check(TANKAN_DATES, 'tankan')
+    // 介入は予定日リストを持たない＝実績があった日にだけ出る
+    if (INTERVENTION_RESULTS[key]) {
+      events.push({ type: 'intervention', detail: INTERVENTION_RESULTS[key] })
+    }
   }
 
   return events
+}
+
+/**
+ * 記録済みの為替介入日（古い順）。R&Dスクリプトから「介入の翌日以降どうなったか」を測るのに使う。
+ * 🔴 アプリの表示には使わない（表示は getMacroEventsForDate 経由）。
+ */
+export function getInterventionDates(): string[] {
+  return Object.keys(INTERVENTION_RESULTS).sort()
 }

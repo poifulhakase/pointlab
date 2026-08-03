@@ -25,6 +25,17 @@
 .sm { font-size: 11px; padding: 1px 4px; }
 .md { font-size: 12px; padding: 3px 7px; }
 
+/* ── 実績の結果（例「据え置き」「日米協調」）───────────────
+   予定日のバッジと見分けが付くよう、結果は色を変えて併記する。
+   日付だけでは「動いたのか」が読めないため、一覧の時点で分かるようにする。 */
+.result {
+  margin-left: 4px;
+  padding-left: 4px;
+  border-left: 1px solid var(--badge-border);
+  font-weight: 700;
+  color: var(--accent, #6ea8fe);
+}
+
 /* ── Text clamping (MacroEventBadge) ─────────────────────── */
 .clamp {
   display: -webkit-box;
