@@ -3,36 +3,24 @@ import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
-import { buildNewsPrompt, buildUpcomingEventsText } from '../utils/newsPrompt'
+import { buildUpcomingEventsText } from '../utils/newsPrompt'
 import { cy } from '../utils/cyberTheme'
 import { useSystemLog, CyberSystemLog, type LogState } from './CyberSystemLog'
 import { SHIELD_PROMPT_TEMPLATE } from '../utils/shieldPrompt'
 import { buildShieldData, getRecentEngineReport } from '../utils/shieldData'
 import { AILaunchRow } from './CyberAiLaunch'
-import { jstTodayKey, jstTimestamp } from '../utils/jstDate'
+import { SectorPanel } from './SectorPanel'
+import { jstTodayKey } from '../utils/jstDate'
 
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
-  shieldTab?: 'shield' | 'news'
-  onShieldTabChange?: (tab: 'shield' | 'news') => void
+  shieldTab?: 'shield' | 'sector'
+  onShieldTabChange?: (tab: 'shield' | 'sector') => void
 }
 
 // ── STATUS LINES ─────────────────────────────────────
-const NEWS_STATUS_LINES = [
-  'POI-ROBO NEWS v1.0  ▶ ONLINE',
-  'マクロイベントカレンダー ...... スキャン中',
-  '5営業日以内のイベント ......... 抽出中',
-  'コンセンサス予想 .............. 取得準備中',
-  '中央銀行スケジュール .......... ロード済み',
-  'SQ日程チェック ................ 確認中',
-  '需給物理統合モード ............ 待機中',
-  '事前確率分類エンジン .......... スタンバイ',
-  'イベント予測プロンプト ........ 生成完了',
-  'ぽいロボ イベント予測 .......... オンライン',
-]
-
 const SHIELD_STATUS_LINES = [
   'POI-ROBO SHIELD v1.0  ▶ ONLINE',
   '日経225先物 OHLC ........... 取得中',
@@ -72,20 +60,6 @@ const SHIELD_MEMO_CONFIG: MemoConfig = {
   ],
   hlDark:  'rgba(255,100,180,0.95)',
   hlLight: '#db2777',
-}
-
-const EVENT_MEMO_CONFIG: MemoConfig = {
-  storageKey: 'poical-event-memo',
-  fsPath: (uid) => `users/${uid}/data/eventMemo`,
-  title: 'イベント分析レポート',
-  placeholder: '▌ イベント分析レポートを記録...',
-  patterns: [
-    /事前確率分類：.+/g,
-    /イベント前の姿勢：.+/g,
-    /予想と需給の方向一致性：.+/g,
-  ],
-  hlDark:  'rgba(0,229,255,0.95)',
-  hlLight: '#0369a1',
 }
 
 function renderMemoHL(text: string, patterns: RegExp[], hlColor: string): React.ReactNode {
@@ -479,178 +453,12 @@ function ShieldPanel({
   )
 }
 
-// ── NewsPanel（ニュースモード左ペイン）──────────────────
-function NewsPanel({
-  isMobile, theme, copyStatus, onNewsCopy, logState,
-}: {
-  isMobile: boolean
-  theme: 'dark' | 'light'
-  copyStatus: '' | 'news_shield'
-  onNewsCopy: () => void
-  logState: LogState
-}) {
-  const c = cy(theme)
-
-  return (
-    <div style={isMobile
-      ? { flexShrink: 0, display: 'flex', flexDirection: 'column',
-          background: c.BG, backgroundImage: c.SCAN }
-      : { width: 500, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          borderRight: `1px solid ${c.BORDBR}` }
-    }>
-      {theme === 'dark' && <style>{`
-        @keyframes news-dust {
-          0%   { transform: translateY(0); opacity: 0; }
-          20%  { opacity: 0.35; }
-          100% { transform: translateY(-160px); opacity: 0; }
-        }
-        .news-dust {
-          position: absolute; width: 2px; height: 2px;
-          background: #00e5ff; border-radius: 50%; opacity: 0;
-          animation: news-dust 10s linear infinite; pointer-events: none;
-        }
-        @keyframes news-scanline {
-          0%   { top: -20px; }
-          100% { top: 110%; }
-        }
-        .news-scanline {
-          position: absolute; left: 0; width: 100%; height: 15px;
-          background: linear-gradient(to bottom, transparent, rgba(0,229,255,0.04), transparent);
-          pointer-events: none;
-          animation: news-scanline 8s linear infinite;
-        }
-      `}</style>}
-
-      <div style={{
-        flex: 1,
-        position: 'relative', display: 'flex', flexDirection: 'column',
-        overflow: isMobile ? 'visible' : 'hidden',
-        ...(!isMobile && theme === 'dark' ? { background: c.BG, backgroundImage: c.SCAN } : {}),
-        ...(!isMobile && theme === 'light' ? { background: c.BG } : {}),
-      }}>
-        {theme === 'dark' && !isMobile && <>
-          <div className="news-dust" style={{ top: '70%', left: '20%', animationDelay: '0s' }} />
-          <div className="news-dust" style={{ top: '40%', left: '80%', animationDelay: '2s' }} />
-          <div className="news-dust" style={{ top: '80%', left: '65%', animationDelay: '1s' }} />
-          <div className="news-dust" style={{ top: '20%', left: '30%', animationDelay: '3s' }} />
-          <div className="news-dust" style={{ top: '60%', left: '50%', animationDelay: '4.5s' }} />
-          <div className="news-scanline" />
-        </>}
-
-        {/* ヘッダー */}
-        <div style={{
-          position: 'relative', zIndex: 1,
-          padding: '5px 14px', minHeight: 36, flexShrink: 0,
-          borderBottom: `1px solid ${c.BORDER}`,
-          background: c.HDBG,
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-              stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m3 11 18-5v12L3 14v-3z"/>
-              <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-            </svg>
-            <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
-              ぽいロボ イベント
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.GREEN, boxShadow: `0 0 6px ${c.GREEN}` }} />
-            <span style={{ fontFamily: c.FONT, fontSize: 10, color: c.DIM, letterSpacing: '0.12em' }}>ONLINE</span>
-          </div>
-        </div>
-
-        {/* コンテンツ */}
-        <div style={{
-          position: 'relative', zIndex: 1, flex: 1, overflowY: 'auto',
-          padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 42,
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div style={{
-              borderLeft: `3px solid ${c.GREEN}`,
-              background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.05)`,
-              borderRadius: '0 8px 8px 0',
-              padding: '10px 14px',
-              fontSize: 14, lineHeight: 1.75,
-              color: c.DESC,
-              fontFamily: c.FONT, letterSpacing: '0.04em',
-            }}>
-              今後5営業日のマクロイベントを分析。<br />
-              下のボタンでコピーしてAI分析してください。
-            </div>
-
-            {/* COPYボタン */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <div style={{ position: 'relative' }}>
-                <button
-                  style={{
-                    width: 84, height: 84, borderRadius: '50%',
-                    background: copyStatus === 'news_shield'
-                      ? `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.18)`
-                      : `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.07)`,
-                    border: `2px solid ${copyStatus === 'news_shield' ? c.GREEN : c.BORDBR}`,
-                    boxShadow: copyStatus === 'news_shield'
-                      ? `0 0 24px ${c.FAINT}, inset 0 0 14px ${c.FAINT}`
-                      : `0 0 16px ${c.FAINT}, inset 0 0 10px ${c.FAINT}`,
-                    color: c.GREEN,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 7, cursor: 'pointer',
-                    transition: 'background 0.2s, box-shadow 0.2s, border-color 0.2s',
-                  }}
-                  onClick={onNewsCopy}
-                >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m3 11 18-5v12L3 14v-3z"/>
-                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
-                  </svg>
-                  <span style={{ fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
-                    {copyStatus === 'news_shield' ? 'DONE' : 'COPY'}
-                  </span>
-                </button>
-                {/* 吹き出し */}
-                <div style={{
-                  position: 'absolute', top: '50%', left: 88, transform: 'translateY(-50%)',
-                  display: 'flex', alignItems: 'center', zIndex: 10, pointerEvents: 'none', width: 'max-content',
-                }}>
-                  <div style={{ width: 0, height: 0, borderTop: '7px solid transparent', borderBottom: '7px solid transparent', borderRight: `8px solid ${c.BORDBR}`, flexShrink: 0 }} />
-                  <div style={{
-                    background: `rgba(${theme === 'dark' ? '0,229,255' : '3,105,161'},0.06)`,
-                    border: `1px solid ${c.BORDBR}`, borderRadius: 8,
-                    padding: '6px 10px', fontFamily: 'system-ui, sans-serif',
-                    fontSize: 11, color: c.DIM, letterSpacing: '0.04em', lineHeight: 1.6, whiteSpace: 'nowrap',
-                  }}>
-                    {copyStatus === 'news_shield' ? '▶ コピー完了' : <>イベント予測<br />プロンプト＋需給状態</>}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 4, fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.04em', color: c.DIM }}>
-              推奨: <span style={{ color: '#60a5fa' }}>Gemini</span>
-            </div>
-          </div>
-
-          {/* AI起動 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div style={{ fontFamily: c.FONT, fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', color: c.DIM }}>
-              ▌ AI起動
-            </div>
-            <AILaunchRow theme={theme} />
-          </div>
-        </div>
-      </div>
-
-      {!isMobile && <CyberSystemLog {...logState} theme={theme} />}
-    </div>
-  )
-}
-
 // ── メインコンポーネント ──────────────────────────────
 export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Props) {
   const tv = themeVars(theme)
 
   const mode = shieldTab
-  const [copyStatus,  setCopyStatus]  = useState<'' | 'shield' | 'news_shield'>('')
+  const [copyStatus,  setCopyStatus]  = useState<'' | 'shield'>('')
   const [isBuilding,  setIsBuilding]  = useState(false)
 
   const handlePromptCopy = useCallback(async () => {
@@ -706,28 +514,7 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
     }
   }, [isBuilding])
 
-  const handleNewsCopy = useCallback(async () => {
-    const ts = jstTimestamp()
-    const report = getRecentEngineReport()
-    const tevState = report
-      ? `エンジンレポート日付：${report.date}\n${report.text}`
-      : '（エンジンレポートなし。ぽいロボ エンジンで需給分析を行ってからコピーしてください）'
-    const prompt = buildNewsPrompt(ts, buildUpcomingEventsText(5), tevState)
-    try {
-      await navigator.clipboard.writeText(prompt)
-    } catch {
-      const el = Object.assign(document.createElement('textarea'), {
-        value: prompt, style: 'position:fixed;opacity:0',
-      })
-      document.body.appendChild(el); el.select(); document.execCommand('copy')
-      document.body.removeChild(el)
-    }
-    setCopyStatus('news_shield')
-    setTimeout(() => setCopyStatus(''), 2500)
-  }, [])
-
   const logState     = useSystemLog(SHIELD_STATUS_LINES)
-  const newsLogState = useSystemLog(NEWS_STATUS_LINES)
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
@@ -756,20 +543,7 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
             {isMobile && <CyberSystemLog {...logState} theme={theme} />}
           </>
         ) : (
-          <>
-            <NewsPanel
-              isMobile={isMobile}
-              theme={theme}
-              copyStatus={copyStatus === 'news_shield' ? 'news_shield' : ''}
-              onNewsCopy={handleNewsCopy}
-              logState={newsLogState}
-            />
-            <div style={isMobile ? s.dividerH : s.divider} />
-            <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-              <MemoPanel user={user} theme={theme} isMobile={isMobile} config={EVENT_MEMO_CONFIG} />
-            </div>
-            {isMobile && <CyberSystemLog {...newsLogState} theme={theme} />}
-          </>
+          <SectorPanel theme={theme} isMobile={isMobile} />
         )}
       </div>
     </div>

@@ -1318,6 +1318,148 @@ async function buildFuturesDailyData() {
   return data
 }
 
+// ── 銘柄マスタ（JPX 東証上場銘柄一覧）────────────────────
+
+/**
+ * 上場銘柄一覧（data_j.xls）から**内国株式のみ**の銘柄マスタを作る。
+ *
+ * 🔵 JPX が月1回更新する無料の Excel。列は
+ *    [日付, コード, 銘柄名, 市場・商品区分, 33業種コード, 33業種区分, 17業種コード, 17業種区分, 規模コード, 規模区分]。
+ * 🔴 **ETF・REIT・外国株・PRO Market は落とす**（業種が "-" で、セクターの話に乗らないため）。
+ * 🔴 17業種は**コード（1〜17）だけ**を持つ。名前はフロント側の表で引く（4000行に文字列を持たせない）。
+ */
+async function fetchStockMaster() {
+  console.log('\n[stockMaster] JPX 上場銘柄一覧を取得...')
+
+  // リンクはページから拾う（att配下のパスは将来変わりうる）。取れなければ既知のURLへ。
+  const FALLBACK = `${BASE}/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls`
+  let xlsUrl = FALLBACK
+  try {
+    const html = await fetchHtml(`${BASE}/markets/statistics-equities/misc/01.html`)
+    const m = html.match(/href="([^"]*data_j\.xls[^"]*)"/)
+    if (m) xlsUrl = m[1].startsWith('http') ? m[1] : BASE + m[1]
+  } catch (e) {
+    console.warn('  ⚠ 一覧ページを読めなかったので既知URLを使う:', e.message)
+  }
+
+  const wb   = XLSX.read(Buffer.from(await fetchBinary(xlsUrl)), { type: 'buffer' })
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' })
+
+  // 先頭行の日付（20260731）＝この一覧の基準日
+  const raw   = String(rows[1]?.[0] ?? '')
+  const asOf  = /^\d{8}$/.test(raw) ? `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6)}` : null
+
+  const DOMESTIC = /^(プライム|スタンダード|グロース)（内国株式）$/
+  const data = []
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i]
+    if (!DOMESTIC.test(String(r[3]))) continue
+    const s17 = Number(r[6])
+    if (!Number.isInteger(s17) || s17 < 1 || s17 > 17) continue
+    data.push({
+      code:     String(r[1]),
+      name:     String(r[2]),
+      sector33: String(r[5]),
+      sector17: s17,
+    })
+  }
+  if (data.length < 3000) throw new Error(`銘柄数が少なすぎる(${data.length}件) — 列構造の変更を疑う`)
+
+  data.sort((a, b) => a.code.localeCompare(b.code))
+  console.log(`  → ${data.length}銘柄（基準日 ${asOf ?? '不明'}）`)
+  return { asOf, data }
+}
+
+// ── 業種別の相対強弱（TOPIX-17 業種別ETF）──────────────
+
+/**
+ * 東証33業種／TOPIX-17 の**業種別株価指数そのものは有料**なので、
+ * それに連動する **NEXT FUNDS の TOPIX-17 業種別ETF（1617〜1633）**の値動きで代用する。
+ *
+ * 🔵 ETFコードと17業種コードは **1617 + (n - 1)** で一対一に対応している
+ *    （data_j.xls のETF名で確認済み: 1617=食品 … 1633=不動産）。
+ * 🔴 ETF価格なので**指数そのものではない**（信託報酬・売買の薄さ・乖離がのる）。
+ *    順位を見るための代用だと分かるように、出力に `proxy: 'etf'` を残す。
+ */
+const SECTOR17_ETF_BASE = 1617
+const SECTOR17_LABELS = [
+  '食品', 'エネルギー資源', '建設・資材', '素材・化学', '医薬品',
+  '自動車・輸送機', '鉄鋼・非鉄', '機械', '電機・精密', '情報通信・サービスその他',
+  '電力・ガス', '運輸・物流', '商社・卸売', '小売', '銀行',
+  '金融（除く銀行）', '不動産',
+]
+
+/** 直近終値と、N営業日前の終値との騰落率（%）。足りなければ null。 */
+function pctChangeBack(closes, back) {
+  const last = closes[closes.length - 1]
+  const prev = closes[closes.length - 1 - back]
+  if (last == null || prev == null || prev === 0) return null
+  return Math.round((last - prev) / prev * 10000) / 100
+}
+
+async function fetchSectorPerfData() {
+  console.log('\n[sectorPerf] TOPIX-17 業種別ETF（1617〜1633）から相対強弱を計算...')
+
+  const rows = []
+  for (let n = 1; n <= 17; n++) {
+    const etf = String(SECTOR17_ETF_BASE + n - 1)
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${etf}.T?interval=1d&range=1y&events=div,split`
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(20000),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json()
+      const result = json?.chart?.result?.[0]
+      const ts    = result?.timestamp ?? []
+      const rawCl = result?.indicators?.quote?.[0]?.close ?? []
+      // 🔴 騰落率は **調整後終値（adjclose）**で計算する。
+      //    素の終値だと分配金の権利落ち（このETF群は1回0.7〜2%）が下落として混ざり、
+      //    権利落ち日が業種ごとにバラバラなので**順位が入れ替わってしまう**。
+      const rawAdj = result?.indicators?.adjclose?.[0]?.adjclose ?? []
+
+      // 🔴 Yahoo は休場日や配信漏れで null を混ぜる。
+      //    そのまま数えると「N営業日前」がずれるので、null行は日付ごと落とす。
+      const times = [], closes = [], adjs = []
+      for (let i = 0; i < ts.length; i++) {
+        if (rawCl[i] == null || isNaN(rawCl[i])) continue
+        times.push(new Date(ts[i] * 1000).toISOString().slice(0, 10))
+        closes.push(rawCl[i])
+        adjs.push(rawAdj[i] == null || isNaN(rawAdj[i]) ? rawCl[i] : rawAdj[i])
+      }
+      if (closes.length < 70) throw new Error(`データ不足(${closes.length}本)`)
+
+      rows.push({
+        sector17: n,
+        label:    SECTOR17_LABELS[n - 1],
+        etf,
+        time:     times[times.length - 1],
+        close:    Math.round(closes[closes.length - 1] * 10) / 10,
+        chg1m:    pctChangeBack(adjs, 21),
+        chg3m:    pctChangeBack(adjs, 62),
+        chg6m:    pctChangeBack(adjs, 123),
+      })
+      console.log(`  ${etf} ${SECTOR17_LABELS[n - 1]}: 1M ${rows[rows.length - 1].chg1m}% / 3M ${rows[rows.length - 1].chg3m}%`)
+    } catch (e) {
+      console.warn(`  ⚠ ${etf} ${SECTOR17_LABELS[n - 1]}: ${e.message}`)
+    }
+  }
+
+  if (rows.length < 14) throw new Error(`取得できた業種が少なすぎる(${rows.length}/17)`)
+
+  // 期間ごとの順位（1位＝いちばん強い）。取れなかった業種は順位なし。
+  for (const key of ['chg1m', 'chg3m', 'chg6m']) {
+    const rankKey = key.replace('chg', 'rank')
+    const sorted = rows.filter(r => r[key] != null).sort((a, b) => b[key] - a[key])
+    sorted.forEach((r, i) => { r[rankKey] = i + 1 })
+    for (const r of rows) if (r[rankKey] == null) r[rankKey] = null
+  }
+
+  rows.sort((a, b) => a.sector17 - b.sector17)
+  return rows
+}
+
 // ── メイン ─────────────────────────────────────
 
 async function main() {
@@ -1338,6 +1480,8 @@ async function main() {
   let cotNikkeiOk           = false
   let topixOk               = false
   let nkFuturesPriceOk      = false
+  let stockMasterOk         = false
+  let sectorPerfOk          = false
 
   try {
     const data = await fetchInvestorData()
@@ -1482,6 +1626,27 @@ async function main() {
     console.warn('\n⚠ topix:', e.message)
   }
 
+  try {
+    const { asOf, data } = await fetchStockMaster()
+    const out = { updatedAt: new Date().toISOString(), asOf, data }
+    // 🔵 3700行あるので pretty-print しない（整形すると3倍近くに膨らむ）。
+    writeFileSync(join(OUT_DIR, 'stock_master.json'), JSON.stringify(out))
+    console.log(`\n✓ stock_master.json 保存 (${data.length}件)`)
+    stockMasterOk = true
+  } catch (e) {
+    console.warn('\n⚠ stockMaster:', e.message)
+  }
+
+  try {
+    const data = await fetchSectorPerfData()
+    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', data }
+    writeFileSync(join(OUT_DIR, 'sector_perf.json'), JSON.stringify(out, null, 2))
+    console.log(`\n✓ sector_perf.json 保存 (${data.length}業種)`)
+    sectorPerfOk = true
+  } catch (e) {
+    console.warn('\n⚠ sectorPerf:', e.message)
+  }
+
   console.log('\n=== 完了 ===')
   if (!investorOk || !marginOk) process.exit(1)
   if (!vixOk)                   console.warn('⚠ vix.json は更新されませんでした（既存ファイルを維持）')
@@ -1496,6 +1661,8 @@ async function main() {
   if (!futuresDailyOk)          console.warn('⚠ futures_daily.json は更新されませんでした（JPX日次PDF取得要確認）')
   if (!cotNikkeiOk)             console.warn('⚠ cot_nikkei.json は更新されませんでした（CFTC URL・CSV形式要確認）')
   if (!topixOk)                 console.warn('⚠ topix.json は更新されませんでした（stooq 接続要確認）')
+  if (!stockMasterOk)           console.warn('⚠ stock_master.json は更新されませんでした（JPX 一覧の列構造要確認・既存ファイルを維持）')
+  if (!sectorPerfOk)            console.warn('⚠ sector_perf.json は更新されませんでした（Yahoo Finance 接続要確認）')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

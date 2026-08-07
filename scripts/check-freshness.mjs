@@ -47,6 +47,7 @@ const EXPECT = [
   { file: 'vix_daily.json',       maxAgeDays: 5,  label: 'VIX（日次）' },
   { file: 'nas100_daily.json',    maxAgeDays: 5,  label: 'NASDAQ100（日次）' },
   { file: 'topix.json',           maxAgeDays: 5,  label: 'TOPIX（NT倍率の分母）' },
+  { file: 'sector_perf.json',     maxAgeDays: 5,  label: '業種別の相対強弱（TOPIX-17 ETF）' },
   // 🔴 ファイル名は daily だが、中身の行間隔は**週次**（7/24, 7/17, 7/10 …）。日次扱いすると誤検知する。
   { file: 'arbitrage_daily.json', maxAgeDays: 14, label: '裁定残（日次ファイル・実際は週次）' }, // 公表ラグ6 + 行間隔7
 
@@ -66,6 +67,9 @@ const EXPECT = [
   { file: 'cot_nikkei.json',      maxAgeDays: 14, label: 'COT（CFTC・金曜公表）' },
 
   // futures_participants.json は手動更新（add-participants.mjs）なので対象外。
+  // 🔴 stock_master.json も対象外。JPX の上場銘柄一覧は**月1回更新**で、
+  //    しかも日付が行ではなくトップレベル（asOf）にあるため latestDateIn では拾えない。
+  //    古くなっても影響は「新規上場が検索に出ない」だけなので、鳴らさない判断。
 ]
 
 /** 日付らしき値を Date に変換（"2026/07/30" と "2026-07-30" の両方が来る）。 */

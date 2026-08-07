@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, Suspense } from 'react'
 import { lazyWithReload as lazy } from '../utils/lazyWithReload'
 import type { ConnectUser }  from './JitsiPanel'
 import { isAdminEmail } from '../utils/admin'
-import { ReversalWatchCard } from './ReversalWatchCard'
 import { NotificationSettings } from './NotificationSettings'
 import { forceAppUpdate } from '../utils/forceUpdate'
 
@@ -838,10 +837,6 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
               }} />
             ))}
           </div>
-
-          {/* 🔒 反転臨界モニター（管理者のみ・PCのみ）。研究室の右上に常時表示する内部R&Dツール。
-              会員向けの機能ではないため、isAdmin かつ !isMobile のときだけ描画する。 */}
-          {isAdmin && !isMobile && <ReversalWatchCard theme={theme} />}
 
           <div
             ref={menuRef}

@@ -230,7 +230,7 @@ export default function App() {
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
   const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro'>('bunseki')
-  const [shieldTab,         setShieldTab]         = useState<'shield' | 'news'>('shield')
+  const [shieldTab,         setShieldTab]         = useState<'shield' | 'sector'>('shield')
   const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
@@ -887,8 +887,9 @@ const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
 const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['エンジン', '環境', '現物', '先物'] as const
-const SHIELD_TABS   = ['shield', 'news'] as const
-const SHIELD_LABELS = ['シールド', 'イベント予想'] as const
+// 🔴 2026-08-07: 「イベント予想」タブを廃止し、同じ位置に「セクター」を置いた（ユーザー指示）。
+const SHIELD_TABS   = ['shield', 'sector'] as const
+const SHIELD_LABELS = ['シールド', 'セクター'] as const
 const LEGAL_TABS    = ['terms', 'disclaimer', 'privacy'] as const
 const LEGAL_LABELS  = ['利用規約', '免責事項', 'プライバシー'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
