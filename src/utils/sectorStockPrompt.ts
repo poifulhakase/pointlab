@@ -1,6 +1,6 @@
 import {
-  phaseOfSector17, sector17Label, strongestPhase,
-  PERF_LABELS,
+  phaseOfSector17, sector17Label, strongestPhase, phaseFits, bestFit,
+  PERF_LABELS, PHASES,
   type PerfKey, type PhaseStrength, type SectorPerfRow, type StockRow,
 } from './sectorRotation'
 
@@ -57,10 +57,32 @@ export function buildStockAnalysisPrompt(
     '17業種の騰落率（強い順）:',
     ...rankLines,
     '',
+    '## 参考：景気4局面の「型」との一致度（0〜100）',
+    '🔵 その局面で強いとされる業種が、実際に17業種中どのあたりに並んでいるかだけで決まる指標です。',
+    '   上位を独占していれば100、下位を独占していれば0。**確率ではありません。**',
+    '| 局面 | ' + (['chg1m', 'chg3m', 'chg6m'] as PerfKey[]).map(k => PERF_LABELS[k]).join(' | ') + ' |',
+    '|---|---|---|---|',
+    ...PHASES.map(ph => {
+      const cells = (['chg1m', 'chg3m', 'chg6m'] as PerfKey[]).map(k => {
+        const f = phaseFits(perf, k).find(x => x.phase.id === ph.id)
+        return f?.score ?? '—'
+      })
+      return `| ${ph.label} | ${cells.join(' | ')} |`
+    }),
+    (() => {
+      const b = bestFit(phaseFits(perf, key))
+      return b
+        ? `- 直近${period}でいちばん型に近いのは「${b.phase.label}」（一致度 ${b.score}）`
+        : '- 一致度：データなし'
+    })(),
+    '',
     '## 🔴 前提として必ず守ること',
     '- **ぽいロボは景気局面の判定を行っていません。**上の分類は「教科書的にどの局面で強いとされるか」'
       + 'という一般的な対応表であり、「いまが◯◯相場だ」という判断ではありません。'
       + '**いまの局面を断定しないでください。**',
+    '- 🔴 **一致度は確率ではありません。**「一致度◯◯だから◯◯相場である可能性が◯◯%」のような'
+      + '言い換えは行わないでください。局面には正解が存在せず、当たったかどうかを検証できない指標です。'
+      + '複数の局面の一致度が近い場合は、**近いこと自体（型が定まっていないこと）を書いてください。**',
     '- 上の騰落率は**実際に測った値**ですが、ETFによる代用値です。指数そのものの数字として扱わないでください。',
     '- 🔴 **ぽいロボはこの銘柄の株価を持っていません。**'
       + 'あなたが最新の株価を参照できる場合はそれを使い、**取得日時と出典を明記**してください。'

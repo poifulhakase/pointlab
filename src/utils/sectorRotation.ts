@@ -202,6 +202,91 @@ export function strongestPhase(strengths: readonly PhaseStrength[]): PhaseStreng
   return strengths.find(s => s.rank === 1) ?? null
 }
 
+// ── 局面の「型」との一致度 ──────────────────────────────
+
+export type FitMember = {
+  row: SectorPerfRow
+  /** 17業種の中での順位（1＝いちばん強い） */
+  rank: number
+  /** 上位1/3＝支持 / 下位1/3＝矛盾 / それ以外＝どちらでもない */
+  role: 'support' | 'contradict' | 'neutral'
+}
+
+export type PhaseFit = {
+  phase: SectorPhase
+  /** 0〜100。その局面で強いとされる業種が実際に上位に並んでいるほど高い。 */
+  score: number | null
+  /** 属する業種の平均順位（小さいほど上位） */
+  meanRank: number | null
+  /** 順位順のメンバー */
+  members: FitMember[]
+}
+
+/**
+ * 「いまの業種の並びが、どの局面の型にどれだけ近いか」を 0〜100 で出す（純粋関数・テスト対象）。
+ *
+ * 考え方はごく単純で、**その局面で強いとされる業種が実際に何位にいるか**だけを見る。
+ *   ・その局面の業種が上位を独占（1位,2位,…）  → 100
+ *   ・下位を独占                                 → 0
+ *   ・ばらけて真ん中                             → 50 付近
+ * 局面ごとに業種数が違う（3〜6）ので、取りうる最良・最悪の平均順位で正規化して揃えている。
+ *
+ * 🔴 **これは「確率」ではない**。単に型との一致度。
+ *    局面には正解ラベルが存在せず、当たったかどうかを後から検証できないため、
+ *    %を確率として名乗らせない（過去に確信度が自信過剰かつ反転していた反省・第25セッション）。
+ * 🔴 使う側は **4局面すべてを並べて出すこと**。1位だけ出すと断定に見える。
+ * 🔵 平均騰落率（`phaseStrengths`）ではなく**順位**を使うのは、
+ *    銀行 +20% のような突出した1業種にグループ全体の評価を持っていかれないため。
+ */
+export function phaseFits(rows: readonly SectorPerfRow[], key: PerfKey): PhaseFit[] {
+  const ranked = [...rows]
+    .filter(r => r[key] != null)
+    .sort((a, b) => b[key]! - a[key]!)
+  const n = ranked.length
+  const rankOf = new Map(ranked.map((r, i) => [r.sector17, i + 1]))
+
+  // 上位1/3を「支持」、下位1/3を「矛盾」とみなす
+  const topCut    = Math.max(1, Math.ceil(n / 3))
+  const bottomCut = n - topCut + 1
+
+  return PHASES.map(phase => {
+    const members: FitMember[] = phase.sectors17
+      .map(code => {
+        const row  = ranked.find(r => r.sector17 === code)
+        const rank = rankOf.get(code)
+        if (!row || rank == null) return null
+        const role: FitMember['role'] =
+          rank <= topCut ? 'support' : rank >= bottomCut ? 'contradict' : 'neutral'
+        return { row, rank, role }
+      })
+      .filter((m): m is FitMember => m !== null)
+      .sort((a, b) => a.rank - b.rank)
+
+    const k = members.length
+    // 🔴 n が小さいと正規化の分母が潰れるので、比較にならない場合は出さない
+    if (k === 0 || n < 4 || k >= n) return { phase, score: null, meanRank: null, members }
+
+    const meanRank = members.reduce((s, m) => s + m.rank, 0) / k
+    const best     = (k + 1) / 2          // 上位を独占したときの平均順位
+    const worst    = n - (k - 1) / 2      // 下位を独占したときの平均順位
+    const score    = Math.round((worst - meanRank) / (worst - best) * 1000) / 10
+
+    return {
+      phase,
+      score: Math.min(100, Math.max(0, score)),
+      meanRank: Math.round(meanRank * 100) / 100,
+      members,
+    }
+  })
+}
+
+/** 一致度がいちばん高い局面。全部 null なら null。 */
+export function bestFit(fits: readonly PhaseFit[]): PhaseFit | null {
+  const scored = fits.filter(f => f.score != null)
+  if (scored.length === 0) return null
+  return scored.reduce((a, b) => (b.score! > a.score! ? b : a))
+}
+
 // ── 銘柄マスタ（public/data/stock_master.json）────────────────
 
 export type StockRow = {

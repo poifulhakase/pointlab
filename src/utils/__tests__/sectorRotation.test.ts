@@ -6,7 +6,7 @@ import masterRaw from '../../../public/data/stock_master.json?raw'
 import {
   PHASES, SECTOR17,
   phaseAt, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
-  phaseStrengths, strongestPhase, searchStocks,
+  phaseStrengths, strongestPhase, phaseFits, bestFit, searchStocks,
   type SectorPerfRow, type StockRow,
 } from '../sectorRotation'
 import { buildStockAnalysisPrompt } from '../sectorStockPrompt'
@@ -126,6 +126,81 @@ describe('局面グループの実測平均', () => {
   })
 })
 
+describe('局面の「型」との一致度', () => {
+  /** 17業種すべてに騰落率を与える（rankIn の順に強い） */
+  function allRows(order: number[]): SectorPerfRow[] {
+    return order.map((code, i) => perfRow(code, 100 - i))
+  }
+  const ALL = Array.from({ length: 17 }, (_, i) => i + 1)
+
+  it('その局面の業種が上位を独占すると100点、下位を独占すると0点', () => {
+    const rev = PHASES.find(p => p.id === 'reverseFinancial')!  // 3業種
+    const others = ALL.filter(c => !rev.sectors17.includes(c))
+
+    const best = phaseFits(allRows([...rev.sectors17, ...others]), 'chg3m')
+    expect(best.find(f => f.phase.id === 'reverseFinancial')!.score).toBe(100)
+
+    const worst = phaseFits(allRows([...others, ...rev.sectors17]), 'chg3m')
+    expect(worst.find(f => f.phase.id === 'reverseFinancial')!.score).toBe(0)
+  })
+
+  it('業種数が違っても点数は比べられる（3業種と6業種で同じ満点）', () => {
+    // 🔴 正規化していないと、業種数の多い局面ほど不利になって比較にならない
+    const rev = PHASES.find(p => p.id === 'reverseFinancial')!    // 3業種
+    const per = PHASES.find(p => p.id === 'performance')!         // 6業種
+    const fitsRev = phaseFits(allRows([...rev.sectors17, ...ALL.filter(c => !rev.sectors17.includes(c))]), 'chg3m')
+    const fitsPer = phaseFits(allRows([...per.sectors17, ...ALL.filter(c => !per.sectors17.includes(c))]), 'chg3m')
+    expect(fitsRev.find(f => f.phase.id === 'reverseFinancial')!.score).toBe(100)
+    expect(fitsPer.find(f => f.phase.id === 'performance')!.score).toBe(100)
+  })
+
+  it('上位1/3は支持・下位1/3は矛盾に分類される', () => {
+    // 逆金融＝銀行(15)/エネ(2)/商社(13)。銀行だけ1位、他2つを最下位付近に置く
+    const order = [15, ...ALL.filter(c => c !== 15 && c !== 2 && c !== 13), 13, 2]
+    const fit = phaseFits(allRows(order), 'chg3m').find(f => f.phase.id === 'reverseFinancial')!
+    const roleOf = (code: number) => fit.members.find(m => m.row.sector17 === code)!.role
+    expect(roleOf(15)).toBe('support')
+    expect(roleOf(13)).toBe('contradict')
+    expect(roleOf(2)).toBe('contradict')
+  })
+
+  it('4局面すべてに点が付き、いちばん高いものが取れる', () => {
+    const fits = phaseFits(allRows(ALL), 'chg3m')
+    expect(fits).toHaveLength(4)
+    for (const f of fits) expect(f.score).not.toBeNull()
+    expect(bestFit(fits)!.score).toBe(Math.max(...fits.map(f => f.score!)))
+  })
+
+  it('🔴 突出した1業種にグループ全体を持っていかれない（順位で見るため）', () => {
+    // 銀行だけ +999%、逆金融の他2業種は最下位 → 平均騰落率なら1位だが、一致度は高くならない
+    const rows: SectorPerfRow[] = [
+      perfRow(15, 999), perfRow(2, -50), perfRow(13, -49),
+      ...ALL.filter(c => ![15, 2, 13].includes(c)).map((c, i) => perfRow(c, 10 - i)),
+    ]
+    const byAvg = phaseStrengths(rows, 'chg3m').find(s => s.phase.id === 'reverseFinancial')!
+    const byFit = phaseFits(rows, 'chg3m').find(f => f.phase.id === 'reverseFinancial')!
+    expect(byAvg.rank).toBe(1)              // 平均だと1位に見えてしまう
+    expect(byFit.score!).toBeLessThan(50)   // 一致度はそうならない
+  })
+
+  it('データが足りないときは点を出さない（0点にしない）', () => {
+    // 🔴 0点にすると「型に全く合わない」と読めてしまい、欠測と区別が付かない
+    const fits = phaseFits([perfRow(15, 10), perfRow(2, 5)], 'chg3m')
+    for (const f of fits) expect(f.score).toBeNull()
+    expect(bestFit(fits)).toBeNull()
+  })
+
+  it('点数は0〜100に収まる', () => {
+    for (const key of ['chg1m', 'chg3m', 'chg6m'] as const) {
+      for (const f of phaseFits(allRows(ALL), key)) {
+        if (f.score == null) continue
+        expect(f.score).toBeGreaterThanOrEqual(0)
+        expect(f.score).toBeLessThanOrEqual(100)
+      }
+    }
+  })
+})
+
 // ── 銘柄検索 ───────────────────────────────────────────
 const STOCKS: StockRow[] = [
   { code: '6758', name: 'ソニーグループ', sector33: '電気機器', sector17: 9 },
@@ -231,6 +306,16 @@ describe('銘柄のAI分析プロンプト', () => {
 
   it('🔴 実測がETFによる代用値であることを伝える', () => {
     expect(p).toContain('代用')
+  })
+
+  it('一致度を4局面ぶん渡す（1つだけ渡すと断定に見える）', () => {
+    expect(p).toContain('型」との一致度')
+    for (const ph of PHASES) expect(p).toContain(ph.label)
+  })
+
+  it('🔴 一致度を確率に言い換えさせない', () => {
+    expect(p).toContain('一致度は確率ではありません')
+    expect(p).toContain('言い換えは行わないでください')
   })
 })
 

@@ -8,9 +8,11 @@ import { loadSectorPerf, loadStockMaster } from '../utils/sectorData'
 import {
   PHASES, PERF_LABELS,
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
-  phaseStrengths, strongestPhase, searchStocks,
-  type PerfKey, type SectorPerfRow, type SectorPhaseId, type StockRow,
+  phaseStrengths, phaseFits, bestFit, searchStocks,
+  type PerfKey, type PhaseFit, type SectorPerfRow, type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
+
+const PERF_KEYS: PerfKey[] = ['chg1m', 'chg3m', 'chg6m']
 
 /**
  * セクターローテーション画面。
@@ -99,11 +101,22 @@ export function SectorPanel({ theme, isMobile }: Props) {
     () => (perf ? phaseStrengths(perf, perfKey) : []),
     [perf, perfKey]
   )
-  const top   = useMemo(() => strongestPhase(strengths), [strengths])
+
+  // 🔵 一致度は**3期間すべて同時に**出す。切替だと「最近になって型が変わった」が見えない。
+  const fitsByKey = useMemo(() => {
+    const out = {} as Record<PerfKey, PhaseFit[]>
+    for (const k of PERF_KEYS) out[k] = perf ? phaseFits(perf, k) : []
+    return out
+  }, [perf])
+
+  const fits = fitsByKey[perfKey]
+  const top  = useMemo(() => bestFit(fits), [fits])
+
   const shown = phaseById(selected)
   const shownStrength = strengths.find(s => s.phase.id === selected) ?? null
+  const shownFit      = fits.find(f => f.phase.id === selected) ?? null
 
-  // 実測でいちばん強いグループを指すマーカー。
+  // 一致度がいちばん高い局面を指すマーカー。
   // 🔵 弧の中央（R_OUT と R_IN の中間）に置くと**局面名のラベルと重なって読めない**ので、
   //    外周の目盛りリング上に逃がしている。
   const marker = top ? pt(phaseMidAngle(top.phase.id), R_OUT + 12) : null
@@ -191,16 +204,16 @@ export function SectorPanel({ theme, isMobile }: Props) {
             const active = p.id === shown.id
             const hot    = p.id === hovered
             const grow   = active ? 10 : hot ? 5 : 0
-            const st     = strengths.find(s => s.phase.id === p.id)
-            // 🔵 実測の順位が高いグループほど濃く塗る（1位=濃い / 4位=薄い）
-            const byRank = st?.rank ? 1 - (st.rank - 1) * 0.2 : 0.55
+            const fit = fits.find(f => f.phase.id === p.id)
+            // 🔵 一致度が高い局面ほど濃く塗る（0点=薄い / 100点=濃い）
+            const byFit = fit?.score != null ? 0.25 + (fit.score / 100) * 0.75 : 0.55
             return (
               <path
                 key={p.id}
                 className="sector-seg"
                 d={segPath(p.angle, p.angle + 90, grow)}
                 fill={`url(#sg-${p.id})`}
-                fillOpacity={active ? 1 : byRank}
+                fillOpacity={active ? 1 : byFit}
                 stroke={p.color}
                 strokeOpacity={active ? 1 : 0.4}
                 strokeWidth={active ? 2 : 1}
@@ -211,11 +224,11 @@ export function SectorPanel({ theme, isMobile }: Props) {
             )
           })}
 
-          {/* 局面名と、その実測平均 */}
+          {/* 局面名と、その一致度 */}
           {PHASES.map(p => {
             const active = p.id === shown.id
-            const st = strengths.find(s => s.phase.id === p.id)
-            const m  = pt(p.angle + 45, (R_OUT + R_IN) / 2 + (active ? 5 : 0))
+            const fit = fits.find(f => f.phase.id === p.id)
+            const m   = pt(p.angle + 45, (R_OUT + R_IN) / 2 + (active ? 5 : 0))
             return (
               <g key={p.id} style={{ pointerEvents: 'none' }}>
                 <text x={m.x} y={m.y - 1} textAnchor="middle"
@@ -223,10 +236,10 @@ export function SectorPanel({ theme, isMobile }: Props) {
                       style={{ transition: 'font-size .2s ease' }}>
                   {p.label}
                 </text>
-                {st?.avg != null && (
+                {fit?.score != null && (
                   <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={11} fontWeight={700}
-                        fill={pnl(st.avg)}>
-                    {signed(st.avg)}
+                        fill={p.color} opacity={0.9}>
+                    一致 {fit.score}
                   </text>
                 )}
               </g>
@@ -245,7 +258,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
 
           <text x={SIZE / 2} y={SIZE / 2 - 20} textAnchor="middle" fontSize={9.5}
                 fill={c.DIM} letterSpacing="0.1em">
-            実測 {PERF_LABELS[perfKey]}で最も強い
+            {PERF_LABELS[perfKey]}の並びが最も近い型
           </text>
           {top ? (
             <>
@@ -254,12 +267,12 @@ export function SectorPanel({ theme, isMobile }: Props) {
                     style={{ filter: glow ? `drop-shadow(0 0 6px ${top.phase.color}77)` : undefined }}>
                 {top.phase.label}
               </text>
-              <text x={SIZE / 2} y={SIZE / 2 + 20} textAnchor="middle" fontSize={12}
-                    fontWeight={700} fill={pnl(top.avg)}>
-                平均 {signed(top.avg)}
+              <text x={SIZE / 2} y={SIZE / 2 + 21} textAnchor="middle" fontSize={13}
+                    fontWeight={700} fill={top.phase.color}>
+                一致度 {top.score}
               </text>
-              <text x={SIZE / 2} y={SIZE / 2 + 36} textAnchor="middle" fontSize={9} fill={c.DIM}>
-                のグループ
+              <text x={SIZE / 2} y={SIZE / 2 + 37} textAnchor="middle" fontSize={9} fill={c.DIM}>
+                ／100（確率ではありません）
               </text>
             </>
           ) : (
@@ -288,13 +301,81 @@ export function SectorPanel({ theme, isMobile }: Props) {
               width: 11, height: 11, borderRadius: '50%',
               border: `3px solid ${top?.phase.color ?? c.BORDBR}`, background: c.BG,
             }} />
-            実測で最も強いグループ
+            一致度が最も高い型
           </span>
         </div>
 
-        {/* 期間の切替 */}
+        {/* 🔵 一致度は3期間まとめて出す。1つずつ切り替えると
+            「最近になって型が変わった」という一番おいしい情報が見えない。 */}
+        {perf && (
+          <div style={{
+            marginTop: 12, width: '100%', maxWidth: 380,
+            border: `1px solid ${c.BORDER}`, borderRadius: 6, padding: '8px 10px',
+            background: c.LOGBG,
+          }}>
+            <div style={{ fontSize: 10, color: c.DIM, marginBottom: 6, letterSpacing: '0.06em' }}>
+              型との一致度（0〜100・確率ではありません）
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5 }}>
+              <thead>
+                <tr style={{ color: c.DIM }}>
+                  <th style={{ textAlign: 'left', fontWeight: 400, paddingBottom: 3 }} />
+                  {PERF_KEYS.map(k => (
+                    <th key={k} style={{ textAlign: 'right', fontWeight: 400, paddingBottom: 3, width: 68 }}>
+                      {PERF_LABELS[k]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {PHASES.map(p => (
+                  <tr
+                    key={p.id}
+                    onClick={() => setSelected(p.id)}
+                    style={{
+                      cursor: 'pointer',
+                      background: p.id === shown.id ? `${p.color}1f` : 'transparent',
+                    }}
+                  >
+                    <td style={{ color: p.color, padding: '3px 4px', whiteSpace: 'nowrap' }}>
+                      {p.label}
+                    </td>
+                    {PERF_KEYS.map(k => {
+                      const f   = fitsByKey[k].find(x => x.phase.id === p.id)
+                      const isT = bestFit(fitsByKey[k])?.phase.id === p.id
+                      return (
+                        <td key={k} style={{ padding: '3px 4px' }}>
+                          {/* 数字だけだと差が掴みにくいので細いバーを敷く */}
+                          <div style={{
+                            position: 'relative', height: 14, borderRadius: 3,
+                            background: c.TAREA, overflow: 'hidden',
+                          }}>
+                            <div style={{
+                              position: 'absolute', inset: 0,
+                              width: `${f?.score ?? 0}%`, background: `${p.color}66`,
+                            }} />
+                            <span style={{
+                              position: 'absolute', inset: 0, display: 'flex',
+                              alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4,
+                              fontWeight: isT ? 700 : 400,
+                              color: isT ? p.color : c.DESC,
+                            }}>
+                              {f?.score ?? '—'}
+                            </span>
+                          </div>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 期間の切替（円環に反映する期間） */}
         <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-          {(['chg1m', 'chg3m', 'chg6m'] as PerfKey[]).map(k => (
+          {PERF_KEYS.map(k => (
             <button
               key={k}
               onClick={() => setPerfKey(k)}
@@ -354,36 +435,62 @@ export function SectorPanel({ theme, isMobile }: Props) {
                   平均 {signed(shownStrength.avg)}
                 </span>
               )}
-              {shownStrength?.rank != null && (
+              {shownFit?.score != null && (
                 <span style={{
                   fontSize: 9.5, color: c.BG, background: shown.color,
                   borderRadius: 3, padding: '1px 6px', fontWeight: 700,
-                }}>実測 {shownStrength.rank}/4位</span>
+                }}>一致度 {shownFit.score}/100</span>
               )}
             </div>
             <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.75, color: c.DESC }}>{shown.note}</p>
 
-            {/* 教科書上このグループとされる業種 × 実測 */}
+            {/* 🔵 一致度の根拠を出す。どの業種が支えていて、どれが矛盾しているかまで見せないと
+                点数がブラックボックスになる。 */}
             <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {(shownStrength?.members.length
-                ? shownStrength.members.map(m => ({ code: m.sector17, label: m.label, v: m[perfKey], rank: m[`rank${perfKey.slice(3)}` as 'rank1m' | 'rank3m' | 'rank6m'] }))
-                : shown.sectors17.map(code => ({ code, label: sector17Label(code), v: null, rank: null }))
-              ).map(m => (
-                <li key={m.code} style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  fontSize: 11.5, padding: '3px 8px', borderRadius: 4,
-                  border: `1px solid ${shown.color}44`,
-                }}>
-                  <span style={{ flex: 1, minWidth: 0, color: c.DESC }}>{m.label}</span>
-                  {m.rank != null && (
-                    <span style={{ fontSize: 10, color: c.DIM }}>17業種中 {m.rank}位</span>
-                  )}
-                  <span style={{ fontWeight: 700, color: pnl(m.v), minWidth: 58, textAlign: 'right' }}>
-                    {signed(m.v)}
-                  </span>
-                </li>
-              ))}
+              {(shownFit?.members.length
+                ? shownFit.members.map(m => ({
+                    code: m.row.sector17, label: m.row.label, v: m.row[perfKey],
+                    rank: m.rank as number | null, role: m.role,
+                  }))
+                : shown.sectors17.map(code => ({
+                    code, label: sector17Label(code), v: null,
+                    rank: null as number | null, role: 'neutral' as const,
+                  }))
+              ).map(m => {
+                const mark = m.role === 'support'    ? { t: '支持', col: UP }
+                           : m.role === 'contradict' ? { t: '矛盾', col: DOWN }
+                           : null
+                return (
+                  <li key={m.code} style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    fontSize: 11.5, padding: '3px 8px', borderRadius: 4,
+                    border: `1px solid ${mark ? `${mark.col}55` : `${shown.color}33`}`,
+                  }}>
+                    {mark && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, color: mark.col,
+                        border: `1px solid ${mark.col}`, borderRadius: 3, padding: '0 4px',
+                      }}>{mark.t}</span>
+                    )}
+                    <span style={{ flex: 1, minWidth: 0, color: c.DESC }}>{m.label}</span>
+                    {m.rank != null && (
+                      <span style={{ fontSize: 10, color: c.DIM }}>17業種中 {m.rank}位</span>
+                    )}
+                    <span style={{ fontWeight: 700, color: pnl(m.v), minWidth: 58, textAlign: 'right' }}>
+                      {signed(m.v)}
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
+
+            {shownFit?.score != null && (
+              <p style={{ margin: '6px 0 0', fontSize: 10, color: c.DIM, lineHeight: 1.7 }}>
+                一致度＝この{shownFit.members.length}業種が17業種中どのあたりに並んでいるかだけで決まります
+                （上位を独占なら100・下位を独占なら0）。平均順位 {shownFit.meanRank}位。
+                {shownStrength?.avg != null && <> グループの平均騰落率は {signed(shownStrength.avg)}。</>}
+              </p>
+            )}
 
             <div style={{ marginTop: 7, fontSize: 10.5, color: c.DIM }}>
               この見方での次の局面 → <span style={{ color: nextPhase(shown.id).color }}>{nextPhase(shown.id).label}</span>
