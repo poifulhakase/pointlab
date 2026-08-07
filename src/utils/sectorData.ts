@@ -8,7 +8,7 @@
 //    同一セッション内はモジュール変数で使い回す。
 
 import { fetchWithCache } from './dataCache'
-import type { SectorPerfRow, StockRow } from './sectorRotation'
+import type { PerfPeriods, SectorPerfRow, StockRow } from './sectorRotation'
 
 const PERF_URL   = `${import.meta.env.BASE_URL}data/sector_perf.json`
 const MASTER_URL = `${import.meta.env.BASE_URL}data/stock_master.json`
@@ -21,6 +21,8 @@ export type SectorPerf = {
   updatedAt: string | null
   /** 代用データである旨（'etf' 固定）。将来 指数そのものを引けたら null にする。 */
   proxy:     string | null
+  /** 各期間が実際いつからいつまでか。「1か月」だけでは伝わらないので画面に出す。 */
+  periods:   PerfPeriods
 }
 
 export async function loadSectorPerf(): Promise<SectorPerf> {
@@ -35,7 +37,12 @@ export async function loadSectorPerf(): Promise<SectorPerf> {
       const rows = Array.isArray(json?.data) ? (json.data as SectorPerfRow[]) : []
       if (rows.length === 0) throw new Error('sector_perf.json が空')
       return {
-        data: { rows, updatedAt: json?.updatedAt ?? null, proxy: json?.proxy ?? null },
+        data: {
+          rows,
+          updatedAt: json?.updatedAt ?? null,
+          proxy:     json?.proxy ?? null,
+          periods:   json?.periods ?? {},
+        },
         updatedAt: json?.updatedAt,
       }
     },

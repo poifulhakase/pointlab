@@ -161,6 +161,25 @@ export const PERF_LABELS: Record<PerfKey, string> = {
   chg6m: '6か月',
 }
 
+/**
+ * 画面に出す言い方。
+ * 🔴 「1か月」「6か月」だけだと**何のための期間か伝わらない**（ユーザー指摘・2026-08-07）。
+ *    知りたいのは「いまどの業種がいいか」なので、**主役は直近1か月＝いまの勢い**。
+ * 🔵 3か月は「その勢いが前から続いているのか、下げたあとの戻りなのか」を見分けるためだけに添える。
+ *    実例＝鉄鋼・非鉄は1か月 +6.0%（上位）だが3か月 −19.1%（最下位）＝戻り。
+ *    1か月だけ見ると「いま強い業種」として拾ってしまう。
+ * 🔵 6か月は用途が薄いので画面には出さない（データは取り続ける）。
+ */
+export const PERF_PLAIN: Record<PerfKey, string> = {
+  chg1m: 'いまの勢い',
+  chg3m: 'その前からの流れ',
+  chg6m: '長い流れ',
+}
+
+/** 期間の実日付（`sector_perf.json` の periods）。 */
+export type PerfPeriod = { days: number; from: string | null; to: string }
+export type PerfPeriods = Partial<Record<PerfKey, PerfPeriod>>
+
 export type PhaseStrength = {
   phase: SectorPhase
   /** その局面に属する業種の騰落率の平均（%）。1つも取れなければ null。 */
@@ -278,6 +297,38 @@ export function phaseFits(rows: readonly SectorPerfRow[], key: PerfKey): PhaseFi
       members,
     }
   })
+}
+
+// ── 「いま強い業種」の並び ────────────────────────────
+
+export type SectorRankRow = {
+  row: SectorPerfRow
+  /** 直近1か月の順位（1＝いちばん強い） */
+  rank: number
+  /** 所属する局面（未分類なら null） */
+  phase: SectorPhase | null
+  /**
+   * 🔴 1か月はプラスなのに3か月がマイナス＝**下げたあとの戻り**。
+   *    ここを黙って「いま強い業種」として並べると、下落トレンドの一時的な反発を拾ってしまう。
+   *    実例（2026-08-07）＝鉄鋼・非鉄 1か月 +6.0% / 3か月 −19.1%。
+   */
+  rebound: boolean
+}
+
+/**
+ * 「いまどの業種がいいか」に答えるための並び（純粋関数・テスト対象）。
+ * 直近1か月の強い順。3か月がマイナスのものには `rebound` を立てる。
+ */
+export function sectorRanking(rows: readonly SectorPerfRow[]): SectorRankRow[] {
+  return [...rows]
+    .filter(r => r.chg1m != null)
+    .sort((a, b) => b.chg1m! - a.chg1m!)
+    .map((row, i) => ({
+      row,
+      rank: i + 1,
+      phase: phaseOfSector17(row.sector17),
+      rebound: row.chg1m! > 0 && row.chg3m != null && row.chg3m < 0,
+    }))
 }
 
 /** 一致度がいちばん高い局面。全部 null なら null。 */

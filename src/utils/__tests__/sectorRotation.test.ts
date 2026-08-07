@@ -6,7 +6,7 @@ import masterRaw from '../../../public/data/stock_master.json?raw'
 import {
   PHASES, SECTOR17,
   phaseAt, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
-  phaseStrengths, strongestPhase, phaseFits, bestFit, searchStocks,
+  phaseStrengths, strongestPhase, phaseFits, bestFit, sectorRanking, searchStocks,
   type SectorPerfRow, type StockRow,
 } from '../sectorRotation'
 import { buildStockAnalysisPrompt } from '../sectorStockPrompt'
@@ -198,6 +198,45 @@ describe('局面の「型」との一致度', () => {
         expect(f.score).toBeLessThanOrEqual(100)
       }
     }
+  })
+})
+
+describe('いま強い業種の並び', () => {
+  /** 1か月・3か月を指定して1行作る */
+  function row(sector17: number, m1: number | null, m3: number | null): SectorPerfRow {
+    return { ...perfRow(sector17, null), chg1m: m1, chg3m: m3 }
+  }
+
+  it('直近1か月の強い順に並ぶ', () => {
+    const r = sectorRanking([row(1, 3, 0), row(15, 9, 0), row(8, -2, 0)])
+    expect(r.map(x => x.row.sector17)).toEqual([15, 1, 8])
+    expect(r.map(x => x.rank)).toEqual([1, 2, 3])
+  })
+
+  it('所属する局面が付く', () => {
+    expect(sectorRanking([row(15, 1, 1)])[0].phase!.id).toBe('reverseFinancial')
+  })
+
+  it('🔴 1か月プラス×3か月マイナスは「戻り」として印を付ける', () => {
+    // 印が無いと、下落トレンドの一時的な反発を「いま強い業種」として拾ってしまう
+    // （実例 2026-08-07: 鉄鋼・非鉄 1か月 +6.0% / 3か月 -19.1%）
+    const r = sectorRanking([
+      row(7, 6, -19),   // 戻り
+      row(15, 5, 20),   // 続いている
+      row(3, -2, -10),  // 1か月もマイナス → 戻りではない
+    ])
+    const by = (code: number) => r.find(x => x.row.sector17 === code)!
+    expect(by(7).rebound).toBe(true)
+    expect(by(15).rebound).toBe(false)
+    expect(by(3).rebound).toBe(false)
+  })
+
+  it('3か月が取れないものは「戻り」にしない（欠測を判定に使わない）', () => {
+    expect(sectorRanking([row(7, 6, null)])[0].rebound).toBe(false)
+  })
+
+  it('1か月が取れない業種は並びから外す', () => {
+    expect(sectorRanking([row(7, null, 5), row(15, 1, 1)]).map(x => x.row.sector17)).toEqual([15])
   })
 })
 

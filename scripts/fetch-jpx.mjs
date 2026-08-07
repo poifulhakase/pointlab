@@ -1397,10 +1397,16 @@ function pctChangeBack(closes, back) {
   return Math.round((last - prev) / prev * 10000) / 100
 }
 
+/** 騰落率の測定に使う「何営業日前と比べるか」。画面に出す日付もここから決まる。 */
+const PERF_BACK = { chg1m: 21, chg3m: 62, chg6m: 123 }
+
 async function fetchSectorPerfData() {
   console.log('\n[sectorPerf] TOPIX-17 業種別ETF（1617〜1633）から相対強弱を計算...')
 
   const rows = []
+  // 🔵 「1か月」が実際いつからいつまでなのかを画面に出すため、比較の基準日を持ち帰る。
+  //    営業日で数えているので「◯か月前の同じ日」とは一致しない。推測させず実日付を渡す。
+  let periods = null
   for (let n = 1; n <= 17; n++) {
     const etf = String(SECTOR17_ETF_BASE + n - 1)
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${etf}.T?interval=1d&range=1y&events=div,split`
@@ -1436,10 +1442,19 @@ async function fetchSectorPerfData() {
         etf,
         time:     times[times.length - 1],
         close:    Math.round(closes[closes.length - 1] * 10) / 10,
-        chg1m:    pctChangeBack(adjs, 21),
-        chg3m:    pctChangeBack(adjs, 62),
-        chg6m:    pctChangeBack(adjs, 123),
+        chg1m:    pctChangeBack(adjs, PERF_BACK.chg1m),
+        chg3m:    pctChangeBack(adjs, PERF_BACK.chg3m),
+        chg6m:    pctChangeBack(adjs, PERF_BACK.chg6m),
       })
+
+      // 最初に取れたETFの日付を代表に使う（東証の営業日カレンダーは全ETF共通）
+      if (!periods) {
+        const to = times[times.length - 1]
+        periods = {}
+        for (const [k, back] of Object.entries(PERF_BACK)) {
+          periods[k] = { days: back, from: times[times.length - 1 - back] ?? null, to }
+        }
+      }
       console.log(`  ${etf} ${SECTOR17_LABELS[n - 1]}: 1M ${rows[rows.length - 1].chg1m}% / 3M ${rows[rows.length - 1].chg3m}%`)
     } catch (e) {
       console.warn(`  ⚠ ${etf} ${SECTOR17_LABELS[n - 1]}: ${e.message}`)
@@ -1457,7 +1472,7 @@ async function fetchSectorPerfData() {
   }
 
   rows.sort((a, b) => a.sector17 - b.sector17)
-  return rows
+  return { rows, periods }
 }
 
 // ── メイン ─────────────────────────────────────
@@ -1638,8 +1653,8 @@ async function main() {
   }
 
   try {
-    const data = await fetchSectorPerfData()
-    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', data }
+    const { rows: data, periods } = await fetchSectorPerfData()
+    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', periods, data }
     writeFileSync(join(OUT_DIR, 'sector_perf.json'), JSON.stringify(out, null, 2))
     console.log(`\n✓ sector_perf.json 保存 (${data.length}業種)`)
     sectorPerfOk = true

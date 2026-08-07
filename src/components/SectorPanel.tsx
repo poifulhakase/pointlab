@@ -6,13 +6,34 @@ import { jstTimestamp } from '../utils/jstDate'
 import { buildStockAnalysisPrompt } from '../utils/sectorStockPrompt'
 import { loadSectorPerf, loadStockMaster } from '../utils/sectorData'
 import {
-  PHASES, PERF_LABELS,
+  PHASES, PERF_LABELS, PERF_PLAIN,
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
-  phaseStrengths, phaseFits, bestFit, searchStocks,
-  type PerfKey, type PhaseFit, type SectorPerfRow, type SectorPhaseId, type StockRow,
+  phaseStrengths, phaseFits, bestFit, sectorRanking, searchStocks,
+  type PerfKey, type PerfPeriods, type PhaseFit, type SectorPerfRow,
+  type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
 
-const PERF_KEYS: PerfKey[] = ['chg1m', 'chg3m', 'chg6m']
+/**
+ * 🔴 画面に出す期間は **1か月（いまの勢い）と3か月（その前からの流れ）の2つだけ**。
+ *    3つ並べると「1か月と6か月を比べる理由が分からない」となる（ユーザー指摘・2026-08-07）。
+ *    知りたいのは「いまどの業種がいいか」なので主役は1か月。
+ *    3か月は**下げたあとの戻りを見分けるためだけ**に添える。6か月はデータは取るが出さない。
+ */
+const MAIN_KEY: PerfKey = 'chg1m'
+const SUB_KEY:  PerfKey = 'chg3m'
+const SHOWN_KEYS: PerfKey[] = [MAIN_KEY, SUB_KEY]
+
+/** 「2026-08-07」→「8/7」 */
+function md(date: string | null | undefined): string {
+  if (!date) return '—'
+  const m = date.match(/^\d{4}-(\d{2})-(\d{2})/)
+  return m ? `${Number(m[1])}/${Number(m[2])}` : date
+}
+
+function periodText(periods: PerfPeriods, key: PerfKey): string {
+  const p = periods[key]
+  return p ? `${md(p.from)}→${md(p.to)}` : ''
+}
 
 /**
  * セクターローテーション画面。
@@ -69,12 +90,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
   const pnl  = (v: number | null) => (v == null ? c.DIM : v > 0 ? UP : v < 0 ? DOWN : c.DESC)
 
   const [perf,    setPerf]    = useState<SectorPerfRow[] | null>(null)
+  const [periods, setPeriods] = useState<PerfPeriods>({})
   const [perfErr, setPerfErr] = useState<string | null>(null)
   const [master,  setMaster]  = useState<StockRow[] | null>(null)
   const [masterErr, setMasterErr] = useState<string | null>(null)
   const [asOf,    setAsOf]    = useState<string | null>(null)
 
-  const [perfKey,  setPerfKey]  = useState<PerfKey>('chg3m')
+  // 🔵 円環と吹き出しは「いまの勢い（1か月）」で固定。期間の切替はやめた。
+  const perfKey: PerfKey = MAIN_KEY
   const [selected, setSelected] = useState<SectorPhaseId>('financial')
   const [hovered,  setHovered]  = useState<SectorPhaseId | null>(null)
   const [query,    setQuery]    = useState('')
@@ -84,7 +107,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
   useEffect(() => {
     let alive = true
     loadSectorPerf()
-      .then(d => { if (alive) setPerf(d.rows) })
+      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods) } })
       .catch(e => { if (alive) setPerfErr(e instanceof Error ? e.message : String(e)) })
     return () => { alive = false }
   }, [])
@@ -105,12 +128,28 @@ export function SectorPanel({ theme, isMobile }: Props) {
   // 🔵 一致度は**3期間すべて同時に**出す。切替だと「最近になって型が変わった」が見えない。
   const fitsByKey = useMemo(() => {
     const out = {} as Record<PerfKey, PhaseFit[]>
-    for (const k of PERF_KEYS) out[k] = perf ? phaseFits(perf, k) : []
+    for (const k of SHOWN_KEYS) out[k] = perf ? phaseFits(perf, k) : []
     return out
   }, [perf])
 
+  const ranking = useMemo(() => (perf ? sectorRanking(perf) : []), [perf])
+
   const fits = fitsByKey[perfKey]
   const top  = useMemo(() => bestFit(fits), [fits])
+
+  /**
+   * 🔵 この画面の目的は「いま伸びている業種」ではなく
+   *    **「次に来るとされる業種」から、これから動くかもしれない銘柄を探すこと**（ユーザー・2026-08-07）。
+   *    いまの型（一致度1位）→ 循環の順番で次の局面 → その業種、を出す。
+   * 🔴 **これは予測ではない**。「循環の順番ではこう」という理論の話と、
+   *    「その業種はいま実測で何位か」という事実を並べるだけ。上がるとは書かない。
+   */
+  const nowFit   = top
+  const nextPh   = nowFit ? nextPhase(nowFit.phase.id) : null
+  const nextRows = useMemo(
+    () => (nextPh ? ranking.filter(r => nextPh.sectors17.includes(r.row.sector17)) : []),
+    [nextPh, ranking]
+  )
 
   const shown = phaseById(selected)
   const shownStrength = strengths.find(s => s.phase.id === selected) ?? null
@@ -144,6 +183,89 @@ export function SectorPanel({ theme, isMobile }: Props) {
   }, [picked, perf, strengths, perfKey])
 
   const dataDate = perf?.[0]?.time ?? null
+
+  /**
+   * 選んだ局面の中身。円環の脇に吹き出しで出す（スマホでは右ペインに素で出す）。
+   * 🔵 一致度の根拠（どの業種が支えていて、どれが矛盾しているか）まで出さないと
+   *    点数がブラックボックスになるので、業種の内訳は必ず添える。
+   */
+  const phaseCard = (
+    <section className="sector-card" key={shown.id}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+        <span style={{
+          fontSize: 15, fontWeight: 700, color: shown.color,
+          textShadow: glow ? `0 0 10px ${shown.color}55` : undefined,
+        }}>{shown.label}</span>
+        <span style={{ fontSize: 10.5, color: c.DIM }}>{shown.economy}</span>
+        {shownStrength?.avg != null && (
+          <span style={{ fontSize: 11, fontWeight: 700, color: pnl(shownStrength.avg) }}>
+            平均 {signed(shownStrength.avg)}
+          </span>
+        )}
+        {shownFit?.score != null && (
+          <span style={{
+            fontSize: 9.5, color: c.BG, background: shown.color,
+            borderRadius: 3, padding: '1px 6px', fontWeight: 700,
+          }}>一致度 {shownFit.score}/100</span>
+        )}
+      </div>
+      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: c.DESC }}>{shown.note}</p>
+
+      <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {(shownFit?.members.length
+          ? shownFit.members.map(m => ({
+              code: m.row.sector17, label: m.row.label, v: m.row[perfKey],
+              rank: m.rank as number | null, role: m.role,
+            }))
+          : shown.sectors17.map(code => ({
+              code, label: sector17Label(code), v: null,
+              rank: null as number | null, role: 'neutral' as const,
+            }))
+        ).map(m => {
+          const mark = m.role === 'support'    ? { t: '支持', col: UP }
+                     : m.role === 'contradict' ? { t: '矛盾', col: DOWN }
+                     : null
+          return (
+            <li key={m.code} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontSize: 11, padding: '3px 7px', borderRadius: 4,
+              border: `1px solid ${mark ? `${mark.col}55` : `${shown.color}33`}`,
+            }}>
+              {mark && (
+                <span style={{
+                  fontSize: 9, fontWeight: 700, color: mark.col,
+                  border: `1px solid ${mark.col}`, borderRadius: 3, padding: '0 3px',
+                }}>{mark.t}</span>
+              )}
+              <span style={{ flex: 1, minWidth: 0, color: c.DESC, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {m.label}
+              </span>
+              {m.rank != null && <span style={{ fontSize: 9.5, color: c.DIM }}>{m.rank}位</span>}
+              <span style={{ fontWeight: 700, color: pnl(m.v), minWidth: 52, textAlign: 'right' }}>
+                {signed(m.v)}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+
+      {shownFit?.score != null && (
+        <p style={{ margin: '6px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.65 }}>
+          一致度＝この{shownFit.members.length}業種が17業種中どのあたりに並んでいるかだけで決まります
+          （上位を独占なら100・下位を独占なら0）。平均順位 {shownFit.meanRank}位。
+        </p>
+      )}
+
+      <div style={{ marginTop: 6, fontSize: 10, color: c.DIM, lineHeight: 1.6 }}>
+        この見方での次の局面 → <span style={{ color: nextPhase(shown.id).color }}>{nextPhase(shown.id).label}</span>
+        <br />（循環の順番。いまの位置を示すものではありません）
+      </div>
+    </section>
+  )
+
+  // 吹き出しの尻尾の高さ。選んだ局面が円環の上半分（金融0度・逆業績270度）なら上寄せ。
+  const onTop    = shown.angle === 0 || shown.angle === 270
+  const bubbleBg = theme === 'light' ? '#ffffff' : '#071322'
 
   return (
     <div style={{
@@ -181,6 +303,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
           景気の局面で物色対象が回るという見方 × 実測
         </div>
 
+        {/* 🔵 円環と吹き出しを横に並べる。
+            🔴 円環に重ねて出すと、いま選んでいる局面のラベルを吹き出し自身が隠してしまう。
+               左＝円環／右＝吹き出しで場所を分け、尻尾だけを円環側に向ける。
+               吹き出しの枠は選択の有無にかかわらず場所を取り、円環が横に動かないようにする。 */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 14, width: '100%',
+        }}>
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
              aria-label="景気4局面と、業種別ETFで測った実測の相対強弱"
              style={{ filter: glow ? `drop-shadow(0 0 10px ${c.GREEN}22)` : undefined }}>
@@ -282,6 +412,35 @@ export function SectorPanel({ theme, isMobile }: Props) {
           )}
         </svg>
 
+          {/* 選んだ局面の吹き出し。PCのみ（スマホは右ペインに素で出す） */}
+          {!isMobile && (
+            <div style={{ position: 'relative', width: 300, flexShrink: 0 }}>
+              <div
+                key={`bubble-${shown.id}`}
+                className="sector-card"
+                style={{
+                  background: bubbleBg,
+                  border: `1px solid ${shown.color}`,
+                  borderRadius: 10, padding: '10px 12px',
+                  boxShadow: glow ? `0 0 18px ${shown.color}33` : '0 2px 12px rgba(0,0,0,0.18)',
+                }}
+              >
+                {/* 尻尾。選んだ局面が円環の上半分なら上寄り・下半分なら下寄りに置いて、
+                    どの扇から出ているかが分かるようにする。 */}
+                <span style={{
+                  position: 'absolute', left: -6, width: 10, height: 10,
+                  background: bubbleBg,
+                  borderBottom: `1px solid ${shown.color}`,
+                  borderLeft: `1px solid ${shown.color}`,
+                  transform: 'rotate(45deg)',
+                  [onTop ? 'top' : 'bottom']: 30,
+                }} />
+                {phaseCard}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* 🔵 ハイライトが2種類あって紛らわしいので凡例を出す。
             「広がっている扇＝自分が選んで見ているもの」「丸＝データで決まるもの」。
             クリックしても局面は進まない（見る対象が変わるだけ）ことも書く。 */}
@@ -320,9 +479,11 @@ export function SectorPanel({ theme, isMobile }: Props) {
               <thead>
                 <tr style={{ color: c.DIM }}>
                   <th style={{ textAlign: 'left', fontWeight: 400, paddingBottom: 3 }} />
-                  {PERF_KEYS.map(k => (
-                    <th key={k} style={{ textAlign: 'right', fontWeight: 400, paddingBottom: 3, width: 68 }}>
-                      {PERF_LABELS[k]}
+                  {SHOWN_KEYS.map(k => (
+                    <th key={k} style={{ textAlign: 'right', fontWeight: 400, paddingBottom: 3, width: 88 }}>
+                      {PERF_PLAIN[k]}
+                      <br />
+                      <span style={{ fontSize: 8.5 }}>{periodText(periods, k)}</span>
                     </th>
                   ))}
                 </tr>
@@ -340,7 +501,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
                     <td style={{ color: p.color, padding: '3px 4px', whiteSpace: 'nowrap' }}>
                       {p.label}
                     </td>
-                    {PERF_KEYS.map(k => {
+                    {SHOWN_KEYS.map(k => {
                       const f   = fitsByKey[k].find(x => x.phase.id === p.id)
                       const isT = bestFit(fitsByKey[k])?.phase.id === p.id
                       return (
@@ -372,23 +533,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
             </table>
           </div>
         )}
-
-        {/* 期間の切替（円環に反映する期間） */}
-        <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-          {PERF_KEYS.map(k => (
-            <button
-              key={k}
-              onClick={() => setPerfKey(k)}
-              style={{
-                cursor: 'pointer', fontFamily: c.FONT, fontSize: 11,
-                padding: '4px 12px', borderRadius: 5,
-                border: `1px solid ${perfKey === k ? c.GREEN : c.BORDER}`,
-                background: perfKey === k ? `${c.GREEN}1f` : 'transparent',
-                color: perfKey === k ? c.GREEN : c.DIM,
-              }}
-            >{PERF_LABELS[k]}</button>
-          ))}
-        </div>
 
         {/* 🔴 何を測っていて、何を測っていないかを画面で言い切る */}
         <div style={{
@@ -422,81 +566,141 @@ export function SectorPanel({ theme, isMobile }: Props) {
           width: '100%', maxWidth: 520,
           display: 'flex', flexDirection: 'column', gap: 14,
         }}>
-          {/* 選んだ局面グループの内訳 */}
-          <section className="sector-card" key={shown.id}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-              <span style={{
-                fontSize: 16, fontWeight: 700, color: shown.color,
-                textShadow: glow ? `0 0 10px ${shown.color}55` : undefined,
-              }}>{shown.label}</span>
-              <span style={{ fontSize: 10.5, color: c.DIM }}>{shown.economy}</span>
-              {shownStrength?.avg != null && (
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: pnl(shownStrength.avg) }}>
-                  平均 {signed(shownStrength.avg)}
+          {/* 🔵 局面の内訳は円環の脇（左）に吹き出しで出すようにした（2026-08-07・ユーザー要望）。
+              ここは銘柄の話だけにして、局面の話＝左／銘柄の話＝右 と役割を分ける。
+              スマホでは吹き出しを出す余白が無いので、こちら側に出す。 */}
+          {isMobile && phaseCard}
+
+          {/* 🔵 この画面の主役。**次に来るとされる業種**を先頭に置く。
+              目的が「いま伸びている業種を見る」ではなく
+              「これから動くかもしれない銘柄を探す」ため（ユーザー・2026-08-07）。
+              🔴 予測は書かない。循環の順番（理論）と、その業種のいまの実測（事実）を並べるだけ。 */}
+          {nowFit && nextPh && (
+            <section style={{
+              border: `1px solid ${nextPh.color}`, borderRadius: 8, padding: '10px 12px',
+              background: c.LOGBG,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap', marginBottom: 5 }}>
+                <span style={{ fontSize: 12, color: c.GREEN, letterSpacing: '0.08em' }}>
+                  ▶ 次に来るとされる業種
                 </span>
-              )}
-              {shownFit?.score != null && (
-                <span style={{
-                  fontSize: 9.5, color: c.BG, background: shown.color,
-                  borderRadius: 3, padding: '1px 6px', fontWeight: 700,
-                }}>一致度 {shownFit.score}/100</span>
-              )}
-            </div>
-            <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.75, color: c.DESC }}>{shown.note}</p>
+                <span style={{ fontSize: 10, color: c.DIM }}>
+                  いまの型＝<span style={{ color: nowFit.phase.color }}>{nowFit.phase.label}</span>
+                  （一致度 {nowFit.score}）→ 次は
+                  <span style={{ color: nextPh.color, fontWeight: 700 }}> {nextPh.label}</span> とされる
+                </span>
+              </div>
 
-            {/* 🔵 一致度の根拠を出す。どの業種が支えていて、どれが矛盾しているかまで見せないと
-                点数がブラックボックスになる。 */}
-            <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {(shownFit?.members.length
-                ? shownFit.members.map(m => ({
-                    code: m.row.sector17, label: m.row.label, v: m.row[perfKey],
-                    rank: m.rank as number | null, role: m.role,
-                  }))
-                : shown.sectors17.map(code => ({
-                    code, label: sector17Label(code), v: null,
-                    rank: null as number | null, role: 'neutral' as const,
-                  }))
-              ).map(m => {
-                const mark = m.role === 'support'    ? { t: '支持', col: UP }
-                           : m.role === 'contradict' ? { t: '矛盾', col: DOWN }
-                           : null
-                return (
-                  <li key={m.code} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    fontSize: 11.5, padding: '3px 8px', borderRadius: 4,
-                    border: `1px solid ${mark ? `${mark.col}55` : `${shown.color}33`}`,
-                  }}>
-                    {mark && (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {nextRows.map(r => (
+                  <li key={r.row.sector17}>
+                    <button
+                      className="sector-hit"
+                      onClick={() => {
+                        setSelected(nextPh.id)
+                        ensureMaster()
+                        setQuery(r.row.label)
+                        setPicked(null)
+                      }}
+                      title={`${r.row.label}の銘柄を検索`}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                        border: `1px solid ${nextPh.color}55`, borderLeft: `3px solid ${nextPh.color}`,
+                        borderRadius: 5, padding: '6px 9px', background: c.TAREA,
+                        color: c.TXTCLR, fontFamily: c.FONT, cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
                       <span style={{
-                        fontSize: 9, fontWeight: 700, color: mark.col,
-                        border: `1px solid ${mark.col}`, borderRadius: 3, padding: '0 4px',
-                      }}>{mark.t}</span>
-                    )}
-                    <span style={{ flex: 1, minWidth: 0, color: c.DESC }}>{m.label}</span>
-                    {m.rank != null && (
-                      <span style={{ fontSize: 10, color: c.DIM }}>17業種中 {m.rank}位</span>
-                    )}
-                    <span style={{ fontWeight: 700, color: pnl(m.v), minWidth: 58, textAlign: 'right' }}>
-                      {signed(m.v)}
-                    </span>
+                        fontSize: 12, flex: 1, minWidth: 0,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{r.row.label}</span>
+                      <span style={{ fontSize: 9.5, color: c.DIM, whiteSpace: 'nowrap' }}>
+                        いま17業種中 {r.rank}位
+                      </span>
+                      <span style={{
+                        fontSize: 12, fontWeight: 700, color: pnl(r.row[MAIN_KEY]),
+                        minWidth: 56, textAlign: 'right',
+                      }}>{signed(r.row[MAIN_KEY])}</span>
+                    </button>
                   </li>
-                )
-              })}
-            </ul>
+                ))}
+              </ul>
 
-            {shownFit?.score != null && (
-              <p style={{ margin: '6px 0 0', fontSize: 10, color: c.DIM, lineHeight: 1.7 }}>
-                一致度＝この{shownFit.members.length}業種が17業種中どのあたりに並んでいるかだけで決まります
-                （上位を独占なら100・下位を独占なら0）。平均順位 {shownFit.meanRank}位。
-                {shownStrength?.avg != null && <> グループの平均騰落率は {signed(shownStrength.avg)}。</>}
+              <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.75 }}>
+                🔵 順位が低い＝<b>まだ動いていない</b>ということです。行をクリックでその業種の銘柄を検索。
+                <br />⚠ 循環の順番は経験則で、<b>この通りに回るとは限りません</b>。
               </p>
-            )}
+            </section>
+          )}
 
-            <div style={{ marginTop: 7, fontSize: 10.5, color: c.DIM }}>
-              この見方での次の局面 → <span style={{ color: nextPhase(shown.id).color }}>{nextPhase(shown.id).label}</span>
-              <span style={{ marginLeft: 6 }}>（循環の順番。いまの位置を示すものではありません）</span>
-            </div>
-          </section>
+          {/* 🔵 参考：いま資金が向かっている業種（＝すでに動いた側）。
+              「次」を判断する材料として、順番が実際に回っているかを見るために置く。 */}
+          {ranking.length > 0 && (
+            <section>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, color: c.GREEN, letterSpacing: '0.08em' }}>
+                  いま資金が向かっている業種
+                </span>
+                <span style={{ fontSize: 9.5, color: c.DIM }}>
+                  直近{PERF_LABELS[MAIN_KEY]}（{periodText(periods, MAIN_KEY)}）の強い順
+                </span>
+              </div>
+              <ul style={{
+                listStyle: 'none', margin: 0, padding: 0,
+                display: 'flex', flexDirection: 'column', gap: 3,
+                maxHeight: 300, overflowY: 'auto', overflowX: 'hidden',
+              }}>
+                {ranking.map(r => {
+                  const col = r.phase?.color ?? c.BORDBR
+                  return (
+                    <li key={r.row.sector17}>
+                      <button
+                        className="sector-hit"
+                        onClick={() => {
+                          if (r.phase) setSelected(r.phase.id)
+                          ensureMaster()
+                          setQuery(r.row.label)
+                          setPicked(null)
+                        }}
+                        title={`${r.row.label}の銘柄を検索`}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                          border: `1px solid ${c.BORDER}`, borderLeft: `3px solid ${col}`,
+                          borderRadius: 5, padding: '5px 9px', background: c.LOGBG,
+                          color: c.TXTCLR, fontFamily: c.FONT, cursor: 'pointer', textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ fontSize: 11, color: c.DIM, minWidth: 22 }}>{r.rank}位</span>
+                        <span style={{
+                          fontSize: 12, flex: 1, minWidth: 0,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>{r.row.label}</span>
+                        {/* 🔴 下げたあとの戻りを「いま強い」と誤読させない */}
+                        {r.rebound && (
+                          <span style={{
+                            fontSize: 9, color: DOWN, border: `1px solid ${DOWN}`,
+                            borderRadius: 3, padding: '0 4px', whiteSpace: 'nowrap',
+                          }}>戻り</span>
+                        )}
+                        <span style={{ fontSize: 9.5, color: c.DIM, whiteSpace: 'nowrap' }}>
+                          その前 {signed(r.row[SUB_KEY])}
+                        </span>
+                        <span style={{
+                          fontSize: 12, fontWeight: 700, color: pnl(r.row[MAIN_KEY]),
+                          minWidth: 56, textAlign: 'right',
+                        }}>{signed(r.row[MAIN_KEY])}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <p style={{ margin: '6px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.7 }}>
+                🔴「戻り」＝直近{PERF_LABELS[MAIN_KEY]}はプラスだが、その前（{PERF_LABELS[SUB_KEY]}）はマイナスの業種。
+                下げたあとの反発なので、勢いが続いているものとは分けて見てください。
+                行をクリックすると、その業種の銘柄を検索します。
+              </p>
+            </section>
+          )}
 
           {/* 銘柄検索 */}
           <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 7 }}>
