@@ -188,9 +188,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
     [nextPh, ranking]
   )
 
+  // 🔵 選んだ局面。モーダルは「◯◯相場とは？」＝説明だけなので、実測（一致度・平均・順位）は使わない。
   const shown = phaseById(selected)
-  const shownStrength = strengths.find(s => s.phase.id === selected) ?? null
-  const shownFit      = fits.find(f => f.phase.id === selected) ?? null
 
   // 一致度がいちばん高い局面を指すマーカー。
   // 🔵 弧の中央（R_OUT と R_IN の中間）に置くと**局面名のラベルと重なって読めない**ので、
@@ -231,81 +230,44 @@ export function SectorPanel({ theme, isMobile }: Props) {
   const dataDate = perf?.[0]?.time ?? null
 
   /**
-   * 選んだ局面の中身。円環の脇に吹き出しで出す（スマホでは右ペインに素で出す）。
-   * 🔵 一致度の根拠（どの業種が支えていて、どれが矛盾しているか）まで出さないと
-   *    点数がブラックボックスになるので、業種の内訳は必ず添える。
+   * 「◯◯相場とは？」＝**局面そのものの説明**（モーダルの中身）。
+   *
+   * 🔴 ここには**実測の数字を入れない**（ユーザー指摘・2026-08-07）。
+   *    「業績相場の説明なので理論が大事」＝順位・騰落率・一致度はここでは雑音になる。
+   *    実測は 円環（一致度）と 中央列（順位・騰落率）に既にあるので、役割で場所を分ける。
    */
   const phaseCard = (
     <section className="sector-card" key={shown.id}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
         <span style={{
-          fontSize: 15, fontWeight: 700, color: shown.color,
+          fontSize: 16, fontWeight: 700, color: shown.color,
           textShadow: glow ? `0 0 10px ${shown.color}55` : undefined,
         }}>{shown.label}</span>
-        <span style={{ fontSize: 10.5, color: c.DIM }}>{shown.economy}</span>
-        {shownStrength?.avg != null && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: pnl(shownStrength.avg) }}>
-            平均 {signed(shownStrength.avg)}
-          </span>
-        )}
-        {shownFit?.score != null && (
-          <span style={{
-            fontSize: 9.5, color: c.BG, background: shown.color,
-            borderRadius: 3, padding: '1px 6px', fontWeight: 700,
-          }}>一致度 {shownFit.score}/100</span>
-        )}
+        <span style={{ fontSize: 11, color: c.DIM }}>景気の位置づけ：{shown.economy}</span>
       </div>
-      {/* 🔵 これはモーダルの中身なので高さを固定しない（下に何も無く、ガタつかないため）。
-          以前インラインで出していたときは minHeight で6業種ぶん確保していた。 */}
-      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: c.DESC }}>
+
+      <p style={{ margin: 0, fontSize: 12, lineHeight: 1.85, color: c.DESC }}>
         {shown.note}
       </p>
 
+      <div style={{ marginTop: 12, fontSize: 10.5, color: c.DIM, letterSpacing: '0.06em' }}>
+        この局面で強くなりやすいとされる業種
+      </div>
       <ul style={{
-        listStyle: 'none', margin: '8px 0 0', padding: 0,
-        display: 'flex', flexDirection: 'column', gap: 4,
+        listStyle: 'none', margin: '6px 0 0', padding: 0,
+        display: 'flex', flexWrap: 'wrap', gap: 6,
       }}>
-        {(shownFit?.members.length
-          ? shownFit.members.map(m => ({
-              code: m.row.sector17, label: m.row.label, v: m.row[perfKey],
-              rank: m.rank as number | null, role: m.role,
-            }))
-          : shown.sectors17.map(code => ({
-              code, label: sector17Label(code), v: null,
-              rank: null as number | null, role: 'neutral' as const,
-            }))
-        ).map(m => {
-          const mark = m.role === 'support'    ? { t: '支持', col: UP }
-                     : m.role === 'contradict' ? { t: '矛盾', col: DOWN }
-                     : null
-          return (
-            <li key={m.code} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontSize: 11, padding: '3px 7px', borderRadius: 4,
-              border: `1px solid ${mark ? `${mark.col}55` : `${shown.color}33`}`,
-            }}>
-              {mark && (
-                <span style={{
-                  fontSize: 9, fontWeight: 700, color: mark.col,
-                  border: `1px solid ${mark.col}`, borderRadius: 3, padding: '0 3px',
-                }}>{mark.t}</span>
-              )}
-              <span style={{ flex: 1, minWidth: 0, color: c.DESC, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {m.label}
-              </span>
-              {m.rank != null && <span style={{ fontSize: 9.5, color: c.DIM }}>{m.rank}位</span>}
-              <span style={{ fontWeight: 700, color: pnl(m.v), minWidth: 52, textAlign: 'right' }}>
-                {signed(m.v)}
-              </span>
-            </li>
-          )
-        })}
+        {shown.sectors17.map(code => (
+          <li key={code} style={{
+            fontSize: 11.5, color: shown.color,
+            border: `1px solid ${shown.color}66`, borderRadius: 4, padding: '3px 9px',
+          }}>{sector17Label(code)}</li>
+        ))}
       </ul>
 
-      {/* 🔵 一致度の計算方法の説明はここに書かない。左上の「?」に集約済み（重複を避ける）。 */}
-
-      {/* 🔵 「次の局面」の文章は削除（説明的すぎる・2026-08-07）。
-          代わりに円環側で、いまの型 → 次 を**回る矢印**で見せる。 */}
+      <p style={{ margin: '12px 0 0', fontSize: 10, color: c.DIM, lineHeight: 1.7 }}>
+        ⚠ 一般的な整理であって、この通りに動くとは限りません。
+      </p>
     </section>
   )
 
@@ -379,37 +341,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
             }}
           >?</button>
 
-          {help && (
-            <div
-              className="sector-card"
-              style={{
-                position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 5,
-                width: 340, maxWidth: '92vw', textAlign: 'left',
-                background: bubbleBg, border: `1px solid ${c.BORDBR}`,
-                borderRadius: 8, padding: '10px 12px',
-                fontSize: 10.5, lineHeight: 1.8, color: c.DESC,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-              }}
-            >
-              <span style={{
-                position: 'absolute', top: -6, left: 18, width: 10, height: 10,
-                background: bubbleBg,
-                borderTop: `1px solid ${c.BORDBR}`, borderLeft: `1px solid ${c.BORDBR}`,
-                transform: 'rotate(45deg)',
-              }} />
-              <b style={{ color: c.GREEN }}>一致度とは</b>
-              <br />その局面で強いとされる業種が、実際に17業種中どのあたりに並んでいるかだけで決まります。
-              上位を独占なら100、下位を独占なら0。
-              <br /><br />
-              🔴 <b>確率ではありません。</b>局面に正解が無く、当たったかを検証できないためです。
-              <br />🔴 ぽいロボは<b>景気局面の判定をしていません</b>。円環の4分割は
-              「どの局面でどの業種が強いとされるか」という一般的な対応表です。
-              <br /><br />
-              <b style={{ color: c.GREEN }}>数字の出どころ</b>
-              <br />TOPIX-17 業種別ETF（1617〜1633）の調整後終値。業種別株価指数そのものではなく、その代用です。
-              <br />期間＝直近1か月（{periodText(periods, 'chg1m')}）。
-            </div>
-          )}
         </div>
 
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
@@ -623,7 +554,15 @@ export function SectorPanel({ theme, isMobile }: Props) {
                 </span>
               </div>
 
-              {/* 🔴 ここも局面によって3〜6業種と変わるので高さを確保しておく（下がガタつくため） */}
+              {/* 🔴 この列の数字は**過去（直近1か月）の実績**であって、未来の予想ではない。
+                  見出しが「次に来る」なので、ラベルが無いと未来の数字に読める（ユーザー指摘・2026-08-07）。
+                  役割は「まだ動いていないことの確認」なので、期間を必ず添える。 */}
+              <div style={{
+                display: 'flex', justifyContent: 'flex-end',
+                fontSize: 9, color: c.DIM, margin: '2px 2px 4px',
+              }}>
+                ↓ここまでの実績（{periodText(periods, MAIN_KEY)}）
+              </div>
               <ul style={{
                 listStyle: 'none', margin: 0, padding: 0,
                 display: 'flex', flexDirection: 'column', gap: 4,
@@ -809,6 +748,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
             ) : query.trim() === '' ? (
               <p style={{ margin: 0, fontSize: 10.5, color: c.DIM, lineHeight: 1.7 }}>
                 コードは前方一致、銘柄名・業種名は部分一致で探せます。
+                <br />🔵 行をクリックすると<b>銘柄コードをコピー</b>します（TradingView などへ）。
                 {master && <><br />東証の内国株式 {master.length.toLocaleString()} 銘柄
                   {asOf && `（JPX 上場銘柄一覧 ${asOf} 時点）`}</>}
               </p>
@@ -839,7 +779,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
                       <li
                         key={st.code}
                         className="sector-hit"
-                        onClick={() => setPicked(on ? null : st)}
+                        // 🔵 行を選ぶ＝そのままコードをコピー（貼り先は TradingView 想定）。
+                        //    選択とコピーを別操作にすると毎回2クリックになるので1回にまとめた。
+                        onClick={() => {
+                          setPicked(on ? null : st)
+                          copyText(st.code, 'code')
+                          setCopiedCode(st.code)
+                          setTimeout(() => setCopiedCode(v => (v === st.code ? null : v)), 1600)
+                        }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 10,
                           // 🔴 `border`（一括指定）と `borderLeft` を混ぜないこと。
@@ -855,27 +802,12 @@ export function SectorPanel({ theme, isMobile }: Props) {
                           color: c.TXTCLR, cursor: 'pointer',
                         }}
                       >
-                        {/* 🔵 コード部分だけは押すと**コードをコピー**（証券会社の検索窓に貼るため）。
-                            行の選択と役割が違うので stopPropagation して分ける。 */}
-                        <button
-                          onClick={e => {
-                            e.stopPropagation()
-                            copyText(st.code, 'code')
-                            setCopiedCode(st.code)
-                            setTimeout(() => setCopiedCode(v => (v === st.code ? null : v)), 1600)
-                          }}
-                          title="銘柄コードをコピー"
-                          style={{
-                            fontSize: 12.5, fontWeight: 700, minWidth: 46, textAlign: 'left',
-                            color: copiedCode === st.code ? UP : c.GREEN,
-                            background: 'transparent', border: 'none', padding: 0,
-                            fontFamily: c.FONT, cursor: 'copy',
-                            textDecoration: 'underline', textDecorationStyle: 'dotted',
-                            textUnderlineOffset: 3,
-                          }}
-                        >{st.code}</button>
+                        <span style={{
+                          fontSize: 12.5, fontWeight: 700, minWidth: 46,
+                          color: copiedCode === st.code ? UP : c.GREEN,
+                        }}>{st.code}</span>
                         {copiedCode === st.code && (
-                          <span style={{ fontSize: 9.5, color: UP, whiteSpace: 'nowrap' }}>コピー済</span>
+                          <span style={{ fontSize: 9.5, color: UP, whiteSpace: 'nowrap' }}>コピーしました</span>
                         )}
                         <span style={{ fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{st.name}</span>
                         <span style={{ fontSize: 10.5, color: c.DIM }}>{sector17Label(st.sector17)}</span>
@@ -957,40 +889,64 @@ export function SectorPanel({ theme, isMobile }: Props) {
         </div>
       </div>
 
-      {/* 局面の内訳モーダル（左カラムの「◯◯相場とは？」から開く） */}
-      {detail && (
-        <div
-          onClick={() => setDetail(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 60,
-            background: 'rgba(0,0,0,0.55)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-          }}
-        >
+      {/* 🔵 「?」から開くものはすべてモーダルで統一する（片方が吹き出しだと挙動が揃わない）。 */}
+      {(detail || help) && (() => {
+        const isHelp = help
+        const accent = isHelp ? c.BORDBR : shown.color
+        const close  = () => { setDetail(false); setHelp(false) }
+        return (
           <div
-            onClick={e => e.stopPropagation()}
-            className="sector-card"
+            onClick={close}
             style={{
-              position: 'relative', width: 460, maxWidth: '100%', maxHeight: '86vh', overflowY: 'auto',
-              background: bubbleBg, border: `1px solid ${shown.color}`,
-              borderRadius: 12, padding: '18px 20px',
-              boxShadow: `0 8px 32px rgba(0,0,0,0.45)${glow ? `, 0 0 24px ${shown.color}33` : ''}`,
-              fontFamily: c.FONT, color: c.TXTCLR,
+              position: 'fixed', inset: 0, zIndex: 60,
+              background: 'rgba(0,0,0,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
             }}
           >
-            <button
-              onClick={() => setDetail(false)}
-              aria-label="閉じる"
+            <div
+              onClick={e => e.stopPropagation()}
+              className="sector-card"
               style={{
-                position: 'absolute', top: 10, right: 12,
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                color: c.DIM, fontFamily: c.FONT, fontSize: 16, lineHeight: 1, padding: 4,
+                position: 'relative', width: 460, maxWidth: '100%', maxHeight: '86vh', overflowY: 'auto',
+                background: bubbleBg, border: `1px solid ${accent}`,
+                borderRadius: 12, padding: '18px 20px',
+                boxShadow: `0 8px 32px rgba(0,0,0,0.45)${glow ? `, 0 0 24px ${accent}33` : ''}`,
+                fontFamily: c.FONT, color: c.TXTCLR,
               }}
-            >×</button>
-            {phaseCard}
+            >
+              <button
+                onClick={close}
+                aria-label="閉じる"
+                style={{
+                  position: 'absolute', top: 10, right: 12,
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: c.DIM, fontFamily: c.FONT, fontSize: 16, lineHeight: 1, padding: 4,
+                }}
+              >×</button>
+
+              {isHelp ? (
+                <div style={{ fontSize: 11.5, lineHeight: 1.85, color: c.DESC }}>
+                  <b style={{ color: c.GREEN }}>一致度とは</b>
+                  <br />その局面で強いとされる業種が、実際に17業種中どのあたりに並んでいるかだけで決まります。
+                  上位を独占なら100、下位を独占なら0。
+                  <br /><br />
+                  🔴 <b>確率ではありません。</b>局面に正解が無く、当たったかを検証できないためです。
+                  <br />🔴 ぽいロボは<b>景気局面の判定をしていません</b>。円環の4分割は
+                  「どの局面でどの業種が強いとされるか」という一般的な対応表です。
+                  <br /><br />
+                  🔴 <b>1位はよく入れ替わります。</b>15年ぶんで実測したところ、
+                  1位が続いた期間は<b>中央値2営業日</b>、1か月以上続いたのは37回だけ（平均1.3か月）でした。
+                  <b>その日の並びの特徴</b>であって、腰の据わった「いまの局面」ではありません。
+                  <br /><br />
+                  <b style={{ color: c.GREEN }}>数字の出どころ</b>
+                  <br />TOPIX-17 業種別ETF（1617〜1633）の調整後終値。業種別株価指数そのものではなく、その代用です。
+                  <br />期間＝直近1か月（{periodText(periods, 'chg1m')}）。
+                </div>
+              ) : phaseCard}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
