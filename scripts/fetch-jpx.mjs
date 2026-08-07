@@ -1397,6 +1397,21 @@ function pctChangeBack(closes, back) {
   return Math.round((last - prev) / prev * 10000) / 100
 }
 
+/**
+ * 「N営業日前 → M営業日前」の区間の騰落率（%）。直近を含まない期間を測るのに使う。
+ *
+ * 🔴 「その前はどうだったか」を見るのに **3か月（直近1か月を含む）を使ってはいけない**。
+ *    窓の中で主役が交代していると、古い局面と今の局面を混ぜた数字になり、意味を持たない
+ *    （実際 2026-08-07 時点で 型の一致度1位が 1か月=逆金融 / 3か月=金融 と食い違っていた）。
+ *    なので**重ならない区間**で測る（ユーザー指摘・2026-08-07）。
+ */
+function pctChangeRange(closes, backFrom, backTo) {
+  const from = closes[closes.length - 1 - backFrom]
+  const to   = closes[closes.length - 1 - backTo]
+  if (from == null || to == null || from === 0) return null
+  return Math.round((to - from) / from * 10000) / 100
+}
+
 /** 騰落率の測定に使う「何営業日前と比べるか」。画面に出す日付もここから決まる。 */
 const PERF_BACK = { chg1m: 21, chg3m: 62, chg6m: 123 }
 
@@ -1445,6 +1460,8 @@ async function fetchSectorPerfData() {
         chg1m:    pctChangeBack(adjs, PERF_BACK.chg1m),
         chg3m:    pctChangeBack(adjs, PERF_BACK.chg3m),
         chg6m:    pctChangeBack(adjs, PERF_BACK.chg6m),
+        // 直近1か月の**手前**の2か月（重ならない）＝「その前の局面ではどうだったか」
+        chgPrev2m: pctChangeRange(adjs, PERF_BACK.chg3m, PERF_BACK.chg1m),
       })
 
       // 最初に取れたETFの日付を代表に使う（東証の営業日カレンダーは全ETF共通）
@@ -1453,6 +1470,11 @@ async function fetchSectorPerfData() {
         periods = {}
         for (const [k, back] of Object.entries(PERF_BACK)) {
           periods[k] = { days: back, from: times[times.length - 1 - back] ?? null, to }
+        }
+        periods.prev2m = {
+          days: PERF_BACK.chg3m - PERF_BACK.chg1m,
+          from: times[times.length - 1 - PERF_BACK.chg3m] ?? null,
+          to:   times[times.length - 1 - PERF_BACK.chg1m] ?? null,
         }
       }
       console.log(`  ${etf} ${SECTOR17_LABELS[n - 1]}: 1M ${rows[rows.length - 1].chg1m}% / 3M ${rows[rows.length - 1].chg3m}%`)

@@ -6,22 +6,24 @@ import { jstTimestamp } from '../utils/jstDate'
 import { buildStockAnalysisPrompt } from '../utils/sectorStockPrompt'
 import { loadSectorPerf, loadStockMaster } from '../utils/sectorData'
 import {
-  PHASES, PERF_LABELS, PERF_PLAIN,
+  PHASES, PERF_LABELS,
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, phaseFits, bestFit, sectorRanking, searchStocks,
-  type PerfKey, type PerfPeriods, type PhaseFit, type SectorPerfRow,
+  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type SectorPerfRow,
   type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
 
 /**
- * 🔴 画面に出す期間は **1か月（いまの勢い）と3か月（その前からの流れ）の2つだけ**。
- *    3つ並べると「1か月と6か月を比べる理由が分からない」となる（ユーザー指摘・2026-08-07）。
- *    知りたいのは「いまどの業種がいいか」なので主役は1か月。
- *    3か月は**下げたあとの戻りを見分けるためだけ**に添える。6か月はデータは取るが出さない。
+ * 🔴 画面に出す期間は **直近1か月だけ**（ユーザー指摘・2026-08-07）。
+ *    3か月・6か月は直近1か月を含む重なった窓なので、その中で主役が交代していると
+ *    **古い局面と今の局面を混ぜた数字**になり、型を測っても読めない。
+ *    実際 2026-08-07 の一致度1位は 1か月=逆金融83.3 / 3か月=金融67.3 で食い違っていた
+ *    ＝3か月の窓の中で交代が起きていた。
+ * 🔵 「その前どうだったか」は `chgPrev2m`（重ならない区間）で見て、
+ *    ランキングの「反発」印にだけ使う。数字は出さない（読む必要がないため）。
  */
 const MAIN_KEY: PerfKey = 'chg1m'
-const SUB_KEY:  PerfKey = 'chg3m'
-const SHOWN_KEYS: PerfKey[] = [MAIN_KEY, SUB_KEY]
+const SHOWN_KEYS: PerfKey[] = [MAIN_KEY]
 
 /** 「2026-08-07」→「8/7」 */
 function md(date: string | null | undefined): string {
@@ -30,7 +32,7 @@ function md(date: string | null | undefined): string {
   return m ? `${Number(m[1])}/${Number(m[2])}` : date
 }
 
-function periodText(periods: PerfPeriods, key: PerfKey): string {
+function periodText(periods: PerfPeriods, key: PeriodKey): string {
   const p = periods[key]
   return p ? `${md(p.from)}→${md(p.to)}` : ''
 }
@@ -51,14 +53,25 @@ type Props = {
   isMobile: boolean
 }
 
-const SIZE  = 320
+// 🔵 SIZE は「次はこちら」の矢印を**円の外側**に描く余白ぶんだけ R_OUT より大きく取る
+//    （内側に描くと中央のテキストと重なって読めない）。
+const SIZE  = 344
 const R_OUT = 138
 const R_IN  = 88
+/** 「次の局面はこちら」の矢印を回す半径（外周の目盛りリングのさらに外） */
+const R_NEXT = R_OUT + 24
 
 /** 角度（0度＝真上・時計回り）を SVG 座標へ。 */
 function pt(angle: number, r: number) {
   const rad = ((angle - 90) * Math.PI) / 180
   return { x: SIZE / 2 + r * Math.cos(rad), y: SIZE / 2 + r * Math.sin(rad) }
+}
+
+/** 円弧のパス（時計回り）。半径 r で from→to 度。 */
+function arcPath(from: number, to: number, r: number): string {
+  const a = pt(from, r), b = pt(to, r)
+  const large = ((to - from + 360) % 360) > 180 ? 1 : 0
+  return `M ${a.x} ${a.y} A ${r} ${r} 0 ${large} 1 ${b.x} ${b.y}`
 }
 
 /** ドーナツの4分割セグメントのパス。grow で選択中だけ外へ広げる。 */
@@ -103,6 +116,9 @@ export function SectorPanel({ theme, isMobile }: Props) {
   const [query,    setQuery]    = useState('')
   const [picked,   setPicked]   = useState<StockRow | null>(null)
   const [copied,   setCopied]   = useState(false)
+  const [help,     setHelp]     = useState(false)
+  // 🔵 「いま資金が向かっている業種」は既定で上位5つだけ（17件は多すぎる）
+  const [allRanks, setAllRanks] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -133,6 +149,13 @@ export function SectorPanel({ theme, isMobile }: Props) {
   }, [perf])
 
   const ranking = useMemo(() => (perf ? sectorRanking(perf) : []), [perf])
+
+  // 🔴 既定で出すのは**プラスの業種だけ・最大5つ**。
+  //    17件全部出すとマイナスまで並び、「資金が向かっている」という見出しと矛盾する。
+  const risingRows = useMemo(
+    () => ranking.filter(r => (r.row[MAIN_KEY] ?? 0) > 0).slice(0, 5),
+    [ranking]
+  )
 
   const fits = fitsByKey[perfKey]
   const top  = useMemo(() => bestFit(fits), [fits])
@@ -209,9 +232,18 @@ export function SectorPanel({ theme, isMobile }: Props) {
           }}>一致度 {shownFit.score}/100</span>
         )}
       </div>
-      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: c.DESC }}>{shown.note}</p>
+      {/* 🔴 高さを固定する。局面ごとに説明の行数（1〜2行）と業種数（3〜6）が違うため、
+          クリックで切り替えるたびにカードの高さが変わり、下の「次に来る業種」以下がガタつく
+          （ユーザー指摘・2026-08-07）。いちばん大きい局面に合わせて場所を確保しておく。 */}
+      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: c.DESC, minHeight: 38 }}>
+        {shown.note}
+      </p>
 
-      <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <ul style={{
+        listStyle: 'none', margin: '8px 0 0', padding: 0,
+        display: 'flex', flexDirection: 'column', gap: 4,
+        minHeight: 6 * 21 + 5 * 4,   // 最大6業種ぶん
+      }}>
         {(shownFit?.members.length
           ? shownFit.members.map(m => ({
               code: m.row.sector17, label: m.row.label, v: m.row[perfKey],
@@ -249,22 +281,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
         })}
       </ul>
 
-      {shownFit?.score != null && (
-        <p style={{ margin: '6px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.65 }}>
-          一致度＝この{shownFit.members.length}業種が17業種中どのあたりに並んでいるかだけで決まります
-          （上位を独占なら100・下位を独占なら0）。平均順位 {shownFit.meanRank}位。
-        </p>
-      )}
+      {/* 🔵 一致度の計算方法の説明はここに書かない。左上の「?」に集約済み（重複を避ける）。 */}
 
-      <div style={{ marginTop: 6, fontSize: 10, color: c.DIM, lineHeight: 1.6 }}>
-        この見方での次の局面 → <span style={{ color: nextPhase(shown.id).color }}>{nextPhase(shown.id).label}</span>
-        <br />（循環の順番。いまの位置を示すものではありません）
-      </div>
+      {/* 🔵 「次の局面」の文章は削除（説明的すぎる・2026-08-07）。
+          代わりに円環側で、いまの型 → 次 を**回る矢印**で見せる。 */}
     </section>
   )
 
-  // 吹き出しの尻尾の高さ。選んだ局面が円環の上半分（金融0度・逆業績270度）なら上寄せ。
-  const onTop    = shown.angle === 0 || shown.angle === 270
+  // ヘルプの吹き出しの背景（半透明にすると下の円環が透けて読みにくいので不透明）
   const bubbleBg = theme === 'light' ? '#ffffff' : '#071322'
 
   return (
@@ -279,6 +303,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
         @keyframes sector-sweep { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         @keyframes sector-pulse { 0%,100% { opacity:.25; r:14 } 50% { opacity:.85; r:19 } }
         @keyframes sector-fade  { from { opacity:0; transform: translateY(6px) } to { opacity:1; transform:none } }
+        /* 破線を流して「次はこちら」を向きだけで伝える */
+        @keyframes sector-flow  { from { stroke-dashoffset: 20 } to { stroke-dashoffset: 0 } }
         .sector-seg   { transition: opacity .25s ease, filter .25s ease; cursor: pointer; }
         .sector-seg:hover { filter: brightness(1.25); }
         .sector-card  { animation: sector-fade .28s ease both; }
@@ -291,7 +317,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
         flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '20px 16px', overflowY: isMobile ? 'visible' : 'auto',
+        padding: '44px 16px 24px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           fontSize: 12, letterSpacing: '0.18em', color: c.GREEN, marginBottom: 2,
@@ -299,18 +325,59 @@ export function SectorPanel({ theme, isMobile }: Props) {
         }}>
           ▶ SECTOR ROTATION
         </div>
-        <div style={{ fontSize: 11, color: c.DIM, marginBottom: 8 }}>
-          景気の局面で物色対象が回るという見方 × 実測
+        {/* 🔵 説明は常時出さず「?」に畳む。円環に視線が行くようにするため。 */}
+        <div style={{
+          position: 'relative', display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: 11, color: c.DIM, marginBottom: 8,
+        }}>
+          <span>景気の局面で物色対象が回るという見方 × 実測</span>
+          <button
+            onClick={() => setHelp(v => !v)}
+            aria-label="一致度の説明"
+            aria-expanded={help}
+            style={{
+              width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+              border: `1px solid ${help ? c.GREEN : c.BORDBR}`,
+              background: help ? `${c.GREEN}22` : 'transparent',
+              color: help ? c.GREEN : c.DIM,
+              fontFamily: c.FONT, fontSize: 10, lineHeight: 1, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+            }}
+          >?</button>
+
+          {help && (
+            <div
+              className="sector-card"
+              style={{
+                position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 5,
+                width: 340, maxWidth: '92vw', textAlign: 'left',
+                background: bubbleBg, border: `1px solid ${c.BORDBR}`,
+                borderRadius: 8, padding: '10px 12px',
+                fontSize: 10.5, lineHeight: 1.8, color: c.DESC,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: -6, left: 18, width: 10, height: 10,
+                background: bubbleBg,
+                borderTop: `1px solid ${c.BORDBR}`, borderLeft: `1px solid ${c.BORDBR}`,
+                transform: 'rotate(45deg)',
+              }} />
+              <b style={{ color: c.GREEN }}>一致度とは</b>
+              <br />その局面で強いとされる業種が、実際に17業種中どのあたりに並んでいるかだけで決まります。
+              上位を独占なら100、下位を独占なら0。
+              <br /><br />
+              🔴 <b>確率ではありません。</b>局面に正解が無く、当たったかを検証できないためです。
+              <br />🔴 ぽいロボは<b>景気局面の判定をしていません</b>。円環の4分割は
+              「どの局面でどの業種が強いとされるか」という一般的な対応表です。
+              <br /><br />
+              <b style={{ color: c.GREEN }}>数字の出どころ</b>
+              <br />TOPIX-17 業種別ETF（1617〜1633）の調整後終値。業種別株価指数そのものではなく、その代用です。
+              <br />期間＝直近1か月（{periodText(periods, 'chg1m')}）。
+            </div>
+          )}
         </div>
 
-        {/* 🔵 円環と吹き出しを横に並べる。
-            🔴 円環に重ねて出すと、いま選んでいる局面のラベルを吹き出し自身が隠してしまう。
-               左＝円環／右＝吹き出しで場所を分け、尻尾だけを円環側に向ける。
-               吹き出しの枠は選択の有無にかかわらず場所を取り、円環が横に動かないようにする。 */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 14, width: '100%',
-        }}>
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
              aria-label="景気4局面と、業種別ETFで測った実測の相対強弱"
              style={{ filter: glow ? `drop-shadow(0 0 10px ${c.GREEN}22)` : undefined }}>
@@ -376,6 +443,31 @@ export function SectorPanel({ theme, isMobile }: Props) {
             )
           })}
 
+          {/* 🔵 いまの型 → 次の局面 を、円の内側を回る矢印で見せる（文章での説明は削除）。
+              時計回りに流れることで「次はここ」が言葉なしで伝わる。 */}
+          {top && nextPh && (
+            <g style={{ pointerEvents: 'none' }}>
+              <path
+                d={arcPath(phaseMidAngle(top.phase.id) + 10, phaseMidAngle(nextPh.id) - 16, R_NEXT)}
+                fill="none" stroke={nextPh.color} strokeOpacity={0.8} strokeWidth={2}
+                strokeLinecap="round" strokeDasharray="5 6"
+                style={{ animation: 'sector-flow 1.3s linear infinite' }}
+              />
+              {/* 矢じり（次の局面の側を指す） */}
+              {(() => {
+                const tipA = phaseMidAngle(nextPh.id) - 14
+                const tip  = pt(tipA, R_NEXT)
+                return (
+                  <polygon
+                    points="0,-5 9,0 0,5"
+                    fill={nextPh.color}
+                    transform={`translate(${tip.x} ${tip.y}) rotate(${tipA})`}
+                  />
+                )
+              })()}
+            </g>
+          )}
+
           {/* 🔴 実測でいちばん強いグループ。**局面の判定ではない** */}
           {marker && top && (
             <>
@@ -412,35 +504,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
           )}
         </svg>
 
-          {/* 選んだ局面の吹き出し。PCのみ（スマホは右ペインに素で出す） */}
-          {!isMobile && (
-            <div style={{ position: 'relative', width: 300, flexShrink: 0 }}>
-              <div
-                key={`bubble-${shown.id}`}
-                className="sector-card"
-                style={{
-                  background: bubbleBg,
-                  border: `1px solid ${shown.color}`,
-                  borderRadius: 10, padding: '10px 12px',
-                  boxShadow: glow ? `0 0 18px ${shown.color}33` : '0 2px 12px rgba(0,0,0,0.18)',
-                }}
-              >
-                {/* 尻尾。選んだ局面が円環の上半分なら上寄り・下半分なら下寄りに置いて、
-                    どの扇から出ているかが分かるようにする。 */}
-                <span style={{
-                  position: 'absolute', left: -6, width: 10, height: 10,
-                  background: bubbleBg,
-                  borderBottom: `1px solid ${shown.color}`,
-                  borderLeft: `1px solid ${shown.color}`,
-                  transform: 'rotate(45deg)',
-                  [onTop ? 'top' : 'bottom']: 30,
-                }} />
-                {phaseCard}
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* 🔵 ハイライトが2種類あって紛らわしいので凡例を出す。
             「広がっている扇＝自分が選んで見ているもの」「丸＝データで決まるもの」。
             クリックしても局面は進まない（見る対象が変わるだけ）ことも書く。 */}
@@ -464,88 +527,12 @@ export function SectorPanel({ theme, isMobile }: Props) {
           </span>
         </div>
 
-        {/* 🔵 一致度は3期間まとめて出す。1つずつ切り替えると
-            「最近になって型が変わった」という一番おいしい情報が見えない。 */}
-        {perf && (
-          <div style={{
-            marginTop: 12, width: '100%', maxWidth: 380,
-            border: `1px solid ${c.BORDER}`, borderRadius: 6, padding: '8px 10px',
-            background: c.LOGBG,
-          }}>
-            <div style={{ fontSize: 10, color: c.DIM, marginBottom: 6, letterSpacing: '0.06em' }}>
-              型との一致度（0〜100・確率ではありません）
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5 }}>
-              <thead>
-                <tr style={{ color: c.DIM }}>
-                  <th style={{ textAlign: 'left', fontWeight: 400, paddingBottom: 3 }} />
-                  {SHOWN_KEYS.map(k => (
-                    <th key={k} style={{ textAlign: 'right', fontWeight: 400, paddingBottom: 3, width: 88 }}>
-                      {PERF_PLAIN[k]}
-                      <br />
-                      <span style={{ fontSize: 8.5 }}>{periodText(periods, k)}</span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {PHASES.map(p => (
-                  <tr
-                    key={p.id}
-                    onClick={() => setSelected(p.id)}
-                    style={{
-                      cursor: 'pointer',
-                      background: p.id === shown.id ? `${p.color}1f` : 'transparent',
-                    }}
-                  >
-                    <td style={{ color: p.color, padding: '3px 4px', whiteSpace: 'nowrap' }}>
-                      {p.label}
-                    </td>
-                    {SHOWN_KEYS.map(k => {
-                      const f   = fitsByKey[k].find(x => x.phase.id === p.id)
-                      const isT = bestFit(fitsByKey[k])?.phase.id === p.id
-                      return (
-                        <td key={k} style={{ padding: '3px 4px' }}>
-                          {/* 数字だけだと差が掴みにくいので細いバーを敷く */}
-                          <div style={{
-                            position: 'relative', height: 14, borderRadius: 3,
-                            background: c.TAREA, overflow: 'hidden',
-                          }}>
-                            <div style={{
-                              position: 'absolute', inset: 0,
-                              width: `${f?.score ?? 0}%`, background: `${p.color}66`,
-                            }} />
-                            <span style={{
-                              position: 'absolute', inset: 0, display: 'flex',
-                              alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4,
-                              fontWeight: isT ? 700 : 400,
-                              color: isT ? p.color : c.DESC,
-                            }}>
-                              {f?.score ?? '—'}
-                            </span>
-                          </div>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 🔴 何を測っていて、何を測っていないかを画面で言い切る */}
-        <div style={{
-          marginTop: 12, maxWidth: 380, fontSize: 10.5, lineHeight: 1.75,
-          color: c.DIM, background: c.LOGBG, border: `1px solid ${c.BORDER}`,
-          borderRadius: 6, padding: '8px 11px',
-        }}>
-          ⚠ 円環の4分割は「どの局面でどの業種が強いとされるか」という<b>一般的な対応表</b>で、
-          色の濃さと数字は<b>実際に測った騰落率</b>です。
-          <b>ぽいロボは景気局面の判定をしていません。</b>
-          <br />出所＝TOPIX-17 業種別ETF（1617〜1633）の調整後終値。業種別株価指数そのものではなく、その代用です。
-          {dataDate && <><br />データ日付：{dataDate}</>}
-          {perfErr && <><br />🔴 取得エラー：{perfErr}</>}
+        {/* 🔵 一致度の一覧表は撤去した（期間が1つになったので、円環の各扇に出ている
+            「一致 67.3」と同じ内容＝重複）。説明も箱で常時出すのをやめ、
+            上の「?」の吹き出しに畳んだ。**視線を円環に集めるため**（ユーザー要望・2026-08-07）。 */}
+        <div style={{ marginTop: 8, fontSize: 9.5, color: c.DIM }}>
+          {dataDate && <>データ日付：{dataDate}</>}
+          {perfErr && <span style={{ color: DOWN }}> 🔴 取得エラー：{perfErr}</span>}
         </div>
       </div>
 
@@ -554,22 +541,19 @@ export function SectorPanel({ theme, isMobile }: Props) {
         : { width: 1, background: 'var(--border-dim)', flexShrink: 0 }} />
 
       {/* ── 右：業種の内訳＋銘柄検索＋AI分析 ── 🔵 上下中央 ──── */}
+      {/* ── 中：業種の話 ── 選んだ局面の内訳／次に来る業種／いま強い業種 ──── */}
+      {/* 🔴 上下中央寄せはしない（2026-08-07）。
+          中身が増減するたびに中央位置が変わり、下の列の入力欄まで動いてしまうため。 */}
       <div style={{
         flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
-        justifyContent: isMobile ? 'flex-start' : 'center',
-        alignItems: 'center',
-        padding: '20px 18px', overflowY: 'auto',
+        alignItems: 'center', padding: '44px 16px 24px', overflowY: 'auto',
       }}>
-        {/* 🔵 幅の上限を付ける。付けないと横幅いっぱいに伸びて、
-            検索欄だけが極端に横長になり読みづらい（ユーザー指摘・2026-08-07）。 */}
         <div style={{
-          width: '100%', maxWidth: 520,
+          width: '100%', maxWidth: 460,
           display: 'flex', flexDirection: 'column', gap: 14,
         }}>
-          {/* 🔵 局面の内訳は円環の脇（左）に吹き出しで出すようにした（2026-08-07・ユーザー要望）。
-              ここは銘柄の話だけにして、局面の話＝左／銘柄の話＝右 と役割を分ける。
-              スマホでは吹き出しを出す余白が無いので、こちら側に出す。 */}
-          {isMobile && phaseCard}
+          {/* 選んだ局面の内訳。円環のすぐ隣に置いて、円環と対で読めるようにする */}
+          {phaseCard}
 
           {/* 🔵 この画面の主役。**次に来るとされる業種**を先頭に置く。
               目的が「いま伸びている業種を見る」ではなく
@@ -591,7 +575,12 @@ export function SectorPanel({ theme, isMobile }: Props) {
                 </span>
               </div>
 
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {/* 🔴 ここも局面によって3〜6業種と変わるので高さを確保しておく（下がガタつくため） */}
+              <ul style={{
+                listStyle: 'none', margin: 0, padding: 0,
+                display: 'flex', flexDirection: 'column', gap: 4,
+                minHeight: 6 * 25 + 5 * 4,
+              }}>
                 {nextRows.map(r => (
                   <li key={r.row.sector17}>
                     <button
@@ -626,9 +615,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
                 ))}
               </ul>
 
-              <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.75 }}>
-                🔵 順位が低い＝<b>まだ動いていない</b>ということです。行をクリックでその業種の銘柄を検索。
-                <br />⚠ 循環の順番は経験則で、<b>この通りに回るとは限りません</b>。
+              <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM }}>
+                順位が低い＝まだ動いていない ／ ⚠ 循環は経験則です
               </p>
             </section>
           )}
@@ -638,19 +626,32 @@ export function SectorPanel({ theme, isMobile }: Props) {
           {ranking.length > 0 && (
             <section>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                {/* 🔴 全17業種を出すとマイナスの業種まで並ぶので、
+                    「資金が向かっている」という見出しでは矛盾する（ユーザー指摘・2026-08-07）。
+                    上位だけのときと、全部出したときで見出しを変える。 */}
                 <span style={{ fontSize: 12, color: c.GREEN, letterSpacing: '0.08em' }}>
-                  いま資金が向かっている業種
+                  {allRanks ? '業種ランキング（全17業種）' : 'いま資金が向かっている業種'}
                 </span>
                 <span style={{ fontSize: 9.5, color: c.DIM }}>
                   直近{PERF_LABELS[MAIN_KEY]}（{periodText(periods, MAIN_KEY)}）の強い順
                 </span>
+                {/* 🔵 17業種を全部出すと多すぎる（ユーザー指摘・2026-08-07）。
+                    既に動いた側は参考情報なので、既定は上位5つだけ。 */}
+                <button
+                  onClick={() => setAllRanks(v => !v)}
+                  style={{
+                    marginLeft: 'auto', cursor: 'pointer', fontFamily: c.FONT, fontSize: 9.5,
+                    padding: '2px 8px', borderRadius: 4,
+                    border: `1px solid ${c.BORDER}`, background: 'transparent', color: c.DIM,
+                  }}
+                >{allRanks ? '上位だけ' : `全${ranking.length}業種`}</button>
               </div>
               <ul style={{
                 listStyle: 'none', margin: 0, padding: 0,
                 display: 'flex', flexDirection: 'column', gap: 3,
                 maxHeight: 300, overflowY: 'auto', overflowX: 'hidden',
               }}>
-                {ranking.map(r => {
+                {(allRanks ? ranking : risingRows).map(r => {
                   const col = r.phase?.color ?? c.BORDBR
                   return (
                     <li key={r.row.sector17}>
@@ -675,16 +676,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
                           fontSize: 12, flex: 1, minWidth: 0,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>{r.row.label}</span>
-                        {/* 🔴 下げたあとの戻りを「いま強い」と誤読させない */}
+                        {/* 🔵 警告ではなく事実の印。下げたあとに動き出した業種は、
+                            「まだ上がりきっていないものを買う」目的ではむしろ探しているもの。 */}
                         {r.rebound && (
                           <span style={{
-                            fontSize: 9, color: DOWN, border: `1px solid ${DOWN}`,
+                            fontSize: 9, color: c.GREEN, border: `1px solid ${c.GREEN}`,
                             borderRadius: 3, padding: '0 4px', whiteSpace: 'nowrap',
-                          }}>戻り</span>
+                          }}>反発</span>
                         )}
-                        <span style={{ fontSize: 9.5, color: c.DIM, whiteSpace: 'nowrap' }}>
-                          その前 {signed(r.row[SUB_KEY])}
-                        </span>
                         <span style={{
                           fontSize: 12, fontWeight: 700, color: pnl(r.row[MAIN_KEY]),
                           minWidth: 56, textAlign: 'right',
@@ -694,14 +693,33 @@ export function SectorPanel({ theme, isMobile }: Props) {
                   )
                 })}
               </ul>
-              <p style={{ margin: '6px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.7 }}>
-                🔴「戻り」＝直近{PERF_LABELS[MAIN_KEY]}はプラスだが、その前（{PERF_LABELS[SUB_KEY]}）はマイナスの業種。
-                下げたあとの反発なので、勢いが続いているものとは分けて見てください。
-                行をクリックすると、その業種の銘柄を検索します。
+              {!allRanks && risingRows.length === 0 && (
+                <p style={{ margin: 0, fontSize: 11, color: c.DIM }}>
+                  直近1か月でプラスの業種はありません（全17業種がマイナス）。
+                </p>
+              )}
+
+              <p style={{ margin: '6px 0 0', fontSize: 9.5, color: c.DIM }}>
+                「反発」＝その前（{periodText(periods, 'prev2m')}）は下げていた業種
               </p>
             </section>
           )}
+        </div>
+      </div>
 
+      <div style={isMobile
+        ? { height: 1, background: 'var(--border-dim)', flexShrink: 0 }
+        : { width: 1, background: 'var(--border-dim)', flexShrink: 0 }} />
+
+      {/* ── 右：銘柄の話 ── 検索とAI分析だけ ─────────────────── */}
+      <div style={{
+        flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', padding: '44px 16px 24px', overflowY: 'auto',
+      }}>
+        <div style={{
+          width: '100%', maxWidth: 460,
+          display: 'flex', flexDirection: 'column', gap: 14,
+        }}>
           {/* 銘柄検索 */}
           <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 7 }}>
             <label htmlFor="sector-search" style={{ fontSize: 11, color: c.GREEN, letterSpacing: '0.1em' }}>

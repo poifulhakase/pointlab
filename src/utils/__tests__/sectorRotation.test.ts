@@ -202,9 +202,11 @@ describe('局面の「型」との一致度', () => {
 })
 
 describe('いま強い業種の並び', () => {
-  /** 1か月・3か月を指定して1行作る */
-  function row(sector17: number, m1: number | null, m3: number | null): SectorPerfRow {
-    return { ...perfRow(sector17, null), chg1m: m1, chg3m: m3 }
+  /** 直近1か月と、その前の2か月（重ならない区間）を指定して1行作る */
+  function row(sector17: number, m1: number | null, prev2: number | null): SectorPerfRow {
+    // 🔵 chg3m には**あえて逆向きの値**を入れておく。
+    //    判定が誤って3か月を見ていたら落ちるようにするため。
+    return { ...perfRow(sector17, 999), chg1m: m1, chgPrev2m: prev2 }
   }
 
   it('直近1か月の強い順に並ぶ', () => {
@@ -217,13 +219,13 @@ describe('いま強い業種の並び', () => {
     expect(sectorRanking([row(15, 1, 1)])[0].phase!.id).toBe('reverseFinancial')
   })
 
-  it('🔴 1か月プラス×3か月マイナスは「戻り」として印を付ける', () => {
-    // 印が無いと、下落トレンドの一時的な反発を「いま強い業種」として拾ってしまう
-    // （実例 2026-08-07: 鉄鋼・非鉄 1か月 +6.0% / 3か月 -19.1%）
+  it('🔴 直近1か月プラス×その前2か月マイナスに「反発」の印を付ける', () => {
+    // 「その前は下げていたのに直近で動き出した」＝変化が起きた業種を拾うための印
+    // （実例 2026-08-07: 鉄鋼・非鉄 直近1か月 +6.0% / その前2か月 -23.7%）
     const r = sectorRanking([
-      row(7, 6, -19),   // 戻り
-      row(15, 5, 20),   // 続いている
-      row(3, -2, -10),  // 1か月もマイナス → 戻りではない
+      row(7, 6, -23),   // 反発
+      row(15, 5, 18),   // ずっと強い
+      row(3, -2, -10),  // 直近もマイナス → 反発ではない
     ])
     const by = (code: number) => r.find(x => x.row.sector17 === code)!
     expect(by(7).rebound).toBe(true)
@@ -231,7 +233,15 @@ describe('いま強い業種の並び', () => {
     expect(by(3).rebound).toBe(false)
   })
 
-  it('3か月が取れないものは「戻り」にしない（欠測を判定に使わない）', () => {
+  it('🔴 判定に3か月（直近を含む重なった窓）を使わない', () => {
+    // 3か月は直近1か月を含むので、窓の中で主役が交代していると古い局面と混ざる。
+    // ここでは chgPrev2m がマイナスなのに chg3m がプラス＝反発が前の下げを上回った形。
+    // 3か月で判定していると取りこぼす。
+    const r = sectorRanking([{ ...perfRow(7, 2.6), chg1m: 8, chgPrev2m: -5 }])
+    expect(r[0].rebound).toBe(true)
+  })
+
+  it('その前の2か月が取れないものは印を付けない（欠測を判定に使わない）', () => {
     expect(sectorRanking([row(7, 6, null)])[0].rebound).toBe(false)
   })
 
@@ -371,6 +381,18 @@ describe('public/data の実ファイル', () => {
     }
     // 4局面すべてに実測が付く
     for (const s of phaseStrengths(rows, 'chg3m')) expect(s.avg).not.toBeNull()
+    // 🔴 「その前の2か月」（重ならない区間）が全業種に入っている＝反発の判定に必要
+    for (const r of rows) expect(r.chgPrev2m).not.toBeUndefined()
+  })
+
+  it('🔴 periods の prev2m が「直近1か月の手前」で、重なっていない', () => {
+    const json = JSON.parse(perfRaw)
+    const p1 = json.periods?.chg1m
+    const pv = json.periods?.prev2m
+    expect(p1).toBeTruthy()
+    expect(pv).toBeTruthy()
+    // 前区間の終わり＝直近1か月の始まり（重複ゼロ）
+    expect(pv.to).toBe(p1.from)
   })
 
   it('stock_master.json は内国株式のみで、17業種コードが正しい範囲に入る', () => {

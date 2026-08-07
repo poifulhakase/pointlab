@@ -148,6 +148,12 @@ export type SectorPerfRow = {
   chg1m:    number | null
   chg3m:    number | null
   chg6m:    number | null
+  /**
+   * 直近1か月の**手前**の2か月（重ならない区間）の騰落率。
+   * 🔴 「その前はどうだったか」に 3か月を使ってはいけない。直近1か月を含むので、
+   *    窓の中で主役が交代していると古い局面と今の局面を混ぜた数字になる（ユーザー指摘・2026-08-07）。
+   */
+  chgPrev2m?: number | null
   rank1m:   number | null
   rank3m:   number | null
   rank6m:   number | null
@@ -177,8 +183,10 @@ export const PERF_PLAIN: Record<PerfKey, string> = {
 }
 
 /** 期間の実日付（`sector_perf.json` の periods）。 */
-export type PerfPeriod = { days: number; from: string | null; to: string }
-export type PerfPeriods = Partial<Record<PerfKey, PerfPeriod>>
+export type PerfPeriod = { days: number; from: string | null; to: string | null }
+/** 🔵 `prev2m` は「直近1か月の手前の2か月」＝重ならない区間。騰落率のキーではないので別枠。 */
+export type PeriodKey = PerfKey | 'prev2m'
+export type PerfPeriods = Partial<Record<PeriodKey, PerfPeriod>>
 
 export type PhaseStrength = {
   phase: SectorPhase
@@ -308,16 +316,22 @@ export type SectorRankRow = {
   /** 所属する局面（未分類なら null） */
   phase: SectorPhase | null
   /**
-   * 🔴 1か月はプラスなのに3か月がマイナス＝**下げたあとの戻り**。
-   *    ここを黙って「いま強い業種」として並べると、下落トレンドの一時的な反発を拾ってしまう。
-   *    実例（2026-08-07）＝鉄鋼・非鉄 1か月 +6.0% / 3か月 −19.1%。
+   * 直近1か月はプラスだが、**その前の2か月**はマイナス＝下げたあとに動き出した業種。
+   *
+   * 🔵 これは警告ではない。「まだ上がりきっていないものを買う」のが目的なら、
+   *    底を打った直後はむしろ探しているもの。ただの事実として印を付ける。
+   *    🔴 それが底なのか一時的な反発なのかは**判定できない**（区別を示すところまで）。
+   * 🔴 判定に **3か月を使わない**。3か月は直近1か月を含むので、
+   *    窓の中で主役が交代していると古い局面と混ざる（ユーザー指摘・2026-08-07）。
+   *    実例＝2026-08-07 の型の一致度は 1か月=逆金融83.3 / 3か月=金融67.3 で1位が食い違っていた
+   *    ＝3か月の窓の中で交代が起きている証拠。
    */
   rebound: boolean
 }
 
 /**
  * 「いまどの業種がいいか」に答えるための並び（純粋関数・テスト対象）。
- * 直近1か月の強い順。3か月がマイナスのものには `rebound` を立てる。
+ * 直近1か月の強い順。その前の2か月（重ならない区間）がマイナスなら `rebound`。
  */
 export function sectorRanking(rows: readonly SectorPerfRow[]): SectorRankRow[] {
   return [...rows]
@@ -327,7 +341,7 @@ export function sectorRanking(rows: readonly SectorPerfRow[]): SectorRankRow[] {
       row,
       rank: i + 1,
       phase: phaseOfSector17(row.sector17),
-      rebound: row.chg1m! > 0 && row.chg3m != null && row.chg3m < 0,
+      rebound: row.chg1m! > 0 && row.chgPrev2m != null && row.chgPrev2m < 0,
     }))
 }
 
