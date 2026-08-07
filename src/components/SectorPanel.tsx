@@ -317,7 +317,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
         flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '44px 16px 24px', overflowY: isMobile ? 'visible' : 'auto',
+        padding: '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           fontSize: 12, letterSpacing: '0.18em', color: c.GREEN, marginBottom: 2,
@@ -540,13 +540,13 @@ export function SectorPanel({ theme, isMobile }: Props) {
         ? { height: 1, background: 'var(--border-dim)', flexShrink: 0 }
         : { width: 1, background: 'var(--border-dim)', flexShrink: 0 }} />
 
-      {/* ── 右：業種の内訳＋銘柄検索＋AI分析 ── 🔵 上下中央 ──── */}
       {/* ── 中：業種の話 ── 選んだ局面の内訳／次に来る業種／いま強い業種 ──── */}
-      {/* 🔴 上下中央寄せはしない（2026-08-07）。
-          中身が増減するたびに中央位置が変わり、下の列の入力欄まで動いてしまうため。 */}
+      {/* 🔵 上下中央寄せ。カードに `minHeight` を入れて**高さが変わらないようにした**ので、
+          局面を切り替えても中身は動かない（高さが可変のままだと中央位置がずれてガタつく）。 */}
       <div style={{
         flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', padding: '44px 16px 24px', overflowY: 'auto',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '24px 16px', overflowY: 'auto',
       }}>
         <div style={{
           width: '100%', maxWidth: 460,
@@ -649,7 +649,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
               <ul style={{
                 listStyle: 'none', margin: 0, padding: 0,
                 display: 'flex', flexDirection: 'column', gap: 3,
-                maxHeight: 300, overflowY: 'auto', overflowX: 'hidden',
+                // 🔵 既定は5件なのでスクロールしない。「全17業種」に展開したときだけ効く枠
+                maxHeight: 420, overflowY: 'auto', overflowX: 'hidden',
               }}>
                 {(allRanks ? ranking : risingRows).map(r => {
                   const col = r.phase?.color ?? c.BORDBR
@@ -712,6 +713,9 @@ export function SectorPanel({ theme, isMobile }: Props) {
         : { width: 1, background: 'var(--border-dim)', flexShrink: 0 }} />
 
       {/* ── 右：銘柄の話 ── 検索とAI分析だけ ─────────────────── */}
+      {/* 🔴 この列だけ上揃え。検索結果とAIパネルで**高さが変わる**ため、
+          中央寄せにすると入力欄が上下に動いてしまう（ユーザー指摘・2026-08-07）。
+          上揃えなら中身は下へ伸びるだけで、入力欄の位置は固定される。 */}
       <div style={{
         flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
         alignItems: 'center', padding: '44px 16px 24px', overflowY: 'auto',
@@ -765,7 +769,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
                 <ul style={{
                   listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 5,
                   // 🔵 縦スクロールバーが出た分だけ横にはみ出して横スクロールが生えるので塞ぐ
-                  maxHeight: 220, overflowY: 'auto', overflowX: 'hidden',
+                  // 🔵 列に高さの余裕があるので広めに取る（狭いと数件しか見えず絞り込みづらい）
+                  maxHeight: 420, overflowY: 'auto', overflowX: 'hidden',
                 }}>
                   {search.hits.map(st => {
                     const ph = phaseOfSector17(st.sector17)
