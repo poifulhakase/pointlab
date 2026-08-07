@@ -115,8 +115,12 @@ export function SectorPanel({ theme, isMobile }: Props) {
   const [hovered,  setHovered]  = useState<SectorPhaseId | null>(null)
   const [query,    setQuery]    = useState('')
   const [picked,   setPicked]   = useState<StockRow | null>(null)
-  const [copied,   setCopied]   = useState(false)
+  const [copied,   setCopied]   = useState<'prompt' | 'code' | 'tv' | null>(null)
+  // 🔵 検索結果の行でコードを押したとき、どの行をコピーしたか出すため
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [help,     setHelp]     = useState(false)
+  // 🔵 選んだ局面の内訳はモーダルで出す（常時出すと円環から視線が外れる）
+  const [detail,   setDetail]   = useState(false)
   // 🔵 「いま資金が向かっている業種」は既定で上位5つだけ（17件は多すぎる）
   const [allRanks, setAllRanks] = useState(false)
 
@@ -127,6 +131,16 @@ export function SectorPanel({ theme, isMobile }: Props) {
       .catch(e => { if (alive) setPerfErr(e instanceof Error ? e.message : String(e)) })
     return () => { alive = false }
   }, [])
+
+  // Esc でモーダル・ヘルプを閉じる
+  useEffect(() => {
+    if (!detail && !help) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setDetail(false); setHelp(false) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [detail, help])
 
   // 🔵 銘柄マスタは約3700件と大きいので、**検索を使い始めたときに初めて**取りにいく。
   const ensureMaster = useCallback(() => {
@@ -188,9 +202,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
     [query, master]
   )
 
-  const handleCopy = useCallback(async () => {
-    if (!picked || !perf) return
-    const text = buildStockAnalysisPrompt(picked, perf, strengths, perfKey, jstTimestamp())
+  /** クリップボードへコピー（APIが使えない環境の逃げ道つき） */
+  const copyText = useCallback(async (text: string, mark: 'prompt' | 'code' | 'tv') => {
     try {
       await navigator.clipboard.writeText(text)
     } catch {
@@ -201,9 +214,19 @@ export function SectorPanel({ theme, isMobile }: Props) {
       document.body.appendChild(el); el.select(); document.execCommand('copy')
       document.body.removeChild(el)
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }, [picked, perf, strengths, perfKey])
+    setCopied(mark)
+    setTimeout(() => setCopied(null), 2500)
+  }, [])
+
+  const handleCopy = useCallback(() => {
+    if (!picked || !perf) return
+    copyText(buildStockAnalysisPrompt(picked, perf, strengths, perfKey, jstTimestamp()), 'prompt')
+  }, [picked, perf, strengths, perfKey, copyText])
+
+  // 🔵 銘柄コードだけ欲しい場面がある（証券会社の検索窓に貼る等）ので別ボタンにした
+  const handleCopyCode = useCallback(() => {
+    if (picked) copyText(picked.code, 'code')
+  }, [picked, copyText])
 
   const dataDate = perf?.[0]?.time ?? null
 
@@ -232,17 +255,15 @@ export function SectorPanel({ theme, isMobile }: Props) {
           }}>一致度 {shownFit.score}/100</span>
         )}
       </div>
-      {/* 🔴 高さを固定する。局面ごとに説明の行数（1〜2行）と業種数（3〜6）が違うため、
-          クリックで切り替えるたびにカードの高さが変わり、下の「次に来る業種」以下がガタつく
-          （ユーザー指摘・2026-08-07）。いちばん大きい局面に合わせて場所を確保しておく。 */}
-      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: c.DESC, minHeight: 38 }}>
+      {/* 🔵 これはモーダルの中身なので高さを固定しない（下に何も無く、ガタつかないため）。
+          以前インラインで出していたときは minHeight で6業種ぶん確保していた。 */}
+      <p style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: c.DESC }}>
         {shown.note}
       </p>
 
       <ul style={{
         listStyle: 'none', margin: '8px 0 0', padding: 0,
         display: 'flex', flexDirection: 'column', gap: 4,
-        minHeight: 6 * 21 + 5 * 4,   // 最大6業種ぶん
       }}>
         {(shownFit?.members.length
           ? shownFit.members.map(m => ({
@@ -310,6 +331,19 @@ export function SectorPanel({ theme, isMobile }: Props) {
         .sector-card  { animation: sector-fade .28s ease both; }
         .sector-hit   { transition: transform .15s ease, border-color .15s ease, background .15s ease; }
         .sector-hit:hover { transform: translateX(3px); }
+        /* 🔴 Chrome のオートフィルが背景を白(rgb(232,240,254))で !important 上書きしてしまい、
+           ダークテーマでも入力欄だけ白く見える（ユーザー指摘・2026-08-07）。
+           background では勝てないので、内側シャドウで塗り潰してテーマ色に戻す。 */
+        #sector-search:-webkit-autofill,
+        #sector-search:-webkit-autofill:hover,
+        #sector-search:-webkit-autofill:focus,
+        #sector-search:-webkit-autofill:active {
+          -webkit-text-fill-color: ${c.TXTCLR};
+          -webkit-box-shadow: 0 0 0 1000px ${bubbleBg} inset;
+          box-shadow: 0 0 0 1000px ${bubbleBg} inset;
+          caret-color: ${c.TXTCLR};
+          transition: background-color 9999s ease-in-out 0s;
+        }
       `}</style>
 
       {/* ── 左：円環 ── 🔵 上下中央に置く ───────────────── */}
@@ -530,6 +564,22 @@ export function SectorPanel({ theme, isMobile }: Props) {
         {/* 🔵 一致度の一覧表は撤去した（期間が1つになったので、円環の各扇に出ている
             「一致 67.3」と同じ内容＝重複）。説明も箱で常時出すのをやめ、
             上の「?」の吹き出しに畳んだ。**視線を円環に集めるため**（ユーザー要望・2026-08-07）。 */}
+        {/* 🔵 選んだ局面の中身はモーダルに逃がした（2026-08-07・ユーザー要望）。
+            常時出すと情報量が多く、円環から視線が外れるため。 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
+          <span style={{ fontSize: 11, color: shown.color }}>{shown.label}とは？</span>
+          <button
+            onClick={() => setDetail(true)}
+            aria-label={`${shown.label}の内訳を開く`}
+            style={{
+              width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+              border: `1px solid ${shown.color}`, background: 'transparent',
+              color: shown.color, fontFamily: c.FONT, fontSize: 10, lineHeight: 1,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+            }}
+          >?</button>
+        </div>
+
         <div style={{ marginTop: 8, fontSize: 9.5, color: c.DIM }}>
           {dataDate && <>データ日付：{dataDate}</>}
           {perfErr && <span style={{ color: DOWN }}> 🔴 取得エラー：{perfErr}</span>}
@@ -552,8 +602,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
           width: '100%', maxWidth: 460,
           display: 'flex', flexDirection: 'column', gap: 14,
         }}>
-          {/* 選んだ局面の内訳。円環のすぐ隣に置いて、円環と対で読めるようにする */}
-          {phaseCard}
 
           {/* 🔵 この画面の主役。**次に来るとされる業種**を先頭に置く。
               目的が「いま伸びている業種を見る」ではなく
@@ -594,7 +642,11 @@ export function SectorPanel({ theme, isMobile }: Props) {
                       title={`${r.row.label}の銘柄を検索`}
                       style={{
                         width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                        border: `1px solid ${nextPh.color}55`, borderLeft: `3px solid ${nextPh.color}`,
+                        // 🔴 border 一括と borderLeft を混ぜない（上の検索結果と同じ理由）
+                        borderTop:    `1px solid ${nextPh.color}55`,
+                        borderRight:  `1px solid ${nextPh.color}55`,
+                        borderBottom: `1px solid ${nextPh.color}55`,
+                        borderLeft:   `3px solid ${nextPh.color}`,
                         borderRadius: 5, padding: '6px 9px', background: c.TAREA,
                         color: c.TXTCLR, fontFamily: c.FONT, cursor: 'pointer', textAlign: 'left',
                       }}
@@ -624,7 +676,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
           {/* 🔵 参考：いま資金が向かっている業種（＝すでに動いた側）。
               「次」を判断する材料として、順番が実際に回っているかを見るために置く。 */}
           {ranking.length > 0 && (
-            <section>
+            /* 🔵 上の「次に来るとされる業種」とは役割が違うので、間の余白を広めに取る */
+            <section style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                 {/* 🔴 全17業種を出すとマイナスの業種まで並ぶので、
                     「資金が向かっている」という見出しでは矛盾する（ユーザー指摘・2026-08-07）。
@@ -667,7 +720,11 @@ export function SectorPanel({ theme, isMobile }: Props) {
                         title={`${r.row.label}の銘柄を検索`}
                         style={{
                           width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                          border: `1px solid ${c.BORDER}`, borderLeft: `3px solid ${col}`,
+                          // 🔴 border 一括と borderLeft を混ぜない（上の検索結果と同じ理由）
+                          borderTop:    `1px solid ${c.BORDER}`,
+                          borderRight:  `1px solid ${c.BORDER}`,
+                          borderBottom: `1px solid ${c.BORDER}`,
+                          borderLeft:   `3px solid ${col}`,
                           borderRadius: 5, padding: '5px 9px', background: c.LOGBG,
                           color: c.TXTCLR, fontFamily: c.FONT, cursor: 'pointer', textAlign: 'left',
                         }}
@@ -732,6 +789,8 @@ export function SectorPanel({ theme, isMobile }: Props) {
             <input
               id="sector-search"
               value={query}
+              // 🔵 銘柄名は住所や氏名ではないので、そもそもオートフィルの対象にしない
+              autoComplete="off"
               onFocus={ensureMaster}
               onChange={e => { ensureMaster(); setQuery(e.target.value); setPicked(null) }}
               placeholder="銘柄コード（例 6758）・銘柄名・業種名"
@@ -777,24 +836,50 @@ export function SectorPanel({ theme, isMobile }: Props) {
                     const on = picked?.code === st.code
                     const col = ph?.color ?? c.BORDBR
                     return (
-                      <li key={st.code}>
+                      <li
+                        key={st.code}
+                        className="sector-hit"
+                        onClick={() => setPicked(on ? null : st)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          // 🔴 `border`（一括指定）と `borderLeft` を混ぜないこと。
+                          //    選択状態が変わると React は値の変わった `border` だけを再適用し、
+                          //    値が同じ `borderLeft` は設定し直さないため、左の3pxが1pxに潰れる
+                          //    （実際に選択中の行だけ borderLeftWidth が 1px になっていた・2026-08-07）。
+                          borderTop:    `1px solid ${on ? col : c.BORDER}`,
+                          borderRight:  `1px solid ${on ? col : c.BORDER}`,
+                          borderBottom: `1px solid ${on ? col : c.BORDER}`,
+                          borderLeft:   `3px solid ${col}`,
+                          borderRadius: 5, padding: '7px 10px',
+                          background: on ? `${col}1f` : c.LOGBG,
+                          color: c.TXTCLR, cursor: 'pointer',
+                        }}
+                      >
+                        {/* 🔵 コード部分だけは押すと**コードをコピー**（証券会社の検索窓に貼るため）。
+                            行の選択と役割が違うので stopPropagation して分ける。 */}
                         <button
-                          className="sector-hit"
-                          onClick={() => setPicked(on ? null : st)}
-                          style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                            border: `1px solid ${on ? col : c.BORDER}`,
-                            borderLeft: `3px solid ${col}`,
-                            borderRadius: 5, padding: '7px 10px',
-                            background: on ? `${col}1f` : c.LOGBG,
-                            color: c.TXTCLR, fontFamily: c.FONT, cursor: 'pointer', textAlign: 'left',
+                          onClick={e => {
+                            e.stopPropagation()
+                            copyText(st.code, 'code')
+                            setCopiedCode(st.code)
+                            setTimeout(() => setCopiedCode(v => (v === st.code ? null : v)), 1600)
                           }}
-                        >
-                          <span style={{ fontSize: 12.5, fontWeight: 700, color: c.GREEN, minWidth: 46 }}>{st.code}</span>
-                          <span style={{ fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{st.name}</span>
-                          <span style={{ fontSize: 10.5, color: c.DIM }}>{sector17Label(st.sector17)}</span>
-                          {ph && <span style={{ fontSize: 10, color: col }}>{ph.label}</span>}
-                        </button>
+                          title="銘柄コードをコピー"
+                          style={{
+                            fontSize: 12.5, fontWeight: 700, minWidth: 46, textAlign: 'left',
+                            color: copiedCode === st.code ? UP : c.GREEN,
+                            background: 'transparent', border: 'none', padding: 0,
+                            fontFamily: c.FONT, cursor: 'copy',
+                            textDecoration: 'underline', textDecorationStyle: 'dotted',
+                            textUnderlineOffset: 3,
+                          }}
+                        >{st.code}</button>
+                        {copiedCode === st.code && (
+                          <span style={{ fontSize: 9.5, color: UP, whiteSpace: 'nowrap' }}>コピー済</span>
+                        )}
+                        <span style={{ fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{st.name}</span>
+                        <span style={{ fontSize: 10.5, color: c.DIM }}>{sector17Label(st.sector17)}</span>
+                        {ph && <span style={{ fontSize: 10, color: col }}>{ph.label}</span>}
                       </li>
                     )
                   })}
@@ -812,23 +897,55 @@ export function SectorPanel({ theme, isMobile }: Props) {
               <div style={{ fontSize: 11.5, color: c.GREEN, letterSpacing: '0.08em' }}>
                 ▶ {picked.code} {picked.name} を AI で調べる
               </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
                 onClick={handleCopy}
                 disabled={!perf}
                 style={{
-                  alignSelf: 'flex-start', cursor: perf ? 'pointer' : 'not-allowed',
+                  cursor: perf ? 'pointer' : 'not-allowed',
                   opacity: perf ? 1 : 0.5,
-                  background: copied ? `${c.GREEN}22` : c.TAREA,
-                  border: `2px solid ${copied ? c.GREEN : c.BORDBR}`,
+                  background: copied === 'prompt' ? `${c.GREEN}22` : c.TAREA,
+                  border: `2px solid ${copied === 'prompt' ? c.GREEN : c.BORDBR}`,
                   borderRadius: 6, padding: '8px 16px',
                   color: c.GREEN, fontFamily: c.FONT, fontSize: 12, fontWeight: 700,
                   letterSpacing: '0.08em',
-                  boxShadow: copied && glow ? `0 0 14px ${c.GREEN}55` : undefined,
+                  boxShadow: copied === 'prompt' && glow ? `0 0 14px ${c.GREEN}55` : undefined,
                   transition: 'all .2s ease',
                 }}
               >
-                {copied ? '▶ コピー完了' : 'COPY  分析プロンプト'}
+                {copied === 'prompt' ? '▶ コピー完了' : 'COPY  分析プロンプト'}
               </button>
+              {/* 🔵 コピー先は TradingView 想定。素のコードだと銘柄が特定できないことがあるので、
+                  取引所つきの `TSE:1332` 形式もすぐ貼れるようにしておく。 */}
+              <button
+                onClick={handleCopyCode}
+                title="銘柄コードをコピー"
+                style={{
+                  cursor: 'pointer',
+                  background: copied === 'code' ? `${c.GREEN}22` : 'transparent',
+                  border: `1px solid ${copied === 'code' ? c.GREEN : c.BORDER}`,
+                  borderRadius: 6, padding: '8px 12px',
+                  color: c.DIM, fontFamily: c.FONT, fontSize: 11,
+                  transition: 'all .2s ease',
+                }}
+              >
+                {copied === 'code' ? `▶ ${picked.code} をコピー` : `コード ${picked.code}`}
+              </button>
+              <button
+                onClick={() => copyText(`TSE:${picked.code}`, 'tv')}
+                title="TradingView 用（取引所つき）"
+                style={{
+                  cursor: 'pointer',
+                  background: copied === 'tv' ? `${c.GREEN}22` : 'transparent',
+                  border: `1px solid ${copied === 'tv' ? c.GREEN : c.BORDER}`,
+                  borderRadius: 6, padding: '8px 12px',
+                  color: c.DIM, fontFamily: c.FONT, fontSize: 11,
+                  transition: 'all .2s ease',
+                }}
+              >
+                {copied === 'tv' ? `▶ TSE:${picked.code} をコピー` : `TSE:${picked.code}`}
+              </button>
+              </div>
               <p style={{ margin: 0, fontSize: 10, color: c.DIM, lineHeight: 1.7 }}>
                 コピーしたら下のAIに貼ってください。業種の実測（{PERF_LABELS[perfKey]}）も一緒に渡します。
                 🔴 ぽいロボは株価を持っていないので、株価はAI側に調べさせる形にしています
@@ -839,6 +956,41 @@ export function SectorPanel({ theme, isMobile }: Props) {
           )}
         </div>
       </div>
+
+      {/* 局面の内訳モーダル（左カラムの「◯◯相場とは？」から開く） */}
+      {detail && (
+        <div
+          onClick={() => setDetail(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 60,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="sector-card"
+            style={{
+              position: 'relative', width: 460, maxWidth: '100%', maxHeight: '86vh', overflowY: 'auto',
+              background: bubbleBg, border: `1px solid ${shown.color}`,
+              borderRadius: 12, padding: '18px 20px',
+              boxShadow: `0 8px 32px rgba(0,0,0,0.45)${glow ? `, 0 0 24px ${shown.color}33` : ''}`,
+              fontFamily: c.FONT, color: c.TXTCLR,
+            }}
+          >
+            <button
+              onClick={() => setDetail(false)}
+              aria-label="閉じる"
+              style={{
+                position: 'absolute', top: 10, right: 12,
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: c.DIM, fontFamily: c.FONT, fontSize: 16, lineHeight: 1, padding: 4,
+              }}
+            >×</button>
+            {phaseCard}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
