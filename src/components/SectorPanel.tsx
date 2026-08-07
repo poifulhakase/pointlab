@@ -115,7 +115,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
   const [hovered,  setHovered]  = useState<SectorPhaseId | null>(null)
   const [query,    setQuery]    = useState('')
   const [picked,   setPicked]   = useState<StockRow | null>(null)
-  const [copied,   setCopied]   = useState<'prompt' | 'code' | 'tv' | null>(null)
+  const [copied,   setCopied]   = useState<'prompt' | 'code' | null>(null)
   // 🔵 検索結果の行でコードを押したとき、どの行をコピーしたか出すため
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [help,     setHelp]     = useState(false)
@@ -202,7 +202,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
   )
 
   /** クリップボードへコピー（APIが使えない環境の逃げ道つき） */
-  const copyText = useCallback(async (text: string, mark: 'prompt' | 'code' | 'tv') => {
+  const copyText = useCallback(async (text: string, mark: 'prompt' | 'code') => {
     try {
       await navigator.clipboard.writeText(text)
     } catch {
@@ -222,10 +222,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
     copyText(buildStockAnalysisPrompt(picked, perf, strengths, perfKey, jstTimestamp()), 'prompt')
   }, [picked, perf, strengths, perfKey, copyText])
 
-  // 🔵 銘柄コードだけ欲しい場面がある（証券会社の検索窓に貼る等）ので別ボタンにした
-  const handleCopyCode = useCallback(() => {
-    if (picked) copyText(picked.code, 'code')
-  }, [picked, copyText])
 
   const dataDate = perf?.[0]?.time ?? null
 
@@ -829,11 +825,13 @@ export function SectorPanel({ theme, isMobile }: Props) {
               <div style={{ fontSize: 11.5, color: c.GREEN, letterSpacing: '0.08em' }}>
                 ▶ {picked.code} {picked.name} を AI で調べる
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {/* 🔵 コードのコピーは**リストの行クリック**で済むのでボタンは置かない
+                  （同じことが2か所にあると迷う・2026-08-07）。ここはAIプロンプト専用。 */}
               <button
                 onClick={handleCopy}
                 disabled={!perf}
                 style={{
+                  alignSelf: 'flex-start',
                   cursor: perf ? 'pointer' : 'not-allowed',
                   opacity: perf ? 1 : 0.5,
                   background: copied === 'prompt' ? `${c.GREEN}22` : c.TAREA,
@@ -847,37 +845,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
               >
                 {copied === 'prompt' ? '▶ コピー完了' : 'COPY  分析プロンプト'}
               </button>
-              {/* 🔵 コピー先は TradingView 想定。素のコードだと銘柄が特定できないことがあるので、
-                  取引所つきの `TSE:1332` 形式もすぐ貼れるようにしておく。 */}
-              <button
-                onClick={handleCopyCode}
-                title="銘柄コードをコピー"
-                style={{
-                  cursor: 'pointer',
-                  background: copied === 'code' ? `${c.GREEN}22` : 'transparent',
-                  border: `1px solid ${copied === 'code' ? c.GREEN : c.BORDER}`,
-                  borderRadius: 6, padding: '8px 12px',
-                  color: c.DIM, fontFamily: c.FONT, fontSize: 11,
-                  transition: 'all .2s ease',
-                }}
-              >
-                {copied === 'code' ? `▶ ${picked.code} をコピー` : `コード ${picked.code}`}
-              </button>
-              <button
-                onClick={() => copyText(`TSE:${picked.code}`, 'tv')}
-                title="TradingView 用（取引所つき）"
-                style={{
-                  cursor: 'pointer',
-                  background: copied === 'tv' ? `${c.GREEN}22` : 'transparent',
-                  border: `1px solid ${copied === 'tv' ? c.GREEN : c.BORDER}`,
-                  borderRadius: 6, padding: '8px 12px',
-                  color: c.DIM, fontFamily: c.FONT, fontSize: 11,
-                  transition: 'all .2s ease',
-                }}
-              >
-                {copied === 'tv' ? `▶ TSE:${picked.code} をコピー` : `TSE:${picked.code}`}
-              </button>
-              </div>
               <p style={{ margin: 0, fontSize: 10, color: c.DIM, lineHeight: 1.7 }}>
                 コピーしたら下のAIに貼ってください。業種の実測（{PERF_LABELS[perfKey]}）も一緒に渡します。
                 🔴 ぽいロボは株価を持っていないので、株価はAI側に調べさせる形にしています
