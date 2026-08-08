@@ -61,6 +61,16 @@ const R_IN  = 88
 /** 「次の局面はこちら」の矢印を回す半径（外周の目盛りリングのさらに外） */
 const R_NEXT = R_OUT + 24
 
+/**
+ * 銘柄コードから TradingView の個別銘柄ページを別タブで開く。
+ * 🔵 このアプリは個別銘柄の株価を持たない方針（チャートも指標も TradingView 側が持っている）なので、
+ *    「探す」の出口は外部リンク1本にしている。
+ * 🔴 `noopener` は必須（開いた先から `window.opener` 経由でこちらを操作されないようにする）。
+ */
+function openInTradingView(code: string) {
+  window.open(`https://jp.tradingview.com/symbols/TSE-${code}/`, '_blank', 'noopener,noreferrer')
+}
+
 /** 角度（0度＝真上・時計回り）を SVG 座標へ。 */
 function pt(angle: number, r: number) {
   const rad = ((angle - 90) * Math.PI) / 180
@@ -115,9 +125,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
   const [hovered,  setHovered]  = useState<SectorPhaseId | null>(null)
   const [query,    setQuery]    = useState('')
   const [picked,   setPicked]   = useState<StockRow | null>(null)
-  const [copied,   setCopied]   = useState<'prompt' | 'code' | null>(null)
-  // 🔵 検索結果の行でコードを押したとき、どの行をコピーしたか出すため
-  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [copied,   setCopied]   = useState<'prompt' | null>(null)
   const [help,     setHelp]     = useState(false)
   // 🔵 選んだ局面の内訳はモーダルで出す（常時出すと円環から視線が外れる）
   const [detail,   setDetail]   = useState(false)
@@ -202,7 +210,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
   )
 
   /** クリップボードへコピー（APIが使えない環境の逃げ道つき） */
-  const copyText = useCallback(async (text: string, mark: 'prompt' | 'code') => {
+  const copyText = useCallback(async (text: string, mark: 'prompt') => {
     try {
       await navigator.clipboard.writeText(text)
     } catch {
@@ -339,9 +347,15 @@ export function SectorPanel({ theme, isMobile }: Props) {
 
         </div>
 
+        {/* 🔴 円環は 344px 固定。左右の padding(16px)を足すと 376px 必要なので、
+            360px 以下の端末では viewBox のまま縮めないと横にはみ出す。
+            `maxWidth:100%` + `height:auto` で幅に合わせて縮小する（比率は viewBox が保つ）。 */}
         <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img"
              aria-label="景気4局面と、業種別ETFで測った実測の相対強弱"
-             style={{ filter: glow ? `drop-shadow(0 0 10px ${c.GREEN}22)` : undefined }}>
+             style={{
+               maxWidth: '100%', height: 'auto',
+               filter: glow ? `drop-shadow(0 0 10px ${c.GREEN}22)` : undefined,
+             }}>
           <defs>
             {PHASES.map(p => (
               <radialGradient key={p.id} id={`sg-${p.id}`} cx="50%" cy="50%" r="70%">
@@ -519,11 +533,15 @@ export function SectorPanel({ theme, isMobile }: Props) {
 
       {/* ── 中：業種の話 ── 選んだ局面の内訳／次に来る業種／いま強い業種 ──── */}
       {/* 🔵 上下中央寄せ。カードに `minHeight` を入れて**高さが変わらないようにした**ので、
-          局面を切り替えても中身は動かない（高さが可変のままだと中央位置がずれてガタつく）。 */}
+          局面を切り替えても中身は動かない（高さが可変のままだと中央位置がずれてガタつく）。
+          🔴 スマホ（縦積み）では `flex: 1` にしないこと。左列が円環の高さ(344px)を先に取るため、
+             残りを中列と右列で奪い合って **主役の「次に来る業種」が 63px の帯に潰れる**
+             （2026-08-08 実測）。縦積みのときは中身の高さのまま並べて、
+             スクロールは親（このコンポーネントのルート）に1本だけ持たせる。 */}
       <div style={{
-        flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px', overflowY: 'auto',
+        flex: isMobile ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center',
+        padding: '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           width: '100%', maxWidth: 460,
@@ -707,10 +725,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
       {/* ── 右：銘柄の話 ── 検索とAI分析だけ ─────────────────── */}
       {/* 🔴 この列だけ上揃え。検索結果とAIパネルで**高さが変わる**ため、
           中央寄せにすると入力欄が上下に動いてしまう（ユーザー指摘・2026-08-07）。
-          上揃えなら中身は下へ伸びるだけで、入力欄の位置は固定される。 */}
+          上揃えなら中身は下へ伸びるだけで、入力欄の位置は固定される。
+          🔴 中列と同じ理由でスマホでは `flex: 1` にしない（潰れる）。
+          🔵 上の 44px は3列のときに左右の高さを揃えるためのもの。縦積みでは
+             区切り線のすぐ下に無駄な余白が空くだけなので 24px に落とす。 */}
       <div style={{
-        flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', padding: '44px 16px 24px', overflowY: 'auto',
+        flex: isMobile ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', padding: isMobile ? '24px 16px' : '44px 16px 24px',
+        overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           width: '100%', maxWidth: 460,
@@ -744,7 +766,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
             ) : query.trim() === '' ? (
               <p style={{ margin: 0, fontSize: 10.5, color: c.DIM, lineHeight: 1.7 }}>
                 コードは前方一致、銘柄名・業種名は部分一致で探せます。
-                <br />🔵 行をクリックすると<b>銘柄コードをコピー</b>します（TradingView などへ）。
+                <br />🔵 行をクリックすると<b>TradingView のチャートを別タブで開きます</b>。
                 {master && <><br />東証の内国株式 {master.length.toLocaleString()} 銘柄
                   {asOf && `（JPX 上場銘柄一覧 ${asOf} 時点）`}</>}
               </p>
@@ -775,13 +797,12 @@ export function SectorPanel({ theme, isMobile }: Props) {
                       <li
                         key={st.code}
                         className="sector-hit"
-                        // 🔵 行を選ぶ＝そのままコードをコピー（貼り先は TradingView 想定）。
-                        //    選択とコピーを別操作にすると毎回2クリックになるので1回にまとめた。
+                        // 🔵 行を押す＝その銘柄を選び、**TradingView のページを別タブで開く**
+                        //    （ユーザー・2026-08-08）。以前はコードのクリップボードコピーだったが、
+                        //    貼り先が TradingView と決まっている以上、貼る手間を省いて直接開く。
                         onClick={() => {
-                          setPicked(on ? null : st)
-                          copyText(st.code, 'code')
-                          setCopiedCode(st.code)
-                          setTimeout(() => setCopiedCode(v => (v === st.code ? null : v)), 1600)
+                          setPicked(st)
+                          openInTradingView(st.code)
                         }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 10,
@@ -799,15 +820,14 @@ export function SectorPanel({ theme, isMobile }: Props) {
                         }}
                       >
                         <span style={{
-                          fontSize: 12.5, fontWeight: 700, minWidth: 46,
-                          color: copiedCode === st.code ? UP : c.GREEN,
+                          fontSize: 12.5, fontWeight: 700, minWidth: 46, color: c.GREEN,
                         }}>{st.code}</span>
-                        {copiedCode === st.code && (
-                          <span style={{ fontSize: 9.5, color: UP, whiteSpace: 'nowrap' }}>コピーしました</span>
-                        )}
                         <span style={{ fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{st.name}</span>
                         <span style={{ fontSize: 10.5, color: c.DIM }}>{sector17Label(st.sector17)}</span>
                         {ph && <span style={{ fontSize: 10, color: col }}>{ph.label}</span>}
+                        {/* 🔵 押すと別タブへ出ることが行を見ただけで分かるように印を置く
+                            （外部リンクの標準的な合図。文章で説明を足さずに済む） */}
+                        <span aria-hidden style={{ fontSize: 10, color: c.DIM }}>↗</span>
                       </li>
                     )
                   })}
