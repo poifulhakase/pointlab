@@ -890,9 +890,11 @@ const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
 const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 const QUANT_LABELS  = ['エンジン', '環境', '現物', '先物'] as const
-// 🔴 2026-08-07: 「イベント予想」タブを廃止し、同じ位置に「セクター」を置いた（ユーザー指示）。
+// 🔴 2026-08-07: 「イベント予想」タブを廃止し、同じ位置にセクター画面を置いた（ユーザー指示）。
+// 🔵 2026-08-08: タブ名を「セクター」→「周期」に変更（ユーザー指示）。
+//    内部の識別子 'sector' は据え置き（URL・保存値・テストに影響するため）。
 const SHIELD_TABS   = ['shield', 'sector'] as const
-const SHIELD_LABELS = ['シールド', 'セクター'] as const
+const SHIELD_LABELS = ['シールド', '周期'] as const
 const LEGAL_TABS    = ['terms', 'disclaimer', 'privacy'] as const
 const LEGAL_LABELS  = ['利用規約', '免責事項', 'プライバシー'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
