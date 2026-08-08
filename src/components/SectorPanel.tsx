@@ -12,7 +12,7 @@ import {
   PHASES, PERF_LABELS,
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, phaseFits, bestFit, sectorRanking, searchStocks,
-  rateAlignments, macroPhase,
+  macroPhase,
   type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type MacroInfo, type MacroState,
   type SectorPerfRow, type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
@@ -254,7 +254,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   // 一致度がいちばん高い局面を指すマーカー。
   // 🔵 弧の中央（R_OUT と R_IN の中間）に置くと**局面名のラベルと重なって読めない**ので、
   //    外周の目盛りリング上に逃がしている。
-  const marker = top ? pt(phaseMidAngle(top.phase.id), R_OUT + 12) : null
+  const marker = macroPh ? pt(phaseMidAngle(macroPh.id), R_OUT + 12) : null
 
   const search = useMemo(
     () => (master ? searchStocks(query, master) : { hits: [], total: 0 }),
@@ -292,8 +292,8 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
   const dataDate = perf?.[0]?.time ?? null
 
-  // 🔵 金利の向きと、実際の業種順位の突き合わせ。金利がほとんど動いていなければ空になる。
-  const rateAlign = useMemo(() => (perf ? rateAlignments(perf, rate) : []), [perf, rate])
+  // 🔴 「金利と業種」カードは削除（ユーザー・2026-08-08）。判定に使っていないため。
+  //    突き合わせのロジック（rateAlignments / RATE_SENSITIVITY）は sectorRotation.ts に残してある。
 
   /**
    * 「◯◯相場とは？」＝**局面そのものの説明**（モーダルの中身）。
@@ -514,13 +514,15 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
             </g>
           )}
 
-          {/* 🔴 実測でいちばん強いグループ。**局面の判定ではない** */}
-          {marker && top && (
+          {/* 🔴 丸は**いまの現在地**（マクロ）に付ける（ユーザー・2026-08-08）。
+              以前は「業種の並びが最も近い型」に付けていたが、現在地はマクロで決めるように
+              変えたので、丸も現在地に合わせないと2つの主張が並んで読めなくなる。 */}
+          {marker && macroPh && (
             <>
-              <circle cx={marker.x} cy={marker.y} r={14} fill="none" stroke={top.phase.color} strokeWidth={1}
+              <circle cx={marker.x} cy={marker.y} r={14} fill="none" stroke={macroPh.color} strokeWidth={1}
                       style={{ animation: 'sector-pulse 2.4s ease-in-out infinite' }} />
-              <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={top.phase.color} strokeWidth={3} />
-              <circle cx={marker.x} cy={marker.y} r={3.5} fill={top.phase.color} />
+              <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={macroPh.color} strokeWidth={3} />
+              <circle cx={marker.x} cy={marker.y} r={3.5} fill={macroPh.color} />
             </>
           )}
 
@@ -531,41 +533,31 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               🔵 一致度は「業種の並びがその現在地を支持しているか」の裏づけに降格。 */}
           {macroNow ? (
             <>
-              <text x={SIZE / 2} y={SIZE / 2 - 28} textAnchor="middle" fontSize={9.5}
-                    fill={c.DIM} letterSpacing="0.1em">
-                いまの位置（金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）
+              {/* 🔴 中央の穴は半径88pxしかない。行数と文字数を詰めないとリングに重なる
+                  （ユーザー指摘・2026-08-08）。最大4行・1行は短く。 */}
+              <text x={SIZE / 2} y={SIZE / 2 - 34} textAnchor="middle" fontSize={9.5} fill={c.DIM}>
+                金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}
               </text>
               {/* 🔵 アンカー（金利とインフレが同方向）は直接判定、食い違う日は背理法で割り出している。
                   どちらなのかを黙って混ぜない。 */}
               {macroNow.derived && (
-                <text x={SIZE / 2} y={SIZE / 2 - 40} textAnchor="middle" fontSize={8.5} fill={c.DIM}>
-                  移行期：{phaseById(macro?.lastAnchor ?? 'financial')?.label} のあと
+                <text x={SIZE / 2} y={SIZE / 2 - 20} textAnchor="middle" fontSize={8} fill={c.DIM}>
+                  移行期・{phaseById(macro?.lastAnchor ?? 'financial')?.label}のあと
                 </text>
               )}
-              <text x={SIZE / 2} y={SIZE / 2 - 4} textAnchor="middle" fontSize={17}
+              <text x={SIZE / 2} y={SIZE / 2 + 4} textAnchor="middle" fontSize={17}
                     fontWeight={700} fill={macroPh!.color}
                     style={{ filter: glow ? `drop-shadow(0 0 6px ${macroPh!.color}77)` : undefined }}>
                 {macroPh!.label}
               </text>
-              {/* 🔵 業種の並びが支持しているかどうか。一致していれば静かに、
-                  食い違っていれば「業種の並びは別」と書く（どちらが正しいとは書かない）。 */}
+              {/* 🔵 業種の並びが支持しているかどうか。1行に収める。 */}
               {top && (
-                macroNow.id === top.phase.id ? (
-                  <text x={SIZE / 2} y={SIZE / 2 + 18} textAnchor="middle" fontSize={9.5} fill={c.DESC}>
-                    業種の並びもこれを支持（一致度 {top.score}）
-                  </text>
-                ) : (
-                  <>
-                    <text x={SIZE / 2} y={SIZE / 2 + 16} textAnchor="middle" fontSize={9.5} fill={c.DIM}>
-                      業種の並びは
-                      <tspan fill={top.phase.color} fontWeight={700}> {top.phase.label} </tspan>
-                      に近い
-                    </text>
-                    <text x={SIZE / 2} y={SIZE / 2 + 30} textAnchor="middle" fontSize={9} fill={c.DIM}>
-                      （一致度 {top.score}）
-                    </text>
-                  </>
-                )
+                <text x={SIZE / 2} y={SIZE / 2 + 26} textAnchor="middle" fontSize={8.5}
+                      fill={macroNow.id === top.phase.id ? c.DESC : c.DIM}>
+                  {macroNow.id === top.phase.id
+                    ? `業種の並びも同じ（${top.score}）`
+                    : `業種の並び：${top.phase.label} ${top.score}`}
+                </text>
               )}
             </>
           ) : top ? (
@@ -614,7 +606,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               width: 11, height: 11, borderRadius: '50%',
               border: `3px solid ${top?.phase.color ?? c.BORDBR}`, background: c.BG,
             }} />
-            業種の並びが最も近い型
+            いまの位置（金利×インフレ）
           </span>
         </div>
 
@@ -741,67 +733,6 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
               <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM }}>
                 順位が低い＝まだ動いていない ／ ⚠ 循環は経験則です
-              </p>
-            </section>
-          )}
-
-          {/* ── 金利 × 業種 ────────────────────────────────────────
-              🔴 この画面で唯一、**業種の株価の外側から来た情報**（ユーザー・2026-08-08）。
-                 円環（一致度）は業種の騰落から局面を決めて業種を語る循環だったが、
-                 金利は独立した入力なので、初めて新しい情報が入る。
-              🔴 出すのは「教科書どおりか／ズレているか」まで。**予測には使わない**
-                 （予測方向は検証済み＝多重検定に耐えたのは17業種中1件のみ＝ノイズと区別がつかない）。
-              🔵 感応度は15年の実測（RATE_SENSITIVITY）。理論の当てはめではない。 */}
-          {rate && rateAlign.length > 0 && (
-            <section style={{
-              marginTop: 10, border: `1px solid ${c.BORDBR}`, borderRadius: 8,
-              padding: '10px 12px', background: c.LOGBG,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, color: c.GREEN, letterSpacing: '0.08em' }}>▶ 金利と業種</span>
-                <span style={{ fontSize: 10, color: c.DIM }}>
-                  {rate.label} {rate.last}%（3か月で
-                  <span style={{ color: rate.chg3m != null && rate.chg3m > 0 ? UP : DOWN, fontWeight: 700 }}>
-                    {rate.chg3m != null && rate.chg3m > 0 ? '+' : ''}{rate.chg3m}
-                  </span>
-                  %ポイント{rate.chg3m != null && rate.chg3m > 0 ? '上昇' : '低下'}）
-                </span>
-              </div>
-
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {rateAlign.map(a => {
-                  // 🔵 ズレているものだけ色を付ける。一致は「そうなっている」だけなので静かに出す。
-                  const off = a.matches === false
-                  return (
-                    <li key={a.row.sector17} style={{
-                      display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5,
-                      borderTop:    `1px solid ${off ? DOWN : 'transparent'}`,
-                      borderRight:  `1px solid ${off ? DOWN : 'transparent'}`,
-                      borderBottom: `1px solid ${off ? DOWN : 'transparent'}`,
-                      borderLeft:   `3px solid ${off ? DOWN : c.FAINT}`,
-                      borderRadius: 4, padding: '4px 8px',
-                    }}>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {sector17Label(a.row.sector17)}
-                      </span>
-                      <span style={{ fontSize: 9.5, color: c.DIM, whiteSpace: 'nowrap' }}>
-                        {a.expectStrong ? '上位のはず' : '下位のはず'}
-                      </span>
-                      <span style={{ fontSize: 10.5, color: c.DESC, minWidth: 34, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {a.rank != null ? `${a.rank}位` : '—'}
-                      </span>
-                      <span style={{ fontSize: 10, minWidth: 14, textAlign: 'center', color: off ? DOWN : a.matches ? UP : c.DIM }}>
-                        {off ? '⚠' : a.matches ? '✓' : '–'}
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-
-              <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.7 }}>
-                「はず」は<b>15年の実測</b>（金利が動いた局面で実際に強かった／弱かった業種）。
-                <br />⚠ ＝ 教科書と違うことが起きている、という事実の指摘です（先行きの予想ではありません）。
-                <br />🔵 日本国債は無料で安定して取れないため<b>米10年債で代用</b>しています。
               </p>
             </section>
           )}
