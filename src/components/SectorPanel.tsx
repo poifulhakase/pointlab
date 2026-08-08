@@ -255,6 +255,13 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   // 🔵 弧の中央（R_OUT と R_IN の中間）に置くと**局面名のラベルと重なって読めない**ので、
   //    外周の目盛りリング上に逃がしている。
   const marker = macroPh ? pt(phaseMidAngle(macroPh.id), R_OUT + 12) : null
+  // 🔴 移行期は現在地の候補が2つある（ユーザー・2026-08-08）。
+  //    **直前のアンカー（まだそこにいる）** と **その次（もう進んでいる）** の2つ。
+  //    実例＝逆金融相場と逆業績相場。行き先（金融相場）は現在地の候補ではないので出さない。
+  const altMarker = macroNow?.derived && macro?.lastAnchor
+    ? pt(phaseMidAngle(macro.lastAnchor), R_OUT + 12)
+    : null
+  const altPhase = macroNow?.derived && macro?.lastAnchor ? phaseById(macro.lastAnchor) : null
 
   const search = useMemo(
     () => (master ? searchStocks(query, master) : { hits: [], total: 0 }),
@@ -473,22 +480,15 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                 {/* 🔵 マクロで決まる現在地。扇そのものに書く。
                     🔴 移行期は現在地が確定していないので「いまここ」とは書かない。
                        ハードなら経由する側に「経由？」、行き先に「行き先」と出す。 */}
-                {macroNow?.id === p.id && (
+                {(macroNow?.id === p.id || (macroNow?.derived && macro?.lastAnchor === p.id)) && (
                   <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700}
                         fill={macroNow.derived ? c.DIM : p.color}
                         style={{ filter: glow && !macroNow.derived ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
-                    {macroNow.derived ? '◀ 経由？' : '◀ いまここ'}
-                  </text>
-                )}
-                {macroNow?.derived && nextPh?.id === p.id && (
-                  <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700}
-                        fill={p.color}
-                        style={{ filter: glow ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
-                    ◀ 行き先
+                    {macroNow.derived ? '◀ いまここ？' : '◀ いまここ'}
                   </text>
                 )}
                 {fit?.score != null && (
-                  <text x={m.x} y={m.y + (macroNow?.id === p.id || (macroNow?.derived && nextPh?.id === p.id) ? 26 : 13)} textAnchor="middle"
+                  <text x={m.x} y={m.y + (macroNow?.id === p.id || (macroNow?.derived && macro?.lastAnchor === p.id) ? 26 : 13)} textAnchor="middle"
                         fontSize={11} fontWeight={700}
                         fill={p.color} opacity={0.9}>
                     一致 {fit.score}
@@ -533,15 +533,32 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
           {/* 🔴 丸は**いまの現在地**（マクロ）に付ける（ユーザー・2026-08-08）。
               以前は「業種の並びが最も近い型」に付けていたが、現在地はマクロで決めるように
               変えたので、丸も現在地に合わせないと2つの主張が並んで読めなくなる。
-              🔴 **移行期（derived）は丸を出さない**（2026-08-08）。
-                 ハードランディングなら逆業績相場を経由し、ソフトランディングなら素通りする。
-                 どちらか確定していないものに丸を打つと、確定したように見えてしまう。 */}
-          {marker && macroPh && !macroNow?.derived && (
+              🔴 **移行期は丸を2つ出す**（2026-08-08）。まだ直前のアンカー（逆金融相場）にいるのか、
+                 もう次（逆業績相場）に進んでいるのかが確定しないため。
+                 **どちらも「現在地かもしれない」ので同じ見た目（点線＝未確定）**にする。
+                 確定しているとき（アンカー）だけ実線＋脈動にする。 */}
+          {marker && macroPh && (
+            macroNow?.derived ? (
+              <>
+                <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={macroPh.color}
+                        strokeWidth={2} strokeDasharray="3 3" />
+                <circle cx={marker.x} cy={marker.y} r={3} fill={macroPh.color} />
+              </>
+            ) : (
+              <>
+                <circle cx={marker.x} cy={marker.y} r={14} fill="none" stroke={macroPh.color} strokeWidth={1}
+                        style={{ animation: 'sector-pulse 2.4s ease-in-out infinite' }} />
+                <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={macroPh.color} strokeWidth={3} />
+                <circle cx={marker.x} cy={marker.y} r={3.5} fill={macroPh.color} />
+              </>
+            )
+          )}
+          {/* もう1つの候補＝直前のアンカー（まだそこにいる可能性）。同じ見た目で並べる。 */}
+          {altMarker && altPhase && (
             <>
-              <circle cx={marker.x} cy={marker.y} r={14} fill="none" stroke={macroPh.color} strokeWidth={1}
-                      style={{ animation: 'sector-pulse 2.4s ease-in-out infinite' }} />
-              <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={macroPh.color} strokeWidth={3} />
-              <circle cx={marker.x} cy={marker.y} r={3.5} fill={macroPh.color} />
+              <circle cx={altMarker.x} cy={altMarker.y} r={9} fill={c.BG} stroke={altPhase.color}
+                      strokeWidth={2} strokeDasharray="3 3" />
+              <circle cx={altMarker.x} cy={altMarker.y} r={3} fill={altPhase.color} />
             </>
           )}
 
@@ -574,10 +591,10 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                   {macro?.lastAnchor === 'reverseFinancial' ? (
                     <>
                       <text x={SIZE / 2} y={SIZE / 2 + 22} textAnchor="middle" fontSize={8} fill={c.DIM}>
-                        ハード→逆業績を経由
+                        逆金融相場 か 逆業績相場
                       </text>
                       <text x={SIZE / 2} y={SIZE / 2 + 33} textAnchor="middle" fontSize={8} fill={c.DIM}>
-                        ソフト→素通り
+                        （ソフトなら素通り）
                       </text>
                     </>
                   ) : (
