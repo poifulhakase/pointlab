@@ -8,7 +8,7 @@
 //    同一セッション内はモジュール変数で使い回す。
 
 import { fetchWithCache } from './dataCache'
-import type { MacroInfo, PerfPeriods, SectorPerfRow, StockRow } from './sectorRotation'
+import type { MacroInfo, MacroState, PerfPeriods, SectorPerfRow, StockRow } from './sectorRotation'
 
 const PERF_URL   = `${import.meta.env.BASE_URL}data/sector_perf.json`
 const MASTER_URL = `${import.meta.env.BASE_URL}data/stock_master.json`
@@ -27,6 +27,8 @@ export type SectorPerf = {
   rate:      MacroInfo | null
   /** 期待インフレ率（10年BEI）。金利とセットで「いまの局面」を決める。 */
   infl:      MacroInfo | null
+  /** 直前に確定したアンカー。🔴 取得側が履歴をたどって決めている（フロントで推定しないこと）。 */
+  macro:     MacroState | null
 }
 
 export async function loadSectorPerf(): Promise<SectorPerf> {
@@ -49,6 +51,7 @@ export async function loadSectorPerf(): Promise<SectorPerf> {
           // 🔵 マクロは後から足した項目。古いキャッシュには入っていないので null 許容。
           rate:      (json?.rate as MacroInfo | undefined) ?? null,
           infl:      (json?.infl as MacroInfo | undefined) ?? null,
+          macro:     (json?.macro as MacroState | undefined) ?? null,
         },
         updatedAt: json?.updatedAt,
       }

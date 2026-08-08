@@ -12,7 +12,7 @@ import {
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, phaseFits, bestFit, sectorRanking, searchStocks,
   rateAlignments, macroPhase,
-  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type MacroInfo,
+  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type MacroInfo, type MacroState,
   type SectorPerfRow, type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
 
@@ -137,6 +137,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   const [periods, setPeriods] = useState<PerfPeriods>({})
   const [rate,    setRate]    = useState<MacroInfo | null>(null)
   const [infl,    setInfl]    = useState<MacroInfo | null>(null)
+  const [macro,   setMacro]   = useState<MacroState | null>(null)
   const [perfErr, setPerfErr] = useState<string | null>(null)
   const [master,  setMaster]  = useState<StockRow[] | null>(null)
   const [masterErr, setMasterErr] = useState<string | null>(null)
@@ -158,7 +159,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   useEffect(() => {
     let alive = true
     loadSectorPerf()
-      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods); setRate(d.rate); setInfl(d.infl) } })
+      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods); setRate(d.rate); setInfl(d.infl); setMacro(d.macro) } })
       .catch(e => { if (alive) setPerfErr(e instanceof Error ? e.message : String(e)) })
     return () => { alive = false }
   }, [])
@@ -213,7 +214,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
    *    「その業種はいま実測で何位か」という事実を並べるだけ。上がるとは書かない。
    */
   // 🔴 いまの現在地はマクロ（金利×期待インフレ）で決める。どちらかが横ばいなら null＝判定しない。
-  const macroNow = useMemo(() => macroPhase(rate, infl), [rate, infl])
+  const macroNow = useMemo(() => macroPhase(rate, infl, macro?.lastAnchor ?? null), [rate, infl, macro])
   const macroPh  = macroNow ? phaseById(macroNow.id) : null
 
   // 🔴 起点は**マクロで決めた現在地**（2026-08-08）。画面に「現在地」が2つあると読めないため、
@@ -505,6 +506,13 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                     fill={c.DIM} letterSpacing="0.1em">
                 いまの位置（金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）
               </text>
+              {/* 🔵 アンカー（金利とインフレが同方向）は直接判定、食い違う日は背理法で割り出している。
+                  どちらなのかを黙って混ぜない。 */}
+              {macroNow.derived && (
+                <text x={SIZE / 2} y={SIZE / 2 - 40} textAnchor="middle" fontSize={8.5} fill={c.DIM}>
+                  移行期：{phaseById(macro?.lastAnchor ?? 'financial')?.label} のあと
+                </text>
+              )}
               <text x={SIZE / 2} y={SIZE / 2 - 4} textAnchor="middle" fontSize={17}
                     fontWeight={700} fill={macroPh!.color}
                     style={{ filter: glow ? `drop-shadow(0 0 6px ${macroPh!.color}77)` : undefined }}>

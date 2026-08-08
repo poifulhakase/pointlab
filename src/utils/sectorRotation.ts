@@ -187,6 +187,22 @@ export type MacroPhase = {
   rateUp: boolean
   /** 期待インフレの向き（true＝上昇） */
   inflUp: boolean
+  /**
+   * 直接判定できた（アンカー）か、背理法で割り出したか。
+   * 🔵 アンカー＝金利とインフレが同じ方向。移行期＝食い違っている。
+   */
+  derived: boolean
+}
+
+/**
+ * 🔴 アンカー＝**業種の裏づけが実測で取れた2局面**（金融相場 +0.32／逆金融相場 +0.92）。
+ *    どちらも「金利とインフレが同じ方向＝金融政策が効いている局面」で、循環の対角に位置する。
+ *    残り2つ（方向が食い違う移行期）は裏づけが取れなかったので、
+ *    **象限から直接決めず、直前のアンカーと循環の順序から割り出す**（ユーザー提案・2026-08-08）。
+ */
+const MACRO_ANCHOR_NEXT: Partial<Record<SectorPhaseId, SectorPhaseId>> = {
+  financial:        'performance',        // 金融相場のあとの移行期＝業績相場
+  reverseFinancial: 'reversePerformance', // 逆金融相場のあとの移行期＝逆業績相場
 }
 
 /**
@@ -212,16 +228,42 @@ export type MacroPhase = {
  *
  * @returns どちらかが横ばい（閾値未満）なら null＝判定しない
  */
-export function macroPhase(rate: MacroInfo | null, infl: MacroInfo | null): MacroPhase | null {
+export function macroPhase(
+  rate: MacroInfo | null,
+  infl: MacroInfo | null,
+  /**
+   * 直前に確定していたアンカー（金融相場 or 逆金融相場）。
+   * 移行期（金利とインフレが食い違う日）の行き先を決めるのに使う。
+   * 🔵 無ければ移行期は象限のまま返す（初回など）。
+   */
+  lastAnchor?: SectorPhaseId | null,
+): MacroPhase | null {
   if (!rate || !infl || rate.chg3m == null || infl.chg3m == null) return null
   if (Math.abs(rate.chg3m) < MACRO_RATE_THRESHOLD) return null
   if (Math.abs(infl.chg3m) < MACRO_INFL_THRESHOLD) return null
   const rateUp = rate.chg3m > 0
   const inflUp = infl.chg3m > 0
-  const id: SectorPhaseId = rateUp
-    ? (inflUp ? 'reverseFinancial' : 'performance')
-    : (inflUp ? 'reversePerformance' : 'financial')
-  return { id, rateUp, inflUp }
+
+  // 金利とインフレが同じ方向＝アンカー。そのまま採用する。
+  if (rateUp === inflUp) {
+    return { id: rateUp ? 'reverseFinancial' : 'financial', rateUp, inflUp, derived: false }
+  }
+  // 食い違う＝移行期。直前のアンカーから循環の順序で割り出す（背理法）。
+  const from = lastAnchor && MACRO_ANCHOR_NEXT[lastAnchor] ? lastAnchor : null
+  if (from) return { id: MACRO_ANCHOR_NEXT[from]!, rateUp, inflUp, derived: true }
+  // アンカーがまだ無いときだけ、象限をそのまま使う
+  return { id: rateUp ? 'performance' : 'reversePerformance', rateUp, inflUp, derived: true }
+}
+
+/**
+ * 🔴 `lastAnchor` は**取得側（`fetch-jpx.mjs`）が履歴をたどって確定させる**。
+ *    フロントは日次スナップショットしか持たないので、当日の値から推定すると
+ *    `scripts/analyze-sector-macro.mjs` の逐次更新と食い違う。`sector_perf.json` の
+ *    `macro.lastAnchor` をそのまま渡すこと。
+ */
+export type MacroState = {
+  /** 直前に確定したアンカー（金融相場 or 逆金融相場）。まだ無ければ null */
+  lastAnchor: SectorPhaseId | null
 }
 
 /**

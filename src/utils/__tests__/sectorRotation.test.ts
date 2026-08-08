@@ -409,27 +409,52 @@ describe('public/data の実ファイル', () => {
     expect(top).toBe(15)
   })
 
-  it('🔴 マクロ（金利×インフレ）の4象限が、循環の順番どおりに並ぶ', () => {
-    const mk = (chg3m: number): MacroInfo =>
-      ({ symbol: 'x', label: 'x', time: '2026-08-07', last: 1, chg3m, from: null, to: null })
-    // 金利↓×インフレ↓=金融 / ↑×↓=業績 / ↑×↑=逆金融 / ↓×↑=逆業績
-    expect(macroPhase(mk(-1), mk(-1))!.id).toBe('financial')
-    expect(macroPhase(mk(+1), mk(-1))!.id).toBe('performance')
-    expect(macroPhase(mk(+1), mk(+1))!.id).toBe('reverseFinancial')
-    expect(macroPhase(mk(-1), mk(+1))!.id).toBe('reversePerformance')
-    // 🔵 この並びが PHASES の循環の順番（金融→業績→逆金融→逆業績）と一致していること
-    const cycle = ['financial', 'performance', 'reverseFinancial', 'reversePerformance']
-    expect(PHASES.map(p => p.id)).toEqual(cycle)
+  const mkMacro = (chg3m: number | null): MacroInfo =>
+    ({ symbol: 'x', label: 'x', time: '2026-08-07', last: 1, chg3m, from: null, to: null })
+
+  it('🔴 アンカー（金利とインフレが同方向）は直接判定される', () => {
+    // 実測で業種の裏づけが取れたのはこの2つだけ。ここは背理法を挟まない
+    const fin = macroPhase(mkMacro(-1), mkMacro(-1))!
+    const rev = macroPhase(mkMacro(+1), mkMacro(+1))!
+    expect(fin.id).toBe('financial')
+    expect(rev.id).toBe('reverseFinancial')
+    expect(fin.derived).toBe(false)
+    expect(rev.derived).toBe(false)
+    // アンカーは直前のアンカーに左右されない
+    expect(macroPhase(mkMacro(+1), mkMacro(+1), 'financial')!.id).toBe('reverseFinancial')
+  })
+
+  it('🔴 移行期は直前のアンカーと循環の順序から割り出す（背理法）', () => {
+    // 🔵 ユーザーの言う「逆金融相場ではない ＝ 逆業績相場」がこれ
+    const afterRev = macroPhase(mkMacro(+1), mkMacro(-1), 'reverseFinancial')!
+    expect(afterRev.id).toBe('reversePerformance')
+    expect(afterRev.derived).toBe(true)
+    // 金融相場のあとの移行期は業績相場
+    const afterFin = macroPhase(mkMacro(-1), mkMacro(+1), 'financial')!
+    expect(afterFin.id).toBe('performance')
+    expect(afterFin.derived).toBe(true)
+    // 🔴 同じ象限でも、直前のアンカーが違えば答えが変わる（記憶なしとの決定的な違い）
+    expect(macroPhase(mkMacro(+1), mkMacro(-1), 'financial')!.id).toBe('performance')
+    expect(macroPhase(mkMacro(+1), mkMacro(-1), 'reverseFinancial')!.id).toBe('reversePerformance')
+  })
+
+  it('🔵 アンカーがまだ無ければ象限をそのまま使う', () => {
+    expect(macroPhase(mkMacro(+1), mkMacro(-1), null)!.id).toBe('performance')
+    expect(macroPhase(mkMacro(-1), mkMacro(+1), null)!.id).toBe('reversePerformance')
+  })
+
+  it('🔵 4局面が PHASES の循環の順番と一致している', () => {
+    expect(PHASES.map(p => p.id)).toEqual([
+      'financial', 'performance', 'reverseFinancial', 'reversePerformance',
+    ])
   })
 
   it('🔴 金利かインフレが横ばいなら現在地を判定しない', () => {
-    const mk = (chg3m: number | null): MacroInfo =>
-      ({ symbol: 'x', label: 'x', time: '2026-08-07', last: 1, chg3m, from: null, to: null })
-    expect(macroPhase(mk(MACRO_RATE_THRESHOLD / 2), mk(1))).toBeNull()   // 金利が横ばい
-    expect(macroPhase(mk(1), mk(MACRO_INFL_THRESHOLD / 2))).toBeNull()   // インフレが横ばい
-    expect(macroPhase(null, mk(1))).toBeNull()                            // 取得できていない
-    expect(macroPhase(mk(1), null)).toBeNull()
-    expect(macroPhase(mk(null), mk(1))).toBeNull()
+    expect(macroPhase(mkMacro(MACRO_RATE_THRESHOLD / 2), mkMacro(1))).toBeNull()   // 金利が横ばい
+    expect(macroPhase(mkMacro(1), mkMacro(MACRO_INFL_THRESHOLD / 2))).toBeNull()   // インフレが横ばい
+    expect(macroPhase(null, mkMacro(1))).toBeNull()                                 // 取得できていない
+    expect(macroPhase(mkMacro(1), null)).toBeNull()
+    expect(macroPhase(mkMacro(null), mkMacro(1))).toBeNull()
   })
 
   it('🔴 金利がほとんど動いていない期間は、突き合わせを出さない', () => {
