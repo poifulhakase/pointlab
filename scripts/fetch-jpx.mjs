@@ -1458,6 +1458,58 @@ function dropAnomalies(times, closes, adjs) {
   return dropped
 }
 
+/**
+ * 米10年債利回り（^TNX）の水準と3か月変化を取る。
+ *
+ * 🔴 なぜ要るか（2026-08-08）
+ *   4局面理論はもともと「金利 × 業績」の2軸で定義されるのに、
+ *   ぽいロボは**金利データを1本も持っていなかった**。そのため局面を業種の騰落から
+ *   逆算するしかなく、「業種の騰落から局面を決めて、その局面で業種を語る」という
+ *   循環になっていた（＝新しい情報が入らない）。金利は業種株価の外側にあるので、
+ *   これを入れて初めて外部の情報が入る。
+ *
+ * 🔵 日本国債10年は無料で安定して取れるソースが無いため、米10年債で代用する。
+ *    日米金利は連動が強く、円安/円高を通じて日本株の業種間格差に効く。
+ *    ⚠ 代用であることは画面にも明示すること。
+ */
+async function fetchUs10yData() {
+  console.log('\n[rate] 米10年債利回り（^TNX）を取得...')
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=1y'
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)', 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const result = (await res.json())?.chart?.result?.[0]
+  const ts = result?.timestamp ?? []
+  const cl = result?.indicators?.quote?.[0]?.close ?? []
+
+  const times = [], vals = []
+  for (let i = 0; i < ts.length; i++) {
+    // 🔵 利回りなので 0以下・異常値は捨てる（価格系と違い分割・分配金の調整は無い）
+    if (cl[i] == null || isNaN(cl[i]) || cl[i] <= 0) continue
+    times.push(new Date(ts[i] * 1000).toISOString().slice(0, 10))
+    vals.push(cl[i])
+  }
+  if (vals.length < 70) throw new Error(`データ不足(${vals.length}本)`)
+
+  const last = vals[vals.length - 1]
+  const back = PERF_BACK.chg3m
+  const prev = vals[vals.length - 1 - back]
+  // 🔴 利回りの差は「%ポイント」。騰落率(%)と混同しないこと。
+  const chg3m = prev == null ? null : Math.round((last - prev) * 1000) / 1000
+  console.log(`  ^TNX: ${last.toFixed(2)}% / 3か月 ${chg3m >= 0 ? '+' : ''}${chg3m}%ポイント`)
+  return {
+    symbol: '^TNX',
+    label: '米10年債利回り',
+    time: times[times.length - 1],
+    last: Math.round(last * 100) / 100,
+    chg3m,
+    from: times[times.length - 1 - back] ?? null,
+    to: times[times.length - 1],
+  }
+}
+
 async function fetchSectorPerfData() {
   console.log('\n[sectorPerf] TOPIX-17 業種別ETF（1617〜1633）から相対強弱を計算...')
 
@@ -1728,7 +1780,11 @@ async function main() {
 
   try {
     const { rows: data, periods } = await fetchSectorPerfData()
-    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', periods, data }
+    // 🔵 金利は業種の話とセットでしか使わないので、専用ファイルを増やさず同居させる。
+    //    取得に失敗しても業種の表示は続けたいので、ここで握りつぶして null にする。
+    let rate = null
+    try { rate = await fetchUs10yData() } catch (e) { console.warn(`  ⚠ 金利(^TNX): ${e.message}`) }
+    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', periods, rate, data }
     writeFileSync(join(OUT_DIR, 'sector_perf.json'), JSON.stringify(out, null, 2))
     console.log(`\n✓ sector_perf.json 保存 (${data.length}業種)`)
     sectorPerfOk = true
