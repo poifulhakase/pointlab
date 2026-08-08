@@ -5,7 +5,8 @@ import { isAdminEmail } from '../utils/admin'
 import { cy } from '../utils/cyberTheme'
 import { AILaunchRow } from './CyberAiLaunch'
 import { jstTimestamp } from '../utils/jstDate'
-import { buildStockAnalysisPrompt } from '../utils/sectorStockPrompt'
+import { buildStockAnalysisPrompt, summarizeMarketMargin } from '../utils/sectorStockPrompt'
+import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
 import { loadSectorPerf, loadStockMaster } from '../utils/sectorData'
 import {
   PHASES, PERF_LABELS,
@@ -153,6 +154,8 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   const [rate,    setRate]    = useState<MacroInfo | null>(null)
   const [infl,    setInfl]    = useState<MacroInfo | null>(null)
   const [macro,   setMacro]   = useState<MacroState | null>(null)
+  // 🔵 市場全体の信用需給。個別はぽいロボが持っていないので、AIに調べさせる際の**比較材料**として渡す。
+  const [marginRows, setMarginRows] = useState<MarginWeekData[] | null>(null)
   const [perfErr, setPerfErr] = useState<string | null>(null)
   const [master,  setMaster]  = useState<StockRow[] | null>(null)
   const [masterErr, setMasterErr] = useState<string | null>(null)
@@ -176,6 +179,10 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
     loadSectorPerf()
       .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods); setRate(d.rate); setInfl(d.infl); setMacro(d.macro) } })
       .catch(e => { if (alive) setPerfErr(e instanceof Error ? e.message : String(e)) })
+    // 🔵 市場全体の信用需給。取れなくてもプロンプトは作れるので、失敗は握りつぶす。
+    fetchMarginData()
+      .then(d => { if (alive) setMarginRows(d) })
+      .catch(() => { /* noop */ })
     return () => { alive = false }
   }, [])
 
@@ -270,10 +277,17 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
     setTimeout(() => setCopied(null), 2500)
   }, [])
 
+  // 🔵 市場全体の信用需給の要約。個別はAIに調べさせるので、その**比較材料**として渡す。
+  const marketMargin = useMemo(
+    () => (marginRows ? summarizeMarketMargin(marginRows) : null),
+    [marginRows]
+  )
+
   const handleCopy = useCallback(() => {
     if (!picked || !perf) return
-    copyText(buildStockAnalysisPrompt(picked, perf, strengths, perfKey, jstTimestamp()), 'prompt')
-  }, [picked, perf, strengths, perfKey, copyText])
+    const p = buildStockAnalysisPrompt(picked, perf, strengths, perfKey, jstTimestamp(), marketMargin)
+    copyText(p, 'prompt')
+  }, [picked, perf, strengths, perfKey, marketMargin, copyText])
 
 
   const dataDate = perf?.[0]?.time ?? null

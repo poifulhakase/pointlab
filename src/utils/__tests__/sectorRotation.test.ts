@@ -11,7 +11,8 @@ import {
   macroPhase, MACRO_RATE_THRESHOLD, MACRO_INFL_THRESHOLD,
   type MacroInfo, type SectorPerfRow, type StockRow,
 } from '../sectorRotation'
-import { buildStockAnalysisPrompt } from '../sectorStockPrompt'
+import { buildStockAnalysisPrompt, summarizeMarketMargin } from '../sectorStockPrompt'
+import type { MarginWeekData } from '../jpxMarginData'
 
 /**
  * セクター画面の純粋関数。
@@ -320,12 +321,17 @@ describe('銘柄検索', () => {
   })
 })
 
-// ── AI分析プロンプト ────────────────────────────────────
+// ── AI分析プロンプト（★2026-08-08 需給分析に用途変更）──────────
 describe('銘柄のAI分析プロンプト', () => {
   const stock = STOCKS[2]  // 8306 三菱UFJ（銀行）
   const rows  = [perfRow(15, 20), perfRow(2, 10), perfRow(13, 0), perfRow(9, 1)]
   const st    = phaseStrengths(rows, 'chg3m')
-  const p     = buildStockAnalysisPrompt(stock, rows, st, 'chg3m', '2026-08-07 20:00')
+  const margin: MarginWeekData[] = [
+    { date: '2026/07/31', label: '7月第5週', longBal: 6202268, shortBal: 728711, ratio: 8.51, evalRatio: -8.44 },
+    { date: '2026/07/24', label: '7月第4週', longBal: 6476938, shortBal: 725262, ratio: 8.93, evalRatio: -9.0 },
+    { date: '2026/06/26', label: '6月第4週', longBal: 7016733, shortBal: 1053736, ratio: 6.66, evalRatio: -7.0 },
+  ]
+  const p = buildStockAnalysisPrompt(stock, rows, st, 'chg3m', '2026-08-07 20:00', summarizeMarketMargin(margin))
 
   it('銘柄の基本情報と業種が入る', () => {
     expect(p).toContain('8306')
@@ -334,39 +340,88 @@ describe('銘柄のAI分析プロンプト', () => {
     expect(p).toContain('銀行')     // 17業種
   })
 
-  it('実測の騰落率と順位が入る', () => {
-    expect(p).toContain('+20%')
-    expect(p).toContain('17業種の騰落率（強い順）')
+  it('🔴 需給の分析であることが分かる（会社の基礎情報ではない）', () => {
+    expect(p).toContain('需給分析')
+    expect(p).toContain('信用倍率')
+    // 会社概要・業績・PERは他で見るので要らない、と明示している
+    expect(p).toContain('基礎情報は**不要です**')
+  })
+
+  it('🔴 個別の信用残の出典URLを明示する（数字を記憶から書かせない）', () => {
+    expect(p).toContain('nikkei.com/nkd/company/history/trust/?scode=8306')
+    expect(p).toContain('推測で埋めないでください')
+  })
+
+  it('🔴 市場全体の信用需給を検証済みデータとして渡す', () => {
+    expect(p).toContain('8.51倍')          // 直近の信用倍率
+    expect(p).toContain('解消率')           // ピークからの解消率
+    expect(p).toContain('ぽいロボの実測データ')
+  })
+
+  it('🔴 出来高との関係を出させる（商いがないと解消されない）', () => {
+    expect(p).toContain('商いがないと解消されません')
+    expect(p).toContain('平均出来高の何日分')
+  })
+
+  it('推移と解消率を%で求める', () => {
+    expect(p).toContain('変化を%で')
+    expect(p).toContain('いま何%解消されたか')
+  })
+
+  it('需給の状態を3択で総括させる', () => {
+    expect(p).toContain('重しが消えつつある')
+    expect(p).toContain('まだ重い')
+    expect(p).toContain('どちらとも言えない')
   })
 
   it('🔴 売買の推奨を書かせない（アプリ全体の方針）', () => {
     expect(p).toContain('売買の推奨・目標株価')
     expect(p).toContain('書かないでください')
+    // 総括を出させるが、あくまで需給の状態記述にとどめさせる
+    expect(p).toContain('売買の判断ではありません')
   })
 
   it('🔴 局面の判定をしていないことを伝え、断定を禁じる', () => {
-    // 伝えないとAIが「いまは逆金融相場だから」と確定事実のように語ってしまう
     expect(p).toContain('景気局面の判定を行っていません')
     expect(p).toContain('断定しないでください')
-  })
-
-  it('🔴 株価を持っていないことを明示し、出典と取得日を求める', () => {
-    expect(p).toContain('株価を持っていません')
-    expect(p).toContain('取得日')
   })
 
   it('🔴 実測がETFによる代用値であることを伝える', () => {
     expect(p).toContain('代用')
   })
 
-  it('一致度を4局面ぶん渡す（1つだけ渡すと断定に見える）', () => {
-    expect(p).toContain('型」との一致度')
-    for (const ph of PHASES) expect(p).toContain(ph.label)
+  it('市場の信用データが無くてもプロンプトは作れる', () => {
+    const q = buildStockAnalysisPrompt(stock, rows, st, 'chg3m', '2026-08-07 20:00', null)
+    expect(q).toContain('8306')
+    expect(q).toContain('データを取得できませんでした')
+  })
+})
+
+describe('市場全体の信用需給の要約', () => {
+  const rows: MarginWeekData[] = [
+    { date: '2026/07/31', label: 'w1', longBal: 800, shortBal: 100, ratio: 8.0, evalRatio: null },
+    { date: '2026/07/24', label: 'w2', longBal: 1000, shortBal: 200, ratio: 5.0, evalRatio: null },
+    { date: '2026/07/17', label: 'w3', longBal: 900, shortBal: 300, ratio: 3.0, evalRatio: null },
+  ]
+
+  it('ピークからの解消率を出す', () => {
+    const s = summarizeMarketMargin(rows)!
+    expect(s.peakLong).toBe(1000)
+    expect(s.peakDate).toBe('2026/07/24')
+    // 1000 → 800 なので 20% 解消
+    expect(s.clearedPct).toBe(20)
   })
 
-  it('🔴 一致度を確率に言い換えさせない', () => {
-    expect(p).toContain('一致度は確率ではありません')
-    expect(p).toContain('言い換えは行わないでください')
+  it('信用倍率の52週内の位置を出す（100に近いほど買い残が厚い）', () => {
+    const s = summarizeMarketMargin(rows)!
+    expect(s.ratio).toBe(8.0)
+    expect(s.ratioLow).toBe(3.0)
+    expect(s.ratioHigh).toBe(8.0)
+    expect(s.ratioPct).toBe(67)   // 3件中2件が自分より下
+  })
+
+  it('空なら null（呼び出し側で分岐できる）', () => {
+    expect(summarizeMarketMargin([])).toBeNull()
   })
 })
 

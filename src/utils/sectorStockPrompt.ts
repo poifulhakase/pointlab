@@ -1,43 +1,114 @@
 import {
-  phaseOfSector17, sector17Label, strongestPhase, phaseFits, bestFit,
-  PERF_LABELS, PHASES,
+  phaseOfSector17, sector17Label,
+  PERF_LABELS,
   type PerfKey, type PhaseStrength, type SectorPerfRow, type StockRow,
 } from './sectorRotation'
+import type { MarginWeekData } from './jpxMarginData'
+
+/** 個別銘柄の信用残の出典（日経会社情報）。新形式コード（197A 等）もそのまま通る。 */
+export function marginPageUrl(code: string): string {
+  return `https://www.nikkei.com/nkd/company/history/trust/?scode=${encodeURIComponent(code)}`
+}
+
+/**
+ * 市場全体の信用需給の要約。**ぽいロボが実データを持っている部分**。
+ * 🔵 `margin.json` は新しい順（[0] が最新）。
+ */
+export type MarketMarginSummary = {
+  date: string
+  ratio: number
+  longBal: number
+  shortBal: number
+  /** 52週の信用倍率レンジ */
+  ratioLow: number
+  ratioHigh: number
+  /** 信用倍率が52週の中で下から何%の位置か（100に近いほど買い残が厚い） */
+  ratioPct: number
+  /** 買い残のピーク（52週）とその日付 */
+  peakLong: number
+  peakDate: string
+  /** ピークからの解消率（%）。買い残がどれだけ整理されたか */
+  clearedPct: number
+  /** 直近8週の推移（新しい順） */
+  recent: MarginWeekData[]
+}
+
+export function summarizeMarketMargin(rows: readonly MarginWeekData[]): MarketMarginSummary | null {
+  if (!rows.length) return null
+  const cur = rows[0]
+  const ratios = rows.map(r => r.ratio).filter(v => v != null)
+  const ratioLow = Math.min(...ratios)
+  const ratioHigh = Math.max(...ratios)
+  const below = ratios.filter(v => v < cur.ratio).length
+  const peak = rows.reduce((a, b) => (b.longBal > a.longBal ? b : a), rows[0])
+  return {
+    date: cur.date,
+    ratio: cur.ratio,
+    longBal: cur.longBal,
+    shortBal: cur.shortBal,
+    ratioLow, ratioHigh,
+    ratioPct: Math.round((below / ratios.length) * 100),
+    peakLong: peak.longBal,
+    peakDate: peak.date,
+    // ピークから何%減ったか。マイナスなら「いまがピーク圏」
+    clearedPct: Math.round(((peak.longBal - cur.longBal) / peak.longBal) * 1000) / 10,
+    recent: rows.slice(0, 8),
+  }
+}
 
 /**
  * 検索で選んだ銘柄を AI に分析させるためのプロンプトを組み立てる（純粋関数・テスト対象）。
  *
+ * 🔴 **目的は「需給の分析」**（ユーザー・2026-08-08）。
+ *    会社が何をしている会社か・業績・PER 等は TradingView でも見られるので、
+ *    AI には**信用買い残／売り残／信用倍率**という、チャートに出ない部分をやらせる。
+ *
+ * 🔴 **数字は AI に自由に思い出させない**。信用残のような細かい数値は作り話が混じるため、
+ *    出典URL（日経会社情報の信用残ページ）を**プロンプトに明示**して、そこを見るよう指示する。
+ *
+ * 🔵 **市場全体の信用需給はぽいロボが実データを持っている**ので、検証済みの比較材料として渡す。
+ *    個別だけが無いので、そこをAIに埋めさせて突き合わせる形にする。
+ *
  * 🔴 **出力は状態記述型**にさせる（「買う」「売る」等の推奨を書かせない）。
  *    アプリ全体の方針＝投資助言業の登録をしないため（CLAUDE.md の不変ルール）。
- * 🔴 **株価データはアプリ側に無い**。数字を持っていないのに持っているふりをすると
- *    AIが作り話をするので、「株価は利用者が貼るか、AIが自分で調べる」と明記する。
- * 🔵 渡せる事実は「この銘柄の業種」と「その業種が実測でどのくらい動いたか」まで。
- *    局面の判定はしていないので、**局面を断定させない**よう釘を刺す。
  */
 export function buildStockAnalysisPrompt(
   stock: StockRow,
   perf: readonly SectorPerfRow[],
-  strengths: readonly PhaseStrength[],
+  _strengths: readonly PhaseStrength[],
   key: PerfKey,
-  timestamp: string
+  timestamp: string,
+  market: MarketMarginSummary | null = null
 ): string {
   const sectorName = sector17Label(stock.sector17)
   const phase      = phaseOfSector17(stock.sector17)
   const own        = perf.find(p => p.sector17 === stock.sector17) ?? null
-  const top        = strongestPhase(strengths)
   const period     = PERF_LABELS[key]
+  const rankKey    = `rank${key.slice(3)}` as 'rank1m' | 'rank3m' | 'rank6m'
 
   const ownLine = own && own[key] != null
-    ? `- ${sectorName}の直近${period}騰落率：**${own[key]! > 0 ? '+' : ''}${own[key]}%**（17業種中 ${own[`rank${key.slice(3)}` as 'rank1m' | 'rank3m' | 'rank6m'] ?? '—'}位）`
+    ? `- ${sectorName}の直近${period}騰落率：**${own[key]! > 0 ? '+' : ''}${own[key]}%**（17業種中 ${own[rankKey] ?? '—'}位）`
     : `- ${sectorName}の騰落率：データなし`
 
-  const rankLines = [...perf]
-    .filter(p => p[key] != null)
-    .sort((a, b) => b[key]! - a[key]!)
-    .map((p, i) => `  ${i + 1}. ${p.label} ${p[key]! > 0 ? '+' : ''}${p[key]}%`)
+  const marketBlock = market
+    ? [
+        '## 市場全体の信用需給（ぽいロボの実測データ・検証済み）',
+        '🔵 出所＝JPX 二市場信用取引残高（週次）。**この数字は確かなものとして扱ってください。**',
+        `- 直近（${market.date}）：信用倍率 **${market.ratio}倍** ／ 買い残 ${market.longBal.toLocaleString()} ／ 売り残 ${market.shortBal.toLocaleString()}`,
+        `- 過去52週の信用倍率レンジ：${market.ratioLow}倍 〜 ${market.ratioHigh}倍`,
+        `- いまの位置：**下から${market.ratioPct}%**（100に近いほど買い残が厚く、戻り売りが出やすい）`,
+        `- 買い残のピーク：${market.peakLong.toLocaleString()}（${market.peakDate}）→ **解消率 ${market.clearedPct}%**`,
+        '',
+        '直近8週の推移（新しい順）:',
+        '| 週 | 買い残 | 売り残 | 信用倍率 |',
+        '|---|---|---|---|',
+        ...market.recent.map(r => `| ${r.date} | ${r.longBal.toLocaleString()} | ${r.shortBal.toLocaleString()} | ${r.ratio}倍 |`),
+        '',
+      ]
+    : ['## 市場全体の信用需給', '- データを取得できませんでした。', '']
 
   return [
-    '# 銘柄の状態整理（ぽいロボ セクター）',
+    '# 個別銘柄の需給分析（ぽいロボ セクター）',
     `作成時刻：${timestamp}`,
     '',
     '## 対象銘柄',
@@ -47,63 +118,56 @@ export function buildStockAnalysisPrompt(
     `- 業種（TOPIX-17）：${sectorName}`,
     `- セクターローテーション上の分類：${phase ? `${phase.label}（${phase.economy}）で強くなりやすいとされるグループ` : '分類なし'}`,
     '',
+    ...marketBlock,
     `## 参考：業種別の実測（直近${period}）`,
     '🔵 出所＝TOPIX-17 業種別ETF（1617〜1633）の調整後終値。業種別株価指数そのものではなく、その代用です。',
     ownLine,
-    top?.avg != null
-      ? `- 4グループの中で平均が最も高いのは「${top.phase.label}」グループ（平均 ${top.avg > 0 ? '+' : ''}${top.avg}%）`
-      : '- グループ平均：データなし',
     '',
-    '17業種の騰落率（強い順）:',
-    ...rankLines,
+    '## 🔴 調べてほしい一次情報（ここを必ず見てください）',
+    `**${marginPageUrl(stock.code)}**`,
     '',
-    '## 参考：景気4局面の「型」との一致度（0〜100）',
-    '🔵 その局面で強いとされる業種が、実際に17業種中どのあたりに並んでいるかだけで決まる指標です。',
-    '   上位を独占していれば100、下位を独占していれば0。**確率ではありません。**',
-    '| 局面 | ' + (['chg1m', 'chg3m', 'chg6m'] as PerfKey[]).map(k => PERF_LABELS[k]).join(' | ') + ' |',
-    '|---|---|---|---|',
-    ...PHASES.map(ph => {
-      const cells = (['chg1m', 'chg3m', 'chg6m'] as PerfKey[]).map(k => {
-        const f = phaseFits(perf, k).find(x => x.phase.id === ph.id)
-        return f?.score ?? '—'
-      })
-      return `| ${ph.label} | ${cells.join(' | ')} |`
-    }),
-    (() => {
-      const b = bestFit(phaseFits(perf, key))
-      return b
-        ? `- 直近${period}でいちばん型に近いのは「${b.phase.label}」（一致度 ${b.score}）`
-        : '- 一致度：データなし'
-    })(),
-    '',
-    '## 🔴 前提として必ず守ること',
-    '- **ぽいロボは景気局面の判定を行っていません。**上の分類は「教科書的にどの局面で強いとされるか」'
-      + 'という一般的な対応表であり、「いまが◯◯相場だ」という判断ではありません。'
-      + '**いまの局面を断定しないでください。**',
-    '- 🔴 **一致度は確率ではありません。**「一致度◯◯だから◯◯相場である可能性が◯◯%」のような'
-      + '言い換えは行わないでください。局面には正解が存在せず、当たったかどうかを検証できない指標です。'
-      + '複数の局面の一致度が近い場合は、**近いこと自体（型が定まっていないこと）を書いてください。**',
-    '- 上の騰落率は**実際に測った値**ですが、ETFによる代用値です。指数そのものの数字として扱わないでください。',
-    '- 🔴 **ぽいロボはこの銘柄の株価を持っていません。**'
-      + 'あなたが最新の株価を参照できる場合はそれを使い、**取得日時と出典を明記**してください。'
-      + '参照できない場合は「株価データなし」と明記し、株価に関する記述は行わないでください。',
+    '日経会社情報の「信用残」ページです。週次で 信用売残・信用買残・信用倍率 が並んでいます。',
+    '**このページを参照して数字を取ってください。**参照できない場合は、株探・みんかぶなど'
+      + '他の出所でもかまいませんが、**必ず出所と日付を明記**してください。'
+      + '🔴 **どこも参照できない場合は「取得できず」と書き、数字を推測で埋めないでください。**',
     '',
     '## お願いしたいこと',
-    'この銘柄について、次の順で**事実と状態の整理**をしてください。',
+    'この銘柄の**信用需給**について、次の順で整理してください。',
     '',
-    '1) この会社が何で稼いでいるか（事業の柱と、売上・利益の構成）',
-    '2) 業績と株価が、何に反応して動いてきたか（金利・為替・景気・素材価格など）',
-    `3) いまの株価水準（参照できる最新の株価・PER・PBR・配当利回りを、**取得日と出典を明記して**）`,
-    `4) 同じ業種（${sectorName}）の中での位置。上の業種騰落率と、この銘柄自身の値動きが`
-      + '**揃っているか・ズレているか**。ズレているならその理由として考えられるもの',
-    '5) 見方が分かれている論点（強気側の根拠／弱気側の根拠を、どちらも同じ分量で）',
+    '1) **直近の数字**：信用売残・信用買残・信用倍率（日付つき）',
+    '2) **推移**：直近3か月ほどの信用買い残と信用倍率が、増えているか減っているか。'
+      + '**変化を%で**示してください（例：買い残は8週間で −18.4%）',
+    '3) **解消率**：過去1年の信用買い残のピークはいつ・いくらで、'
+      + 'そこから**いま何%解消されたか**（％で明示）',
+    '4) **市場全体との比較**：上に載せた市場全体の数字（信用倍率・解消率）と比べて、'
+      + 'この銘柄は**重いほうか・軽いほうか**',
+    '5) **売り残の状況**：売り残が積み上がっているなら、踏み上げの材料になりうるか。'
+      + '信用倍率が1倍を下回っているかどうかも書いてください',
+    '6) 🔴 **出来高との関係**：信用買い残は**商いがないと解消されません**。'
+      + '直近の平均出来高（1日）を調べ、**買い残が平均出来高の何日分にあたるか**を出してください。'
+      + 'あわせて出来高が増えているか減っているか（解消が進みやすい環境かどうか）も書いてください。',
+    '7) **需給以外で説明が要る点**：直近で増資・株式分割・株主優待の変更・'
+      + '大株主の異動など、需給に直接効く出来事があったか',
+    '',
+    '## 最後に、需給の状態を一言で',
+    '上をふまえて、いまの需給がどの状態に近いかを**次の3つから選び、理由を1〜2行**で書いてください。',
+    '- **重しが消えつつある**（買い残が解消され、出来高も伴っている）',
+    '- **まだ重い**（買い残が高水準、または商いが細くて解消が進んでいない）',
+    '- **どちらとも言えない**（材料が揃わない・数字が取れない）',
+    '🔴 これは**需給の状態の記述**であって、売買の判断ではありません。'
+      + '「買い時」「仕込み場」のような表現は使わないでください。',
     '',
     '## 守ってほしいこと',
     '- 🔴 **売買の推奨・目標株価・「買い時」の判断を書かないでください。**'
-      + '出すのは状態の記述と、判断材料の整理までです。',
-    '- 🔴 **数字は必ず出典と取得日を添えてください。**分からない数字は「不明」と書き、推測で埋めないでください。',
-    '- 業種の分類は**一般的な整理**であって、この銘柄の値動きを説明する根拠ではありません。'
-      + '実際の値動きと分類が食い違うなら、その食い違い自体を書いてください。',
+      + '出すのは需給の状態の記述と、判断材料の整理までです。',
+    '- 🔴 **数字は必ず出典と取得日を添えてください。**分からない数字は「不明」と書き、'
+      + '推測で埋めないでください。**特に信用残の数値を記憶から書かないこと。**',
+    '- 🔴 **ぽいロボは景気局面の判定を行っていません。**上の業種分類は'
+      + '「教科書的にどの局面で強いとされるか」という一般的な対応表であり、'
+      + '「いまが◯◯相場だ」という判断ではありません。**いまの局面を断定しないでください。**',
+    '- 会社の事業内容・業績・PER などの基礎情報は**不要です**（別のツールで見ています）。'
+      + '需給に絞ってください。ただし需給を動かした出来事（決算サプライズ等）があれば'
+      + '**きっかけとして**触れてかまいません。',
     '- 最後に「この整理で確認できなかったこと」を箇条書きにしてください。',
   ].join('\n')
 }
