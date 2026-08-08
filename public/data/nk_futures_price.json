@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-08T01:00:12.768Z",
+  "updatedAt": "2026-08-08T11:33:06.569Z",
   "data": [
     {
       "date": "2026-08-07",
@@ -7,7 +7,7 @@
       "high": 65991,
       "low": 64651,
       "close": 65607,
-      "volume": 0,
+      "volume": 205400000,
       "prev_close": 65683,
       "change": -76,
       "change_pct": -0.12,
