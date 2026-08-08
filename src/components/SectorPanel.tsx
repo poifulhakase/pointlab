@@ -83,6 +83,21 @@ const TV_ADMIN_LAYOUT_ID = 'ecEzo0V0'
  *    チャート（`/chart/`）＝ `interval`（足）／銘柄ページ（`/symbols/`）＝ `timeframe`（表示範囲）。
  * 🔴 `noopener` は必須（開いた先から `window.opener` 経由でこちらを操作されないようにする）。
  */
+/**
+ * 銘柄コードから日経会社情報の「信用残」ページを別タブで開く。
+ *
+ * 🔵 個別銘柄の信用売残・買残・信用倍率が**週次で無料**で見られる（ユーザー・2026-08-08）。
+ *    `?scode=` に銘柄コードを入れるだけ。新形式のコード（197A など）もそのまま通る。
+ * 🔴 **データは持たない**。J-Quants Standard（月3,300円）なら個別の信用残を取れるが、
+ *    候補が数銘柄に絞られた後の確認用途なら、リンクで足りるという判断
+ *    （TradingView と同じ「持たずにリンクする」方式・S3の方針どおり）。
+ * 🔵 市場全体の信用残は `margin.json` に52週ぶん持っている。個別だけが無い。
+ */
+function openMarginPage(code: string) {
+  const url = `https://www.nikkei.com/nkd/company/history/trust/?scode=${encodeURIComponent(code)}`
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
 function openInTradingView(code: string, isAdmin: boolean) {
   const url = isAdmin
     ? `https://jp.tradingview.com/chart/${TV_ADMIN_LAYOUT_ID}/?symbol=${encodeURIComponent(`TSE:${code}`)}&interval=1M`
@@ -1015,6 +1030,23 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                 }}
               >
                 {copied === 'prompt' ? '▶ コピー完了' : 'COPY  分析プロンプト'}
+              </button>
+
+              {/* 🔵 個別の需給。ここだけ ぽいロボがデータを持っていないので外部リンクで補う。
+                  市場全体の信用残は margin.json にあるが、銘柄別は無い（2026-08-08）。 */}
+              <button
+                onClick={() => openMarginPage(picked.code)}
+                style={{
+                  alignSelf: 'flex-start',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  border: `1px solid ${c.BORDBR}`,
+                  borderRadius: 6, padding: '6px 12px',
+                  color: c.DESC, fontFamily: c.FONT, fontSize: 11,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                ↗ 信用残・信用倍率（日経）
               </button>
               <p style={{ margin: 0, fontSize: 10, color: c.DIM, lineHeight: 1.7 }}>
                 コピーしたら下のAIに貼ってください。業種の実測（{PERF_LABELS[perfKey]}）も一緒に渡します。
