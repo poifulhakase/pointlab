@@ -177,7 +177,8 @@ export default function App() {
       return next
     })
   }, [])
-  // 開いているフッターを閉じる（PC のみ）。コンテンツクリック / ぽいロボページ表示で使用
+  // 開いているフッターを閉じる（PC のみ）。「ぽいロボとは？」ページを開いたときだけ使う。
+  // 🔴 コンテンツクリックでの自動クローズは 2026-08-08 に削除済み（手動開閉のみ）。
   const collapseFooter = useCallback(() => {
     if (isMobile || footerCollapsedRef.current) return
     setFooterAnimating(true)
@@ -511,7 +512,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           onClose={() => setPoiroboAlertModalOpen(false)}
         />
       </Suspense>
-      <div style={styles.body} onClick={collapseFooter}>
+      {/* 🔴 コンテンツをクリックしたらフッターを閉じる挙動は削除（ユーザー・2026-08-08）。
+          開閉はつまみ（^）の手動操作だけにする。復活させないこと。 */}
+      <div style={styles.body}>
         {isMobile && sidebarOpen && (
           <div style={styles.mobileOverlay} onClick={handleOverlayClick} />
         )}
