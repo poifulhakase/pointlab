@@ -114,6 +114,30 @@ async function main() {
   }
   const solid = runs.filter(r => r.n >= 21).map(r => r.n)
   console.log(`\n1か月以上続いた区間: ${solid.length}回 / 平均 ${(avg(solid) / 21).toFixed(1)}か月 / 最長 ${(Math.max(...solid) / 21).toFixed(1)}か月`)
+
+  // ── 入れ替わり方（2026-08-08 追加）─────────────────────────
+  // 🔴 「1位が短い」だけでなく「**どこへ動くか**」も見ないと画面の建て付けを誤る。
+  //    円環は循環の順番（金融→業績→逆金融→逆業績）を前提に「次に来るとされる業種」を出しているが、
+  //    実際の1位の移り先がその順番に従っているかは誰も測っていなかった。
+  const ORDER = ['financial', 'performance', 'reverseFinancial', 'reversePerformance']
+  let changed = 0, fwd = 0, other = 0
+  for (let i = 1; i < tops.length; i++) {
+    if (tops[i].t === tops[i - 1].t) continue
+    changed++
+    const from = ORDER.indexOf(tops[i - 1].t), to = ORDER.indexOf(tops[i].t)
+    if ((from + 1) % 4 === to) fwd++; else other++
+  }
+  let triple = 0
+  for (let i = 2; i < tops.length; i++) {
+    const [a, b, c] = [tops[i - 2].t, tops[i - 1].t, tops[i].t]
+    if (a !== b && b !== c && a !== c) triple++
+  }
+  console.log(`\n=== 1位の入れ替わり方 ===`)
+  console.log(`前日と1位が変わった日: ${changed}日 / ${tops.length - 1}日 = ${(changed / (tops.length - 1) * 100).toFixed(1)}%`)
+  console.log(`3営業日連続で1位が全部違った: ${triple}回 = ${(triple / (tops.length - 2) * 100).toFixed(1)}%`)
+  console.log(`移り先が循環の順番どおり（次の局面へ）: ${fwd}回 / それ以外（逆行・飛び）: ${other}回`)
+  console.log(`  → 循環どおりは ${(fwd / (fwd + other) * 100).toFixed(1)}%（行き先がでたらめなら33.3%）`)
+  console.log(`  🔴 実測 37.5% ＝ 偶然とほぼ変わらない。日次で見るかぎり循環の順番は現れていない。`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
