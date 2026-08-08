@@ -11,8 +11,8 @@ import {
   PHASES, PERF_LABELS,
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, phaseFits, bestFit, sectorRanking, searchStocks,
-  rateAlignments,
-  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type RateInfo,
+  rateAlignments, macroPhase,
+  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type MacroInfo,
   type SectorPerfRow, type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
 
@@ -135,7 +135,8 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
   const [perf,    setPerf]    = useState<SectorPerfRow[] | null>(null)
   const [periods, setPeriods] = useState<PerfPeriods>({})
-  const [rate,    setRate]    = useState<RateInfo | null>(null)
+  const [rate,    setRate]    = useState<MacroInfo | null>(null)
+  const [infl,    setInfl]    = useState<MacroInfo | null>(null)
   const [perfErr, setPerfErr] = useState<string | null>(null)
   const [master,  setMaster]  = useState<StockRow[] | null>(null)
   const [masterErr, setMasterErr] = useState<string | null>(null)
@@ -157,7 +158,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   useEffect(() => {
     let alive = true
     loadSectorPerf()
-      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods); setRate(d.rate) } })
+      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods); setRate(d.rate); setInfl(d.infl) } })
       .catch(e => { if (alive) setPerfErr(e instanceof Error ? e.message : String(e)) })
     return () => { alive = false }
   }, [])
@@ -211,8 +212,14 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
    * 🔴 **これは予測ではない**。「循環の順番ではこう」という理論の話と、
    *    「その業種はいま実測で何位か」という事実を並べるだけ。上がるとは書かない。
    */
-  const nowFit   = top
-  const nextPh   = nowFit ? nextPhase(nowFit.phase.id) : null
+  // 🔴 いまの現在地はマクロ（金利×期待インフレ）で決める。どちらかが横ばいなら null＝判定しない。
+  const macroNow = useMemo(() => macroPhase(rate, infl), [rate, infl])
+  const macroPh  = macroNow ? phaseById(macroNow.id) : null
+
+  // 🔴 起点は**マクロで決めた現在地**（2026-08-08）。画面に「現在地」が2つあると読めないため、
+  //    円環の中心と同じものを使う。マクロが横ばいで判定できない日だけ一致度で代用する。
+  const nowPhase = macroPh ?? top?.phase ?? null
+  const nextPh   = nowPhase ? nextPhase(nowPhase.id) : null
   const nextRows = useMemo(
     () => (nextPh ? ranking.filter(r => nextPh.sectors17.includes(r.row.sector17)) : []),
     [nextPh, ranking]
@@ -433,8 +440,17 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                       style={{ transition: 'font-size .2s ease' }}>
                   {p.label}
                 </text>
+                {/* 🔵 マクロで決まる現在地。扇そのものに「いまここ」と書く */}
+                {macroNow?.id === p.id && (
+                  <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700}
+                        fill={p.color}
+                        style={{ filter: glow ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
+                    ◀ いまここ
+                  </text>
+                )}
                 {fit?.score != null && (
-                  <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={11} fontWeight={700}
+                  <text x={m.x} y={m.y + (macroNow?.id === p.id ? 26 : 13)} textAnchor="middle"
+                        fontSize={11} fontWeight={700}
                         fill={p.color} opacity={0.9}>
                     一致 {fit.score}
                   </text>
@@ -445,10 +461,10 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
           {/* 🔵 いまの型 → 次の局面 を、円の内側を回る矢印で見せる（文章での説明は削除）。
               時計回りに流れることで「次はここ」が言葉なしで伝わる。 */}
-          {top && nextPh && (
+          {nowPhase && nextPh && (
             <g style={{ pointerEvents: 'none' }}>
               <path
-                d={arcPath(phaseMidAngle(top.phase.id) + 10, phaseMidAngle(nextPh.id) - 16, R_NEXT)}
+                d={arcPath(phaseMidAngle(nowPhase.id) + 10, phaseMidAngle(nextPh.id) - 16, R_NEXT)}
                 fill="none" stroke={nextPh.color} strokeOpacity={0.8} strokeWidth={2}
                 strokeLinecap="round" strokeDasharray="5 6"
                 style={{ animation: 'sector-flow 1.3s linear infinite' }}
@@ -478,12 +494,50 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
             </>
           )}
 
-          <text x={SIZE / 2} y={SIZE / 2 - 20} textAnchor="middle" fontSize={9.5}
-                fill={c.DIM} letterSpacing="0.1em">
-            {PERF_LABELS[perfKey]}の並びが最も近い型
-          </text>
-          {top ? (
+          {/* 🔴 中心は「いまの現在地」。**マクロ（金利×期待インフレ）で決める**（2026-08-08）。
+              以前は一致度（業種の並び）で決めていたが、業種の騰落から局面を決めて
+              その局面で業種を語る循環で、しかも1位が20.2%の日で入れ替わっていた。
+              マクロなら入れ替わりは4.1%・中央値8営業日で腰が据わる（実測）。
+              🔵 一致度は「業種の並びがその現在地を支持しているか」の裏づけに降格。 */}
+          {macroNow ? (
             <>
+              <text x={SIZE / 2} y={SIZE / 2 - 28} textAnchor="middle" fontSize={9.5}
+                    fill={c.DIM} letterSpacing="0.1em">
+                いまの位置（金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）
+              </text>
+              <text x={SIZE / 2} y={SIZE / 2 - 4} textAnchor="middle" fontSize={17}
+                    fontWeight={700} fill={macroPh!.color}
+                    style={{ filter: glow ? `drop-shadow(0 0 6px ${macroPh!.color}77)` : undefined }}>
+                {macroPh!.label}
+              </text>
+              {/* 🔵 業種の並びが支持しているかどうか。一致していれば静かに、
+                  食い違っていれば「業種の並びは別」と書く（どちらが正しいとは書かない）。 */}
+              {top && (
+                macroNow.id === top.phase.id ? (
+                  <text x={SIZE / 2} y={SIZE / 2 + 18} textAnchor="middle" fontSize={9.5} fill={c.DESC}>
+                    業種の並びもこれを支持（一致度 {top.score}）
+                  </text>
+                ) : (
+                  <>
+                    <text x={SIZE / 2} y={SIZE / 2 + 16} textAnchor="middle" fontSize={9.5} fill={c.DIM}>
+                      業種の並びは
+                      <tspan fill={top.phase.color} fontWeight={700}> {top.phase.label} </tspan>
+                      に近い
+                    </text>
+                    <text x={SIZE / 2} y={SIZE / 2 + 30} textAnchor="middle" fontSize={9} fill={c.DIM}>
+                      （一致度 {top.score}）
+                    </text>
+                  </>
+                )
+              )}
+            </>
+          ) : top ? (
+            <>
+              {/* マクロが横ばい（判定しない）ときは、従来どおり一致度だけを出す */}
+              <text x={SIZE / 2} y={SIZE / 2 - 20} textAnchor="middle" fontSize={9.5}
+                    fill={c.DIM} letterSpacing="0.1em">
+                {PERF_LABELS[perfKey]}の並びが最も近い型
+              </text>
               <text x={SIZE / 2} y={SIZE / 2 + 2} textAnchor="middle" fontSize={16}
                     fontWeight={700} fill={top.phase.color}
                     style={{ filter: glow ? `drop-shadow(0 0 6px ${top.phase.color}77)` : undefined }}>
@@ -523,7 +577,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               width: 11, height: 11, borderRadius: '50%',
               border: `3px solid ${top?.phase.color ?? c.BORDBR}`, background: c.BG,
             }} />
-            一致度が最も高い型
+            業種の並びが最も近い型
           </span>
         </div>
 
@@ -577,7 +631,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               目的が「いま伸びている業種を見る」ではなく
               「これから動くかもしれない銘柄を探す」ため（ユーザー・2026-08-07）。
               🔴 予測は書かない。循環の順番（理論）と、その業種のいまの実測（事実）を並べるだけ。 */}
-          {nowFit && nextPh && (
+          {nowPhase && nextPh && (
             <section style={{
               border: `1px solid ${nextPh.color}`, borderRadius: 8, padding: '10px 12px',
               background: c.LOGBG,
@@ -587,8 +641,11 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                   ▶ 次に来るとされる業種
                 </span>
                 <span style={{ fontSize: 10, color: c.DIM }}>
-                  いまの型＝<span style={{ color: nowFit.phase.color }}>{nowFit.phase.label}</span>
-                  （一致度 {nowFit.score}）→ 次は
+                  いまの位置＝<span style={{ color: nowPhase.color }}>{nowPhase.label}</span>
+                  {macroNow
+                    ? <>（金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）</>
+                    : <>（業種の並び・一致度 {top?.score}）</>}
+                  → 次は
                   <span style={{ color: nextPh.color, fontWeight: 700 }}> {nextPh.label}</span> とされる
                 </span>
               </div>

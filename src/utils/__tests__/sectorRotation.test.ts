@@ -8,7 +8,8 @@ import {
   phaseAt, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, strongestPhase, phaseFits, bestFit, sectorRanking, searchStocks,
   RATE_SENSITIVITY, RATE_MOVE_THRESHOLD, rateAlignments,
-  type RateInfo, type SectorPerfRow, type StockRow,
+  macroPhase, MACRO_RATE_THRESHOLD, MACRO_INFL_THRESHOLD,
+  type MacroInfo, type SectorPerfRow, type StockRow,
 } from '../sectorRotation'
 import { buildStockAnalysisPrompt } from '../sectorStockPrompt'
 
@@ -408,9 +409,32 @@ describe('public/data の実ファイル', () => {
     expect(top).toBe(15)
   })
 
+  it('🔴 マクロ（金利×インフレ）の4象限が、循環の順番どおりに並ぶ', () => {
+    const mk = (chg3m: number): MacroInfo =>
+      ({ symbol: 'x', label: 'x', time: '2026-08-07', last: 1, chg3m, from: null, to: null })
+    // 金利↓×インフレ↓=金融 / ↑×↓=業績 / ↑×↑=逆金融 / ↓×↑=逆業績
+    expect(macroPhase(mk(-1), mk(-1))!.id).toBe('financial')
+    expect(macroPhase(mk(+1), mk(-1))!.id).toBe('performance')
+    expect(macroPhase(mk(+1), mk(+1))!.id).toBe('reverseFinancial')
+    expect(macroPhase(mk(-1), mk(+1))!.id).toBe('reversePerformance')
+    // 🔵 この並びが PHASES の循環の順番（金融→業績→逆金融→逆業績）と一致していること
+    const cycle = ['financial', 'performance', 'reverseFinancial', 'reversePerformance']
+    expect(PHASES.map(p => p.id)).toEqual(cycle)
+  })
+
+  it('🔴 金利かインフレが横ばいなら現在地を判定しない', () => {
+    const mk = (chg3m: number | null): MacroInfo =>
+      ({ symbol: 'x', label: 'x', time: '2026-08-07', last: 1, chg3m, from: null, to: null })
+    expect(macroPhase(mk(MACRO_RATE_THRESHOLD / 2), mk(1))).toBeNull()   // 金利が横ばい
+    expect(macroPhase(mk(1), mk(MACRO_INFL_THRESHOLD / 2))).toBeNull()   // インフレが横ばい
+    expect(macroPhase(null, mk(1))).toBeNull()                            // 取得できていない
+    expect(macroPhase(mk(1), null)).toBeNull()
+    expect(macroPhase(mk(null), mk(1))).toBeNull()
+  })
+
   it('🔴 金利がほとんど動いていない期間は、突き合わせを出さない', () => {
     const rows: SectorPerfRow[] = JSON.parse(perfRaw).data
-    const still: RateInfo = {
+    const still: MacroInfo = {
       symbol: '^TNX', label: '米10年債利回り', time: '2026-08-07',
       chg3m: RATE_MOVE_THRESHOLD / 2, last: 4.5, from: null, to: null,
     }

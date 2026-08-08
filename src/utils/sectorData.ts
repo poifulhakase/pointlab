@@ -8,7 +8,7 @@
 //    同一セッション内はモジュール変数で使い回す。
 
 import { fetchWithCache } from './dataCache'
-import type { PerfPeriods, RateInfo, SectorPerfRow, StockRow } from './sectorRotation'
+import type { MacroInfo, PerfPeriods, SectorPerfRow, StockRow } from './sectorRotation'
 
 const PERF_URL   = `${import.meta.env.BASE_URL}data/sector_perf.json`
 const MASTER_URL = `${import.meta.env.BASE_URL}data/stock_master.json`
@@ -24,7 +24,9 @@ export type SectorPerf = {
   /** 各期間が実際いつからいつまでか。「1か月」だけでは伝わらないので画面に出す。 */
   periods:   PerfPeriods
   /** 金利（米10年債利回り）。取得に失敗した日は null になりうる。 */
-  rate:      RateInfo | null
+  rate:      MacroInfo | null
+  /** 期待インフレ率（10年BEI）。金利とセットで「いまの局面」を決める。 */
+  infl:      MacroInfo | null
 }
 
 export async function loadSectorPerf(): Promise<SectorPerf> {
@@ -44,8 +46,9 @@ export async function loadSectorPerf(): Promise<SectorPerf> {
           updatedAt: json?.updatedAt ?? null,
           proxy:     json?.proxy ?? null,
           periods:   json?.periods ?? {},
-          // 🔵 金利は後から足した項目。古いキャッシュには入っていないので null 許容。
-          rate:      (json?.rate as RateInfo | undefined) ?? null,
+          // 🔵 マクロは後から足した項目。古いキャッシュには入っていないので null 許容。
+          rate:      (json?.rate as MacroInfo | undefined) ?? null,
+          infl:      (json?.infl as MacroInfo | undefined) ?? null,
         },
         updatedAt: json?.updatedAt,
       }

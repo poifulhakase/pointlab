@@ -159,17 +159,69 @@ export type SectorPerfRow = {
   rank6m:   number | null
 }
 
-/** 金利（米10年債利回り）の水準と3か月変化。sector_perf.json に同居している。 */
-export type RateInfo = {
+/** マクロ指標（金利・期待インフレ）の水準と3か月変化。sector_perf.json に同居している。 */
+export type MacroInfo = {
   symbol: string
   label:  string
   time:   string
-  /** 直近の利回り（%） */
+  /** 直近の値（%） */
   last:   number
   /** 3か月の変化。🔴 単位は**%ポイント**（騰落率の%ではない） */
   chg3m:  number | null
   from:   string | null
   to:     string | null
+}
+/** 金利専用だった頃の名前。中身は MacroInfo と同じ。 */
+export type RateInfo = MacroInfo
+
+/**
+ * マクロで「いまどこにいるか」を決めるときの、動いたとみなす幅（%ポイント）。
+ * 🔵 実測（`scripts/analyze-sector-macro.mjs`）もこの幅で区切っている。変えたら測り直すこと。
+ */
+export const MACRO_RATE_THRESHOLD = 0.10
+export const MACRO_INFL_THRESHOLD = 0.05
+
+export type MacroPhase = {
+  id: SectorPhaseId
+  /** 金利の向き（true＝上昇） */
+  rateUp: boolean
+  /** 期待インフレの向き（true＝上昇） */
+  inflUp: boolean
+}
+
+/**
+ * 金利と期待インフレの**向きだけ**で、いまの局面を決める。
+ *
+ * | 金利 | インフレ | 局面 |
+ * |---|---|---|
+ * | ↓ | ↓ | 金融相場（緩和・ディスインフレ） |
+ * | ↑ | ↓ | 業績相場（良い金利上昇） |
+ * | ↑ | ↑ | 逆金融相場（インフレ退治の引き締め） |
+ * | ↓ | ↑ | 逆業績相場（スタグフレーション的） |
+ *
+ * 🔵 Merrill の Investment Clock と同じ並びで、この順に一周する。
+ * 🔴 **業種の騰落率を一切使わない**のが要点。一致度は「業種の並びから局面を決めて、
+ *    その局面で業種を語る」循環だったが、こちらは外部の入力だけで決まる。
+ *
+ * 🔵 実測（2015-07〜2026-08・`scripts/analyze-sector-macro.mjs`）
+ *    局面が入れ替わった日 **4.1%**（一致度だけだと21.6%）／続いた期間の中央値 **8営業日**（同2営業日）
+ *    ／循環の順番どおりの遷移 **41.7%**（同35.6%・偶然33.3%）＝ 格段に腰が据わる。
+ * 🔴 ただし**業種の裏づけが取れたのは4局面中2つだけ**（逆金融相場 +0.92／金融相場 +0.32）。
+ *    業績相場と逆業績相場は該当日が少なく（11%/8%）、教科書と逆に出ている。
+ *    ＝ **現在地の表示に使う。「この局面だからこの業種が上がる」とは書かない。**
+ *
+ * @returns どちらかが横ばい（閾値未満）なら null＝判定しない
+ */
+export function macroPhase(rate: MacroInfo | null, infl: MacroInfo | null): MacroPhase | null {
+  if (!rate || !infl || rate.chg3m == null || infl.chg3m == null) return null
+  if (Math.abs(rate.chg3m) < MACRO_RATE_THRESHOLD) return null
+  if (Math.abs(infl.chg3m) < MACRO_INFL_THRESHOLD) return null
+  const rateUp = rate.chg3m > 0
+  const inflUp = infl.chg3m > 0
+  const id: SectorPhaseId = rateUp
+    ? (inflUp ? 'reverseFinancial' : 'performance')
+    : (inflUp ? 'reversePerformance' : 'financial')
+  return { id, rateUp, inflUp }
 }
 
 /**
