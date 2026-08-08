@@ -9,7 +9,50 @@
 
 ## 🟢 現在の状態
 
-**ブランチ**: `main`（origin/main へ push 済・最新 `b66abff`。Vercel Git 連携で本番自動デプロイ）
+**ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
+
+### 2026-08-08(2): TradingView の開き方を管理者だけ変更／不要物の削除 ✅（push 済）
+
+**① TradingView のURLを管理者とそれ以外で分けた**（ユーザー・2026-08-08）
+
+| | 開くURL |
+|---|---|
+| 管理者（`isAdminEmail`） | `https://jp.tradingview.com/chart/ecEzo0V0/?symbol=TSE%3A{コード}` |
+| それ以外・未ログイン | `https://jp.tradingview.com/symbols/TSE-{コード}/?timeframe=1M` |
+
+`ecEzo0V0` は**管理者本人の保存済みチャートレイアウト**（画面右上の名前は「ポイントラボ」）。
+🔴 **一般ユーザーには使わない**＝他人が開くと管理者のインジケーター構成や描画が見えるため。
+判定は `utils/admin.ts` の `isAdminEmail()`（`firestore.rules` との齟齬を CI が検知する既存の単一情報源）。
+配線は `ShieldView` → `SectorPanel` に `user` を渡す形。
+🔵 管理者側には足の指定（`interval`）を**付けていない**＝レイアウトに保存された足がそのまま出る。
+月足で固定したくなったら `&interval=1M` を足す（`interval` が足、`timeframe` は表示範囲）。
+
+🔵 **調べた結論（再調査しないこと）**
+- TradingView 規約：**外部リンクは制限対象外**。制限されるのは「コンテンツ/データを自前の画面に表示すること」
+  （Section 3 の display-only／スナップショットには出典表示が必要）と「自動アクセス・機械処理」。
+  レイアウトURLの共有は TradingView 公式の「共有」機能が生成するものなので禁止条項なし。
+- **有料プランは相手に渡らない**。機能制限は**開いた人のアカウント**で判定され、招待制/有料の
+  サードパーティ製インジケーターはアカウント単位の許可制でソースも見えない。伝わるのは「構成」まで。
+  ※ 別アカウントでの実地検証はしていない（仕組み上の説明）。確かめるならシークレットウィンドウで開く。
+
+**② 下端の空白の帯を解消**（ユーザー指摘）
+
+`ShieldView` の `paddingBottom: isMobile ? 130 : 0` が、セクタータブでは**常時見える死んだ帯**になっていた
+（`SectorPanel` は自前で1本スクロールするため、親の padding が中身の末尾にならない）。
+🔴 `paddingBottom` は **`mode === 'shield'` のときだけ**に変更し、セクター側の下端の逃げは
+**スクロールの中身の末尾**＝`SectorPanel` 右列の `padding-bottom: 120px` に移した
+（浮いている「シールド／セクター」トグルとフッターに最後の項目が隠れないため）。
+実測でスクロール枠が 650px → **776px** に拡大、最下部の AI 起動アイコンも隠れないことを確認。
+
+**③ 削除・据え置き**
+- 🔴 **反転臨界モニターの残骸3ファイルを削除**（`src/utils/reversalWatch.ts` /
+  `src/utils/__tests__/reversalWatch.test.ts` / `scripts/check-reversal-watch.ts`）。
+  削除前に `src`/`scripts`/`docs`/`package.json`/`.github` を走査し参照ゼロを確認。
+  **テストは 252 → 233 件**（削除したテスト自身の19件ぶん・テストファイル 20→19）。
+- 検索結果の行末に置いていた `↗` は**削除**（ユーザー判断）。
+- 「ぽいロボとは？」ページを開いたときにフッターを閉じる挙動は**残す**（ユーザー判断）。
+
+検証: tsc(app)=0 / lint=0 / vitest **233 pass**。
 
 ### 2026-08-08(1): セクター画面のスマホ表示を修正／行クリックを TradingView へ ✅（push 済）
 
