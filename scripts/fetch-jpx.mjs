@@ -1510,6 +1510,50 @@ async function fetchUs10yData() {
   }
 }
 
+/**
+ * 期待インフレ率（10年ブレークイーブン・FRED T10YIE）の水準と3か月変化。
+ *
+ * 🔴 なぜ要るか（2026-08-08）
+ *   金利だけでは4局面を2つまでしか絞れない（金融相場と逆業績相場はどちらも「金利↓」、
+ *   業績相場と逆金融相場はどちらも「金利↑」で、原理的に区別できない）。
+ *   インフレを2本目の軸に入れると4象限に分かれる＝ Merrill の Investment Clock と同じ並びで、
+ *   金融→業績→逆金融→逆業績 の順に一周する。
+ *
+ * 🔵 FRED の CSV は **APIキー不要**。2003年から日次。欠損は "." で入る。
+ *   CPI の発表を待たず、市場が織り込んでいる期待インフレをその日のうちに取れる。
+ */
+async function fetchBreakevenData() {
+  console.log('\n[inflation] 期待インフレ率（FRED T10YIE）を取得...')
+  const res = await fetch('https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10YIE', {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const times = [], vals = []
+  for (const line of (await res.text()).trim().split('\n').slice(1)) {
+    const [d, v] = line.split(',')
+    const n = Number(v)
+    if (!v || v === '.' || isNaN(n) || n <= 0) continue
+    times.push(d); vals.push(n)
+  }
+  if (vals.length < 70) throw new Error(`データ不足(${vals.length}本)`)
+
+  const last = vals[vals.length - 1]
+  const back = PERF_BACK.chg3m
+  const prev = vals[vals.length - 1 - back]
+  const chg3m = prev == null ? null : Math.round((last - prev) * 1000) / 1000
+  console.log(`  T10YIE: ${last.toFixed(2)}% / 3か月 ${chg3m >= 0 ? '+' : ''}${chg3m}%ポイント`)
+  return {
+    symbol: 'T10YIE',
+    label: '期待インフレ率（10年BEI）',
+    time: times[times.length - 1],
+    last: Math.round(last * 100) / 100,
+    chg3m,
+    from: times[times.length - 1 - back] ?? null,
+    to: times[times.length - 1],
+  }
+}
+
 async function fetchSectorPerfData() {
   console.log('\n[sectorPerf] TOPIX-17 業種別ETF（1617〜1633）から相対強弱を計算...')
 
@@ -1782,9 +1826,10 @@ async function main() {
     const { rows: data, periods } = await fetchSectorPerfData()
     // 🔵 金利は業種の話とセットでしか使わないので、専用ファイルを増やさず同居させる。
     //    取得に失敗しても業種の表示は続けたいので、ここで握りつぶして null にする。
-    let rate = null
-    try { rate = await fetchUs10yData() } catch (e) { console.warn(`  ⚠ 金利(^TNX): ${e.message}`) }
-    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', periods, rate, data }
+    let rate = null, infl = null
+    try { rate = await fetchUs10yData() }    catch (e) { console.warn(`  ⚠ 金利(^TNX): ${e.message}`) }
+    try { infl = await fetchBreakevenData() } catch (e) { console.warn(`  ⚠ 期待インフレ(T10YIE): ${e.message}`) }
+    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', periods, rate, infl, data }
     writeFileSync(join(OUT_DIR, 'sector_perf.json'), JSON.stringify(out, null, 2))
     console.log(`\n✓ sector_perf.json 保存 (${data.length}業種)`)
     sectorPerfOk = true
