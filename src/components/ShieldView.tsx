@@ -524,7 +524,12 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         overflowY: isMobile ? 'auto' : 'hidden',
-        paddingBottom: isMobile ? 130 : 0,
+        // 🔴 セクタータブでは付けない（ユーザー指摘・2026-08-08）。
+        //    シールドタブは中身が縦に積まれてここが末尾になるので余白が効くが、
+        //    SectorPanel は自前で1本スクロールするため、この padding が
+        //    **常時見えるだけの空白の帯**になってしまう。
+        //    セクター側の下の逃げは SectorPanel の右列の padding-bottom で確保している。
+        paddingBottom: isMobile && mode === 'shield' ? 130 : 0,
       }}>
         {mode === 'shield' ? (
           <>
@@ -543,7 +548,7 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
             {isMobile && <CyberSystemLog {...logState} theme={theme} />}
           </>
         ) : (
-          <SectorPanel theme={theme} isMobile={isMobile} />
+          <SectorPanel theme={theme} isMobile={isMobile} user={user} />
         )}
       </div>
     </div>

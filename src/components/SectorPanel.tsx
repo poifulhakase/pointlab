@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import type React from 'react'
+import type { User } from 'firebase/auth'
+import { isAdminEmail } from '../utils/admin'
 import { cy } from '../utils/cyberTheme'
 import { AILaunchRow } from './CyberAiLaunch'
 import { jstTimestamp } from '../utils/jstDate'
@@ -51,6 +53,8 @@ function periodText(periods: PerfPeriods, key: PeriodKey): string {
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
+  /** 管理者判定に使う（TradingView を自分のチャートレイアウトで開くかの分岐） */
+  user: User | null
 }
 
 // 🔵 SIZE は「次はこちら」の矢印を**円の外側**に描く余白ぶんだけ R_OUT より大きく取る
@@ -62,13 +66,26 @@ const R_IN  = 88
 const R_NEXT = R_OUT + 24
 
 /**
- * 銘柄コードから TradingView の個別銘柄ページを別タブで開く。
- * 🔵 このアプリは個別銘柄の株価を持たない方針（チャートも指標も TradingView 側が持っている）なので、
+ * 管理者の保存済みチャートレイアウトID。
+ * 🔴 **管理者本人がログインしているときだけ**使う（ユーザー・2026-08-08）。
+ *    個人のレイアウトなので、他の人がこれを開くと管理者のインジケーター構成が見えてしまう。
+ *    そのため一般ユーザーには従来どおり銘柄ページを開く。
+ */
+const TV_ADMIN_LAYOUT_ID = 'ecEzo0V0'
+
+/**
+ * 銘柄コードから TradingView を別タブで開く。
+ * 🔵 このアプリは個別銘柄の株価を持たない方針（チャートも指標も TradingView 側が持っている）ので、
  *    「探す」の出口は外部リンク1本にしている。
+ * 🔵 管理者＝自分のチャートレイアウトで開く（足やインジケーターはレイアウト側の設定に従う）。
+ *    それ以外＝銘柄ページを `timeframe=1M`（1か月足）で開く。
  * 🔴 `noopener` は必須（開いた先から `window.opener` 経由でこちらを操作されないようにする）。
  */
-function openInTradingView(code: string) {
-  window.open(`https://jp.tradingview.com/symbols/TSE-${code}/`, '_blank', 'noopener,noreferrer')
+function openInTradingView(code: string, isAdmin: boolean) {
+  const url = isAdmin
+    ? `https://jp.tradingview.com/chart/${TV_ADMIN_LAYOUT_ID}/?symbol=${encodeURIComponent(`TSE:${code}`)}`
+    : `https://jp.tradingview.com/symbols/TSE-${code}/?timeframe=1M`
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 /** 角度（0度＝真上・時計回り）を SVG 座標へ。 */
@@ -105,9 +122,11 @@ function signed(v: number | null): string {
   return `${v > 0 ? '+' : ''}${v}%`
 }
 
-export function SectorPanel({ theme, isMobile }: Props) {
+export function SectorPanel({ theme, isMobile, user }: Props) {
   const c    = cy(theme)
   const glow = theme === 'dark'
+  // 🔵 管理者判定は `utils/admin.ts` に集約（firestore.rules の isAdmin() と齟齬が出ないようテストあり）
+  const isAdmin = isAdminEmail(user?.email)
   const UP   = theme === 'light' ? '#15803d' : '#4ade80'
   const DOWN = theme === 'light' ? '#dc2626' : '#f87171'
   const pnl  = (v: number | null) => (v == null ? c.DIM : v > 0 ? UP : v < 0 ? DOWN : c.DESC)
@@ -731,7 +750,10 @@ export function SectorPanel({ theme, isMobile }: Props) {
              区切り線のすぐ下に無駄な余白が空くだけなので 24px に落とす。 */}
       <div style={{
         flex: isMobile ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', padding: isMobile ? '24px 16px' : '44px 16px 24px',
+        // 🔵 スマホの下の余白（120px）は、浮いている「シールド／セクター」トグルと
+        //    フッターに最後の項目が隠れないための逃げ。**スクロールの中身の末尾**に置くこと
+        //    （親のコンテナに padding で持たせると、常時見える空白の帯になる・2026-08-08）。
+        alignItems: 'center', padding: isMobile ? '24px 16px 120px' : '44px 16px 24px',
         overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
@@ -802,7 +824,7 @@ export function SectorPanel({ theme, isMobile }: Props) {
                         //    貼り先が TradingView と決まっている以上、貼る手間を省いて直接開く。
                         onClick={() => {
                           setPicked(st)
-                          openInTradingView(st.code)
+                          openInTradingView(st.code, isAdmin)
                         }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 10,
@@ -825,9 +847,6 @@ export function SectorPanel({ theme, isMobile }: Props) {
                         <span style={{ fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{st.name}</span>
                         <span style={{ fontSize: 10.5, color: c.DIM }}>{sector17Label(st.sector17)}</span>
                         {ph && <span style={{ fontSize: 10, color: col }}>{ph.label}</span>}
-                        {/* 🔵 押すと別タブへ出ることが行を見ただけで分かるように印を置く
-                            （外部リンクの標準的な合図。文章で説明を足さずに済む） */}
-                        <span aria-hidden style={{ fontSize: 10, color: c.DIM }}>↗</span>
                       </li>
                     )
                   })}
