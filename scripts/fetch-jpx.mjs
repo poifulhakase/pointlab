@@ -1500,13 +1500,16 @@ async function fetchUs10yData() {
   const chg3m = prev == null ? null : Math.round((last - prev) * 1000) / 1000
   console.log(`  ^TNX: ${last.toFixed(2)}% / 3か月 ${chg3m >= 0 ? '+' : ''}${chg3m}%ポイント`)
   return {
-    symbol: '^TNX',
-    label: '米10年債利回り',
-    time: times[times.length - 1],
-    last: Math.round(last * 100) / 100,
-    chg3m,
-    from: times[times.length - 1 - back] ?? null,
-    to: times[times.length - 1],
+    info: {
+      symbol: '^TNX',
+      label: '米10年債利回り',
+      time: times[times.length - 1],
+      last: Math.round(last * 100) / 100,
+      chg3m,
+      from: times[times.length - 1 - back] ?? null,
+      to: times[times.length - 1],
+    },
+    times, vals,
   }
 }
 
@@ -1544,14 +1547,56 @@ async function fetchBreakevenData() {
   const chg3m = prev == null ? null : Math.round((last - prev) * 1000) / 1000
   console.log(`  T10YIE: ${last.toFixed(2)}% / 3か月 ${chg3m >= 0 ? '+' : ''}${chg3m}%ポイント`)
   return {
-    symbol: 'T10YIE',
-    label: '期待インフレ率（10年BEI）',
-    time: times[times.length - 1],
-    last: Math.round(last * 100) / 100,
-    chg3m,
-    from: times[times.length - 1 - back] ?? null,
-    to: times[times.length - 1],
+    info: {
+      symbol: 'T10YIE',
+      label: '期待インフレ率（10年BEI）',
+      time: times[times.length - 1],
+      last: Math.round(last * 100) / 100,
+      chg3m,
+      from: times[times.length - 1 - back] ?? null,
+      to: times[times.length - 1],
+    },
+    times, vals,
   }
+}
+
+/**
+ * 「直前に確定したアンカー」を履歴からたどって決める。
+ *
+ * 🔴 アンカー＝金利とインフレが**同じ方向**の日（金融相場＝どちらも↓／逆金融相場＝どちらも↑）。
+ *    実測で業種の裏づけが取れたのはこの2つだけ（金融 +0.32／逆金融 +0.92）。
+ *    方向が食い違う日は移行期で、**直前のアンカーと循環の順序から割り出す**（背理法）。
+ *    ＝ 「逆金融相場ではない ＝ 逆業績相場」（ユーザー・2026-08-08）。
+ *
+ * 🔴 フロントは日次スナップショットしか持たないので、ここで確定させて JSON に載せる。
+ *    当日の値だけから推定すると `scripts/analyze-sector-macro.mjs` の逐次更新と食い違う。
+ *
+ * 🔵 実測での効果（記憶なし→アンカー＋背理法）
+ *    循環の順番どおりの遷移 41.7% → **73.6%**（定義上の当たり前ではない。アンカーは飛べる）
+ *    逆業績相場の業種の裏づけ −0.83 → **+0.04**（間違ってはいない水準まで戻る）
+ *    入れ替わり頻度は 4.1% のまま＝詰まらない（「前進のみ」は金融相場に52%居座る）
+ */
+function computeLastAnchor(rateSeries, inflSeries) {
+  // 日付で突き合わせる（米国休場やFREDの欠損で日付がずれるため）
+  const inflMap = new Map()
+  for (let i = 0; i < inflSeries.times.length; i++) inflMap.set(inflSeries.times[i], inflSeries.vals[i])
+
+  const days = []
+  for (let i = 0; i < rateSeries.times.length; i++) {
+    const d = rateSeries.times[i]
+    if (inflMap.has(d)) days.push({ d, r: rateSeries.vals[i], f: inflMap.get(d) })
+  }
+  const back = PERF_BACK.chg3m
+  let lastAnchor = null
+  for (let i = back; i < days.length; i++) {
+    const dr = days[i].r - days[i - back].r
+    const di = days[i].f - days[i - back].f
+    if (Math.abs(dr) < 0.10 || Math.abs(di) < 0.05) continue   // 横ばいは判定しない
+    const rateUp = dr > 0, inflUp = di > 0
+    if (rateUp === inflUp) lastAnchor = rateUp ? 'reverseFinancial' : 'financial'
+  }
+  console.log(`  直前のアンカー: ${lastAnchor ?? '（まだ無し）'}`)
+  return lastAnchor
 }
 
 async function fetchSectorPerfData() {
@@ -1826,10 +1871,15 @@ async function main() {
     const { rows: data, periods } = await fetchSectorPerfData()
     // 🔵 金利は業種の話とセットでしか使わないので、専用ファイルを増やさず同居させる。
     //    取得に失敗しても業種の表示は続けたいので、ここで握りつぶして null にする。
-    let rate = null, infl = null
-    try { rate = await fetchUs10yData() }    catch (e) { console.warn(`  ⚠ 金利(^TNX): ${e.message}`) }
-    try { infl = await fetchBreakevenData() } catch (e) { console.warn(`  ⚠ 期待インフレ(T10YIE): ${e.message}`) }
-    const out  = { updatedAt: new Date().toISOString(), proxy: 'etf', periods, rate, infl, data }
+    let rateS = null, inflS = null
+    try { rateS = await fetchUs10yData() }    catch (e) { console.warn(`  ⚠ 金利(^TNX): ${e.message}`) }
+    try { inflS = await fetchBreakevenData() } catch (e) { console.warn(`  ⚠ 期待インフレ(T10YIE): ${e.message}`) }
+    // 🔵 アンカーは履歴をたどって確定させる（フロントは日次スナップショットしか持てないため）
+    const macro = (rateS && inflS) ? { lastAnchor: computeLastAnchor(rateS, inflS) } : null
+    const out  = {
+      updatedAt: new Date().toISOString(), proxy: 'etf', periods,
+      rate: rateS?.info ?? null, infl: inflS?.info ?? null, macro, data,
+    }
     writeFileSync(join(OUT_DIR, 'sector_perf.json'), JSON.stringify(out, null, 2))
     console.log(`\n✓ sector_perf.json 保存 (${data.length}業種)`)
     sectorPerfOk = true
