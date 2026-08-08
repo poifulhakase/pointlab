@@ -711,9 +711,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
             </>
           ) : (
             <>
-              <span style={{ fontSize: 11, color: c.DIM }}>
-                景気の局面で物色対象が回るという見方 × 実測
-              </span>
+              <span style={{ fontSize: 11, color: c.DIM }}>一致度とは？</span>
               <button
                 onClick={() => setHelp(v => !v)}
                 aria-label="一致度の説明"
