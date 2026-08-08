@@ -173,6 +173,9 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   const [detail,   setDetail]   = useState(false)
   // 🔵 「いま資金が向かっている業種」は既定で上位5つだけ（17件は多すぎる）
   const [allRanks, setAllRanks] = useState(false)
+  // 🔵 円環の中央をクリックして「現在地（マクロ）」と「一致度（業種の並び）」を切り替える。
+  //    両方を同時に出すと扇が3行になって重なるため（ユーザー・2026-08-08）。
+  const [centerMode, setCenterMode] = useState<'macro' | 'fit'>('macro')
 
   useEffect(() => {
     let alive = true
@@ -254,14 +257,17 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   // 一致度がいちばん高い局面を指すマーカー。
   // 🔵 弧の中央（R_OUT と R_IN の中間）に置くと**局面名のラベルと重なって読めない**ので、
   //    外周の目盛りリング上に逃がしている。
-  const marker = macroPh ? pt(phaseMidAngle(macroPh.id), R_OUT + 12) : null
-  // 🔴 移行期は現在地の候補が2つある（ユーザー・2026-08-08）。
-  //    **直前のアンカー（まだそこにいる）** と **その次（もう進んでいる）** の2つ。
-  //    実例＝逆金融相場と逆業績相場。行き先（金融相場）は現在地の候補ではないので出さない。
-  const altMarker = macroNow?.derived && macro?.lastAnchor
-    ? pt(phaseMidAngle(macro.lastAnchor), R_OUT + 12)
-    : null
-  const altPhase = macroNow?.derived && macro?.lastAnchor ? phaseById(macro.lastAnchor) : null
+  // 🔴 移行期の構造（ユーザー・2026-08-08）:
+  //    **現在地＝直前のアンカー（確定）**。逆金融相場ならそこにいる。
+  //    **行き先＝2つの候補（未確定）**。ハードなら逆業績相場を経由、ソフトなら素通りして金融相場。
+  //    ＝ 実線の丸1つ（現在地）＋ 点線の丸2つ（行き先の候補）。
+  const hereId  = macroNow?.derived ? (macro?.lastAnchor ?? null) : (macroPh?.id ?? null)
+  const herePh  = hereId ? phaseById(hereId) : null
+  const hereMk  = hereId ? pt(phaseMidAngle(hereId), R_OUT + 12) : null
+  /** 行き先の候補（移行期のときだけ）。ハード＝経由する局面／ソフト＝その次 */
+  const destIds: SectorPhaseId[] = macroNow?.derived && macroPh && nextPh
+    ? [macroPh.id, nextPh.id]
+    : []
 
   const search = useMemo(
     () => (master ? searchStocks(query, master) : { hits: [], total: 0 }),
@@ -394,27 +400,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
         }}>
           ▶ SECTOR ROTATION
         </div>
-        {/* 🔵 説明は常時出さず「?」に畳む。円環に視線が行くようにするため。 */}
-        <div style={{
-          position: 'relative', display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: 11, color: c.DIM, marginBottom: 8,
-        }}>
-          <span>景気の局面で物色対象が回るという見方 × 実測</span>
-          <button
-            onClick={() => setHelp(v => !v)}
-            aria-label="一致度の説明"
-            aria-expanded={help}
-            style={{
-              width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-              border: `1px solid ${help ? c.GREEN : c.BORDBR}`,
-              background: help ? `${c.GREEN}22` : 'transparent',
-              color: help ? c.GREEN : c.DIM,
-              fontFamily: c.FONT, fontSize: 10, lineHeight: 1, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-            }}
-          >?</button>
-
-        </div>
+        <div style={{ marginBottom: 8 }} />
 
         {/* 🔴 円環は 344px 固定。左右の padding(16px)を足すと 376px 必要なので、
             360px 以下の端末では viewBox のまま縮めないと横にはみ出す。
@@ -477,21 +463,25 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                       style={{ transition: 'font-size .2s ease' }}>
                   {p.label}
                 </text>
-                {/* 🔵 マクロで決まる現在地。扇そのものに書く。
-                    🔴 移行期は現在地が確定していないので「いまここ」とは書かない。
-                       ハードなら経由する側に「経由？」、行き先に「行き先」と出す。 */}
-                {(macroNow?.id === p.id || (macroNow?.derived && macro?.lastAnchor === p.id)) && (
+                {/* 🔵 中央のクリックで「現在地」と「一致度」を切り替える（ユーザー・2026-08-08）。
+                    両方を同時に出すと扇が3行になって重なるため、モードごとに出し分ける。 */}
+                {centerMode === 'macro' && hereId === p.id && (
                   <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700}
-                        fill={macroNow.derived ? c.DIM : p.color}
-                        style={{ filter: glow && !macroNow.derived ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
-                    {macroNow.derived ? '◀ いまここ？' : '◀ いまここ'}
+                        fill={p.color}
+                        style={{ filter: glow ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
+                    ◀ いまここ
                   </text>
                 )}
-                {fit?.score != null && (
-                  <text x={m.x} y={m.y + (macroNow?.id === p.id || (macroNow?.derived && macro?.lastAnchor === p.id) ? 26 : 13)} textAnchor="middle"
+                {centerMode === 'macro' && destIds.includes(p.id) && (
+                  <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700} fill={c.DIM}>
+                    ◀ 行き先？
+                  </text>
+                )}
+                {centerMode === 'fit' && fit?.score != null && (
+                  <text x={m.x} y={m.y + 13} textAnchor="middle"
                         fontSize={11} fontWeight={700}
                         fill={p.color} opacity={0.9}>
-                    一致 {fit.score}
+                    一致度 {fit.score}
                   </text>
                 )}
               </g>
@@ -533,41 +523,49 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
           {/* 🔴 丸は**いまの現在地**（マクロ）に付ける（ユーザー・2026-08-08）。
               以前は「業種の並びが最も近い型」に付けていたが、現在地はマクロで決めるように
               変えたので、丸も現在地に合わせないと2つの主張が並んで読めなくなる。
-              🔴 **移行期は丸を2つ出す**（2026-08-08）。まだ直前のアンカー（逆金融相場）にいるのか、
-                 もう次（逆業績相場）に進んでいるのかが確定しないため。
-                 **どちらも「現在地かもしれない」ので同じ見た目（点線＝未確定）**にする。
-                 確定しているとき（アンカー）だけ実線＋脈動にする。 */}
-          {marker && macroPh && (
-            macroNow?.derived ? (
-              <>
-                <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={macroPh.color}
-                        strokeWidth={2} strokeDasharray="3 3" />
-                <circle cx={marker.x} cy={marker.y} r={3} fill={macroPh.color} />
-              </>
-            ) : (
-              <>
-                <circle cx={marker.x} cy={marker.y} r={14} fill="none" stroke={macroPh.color} strokeWidth={1}
-                        style={{ animation: 'sector-pulse 2.4s ease-in-out infinite' }} />
-                <circle cx={marker.x} cy={marker.y} r={9} fill={c.BG} stroke={macroPh.color} strokeWidth={3} />
-                <circle cx={marker.x} cy={marker.y} r={3.5} fill={macroPh.color} />
-              </>
-            )
-          )}
-          {/* もう1つの候補＝直前のアンカー（まだそこにいる可能性）。同じ見た目で並べる。 */}
-          {altMarker && altPhase && (
+              🔴 **移行期は現在地（実線1つ）＋行き先の候補（点線2つ）**（2026-08-08）。
+                 現在地は直前のアンカーで確定している。確定していないのは**行き先**のほうで、
+                 ハードなら逆業績相場を経由し、ソフトなら素通りして金融相場へ行く。
+                 見分けは**破線かどうか**だけにして、大きさと脈動は揃える（細いと見えないため）。 */}
+          {centerMode === 'macro' && hereMk && herePh && (
             <>
-              <circle cx={altMarker.x} cy={altMarker.y} r={9} fill={c.BG} stroke={altPhase.color}
-                      strokeWidth={2} strokeDasharray="3 3" />
-              <circle cx={altMarker.x} cy={altMarker.y} r={3} fill={altPhase.color} />
+              <circle cx={hereMk.x} cy={hereMk.y} r={14} fill="none" stroke={herePh.color} strokeWidth={1}
+                      style={{ animation: 'sector-pulse 2.4s ease-in-out infinite' }} />
+              <circle cx={hereMk.x} cy={hereMk.y} r={9} fill={c.BG} stroke={herePh.color} strokeWidth={3} />
+              <circle cx={hereMk.x} cy={hereMk.y} r={3.5} fill={herePh.color} />
             </>
           )}
+          {/* 行き先の候補（移行期のときだけ）。破線＝未確定。 */}
+          {(centerMode === 'macro' ? destIds : []).map(id => {
+            const ph = phaseById(id)
+            if (!ph) return null
+            const m = pt(phaseMidAngle(id), R_OUT + 12)
+            return (
+              <g key={`dest-${id}`}>
+                <circle cx={m.x} cy={m.y} r={9} fill={c.BG} stroke={ph.color}
+                        strokeWidth={3} strokeDasharray="4 3" />
+                <circle cx={m.x} cy={m.y} r={3.5} fill={ph.color} />
+              </g>
+            )
+          })}
+
+          {/* 🔵 中央はクリックで「現在地」と「一致度」を切り替えるボタン（ユーザー・2026-08-08）。
+              穴の全面を当たり判定にする。テキストは pointerEvents:none で透過させる。 */}
+          <circle
+            cx={SIZE / 2} cy={SIZE / 2} r={R_IN - 2}
+            fill="transparent" style={{ cursor: 'pointer' }}
+            onClick={() => setCenterMode(m => (m === 'macro' ? 'fit' : 'macro'))}
+          >
+            <title>クリックで「現在地」と「一致度」を切り替え</title>
+          </circle>
 
           {/* 🔴 中心は「いまの現在地」。**マクロ（金利×期待インフレ）で決める**（2026-08-08）。
               以前は一致度（業種の並び）で決めていたが、業種の騰落から局面を決めて
               その局面で業種を語る循環で、しかも1位が20.2%の日で入れ替わっていた。
               マクロなら入れ替わりは4.1%・中央値8営業日で腰が据わる（実測）。
               🔵 一致度は「業種の並びがその現在地を支持しているか」の裏づけに降格。 */}
-          {macroNow ? (
+          <g style={{ pointerEvents: 'none' }}>
+          {macroNow && centerMode === 'macro' ? (
             <>
               {/* 🔴 中央の穴は半径88pxしかない。行数と文字数を詰めないとリングに重なる
                   （ユーザー指摘・2026-08-08）。最大4行・1行は短く。 */}
@@ -580,21 +578,18 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                      **両論併記**にする（ユーザー・2026-08-08）。 */}
               {macroNow.derived ? (
                 <>
-                  <text x={SIZE / 2} y={SIZE / 2 - 18} textAnchor="middle" fontSize={8.5} fill={c.DIM}>
-                    {phaseById(macro?.lastAnchor ?? 'financial')?.label}のあと
-                  </text>
                   <text x={SIZE / 2} y={SIZE / 2 + 4} textAnchor="middle" fontSize={17}
-                        fontWeight={700} fill={c.DESC}
-                        style={{ filter: glow ? `drop-shadow(0 0 6px ${c.DESC}55)` : undefined }}>
-                    移行期
+                        fontWeight={700} fill={herePh?.color ?? c.DESC}
+                        style={{ filter: glow && herePh ? `drop-shadow(0 0 6px ${herePh.color}77)` : undefined }}>
+                    {herePh?.label ?? '移行期'}
                   </text>
                   {macro?.lastAnchor === 'reverseFinancial' ? (
                     <>
                       <text x={SIZE / 2} y={SIZE / 2 + 22} textAnchor="middle" fontSize={8} fill={c.DIM}>
-                        逆金融相場 か 逆業績相場
+                        行き先は 逆業績 か 金融
                       </text>
                       <text x={SIZE / 2} y={SIZE / 2 + 33} textAnchor="middle" fontSize={8} fill={c.DIM}>
-                        （ソフトなら素通り）
+                        （ソフトなら逆業績を素通り）
                       </text>
                     </>
                   ) : (
@@ -647,6 +642,13 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               {perfErr ? '取得できません' : '読み込み中…'}
             </text>
           )}
+          {/* 🔵 クリックで切り替わることが分かるように、穴の下端に小さく出す */}
+          {(macroNow || top) && (
+            <text x={SIZE / 2} y={SIZE / 2 + 58} textAnchor="middle" fontSize={7.5} fill={c.FAINT}>
+              クリックで{centerMode === 'macro' ? '一致度' : '現在地'}へ
+            </text>
+          )}
+          </g>
         </svg>
 
         {/* 🔵 ハイライトが2種類あって紛らわしいので凡例を出す。
@@ -661,15 +663,28 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               width: 13, height: 9, borderRadius: 2,
               border: `2px solid ${shown.color}`, background: `${shown.color}33`,
             }} />
-            選択中（クリックで切替）
+            選択中
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{
-              width: 11, height: 11, borderRadius: '50%',
-              border: `3px solid ${top?.phase.color ?? c.BORDBR}`, background: c.BG,
-            }} />
-            いまの位置（金利×インフレ）
-          </span>
+          {/* 🔵 丸は現在地モードのときだけ出しているので、凡例もそのときだけ。
+              移行期は「行き先の候補」が破線で並ぶので、それも説明する。 */}
+          {centerMode === 'macro' && herePh && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{
+                width: 11, height: 11, borderRadius: '50%',
+                border: `3px solid ${herePh.color}`, background: c.BG,
+              }} />
+              いまの位置
+            </span>
+          )}
+          {centerMode === 'macro' && destIds.length > 0 && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{
+                width: 11, height: 11, borderRadius: '50%',
+                border: `3px dashed ${c.BORDBR}`, background: c.BG,
+              }} />
+              行き先の候補
+            </span>
+          )}
         </div>
 
         {/* 🔵 一致度の一覧表は撤去した（期間が1つになったので、円環の各扇に出ている
@@ -677,18 +692,43 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
             上の「?」の吹き出しに畳んだ。**視線を円環に集めるため**（ユーザー要望・2026-08-07）。 */}
         {/* 🔵 選んだ局面の中身はモーダルに逃がした（2026-08-07・ユーザー要望）。
             常時出すと情報量が多く、円環から視線が外れるため。 */}
+        {/* 🔵 モードで役割が違うので、この位置に出すものも入れ替える（ユーザー・2026-08-08）。
+            現在地モード＝選んだ局面の説明／一致度モード＝一致度そのものの説明。 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
-          <span style={{ fontSize: 11, color: shown.color }}>{shown.label}とは？</span>
-          <button
-            onClick={() => setDetail(true)}
-            aria-label={`${shown.label}の内訳を開く`}
-            style={{
-              width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-              border: `1px solid ${shown.color}`, background: 'transparent',
-              color: shown.color, fontFamily: c.FONT, fontSize: 10, lineHeight: 1,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-            }}
-          >?</button>
+          {centerMode === 'macro' ? (
+            <>
+              <span style={{ fontSize: 11, color: shown.color }}>{shown.label}とは？</span>
+              <button
+                onClick={() => setDetail(true)}
+                aria-label={`${shown.label}の内訳を開く`}
+                style={{
+                  width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                  border: `1px solid ${shown.color}`, background: 'transparent',
+                  color: shown.color, fontFamily: c.FONT, fontSize: 10, lineHeight: 1,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                }}
+              >?</button>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 11, color: c.DIM }}>
+                景気の局面で物色対象が回るという見方 × 実測
+              </span>
+              <button
+                onClick={() => setHelp(v => !v)}
+                aria-label="一致度の説明"
+                aria-expanded={help}
+                style={{
+                  width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                  border: `1px solid ${help ? c.GREEN : c.BORDBR}`,
+                  background: help ? `${c.GREEN}22` : 'transparent',
+                  color: help ? c.GREEN : c.DIM,
+                  fontFamily: c.FONT, fontSize: 10, lineHeight: 1, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                }}
+              >?</button>
+            </>
+          )}
         </div>
 
         <div style={{ marginTop: 8, fontSize: 9.5, color: c.DIM }}>
@@ -734,9 +774,9 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                 <span style={{ fontSize: 10, color: c.DIM }}>
                   {macroNow?.derived ? (
                     <>
-                      いまは<span style={{ color: c.DESC }}>移行期</span>
-                      （金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}・
-                      {phaseById(macro?.lastAnchor ?? 'financial')?.label}のあと）→ 行き先は
+                      いまの位置＝<span style={{ color: herePh?.color }}>{herePh?.label}</span>
+                      （金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）→ 行き先は
+                      <span style={{ color: macroPh!.color, fontWeight: 700 }}> {macroPh!.label}</span> か
                     </>
                   ) : (
                     <>
