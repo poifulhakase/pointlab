@@ -7,7 +7,8 @@ import {
   PHASES, SECTOR17,
   phaseAt, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, strongestPhase, phaseFits, bestFit, sectorRanking, searchStocks,
-  type SectorPerfRow, type StockRow,
+  RATE_SENSITIVITY, RATE_MOVE_THRESHOLD, rateAlignments,
+  type RateInfo, type SectorPerfRow, type StockRow,
 } from '../sectorRotation'
 import { buildStockAnalysisPrompt } from '../sectorStockPrompt'
 
@@ -393,6 +394,45 @@ describe('public/data の実ファイル', () => {
     expect(pv).toBeTruthy()
     // 前区間の終わり＝直近1か月の始まり（重複ゼロ）
     expect(pv.to).toBe(p1.from)
+  })
+
+  it('🔴 金利感応度は17業種すべてに実測値があり、-1〜+1 に収まる', () => {
+    // 🔵 これは理論の当てはめではなく実測の相関係数。欠けると突き合わせが片肺になる
+    for (const s of SECTOR17) {
+      const v = RATE_SENSITIVITY[s.code]
+      expect(v, `${s.label} の感応度が無い`).toBeTypeOf('number')
+      expect(Math.abs(v)).toBeLessThanOrEqual(1)
+    }
+    // 実測どおり、金利に最も強く反応するのは銀行（コード15）
+    const top = SECTOR17.map(s => s.code).sort((a, b) => RATE_SENSITIVITY[b] - RATE_SENSITIVITY[a])[0]
+    expect(top).toBe(15)
+  })
+
+  it('🔴 金利がほとんど動いていない期間は、突き合わせを出さない', () => {
+    const rows: SectorPerfRow[] = JSON.parse(perfRaw).data
+    const still: RateInfo = {
+      symbol: '^TNX', label: '米10年債利回り', time: '2026-08-07',
+      chg3m: RATE_MOVE_THRESHOLD / 2, last: 4.5, from: null, to: null,
+    }
+    // 🔵 動いていない金利で「教科書ではこうなるはず」と言うのは根拠がない
+    expect(rateAlignments(rows, still)).toEqual([])
+    expect(rateAlignments(rows, null)).toEqual([])
+  })
+
+  it('🔴 金利の向きで「上位にいるはず」の業種が反転する', () => {
+    const rows: SectorPerfRow[] = JSON.parse(perfRaw).data
+    const base = { symbol: '^TNX', label: '米10年債利回り', time: '2026-08-07', last: 4.5, from: null, to: null }
+    const up   = rateAlignments(rows, { ...base, chg3m:  1.0 })
+    const down = rateAlignments(rows, { ...base, chg3m: -1.0 })
+    expect(up.length).toBeGreaterThan(0)
+    expect(up.length).toBe(down.length)
+    // 銀行（感応度プラス）は、金利上昇なら「上位のはず」・低下なら「下位のはず」
+    const bankUp   = up.find(a => a.row.sector17 === 15)!
+    const bankDown = down.find(a => a.row.sector17 === 15)!
+    expect(bankUp.expectStrong).toBe(true)
+    expect(bankDown.expectStrong).toBe(false)
+    // 食品（感応度マイナス）はその逆
+    expect(up.find(a => a.row.sector17 === 1)!.expectStrong).toBe(false)
   })
 
   it('stock_master.json は内国株式のみで、17業種コードが正しい範囲に入る', () => {

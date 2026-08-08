@@ -159,6 +159,100 @@ export type SectorPerfRow = {
   rank6m:   number | null
 }
 
+/** 金利（米10年債利回り）の水準と3か月変化。sector_perf.json に同居している。 */
+export type RateInfo = {
+  symbol: string
+  label:  string
+  time:   string
+  /** 直近の利回り（%） */
+  last:   number
+  /** 3か月の変化。🔴 単位は**%ポイント**（騰落率の%ではない） */
+  chg3m:  number | null
+  from:   string | null
+  to:     string | null
+}
+
+/**
+ * 業種ごとの「金利感応度」＝**実測した相関係数**。
+ *
+ * 🔴 これは理論の当てはめではなく、**15年ぶんの実測値**（2026-08-08・`scripts/analyze-sector-rate.mjs`）。
+ *    米10年債利回りの3か月変化と、その3か月の対TOPIX超過リターンの相関。
+ *    例）金利が3か月で+0.25%ポイント以上動いた局面での対TOPIX超過リターンの平均は
+ *        銀行 = 金利上昇期 +7.34% / 低下期 -3.57%（差 10.9ポイント・相関 0.484）。
+ *
+ * 🔵 **同時点の関係**であって予測ではない。「金利が上がった局面では銀行が強かった」という
+ *    事実の記述にだけ使う。先を当てる用途には使わないこと
+ *    （予測方向は検証済み＝多重検定に耐えたのは17業種中1件のみ＝ノイズと区別がつかない）。
+ *
+ * 🔴 指標や期間を変えたら `scripts/analyze-sector-rate.mjs` で測り直して、この表を更新すること。
+ */
+export const RATE_SENSITIVITY: Readonly<Record<number, number>> = {
+  1:  -0.303,  // 食品
+  2:   0.465,  // エネルギー資源
+  3:  -0.019,  // 建設・資材
+  4:  -0.317,  // 素材・化学
+  5:  -0.226,  // 医薬品
+  6:   0.244,  // 自動車・輸送機
+  7:   0.295,  // 鉄鋼・非鉄
+  8:   0.003,  // 機械
+  9:  -0.219,  // 電機・精密
+  10: -0.294,  // 情報通信・サービスその他
+  11: -0.009,  // 電力・ガス
+  12: -0.044,  // 運輸・物流
+  13:  0.260,  // 商社・卸売
+  14: -0.107,  // 小売
+  15:  0.484,  // 銀行
+  16:  0.430,  // 金融（除く銀行）
+  17:  0.157,  // 不動産
+} as const
+
+/** 感応度がこの値以上/以下なら「金利に反応する業種」とみなす（それ以外は無関係として扱う） */
+export const RATE_SENS_THRESHOLD = 0.2
+/** 金利が「動いた」とみなす3か月変化の幅（%ポイント）。実測もこの幅で区切っている */
+export const RATE_MOVE_THRESHOLD = 0.25
+
+export type RateAlignment = {
+  row: SectorPerfRow
+  /** 実測の金利感応度 */
+  sens: number
+  /** 金利の向きから見て「上位にいるはず」なら true、「下位にいるはず」なら false */
+  expectStrong: boolean
+  /** いまの順位（1か月） */
+  rank: number | null
+  /** 教科書どおりか。順位が上位1/3なら強い、下位1/3なら弱いと判定 */
+  matches: boolean | null
+}
+
+/**
+ * 金利の向きと、実際の業種順位が一致しているかを突き合わせる。
+ *
+ * 🔵 出すのは「一致しているか／ズレているか」まで。**ズレを予測の材料にはしない**。
+ *    ズレは「教科書と違うことが起きている」という事実の指摘にとどめる。
+ */
+export function rateAlignments(rows: SectorPerfRow[], rate: RateInfo | null): RateAlignment[] {
+  if (!rate || rate.chg3m == null || Math.abs(rate.chg3m) < RATE_MOVE_THRESHOLD) return []
+  const rising = rate.chg3m > 0
+  const n = rows.length
+  const out: RateAlignment[] = []
+  for (const row of rows) {
+    const sens = RATE_SENSITIVITY[row.sector17]
+    if (sens == null || Math.abs(sens) < RATE_SENS_THRESHOLD) continue
+    // 金利上昇 × 感応度プラス → 上位のはず。金利低下なら逆になる。
+    const expectStrong = rising ? sens > 0 : sens < 0
+    const rank = row.rank1m ?? null
+    let matches: boolean | null = null
+    if (rank != null) {
+      const strong = rank <= n / 3
+      const weak   = rank >  (n * 2) / 3
+      if (expectStrong)      matches = strong ? true : weak ? false : null
+      else                   matches = weak   ? true : strong ? false : null
+    }
+    out.push({ row, sens, expectStrong, rank, matches })
+  }
+  // 感応度の絶対値が大きい順＝金利との関係がはっきりしている業種から並べる
+  return out.sort((a, b) => Math.abs(b.sens) - Math.abs(a.sens))
+}
+
 export type PerfKey = 'chg1m' | 'chg3m' | 'chg6m'
 
 export const PERF_LABELS: Record<PerfKey, string> = {

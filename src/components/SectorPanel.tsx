@@ -11,8 +11,9 @@ import {
   PHASES, PERF_LABELS,
   phaseById, nextPhase, phaseOfSector17, phaseMidAngle, sector17Label,
   phaseStrengths, phaseFits, bestFit, sectorRanking, searchStocks,
-  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type SectorPerfRow,
-  type SectorPhaseId, type StockRow,
+  rateAlignments,
+  type PerfKey, type PeriodKey, type PerfPeriods, type PhaseFit, type RateInfo,
+  type SectorPerfRow, type SectorPhaseId, type StockRow,
 } from '../utils/sectorRotation'
 
 /**
@@ -134,6 +135,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
   const [perf,    setPerf]    = useState<SectorPerfRow[] | null>(null)
   const [periods, setPeriods] = useState<PerfPeriods>({})
+  const [rate,    setRate]    = useState<RateInfo | null>(null)
   const [perfErr, setPerfErr] = useState<string | null>(null)
   const [master,  setMaster]  = useState<StockRow[] | null>(null)
   const [masterErr, setMasterErr] = useState<string | null>(null)
@@ -155,7 +157,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
   useEffect(() => {
     let alive = true
     loadSectorPerf()
-      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods) } })
+      .then(d => { if (alive) { setPerf(d.rows); setPeriods(d.periods); setRate(d.rate) } })
       .catch(e => { if (alive) setPerfErr(e instanceof Error ? e.message : String(e)) })
     return () => { alive = false }
   }, [])
@@ -252,6 +254,9 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
 
   const dataDate = perf?.[0]?.time ?? null
+
+  // 🔵 金利の向きと、実際の業種順位の突き合わせ。金利がほとんど動いていなければ空になる。
+  const rateAlign = useMemo(() => (perf ? rateAlignments(perf, rate) : []), [perf, rate])
 
   /**
    * 「◯◯相場とは？」＝**局面そのものの説明**（モーダルの中身）。
@@ -642,6 +647,67 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
               <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM }}>
                 順位が低い＝まだ動いていない ／ ⚠ 循環は経験則です
+              </p>
+            </section>
+          )}
+
+          {/* ── 金利 × 業種 ────────────────────────────────────────
+              🔴 この画面で唯一、**業種の株価の外側から来た情報**（ユーザー・2026-08-08）。
+                 円環（一致度）は業種の騰落から局面を決めて業種を語る循環だったが、
+                 金利は独立した入力なので、初めて新しい情報が入る。
+              🔴 出すのは「教科書どおりか／ズレているか」まで。**予測には使わない**
+                 （予測方向は検証済み＝多重検定に耐えたのは17業種中1件のみ＝ノイズと区別がつかない）。
+              🔵 感応度は15年の実測（RATE_SENSITIVITY）。理論の当てはめではない。 */}
+          {rate && rateAlign.length > 0 && (
+            <section style={{
+              marginTop: 10, border: `1px solid ${c.BORDBR}`, borderRadius: 8,
+              padding: '10px 12px', background: c.LOGBG,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: c.GREEN, letterSpacing: '0.08em' }}>▶ 金利と業種</span>
+                <span style={{ fontSize: 10, color: c.DIM }}>
+                  {rate.label} {rate.last}%（3か月で
+                  <span style={{ color: rate.chg3m != null && rate.chg3m > 0 ? UP : DOWN, fontWeight: 700 }}>
+                    {rate.chg3m != null && rate.chg3m > 0 ? '+' : ''}{rate.chg3m}
+                  </span>
+                  %ポイント{rate.chg3m != null && rate.chg3m > 0 ? '上昇' : '低下'}）
+                </span>
+              </div>
+
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {rateAlign.map(a => {
+                  // 🔵 ズレているものだけ色を付ける。一致は「そうなっている」だけなので静かに出す。
+                  const off = a.matches === false
+                  return (
+                    <li key={a.row.sector17} style={{
+                      display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5,
+                      borderTop:    `1px solid ${off ? DOWN : 'transparent'}`,
+                      borderRight:  `1px solid ${off ? DOWN : 'transparent'}`,
+                      borderBottom: `1px solid ${off ? DOWN : 'transparent'}`,
+                      borderLeft:   `3px solid ${off ? DOWN : c.FAINT}`,
+                      borderRadius: 4, padding: '4px 8px',
+                    }}>
+                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {sector17Label(a.row.sector17)}
+                      </span>
+                      <span style={{ fontSize: 9.5, color: c.DIM, whiteSpace: 'nowrap' }}>
+                        {a.expectStrong ? '上位のはず' : '下位のはず'}
+                      </span>
+                      <span style={{ fontSize: 10.5, color: c.DESC, minWidth: 34, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {a.rank != null ? `${a.rank}位` : '—'}
+                      </span>
+                      <span style={{ fontSize: 10, minWidth: 14, textAlign: 'center', color: off ? DOWN : a.matches ? UP : c.DIM }}>
+                        {off ? '⚠' : a.matches ? '✓' : '–'}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+
+              <p style={{ margin: '7px 0 0', fontSize: 9.5, color: c.DIM, lineHeight: 1.7 }}>
+                「はず」は<b>15年の実測</b>（金利が動いた局面で実際に強かった／弱かった業種）。
+                <br />⚠ ＝ 教科書と違うことが起きている、という事実の指摘です（先行きの予想ではありません）。
+                <br />🔵 日本国債は無料で安定して取れないため<b>米10年債で代用</b>しています。
               </p>
             </section>
           )}
