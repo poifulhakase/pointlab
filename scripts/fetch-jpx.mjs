@@ -1415,6 +1415,49 @@ function pctChangeRange(closes, backFrom, backTo) {
 /** 騰落率の測定に使う「何営業日前と比べるか」。画面に出す日付もここから決まる。 */
 const PERF_BACK = { chg1m: 21, chg3m: 62, chg6m: 123 }
 
+/**
+ * Yahoo の系列に混ざる「壊れた日」を落とす。
+ *
+ * 🔴 なぜ要るか（2026-08-08 実測）
+ *   1629（商社・卸売）の系列は 15年のうち約970日ぶんが壊れている。
+ *   例: 2026-03-27 に 288.60円だった株価が、03-30〜03-31 だけ 0.5676円/0.5498円
+ *       （出来高2.5〜4億株＝明らかに別銘柄のデータ）になり、04-01 に 288.70円へ戻る。
+ *       2014〜2015年には **調整後終値がマイナス**（-452,348 等）の期間もある。
+ *   騰落率は期間の両端しか見ないので普段は表に出ないが、
+ *   **壊れた日が端点に来ると、その業種が -99% や +52,410% として順位に入り、
+ *   17業種のランキングが黙って崩れる**。検知する仕組みが無かったのでここで塞ぐ。
+ *
+ * 🔵 判定は「前後10営業日の中央値から35%以上外れているか」。
+ *    連続する異常（2日以上の壊れた区間）は前日比では互いに近くすり抜けるため、
+ *    窓の中央値を基準にする必要がある。
+ *
+ * @returns 落とした日数（呼び出し側で多すぎれば打ち切る）
+ */
+function dropAnomalies(times, closes, adjs) {
+  const keep = []
+  for (let i = 0; i < adjs.length; i++) {
+    if (!(adjs[i] > 0) || !(closes[i] > 0)) continue      // 0・マイナス・NaN は問答無用で落とす
+    const win = []
+    for (let k = Math.max(0, i - 10); k <= Math.min(adjs.length - 1, i + 10); k++) {
+      if (k !== i && adjs[k] > 0) win.push(adjs[k])
+    }
+    if (win.length >= 5) {
+      win.sort((a, b) => a - b)
+      const med = win[Math.floor(win.length / 2)]
+      if (Math.abs(adjs[i] / med - 1) > 0.35) continue
+    }
+    keep.push(i)
+  }
+  const dropped = adjs.length - keep.length
+  if (dropped) {
+    const t = keep.map(i => times[i]), c = keep.map(i => closes[i]), a = keep.map(i => adjs[i])
+    times.length = 0; times.push(...t)
+    closes.length = 0; closes.push(...c)
+    adjs.length = 0; adjs.push(...a)
+  }
+  return dropped
+}
+
 async function fetchSectorPerfData() {
   console.log('\n[sectorPerf] TOPIX-17 業種別ETF（1617〜1633）から相対強弱を計算...')
 
@@ -1448,6 +1491,15 @@ async function fetchSectorPerfData() {
         times.push(new Date(ts[i] * 1000).toISOString().slice(0, 10))
         closes.push(rawCl[i])
         adjs.push(rawAdj[i] == null || isNaN(rawAdj[i]) ? rawCl[i] : rawAdj[i])
+      }
+      // 🔴 壊れた日を落とす（詳細は dropAnomalies のコメント）。
+      //    落とした日が多すぎる系列は信用できないので、その業種ごと捨てる
+      //    （下の rows.length < 14 で、全体が崩れていれば処理自体が止まる）。
+      const dropped = dropAnomalies(times, closes, adjs)
+      if (dropped) {
+        const pct = (dropped / (closes.length + dropped)) * 100
+        console.warn(`  ⚠ ${etf} ${SECTOR17_LABELS[n - 1]}: 異常値 ${dropped}日を除外（${pct.toFixed(1)}%）`)
+        if (pct > 5) throw new Error(`異常値が多すぎる(${dropped}日 / ${pct.toFixed(1)}%)`)
       }
       if (closes.length < 70) throw new Error(`データ不足(${closes.length}本)`)
 
