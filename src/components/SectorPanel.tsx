@@ -470,16 +470,25 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                       style={{ transition: 'font-size .2s ease' }}>
                   {p.label}
                 </text>
-                {/* 🔵 マクロで決まる現在地。扇そのものに「いまここ」と書く */}
+                {/* 🔵 マクロで決まる現在地。扇そのものに書く。
+                    🔴 移行期は現在地が確定していないので「いまここ」とは書かない。
+                       ハードなら経由する側に「経由？」、行き先に「行き先」と出す。 */}
                 {macroNow?.id === p.id && (
+                  <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700}
+                        fill={macroNow.derived ? c.DIM : p.color}
+                        style={{ filter: glow && !macroNow.derived ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
+                    {macroNow.derived ? '◀ 経由？' : '◀ いまここ'}
+                  </text>
+                )}
+                {macroNow?.derived && nextPh?.id === p.id && (
                   <text x={m.x} y={m.y + 13} textAnchor="middle" fontSize={10} fontWeight={700}
                         fill={p.color}
                         style={{ filter: glow ? `drop-shadow(0 0 5px ${p.color}88)` : undefined }}>
-                    ◀ いまここ
+                    ◀ 行き先
                   </text>
                 )}
                 {fit?.score != null && (
-                  <text x={m.x} y={m.y + (macroNow?.id === p.id ? 26 : 13)} textAnchor="middle"
+                  <text x={m.x} y={m.y + (macroNow?.id === p.id || (macroNow?.derived && nextPh?.id === p.id) ? 26 : 13)} textAnchor="middle"
                         fontSize={11} fontWeight={700}
                         fill={p.color} opacity={0.9}>
                     一致 {fit.score}
@@ -490,11 +499,18 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
           })}
 
           {/* 🔵 いまの型 → 次の局面 を、円の内側を回る矢印で見せる（文章での説明は削除）。
-              時計回りに流れることで「次はここ」が言葉なしで伝わる。 */}
+              時計回りに流れることで「次はここ」が言葉なしで伝わる。
+              🔴 **移行期は直前のアンカーから引く**（2026-08-08）。
+                 ハードなら逆業績を経由、ソフトなら素通りだが、**行き先はどちらも同じ**なので
+                 弧は1本で足りる。2本引くと同じリング上で重なって読めない。 */}
           {nowPhase && nextPh && (
             <g style={{ pointerEvents: 'none' }}>
               <path
-                d={arcPath(phaseMidAngle(nowPhase.id) + 10, phaseMidAngle(nextPh.id) - 16, R_NEXT)}
+                d={arcPath(
+                  phaseMidAngle(macroNow?.derived && macro?.lastAnchor ? macro.lastAnchor : nowPhase.id) + 10,
+                  phaseMidAngle(nextPh.id) - 16,
+                  R_NEXT
+                )}
                 fill="none" stroke={nextPh.color} strokeOpacity={0.8} strokeWidth={2}
                 strokeLinecap="round" strokeDasharray="5 6"
                 style={{ animation: 'sector-flow 1.3s linear infinite' }}
@@ -516,8 +532,11 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
 
           {/* 🔴 丸は**いまの現在地**（マクロ）に付ける（ユーザー・2026-08-08）。
               以前は「業種の並びが最も近い型」に付けていたが、現在地はマクロで決めるように
-              変えたので、丸も現在地に合わせないと2つの主張が並んで読めなくなる。 */}
-          {marker && macroPh && (
+              変えたので、丸も現在地に合わせないと2つの主張が並んで読めなくなる。
+              🔴 **移行期（derived）は丸を出さない**（2026-08-08）。
+                 ハードランディングなら逆業績相場を経由し、ソフトランディングなら素通りする。
+                 どちらか確定していないものに丸を打つと、確定したように見えてしまう。 */}
+          {marker && macroPh && !macroNow?.derived && (
             <>
               <circle cx={marker.x} cy={marker.y} r={14} fill="none" stroke={macroPh.color} strokeWidth={1}
                       style={{ animation: 'sector-pulse 2.4s ease-in-out infinite' }} />
@@ -538,26 +557,52 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
               <text x={SIZE / 2} y={SIZE / 2 - 34} textAnchor="middle" fontSize={9.5} fill={c.DIM}>
                 金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}
               </text>
-              {/* 🔵 アンカー（金利とインフレが同方向）は直接判定、食い違う日は背理法で割り出している。
-                  どちらなのかを黙って混ぜない。 */}
-              {macroNow.derived && (
-                <text x={SIZE / 2} y={SIZE / 2 - 20} textAnchor="middle" fontSize={8} fill={c.DIM}>
-                  移行期・{phaseById(macro?.lastAnchor ?? 'financial')?.label}のあと
-                </text>
-              )}
-              <text x={SIZE / 2} y={SIZE / 2 + 4} textAnchor="middle" fontSize={17}
-                    fontWeight={700} fill={macroPh!.color}
-                    style={{ filter: glow ? `drop-shadow(0 0 6px ${macroPh!.color}77)` : undefined }}>
-                {macroPh!.label}
-              </text>
-              {/* 🔵 業種の並びが支持しているかどうか。1行に収める。 */}
-              {top && (
-                <text x={SIZE / 2} y={SIZE / 2 + 26} textAnchor="middle" fontSize={8.5}
-                      fill={macroNow.id === top.phase.id ? c.DESC : c.DIM}>
-                  {macroNow.id === top.phase.id
-                    ? `業種の並びも同じ（${top.score}）`
-                    : `業種の並び：${top.phase.label} ${top.score}`}
-                </text>
+              {/* 🔴 アンカー（金利とインフレが同方向）は現在地を1つに決められる。
+                  食い違う日は**移行期**で、着地の仕方によって経路が変わる。
+                  🔴 **ソフトランディングかどうかは事後にしか確定しない**ので判定せず、
+                     **両論併記**にする（ユーザー・2026-08-08）。 */}
+              {macroNow.derived ? (
+                <>
+                  <text x={SIZE / 2} y={SIZE / 2 - 18} textAnchor="middle" fontSize={8.5} fill={c.DIM}>
+                    {phaseById(macro?.lastAnchor ?? 'financial')?.label}のあと
+                  </text>
+                  <text x={SIZE / 2} y={SIZE / 2 + 4} textAnchor="middle" fontSize={17}
+                        fontWeight={700} fill={c.DESC}
+                        style={{ filter: glow ? `drop-shadow(0 0 6px ${c.DESC}55)` : undefined }}>
+                    移行期
+                  </text>
+                  {macro?.lastAnchor === 'reverseFinancial' ? (
+                    <>
+                      <text x={SIZE / 2} y={SIZE / 2 + 22} textAnchor="middle" fontSize={8} fill={c.DIM}>
+                        ハード→逆業績を経由
+                      </text>
+                      <text x={SIZE / 2} y={SIZE / 2 + 33} textAnchor="middle" fontSize={8} fill={c.DIM}>
+                        ソフト→素通り
+                      </text>
+                    </>
+                  ) : (
+                    <text x={SIZE / 2} y={SIZE / 2 + 24} textAnchor="middle" fontSize={8.5} fill={c.DIM}>
+                      → {macroPh!.label}
+                    </text>
+                  )}
+                </>
+              ) : (
+                <>
+                  <text x={SIZE / 2} y={SIZE / 2 + 4} textAnchor="middle" fontSize={17}
+                        fontWeight={700} fill={macroPh!.color}
+                        style={{ filter: glow ? `drop-shadow(0 0 6px ${macroPh!.color}77)` : undefined }}>
+                    {macroPh!.label}
+                  </text>
+                  {/* 🔵 業種の並びが支持しているかどうか。1行に収める。 */}
+                  {top && (
+                    <text x={SIZE / 2} y={SIZE / 2 + 26} textAnchor="middle" fontSize={8.5}
+                          fill={macroNow.id === top.phase.id ? c.DESC : c.DIM}>
+                      {macroNow.id === top.phase.id
+                        ? `業種の並びも同じ（${top.score}）`
+                        : `業種の並び：${top.phase.label} ${top.score}`}
+                    </text>
+                  )}
+                </>
               )}
             </>
           ) : top ? (
@@ -670,11 +715,21 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
                   ▶ 次に来るとされる業種
                 </span>
                 <span style={{ fontSize: 10, color: c.DIM }}>
-                  いまの位置＝<span style={{ color: nowPhase.color }}>{nowPhase.label}</span>
-                  {macroNow
-                    ? <>（金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）</>
-                    : <>（業種の並び・一致度 {top?.score}）</>}
-                  → 次は
+                  {macroNow?.derived ? (
+                    <>
+                      いまは<span style={{ color: c.DESC }}>移行期</span>
+                      （金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}・
+                      {phaseById(macro?.lastAnchor ?? 'financial')?.label}のあと）→ 行き先は
+                    </>
+                  ) : (
+                    <>
+                      いまの位置＝<span style={{ color: nowPhase.color }}>{nowPhase.label}</span>
+                      {macroNow
+                        ? <>（金利{macroNow.rateUp ? '↑' : '↓'} × インフレ{macroNow.inflUp ? '↑' : '↓'}）</>
+                        : <>（業種の並び・一致度 {top?.score}）</>}
+                      → 次は
+                    </>
+                  )}
                   <span style={{ color: nextPh.color, fontWeight: 700 }}> {nextPh.label}</span> とされる
                 </span>
               </div>
