@@ -77,13 +77,14 @@ const TV_ADMIN_LAYOUT_ID = 'ecEzo0V0'
  * 銘柄コードから TradingView を別タブで開く。
  * 🔵 このアプリは個別銘柄の株価を持たない方針（チャートも指標も TradingView 側が持っている）ので、
  *    「探す」の出口は外部リンク1本にしている。
- * 🔵 管理者＝自分のチャートレイアウトで開く（足やインジケーターはレイアウト側の設定に従う）。
- *    それ以外＝銘柄ページを `timeframe=1M`（1か月足）で開く。
+ * 🔵 どちらも月足で開く。インジケーターや配色は、管理者だけ自分のレイアウトのものが乗る。
+ * 🔴 **パラメータ名が違う**ので取り違えないこと。
+ *    チャート（`/chart/`）＝ `interval`（足）／銘柄ページ（`/symbols/`）＝ `timeframe`（表示範囲）。
  * 🔴 `noopener` は必須（開いた先から `window.opener` 経由でこちらを操作されないようにする）。
  */
 function openInTradingView(code: string, isAdmin: boolean) {
   const url = isAdmin
-    ? `https://jp.tradingview.com/chart/${TV_ADMIN_LAYOUT_ID}/?symbol=${encodeURIComponent(`TSE:${code}`)}`
+    ? `https://jp.tradingview.com/chart/${TV_ADMIN_LAYOUT_ID}/?symbol=${encodeURIComponent(`TSE:${code}`)}&interval=1M`
     : `https://jp.tradingview.com/symbols/TSE-${code}/?timeframe=1M`
   window.open(url, '_blank', 'noopener,noreferrer')
 }

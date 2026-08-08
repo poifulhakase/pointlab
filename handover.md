@@ -19,15 +19,17 @@
 
 | | 開くURL |
 |---|---|
-| 管理者（`isAdminEmail`） | `https://jp.tradingview.com/chart/ecEzo0V0/?symbol=TSE%3A{コード}` |
+| 管理者（`isAdminEmail`） | `https://jp.tradingview.com/chart/ecEzo0V0/?symbol=TSE%3A{コード}&interval=1M` |
 | それ以外・未ログイン | `https://jp.tradingview.com/symbols/TSE-{コード}/?timeframe=1M` |
 
 `ecEzo0V0` は**管理者本人の保存済みチャートレイアウト**（画面右上の名前は「ポイントラボ」）。
 🔴 **一般ユーザーには使わない**＝他人が開くと管理者のインジケーター構成や描画が見えるため。
 判定は `utils/admin.ts` の `isAdminEmail()`（`firestore.rules` との齟齬を CI が検知する既存の単一情報源）。
 配線は `ShieldView` → `SectorPanel` に `user` を渡す形。
-🔵 管理者側には足の指定（`interval`）を**付けていない**＝レイアウトに保存された足がそのまま出る。
-月足で固定したくなったら `&interval=1M` を足す（`interval` が足、`timeframe` は表示範囲）。
+🔵 **両方とも月足**。インジケーターや配色は管理者だけ自分のレイアウトのものが乗る。
+🔴 **足のパラメータ名が違う**＝チャート（`/chart/`）は `interval`、銘柄ページ（`/symbols/`）は
+`timeframe`（表示範囲）。取り違えると効かない。`interval=1M` が効くことは実機で確認済み
+（ツールバーの「月」が選択状態・銘柄名の横も「TSE:1377・1月」）。
 
 🔵 **調べた結論（再調査しないこと）**
 - TradingView 規約：**外部リンクは制限対象外**。制限されるのは「コンテンツ/データを自前の画面に表示すること」
