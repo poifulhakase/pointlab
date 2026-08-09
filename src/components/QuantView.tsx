@@ -395,10 +395,15 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
   const [microMounted, setMicroMounted] = useState(() => quantTab === 'micro')
   useEffect(() => { if (quantTab === 'micro') setMicroMounted(true) }, [quantTab])
 
-  // ── スライダー（visibleTabs の並びで積む）──
-  // 🔴 幅は visibleTabs の本数で決まる。1本なら 100%・3本なら 300% で各パネルが 1/3。
-  const tabCount = visibleTabs.length
-  const tabIndex = Math.max(0, visibleTabs.indexOf(quantTab))
+  // ── スライダー（visibleTabs のうち、描画してあるものを左から順に積む）──
+  // 🔴 幅は本数で決まる。1本なら 100%・3本なら 300% で各パネルが 1/3。
+  // 🔴 移動量は **DOM 上の並び順** で計算すること。
+  //    パネルは JSX に書いた順（ALL_QUANT_TABS の順）で並ぶので、
+  //    タブボタンの並び順（visibleTabs）で index を取ると別のパネルが表示される。
+  //    （2026-08-09: 周期をタブの末尾へ動かしたときに実際に起きた）
+  const domOrder = ALL_QUANT_TABS.filter(t => visibleTabs.includes(t))
+  const tabCount = domOrder.length
+  const tabIndex = Math.max(0, domOrder.indexOf(quantTab))
   const paneWidth = `${100 / tabCount}%`
   const showTab = useCallback((t: QuantTabKey) => visibleTabs.includes(t), [visibleTabs])
 

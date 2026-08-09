@@ -42,6 +42,16 @@ export type RoboStats = {
   } | null
 }
 
+export type RoboDivergence = {
+  date: string
+  source_file_id: string | null
+  matched: boolean
+  skipped?: boolean
+  kind?: 'none' | 'same' | 'increased' | 'decreased' | 'closed' | 'opened' | 'switched'
+  delta?: number
+  note: string
+}
+
 export type RoboAccount = {
   generated_at: string | null
   logic_version: string
@@ -54,6 +64,8 @@ export type RoboAccount = {
   equity_curve: { date: string; equity: number }[]
   stats: RoboStats
   baseline: RoboStats | null
+  divergences?: RoboDivergence[]
+  last_synced_file_id?: string | null
 }
 
 const CACHE_KEY = 'poical-robo-account-v1'
@@ -89,11 +101,19 @@ export async function fetchRoboAccount(force = false): Promise<RoboAccount | nul
   }
 }
 
-/** 評価額（現金＋建玉の時価）。現在値が無ければ簿価で代用する */
+/**
+ * 評価額（現金＋建玉の時価）。
+ * 🔴 現在値を渡さない場合は equity_curve の最新値を使う。
+ *    建玉を簿価で評価すると含み損益がゼロに見えてしまうため
+ *    （robo-trade.mjs が毎日、現在値で計算して equity_curve に積んでいる）。
+ */
 export function equityOf(a: RoboAccount, lastPrice?: number | null): number {
+  if (lastPrice == null) {
+    const snap = a.equity_curve?.[a.equity_curve.length - 1]
+    if (snap?.equity != null) return snap.equity
+  }
   if (!a.position || !a.position.qty) return a.cash
-  const px = lastPrice ?? a.position.avg_price
-  return a.cash + a.position.qty * px
+  return a.cash + a.position.qty * (lastPrice ?? a.position.avg_price)
 }
 
 /** 累計損益率 */
