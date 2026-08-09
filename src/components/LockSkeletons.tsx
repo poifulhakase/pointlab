@@ -90,7 +90,7 @@ function FakeChart({ down = false, height = 60 }: { down?: boolean; height?: num
   )
 }
 
-// ── エンジン（QuantView）スケルトン ────────────────────
+// ── シールド（QuantView・需給分析）スケルトン ────────────────────
 
 export function QuantSkeleton() {
   return (
@@ -217,7 +217,7 @@ export function ChartSkeleton() {
   )
 }
 
-// ── シールド（ShieldView）スケルトン ───────────────────
+// ── エンジン（ShieldView・ポジション分析）スケルトン ───────────────────
 
 export function ShieldSkeleton() {
   return (
@@ -225,9 +225,9 @@ export function ShieldSkeleton() {
       display: 'grid', gridTemplateColumns: '500px 1fr', gap: 14,
       padding: 14, height: '100%', boxSizing: 'border-box',
     }}>
-      {/* 左：シールドパネル */}
+      {/* 左：エンジンパネル */}
       <Panel>
-        <PanelHeader label="POIROBO ▸ SHIELD" />
+        <PanelHeader label="POIROBO ▸ ENGINE" />
         {/* AI起動セクション */}
         <div style={{ fontFamily: MONO, fontSize: 9, color: CY_DIM, letterSpacing: '0.1em', marginTop: 8 }}>
           ▌ AI起動

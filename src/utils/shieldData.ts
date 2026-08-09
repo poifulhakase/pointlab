@@ -205,7 +205,8 @@ export async function buildShieldData(): Promise<ShieldMktData> {
   })
 }
 
-// ── ぽいロボ エンジン 直近レポート取得 ─────────────────
+// ── ぽいロボ シールド（需給分析）直近レポート取得 ─────────────────
+//    🔴 2026-08-09 の名称入替後も関数名・保存キーは据え置き（getRecentEngineReport / poical-quant-memo-history）。
 export function getRecentEngineReport(): { date: string; text: string } | null {
   try {
     const raw = localStorage.getItem('poical-quant-memo-history')

@@ -320,7 +320,7 @@ export function buildExportJson(
 
   // ── 価格レジーム判定（★2026-05-30 追加：需給逆張りのトレンド/レンジ ゲート用）──
   // MA60 の傾き（20営業日前との比較）＋ 価格・MA20・MA60 の並びで分類。
-  // 需給シグナルがトレンドに逆らう場合の「待機」判断に使う（レンジ型エンジンの弱点対策）。
+  // 需給シグナルがトレンドに逆らう場合の「待機」判断に使う（レンジ型シールドの弱点対策）。
   const nkMa60Prev   = nkPrices.length > 80 ? maL(nkPrices.slice(0, nkPrices.length - 20), 60) : null
   const nkMa60Slope  = (nkMa60 != null && nkMa60Prev != null)
     ? (nkMa60 > nkMa60Prev ? 'rising' : nkMa60 < nkMa60Prev ? 'falling' : 'flat')

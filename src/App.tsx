@@ -82,7 +82,7 @@ const PushErrorToast = memo(({ message }: { message: string }) => (
 
 
 // 🚧 一時的な全ページ公開フラグ。true の間は非メンバーでも会員限定ページ
-//   （カレンダー/エンジン/シールド）を「閲覧」できる（ロック画面・研究室への
+//   （カレンダー/シールド/エンジン）を「閲覧」できる（ロック画面・研究室への
 //   自動リダイレクトをバイパス）。コネクト予約・プッシュ通知などのアクションは
 //   従来どおりメンバー限定のまま。元に戻すときは false にするだけ。
 const TEMP_PUBLIC_ALL_PAGES = false
@@ -616,14 +616,14 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {/* データ（需給） */}
           {cal.view === 'quant' && (
             canViewMemberPages
-              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
-          {/* シールド */}
+          {/* エンジン（内部識別子は 'shield' のまま） */}
           {cal.view === 'shield' && (
             canViewMemberPages
-              ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
@@ -748,7 +748,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       </Suspense>
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {/* コミュニティ限定ビュー（カレンダー/エンジン/シールド）は非メンバー時に非表示。
+      {/* コミュニティ限定ビュー（カレンダー/シールド/エンジン）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
       {(((isCalView || cal.view === 'quant' || cal.view === 'shield') && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isLegalNeon ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
@@ -889,12 +889,13 @@ const NEON_BRDR = 'rgba(0,229,255,0.18)'
 const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
 const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
-const QUANT_LABELS  = ['エンジン', '環境', '現物', '先物'] as const
+// 🔴 2026-08-09: 「エンジン」⇔「シールド」の名称を入れ替えた（表示名のみ・識別子は据え置き）。
+const QUANT_LABELS  = ['シールド', '環境', '現物', '先物'] as const
 // 🔴 2026-08-07: 「イベント予想」タブを廃止し、同じ位置にセクター画面を置いた（ユーザー指示）。
 // 🔵 2026-08-08: タブ名を「セクター」→「周期」に変更（ユーザー指示）。
 //    内部の識別子 'sector' は据え置き（URL・保存値・テストに影響するため）。
 const SHIELD_TABS   = ['shield', 'sector'] as const
-const SHIELD_LABELS = ['シールド', '周期'] as const
+const SHIELD_LABELS = ['エンジン', '周期'] as const
 const LEGAL_TABS    = ['terms', 'disclaimer', 'privacy'] as const
 const LEGAL_LABELS  = ['利用規約', '免責事項', 'プライバシー'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）

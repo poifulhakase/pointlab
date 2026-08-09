@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// エンジン シグナル診断（内部R&D）
+// シールド（需給分析）シグナル診断（内部R&D）
+// 🔴 2026-08-09 に画面名を「エンジン」→「シールド」へ入れ替えた。ファイル名は据え置き。
 // 使い方: node scripts/analyze-engine-signals.mjs
 // 目的:   public/data/backtest_results.json の weekly_log を解剖し、
 //         「どこで・なぜ負けているか」を地合い・方向・ステータス・トレンド整合で診断する。
 //         ★本番ロジックは変更しない。トレンドフィルター等の仮説検証（過学習回避のため独立R&Dと突合）。
 //
 // 主要所見（2026-06-10・52週/27シグナル時点）:
-//   - 期間の日経は +76% の歴史的大相場 → エンジンは逆張りの bear を量産し負けていた
+//   - 期間の日経は +76% の歴史的大相場 → シールドは逆張りの bear を量産し負けていた
 //   - 順張り 56% vs 逆張り 36%。逆行シグナルが最大のドラッグ
 //   - 第15-16の20年R&D（トレンドフィルターでDD制御・逆張りは確定下落でのみ）と整合
 
@@ -37,7 +38,7 @@ const cnt = a => `${a.filter(x => x.win).length}/${a.length}`
 const line = (label, a) => console.log(`  ${label.padEnd(26)} ${cnt(a).padStart(6)}  ${wr(a) ?? '-'}%`)
 
 const first = closes[0], last = closes[closes.length - 1]
-console.log('=== エンジン シグナル診断 ===')
+console.log('=== シールド シグナル診断 ===')
 console.log(`期間: ${d.data_range.from} 〜 ${d.data_range.to}（${d.weekly_log.length}週）`)
 console.log(`地合い: 日経 ${first} → ${last}（${(((last - first) / first) * 100).toFixed(1)}%）`)
 console.log(`シグナル週: ${valid.length}（全体勝率 ${wr(valid)}%）`)

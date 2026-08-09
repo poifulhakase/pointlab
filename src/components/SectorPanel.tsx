@@ -952,7 +952,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
              区切り線のすぐ下に無駄な余白が空くだけなので 24px に落とす。 */}
       <div style={{
         flex: isMobile ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column',
-        // 🔵 スマホの下の余白（120px）は、浮いている「シールド／セクター」トグルと
+        // 🔵 スマホの下の余白（120px）は、浮いている「エンジン／周期」トグルと
         //    フッターに最後の項目が隠れないための逃げ。**スクロールの中身の末尾**に置くこと
         //    （親のコンテナに padding で持たせると、常時見える空白の帯になる・2026-08-08）。
         alignItems: 'center', padding: isMobile ? '24px 16px 120px' : '44px 16px 24px',
@@ -1057,7 +1057,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
             )}
           </section>
 
-          {/* 選んだ銘柄をAIに分析させる（シールドと同じ「コピーして投げる」方式） */}
+          {/* 選んだ銘柄をAIに分析させる（エンジンと同じ「コピーして投げる」方式） */}
           {picked && (
             <section className="sector-card" key={picked.code} style={{
               border: `1px solid ${c.BORDBR}`, borderRadius: 8, padding: '11px 13px',

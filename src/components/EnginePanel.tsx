@@ -125,7 +125,9 @@ const ms: Record<string, React.CSSProperties> = {
   aiDesc:  { fontSize: 10, color: 'var(--text)', whiteSpace: 'nowrap' as const },
 }
 
-// ── エンジンパネル（インライン）────────────────────
+// ── シールドパネル（インライン）──────────────────
+//    🔴 2026-08-09 に表示名を「エンジン」→「シールド」へ入れ替え。
+//    ファイル名・識別子・CSS クラス（engine-dust 等）は据え置き。
 export function EnginePanel({
   onPromptCopy, copyStatus, isMobile, theme, logState,
 }: {
@@ -212,17 +214,12 @@ export function EnginePanel({
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 8V4H8"/>
-            <rect width="16" height="12" x="4" y="8" rx="2"/>
-            <path d="M2 14h2"/>
-            <path d="M20 14h2"/>
-            <path d="M15 13v2"/>
-            <path d="M9 13v2"/>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
           <span style={CYBER_MODE
             ? { fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
             : {}
-          }>ぽいロボ エンジン</span>
+          }>ぽいロボ シールド</span>
         </div>
         {CYBER_MODE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -275,12 +272,7 @@ export function EnginePanel({
                   onClick={onPromptCopy}
                 >
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 8V4H8"/>
-                    <rect width="16" height="12" x="4" y="8" rx="2"/>
-                    <path d="M2 14h2"/>
-                    <path d="M20 14h2"/>
-                    <path d="M15 13v2"/>
-                    <path d="M9 13v2"/>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                   </svg>
                   <span style={{ fontFamily: CY_FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
                     {copyStatus === 'prompt' ? 'DONE' : 'COPY'}

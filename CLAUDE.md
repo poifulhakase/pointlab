@@ -76,7 +76,11 @@ npx firebase-tools deploy --only firestore:rules --project pointlab-96310
 - **管理者メールは `firestore.rules` の `isAdmin()` に集約**（`utils/admin.ts` と齟齬が出ないようテストあり）。変更時は両方確認。
 - **`api/` は ESM 必須**。firebase-admin 系は `FIREBASE_SERVICE_ACCOUNT` 環境変数 + `getAdmin()` の遅延初期化で使う。
 - **PCR データソースは `parseDailyArray` 必須**（配列の hole 対策）。
-- **エンジン/シールド出力は状態記述型**（命令・推奨を出さない）。プロンプト改修時は **EvalsPanel の採点キーも同時に直す**。
+- **シールド/エンジン出力は状態記述型**（命令・推奨を出さない）。プロンプト改修時は **EvalsPanel の採点キーも同時に直す**。
+- 🔴 **画面名と内部識別子が食い違っている**（2026-08-09 に名称を入れ替えたため）。
+  **シールド＝需給分析＝`'quant'`（QuantView / EnginePanel / enginePrompt.ts）**、
+  **エンジン＝ポジション分析＝`'shield'`（ShieldView / shieldPrompt.ts）**。
+  識別子・localStorage キー・ファイル名は**据え置き**（保存レポートの中身が入れ替わるため）。改名しないこと。
 - **`vercel --prod` 後は必ず commit & push**（本番=リポジトリを保つ）。
 
 ---

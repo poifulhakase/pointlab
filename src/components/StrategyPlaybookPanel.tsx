@@ -193,8 +193,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 14 }}>
           {[
             { icon: <CalIcon />,         nm: 'ぽいロボ レーダー',   ds: 'この先「何が起きるか」を知り、大事な日は前日に通知' },
-            { icon: <EngineIcon />,       nm: 'ぽいロボ エンジン',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
-            { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ シールド',   ds: '持っているものを「いつ手放すか」を決める' },
+            { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ シールド',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
+            { icon: <EngineIcon />,       nm: 'ぽいロボ エンジン',   ds: '持っているものを「いつ手放すか」を決める' },
             { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「ぽいふる博士に相談」できる' },
           ].map(({ icon, nm, ds }) => (
             <div key={nm} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
@@ -213,9 +213,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     { id: 'week', node: slide('1週間の流れ', '土曜起点・ROUTINE', (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {([
-          ['1', '土曜（週の準備）', '金曜までの需給データが出そろう日。エンジンで最新の地合いを確認し、カレンダーで来週の予定（イベント・季節）をチェック。レーダー通知をONに。'],
+          ['1', '土曜（週の準備）', '金曜までの需給データが出そろう日。シールドで最新の地合いを確認し、カレンダーで来週の予定（イベント・季節）をチェック。レーダー通知をONに。'],
           ['2', '平日（エントリー）', '重要イベントの前は控えめに。チャンスがルールに合えば買う。合わなければ何もしないのも仕事。'],
-          ['3', '持っている間（管理）', 'シールドで出口（利確・損切り）を見守る。'],
+          ['3', '持っている間（管理）', 'エンジンで出口（利確・損切り）を見守る。'],
           ['4', '迷ったら（伴走）', 'コネクトでぽいふる博士に相談。ひとりで抱えない。'],
         ] as const).map(([n, h, d], i, arr) => (
           <div key={n}>
@@ -246,19 +246,19 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       <>気になるイベント（FOMC・雇用統計・SQ など）を選んでおくと、<b style={{ color: c.TEXT }}>前日のお昼（12:30）にスマホへ通知</b>が届きます。受け取る種別は設定で選べるので、見たいイベントだけを逃さずキャッチできます。</>,
     ), <CalIcon />) },
 
-    // ════ 道具：ぽいロボ エンジン ════
-    { id: 'engine', node: slide('ぽいロボ エンジン', '地合いのエネルギーを見る・ENGINE', toolBody(
+    // ════ 道具：ぽいロボ シールド（需給・旧エンジン）════
+    { id: 'engine', node: slide('ぽいロボ シールド', '地合いのエネルギーを見る・SHIELD', toolBody(
       <>需給を物理にたとえて、相場のエネルギー（TEV）を診断します。「<b style={{ color: c.TEXT }}>需給×価格セル</b>」「<b style={{ color: c.TEXT }}>慣性持続性</b>」で、いまが<b style={{ color: c.TEXT }}>順行・売られすぎ・限界</b>のどれかがひと目で分かります。</>,
       '基本の使い方',
       <>ボタン一つでAI用プロンプトをコピーでき、AIに<b style={{ color: c.TEXT }}>確信度つきの状態診断</b>を出してもらえます。<b style={{ color: c.TEXT }}>“枯渇圏”のときは勢いが切れかけと読む</b>——これが基本です。最終的な判断はご自身で。</>,
-    ), <EngineIcon />) },
+    ), <ShieldGuardIcon />) },
 
-    // ════ 道具：ぽいロボ シールド ════
-    { id: 'shield-tool', node: slide('ぽいロボ シールド', 'いつ手放すか・SHIELD', toolBody(
-      <>持っているポジション専用の道具です。証券口座の<b style={{ color: c.TEXT }}>保有画面のスクショ</b>を撮り、シールドの市場データ＋プロンプトと一緒にAIへ。<b style={{ color: c.TEXT }}>持ち続ける／利確／損切り</b>の出口の考え方を整理できます。</>,
+    // ════ 道具：ぽいロボ エンジン（ポジション・旧シールド）════
+    { id: 'shield-tool', node: slide('ぽいロボ エンジン', 'いつ手放すか・ENGINE', toolBody(
+      <>持っているポジション専用の道具です。証券口座の<b style={{ color: c.TEXT }}>保有画面のスクショ</b>を撮り、エンジンの市場データ＋プロンプトと一緒にAIへ。<b style={{ color: c.TEXT }}>持ち続ける／利確／損切り</b>の出口の考え方を整理できます。</>,
       '「守り」の道具',
       <>エントリー（買い）ではなく、買ったあとの<b style={{ color: c.TEXT }}>出口</b>を整える道具。持っている間の不安をここで整理します。</>,
-    ), <ShieldGuardIcon />) },
+    ), <EngineIcon />) },
 
     // ════ 道具：ぽいロボ コネクト ════
     { id: 'connect', node: slide('ぽいロボ コネクト', 'ひとりで悩まない・CONNECT', toolBody(

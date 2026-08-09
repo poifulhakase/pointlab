@@ -19,7 +19,7 @@ describe('buildUpcomingEventsText', () => {
 describe('buildNewsPrompt', () => {
   const ts = '2026-05-30 12:00:00'
   const events = '2026-06-02（火）: FOMC'
-  const tev = 'エンジンレポート日付：2026-05-29\n強持続'
+  const tev = 'シールドレポート日付：2026-05-29\n強持続'
 
   it('embeds the timestamp, events and TEV state', () => {
     const p = buildNewsPrompt(ts, events, tev)

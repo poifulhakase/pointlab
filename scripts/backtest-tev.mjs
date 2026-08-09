@@ -129,7 +129,7 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
   const adRatios    = adSlice.slice(0, 26).map(d => d.ratio25)
   const adPct       = adRatios.length > 1 ? pctRank(adRatios.slice(1), adRatios[0]) : 50
 
-  // backtest は PCR/USD-JPY のヒストリカルデータを持たないため7項目（実エンジンは9項目）。
+  // backtest は PCR/USD-JPY のヒストリカルデータを持たないため7項目（実シールドは9項目）。
   // データ制約による差として許容（★2026-06-08 ユーザー判断）。sig 閾値は共有コアの 65/35。
   const items = [
     { signal: sig(foreign4wPct),       w: 0.25 },

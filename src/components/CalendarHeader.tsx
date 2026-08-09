@@ -70,8 +70,10 @@ function ShieldIcon() {
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
   { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
-  { label: 'エンジン',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <RobotIcon /> },
-  { label: 'シールド',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <ShieldIcon /> },
+  // 🔴 2026-08-09 に名称を入れ替えた（需給分析=シールド／ポジション分析=エンジン）。
+  //    内部識別子 'quant'/'shield' と localStorage キーは据え置き（保存レポートの中身が入れ替わるため）。
+  { label: 'シールド',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <ShieldIcon /> },
+  { label: 'エンジン',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon /> },
   { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]

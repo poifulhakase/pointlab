@@ -3,7 +3,7 @@
 > セッションをまたぐ「直近状態」の正。作業完了時に**先頭の「現在の状態」を更新**し、古い分は「履歴」に1〜2行で畳む。
 > 背景・経緯の深掘りは `~/.claude` メモリ（第1〜25セッションの詳細ログ）。
 
-最終更新: 2026-08-08
+最終更新: 2026-08-09
 
 ---
 
@@ -11,7 +11,62 @@
 
 **ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
 
-### 2026-08-08(12): 総括の決め方を手順で縛る ⚠️（未コミット）
+### 2026-08-09(1): 「エンジン」⇔「シールド」の名称を入れ替えた ✅
+
+🔵 ユーザー指示（2026-08-09）。**需給分析＝「シールド」／ポジション分析＝「エンジン」**。アイコンも一緒に入れ替え。
+
+| | 内部識別子 | 旧名 | **新名** | アイコン |
+|---|---|---|---|---|
+| 需給分析（QuantView / EnginePanel） | `'quant'` | エンジン | **シールド** | 盾 |
+| ポジション分析（ShieldView） | `'shield'` | シールド | **エンジン** | ロボット |
+
+🔴 **画面の位置（ナビの並び）は据え置き**＝カレンダー / シールド / エンジン / チャート / 研究室。
+ユーザー判断で「開く画面が入れ替わる」より「名前が入れ替わる」を選んだ。
+
+🔴 **入れ替えたのは表示名・アイコン・プロンプト内の呼称・ドキュメントだけ**。
+以下は**すべて据え置き**（改名しないこと）:
+- ViewMode の `'quant'` / `'shield'`、タブの `'shield'` / `'sector'`
+- localStorage キー（`poical-quant-memo` / `poical-quant-memo-history` / `poical-shield-memo` / `poical-shield-mkt-data-v2`）
+- Firestore パス（`users/{uid}/data/shieldMemo`）
+- ファイル名（`EnginePanel.tsx` / `ShieldView.tsx` / `enginePrompt.ts` / `shieldPrompt.ts` / `shieldData.ts` / `engineExport.ts`）
+- 関数名（`getRecentEngineReport` / `buildShieldData`）、CSS クラス（`engine-dust` / `shield-dust`）
+
+🔴 **据え置きの理由＝保存キーを入れ替えるとユーザーの保存済みレポートの中身が別画面のものとして表示される**
+（`poical-quant-memo` は需給レポート、`poical-shield-memo` はポジションレポート）。
+前例＝「セクター」→「周期」のタブ改称でも識別子 `'sector'` は据え置いている。
+**この食い違いは `CLAUDE.md` の不変ルールにも明記した。**
+
+**プロンプト側の変更**
+- 需給（`enginePrompt.ts`）: Role「ぽいロボ エンジン」→「**ぽいロボ シールド**」
+- ポジション（`shieldPrompt.ts`）: Role「ぽいロボ シールド」→「**ぽいロボ エンジン**」／
+  「シールドの3原則」→「エンジンの3原則」／出力見出し「シールドログ・シールド判定・シールド総評」→
+  「エンジンログ・エンジン判定・エンジン総評」／エラー識別子 `SHIELD ERROR` → `ENGINE ERROR`
+- `ShieldView` が添付する二次参考の見出し「ぽいロボ エンジン 直近レポート」→「**ぽいロボ シールド 直近レポート**」
+- ターミナルログ `POI-ROBO SHIELD v1.0` → `POI-ROBO ENGINE v1.0`
+
+**触った範囲**: `CalendarHeader`（ナビの label と icon）/ `App.tsx`（`QUANT_LABELS` `SHIELD_LABELS` `ErrorBoundary` label）/
+`EnginePanel`（ヘッダー・COPYボタンのアイコンを盾へ）/ `ShieldView`（同じくロボットへ）/
+`ManualView` / `StrategyPlaybookPanel` / `PoiroboAboutPanel` / `LegalModal` / `LockSkeletons` / `SectorPanel` /
+`CyberAiLaunch` / `SpecView`（現行仕様の記述＋改称の節を追加）/ `requirements.md` / `CLAUDE.md` /
+`docs/legal/*` / `docs/maintenance/ai-model-check.md` / `scripts/analyze-engine-signals.mjs` / `scripts/backtest-tev.mjs`
+
+🔵 **触っていない**: `SpecView` と本書の**★日付つき過去履歴**（当時の名称のまま。過去の記録を書き換えないため）。
+2026-08-08 以前の記述で「エンジン」とあれば需給分析、「シールド」とあればポジション分析を指す。
+`poirobo/` `poinavi/` は別プロダクト（旧静的サイト・翻訳アプリ）なので対象外。
+
+**ついでに直したもの**
+- `requirements.md` のシールド節が「イベント予想プロンプト」と**誤っていた**のを実装どおりに書き直した
+  （実体＝日経平均ブル/ベア専用のポジション分析。イベントはプロンプトの一部品にすぎない）。
+- `ManualView` の「シールド画面右下のメニューで『イベント予想』に切り替える」は**廃止済みの機能**だったので
+  現行の「周期（セクター画面）」に直した。
+
+🔴 **残っている齟齬（既知・実害なし）**: ポジション分析側のプロンプトに
+「防衛（盾）／最大化（槍）／管理（鎧）」という**盾のメタファー**が残っている。
+名称が「エンジン」になったので、文言を作り直すかは今後の判断。
+
+検証: tsc(app)=0 / lint=0 / vitest **249 pass** / `npm run build` 成功。
+
+### 2026-08-08(12): 総括の決め方を手順で縛る ✅（`f19e654`・push 済）
 
 🔴 **基準を書くだけでは足りず、2回目の誤判定が出た**（LIFULL 2120・2026-08-08）。
 解消日数 **6.7日分**で5日基準を超えているのに、

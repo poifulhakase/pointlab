@@ -22,7 +22,7 @@ type Props = {
 
 // ── STATUS LINES ─────────────────────────────────────
 const SHIELD_STATUS_LINES = [
-  'POI-ROBO SHIELD v1.0  ▶ ONLINE',
+  'POI-ROBO ENGINE v1.0  ▶ ONLINE',
   '日経225先物 OHLC ........... 取得中',
   'MA20 / MA60 / MA200 ....... 計算中',
   '直近高値・安値 ............. 算出中',
@@ -36,7 +36,9 @@ const SHIELD_STATUS_LINES = [
   'データパッケージ生成 ....... 待機中',
 ]
 
-// ── ⑫ MemoPanel（レポート保存：シールド/イベント共通）──────────
+// ── ⑫ MemoPanel（レポート保存：エンジン＝ポジション分析）──────────
+//    🔴 2026-08-09 に表示名を「シールド」→「エンジン」へ入れ替え。
+//    ファイル名・識別子・localStorage キー（poical-shield-memo）は据え置き。
 type MemoConfig = {
   storageKey: string
   fsPath: (uid: string) => string
@@ -101,7 +103,7 @@ function MemoPanel({ user, theme, isMobile, config }: { user: User | null; theme
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
 
-  // 設定切替時に保存済みテキストを読み直す（シールド⇄イベント）
+  // 設定切替時に保存済みテキストを読み直す
   useEffect(() => {
     try { setText(localStorage.getItem(config.storageKey) ?? '') } catch { setText('') }
   }, [config.storageKey])
@@ -325,10 +327,15 @@ function ShieldPanel({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
               stroke={c.GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8V4H8"/>
+              <rect width="16" height="12" x="4" y="8" rx="2"/>
+              <path d="M2 14h2"/>
+              <path d="M20 14h2"/>
+              <path d="M15 13v2"/>
+              <path d="M9 13v2"/>
             </svg>
             <span style={{ fontFamily: c.FONT, fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
-              ぽいロボ シールド
+              ぽいロボ エンジン
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -384,7 +391,12 @@ function ShieldPanel({
                   {isBuilding
                     ? <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2.5px solid ${c.FAINT}`, borderTopColor: c.GREEN, animation: 'spin 0.7s linear infinite' }} />
                     : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M12 8V4H8"/>
+                        <rect width="16" height="12" x="4" y="8" rx="2"/>
+                        <path d="M2 14h2"/>
+                        <path d="M20 14h2"/>
+                        <path d="M15 13v2"/>
+                        <path d="M9 13v2"/>
                       </svg>
                   }
                   <span style={{ fontFamily: c.FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
@@ -476,10 +488,10 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
       ])
       const engineReport = getRecentEngineReport()
       const engineSection = engineReport
-        ? `\n---\n# ぽいロボ エンジン 直近レポート（二次参考）\n`
+        ? `\n---\n# ぽいロボ シールド 直近レポート（二次参考）\n`
           + `> ⚠️ このレポートはエントリー可否・相場方向の需給分析用です。\n`
-          + `> シールドの判断は「ポジション画像」と「市場データJSON」を一次情報とし、このレポートは二次参考に留めてください。\n`
-          + `> エンジンの相場観とポジション管理方針が食い違う場合は、ポジション画像の損益状況を優先してください。\n`
+          + `> エンジンの判断は「ポジション画像」と「市場データJSON」を一次情報とし、このレポートは二次参考に留めてください。\n`
+          + `> シールドの相場観とポジション管理方針が食い違う場合は、ポジション画像の損益状況を優先してください。\n`
           + `> レポート日付: ${engineReport.date}\n\n`
           + engineReport.text + '\n'
         : ''
@@ -525,7 +537,7 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
         flexDirection: isMobile ? 'column' : 'row',
         overflowY: isMobile ? 'auto' : 'hidden',
         // 🔴 セクタータブでは付けない（ユーザー指摘・2026-08-08）。
-        //    シールドタブは中身が縦に積まれてここが末尾になるので余白が効くが、
+        //    エンジンタブ（識別子 'shield'）は中身が縦に積まれてここが末尾になるので余白が効くが、
         //    SectorPanel は自前で1本スクロールするため、この padding が
         //    **常時見えるだけの空白の帯**になってしまう。
         //    セクター側の下の逃げは SectorPanel の右列の padding-bottom で確保している。
