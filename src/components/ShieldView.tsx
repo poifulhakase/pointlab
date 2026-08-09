@@ -10,6 +10,8 @@ import { SHIELD_PROMPT_TEMPLATE } from '../utils/shieldPrompt'
 import { buildShieldData, getRecentEngineReport } from '../utils/shieldData'
 import { AILaunchRow } from './CyberAiLaunch'
 import { jstTodayKey } from '../utils/jstDate'
+import { isAdminEmail } from '../utils/admin'
+import { RoboAccountPanel } from './RoboAccountPanel'
 
 // 🔴 2026-08-09: 周期（セクター）タブは QuantView へタブごと移設した。
 //    この画面はポジション分析（エンジン）1枚のみを持つ。タブの出し分けは App.tsx が行う。
@@ -547,7 +549,13 @@ export function ShieldView({ theme, isMobile, user }: Props) {
         />
         <div style={isMobile ? s.dividerH : s.divider} />
         <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-          <MemoPanel user={user} theme={theme} isMobile={isMobile} config={SHIELD_MEMO_CONFIG} />
+          {/* 🔴 右側はロボ口座（疑似トレードの記録）。表示は管理者のみ（設計書 §10.2）。
+              robo_account.json は公開データなので、他の人には従来のメモ欄を出す。 */}
+          {isAdminEmail(user?.email) ? (
+            <RoboAccountPanel theme={theme} isMobile={isMobile} />
+          ) : (
+            <MemoPanel user={user} theme={theme} isMobile={isMobile} config={SHIELD_MEMO_CONFIG} />
+          )}
         </div>
         {isMobile && <CyberSystemLog {...logState} theme={theme} />}
       </div>

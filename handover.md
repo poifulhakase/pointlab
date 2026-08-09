@@ -11,22 +11,36 @@
 
 **ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
 
-### 2026-08-09(4): 疑似トレード 実装 第1〜2段階 ✅（`3cdd185` / `5833371`・push 済）— **途中で停止中**
+### 2026-08-09(4): 疑似トレード 実装 ✅ 一式そろった（`3cdd185`〜・push 済）
 
-🔴 **ユーザー指示で一旦停止（2026-08-09）**。設計は §12 まで全項目確定済み、実装は5/9 が残っている。
+🔴 **設計は全項目確定・実装は一式そろった**。残るのは**本番の鍵設定と初回ログインだけ**（下記「再開時に必要な設定」）。
 
 **できているもの**
 
 | ファイル | 中身 |
 |---|---|
 | `src/utils/robotStrategy.mjs` | 🔴 決定論ロジックの**単一情報源**（`tevCore.mjs` と同格）。対照群シグナル＋損切り＋資金クリップ |
-| `src/utils/__tests__/robotStrategy.test.ts` | 33件 |
 | `scripts/backtest-robo.mjs` | 対照群バックテスト（指数近似20年＋ETF実データ上場来の2本立て） |
 | `scripts/roboPrompt.mjs` | 判断プロンプト（価格の特徴加工・優先順位・裁定ルール・対照群提示・背景） |
 | `scripts/llmDecide.mjs` | Claude API（`claude-opus-5` / effort `high` / Structured Outputs / refusal 対応） |
-| `src/utils/__tests__/roboDecision.test.ts` | 25件 |
+| `scripts/roboData.mjs` | 価格（Yahoo日次）と需給（public/data）の読み込み |
+| `scripts/roboAccount.mjs` | 口座の状態遷移（ドテン分解・損切り確定・資金クリップ・成績再計算） |
+| `scripts/chatwork.mjs` | 通知の送信／画像の受け取り／ファイル投稿 |
+| `scripts/readPosition.mjs` | 保有画面キャプチャの vision 読み取り（推測で埋めない・確度と未読項目を返す） |
+| `scripts/robo-trade.mjs` | **実行本体**（`--dry` / `--no-llm` あり） |
+| `scripts/capture-tradingview.mjs` | 🔴 **ローカル専用**。Playwright で TradingView を撮って Chatwork へ投稿 |
+| `src/utils/roboAccount.ts` / `src/components/RoboAccountPanel.tsx` | 画面（管理者のみ表示・`ShieldView` の右カラム） |
+| `.github/workflows/fetch-data.yml` | `robo-trade` ステップ追加（**平日19:30 JST のみ**・`continue-on-error`） |
 
-検証: tsc(app)=0 / lint=0 / vitest **307 pass**。`@anthropic-ai/sdk` を追加済み。
+テスト: robotStrategy 33件 / roboDecision 25件 / roboChatwork 14件 / roboAccount 21件
+検証: tsc(app)=0 / lint=0 / vitest **342 pass** / build 成功。
+
+🔵 **通し確認済み**（`node scripts/robo-trade.mjs --dry --no-llm`）: 価格取得 → 需給12項目（VIX 14.9）
+→ 対照群判定 → 口座反映 → 通知本文生成まで動作。
+
+🔴 **途中で見つけて直した問題**: `public/data` の JSON は共通で `{ updatedAt, data }` 形式だが、
+**並び順がファイルによって逆**（週次＝新しい順／日次＝古い順）。末尾を最新として読んでいたため
+需給が2項目しか取れていなかった。日付を見て最新行を選ぶ方式に変更。
 
 **🔴 対照群の実測（Go/No-Go の比較対象。設計書 §5 に詳細）**
 
@@ -41,20 +55,32 @@
 🔴 **ベアは20年で63日（1%）しか立たない**＝ベア側は対照群として比較力を持たない。
 → この3点はプロンプトに反映済み。Go/No-Go の DD 条件も**絶対値→対照群比**に修正済み（§2）。
 
-**🔴 残りの実装（この順）**
-1. `scripts/chatworkFiles.mjs` — Chatwork のファイル一覧取得＋ダウンロード
-2. `scripts/capture-tradingview.mjs` — **ローカルPC**で Playwright 撮影 → Chatwork 自動投稿
-   🔴 Playwright は未インストール。`userDataDir` は `.gitignore` に入れること。初回は手動ログイン。
-3. `scripts/readPosition.mjs` — 保有画面キャプチャを vision で読み取り `real_position.json`
-4. `scripts/robo-trade.mjs` — 実行本体（取込→判断→損切り確定→記録→通知）
-5. `scripts/notify-chatwork.mjs` — 通知（hold の日も毎日送る）
-6. `src/utils/roboAccount.ts` / `src/components/RoboAccountPanel.tsx` — 画面（管理者のみ表示）
-7. `.github/workflows/fetch-data.yml` — `robo-trade` ステップ追加
-8. 旧ポジション分析の撤去（`ShieldView` の中身を差し替え）
+**🔴 動かすために必要な設定（未実施・ユーザー作業）**
 
-**🔴 再開時に必要な設定（未実施）**
-- GitHub Secrets: `ANTHROPIC_API_KEY` / `CHATWORK_API_TOKEN` / `CHATWORK_ROOM_ID`
-  （room_id の値は `~/.claude` メモリ `reference_stock_calendar_chatwork_room` にある。設計書には書かない）
+1. **GitHub Secrets を3つ登録**
+   `ANTHROPIC_API_KEY` / `CHATWORK_API_TOKEN` / `CHATWORK_ROOM_ID`
+   🔵 room_id の値は `~/.claude` メモリ `reference_stock_calendar_chatwork_room` にある（設計書には書かない）。
+   🔴 **これが入るまで判断は実行されない**（ステップは `continue-on-error` なので他は動く）。
+2. **ローカルで Playwright を入れ、初回ログイン**（チャート画像を使う場合）
+   ```
+   npm install -D playwright
+   npx playwright install chromium
+   npm run capture-chart -- --login     # ブラウザが開くのでログイン→Enter
+   ```
+   🔵 撮影しなくても判断は動く（数値だけで続行する）。
+3. **運用**: 引け後にローカルで `npm run capture-chart`（チャート）＋ 保有画面を Chatwork に投稿
+   → 19:30 JST に Actions が判断・記録・通知。
+
+**🔵 旧ポジション分析の扱い（仕様書 §3 の削除タスク）**
+- 左カラムの `ShieldPanel`（AIにポジション分析させるプロンプトのコピー）は**残した**。
+  人が使う道具として性質が違い、ロボ口座が動き出す前の唯一の手段でもあるため。
+- 右カラムの `MemoPanel`（手書きレポート保存）は**管理者にはロボ口座を表示**するよう差し替え。
+  🔴 localStorage `poical-shield-memo` / Firestore `users/{uid}/data/shieldMemo` は**消していない**
+  （過去のレポートを失わせないため。読み出し口を落としただけ）。
+
+**🔴 次の判断ポイント**
+- 30トレード貯まったら Go/No-Go（期待値>0 かつ 対照群を上回る）。週次シグナルなら**約7ヶ月**先。
+- 実運用で LLM のコストを実測し、`effort` を `high` のままにするか判断する（見積もり約1,000円/月）。
 
 ### 2026-08-09(3): 疑似トレード（ロボ口座）＋通知の技術設計書 ✅（`bb3bf2b`・push 済）
 

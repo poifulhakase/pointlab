@@ -51,6 +51,13 @@ Set-Location 'C:\Project\PointLab\stock-calendar'; npm test
 # データ取得（JPX Excel + nikkei225jp.com → public/data/*.json）
 Set-Location 'C:\Project\PointLab\stock-calendar'; npm run fetch-data
 
+# ロボ口座（疑似トレード）
+npm run backtest-robo                          # 対照群の期待成績を測る
+node scripts/robo-trade.mjs --dry --no-llm     # 配線確認（LLM を呼ばない・書き込まない）
+npm run robo-trade                             # 本番（ANTHROPIC_API_KEY / CHATWORK_* が要る）
+npm run capture-chart -- --login               # 🔴 ローカル専用。初回だけ TradingView に手動ログイン
+npm run capture-chart                          # 🔴 ローカル専用。チャートを撮って Chatwork へ投稿
+
 # バックテスト再計算（→ public/data/backtest_results.json）
 Set-Location 'C:\Project\PointLab\stock-calendar'; npm run backtest
 
@@ -82,6 +89,14 @@ npx firebase-tools deploy --only firestore:rules --project pointlab-96310
   **エンジン＝ポジション分析＝`'shield'`（ShieldView / shieldPrompt.ts）**。
   識別子・localStorage キー・ファイル名は**据え置き**（保存レポートの中身が入れ替わるため）。改名しないこと。
 - **`vercel --prod` 後は必ず commit & push**（本番=リポジトリを保つ）。
+- 🔴 **ロボ口座（疑似トレード）の不変ルール**
+  - 決定論ロジック（対照群シグナル・損切り）は **`src/utils/robotStrategy.mjs` が単一情報源**。式を二重定義しない。
+  - **損切りは LLM に決めさせない**（ATR20×VIX連動の純関数）。建てた瞬間に確定させ、後から動かさない。
+  - **`robo_account.json`（AIの口座）と `real_position.json`（実保有）を混ぜない**。
+    同期させると AI の成績と人の介入が分離できず、Go/No-Go も対照群比較も無意味になる。
+  - **判断が取れない日は hold で記録する**。決定論の結果で埋めない（判断器を混ぜない）。
+  - **判断は1日1回**（平日19:30 JST のみ）。21:30 は取りこぼしの保険なので判断させない。
+  - **`.tradingview-session/` と `.captures/` はコミットしない**（認証情報と実口座の残高）。
 
 ---
 

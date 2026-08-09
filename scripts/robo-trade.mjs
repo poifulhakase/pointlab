@@ -30,6 +30,7 @@ import {
 import {
   fetchLatestImages, downloadFile, ageInDays, sendMessage, buildNotification,
 } from './chatwork.mjs'
+import { readPositionImage, toRealPosition, checkRealPosition } from './readPosition.mjs'
 
 const ACCOUNT_PATH = path.join(DATA_DIR, 'robo_account.json')
 const LOG_DIR = path.join(DATA_DIR, 'robo_logs')
@@ -130,9 +131,38 @@ async function main() {
   account = stopped.account
   if (stopped.hit) log('[5] 🔴 損切りに触れたため決済した')
 
-  const realPosition = (() => {
+  // ── 5b) 実保有の読み取り ──
+  // 🔴 ロボ口座とは別ファイル。同期させると AI の成績と人の介入が分離できなくなる。
+  let realPosition = (() => {
     try { return fs.existsSync(REAL_POS_PATH) ? JSON.parse(fs.readFileSync(REAL_POS_PATH, 'utf8')) : null } catch { return null }
   })()
+
+  if (images.position && !NO_LLM) {
+    log('[5b] 保有画面を読み取る...')
+    try {
+      const r = await readPositionImage({ base64: images.position.base64, mediaType: images.position.mediaType })
+      if (r.ok) {
+        realPosition = toRealPosition({
+          result: r.result,
+          uploadTime: images.position.uploadTime,
+          filename: images.position.filename,
+          ageDays: images.position.ageDays,
+        })
+        log(`  → ${realPosition.positions.length}件（確度 ${realPosition.confidence}）`)
+        images.warnings.push(...checkRealPosition(realPosition))
+        if (!DRY) saveJson(REAL_POS_PATH, realPosition)
+      } else {
+        log(`  ⚠ 読み取り失敗: ${r.error}`)
+        images.warnings.push(`保有画面の読み取りに失敗しました（${r.error}）`)
+      }
+    } catch (e) {
+      log(`  ⚠ 読み取りで例外: ${e.message}`)
+      images.warnings.push(`保有画面の読み取りで問題が起きました（${e.message}）`)
+    }
+  } else if (realPosition?.age_days != null && realPosition.age_days > 0) {
+    // キャプチャが無い日は前回分を「古い」と明示して使う（ユーザー決定・2026-08-09）
+    images.warnings.push(`保有情報は${realPosition.age_days}営業日前のキャプチャです`)
+  }
 
   // ── 6) 判断 ──
   const prompt = buildRoboPrompt({

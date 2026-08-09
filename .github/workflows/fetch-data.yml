@@ -43,6 +43,19 @@ jobs:
         run: npm run backtest
         continue-on-error: true
 
+      # ロボ口座（疑似トレード）の判断。
+      # 🔴 平日19:30 JST の回だけ動かす。21:30 は取りこぼしの保険なので、
+      #    ここで判断すると同じ日に2回判断してしまう（1日1回・設計書 §2 論点1）。
+      # 🔴 continue-on-error: 判断が失敗してもデータ更新とコミットは止めない。
+      - name: ロボ口座の判断（平日19:30のみ）
+        if: github.event_name == 'schedule' && contains(github.event.schedule, '30 10 * * 1-5')
+        run: npm run robo-trade
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CHATWORK_API_TOKEN: ${{ secrets.CHATWORK_API_TOKEN }}
+          CHATWORK_ROOM_ID: ${{ secrets.CHATWORK_ROOM_ID }}
+
       - name: 変更チェック & コミット
         id: commit
         run: |

@@ -53,6 +53,36 @@ export async function sendMessage(message, { roomId, token, dryRun = false } = {
   return call(`/rooms/${room}/messages`, { method: 'POST', body, token })
 }
 
+/**
+ * ファイルを投稿する（ローカルの撮影スクリプトから使う）。
+ * 🔴 Chatwork のファイル投稿は multipart/form-data。JSON ではない。
+ */
+export async function uploadFile({ filePath, message = '', roomId, token } = {}) {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
+  if (!fs.existsSync(filePath)) throw new Error(`ファイルが無い: ${filePath}`)
+
+  const room = roomId ?? need('CHATWORK_ROOM_ID')
+  const buf = fs.readFileSync(filePath)
+  const name = path.basename(filePath)
+
+  const form = new FormData()
+  form.append('file', new Blob([buf]), name)
+  if (message) form.append('message', message)
+
+  const res = await fetch(`${API}/rooms/${room}/files`, {
+    method: 'POST',
+    headers: { 'X-ChatWorkToken': token ?? need('CHATWORK_API_TOKEN') },
+    body: form,
+    signal: AbortSignal.timeout(60000),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Chatwork ファイル投稿に失敗 HTTP ${res.status} ${text.slice(0, 200)}`)
+  }
+  return res.json()
+}
+
 // ── 受け取り（画像）────────────────────────────────────────────────────────
 
 /**
