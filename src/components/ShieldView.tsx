@@ -9,15 +9,14 @@ import { useSystemLog, CyberSystemLog, type LogState } from './CyberSystemLog'
 import { SHIELD_PROMPT_TEMPLATE } from '../utils/shieldPrompt'
 import { buildShieldData, getRecentEngineReport } from '../utils/shieldData'
 import { AILaunchRow } from './CyberAiLaunch'
-import { SectorPanel } from './SectorPanel'
 import { jstTodayKey } from '../utils/jstDate'
 
+// 🔴 2026-08-09: 周期（セクター）タブは QuantView へタブごと移設した。
+//    この画面はポジション分析（エンジン）1枚のみを持つ。タブの出し分けは App.tsx が行う。
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
-  shieldTab?: 'shield' | 'sector'
-  onShieldTabChange?: (tab: 'shield' | 'sector') => void
 }
 
 // ── STATUS LINES ─────────────────────────────────────
@@ -466,10 +465,9 @@ function ShieldPanel({
 }
 
 // ── メインコンポーネント ──────────────────────────────
-export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Props) {
+export function ShieldView({ theme, isMobile, user }: Props) {
   const tv = themeVars(theme)
 
-  const mode = shieldTab
   const [copyStatus,  setCopyStatus]  = useState<'' | 'shield'>('')
   const [isBuilding,  setIsBuilding]  = useState(false)
 
@@ -536,32 +534,22 @@ export function ShieldView({ theme, isMobile, user, shieldTab = 'shield' }: Prop
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         overflowY: isMobile ? 'auto' : 'hidden',
-        // 🔴 セクタータブでは付けない（ユーザー指摘・2026-08-08）。
-        //    エンジンタブ（識別子 'shield'）は中身が縦に積まれてここが末尾になるので余白が効くが、
-        //    SectorPanel は自前で1本スクロールするため、この padding が
-        //    **常時見えるだけの空白の帯**になってしまう。
-        //    セクター側の下の逃げは SectorPanel の右列の padding-bottom で確保している。
-        paddingBottom: isMobile && mode === 'shield' ? 130 : 0,
+        // 中身が縦に積まれてここが末尾になるので、浮いているタブとフッターの逃げに使う。
+        paddingBottom: isMobile ? 130 : 0,
       }}>
-        {mode === 'shield' ? (
-          <>
-            <ShieldPanel
-              isMobile={isMobile}
-              theme={theme}
-              copyStatus={copyStatus === 'shield' ? 'shield' : ''}
-              isBuilding={isBuilding}
-              onPromptCopy={handlePromptCopy}
-              logState={logState}
-            />
-            <div style={isMobile ? s.dividerH : s.divider} />
-            <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
-              <MemoPanel user={user} theme={theme} isMobile={isMobile} config={SHIELD_MEMO_CONFIG} />
-            </div>
-            {isMobile && <CyberSystemLog {...logState} theme={theme} />}
-          </>
-        ) : (
-          <SectorPanel theme={theme} isMobile={isMobile} user={user} />
-        )}
+        <ShieldPanel
+          isMobile={isMobile}
+          theme={theme}
+          copyStatus={copyStatus === 'shield' ? 'shield' : ''}
+          isBuilding={isBuilding}
+          onPromptCopy={handlePromptCopy}
+          logState={logState}
+        />
+        <div style={isMobile ? s.dividerH : s.divider} />
+        <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
+          <MemoPanel user={user} theme={theme} isMobile={isMobile} config={SHIELD_MEMO_CONFIG} />
+        </div>
+        {isMobile && <CyberSystemLog {...logState} theme={theme} />}
       </div>
     </div>
   )

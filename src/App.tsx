@@ -230,8 +230,11 @@ export default function App() {
 
   // ── フローティングサブバー用 状態 ─────────────────────────────────────
   const [chartSymbol,       setChartSymbol]       = useState('INDEX:NKY')
-  const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro'>('bunseki')
-  const [shieldTab,         setShieldTab]         = useState<'shield' | 'sector'>('shield')
+  // 🔴 2026-08-09: タブを機能ごと2画面に振り分けた（ユーザー指示）。
+  //    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= エンジン + 環境 + 現物 + 先物。
+  //    環境/現物/先物 の中身は QuantView のままなので、エンジン画面からも QuantView を使う。
+  const [quantTab,          setQuantTab]          = useState<'bunseki' | 'sector'>('bunseki')
+  const [shieldTab,         setShieldTab]         = useState<'shield' | 'kankyou' | 'genbutsu' | 'micro'>('shield')
   const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
@@ -371,7 +374,14 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     prevViewRef2.current = cal.view
     if (prev === 'chart')  setChartSymbol('INDEX:NKY')
     if (prev === 'quant')  setQuantTab('bunseki')
+    if (prev === 'shield') setShieldTab('shield')
   }, [cal.view])
+
+  // エンジン画面の市場3タブ（環境/現物/先物）は初回訪問時にマウントし、以降は維持する
+  const [engineMarketMounted, setEngineMarketMounted] = useState(false)
+  useEffect(() => {
+    if (cal.view === 'shield' && shieldTab !== 'shield') setEngineMarketMounted(true)
+  }, [cal.view, shieldTab])
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
   // SupportView（研究室）内部のモーダル（予約/管理/メンバー案内/各ドロワー等）の
@@ -613,17 +623,32 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             <ErrorBoundary label="チャート"><Suspense fallback={<ViewLoader />}><ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} /></Suspense></ErrorBoundary>
           )}
 
-          {/* データ（需給） */}
+          {/* シールド（需給分析）＝ 分析 + 周期。内部識別子は 'quant' のまま */}
           {cal.view === 'quant' && (
             canViewMemberPages
-              ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} onQuantTabChange={setQuantTab} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} visibleTabs={SHIELD_VIEW_TABS} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
-          {/* エンジン（内部識別子は 'shield' のまま） */}
+          {/* エンジン（ポジション分析）＝ エンジン + 環境 + 現物 + 先物。内部識別子は 'shield' のまま */}
           {cal.view === 'shield' && (
             canViewMemberPages
-              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} shieldTab={shieldTab} onShieldTabChange={setShieldTab} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}>
+                  {/* 🔴 タブ切替で QuantView を再マウントさせない（アンマウントすると state が消え、
+                      再表示のたびにローディングが出るため）。市場3タブは初回訪問時にマウントし以降維持。 */}
+                  <div style={{ ...styles.tabPane, display: shieldTab === 'shield' ? 'flex' : 'none' }}>
+                    <ShieldView theme={theme} isMobile={isMobile} user={user} />
+                  </div>
+                  {engineMarketMounted && (
+                    <div style={{ ...styles.tabPane, display: shieldTab === 'shield' ? 'none' : 'flex' }}>
+                      <QuantView
+                        theme={theme} isMobile={isMobile} user={user}
+                        quantTab={shieldTab === 'shield' ? 'kankyou' : shieldTab}
+                        visibleTabs={ENGINE_VIEW_TABS}
+                      />
+                    </div>
+                  )}
+                </Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
@@ -888,14 +913,18 @@ const NEON_BRDR = 'rgba(0,229,255,0.18)'
 // ── 定数 ──────────────────────────────────────────────────────────────────
 const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 
-const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
-// 🔴 2026-08-09: 「エンジン」⇔「シールド」の名称を入れ替えた（表示名のみ・識別子は据え置き）。
-const QUANT_LABELS  = ['シールド', '環境', '現物', '先物'] as const
-// 🔴 2026-08-07: 「イベント予想」タブを廃止し、同じ位置にセクター画面を置いた（ユーザー指示）。
-// 🔵 2026-08-08: タブ名を「セクター」→「周期」に変更（ユーザー指示）。
-//    内部の識別子 'sector' は据え置き（URL・保存値・テストに影響するため）。
-const SHIELD_TABS   = ['shield', 'sector'] as const
-const SHIELD_LABELS = ['エンジン', '周期'] as const
+// 🔴 2026-08-09: 「エンジン」⇔「シールド」の名称を入れ替え、さらにタブを機能ごと振り分けた（ユーザー指示）。
+//    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= エンジン + 環境 + 現物 + 先物。
+//    🔴 タブの識別子はすべて据え置き（'bunseki'/'sector'/'kankyou'/'genbutsu'/'micro'/'shield'）。
+//    環境/現物/先物 の中身は QuantView のままなので、エンジン画面も QuantView を使う（下の ENGINE_VIEW_TABS）。
+const QUANT_TABS    = ['bunseki', 'sector'] as const
+const QUANT_LABELS  = ['シールド', '周期'] as const
+// 🔵 2026-08-08: タブ名を「セクター」→「周期」に変更（ユーザー指示）。識別子 'sector' は据え置き。
+const SHIELD_TABS   = ['shield', 'kankyou', 'genbutsu', 'micro'] as const
+const SHIELD_LABELS = ['エンジン', '環境', '現物', '先物'] as const
+// QuantView に渡すタブ集合（画面ごとに何を並べるか）
+const SHIELD_VIEW_TABS = ['bunseki', 'sector'] as const
+const ENGINE_VIEW_TABS = ['kankyou', 'genbutsu', 'micro'] as const
 const LEGAL_TABS    = ['terms', 'disclaimer', 'privacy'] as const
 const LEGAL_LABELS  = ['利用規約', '免責事項', 'プライバシー'] as const
 // カルーセル用スタイル定数（スワイプ中に直接 DOM を操作するため ref でも使用）
@@ -928,6 +957,8 @@ const styles: Record<string, React.CSSProperties> = {
   app:         { height: '100%', display: 'flex', flexDirection: 'column' },
   body:        { flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' },
   main:        { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
+  // エンジン画面のタブ切替用。非表示側は display:none にしてマウントを維持する
+  tabPane:     { flex: 1, flexDirection: 'column', overflow: 'hidden', minHeight: 0, minWidth: 0 },
   mobileOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)', zIndex: Z.sidebarOverlay },
 
   calSubBar:    { display: 'flex', alignItems: 'center', padding: '6px 12px', flexShrink: 0, background: 'transparent', border: 'none', userSelect: 'none' },

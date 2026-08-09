@@ -11,6 +11,42 @@
 
 **ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
 
+### 2026-08-09(2): タブを機能ごと2画面に振り分けた ✅
+
+🔵 ユーザー指示（2026-08-09）＝**「環境・現物・先物 → エンジンへ／周期 → シールドへ。タブをタブのまま移動」**。
+中身の統合はせず、タブという単位のまま所属画面を入れ替えた。
+
+| 画面 | 内部識別子 | タブ |
+|---|---|---|
+| シールド（需給分析） | `'quant'` | **シールド / 周期** |
+| エンジン（ポジション分析） | `'shield'` | **エンジン / 環境 / 現物 / 先物** |
+
+🔴 **タブの識別子はすべて据え置き**（`'bunseki'` / `'sector'` / `'kankyou'` / `'genbutsu'` / `'micro'` / `'shield'`）。
+所属する画面だけが変わった。
+
+**実装のかなめ**
+- 🔴 **環境/現物/先物 の中身は `QuantView` のまま**なので、**エンジン画面も `QuantView` を描画する**。
+  どのタブを並べるかは新 prop **`visibleTabs`** で渡す（`App.tsx` の `SHIELD_VIEW_TABS` / `ENGINE_VIEW_TABS`）。
+  スライダーの幅と `translateX` は `visibleTabs.length` から動的に計算
+  （旧＝`width:400%` 固定・各パネル `25%`・`transform` は4分岐のハードコードだった）。
+- 🔴 **データ取得は分割していない**。分析タブの AI プロンプト（`buildExportJson`）が全項目を使うため、
+  `QuantView` はタブ集合に関わらず従来どおり全部読み込む。
+  `dataCache`（localStorage）を共有するので2画面ぶんの実 fetch にはならない。
+- 🔴 **エンジン画面はタブ切替で `QuantView` を再マウントしない**＝`display:none` で出し分ける（`styles.tabPane`）。
+  アンマウントすると state が消えて、タブに戻るたびにローディングが出るため。
+  市場3タブは**初回訪問時にマウントして以降維持**（`engineMarketMounted`。`micro` タブの既存パターンと同じ）。
+- `SectorPanel` は `ShieldView` → `QuantView` へ移動（props は `theme`/`isMobile`/`user` のみなので単純）。
+  `ShieldView` は周期タブを失いポジション分析1枚になったので、`shieldTab` / `onShieldTabChange` props と
+  `mode` 分岐、`SectorPanel` の import を削除。`paddingBottom` の分岐（セクター時は付けない）も不要になり単純化。
+- `QuantView` の `onQuantTabChange` prop は**もともと本体で使っていなかった**ので削除（タブ操作は App 側の
+  フローティングサブバーが持つ）。
+- ビューを離れたときのタブリセットに `shield` を追加（`prev === 'shield'` → `setShieldTab('shield')`）。
+
+🔵 **確認済み**: フッターナビの並びとアイコン（カレンダー → 盾 → ロボット → チャート → 研究室）を
+ローカル（`npm run dev`）で実測。**タブの中身は会員ログインが要るのでローカルでは未確認**＝本番で見ること。
+
+検証: tsc(app)=0 / lint=0 / vitest **249 pass** / `npm run build` 成功。
+
 ### 2026-08-09(1): 「エンジン」⇔「シールド」の名称を入れ替えた ✅
 
 🔵 ユーザー指示（2026-08-09）。**需給分析＝「シールド」／ポジション分析＝「エンジン」**。アイコンも一緒に入れ替え。

@@ -26,15 +26,23 @@ const MicroQuantView = lazy(() => import('./MicroQuantView').then(m => ({ defaul
 const QuantMemoPanel = lazy(() => import('./MicroQuantView').then(m => ({ default: m.QuantMemoPanel })))
 const MarketDailyPanel = lazy(() => import('./MarketDailyPanel').then(m => ({ default: m.MarketDailyPanel })))
 const ContribSectorPanel = lazy(() => import('./StocksView').then(m => ({ default: m.ContribSectorPanel })))
+const SectorPanel = lazy(() => import('./SectorPanel').then(m => ({ default: m.SectorPanel })))
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
-type QuantTabKey = 'bunseki' | 'kankyou' | 'genbutsu' | 'micro'
+// 🔴 2026-08-09: タブを機能ごと2画面に振り分けた（ユーザー指示）。
+//    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= 環境 + 現物 + 先物。
+//    QuantView は**両方の画面から使われる**ので、どのタブを並べるかは visibleTabs で受け取る。
+//    データ取得は分析タブの AI プロンプト（buildExportJson）が全項目を使うため、
+//    タブ集合に関わらず従来どおり全部読み込む（分割しない）。
+export type QuantTabKey = 'bunseki' | 'sector' | 'kankyou' | 'genbutsu' | 'micro'
+const ALL_QUANT_TABS: readonly QuantTabKey[] = ['bunseki', 'sector', 'kankyou', 'genbutsu', 'micro']
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
   quantTab: QuantTabKey
-  onQuantTabChange: (t: QuantTabKey) => void
+  /** 並べるタブ（この順にスライダーへ積む）。省略時は全タブ。 */
+  visibleTabs?: readonly QuantTabKey[]
 }
 
 // ── 投資主体別 列定義 ──────────────────────────────
@@ -311,7 +319,7 @@ function PanelCenter({ loading, error, onRetry }: { loading: boolean; error: str
 }
 
 // ── メインコンポーネント ───────────────────────────
-export function QuantView({ theme, isMobile, user, quantTab }: Props) {
+export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_QUANT_TABS }: Props) {
   const [invData,    setInvData]    = useState<InvestorWeekData[]>([])
   const [invLoading, setInvLoading] = useState(false)
   const [invError,   setInvError]   = useState('')
@@ -386,6 +394,13 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
   // micro タブは初回訪問時にマウント（以降は維持）
   const [microMounted, setMicroMounted] = useState(() => quantTab === 'micro')
   useEffect(() => { if (quantTab === 'micro') setMicroMounted(true) }, [quantTab])
+
+  // ── スライダー（visibleTabs の並びで積む）──
+  // 🔴 幅は visibleTabs の本数で決まる。1本なら 100%・3本なら 300% で各パネルが 1/3。
+  const tabCount = visibleTabs.length
+  const tabIndex = Math.max(0, visibleTabs.indexOf(quantTab))
+  const paneWidth = `${100 / tabCount}%`
+  const showTab = useCallback((t: QuantTabKey) => visibleTabs.includes(t), [visibleTabs])
 
   // スマホ用テーブル展開状態（デフォルト: 折りたたみ）
   const [marExpanded,         setMarExpanded]         = useState(false)
@@ -550,15 +565,15 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
         {/* スライダートラック */}
         <div style={{
           display: 'flex',
-          width: '400%',
+          width: `${tabCount * 100}%`,
           height: '100%',
-          transform: quantTab === 'bunseki' ? 'translateX(0)' : quantTab === 'kankyou' ? 'translateX(-25%)' : quantTab === 'genbutsu' ? 'translateX(-50%)' : 'translateX(-75%)',
+          transform: `translateX(-${tabIndex * (100 / tabCount)}%)`,
           transition: 'transform 0.25s ease',
         }}>
 
         {/* ━━ 分析 ━━ */}
-        <div style={{
-          width: '25%',
+        {showTab('bunseki') && <div style={{
+          width: paneWidth,
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -574,11 +589,25 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
           </div>
           {/* ② スマホ: SYSTEM LOG は QuantMemoPanel の下に表示 */}
           {isMobile && <EngineSystemLog {...engineLogState} theme={theme} />}
-        </div>{/* /分析 */}
+        </div>}{/* /分析 */}
+
+        {/* ━━ 周期（セクター）━━ */}
+        {/* 🔴 2026-08-09: エンジン画面（ShieldView）からタブごと移設 */}
+        {showTab('sector') && <div style={{
+          width: paneWidth,
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          height: '100%',
+          overflowX: 'hidden',
+          overflowY: isMobile ? 'auto' : 'hidden',
+        }}>
+          <Suspense fallback={null}><SectorPanel theme={theme} isMobile={isMobile} user={user} /></Suspense>
+        </div>}{/* /周期 */}
 
         {/* ━━ 環境 ━━ */}
-        <div style={{
-          width: '25%',
+        {showTab('kankyou') && <div style={{
+          width: paneWidth,
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -637,16 +666,16 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
         </div>
 
 
-        </div>{/* /環境 */}
+        </div>}{/* /環境 */}
 
         {/* ━━ 現物需給 ━━ */}
-        <div style={isMobile ? {
-          width: '25%', flexShrink: 0,
+        {showTab('genbutsu') && <div style={isMobile ? {
+          width: paneWidth, flexShrink: 0,
           display: 'flex', flexDirection: 'column',
           height: '100%', overflowX: 'hidden', overflowY: 'auto',
           paddingBottom: 130,
         } : {
-          width: '25%', flexShrink: 0,
+          width: paneWidth, flexShrink: 0,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gridTemplateRows: '1fr 1fr',
@@ -894,11 +923,11 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
         </div>
 
 
-        </div>{/* /現物需給 */}
+        </div>}{/* /現物需給 */}
 
         {/* ━━ 先物需給 ━━ */}
-        <div style={{
-          width: '25%',
+        {showTab('micro') && <div style={{
+          width: paneWidth,
           flexShrink: 0,
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -1166,7 +1195,7 @@ export function QuantView({ theme, isMobile, user, quantTab }: Props) {
             )
           })()}
 
-        </div>
+        </div>}{/* /先物需給 */}
 
         </div>{/* /スライダートラック */}
 
