@@ -7,6 +7,36 @@
 
 ---
 
+## 🔴 ユーザーの残作業（2026-08-09 時点・未完了）
+
+疑似トレード（ロボ口座）は**実装が一式そろっていて、動かすのに必要なのは下記だけ**。
+コード側でできることは残っていない。
+
+- [ ] **① GitHub Secrets を3つ登録**（これが入るまで判断は実行されない）
+  - `ANTHROPIC_API_KEY` — Claude API（判断と保有画面の読み取りに使う）
+  - `CHATWORK_API_TOKEN` — 通知の送信と画像の受け取り
+  - `CHATWORK_ROOM_ID` — 宛先。値は `~/.claude` メモリ `reference_stock_calendar_chatwork_room` にある
+  - 🔵 未設定でも他のデータ更新は動く（`continue-on-error` にしてある）
+
+- [ ] **② ローカルに Playwright を入れ、TradingView に初回ログイン**（チャート画像を使う場合）
+  ```
+  npm install -D playwright
+  npx playwright install chromium
+  npm run capture-chart -- --login     # ブラウザが開くのでログイン→Enter
+  ```
+  🔵 撮影しなくても判断は動く（数値だけで続行する）。急がなくてよい。
+
+- [ ] **③ 毎営業日の運用**（②が済んでから）
+  引け後に `npm run capture-chart`（チャート撮影＋自動投稿）＋ **保有画面のキャプチャを Chatwork に投稿**
+  → 19:30 JST に Actions が判断・記録・通知。
+  🔵 保有画面は判別のため、ファイル名に `chart` を**含めない**こと（含むとチャート扱いになる）。
+
+- [ ] **④ 判断ポイント（先の話）**
+  - 30トレード貯まったら Go/No-Go（期待値>0 かつ 対照群を上回る）。週次シグナルなら**約7ヶ月**先
+  - LLM のコストを実測して `effort` を `high` のままにするか決める（見積もり約1,000円/月）
+
+---
+
 ## 🟢 現在の状態
 
 **ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
