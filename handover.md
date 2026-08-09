@@ -11,6 +11,51 @@
 
 **ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
 
+### 2026-08-09(4): 疑似トレード 実装 第1〜2段階 ✅（`3cdd185` / `5833371`・push 済）— **途中で停止中**
+
+🔴 **ユーザー指示で一旦停止（2026-08-09）**。設計は §12 まで全項目確定済み、実装は5/9 が残っている。
+
+**できているもの**
+
+| ファイル | 中身 |
+|---|---|
+| `src/utils/robotStrategy.mjs` | 🔴 決定論ロジックの**単一情報源**（`tevCore.mjs` と同格）。対照群シグナル＋損切り＋資金クリップ |
+| `src/utils/__tests__/robotStrategy.test.ts` | 33件 |
+| `scripts/backtest-robo.mjs` | 対照群バックテスト（指数近似20年＋ETF実データ上場来の2本立て） |
+| `scripts/roboPrompt.mjs` | 判断プロンプト（価格の特徴加工・優先順位・裁定ルール・対照群提示・背景） |
+| `scripts/llmDecide.mjs` | Claude API（`claude-opus-5` / effort `high` / Structured Outputs / refusal 対応） |
+| `src/utils/__tests__/roboDecision.test.ts` | 25件 |
+
+検証: tsc(app)=0 / lint=0 / vitest **307 pass**。`@anthropic-ai/sdk` を追加済み。
+
+**🔴 対照群の実測（Go/No-Go の比較対象。設計書 §5 に詳細）**
+
+| | トレード | 勝率 | 期待値 | CAGR | 最大DD |
+|---|---:|---:|---:|---:|---:|
+| ETF実データ（1570/1357・2014-07〜） | 57件 | 40% | +47,347円 | 11.39% | −42.68% |
+| 指数近似（^N225×2倍・20年） | 93件 | 34% | +54,317円 | 9.23% | −42.09% |
+| 参考: 日経2倍持ちっぱなし | 7件 | 14% | +811,243円 | **9.89%** | **−88.42%** |
+
+🔴 **対照群の価値はリターンでなくDD**（持ちっぱなしよりCAGRは低く、DDを−88%→−42%に半減）。
+🔴 **勝率は34〜40%が正常**。プロンプトで勝率を上げろと指示してはいけない。
+🔴 **ベアは20年で63日（1%）しか立たない**＝ベア側は対照群として比較力を持たない。
+→ この3点はプロンプトに反映済み。Go/No-Go の DD 条件も**絶対値→対照群比**に修正済み（§2）。
+
+**🔴 残りの実装（この順）**
+1. `scripts/chatworkFiles.mjs` — Chatwork のファイル一覧取得＋ダウンロード
+2. `scripts/capture-tradingview.mjs` — **ローカルPC**で Playwright 撮影 → Chatwork 自動投稿
+   🔴 Playwright は未インストール。`userDataDir` は `.gitignore` に入れること。初回は手動ログイン。
+3. `scripts/readPosition.mjs` — 保有画面キャプチャを vision で読み取り `real_position.json`
+4. `scripts/robo-trade.mjs` — 実行本体（取込→判断→損切り確定→記録→通知）
+5. `scripts/notify-chatwork.mjs` — 通知（hold の日も毎日送る）
+6. `src/utils/roboAccount.ts` / `src/components/RoboAccountPanel.tsx` — 画面（管理者のみ表示）
+7. `.github/workflows/fetch-data.yml` — `robo-trade` ステップ追加
+8. 旧ポジション分析の撤去（`ShieldView` の中身を差し替え）
+
+**🔴 再開時に必要な設定（未実施）**
+- GitHub Secrets: `ANTHROPIC_API_KEY` / `CHATWORK_API_TOKEN` / `CHATWORK_ROOM_ID`
+  （room_id の値は `~/.claude` メモリ `reference_stock_calendar_chatwork_room` にある。設計書には書かない）
+
 ### 2026-08-09(3): 疑似トレード（ロボ口座）＋通知の技術設計書 ✅（`bb3bf2b`・push 済）
 
 🔵 ユーザーから仕様書「疑似トレード（表示名エンジン）+ 通知システム」を受領。
