@@ -27,6 +27,7 @@ import { useCommunityAccess } from './hooks/useCommunityAccess'
 import { usePushNotifications } from './hooks/usePushNotifications'
 import { useMaintenance } from './hooks/useMaintenance'
 import { useBooking } from './hooks/useBooking'
+import { demoMode } from './utils/roboDemo'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
 // 週/日ビューは初期表示（月）では画面外。lazy 化して初期バンドルから外し、
@@ -258,7 +259,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // 🚧 ページ「閲覧」用のゲート。一時公開フラグが立っている間は非メンバー
   //   （管理者の「非メンバーとして確認」中も含む）でも会員限定ページを閲覧可。
-  const canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES
+  // 🔵 開発時の ?demo=... はデザイン確認用。demoMode() は本番ビルドでは常に null。
+  const canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES || !!demoMode()
 
   // ── プッシュ通知 ──────────────────────────────────────────────────────
   const {

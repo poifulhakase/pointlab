@@ -311,9 +311,12 @@ export function syncWithReal({ account, realPosition, priceOf, date, sourceFileI
   const before = account.position ? { ...account.position } : null
 
   // 差分の記録（同期の前後で何が違ったか）
+  // 🔴 equity を一緒に残す。「AIに従った期間」と「外した期間」の成績を
+  //    あとから比較するための起点になる（これが無いと期間リターンを出せない）。
   const diff = {
     date,
     source_file_id: sourceFileId ?? null,
+    equity: Math.round(equityOf(account, priceOf ?? (() => null))),
     robo: before ? { symbol: before.symbol, qty: before.qty, avg_price: before.avg_price } : null,
     real: target ? { symbol: String(target.symbol), qty: target.qty, avg_price: target.avg_price } : null,
     matched: false,

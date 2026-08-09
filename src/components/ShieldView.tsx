@@ -4,6 +4,7 @@ import { themeVars } from '../utils/themeVars'
 import { cy } from '../utils/cyberTheme'
 import { isAdminEmail } from '../utils/admin'
 import { RoboAccountPanel } from './RoboAccountPanel'
+import { demoMode } from '../utils/roboDemo'
 
 // ──────────────────────────────────────────────────────────────────────────
 // エンジン（ポジション）ビュー
@@ -36,7 +37,9 @@ export function ShieldView({ theme, isMobile, user }: Props) {
         // 浮いているタブとフッターに中身の末尾が隠れないための逃げ
         paddingBottom: isMobile ? 130 : 0,
       }}>
-        {isAdminEmail(user?.email) ? (
+        {/* 🔵 デザイン確認時（開発時の ?demo=...）は未ログインでも中身を出す。
+            demoMode() は本番ビルドでは常に null なので、この枝は落ちる。 */}
+        {isAdminEmail(user?.email) || demoMode() ? (
           <RoboAccountPanel theme={theme} isMobile={isMobile} />
         ) : (
           <div style={{

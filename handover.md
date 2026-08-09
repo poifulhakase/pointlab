@@ -12,10 +12,15 @@
 疑似トレード（ロボ口座）は**実装が一式そろっていて、動かすのに必要なのは下記だけ**。
 コード側でできることは残っていない。
 
-- [ ] **① Anthropic API にクレジットをチャージ**
-  https://console.anthropic.com/settings/billing （Settings → Billing → Add Credits）
-  🔴 **AutoFBA のハカセAI が同じ理由で止まっている**。同じアカウントなら残高は共用になる。
+- [x] **① Anthropic API にクレジットをチャージ** … ✅ 2026-08-09 完了（$20・残高 $19.97）
   🔵 ぽいロボ側の見積もりは**約1,000円/月**（1日1回・営業日20日・`claude-opus-5` / effort `high`）。
+  🔵 AutoFBA のハカセAI と同じアカウントなら残高は共用。
+
+- [ ] **①b 月間の支出上限と自動リロードを見直す**（チャージ直後の設定のまま）
+  https://console.anthropic.com/settings/limits
+  🔴 **月間上限が $10 のまま**＝ぽいロボ＋AutoFBA を合わせると月内に頭打ちする可能性がある。**$15〜20 へ引き上げ推奨**。
+  🔵 自動リロードはオフのまま。残高が尽きると**判断が静かに止まる**（Actions は `continue-on-error`）ので、
+  　 オンにするか、残高を月1回見るかを決めておく。
 
 - [ ] **② GitHub Secrets を3つ登録**（これが入るまで判断は実行されない）
   - `ANTHROPIC_API_KEY` — Claude API（判断と保有画面の読み取りに使う。Settings → API Keys で発行）
@@ -51,6 +56,43 @@
 ## 🟢 現在の状態
 
 **ブランチ**: `main`（origin/main へ push 済。Vercel Git 連携で本番自動デプロイ）
+
+### 2026-08-09(6): 営業日カレンダー連動・3カラムUI・YOUR CALL ✅（push 済）
+
+**① 🔴 東証の休場日には走らせない**（ユーザー指示「トレード時間は、ぽいロボカレンダーの営業時間みてね」）
+
+- `scripts/robo-trade.mjs` の先頭で `marketStatus(todayJst())` を見て、休場なら**判断も口座更新も通知もせず終了**
+- なぜ止めるか＝休場日に「本日は hold」を記録すると、**判断した日と何もしなかった日が混ざり成績の分母が壊れる**
+- 🔴 **休場判定を `src/utils/marketCalendar.mjs` に集約**（アプリと Node の単一情報源・`tevCore.mjs` と同格）。
+  `src/utils/marketHolidays.ts` は**型付きの re-export だけ**に変えた（既存の import は無変更で通る）
+- 日付は JST で判定（Actions は UTC のため `Intl` で Asia/Tokyo に寄せる）
+- 配線確認用に `--force`（休場日でも走る）。**本番では付けない**
+
+**② イベントをプロンプトに渡す**（ユーザー指示「トレードはカレンダーとかも見てね」）
+
+- `scripts/roboCalendar.mjs` の `upcomingEventsText()` が**今後5営業日**の FOMC・日銀・CPI・PCE・雇用統計・短観・介入実績をまとめて添付
+- 出どころは `src/utils/macroCalendar.ts`＝**アプリのカレンダーと同じ表**。Node の型ストリップで `.ts` を直接 import
+  （動作確認済み。CI は Node 22 系＝型ストリップ既定の版）
+- 🔴 **読めなくても判断は続ける**（警告1行だけ足す）。イベントは「あれば効く」情報
+
+**③ UI を3カラムに（他ページと同じ構成・100vh に収まる）**
+
+| 位置 | 中身 |
+|---|---|
+| 左 | 評価額 / 建玉＋LAST SYNC / 資産推移 |
+| 中 | PERFORMANCE（ロボ vs 対照群） / 🆕 YOUR CALL |
+| 右 | 約定履歴（**ここだけスクロール**） |
+
+**④ 🆕 YOUR CALL / 従った時 vs 外した時**
+同期から次の同期までを1区間とし、区間の頭で AI の判断どおりだったか（`matched`）で振り分けて区間リターンを比較。
+PERFORMANCE が「AI は決定論より上手いか」を測るのに対し、こちらは**運用者の介入が効いているか**を測る。
+区間ごとの内訳も表示。🔴 4区間未満は「数回では判断できません」と明示する。
+
+**⑤ 開発用ダミーデータ** `src/utils/roboDemo.ts`（`?demo=1` / `?demo=empty` / `?demo=loss`）。
+`import.meta.env.DEV` 限定で本番ビルドでは丸ごと落ちる。
+
+検証: tsc(app)=0 / lint=0 / vitest **368 pass**（`marketCalendar.test.ts` 7件を新規追加）/ build 成功。
+実機で `?demo=1` / `?demo=empty` を確認済み。
 
 ### 2026-08-09(5): 実保有への同期・UI・タブ構成の最終形 ✅（`3c56d02` / `55b3234`・push 済）
 

@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react'
 import type React from 'react'
 import { cy } from '../utils/cyberTheme'
 import {
-  fetchRoboAccount, symbolLabel, equityOf, totalReturnPct,
-  ROBO_SYMBOLS, type RoboAccount, type RoboTrade,
+  fetchRoboAccount, symbolLabel, equityOf, totalReturnPct, followVsDiverge,
+  ROBO_SYMBOLS, type RoboAccount, type RoboTrade, type FollowStat,
 } from '../utils/roboAccount'
+import { demoMode, demoAccount } from '../utils/roboDemo'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean }
 
@@ -23,12 +24,45 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
 
   useEffect(() => {
     let alive = true
+    // 🔵 デザイン確認用のデモモード（開発時のみ・?demo=1 / empty / loss）。
+    //    本番ビルドでは demoMode() が常に null を返すのでこの枝は落ちる。
+    const mode = demoMode()
+    if (mode) {
+      setAccount(demoAccount(mode))
+      setLoading(false)
+      return
+    }
     fetchRoboAccount()
       .then(a => { if (alive) { setAccount(a); setLoading(false) } })
       .catch(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [])
 
+  // 🔵 デスクトップは3カラム（口座の状態／成績・資産推移／約定履歴）で、**画面内に収める**。
+  //    他ページ（環境・現物など）と同じ3列構成。スクロールするのは約定履歴だけ。
+  //    モバイルは従来どおり縦1本スクロール。
+  const outer: React.CSSProperties = {
+    flex: 1, minHeight: 0, position: 'relative',
+    background: c.BG, backgroundImage: c.SCAN,
+    display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+    overflow: isMobile ? 'auto' : 'hidden',
+    fontFamily: c.FONT,
+  }
+  const col = (grow: number): React.CSSProperties => ({
+    flex: isMobile ? 'none' : grow, minWidth: 0, minHeight: 0,
+    // 🔴 デスクトップではカラム自体はスクロールさせない（画面内に収める）
+    overflow: isMobile ? 'visible' : 'hidden',
+    padding: isMobile ? 14 : 16,
+    display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 10,
+  })
+  const divider: React.CSSProperties = isMobile
+    ? { borderTop: `1px solid ${c.BORDER}` }
+    : { borderLeft: `1px solid ${c.BORDER}` }
+  const rightCol: React.CSSProperties = {
+    ...col(1), ...divider,
+    flex: isMobile ? 'none' : '0 0 400px',
+  }
+  // ローディング／未生成のときは1カラムで十分
   const shell: React.CSSProperties = {
     flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative',
     background: c.BG, backgroundImage: c.SCAN,
@@ -70,9 +104,10 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
   const recent = [...account.trades].reverse().slice(0, openLog ? 100 : 5)
   const lastDiv = account.divergences?.length ? account.divergences[account.divergences.length - 1] : null
   const side = pos ? ROBO_SYMBOLS[pos.symbol]?.side : null
+  const fvd = followVsDiverge(account)
 
   return (
-    <div style={shell}>
+    <div style={outer}>
       <Keyframes />
       {theme === 'dark' && <>
         <div className="robo-dust" style={{ top: '18%', left: '12%', animationDelay: '0s' }} />
@@ -81,10 +116,12 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
         <div className="robo-scan" />
       </>}
 
+      {/* ══ 第1カラム: 口座の状態 ══ */}
+      <div style={col(1)}>
       <Header c={c} status={pos ? 'IN POSITION' : 'NO POSITION'} live={!!pos} />
 
       {/* ── 評価額 ── */}
-      <div style={panel(c)}>
+      <div className="robo-rise" style={panel(c, 0)}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
@@ -103,7 +140,7 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
       </div>
 
       {/* ── 建玉 ── */}
-      <div style={panel(c)}>
+      <div className="robo-rise" style={panel(c, 70)}>
         <SectionTitle c={c} text="POSITION / 建玉" />
         {pos && pos.qty > 0 ? (
           <>
@@ -135,21 +172,33 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
             </div>
           </div>
         )}
+
+        {/* 直近の同期（あなたが実際にどう動いたか）*/}
+        {lastDiv && (
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${c.BORDER}` }}>
+            <div style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.1em', marginBottom: 5 }}>
+              LAST SYNC / あなたの保有の変化
+              <span style={{ marginLeft: 8 }}>
+                {lastDiv.date}{lastDiv.skipped ? ' · 同期は見送り' : lastDiv.matched ? ' · 一致' : ' · 実態に合わせて修正'}
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: c.DESC, lineHeight: 1.8 }}>{lastDiv.note}</div>
+          </div>
+        )}
       </div>
 
-      {/* ── 直近の同期（あなたの売買） ── */}
-      {lastDiv && (
-        <div style={panel(c)}>
-          <SectionTitle c={c} text="LAST SYNC / あなたの保有の変化" />
-          <div style={{ fontSize: 12.5, color: c.DESC, lineHeight: 1.9 }}>{lastDiv.note}</div>
-          <div style={{ fontSize: 10, color: c.DIM, marginTop: 6, letterSpacing: '0.06em' }}>
-            {lastDiv.date}{lastDiv.skipped ? ' / 同期は見送り' : lastDiv.matched ? ' / 一致' : ' / 実態に合わせて修正'}
-          </div>
-        </div>
-      )}
+      {/* ── 資産推移（第1カラムの残りを埋める）── */}
+      <div className="robo-rise" style={{ ...panel(c, 280), flex: isMobile ? 'none' : 1, minHeight: isMobile ? 140 : 0, display: 'flex', flexDirection: 'column' }}>
+        <SectionTitle c={c} text="EQUITY CURVE / 資産推移" />
+        <EquityCurve c={c} points={account.equity_curve} initial={account.initial_cash} theme={theme} />
+      </div>
+      </div>{/* /第1カラム */}
 
-      {/* ── 成績 ── */}
-      <div style={panel(c)}>
+      {/* ══ 第2カラム: 成績 ══ */}
+      <div style={{ ...col(1), ...divider }}>
+
+      {/* ── 成績（対照群比較 ＋ 従った/外した を1枚に）── */}
+      <div className="robo-rise" style={panel(c, 140)}>
         <SectionTitle c={c} text={`PERFORMANCE / 成績（決着 ${closed.length} 件）`} />
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, fontFamily: c.FONT }}>
@@ -169,22 +218,44 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
         <ProgressToJudgement c={c} n={closed.length} />
       </div>
 
-      {/* ── 約定履歴 ── */}
-      <div style={panel(c)}>
-        <button
-          onClick={() => setOpenLog(v => !v)}
-          style={{
-            width: '100%', textAlign: 'left', cursor: 'pointer', background: 'none', border: 'none',
-            padding: 0, marginBottom: 10, fontFamily: c.FONT,
-            fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.12em',
-          }}
-        >
-          ▌ TRADE LOG / 約定履歴（{account.trades.length}）{openLog ? ' ▲' : ' ▼'}
-        </button>
+      {/* ── 🔴 あなたの介入は効いているか（第2カラムの残りを埋める）── */}
+      <div className="robo-rise" style={{ ...panel(c, 210), flex: isMobile ? 'none' : 1, minHeight: 0, overflowY: 'auto' }}>
+        <SectionTitle c={c} text="YOUR CALL / 従った時 vs 外した時" />
+        <FollowPanel c={c} data={fvd} theme={theme} />
+      </div>
+      </div>{/* /第2カラム */}
+
+      {/* ══ 右カラム: 約定履歴（ここだけスクロールする）══ */}
+      <div style={rightCol}>
+        <div style={{
+          position: 'relative', zIndex: 1, flexShrink: 0,
+          fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.12em',
+          paddingBottom: 10, marginBottom: 12, borderBottom: `1px solid ${c.BORDER}`,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span>▌ TRADE LOG / 約定履歴</span>
+          <span style={{ color: c.DIM, fontWeight: 400 }}>{account.trades.length}</span>
+          <span style={{ flex: 1 }} />
+          {account.trades.length > 5 && (
+            <button
+              onClick={() => setOpenLog(v => !v)}
+              style={{
+                cursor: 'pointer', background: 'none', border: `1px solid ${c.BORDER}`,
+                borderRadius: 3, padding: '2px 8px', fontFamily: c.FONT,
+                fontSize: 9.5, color: c.DIM, letterSpacing: '0.08em',
+              }}
+            >{openLog ? '直近5件' : 'すべて'}</button>
+          )}
+        </div>
         {account.trades.length === 0 ? (
-          <div style={{ fontSize: 12.5, color: c.DESC }}>まだ約定はありません。</div>
+          <div style={{ fontSize: 12.5, color: c.DESC, position: 'relative', zIndex: 1 }}>まだ約定はありません。</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{
+            position: 'relative', zIndex: 1,
+            flex: 1, minHeight: 0, overflowY: 'auto',
+            display: 'flex', flexDirection: 'column', gap: 14,
+            paddingRight: 4,
+          }}>
             {recent.map(t => <TradeRow key={t.id} t={t} c={c} theme={theme} />)}
           </div>
         )}
@@ -263,6 +334,187 @@ function Row({ c, name, data, strong }: {
   )
 }
 
+/**
+ * 「AIに従った時」vs「外した時」。
+ * 🔴 対照群比較が「AIは決定論ルールより上手いか」なら、こちらは
+ *    **あなたの介入は効いているか**を測る。今日の同期仕様があるから出せる数字。
+ */
+function FollowPanel({ c, data, theme }: {
+  c: ReturnType<typeof cy>
+  data: ReturnType<typeof followVsDiverge>
+  theme: 'dark' | 'light'
+}) {
+  const { followed, diverged } = data
+  const up = theme === 'dark' ? '#ff6b6b' : '#dc2626'
+  const down = theme === 'dark' ? '#4dabf7' : '#2563eb'
+
+  if (!followed && !diverged) {
+    return (
+      <div style={{ fontSize: 11.5, color: c.DIM, lineHeight: 1.9 }}>
+        まだ判定できません。<br />
+        売買してキャプチャを投げるたびに、AIの判断どおりだったか／外したかが記録され、
+        その後の成績がここに出ます。
+      </div>
+    )
+  }
+
+  const total = (followed?.n ?? 0) + (diverged?.n ?? 0)
+  const cell = (s: FollowStat | null) => (
+    <>
+      <td style={{ ...tdBase(c), color: s ? (s.avgReturnPct >= 0 ? up : down) : c.DIM, fontWeight: 700 }}>
+        {s ? `${s.avgReturnPct > 0 ? '+' : ''}${s.avgReturnPct.toFixed(2)}%` : '—'}
+      </td>
+      <td style={tdBase(c)}>{s ? `${Math.round(s.winRate * 100)}%` : '—'}</td>
+      <td style={tdBase(c)}>{s ? `${s.n}回` : '—'}</td>
+    </>
+  )
+
+  // どちらが良かったかの一言
+  let verdict: { text: string; color: string } | null = null
+  if (followed && diverged && total >= 4) {
+    const d = followed.avgReturnPct - diverged.avgReturnPct
+    verdict = Math.abs(d) < 0.3
+      ? { text: 'いまのところ差はほとんどありません。', color: c.DIM }
+      : d > 0
+        ? { text: `AIに従ったほうが平均 ${d.toFixed(2)}ポイント良い結果でした。`, color: c.NOTICE }
+        : { text: `あなたが外したほうが平均 ${Math.abs(d).toFixed(2)}ポイント良い結果でした。`, color: c.NOTICE }
+  }
+
+  return (
+    <>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, fontFamily: c.FONT }}>
+        <thead>
+          <tr>
+            {['', '平均リターン', '勝率', '回数'].map(h => (
+              <th key={h} style={{ textAlign: h ? 'right' : 'left', padding: '5px 8px', fontSize: 10, color: c.DIM, fontWeight: 400, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ ...tdBase(c), textAlign: 'left', color: c.GREEN, fontWeight: 700, fontSize: 11 }}>AIに従った</td>
+            {cell(followed)}
+          </tr>
+          <tr>
+            <td style={{ ...tdBase(c), textAlign: 'left', color: c.DIM, fontSize: 11 }}>自分で外した</td>
+            {cell(diverged)}
+          </tr>
+        </tbody>
+      </table>
+      <div style={{ marginTop: 8, fontSize: 10, color: verdict?.color ?? c.DIM, lineHeight: 1.8 }}>
+        {verdict?.text}
+        {total < 4 && <>まだ {total} 回ぶんしかありません。<b>数回では判断できません</b>。</>}
+      </div>
+
+      {/* 区間の内訳（何をした結果そうなったのか、を追えるようにする）*/}
+      {data.segments.length > 0 && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${c.BORDER}` }}>
+          <div style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.1em', marginBottom: 8 }}>
+            SEGMENTS / 区間の内訳
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {[...data.segments].reverse().map(s => (
+              <div key={`${s.from}-${s.to}`} style={{
+                borderLeft: `2px solid ${s.followed ? c.BORDBR : c.BORDER}`,
+                paddingLeft: 9,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 9.5, color: c.DIM, letterSpacing: '0.06em' }}>
+                  <span>{s.from} → {s.to}</span>
+                  <span style={{ color: s.followed ? c.GREEN : c.DIM }}>
+                    {s.followed ? 'AIに従った' : '自分で外した'}
+                  </span>
+                  <span style={{ flex: 1 }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: s.returnPct >= 0 ? up : down }}>
+                    {s.returnPct > 0 ? '+' : ''}{s.returnPct.toFixed(2)}%
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: c.DESC, lineHeight: 1.7, marginTop: 2 }}>{s.note}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+function tdBase(c: ReturnType<typeof cy>): React.CSSProperties {
+  return {
+    padding: '7px 8px', borderTop: `1px solid ${c.BORDER}`,
+    textAlign: 'right', whiteSpace: 'nowrap', color: c.TXTCLR,
+  }
+}
+
+/**
+ * 資産推移。SVG で描く軽いスパークライン。
+ * 🔵 ダイナミックに見せるため、面のグラデーション・線のグロー・先端の脈動を入れる。
+ */
+function EquityCurve({ c, points, initial, theme }: {
+  c: ReturnType<typeof cy>
+  points: { date: string; equity: number }[]
+  initial: number
+  theme: 'dark' | 'light'
+}) {
+  if (!points?.length) {
+    return <div style={{ fontSize: 11, color: c.DIM }}>まだデータがありません。</div>
+  }
+
+  const W = 1000, H = 200, PAD = 6
+  const vals = points.map(p => p.equity)
+  const lo = Math.min(...vals, initial)
+  const hi = Math.max(...vals, initial)
+  const span = hi - lo || 1
+  const x = (i: number) => (points.length === 1 ? W / 2 : PAD + (i / (points.length - 1)) * (W - PAD * 2))
+  const y = (v: number) => PAD + (1 - (v - lo) / span) * (H - PAD * 2)
+
+  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.equity).toFixed(1)}`).join(' ')
+  const area = `${line} L${x(points.length - 1).toFixed(1)},${H} L${x(0).toFixed(1)},${H} Z`
+  const baseY = y(initial)
+
+  const last = points[points.length - 1]
+  const up = last.equity >= initial
+  const stroke = up ? (theme === 'dark' ? '#ff6b6b' : '#dc2626') : (theme === 'dark' ? '#4dabf7' : '#2563eb')
+  const id = up ? 'roboGradUp' : 'roboGradDown'
+
+  return (
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+        style={{ width: '100%', flex: 1, minHeight: 90, overflow: 'visible' }}>
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+          </linearGradient>
+          <filter id="roboGlow" x="-20%" y="-40%" width="140%" height="180%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* 元本のライン */}
+        <line x1="0" y1={baseY} x2={W} y2={baseY} stroke={c.BORDER} strokeWidth="1" strokeDasharray="4 5" />
+        {/* 面 */}
+        <path d={area} fill={`url(#${id})`} />
+        {/* 線 */}
+        <path d={line} fill="none" stroke={stroke} strokeWidth="2.5"
+          strokeLinejoin="round" strokeLinecap="round" filter="url(#roboGlow)"
+          className="robo-draw" vectorEffect="non-scaling-stroke" />
+        {/* 先端 */}
+        <circle cx={x(points.length - 1)} cy={y(last.equity)} r="4"
+          fill={stroke} className="robo-pulse" style={{ color: stroke }} />
+      </svg>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', flexShrink: 0,
+        fontSize: 9.5, color: c.DIM, letterSpacing: '0.06em', marginTop: 6,
+      }}>
+        <span>{points[0].date}</span>
+        <span style={{ color: c.DIM }}>元本 {Math.round(initial).toLocaleString()}円</span>
+        <span>{last.date}</span>
+      </div>
+    </div>
+  )
+}
+
 /** 判定（30件）までの進み具合をバーで見せる */
 function ProgressToJudgement({ c, n }: { c: ReturnType<typeof cy>; n: number }) {
   const goal = 30
@@ -315,11 +567,12 @@ function TradeRow({ t, c, theme }: { t: RoboTrade; c: ReturnType<typeof cy>; the
   )
 }
 
-function panel(c: ReturnType<typeof cy>): React.CSSProperties {
+function panel(c: ReturnType<typeof cy>, delay = 0): React.CSSProperties {
   return {
     position: 'relative', zIndex: 1,
     border: `1px solid ${c.BORDER}`, borderRadius: 6,
     background: c.HDBG, padding: 14,
+    animationDelay: `${delay}ms`,
   }
 }
 
@@ -354,6 +607,30 @@ function Keyframes() {
       .robo-pulse { animation: robo-pulse 1.8s ease-in-out infinite; }
       @keyframes robo-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
       .robo-blink { animation: robo-blink 1s step-end infinite; }
+
+      /* 資産推移の線を左から引く */
+      @keyframes robo-draw { from { stroke-dashoffset: 2400; } to { stroke-dashoffset: 0; } }
+      .robo-draw { stroke-dasharray: 2400; animation: robo-draw 1.6s ease-out both; }
+
+      /* パネルの入場（下から浮かせる）。時差をつけて順に出す */
+      @keyframes robo-rise {
+        from { opacity: 0; transform: translate3d(0, 10px, 0); }
+        to   { opacity: 1; transform: none; }
+      }
+      .robo-rise { animation: robo-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+      /* 数値のグロー（評価額など主役の数字） */
+      @keyframes robo-sheen {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.82; }
+      }
+      .robo-sheen { animation: robo-sheen 3.4s ease-in-out infinite; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .robo-dust, .robo-scan, .robo-pulse, .robo-draw, .robo-rise, .robo-sheen {
+          animation: none !important;
+        }
+      }
     `}</style>
   )
 }

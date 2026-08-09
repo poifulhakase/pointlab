@@ -3,7 +3,8 @@
 // ぽいロボ 疑似トレード: 実行本体
 //
 // 流れ（docs/robo-trade-design.md §3）
-//   0. Chatwork から画像を取る（チャート・保有画面）※失敗しても止めない
+//   0. 東証の営業日か確認する（休場なら何もしない）
+//   0b. Chatwork から画像を取る（チャート・保有画面）※失敗しても止めない
 //   1. 価格・需給を読む
 //   2. 決定論ベースライン（対照群）のシグナルを出す ※記録のみ
 //   3. 🔴 LLM に判断させる（本番判断）
@@ -15,6 +16,7 @@
 //   node scripts/robo-trade.mjs            … 本番（書き込み＋通知）
 //   node scripts/robo-trade.mjs --dry      … 判断まで行い、書き込みと通知はしない
 //   node scripts/robo-trade.mjs --no-llm   … LLM を呼ばず対照群の判断で通す（配線確認用）
+//   node scripts/robo-trade.mjs --force    … 休場日でも走らせる（配線確認用・本番では付けない）
 // ──────────────────────────────────────────────────────────────────────────
 
 import fs from 'node:fs'
@@ -32,6 +34,7 @@ import {
 } from './chatwork.mjs'
 import { readPositionImage, toRealPosition, checkRealPosition } from './readPosition.mjs'
 import { validateRealPosition } from './roboAccount.mjs'
+import { marketStatus, upcomingEventsText, todayJst } from './roboCalendar.mjs'
 
 const ACCOUNT_PATH = path.join(DATA_DIR, 'robo_account.json')
 const LOG_DIR = path.join(DATA_DIR, 'robo_logs')
@@ -40,6 +43,8 @@ const REAL_POS_PATH = path.join(DATA_DIR, 'real_position.json')
 const args = process.argv.slice(2)
 const DRY = args.includes('--dry')
 const NO_LLM = args.includes('--no-llm')
+// 🔴 休場日でも強制的に走らせる（配線確認用）。本番では付けない
+const FORCE = args.includes('--force')
 
 const log = (s = '') => console.log(s)
 
@@ -94,6 +99,19 @@ async function main() {
   log('=== ぽいロボ 疑似トレード ===')
   if (DRY) log('（--dry: 書き込みと通知はしない）')
   if (NO_LLM) log('（--no-llm: LLM を呼ばず対照群の判断で通す）')
+
+  // ── 0) 営業日かどうか ──
+  // 🔴 東証が閉まっている日は、判断も口座の更新も通知もしない。
+  //    休場日に「本日はhold」と通知が来ると、判断した日と何もしなかった日が
+  //    区別できなくなり、成績の分母が壊れる。
+  const market = marketStatus(todayJst())
+  if (!market.open && !FORCE) {
+    log(`[0] ${market.date} は東証が休場（${market.reason}）→ 何もしない`)
+    log('=== 完了（休場） ===')
+    return
+  }
+  if (!market.open && FORCE) log(`[0] ⚠ ${market.date} は休場（${market.reason}）だが --force のため続行`)
+  else log(`[0] ${market.date} は営業日`)
 
   // ── 1) 価格・需給 ──
   log('[1] 価格を取得...')
@@ -188,11 +206,17 @@ async function main() {
   }
 
   // ── 6) 判断 ──
+  // イベント（FOMC・日銀・CPI…）を渡す。取れなくても止めない
+  const events = await upcomingEventsText(todayJst(), 5)
+  if (events) log(`[5c] 今後5営業日のイベントを添付\n${events}`)
+  else images.warnings.push('イベントカレンダーを読めませんでした（イベント無しで判断しています）')
+
   const prompt = buildRoboPrompt({
     priceFeatures: buildPriceFeatures(nk),
     etfFeatures: etfFeatures(etf),
     supply,
     baseline,
+    events,
     account: { ...account, equity: equityOf(account, priceOf) },
     realPosition,
     images: {

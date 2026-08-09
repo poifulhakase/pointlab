@@ -271,6 +271,34 @@ GitHub Actions (fetch-data.yml の後段に1ステップ足すだけ)
    🔴 ただし「これに従え」とは書かない。**参考値として見せ、違う判断をしたなら理由に書かせる**。
 8. **売買推奨ではなく疑似口座の操作である**という位置づけ（本人専用・状態記述の方針は維持）
 
+### 🔴 営業日カレンダー（2026-08-09 追加・ユーザー指示）
+
+> 「トレード時間は、ぽいロボカレンダーの営業時間みてね」「あと、トレードはカレンダーとかも見てね」
+
+**① 休場日は走らせない。**
+`scripts/robo-trade.mjs` は最初に `marketStatus(todayJst())` を見て、東証が休場なら
+**判断も口座更新も通知もせずに終了する**。
+
+- なぜ止めるのか＝休場日に「本日は hold」と通知すると、**判断した日と何もしなかった日が
+  区別できなくなる**。成績の分母（判断回数）が水増しされ、対照群との比較が壊れる。
+- 判定は `src/utils/marketCalendar.mjs`。**アプリのカレンダー表示と同じ実装**を使う
+  （`marketHolidays.ts` はこの .mjs を re-export するだけの入口に変えた）。
+  🔴 休場条件を二箇所に書くと、片方だけ直して祝日に発注する事故になる。
+  `tevCore.mjs` / `robotStrategy.mjs` と同じ「単一情報源」扱い。
+- 日付は **JST で判定する**（Actions は UTC で走るため `Intl` で Asia/Tokyo に寄せる）。
+- 配線確認用に `--force` で休場日でも走らせられる。**本番では付けない**。
+
+**② イベントをプロンプトに渡す。**
+`upcomingEventsText()` が **今後5営業日** の FOMC・日銀・CPI・PCE・雇用統計・短観・介入実績を
+1つの節にまとめてプロンプトへ入れる（上の「プロンプトに必ず入れるもの」4番の実装）。
+
+- 出どころは `src/utils/macroCalendar.ts`＝**アプリのカレンダーと同じ表**。
+  Node の型ストリップ（Node 22.18+ / 23.6+ で既定）で `.ts` を直接 import している。
+  → カレンダーの年次更新（`docs/maintenance/calendar-dates-check.md`）が
+  　 そのままトレード側にも効く。二重管理しない。
+- 🔴 **読めなくても判断は続ける**（警告を1行足すだけ）。イベントは「あれば効く」情報であって、
+  これが無いと判断できないものではない。型ストリップが使えない環境で全停止する方が損。
+
 ### プロンプトキャッシュは効かない（明記）
 
 🔴 **1日1回の実行では prompt caching は無意味**。キャッシュの TTL は 5分（既定）または 1時間で、
@@ -458,11 +486,18 @@ k = VIX < 20 → 2.0 ／ 20–30 → 2.5 ／ 30 以上 → 3.0
 
 - 旧ポジション分析（`ShieldView` の中身）を **`RoboAccountPanel` に差し替える**。
 - タブ構成は**2026-08-09 の振り分けを維持**: エンジン / 環境 / 現物 / 先物。疑似トレードは「エンジン」サブタブ。
-- 4ブロック構成（仕様書の3ブロック＋対照群）:
-  1. 上部: 合計損益 / 時価評価額 / 前日比
-  2. メイン: 建玉一覧（銘柄・数量・平均取得単価・現在値・評価損益・評価損益率）
-  3. 下部（折りたたみ）: 約定履歴（日時・売買・数量・約定価格・**理由**・**反証**・確信度・損切り値）
-  4. 🔴 **成績表**: ロボ（LLM）と対照群（決定論）を並べる。Go/No-Go 基準に対して今どこにいるかを出す
+- 🔵 **実装は3カラム（他ページと同じ構成）／100vh に収める**。伸びるのは約定履歴だけ:
+  | | 内容 |
+  |---|---|
+  | 左 | 評価額・累計損益率・現金 → 建玉（数量・平均取得・損切り）＋**あなたの保有の変化**（直近の同期） → 資産推移 |
+  | 中 | 🔴 **成績表**（ロボ＝LLM と対照群＝決定論を並べ、Go/No-Go に対して今どこかを出す） → 🆕 **YOUR CALL**（従った時 vs 外した時＋区間の内訳） |
+  | 右 | 約定履歴（日時・売買・数量・約定価格・**理由**・**外れる条件**・確信度）。**ここだけスクロール**する |
+- 🆕 **YOUR CALL / 従った時 vs 外した時**＝同期から次の同期までを1区間とし、区間の頭で
+  AI の判断どおりだったか（`matched`）で振り分けて区間リターンを比べる。
+  成績表が「AI は決定論より上手いか」を測るのに対し、こちらは**運用者の介入が効いているか**を測る。
+  🔴 4区間未満のときは数字を出しつつ「**数回では判断できません**」と明示する。
+- 🔵 開発時のみ `?demo=1` / `?demo=empty` / `?demo=loss` でダミーデータを表示できる（`utils/roboDemo.ts`）。
+  本番ビルドでは `import.meta.env.DEV` で丸ごと落ちる。
 - データ取得は `robo_account.json` を `dataCache` 経由で読むだけ（新規 `utils/roboAccount.ts`）。
 - 🔴 **表示は管理者のみ**（`utils/admin.ts` の `isAdminEmail`）。§10.2 の決定に従う。
 
@@ -490,6 +525,11 @@ k = VIX < 20 → 2.0 ／ 20–30 → 2.5 ／ 30 以上 → 3.0
 | `src/utils/robotStrategy.mjs` | 決定論シグナル＋**損切り**。対照群と損切りの単一情報源 |
 | `src/utils/__tests__/robotStrategy.test.ts` | 損切り値・シグナル境界のテスト |
 | `scripts/backtest-robo.mjs` | 決定論ルールを過去データで回す（**対照群の期待成績を着手前に確定**） |
+| `scripts/roboCalendar.mjs` | 🔴 営業日判定（休場なら走らせない）＋今後5営業日のイベント抽出 |
+| `src/utils/marketCalendar.mjs` | 🔴 東証／NYSE 休場判定の**単一情報源**（アプリと Node の共通実装） |
+| `src/utils/marketCalendar.d.mts` | 上の型定義（`tevCore.d.mts` と同じ扱い） |
+| `src/utils/__tests__/marketCalendar.test.ts` | 休場ラベル・翌営業日・n営業日先のテスト |
+| `src/utils/roboDemo.ts` | 開発時のダミーデータ（`?demo=1` / `empty` / `loss`・本番ビルドでは無効） |
 | `scripts/notify-chatwork.mjs` | Chatwork 送信（数十行） |
 | `src/utils/roboAccount.ts` | フロントの読込（`dataCache` 経由） |
 | `src/components/RoboAccountPanel.tsx` | 表示（建玉・損益・履歴・成績表） |
@@ -504,6 +544,7 @@ k = VIX < 20 → 2.0 ／ 20–30 → 2.5 ／ 30 以上 → 3.0
 | `src/components/ShieldView.tsx` | 旧ポジション分析を撤去し `RoboAccountPanel` に差し替え |
 | `src/App.tsx` | 配線（タブ構成は変えない） |
 | `src/utils/shieldPrompt.ts` / `shieldData.ts` | 旧ポジション分析プロンプトの撤去（`buildShieldData` の価格取得は転用できる可能性あり） |
+| `src/utils/marketHolidays.ts` | 実装を `marketCalendar.mjs` へ移し、型付きの re-export だけにした（休場判定の二重化を防ぐ） |
 | `requirements.md` / `CLAUDE.md` / `handover.md` / `SpecView.tsx` / `ManualView.tsx` / `StrategyPlaybookPanel.tsx` | 記述更新 |
 | `docs/legal/*` | §10 の結論を反映 |
 

@@ -92,10 +92,17 @@ npx firebase-tools deploy --only firestore:rules --project pointlab-96310
 - 🔴 **ロボ口座（疑似トレード）の不変ルール**
   - 決定論ロジック（対照群シグナル・損切り）は **`src/utils/robotStrategy.mjs` が単一情報源**。式を二重定義しない。
   - **損切りは LLM に決めさせない**（ATR20×VIX連動の純関数）。建てた瞬間に確定させ、後から動かさない。
-  - **`robo_account.json`（AIの口座）と `real_position.json`（実保有）を混ぜない**。
-    同期させると AI の成績と人の介入が分離できず、Go/No-Go も対照群比較も無意味になる。
+  - **`robo_account.json`（AIの口座）は実保有に同期する**（2026-08-09 ユーザー決定で方針変更）。
+    ただし🔴 **同期由来の約定（`exit_reason === 'sync'`）は成績の集計から必ず除外する**。
+    ここを混ぜると AI の成績と人の介入が分離できず、Go/No-Go も対照群比較も無意味になる。
+    二重同期は `last_synced_file_id` で防ぎ、読み取り結果は実価格と突き合わせて桁誤りを弾く。
   - **判断が取れない日は hold で記録する**。決定論の結果で埋めない（判断器を混ぜない）。
   - **判断は1日1回**（平日19:30 JST のみ）。21:30 は取りこぼしの保険なので判断させない。
+  - 🔴 **東証の休場日は判断も通知もしない**。休場日に hold を記録すると、判断した日と
+    何もしなかった日が混ざって成績の分母が壊れる。
+  - 🔴 **休場判定は `src/utils/marketCalendar.mjs` が単一情報源**。アプリ（`marketHolidays.ts`）は
+    これを re-export するだけ。二箇所に書くと片方だけ直して祝日に発注する事故になる。
+    イベントは `src/utils/macroCalendar.ts` を Node の型ストリップで直接読む（表を二重管理しない）。
   - **`.tradingview-session/` と `.captures/` はコミットしない**（認証情報と実口座の残高）。
 
 ---
