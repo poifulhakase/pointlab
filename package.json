@@ -17,6 +17,7 @@
     "check-freshness": "node scripts/check-freshness.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
     "@sentry/react": "^10.53.1",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.10.0",
