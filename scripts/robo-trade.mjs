@@ -25,12 +25,13 @@ import { loadPrices, etfFeatures, priceMap, atrMap, summarizeSupply, DATA_DIR } 
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
 import { decide, holdOnFailure, validateDecision, ROBO_MODEL, ROBO_EFFORT } from './llmDecide.mjs'
 import {
-  emptyAccount, applyDecision, applyStop, equityOf, pushEquity, recomputeStats,
+  emptyAccount, applyDecision, applyStop, equityOf, pushEquity, recomputeStats, syncWithReal,
 } from './roboAccount.mjs'
 import {
   fetchLatestImages, downloadFile, ageInDays, sendMessage, buildNotification,
 } from './chatwork.mjs'
 import { readPositionImage, toRealPosition, checkRealPosition } from './readPosition.mjs'
+import { validateRealPosition } from './roboAccount.mjs'
 
 const ACCOUNT_PATH = path.join(DATA_DIR, 'robo_account.json')
 const LOG_DIR = path.join(DATA_DIR, 'robo_logs')
@@ -137,7 +138,14 @@ async function main() {
     try { return fs.existsSync(REAL_POS_PATH) ? JSON.parse(fs.readFileSync(REAL_POS_PATH, 'utf8')) : null } catch { return null }
   })()
 
-  if (images.position && !NO_LLM) {
+  // 🔴 キャプチャは「売買した日だけ」投稿される運用（ユーザー決定・2026-08-09）。
+  //    そのため Chatwork の直近画像は、売買していない日には前回の画像が残っている。
+  //    同じ画像で二度同期すると口座が壊れるので、file_id で必ず弾く。
+  const posFileId = images.position ? String(images.position.fileId) : null
+  const alreadySynced = posFileId != null && String(account.last_synced_file_id ?? '') === posFileId
+  let syncDiff = null
+
+  if (images.position && !NO_LLM && !alreadySynced) {
     log('[5b] 保有画面を読み取る...')
     try {
       const r = await readPositionImage({ base64: images.position.base64, mediaType: images.position.mediaType })
@@ -151,6 +159,22 @@ async function main() {
         log(`  → ${realPosition.positions.length}件（確度 ${realPosition.confidence}）`)
         images.warnings.push(...checkRealPosition(realPosition))
         if (!DRY) saveJson(REAL_POS_PATH, realPosition)
+
+        // 🔴 ロボ口座を実保有に合わせる（ユーザー決定）。差分は divergences に残す。
+        // 🔴 AI の自己申告（confidence）だけに頼らず、実際の価格と突き合わせて桁誤りを弾く
+        const issues = validateRealPosition({ positions: realPosition.positions, priceOf, cash: account.initial_cash })
+        if (issues.length) {
+          log(`  🔴 読み取りが価格と合わない → 同期しない: ${issues.join(' / ')}`)
+          images.warnings.push(...issues.map(i => `保有画面の読み取りに疑いあり（同期は見送り）: ${i}`))
+        } else if (realPosition.confidence === 'low') {
+          log('  ⚠ 読み取りの確度が低いため同期しない（誤った残高で上書きしないため）')
+          images.warnings.push('読み取りの確度が低かったため、口座の同期は見送りました')
+        } else {
+          const sync = syncWithReal({ account, realPosition, priceOf, date, sourceFileId: posFileId })
+          account = sync.account
+          syncDiff = sync.diff
+          log(`  ${sync.diff.matched ? '同期' : '🔴 同期'}: ${sync.diff.note}`)
+        }
       } else {
         log(`  ⚠ 読み取り失敗: ${r.error}`)
         images.warnings.push(`保有画面の読み取りに失敗しました（${r.error}）`)
@@ -159,9 +183,8 @@ async function main() {
       log(`  ⚠ 読み取りで例外: ${e.message}`)
       images.warnings.push(`保有画面の読み取りで問題が起きました（${e.message}）`)
     }
-  } else if (realPosition?.age_days != null && realPosition.age_days > 0) {
-    // キャプチャが無い日は前回分を「古い」と明示して使う（ユーザー決定・2026-08-09）
-    images.warnings.push(`保有情報は${realPosition.age_days}営業日前のキャプチャです`)
+  } else if (alreadySynced) {
+    log('[5b] 保有画面は前回と同じ画像 → 同期しない（売買が無かった日）')
   }
 
   // ── 6) 判断 ──
@@ -246,6 +269,7 @@ async function main() {
     account: { ...account, equity: equityOf(account, priceOf) },
     baseline,
     stats: account.stats,
+    syncDiff,
     warnings: images.warnings,
   })
   await sendMessage(message, { dryRun: DRY })

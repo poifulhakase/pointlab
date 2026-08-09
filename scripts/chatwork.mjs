@@ -181,7 +181,7 @@ const SIDE_LABEL = {
  * 🔴 hold の日も毎日送る（ユーザー決定・2026-08-09）。
  * 🔴 反証（counter）を必ず載せる。判断を鵜呑みにさせないため。
  */
-export function buildNotification({ date, decision, execPrice, account, baseline, stats, warnings = [] }) {
+export function buildNotification({ date, decision, execPrice, account, baseline, stats, syncDiff, warnings = [] }) {
   const d = decision ?? {}
   const head = d.action === 'open'
     ? `【ロボ口座】${SIDE_LABEL[d.symbol] ?? d.symbol} を ${d.qty}口 新規建て`
@@ -204,6 +204,15 @@ export function buildNotification({ date, decision, execPrice, account, baseline
     lines.push('')
     lines.push('■ あなたの保有について')
     lines.push(String(d.user_note))
+  }
+
+  // 🔴 前回からの変化（あなたが実際にどう動いたか）を先に見せる。
+  //    「どれだけ減ったか・増えたか・新規で建てたか」が一目で分かるように。
+  if (syncDiff) {
+    lines.push('')
+    lines.push('■ あなたの保有の変化（前回のキャプチャから）')
+    lines.push(syncDiff.note ?? '—')
+    if (syncDiff.skipped) lines.push('※ 判断がつかないため口座の同期は見送りました')
   }
 
   if (baseline) {

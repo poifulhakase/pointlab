@@ -23,6 +23,9 @@ export function emptyAccount({ logicVersion = 'robo-v1-llm', decider = null } = 
     equity_curve: [],
     stats: { closed_trades: 0, win_rate: null, expectancy: null, max_drawdown_pct: null, stop_then_reversed: 0 },
     baseline: null,
+    // 🔴 実保有に合わせた同期の記録。同期しても差分は消さずここに残す
+    divergences: [],
+    last_synced_file_id: null,
   }
 }
 
@@ -157,9 +160,17 @@ export function applyStop({ account, priceOf, date, execDate }) {
   }
 }
 
-/** 成績を再計算する（trades から導出。保存された値は信用しない） */
+/**
+ * 成績を再計算する（trades から導出。保存された値は信用しない）。
+ *
+ * 🔴 同期由来の約定（exit_reason: 'sync'）は成績に入れない。
+ *    これは「AI の判断」ではなく「実保有に合わせた辻褄合わせ」なので、
+ *    AI の実力を測る数字に混ぜてはいけない。
+ *    副次的に、キャプチャの誤読が成績を汚すのも防げる（建玉は次の同期で直るが、
+ *    履歴に残った偽の約定は消えないため）。
+ */
 export function recomputeStats(account) {
-  const closed = account.trades.filter(t => t.side === 'sell')
+  const closed = account.trades.filter(t => t.side === 'sell' && t.exit_reason !== 'sync')
   const n = closed.length
   const wins = closed.filter(t => (t.pnl ?? 0) > 0).length
   const total = closed.reduce((s, t) => s + (t.pnl ?? 0), 0)
@@ -179,6 +190,208 @@ export function recomputeStats(account) {
       expectancy: n ? Math.round(total / n) : null,
       max_drawdown_pct: account.equity_curve.length ? Math.round(maxDD * 10000) / 100 : null,
     },
+  }
+}
+
+// ── 実保有との同期（ユーザー決定・2026-08-09）──────────────────────────────
+//
+// 🔴 ユーザーは基本的に AI の判断どおりに動き、最終決定だけ自分で下す。
+//    そのため実保有とロボ口座はほぼ一致し、ズレるのは判断で外したときだけ。
+//    そのズレを実態に合わせる（ユーザー判断。設計書 §11.5 の懸念は了承済み）。
+//
+// 🔴 ただし**差分は必ず記録する**。同期して消してしまうと、
+//    「AI の判断が良かったのか、人の介入が良かったのか」を後から一切追えなくなる。
+//    divergences に残しておけば、部分的にでも切り分けられる。
+//
+// 🔴 キャプチャは「売買した日だけ」投稿される運用。
+//    同じ画像で二度同期しないよう、呼び出し側が last_synced_file_id で弾く。
+
+/**
+ * 読み取った実保有が、実際の価格・資金と辻褄が合うかを機械的に見る。
+ * 🔴 AI の自己申告（confidence）に依存しないチェック。桁誤りをここで弾く。
+ * @returns {string[]} 問題の説明（空なら問題なし）
+ */
+export function validateRealPosition({ positions, priceOf, cash = INITIAL_CASH }) {
+  const issues = []
+  for (const p of positions ?? []) {
+    const code = String(p.symbol)
+    const u = bySymbol(code)
+    if (!u) continue                                  // 対象外の銘柄は見ない
+
+    const market = priceOf ? priceOf(code) : null
+    // 単価が現在値から大きく離れていたら桁誤りを疑う（±60%を超えたら弾く）
+    if (market != null && market > 0 && p.avg_price > 0) {
+      const ratio = p.avg_price / market
+      if (ratio > 1.6 || ratio < 0.4) {
+        issues.push(`${code}: 平均取得単価 ${Math.round(p.avg_price).toLocaleString()}円 が現在値 ${Math.round(market).toLocaleString()}円 と離れすぎ（桁の読み違いの可能性）`)
+      }
+    }
+    // 資金で買えない数量なら弾く
+    if (market != null && market > 0 && p.qty > 0) {
+      const cost = p.qty * market
+      if (cost > cash * 3) {
+        issues.push(`${code}: 数量 ${p.qty}口 は元本に対して大きすぎる（約${Math.round(cost).toLocaleString()}円分）`)
+      }
+    }
+    if (!Number.isFinite(p.qty) || p.qty <= 0) issues.push(`${code}: 数量が読めていない`)
+  }
+  return issues
+}
+
+const SIDE_JA = {
+  1321: 'ブル1倍', 1570: 'ブル2倍', 1571: 'ベア1倍', 1357: 'ベア2倍',
+}
+const label = (code) => `${SIDE_JA[String(code)] ?? ''}（${code}）`
+
+/**
+ * 前回の建玉と実保有を見比べて、「何がどう変わったか」を人が読める形にする。
+ * 🔴 「前回からどれだけ減ったか／増えたか／新規で建てたか」が一目で分かることを狙う
+ *    （ユーザー要望・2026-08-09）。
+ */
+export function describeChange(before, target) {
+  const b = before ? { symbol: String(before.symbol), qty: before.qty } : null
+  const t = target ? { symbol: String(target.symbol), qty: target.qty } : null
+
+  if (!b && !t) return { matched: true, kind: 'none', note: '保有なし（変化なし）' }
+
+  if (b && t && b.symbol === t.symbol) {
+    if (b.qty === t.qty) {
+      return { matched: true, kind: 'same', note: `${label(b.symbol)} ${b.qty}口のまま（変化なし）` }
+    }
+    const d = t.qty - b.qty
+    return {
+      matched: false,
+      kind: d > 0 ? 'increased' : 'decreased',
+      delta: d,
+      note: d > 0
+        ? `${label(b.symbol)} を ${b.qty}口 → ${t.qty}口 に買い増し（+${d}口）`
+        : `${label(b.symbol)} を ${b.qty}口 → ${t.qty}口 に減らした（${d}口）`,
+    }
+  }
+
+  if (b && !t) {
+    return { matched: false, kind: 'closed', delta: -b.qty, note: `${label(b.symbol)} ${b.qty}口 を全部手仕舞い（保有なしに）` }
+  }
+  if (!b && t) {
+    return { matched: false, kind: 'opened', delta: t.qty, note: `${label(t.symbol)} を新規で ${t.qty}口 建てた` }
+  }
+  return {
+    matched: false,
+    kind: 'switched',
+    note: `${label(b.symbol)} ${b.qty}口 を手仕舞い、${label(t.symbol)} を ${t.qty}口 建てた（乗り換え）`,
+  }
+}
+
+/**
+ * 実保有をロボ口座に写し取る。差分は divergences に残す。
+ *
+ * 🔴 対象4銘柄を2つ以上持っていたら**同期しない**（どちらかを勝手に選ばない）。
+ *    同時保有はしない前提だが、乗り換え途中や両建てした日には実際に起こりうる。
+ */
+export function syncWithReal({ account, realPosition, priceOf, date, sourceFileId }) {
+  const all = (realPosition?.positions ?? []).filter(p => p && p.qty > 0)
+  const inUniverse = all.filter(p => bySymbol(String(p.symbol)))
+
+  if (inUniverse.length > 1) {
+    const codes = inUniverse.map(p => p.symbol).join(', ')
+    const diff = {
+      date, source_file_id: sourceFileId ?? null,
+      robo: account.position ? { symbol: account.position.symbol, qty: account.position.qty } : null,
+      real: inUniverse.map(p => ({ symbol: String(p.symbol), qty: p.qty })),
+      matched: false, skipped: true,
+      note: `対象銘柄を${inUniverse.length}件保有（${codes}）→ どちらに合わせるか決められないため同期を見送り`,
+    }
+    return {
+      account: { ...account, divergences: [...(account.divergences ?? []), diff], last_synced_file_id: sourceFileId ?? account.last_synced_file_id ?? null },
+      diff,
+    }
+  }
+
+  const target = inUniverse[0] ?? null
+  const before = account.position ? { ...account.position } : null
+
+  // 差分の記録（同期の前後で何が違ったか）
+  const diff = {
+    date,
+    source_file_id: sourceFileId ?? null,
+    robo: before ? { symbol: before.symbol, qty: before.qty, avg_price: before.avg_price } : null,
+    real: target ? { symbol: String(target.symbol), qty: target.qty, avg_price: target.avg_price } : null,
+    matched: false,
+    ...describeChange(before, target),
+  }
+
+  const divergences = [...(account.divergences ?? []), diff]
+
+  // 一致しているなら口座はそのまま（現金の再計算もしない）
+  if (diff.matched) {
+    return { account: { ...account, divergences, last_synced_file_id: sourceFileId ?? account.last_synced_file_id ?? null }, diff }
+  }
+
+  // 🔴 建玉を実態に置き換え、現金は「元本 − 建玉の簿価」で辻褄を合わせる。
+  //    実口座の現金残高は分からないので、ロボ口座の元本を基準にする。
+  const nextPosition = target
+    ? {
+        symbol: String(target.symbol),
+        qty: target.qty,
+        avg_price: target.avg_price,
+        // 損切りは維持（同じ銘柄なら）。違う銘柄なら次の判断で引き直される
+        stop_price: before && String(before.symbol) === String(target.symbol) ? before.stop_price : null,
+        stop_rule: before && String(before.symbol) === String(target.symbol) ? before.stop_rule : null,
+        opened_on: before && String(before.symbol) === String(target.symbol) ? before.opened_on : date,
+        synced_from_real: true,
+      }
+    : null
+
+  // 実現損益: ロボが持っていた建玉を、実際には手仕舞っていた場合に精算する
+  let cash = account.cash
+  const trades = [...account.trades]
+  if (before && (!target || String(before.symbol) !== String(target.symbol))) {
+    const px = priceOf ? priceOf(before.symbol) : null
+    if (px != null) {
+      cash += before.qty * px
+      trades.push({
+        id: `${date}-sync-close`,
+        decided_on: date,
+        executed_on: date,
+        side: 'sell',
+        symbol: before.symbol,
+        qty: before.qty,
+        price: px,
+        entry_price: before.avg_price,
+        pnl: Math.round((px - before.avg_price) * before.qty),
+        exit_reason: 'sync',   // 🔴 実保有に合わせた結果の決済。AIの判断ではない
+      })
+    }
+  }
+  if (nextPosition && (!before || String(before.symbol) !== String(nextPosition.symbol))) {
+    cash -= nextPosition.qty * nextPosition.avg_price
+    trades.push({
+      id: `${date}-sync-open`,
+      decided_on: date,
+      executed_on: date,
+      side: 'buy',
+      symbol: nextPosition.symbol,
+      qty: nextPosition.qty,
+      price: nextPosition.avg_price,
+      reason: '実保有に合わせて同期',
+      exit_reason: undefined,
+      synced: true,           // 🔴 AIの判断による建玉ではない印
+    })
+  } else if (nextPosition && before && nextPosition.qty !== before.qty) {
+    // 同じ銘柄で数量だけ違う → 差分を現金で調整
+    cash -= (nextPosition.qty - before.qty) * nextPosition.avg_price
+  }
+
+  return {
+    account: {
+      ...account,
+      cash,
+      position: nextPosition,
+      trades,
+      divergences,
+      last_synced_file_id: sourceFileId ?? account.last_synced_file_id ?? null,
+    },
+    diff,
   }
 }
 

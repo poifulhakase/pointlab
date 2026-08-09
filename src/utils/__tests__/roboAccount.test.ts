@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   emptyAccount, equityOf, openPosition, closePosition,
-  applyDecision, applyStop, recomputeStats, pushEquity, INITIAL_CASH,
+  applyDecision, applyStop, recomputeStats, pushEquity,
+  syncWithReal, describeChange, validateRealPosition, INITIAL_CASH,
 // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../../../scripts/roboAccount.mjs'
 
@@ -168,6 +169,167 @@ describe('applyStop', () => {
   })
 })
 
+describe('describeChange（前回からの変化を人が読める形に）', () => {
+  const pos = (symbol: string, qty: number) => ({ symbol, qty })
+
+  it('どちらも保有なしなら「変化なし」', () => {
+    const r = describeChange(null, null)
+    expect(r.matched).toBe(true)
+    expect(r.kind).toBe('none')
+  })
+
+  it('同じ銘柄・同じ数量なら一致', () => {
+    const r = describeChange(pos('1570', 30), pos('1570', 30))
+    expect(r.matched).toBe(true)
+    expect(r.kind).toBe('same')
+  })
+
+  it('🔴 買い増しは「+◯口」と分かる', () => {
+    const r = describeChange(pos('1570', 30), pos('1570', 50))
+    expect(r.kind).toBe('increased')
+    expect(r.delta).toBe(20)
+    expect(r.note).toContain('買い増し')
+    expect(r.note).toContain('+20口')
+  })
+
+  it('🔴 減らしたら「−◯口」と分かる', () => {
+    const r = describeChange(pos('1570', 50), pos('1570', 20))
+    expect(r.kind).toBe('decreased')
+    expect(r.delta).toBe(-30)
+    expect(r.note).toContain('減らした')
+  })
+
+  it('🔴 全部手仕舞いが分かる', () => {
+    const r = describeChange(pos('1570', 30), null)
+    expect(r.kind).toBe('closed')
+    expect(r.note).toContain('全部手仕舞い')
+  })
+
+  it('🔴 新規で建てたことが分かる（ベアを新規で買った等）', () => {
+    const r = describeChange(null, pos('1357', 50))
+    expect(r.kind).toBe('opened')
+    expect(r.note).toContain('新規')
+    expect(r.note).toContain('ベア2倍')
+  })
+
+  it('🔴 乗り換え（ブル→ベア）が分かる', () => {
+    const r = describeChange(pos('1570', 30), pos('1357', 50))
+    expect(r.kind).toBe('switched')
+    expect(r.note).toContain('ブル2倍')
+    expect(r.note).toContain('ベア2倍')
+    expect(r.note).toContain('乗り換え')
+  })
+})
+
+describe('validateRealPosition（AIの自己申告に頼らない機械チェック）', () => {
+  it('妥当な読み取りは通る', () => {
+    const issues = validateRealPosition({
+      positions: [{ symbol: '1570', qty: 30, avg_price: 30500 }],
+      priceOf, cash: INITIAL_CASH,
+    })
+    expect(issues).toEqual([])
+  })
+
+  it('🔴 桁の読み違いを弾く（30,000円を3,000円と読んだ）', () => {
+    const issues = validateRealPosition({
+      positions: [{ symbol: '1570', qty: 30, avg_price: 3000 }],
+      priceOf, cash: INITIAL_CASH,
+    })
+    expect(issues.length).toBeGreaterThan(0)
+    expect(issues[0]).toContain('桁')
+  })
+
+  it('🔴 元本に対して大きすぎる数量を弾く', () => {
+    const issues = validateRealPosition({
+      positions: [{ symbol: '1570', qty: 9999, avg_price: 30000 }],
+      priceOf, cash: INITIAL_CASH,
+    })
+    expect(issues.some((i: string) => i.includes('大きすぎる'))).toBe(true)
+  })
+
+  it('対象外の銘柄（個別株）は見ない', () => {
+    const issues = validateRealPosition({
+      positions: [{ symbol: '7203', qty: 100, avg_price: 2500 }],
+      priceOf, cash: INITIAL_CASH,
+    })
+    expect(issues).toEqual([])
+  })
+})
+
+describe('syncWithReal（実保有への同期）', () => {
+  const held = openPosition({
+    account: emptyAccount(), symbol: '1570', qty: 10, price: 30000,
+    atr20: 600, vix: 15, date: '2026-08-10', execDate: '2026-08-11',
+  })
+  const real = (list: { symbol: string; qty: number; avg_price: number }[]) => ({ positions: list })
+
+  it('一致していれば口座は変わらない', () => {
+    const r = syncWithReal({
+      account: held, realPosition: real([{ symbol: '1570', qty: 10, avg_price: 30000 }]),
+      priceOf, date: '2026-08-12', sourceFileId: 'f1',
+    })
+    expect(r.diff.matched).toBe(true)
+    expect(r.account.position.qty).toBe(10)
+  })
+
+  it('🔴 実際には手仕舞っていたら、口座も保有なしに合わせる', () => {
+    const r = syncWithReal({
+      account: held, realPosition: real([]), priceOf, date: '2026-08-12', sourceFileId: 'f1',
+    })
+    expect(r.account.position).toBe(null)
+    expect(r.diff.kind).toBe('closed')
+  })
+
+  it('🔴 実際には別の銘柄を持っていたら乗り換えとして合わせる', () => {
+    const r = syncWithReal({
+      account: held, realPosition: real([{ symbol: '1357', qty: 50, avg_price: 200 }]),
+      priceOf, date: '2026-08-12', sourceFileId: 'f1',
+    })
+    expect(r.account.position.symbol).toBe('1357')
+    expect(r.account.position.qty).toBe(50)
+    expect(r.diff.kind).toBe('switched')
+  })
+
+  it('🔴 差分は必ず divergences に残る（同期しても記録は消さない）', () => {
+    const r = syncWithReal({
+      account: held, realPosition: real([]), priceOf, date: '2026-08-12', sourceFileId: 'f1',
+    })
+    expect(r.account.divergences).toHaveLength(1)
+    expect(r.account.divergences[0].source_file_id).toBe('f1')
+  })
+
+  it('🔴 対象銘柄を2つ以上持っていたら同期しない（勝手に選ばない）', () => {
+    const r = syncWithReal({
+      account: held,
+      realPosition: real([
+        { symbol: '1570', qty: 10, avg_price: 30000 },
+        { symbol: '1357', qty: 50, avg_price: 200 },
+      ]),
+      priceOf, date: '2026-08-12', sourceFileId: 'f1',
+    })
+    expect(r.diff.skipped).toBe(true)
+    expect(r.account.position.symbol).toBe('1570')   // 元のまま
+    expect(r.account.divergences).toHaveLength(1)
+  })
+
+  it('対象外の銘柄（個別株）は無視され、口座に写らない', () => {
+    const r = syncWithReal({
+      account: emptyAccount(),
+      realPosition: real([{ symbol: '7203', qty: 100, avg_price: 2500 }]),
+      priceOf, date: '2026-08-12', sourceFileId: 'f1',
+    })
+    expect(r.account.position).toBe(null)
+    expect(r.diff.matched).toBe(true)
+  })
+
+  it('同期した画像の file_id を記録する（二重同期の防止に使う）', () => {
+    const r = syncWithReal({
+      account: held, realPosition: real([]), priceOf, date: '2026-08-12', sourceFileId: 'f9',
+    })
+    expect(r.account.last_synced_file_id).toBe('f9')
+  })
+})
+
 describe('equityOf / pushEquity / recomputeStats', () => {
   it('評価額は現金＋建玉の時価', () => {
     const a = openPosition({
@@ -183,6 +345,18 @@ describe('equityOf / pushEquity / recomputeStats', () => {
     let a = pushEquity(emptyAccount(), '2026-08-10', 1000000)
     a = pushEquity(a, '2026-08-10', 999999)
     expect(a.equity_curve).toHaveLength(1)
+  })
+
+  it('🔴 同期由来の約定は成績に入れない（AIの判断ではないため／誤読が成績を汚さない）', () => {
+    let a = openPosition({
+      account: emptyAccount(), symbol: '1570', qty: 10, price: 30000,
+      atr20: 600, vix: 15, date: 'd1', execDate: 'e1',
+    })
+    // 実保有に合わせて手仕舞い（同期由来）
+    a = syncWithReal({ account: a, realPosition: { positions: [] }, priceOf, date: 'd2', sourceFileId: 'f1' }).account
+    const s = recomputeStats(a).stats
+    expect(a.trades.some((t: { exit_reason?: string }) => t.exit_reason === 'sync')).toBe(true)
+    expect(s.closed_trades).toBe(0)   // 同期の決済は数えない
   })
 
   it('成績は約定履歴から計算し直す', () => {
