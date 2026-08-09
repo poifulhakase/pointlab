@@ -40,13 +40,15 @@ async function call(path, { method = 'GET', body, token, raw = false } = {}) {
  * @param {object} opts { roomId, token, dryRun }
  */
 export async function sendMessage(message, { roomId, token, dryRun = false } = {}) {
-  const room = roomId ?? need('CHATWORK_ROOM_ID')
+  // 🔴 dry-run では宛先を要求しない（設定が無い環境でも配線を確認できるように）
   if (dryRun) {
+    const room = roomId ?? process.env.CHATWORK_ROOM_ID ?? '(未設定)'
     console.log(`--- [dry-run] Chatwork room=${room} へ送信する内容 ---`)
     console.log(message)
     console.log('--- ここまで ---')
     return { dryRun: true, message }
   }
+  const room = roomId ?? need('CHATWORK_ROOM_ID')
   const body = new URLSearchParams({ body: message }).toString()
   return call(`/rooms/${room}/messages`, { method: 'POST', body, token })
 }

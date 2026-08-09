@@ -118,10 +118,11 @@ export function formatSupplySection(supply) {
   if (supply.cotNet != null) l.push(`海外投機筋(CFTC)ネット: ${yen(supply.cotNet)}枚`)
   if (supply.shortRatio != null) l.push(`空売り比率: ${r2(supply.shortRatio)}%`)
   if (supply.adRatio != null) l.push(`騰落レシオ: ${r2(supply.adRatio)}`)
-  if (supply.arbitrageLong != null) l.push(`裁定買い残: ${yen(supply.arbitrageLong)}億円`)
+  if (supply.arbitrageLong != null) l.push(`裁定買い残: ${yen(supply.arbitrageLong)}千株`)
   if (supply.pcr != null) l.push(`PCR: ${r2(supply.pcr)}`)
+  if (supply.futuresOi != null) l.push(`先物建玉: ${yen(supply.futuresOi)}枚`)
   if (supply.vix != null) l.push(`VIX: ${r2(supply.vix)}`)
-  if (supply.ntRatio != null) l.push(`NT倍率: ${r2(supply.ntRatio)}`)
+  if (supply.topixClose != null) l.push(`TOPIX: ${r2(supply.topixClose)}`)
 
   return `## 【二次情報】需給
 ${l.length ? l.map(s => `  ${s}`).join('\n') : '  データなし'}
