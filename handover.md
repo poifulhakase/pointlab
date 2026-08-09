@@ -28,6 +28,20 @@
   - `CHATWORK_ROOM_ID` — 宛先。値は `~/.claude` メモリ `reference_stock_calendar_chatwork_room` にある
   - 🔵 未設定でも他のデータ更新は動く（`continue-on-error` にしてある）
 
+- [ ] **②b APIキーを発行したら、まずローカルで空撃ちする**（本番前の最終確認）
+  ```
+  # 鍵なしで配線だけ確認（済・2026-08-09 に実施して通っている）
+  node scripts/robo-trade.mjs --dry --no-llm --force
+
+  # 鍵ありで「AIの判断そのもの」を目視する（書き込み・通知はしない）
+  $env:ANTHROPIC_API_KEY = "sk-ant-..."
+  node scripts/robo-trade.mjs --dry --force
+  ```
+  🔵 `--dry` は口座もログも書かず、Chatwork へも送らない（送る内容を画面に出すだけ）。
+  🔵 `--force` は休場日でも走らせる指定。平日に試すなら要らない。
+  🔴 ここで**理由と「この判断が外れるとき」が日本語で埋まっているか**を見ること。
+  　 空だったり英語だったりしたらプロンプト側の問題なので、本番に上げる前に直す。
+
 - [ ] **③ ローカルに Playwright を入れ、TradingView に初回ログイン**（チャート画像を使う場合）
   ```
   npm install -D playwright
