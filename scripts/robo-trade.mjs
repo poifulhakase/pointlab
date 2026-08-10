@@ -22,6 +22,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { loadLocalEnv } from './loadLocalEnv.mjs'
 import { baselineTimeline } from '../src/utils/robotStrategy.mjs'
 import { loadPrices, etfFeatures, priceMap, atrMap, summarizeSupply, DATA_DIR } from './roboData.mjs'
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
@@ -35,6 +36,10 @@ import {
 import { readPositionImage, toRealPosition, checkRealPosition } from './readPosition.mjs'
 import { validateRealPosition } from './roboAccount.mjs'
 import { marketStatus, upcomingEventsText, todayJst } from './roboCalendar.mjs'
+
+// ローカルで試すとき用に `.env.local` を読む（Actions では無いので何も起きない）。
+// 🔵 Anthropic / Chatwork のクライアントは呼び出し時に process.env を見るので、ここで間に合う。
+const LOCAL_ENV_KEYS = loadLocalEnv()
 
 const ACCOUNT_PATH = path.join(DATA_DIR, 'robo_account.json')
 const LOG_DIR = path.join(DATA_DIR, 'robo_logs')
@@ -99,6 +104,8 @@ async function main() {
   log('=== ぽいロボ 疑似トレード ===')
   if (DRY) log('（--dry: 書き込みと通知はしない）')
   if (NO_LLM) log('（--no-llm: LLM を呼ばず対照群の判断で通す）')
+  // 🔵 読み込んだ「キー名」だけ出す。値は絶対に出さない（作業ログに残るため）
+  if (LOCAL_ENV_KEYS.length) log(`（.env.local から読み込み: ${LOCAL_ENV_KEYS.join(', ')}）`)
 
   // ── 0) 営業日かどうか ──
   // 🔴 東証が閉まっている日は、判断も口座の更新も通知もしない。

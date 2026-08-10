@@ -35,14 +35,21 @@
   - 🔵 未設定でも他のデータ更新は動く（`continue-on-error` にしてある）
 
 - [ ] **②b APIキーを発行したら、まずローカルで空撃ちする**（本番前の最終確認）
+  🔴 **鍵をコマンドに直接書かない**（シェル履歴と画面＝作業ログに残る）。
+  リポジトリ直下に `.env.local` を作って、そこに1行だけ置く（`.gitignore` の `.env*.local` で除外済み）:
+  ```
+  ANTHROPIC_API_KEY=sk-ant-...
+  ```
   ```
   # 鍵なしで配線だけ確認（済・2026-08-09 に実施して通っている）
   node scripts/robo-trade.mjs --dry --no-llm --force
 
   # 鍵ありで「AIの判断そのもの」を目視する（書き込み・通知はしない）
-  $env:ANTHROPIC_API_KEY = "sk-ant-..."
-  node scripts/robo-trade.mjs --dry --force
+  node scripts/robo-trade.mjs --dry
   ```
+  🔵 `.env.local` は `scripts/loadLocalEnv.mjs` が読む。Actions には存在しないので影響しない
+  　 （Secrets が `process.env` に入る／既存の環境変数は上書きしない）。
+  🔵 起動時に出るのは**読み込んだキー名だけ**で、値は表示されない。
   🔵 `--dry` は口座もログも書かず、Chatwork へも送らない（送る内容を画面に出すだけ）。
   🔵 `--force` は休場日でも走らせる指定。平日に試すなら要らない。
   🔴 ここで**理由と「この判断が外れるとき」が日本語で埋まっているか**を見ること。
