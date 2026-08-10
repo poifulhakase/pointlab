@@ -13,6 +13,11 @@ on:
     # 土曜 09:00 JST (00:00 UTC): 週次COT（CFTC金曜20:30UTC公表後）・週次集計・バックテスト再計算・更新通知
     - cron: '0 0 * * 6'
   workflow_dispatch:
+    inputs:
+      robo_dry:
+        description: 'ロボ口座の判断を空撃ちする（--dry：口座もログも書かず、Chatwork へも送らない。鍵の配線確認用）'
+        type: boolean
+        default: false
 
 jobs:
   fetch-and-deploy:
@@ -47,9 +52,16 @@ jobs:
       # 🔴 平日19:30 JST の回だけ動かす。21:30 は取りこぼしの保険なので、
       #    ここで判断すると同じ日に2回判断してしまう（1日1回・設計書 §2 論点1）。
       # 🔴 continue-on-error: 判断が失敗してもデータ更新とコミットは止めない。
-      - name: ロボ口座の判断（平日19:30のみ）
-        if: github.event_name == 'schedule' && contains(github.event.schedule, '30 10 * * 1-5')
-        run: npm run robo-trade
+      # 🔵 手動実行で robo_dry にチェックを入れたときだけ、--dry の空撃ちとして走らせる
+      #    （Secrets が Actions 上で通るかの確認用。休場日でも見たいので --force を付ける）。
+      - name: ロボ口座の判断（平日19:30のみ／手動は空撃ち）
+        if: (github.event_name == 'schedule' && contains(github.event.schedule, '30 10 * * 1-5')) || inputs.robo_dry
+        run: |
+          if [ "${{ inputs.robo_dry }}" = "true" ]; then
+            npm run robo-trade -- --dry --force
+          else
+            npm run robo-trade
+          fi
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
