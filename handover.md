@@ -23,7 +23,13 @@
   　 オンにするか、残高を月1回見るかを決めておく。
 
 - [ ] **② GitHub Secrets を3つ登録**（これが入るまで判断は実行されない）
-  - `ANTHROPIC_API_KEY` — Claude API（判断と保有画面の読み取りに使う。Settings → API Keys で発行）
+  - `ANTHROPIC_API_KEY` — Claude API（判断と保有画面の読み取りに使う）
+    🔴 **ぽいロボ専用に新しく1本発行する**（2026-08-10 ユーザー決定）。AutoFBA のハカセAI と
+    **鍵は分けるが残高は共用**（残高はアカウント単位なので追加チャージは不要）。
+    分ける理由＝①ぽいロボがいくら使ったかを鍵ごとの使用量で検証できる（見積もり約1,000円/月の答え合わせ）
+    ②将来この鍵を失効させてもハカセAIが巻き添えで止まらない。
+    発行: https://console.anthropic.com/settings/keys → Create Key（名前は `poirobo` 等）
+    🔵 AutoFBA の鍵は**本番サーバーの `.env` にしか無い**（ローカルの `backend/.env` には入っていない）。持ち出さない。
   - `CHATWORK_API_TOKEN` — 通知の送信と画像の受け取り
   - `CHATWORK_ROOM_ID` — 宛先。値は `~/.claude` メモリ `reference_stock_calendar_chatwork_room` にある
   - 🔵 未設定でも他のデータ更新は動く（`continue-on-error` にしてある）
