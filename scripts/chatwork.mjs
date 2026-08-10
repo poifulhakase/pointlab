@@ -29,7 +29,12 @@ async function call(path, { method = 'GET', body, token, raw = false } = {}) {
     const text = await res.text().catch(() => '')
     throw new Error(`Chatwork ${method} ${path} → HTTP ${res.status} ${text.slice(0, 200)}`)
   }
-  return raw ? res : res.json()
+  if (raw) return res
+  // 🔴 Chatwork は「該当なし」を 204 No Content（本文が空）で返す。
+  //    ファイルが1枚も無いルームで /files を叩くとこれに当たるので、
+  //    そのまま res.json() すると Unexpected end of JSON input で落ちる。
+  const text = await res.text()
+  return text ? JSON.parse(text) : null
 }
 
 // ── 送信 ──────────────────────────────────────────────────────────────────
