@@ -33,8 +33,16 @@ const USER_DATA_DIR = path.resolve(process.cwd(), '.tradingview-session')
 const OUT_DIR = path.resolve(process.cwd(), '.captures')
 
 // 管理者本人の保存済みレイアウト（セクター画面と同じもの）。日足で開く。
+// 🔴 **ログイン不要の公開チャートを既定にする**（2026-08-10 変更）。
+//    保存レイアウト（`/chart/ecEzo0V0/`）は**ログインしないと開けない**が、
+//    Google は自動操作ブラウザからのログインを弾く（`Chrome for Testing` 判定）。
+//    メール＋パスワードなら入れるが、**セッションが切れるたびに運用が止まる**。
+//    公開チャートなら日足のローソクがそのまま撮れて、右にNI225/DJI/SPX/DXY/VIXの現値も入る。
+//    🔵 代償＝保存レイアウトのインジケーター（BB等）は使えない。必要になったら
+//       ログインして `ROBO_CHART_URL=https://jp.tradingview.com/chart/ecEzo0V0/?symbol=INDEX%3ANKY&interval=D`
+//       に差し替える（`.env.local` に置けばよい）。
 const CHART_URL = process.env.ROBO_CHART_URL
-  ?? 'https://jp.tradingview.com/chart/ecEzo0V0/?symbol=INDEX%3ANKY&interval=D'
+  ?? 'https://jp.tradingview.com/chart/?symbol=INDEX%3ANKY&interval=D'
 
 const log = (s = '') => console.log(s)
 
