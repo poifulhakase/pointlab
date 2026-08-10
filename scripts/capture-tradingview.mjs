@@ -21,6 +21,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline'
+import { loadLocalEnv } from './loadLocalEnv.mjs'
+
+// 🔴 **これが無いと平日16:00の自動実行で投稿できない**（2026-08-10 に踏んだ）。
+//    撮影はローカルPCで動くので、GitHub Secrets は使えない。Chatwork のトークンと
+//    ルームIDは `.env.local` から読む。判断側（robo-trade.mjs）と同じ読み方に揃える。
+loadLocalEnv()
 
 const args = process.argv.slice(2)
 const DRY = args.includes('--dry')
@@ -143,6 +149,19 @@ async function main() {
 
     if (DRY) {
       log('[4] --dry のため投稿しない')
+      return
+    }
+
+    // 🔴 未設定のまま uploadFile に入ると分かりにくい例外で落ちる。
+    //    自動実行では画面を誰も見ていないので、ここで理由をはっきり出して終わる。
+    if (!process.env.CHATWORK_API_TOKEN || !process.env.CHATWORK_ROOM_ID) {
+      log('')
+      log('  🔴 Chatwork の設定が無いので投稿できません（撮影はできています）。')
+      log('     .env.local に次の2行を足してください:')
+      log('       CHATWORK_API_TOKEN=...')
+      log('       CHATWORK_ROOM_ID=...')
+      log('     🔵 GitHub Secrets は Actions 専用です。撮影はローカルPCで動くので届きません。')
+      log(`     撮れたものはここにあります: ${file}`)
       return
     }
 

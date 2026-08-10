@@ -93,6 +93,15 @@ ROBO_CHART_URL=https://jp.tradingview.com/chart/ecEzo0V0/?symbol=INDEX%3ANKY&int
 🔴 **精度より「毎日同じ時刻」であることが大事**。日によって時刻がずれると、
 AIは違う条件のチャートを見て判断することになり、あとで成績を比べられなくなる。
 
+🔴 **撮影は「ローカルPCで動く」ので GitHub Secrets は届かない**（2026-08-10 に踏んだ）。
+Chatwork へ投稿するには、リポジトリ直下の `.env.local` に**この2行が必要**:
+```
+CHATWORK_API_TOKEN=...
+CHATWORK_ROOM_ID=...
+```
+🔵 無い場合は「撮れているが投稿できない」と理由を出して止まる（分かりにくい例外で落ちない）。
+🔵 判断（19:30・Actions）側は Secrets を使うので、そちらは影響を受けない。
+
 🔵 **平日16:00は自動で走る**（2026-08-10 設定）。Windowsのタスクスケジューラに
 `poirobo-capture-chart` を登録済み。手で叩く必要はない。
 ```
