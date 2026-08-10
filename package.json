@@ -46,6 +46,7 @@
     "globals": "^17.4.0",
     "jsdom": "^29.1.1",
     "pdfjs-dist": "^5.7.284",
+    "playwright": "^1.62.1",
     "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",

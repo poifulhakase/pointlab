@@ -25,6 +25,8 @@ import readline from 'node:readline'
 const args = process.argv.slice(2)
 const DRY = args.includes('--dry')
 const LOGIN = args.includes('--login')
+// 休場日でも撮る（配線確認用）。ログイン時は判定そのものを飛ばす。
+const FORCE = args.includes('--force') || LOGIN
 
 // 🔴 ログイン状態はここに残る。.gitignore に入れてありコミットしない。
 const USER_DATA_DIR = path.resolve(process.cwd(), '.tradingview-session')
@@ -55,6 +57,21 @@ function waitEnter(message) {
 }
 
 async function main() {
+  // ── 0) 営業日か（2026-08-10 追加）──
+  // 🔴 東証が閉まっている日は撮らない。判断側（robo-trade）は休場日に何もしないので、
+  //    撮っても使われないまま Chatwork に画像だけが積まれる。
+  //    毎日16:00に自動実行する運用にしたので、ここで止めないと祝日ぶんが毎回流れる。
+  // 🔵 判断側と同じ `marketStatus` を使う（休場判定の単一情報源）。
+  if (!FORCE) {
+    const { marketStatus, todayJst } = await import('./roboCalendar.mjs')
+    const market = marketStatus(todayJst())
+    if (!market.open) {
+      log(`[0] ${market.date} は東証が休場（${market.reason}）→ 撮影しない`)
+      return
+    }
+    log(`[0] ${market.date} は営業日`)
+  }
+
   const { chromium } = await loadPlaywright()
   fs.mkdirSync(USER_DATA_DIR, { recursive: true })
   fs.mkdirSync(OUT_DIR, { recursive: true })
@@ -80,12 +97,17 @@ async function main() {
       return
     }
 
-    // チャートの描画を待つ。要素が出ないときも一定時間で進む（撮れないより撮る）
+    // チャートの描画を待つ。
+    // 🔴 **canvas が出ないときは撮れていない**＝チャートが1本も描かれていない。
+    //    以前は「撮れないより撮る」で先へ進めていたが、それだと**ログインが切れた日から毎日
+    //    エラー画面を Chatwork へ投げ続ける**（平日16:00の自動実行にしたので毎日流れる）。
+    //    AI はそれをチャートとして読むので、黙って判断が濁る。ここで止める。
     log('[2] 描画を待つ...')
+    let drawn = true
     try {
       await page.waitForSelector('canvas', { timeout: 45000 })
     } catch {
-      log('  ⚠ canvas が見つからないまま進む（ログイン切れの可能性）')
+      drawn = false
     }
     await page.waitForTimeout(8000)
 
@@ -94,10 +116,21 @@ async function main() {
     await page.screenshot({ path: file, fullPage: false })
     log(`[3] 撮影: ${file}`)
 
-    // ログイン切れの検知（撮れてはいるが中身がログイン画面のことがある）
-    const bodyText = await page.textContent('body').catch(() => '')
-    if (/ログイン|Sign in|Log in/.test(bodyText ?? '') && !/チャート|Chart/.test(bodyText ?? '')) {
-      log('  🔴 ログイン画面が写っている可能性があります。`--login` で入り直してください。')
+    // 🔴 ログイン切れの検知。
+    //    以前は「ログイン」を含み「チャート」を含まないことを条件にしていたが、
+    //    実際のエラー画面は「このチャートレイアウトを開くことができません…ログインする必要があります」で
+    //    **両方の語を含むため検知をすり抜けた**（2026-08-10 の空撃ちで発覚）。
+    //    文言に頼らず、**canvas が描かれたか**で判定する。
+    const bodyText = (await page.textContent('body').catch(() => '')) ?? ''
+    const blocked = /開くことができません|Can't open|ログインする必要があります/.test(bodyText)
+
+    if (!drawn || blocked) {
+      log('')
+      log('  🔴 チャートが描かれていません（ログイン切れの可能性が高い）。')
+      log('  🔴 中身が無い画像を投げると AI がそれを読んでしまうので、投稿しません。')
+      log('     直し方: npm run capture-chart -- --login')
+      log(`     撮れたものは確認用に残してあります: ${file}`)
+      return
     }
 
     if (DRY) {

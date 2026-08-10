@@ -75,6 +75,23 @@ npm run capture-chart
 🔴 **精度より「毎日同じ時刻」であることが大事**。日によって時刻がずれると、
 AIは違う条件のチャートを見て判断することになり、あとで成績を比べられなくなる。
 
+🔵 **平日16:00は自動で走る**（2026-08-10 設定）。Windowsのタスクスケジューラに
+`poirobo-capture-chart` を登録済み。手で叩く必要はない。
+```
+# 中身を見る／消す／今すぐ試す
+Get-ScheduledTask -TaskName 'poirobo-capture-chart'
+Start-ScheduledTask -TaskName 'poirobo-capture-chart'
+Unregister-ScheduledTask -TaskName 'poirobo-capture-chart'
+```
+- 実行ログ＝`.captures/capture.log`（追記）
+- 🔵 **PCが16:00に落ちていたら、次に起動したときに走る**（`StartWhenAvailable`）。
+  日足の当日バーは15:30で確定し以降動かないので、遅れて撮っても中身は同じ
+- 🔴 **ブラウザを立ち上げておく必要はない**。Playwright が毎回ヘッドレスで自前のブラウザを起動し、
+  `.tradingview-session` の保存済みログインを使う。**ふだんのChromeとは別物**。
+  必要なのは「PCが起動していてWindowsにサインインしていること」だけ
+- 🔵 **休場日は撮らない**（スクリプト側で `marketStatus` を見て終了する）。
+  カレンダー判定は判断側と同じ単一情報源
+
 🔵 撮っているのは**保存チャート `ecEzo0V0` そのもの**（`INDEX:NKY`・`interval=D`＝日足）。
 インジケーターを増やしたいときは**TradingView側で足して保存する**だけでよく、コードは触らない。
 🔴 ただし**入れすぎると画像が読めなくなる**（AIが読む前提）。BB(20,2)＋出来高くらいが上限。
