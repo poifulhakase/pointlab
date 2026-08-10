@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-08-10T11:31:36.415Z",
+  "logic_version": "robo-v1-llm",
+  "decider": {
+    "type": "llm",
+    "model": "claude-opus-5",
+    "effort": "high"
+  },
+  "universe": [
+    "1321.T",
+    "1570.T",
+    "1571.T",
+    "1357.T"
+  ],
+  "initial_cash": 1000000,
+  "cash": 1000000,
+  "trades": [],
+  "position": null,
+  "equity_curve": [
+    {
+      "date": "2026-08-10",
+      "equity": 1000000
+    }
+  ],
+  "stats": {
+    "closed_trades": 0,
+    "win_rate": null,
+    "expectancy": null,
+    "max_drawdown_pct": 0,
+    "stop_then_reversed": 0
+  },
+  "baseline": null,
+  "divergences": [],
+  "last_synced_file_id": null
+}
