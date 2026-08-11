@@ -642,7 +642,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'chartpattern' && (
             <ErrorBoundary label="フォーメーション分析">
               <Suspense fallback={<ViewLoader />}>
-                <ChartPatternPanel theme={theme} isMobile={isMobile} />
+                <ChartPatternPanel theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
               </Suspense>
             </ErrorBoundary>
           )}

@@ -15,7 +15,7 @@ import { useState } from 'react'
 // 🔴 実測の出どころは `scripts/analyze-chart-patterns.mjs`（2026-08-11）。
 //    数字を書き換えるときは必ずスクリプトを走らせ直すこと。ここで手打ちしない。
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean }
+type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
 
 type Pattern = {
   name: string
@@ -191,7 +191,7 @@ const KIND_LABEL: Record<Pattern['kind'], string> = {
   'cont-down': '下落の途中',
 }
 
-export function ChartPatternPanel({ theme, isMobile }: Props) {
+export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   const dark = theme === 'dark'
   const [open, setOpen] = useState<string | null>(null)
   const [help, setHelp] = useState(false)
@@ -249,16 +249,17 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
           ぽいロボ ▸ フォーメーション分析
         </span>
         <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>{PATTERNS.length} 種</span>
-        <button
-          onClick={() => setHelp(v => !v)}
-          aria-label="このページについて"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28,
-            borderRadius: 7, cursor: 'pointer', border: `1px solid ${c.border}`,
-            background: help ? (dark ? 'rgba(0,229,255,0.12)' : 'rgba(11,114,168,0.10)') : 'transparent',
-            color: c.accent, flexShrink: 0, fontSize: 12, fontFamily: 'inherit',
-          }}
-        >?</button>
+        {/* 🔴 ヘッダー右端は**閉じる**（タイムマシンと同じ位置・同じ役目）。
+            ヘルプは見出しの右に置く（2026-08-11 ユーザー指示）。 */}
+        <button onClick={onClose} aria-label="閉じる" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28,
+          borderRadius: 7, cursor: 'pointer', border: `1px solid ${c.border}`,
+          background: 'transparent', color: c.sub, flexShrink: 0,
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
@@ -278,12 +279,25 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
               textShadow: dark ? `0 0 12px ${c.accent}55` : undefined,
               animation: 'cpBlink 2.4s ease-in-out infinite',
             }}>▶ FORMATION ANALYSIS</div>
-            <h1 style={{
-              fontSize: isMobile ? 26 : 40, fontWeight: 800, margin: 0, letterSpacing: '-0.01em',
-              textShadow: dark ? `0 0 24px ${c.accent}22` : undefined,
-            }}>
-              フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <h1 style={{
+                fontSize: isMobile ? 26 : 40, fontWeight: 800, margin: 0, letterSpacing: '-0.01em',
+                textShadow: dark ? `0 0 24px ${c.accent}22` : undefined,
+              }}>
+                フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種
+              </h1>
+              <button
+                onClick={() => setHelp(v => !v)}
+                aria-label="このページについて"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                  border: `1px solid ${c.accent}`, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
+                  background: help ? (dark ? 'rgba(0,229,255,0.14)' : 'rgba(11,114,168,0.12)') : 'transparent',
+                  color: c.accent,
+                }}
+              >?</button>
+            </div>
           </div>
         </div>
 
