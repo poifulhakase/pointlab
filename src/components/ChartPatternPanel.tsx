@@ -212,7 +212,8 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
 
   return (
     <div style={{
-      flex: 1, minHeight: 0, overflowY: 'auto', background: c.bg, color: c.text,
+      flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column',
+      background: c.bg, color: c.text,
       fontFamily: "'Courier New', Courier, monospace",
       backgroundImage: dark
         ? 'repeating-linear-gradient(0deg, rgba(0,229,255,0.03) 0 1px, transparent 1px 3px)'
@@ -228,6 +229,39 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
         .cp-card:hover { transform: translateY(-3px); }
       `}</style>
 
+      {/* 🔴 ヘッダーはタイムマシンと同じ形にそろえる（2026-08-11 ユーザー指示）。
+          研究室から開く内部ビューは、どれも同じ見た目で始まるようにする。 */}
+      <div style={{
+        position: 'relative', zIndex: 6, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10,
+        padding: isMobile ? '11px 16px' : '12px 28px',
+        background: dark ? 'rgba(4,10,22,0.72)' : 'rgba(255,255,255,0.82)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: `1px solid ${c.border}`,
+      }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: '50%', background: c.accent,
+          boxShadow: dark ? `0 0 7px ${c.accent}` : 'none', flexShrink: 0,
+        }} />
+        <span style={{
+          flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.sub,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          ぽいロボ ▸ フォーメーション分析
+        </span>
+        <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>{PATTERNS.length} 種</span>
+        <button
+          onClick={() => setHelp(v => !v)}
+          aria-label="このページについて"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28,
+            borderRadius: 7, cursor: 'pointer', border: `1px solid ${c.border}`,
+            background: help ? (dark ? 'rgba(0,229,255,0.12)' : 'rgba(11,114,168,0.10)') : 'transparent',
+            color: c.accent, flexShrink: 0, fontSize: 12, fontFamily: 'inherit',
+          }}
+        >?</button>
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: isMobile ? '20px 14px 120px' : '32px 24px 60px' }}>
 
         {/* 🔵 見出しは大きく。背景に薄い巨大文字を敷いて奥行きを出す（研究室の世界観に寄せる） */}
@@ -253,33 +287,17 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
           </div>
         </div>
 
-        {/* 🔴 立場の説明は**ヘルプに畳む**（2026-08-11 ユーザー指示）。
-            最初から大きく出すと、図鑑として見に来た人の邪魔になる。
+        {/* 🔴 このページの立場と測り方は**ヘルプに畳む**（2026-08-11 ユーザー指示）。
+            図鑑として見に来た人の邪魔にならないよう、既定では出さない。
             🔴 ただし**消さない**。教科書の説明だけ並べると「これを見れば当たる」と読めるので、
-               いつでも開ける場所には必ず置いておく。 */}
-        <button
-          onClick={() => setHelp(v => !v)}
-          aria-label="このページについて"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: help ? 10 : 22,
-            background: 'transparent', border: `1px solid ${c.border}`, borderRadius: 999,
-            padding: '5px 12px', cursor: 'pointer', color: c.accent, fontSize: 11,
-            fontFamily: 'inherit', letterSpacing: '0.06em',
-          }}
-        >
-          <span style={{
-            width: 15, height: 15, borderRadius: '50%', border: `1px solid ${c.accent}`,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10,
-          }}>?</span>
-          このページについて
-        </button>
-
+               ヘッダーの ? からいつでも開ける場所には必ず置いておく。 */}
         {help && (
           <div style={{
             border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
             background: c.card, borderRadius: 8, padding: isMobile ? 12 : 16, marginBottom: 22,
-            fontSize: isMobile ? 12 : 13, lineHeight: 1.8, animation: 'cpRise .3s ease both',
+            fontSize: isMobile ? 12 : 13, lineHeight: 1.9, animation: 'cpRise .3s ease both',
           }}>
+            <div style={{ fontWeight: 700, color: c.text, marginBottom: 6 }}>先に大事なこと</div>
             <div style={{ color: c.sub }}>
               形の意味は<b style={{ color: c.text }}>「そう言われている」</b>という話であって、当たるという意味ではありません。
               2026-08-11 に<b style={{ color: c.text }}>日経225の26年・6,361営業日</b>で6種類を測ったところ、
@@ -288,6 +306,21 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
               <br />
               測れたものには実測を併記しています。<b style={{ color: c.text }}>形を覚えることより、
               覚えた形が効かないと知っていることのほうが役に立ちます。</b>
+            </div>
+
+            <div style={{ fontWeight: 700, color: c.text, margin: '14px 0 6px' }}>測り方</div>
+            <div style={{ color: c.sub }}>
+              山と谷（ピボット）を機械的に拾い、パターンが成立した日（ネックラインを抜けた日）の終値から
+              先5日・20日のリターンを見ています。<b style={{ color: c.text }}>山の探し方（3/5/10本）と
+              許容幅（0.5/1/2%）を先に振って、全部の組み合わせを並べました</b>。
+              <br />
+              🔴 これは<b style={{ color: c.text }}>定義をいじって当たりを作らないため</b>です。
+              9通りのうち1つだけ当たったなら、それは効いたのではなく、たまたま当たる定義を選んだだけです。
+              <br />
+              🔴 山は<b style={{ color: c.text }}>その後 k 本経たないと確定しません</b>。
+              「あとから見れば山だった」を使うと成績はいくらでも良くなります。確定した山だけを使っています。
+              <br />
+              検証コード: <span style={{ color: c.text }}>scripts/analyze-chart-patterns.mjs</span>
             </div>
           </div>
         )}
@@ -391,24 +424,7 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
           })}
         </div>
 
-        <div style={{
-          marginTop: 26, border: `1px solid ${c.border}`, background: c.card,
-          borderRadius: 8, padding: isMobile ? 12 : 16, fontSize: isMobile ? 11 : 12,
-          color: c.sub, lineHeight: 1.9,
-        }}>
-          <div style={{ fontWeight: 700, color: c.text, marginBottom: 6 }}>測り方</div>
-          山と谷（ピボット）を機械的に拾い、パターンが成立した日（ネックラインを抜けた日）の終値から
-          先5日・20日のリターンを見ています。<b style={{ color: c.text }}>山の探し方（3/5/10本）と許容幅（0.5/1/2%）を
-          先に振って、全部の組み合わせを並べました</b>。
-          <br />
-          🔴 これは<b style={{ color: c.text }}>定義をいじって当たりを作らないため</b>です。
-          9通りのうち1つだけ当たったなら、それは効いたのではなく、たまたま当たる定義を選んだだけです。
-          <br />
-          🔴 山は<b style={{ color: c.text }}>その後 k 本経たないと確定しません</b>。
-          「あとから見れば山だった」を使うと成績はいくらでも良くなります。確定した山だけを使っています。
-          <br />
-          検証コード: <span style={{ color: c.text }}>scripts/analyze-chart-patterns.mjs</span>
-        </div>
+      </div>
       </div>
     </div>
   )
