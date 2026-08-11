@@ -38,6 +38,8 @@ async function daily(symbol, years) {
     out.push({
       date: new Date(t * 1000).toISOString().slice(0, 10),
       open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i],
+      // 🔴 出来高を落とすと出来高フィルターが素通りして、実物と違う成績が出る（2026-08-11 に踏んだ）
+      volume: q.volume?.[i] ?? 0,
     })
   })
   return out
