@@ -11,6 +11,7 @@ import {
 } from '../utils/roboAccount'
 import { demoMode, demoAccount } from '../utils/roboDemo'
 import { ENGINE_TABS, type EngineTabKey } from '../utils/engineTabs'
+import { PoiroboPixel } from './PoiroboPixel'
 
 type Props = {
   theme: 'dark' | 'light'
@@ -56,11 +57,19 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
   const outer: React.CSSProperties = {
     flex: 1, minHeight: 0, position: 'relative',
     background: c.BG, backgroundImage: c.SCAN,
-    display: 'flex', flexDirection: 'column',
+    // 🔴 PCは「左のビジュアル列 ＋ 右の中身」の横並び。スマホは中身だけを縦に。
+    display: 'flex', flexDirection: isMobile ? 'column' : 'row',
     overflow: 'hidden',
     fontFamily: c.FONT,
   }
-  /** スライダーのトラック（横に3枚並べて translateX で送る）。 */
+  /**
+   * スライダーのトラック（横に3枚並べて translateX で送る）。
+   * 🔴 PCでは左のビジュアル列があるので、**残り幅の中**でスライドさせる。
+   *    そのため外側に1枚かませて overflow を切る（下の trackClip）。
+   */
+  const trackClip: React.CSSProperties = {
+    flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden',
+  }
   const track: React.CSSProperties = {
     display: 'flex', width: `${tabCount * 100}%`, height: '100%', minHeight: 0,
     transform: `translateX(-${tabIndex * (100 / tabCount)}%)`,
@@ -130,7 +139,16 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
         <div className="robo-scan" />
       </>}
 
+      {/* ══ 左のビジュアル列（PCのみ・2026-08-11 ユーザー指示）══
+          🔴 幅は**シールド画面の左パネルと同じ 500px**にそろえる（EnginePanel と同値）。
+             画面をまたいで同じ位置に同じ幅の柱が立つので、切り替えても目線が動かない。
+          🔵 目的は2つ：①中身が画面いっぱいに伸びて間延びするのを止める
+             ②毎日見る画面なので、飽きないように世界観を置く。
+          🔵 スマホは縦に積むと邪魔になるだけなので出さない。 */}
+      {!isMobile && <VisualColumn theme={theme} />}
+
       {/* スライダートラック（面を書く順は ENGINE_TABS と同じにすること） */}
+      <div style={trackClip}>
       <div style={track}>
 
       {/* ══ ① ロボ口座（口座の状態＋資産推移）══ */}
@@ -279,6 +297,42 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
       </div>{/* /履歴 */}
 
       </div>{/* /スライダートラック */}
+      </div>{/* /トラックの外枠 */}
+    </div>
+  )
+}
+
+/**
+ * 左のビジュアル列（PCのみ）。
+ *
+ * 🔴 幅はシールド画面の左パネルと同じ **500px**（`EnginePanel` と同値）。
+ *    画面を切り替えても同じ位置に同じ幅の柱が立つので、目線が動かない。
+ * 🔵 情報は置かない。**数字はすべて右側にある**ので、ここに増やすと二重管理になる。
+ *    置くのは「ぽいロボが働いている」という気配だけ。
+ */
+function VisualColumn({ theme }: { theme: 'dark' | 'light' }) {
+  const c = cy(theme)
+  return (
+    <div style={{
+      width: 500, flexShrink: 0, minHeight: 0, position: 'relative',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 22, padding: 24,
+      borderRight: `1px solid ${c.BORDER}`,
+      overflow: 'hidden',
+    }}>
+      {/* 🔴 サイズは24の倍数にする。端数だと1ドットが割り切れず、行ごとに継ぎ目が出る（2026-08-11 に踏んだ） */}
+      <PoiroboPixel size={216} animate alt="" />
+
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          fontSize: 11, fontWeight: 700, letterSpacing: '0.24em', color: c.GREEN,
+          textShadow: theme === 'dark' ? `0 0 10px ${c.GREEN}55` : 'none',
+        }}>ROBO ACCOUNT</div>
+        <div style={{ marginTop: 8, fontSize: 11, color: c.DIM, letterSpacing: '0.08em', lineHeight: 1.9 }}>
+          毎営業日 08:30 に判断しています<br />
+          <span style={{ color: c.DESC }}>実際の売買はしません</span>
+        </div>
+      </div>
     </div>
   )
 }

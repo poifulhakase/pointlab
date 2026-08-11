@@ -11,6 +11,7 @@ import { useFirebaseSync } from './hooks/useFirebaseSync'
 import { CalendarHeader, MonitorIcon, ChevronLeft, ChevronRight } from './components/CalendarHeader'
 const AuthModal         = lazy(() => import('./components/AuthModal').then(m => ({ default: m.AuthModal })))
 import { Sidebar } from './components/Sidebar'
+import { PoiroboPixel } from './components/PoiroboPixel'
 import { MonthView } from './components/MonthView'
 import { getDividendDates, getMarkersForDate, type DividendDateSet } from './utils/dividendCalendar'
 import { isMarketClosed, getClosedReason } from './utils/marketHolidays'
@@ -56,11 +57,15 @@ const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView'
 const PoiroboAlertModal = lazy(() => import('./components/PoiroboAlertModal').then(m => ({ default: m.PoiroboAlertModal })))
 const DayNotePanel      = lazy(() => import('./components/DayNotePanel').then(m => ({ default: m.DayNotePanel })))
 
-// ── ローディングスピナー（Suspense フォールバック） ───────────────────
+// ── ローディング（Suspense フォールバック） ───────────────────────────
+// 🔵 2026-08-11: ただの回転から**ぽいロボのドット絵**に変えた（ユーザー指示）。
+//    待っている数百ミリ秒はどうせ見る時間なので、そこに世界観を置く。
+//    画像ではなくコードなので、読み込みが増えない（＝待ち時間を増やさない）。
 function ViewLoader() {
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span style={spinnerStyle} />
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+      <PoiroboPixel size={72} animate alt="" />
+      <span style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--text-sub)', fontFamily: "'Courier New', Courier, monospace" }}>LOADING...</span>
     </div>
   )
 }
@@ -944,13 +949,8 @@ const CHART_SYMBOLS = [
   { label: '米国債',  symbol: 'NASDAQ:TLT' },
 ]
 
-const spinnerStyle: React.CSSProperties = {
-  width: 32, height: 32, borderRadius: '50%',
-  border: '3px solid var(--glass-border)',
-  borderTopColor: 'var(--accent)',
-  animation: 'spin 0.7s linear infinite',
-  display: 'inline-block',
-}
+// 🔵 2026-08-11: ViewLoader をぽいロボのドット絵に変えたため、回転スピナーは未使用になった。
+//    `@keyframes spin` は他（ロック画面など）でも使っているので CSS 側は残してある。
 
 // ── スタイル ───────────────────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
