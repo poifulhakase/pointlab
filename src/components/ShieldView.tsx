@@ -37,8 +37,10 @@ export function ShieldView({ theme, isMobile, user, engineTab }: Props) {
       <div style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
-        // 浮いているタブとフッターに中身の末尾が隠れないための逃げ
-        paddingBottom: isMobile ? 130 : 0,
+        // 🔴 2026-08-11: ここで下に余白を空けるのをやめた（ユーザー指摘）。
+        //    パネルの背景がその手前で切れるため、**下に色の違う板が出て見えていた**。
+        //    浮いているタブに末尾が隠れないための逃げは、
+        //    スクロールする面の側（RoboAccountPanel の paddingBottom）で確保している。
       }}>
         {/* 🔵 デザイン確認時（開発時の ?demo=...）は未ログインでも中身を出す。
             demoMode() は本番ビルドでは常に null なので、この枝は落ちる。 */}
