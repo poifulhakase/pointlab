@@ -5,6 +5,7 @@ import { cy } from '../utils/cyberTheme'
 import { isAdminEmail } from '../utils/admin'
 import { RoboAccountPanel } from './RoboAccountPanel'
 import { demoMode } from '../utils/roboDemo'
+import type { EngineTabKey } from '../utils/engineTabs'
 
 // ──────────────────────────────────────────────────────────────────────────
 // エンジン（ポジション）ビュー
@@ -23,9 +24,11 @@ type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
+  /** 表示するタブ（ロボ口座／成績／履歴）。並び順は engineTabs.ts が単一情報源。 */
+  engineTab?: EngineTabKey
 }
 
-export function ShieldView({ theme, isMobile, user }: Props) {
+export function ShieldView({ theme, isMobile, user, engineTab }: Props) {
   const tv = themeVars(theme)
   const c = cy(theme)
 
@@ -40,7 +43,7 @@ export function ShieldView({ theme, isMobile, user }: Props) {
         {/* 🔵 デザイン確認時（開発時の ?demo=...）は未ログインでも中身を出す。
             demoMode() は本番ビルドでは常に null なので、この枝は落ちる。 */}
         {isAdminEmail(user?.email) || demoMode() ? (
-          <RoboAccountPanel theme={theme} isMobile={isMobile} />
+          <RoboAccountPanel theme={theme} isMobile={isMobile} engineTab={engineTab} />
         ) : (
           <div style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',

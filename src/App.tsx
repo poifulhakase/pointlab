@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
 // 🔴 シールド画面のタブの並び順は、ここ1か所だけで決める（QuantView のDOM順もこれに合わせる）
 import { QUANT_TABS, QUANT_LABELS } from './utils/quantTabs'
+import { ENGINE_TABS, ENGINE_LABELS, type EngineTabKey } from './utils/engineTabs'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
@@ -237,6 +238,8 @@ export default function App() {
   //    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= エンジン + 環境 + 現物 + 先物。
   //    環境/現物/先物 の中身は QuantView のままなので、エンジン画面からも QuantView を使う。
   const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro' | 'sector'>('bunseki')
+  // エンジン画面（ロボ口座）のタブ（2026-08-11 追加・ロボ口座／成績／履歴）
+  const [engineTab,         setEngineTab]         = useState<EngineTabKey>('account')
   const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
@@ -631,7 +634,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               シールド側へ戻した。この画面はタブを持たない。 */}
           {cal.view === 'shield' && (
             canViewMemberPages
-              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
@@ -800,6 +803,18 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                     style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
                     onClick={() => setQuantTab(tab)}
                   >{QUANT_LABELS[tab]}</button>
+                ))}
+              </>
+            )}
+            {/* エンジン（ロボ口座）＝ ロボ口座 / 成績 / 履歴（2026-08-11 追加） */}
+            {cal.view === 'shield' && (
+              <>
+                {ENGINE_TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    style={{ ...styles.floatTab, ...(engineTab === tab ? styles.floatTabActive : {}) }}
+                    onClick={() => setEngineTab(tab)}
+                  >{ENGINE_LABELS[tab]}</button>
                 ))}
               </>
             )}

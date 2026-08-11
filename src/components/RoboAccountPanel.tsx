@@ -10,13 +10,19 @@ import {
   ROBO_SYMBOLS, type RoboAccount, type RoboTrade, type FollowStat,
 } from '../utils/roboAccount'
 import { demoMode, demoAccount } from '../utils/roboDemo'
+import { ENGINE_TABS, type EngineTabKey } from '../utils/engineTabs'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean }
+type Props = {
+  theme: 'dark' | 'light'
+  isMobile: boolean
+  /** 表示するタブ。並び順は engineTabs.ts が単一情報源。 */
+  engineTab?: EngineTabKey
+}
 
 const yen = (v: number | null | undefined) => (v == null ? '—' : `${Math.round(v).toLocaleString()}`)
 const pct = (v: number | null | undefined, d = 1) => (v == null ? '—' : `${v > 0 ? '+' : ''}${v.toFixed(d)}%`)
 
-export function RoboAccountPanel({ theme, isMobile }: Props) {
+export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Props) {
   const [account, setAccount] = useState<RoboAccount | null>(null)
   const [loading, setLoading] = useState(true)
   const [openLog, setOpenLog] = useState(false)
@@ -38,30 +44,38 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
     return () => { alive = false }
   }, [])
 
-  // 🔵 デスクトップは3カラム（口座の状態／成績・資産推移／約定履歴）で、**画面内に収める**。
-  //    他ページ（環境・現物など）と同じ3列構成。スクロールするのは約定履歴だけ。
-  //    モバイルは従来どおり縦1本スクロール。
+  // 🔴 2026-08-11: 3カラムを **タブ3枚**（ロボ口座／成績／履歴）に分けた（ユーザー指示）。
+  //    それまでは1画面に3列を並べて俯瞰していたが、資産推移のグラフと約定履歴が
+  //    1/3幅に押し込まれていた。タブなら各ブロックが全幅を使える。
+  //    🔵 代償＝「成績を見ながら履歴を確かめる」ができなくなる（承知のうえでの判断）。
+  // 🔴 並び順は `engineTabs.ts` が単一情報源。**パネルを書く順もこれに合わせること**
+  //    （シールド画面で、DOM順とボタン順がズレてスライドが左右逆に動く事故を起こしている）。
+  const tabIndex = Math.max(0, ENGINE_TABS.indexOf(engineTab))
+  const tabCount = ENGINE_TABS.length
+
   const outer: React.CSSProperties = {
     flex: 1, minHeight: 0, position: 'relative',
     background: c.BG, backgroundImage: c.SCAN,
-    display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-    overflow: isMobile ? 'auto' : 'hidden',
+    display: 'flex', flexDirection: 'column',
+    overflow: 'hidden',
     fontFamily: c.FONT,
   }
-  const col = (grow: number): React.CSSProperties => ({
-    flex: isMobile ? 'none' : grow, minWidth: 0, minHeight: 0,
-    // 🔴 デスクトップではカラム自体はスクロールさせない（画面内に収める）
-    overflow: isMobile ? 'visible' : 'hidden',
+  /** スライダーのトラック（横に3枚並べて translateX で送る）。 */
+  const track: React.CSSProperties = {
+    display: 'flex', width: `${tabCount * 100}%`, height: '100%', minHeight: 0,
+    transform: `translateX(-${tabIndex * (100 / tabCount)}%)`,
+    transition: 'transform 0.25s ease',
+  }
+  /** 1タブぶんの面。**縦スクロールは面ごと**に持たせる（全幅になり中身が伸びるため）。 */
+  const col = (): React.CSSProperties => ({
+    width: `${100 / tabCount}%`, flexShrink: 0, minWidth: 0, minHeight: 0,
+    overflowY: 'auto',
     padding: isMobile ? 14 : 16,
     display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 10,
+    // 浮いているタブとフッターに末尾が隠れないための逃げ
+    paddingBottom: isMobile ? 130 : 70,
   })
-  const divider: React.CSSProperties = isMobile
-    ? { borderTop: `1px solid ${c.BORDER}` }
-    : { borderLeft: `1px solid ${c.BORDER}` }
-  const rightCol: React.CSSProperties = {
-    ...col(1), ...divider,
-    flex: isMobile ? 'none' : '0 0 400px',
-  }
+  const rightCol: React.CSSProperties = col()
   // ローディング／未生成のときは1カラムで十分
   const shell: React.CSSProperties = {
     flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative',
@@ -116,8 +130,11 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
         <div className="robo-scan" />
       </>}
 
-      {/* ══ 第1カラム: 口座の状態 ══ */}
-      <div style={col(1)}>
+      {/* スライダートラック（面を書く順は ENGINE_TABS と同じにすること） */}
+      <div style={track}>
+
+      {/* ══ ① ロボ口座（口座の状態＋資産推移）══ */}
+      <div style={col()}>
       <Header c={c} status={pos ? 'IN POSITION' : 'NO POSITION'} live={!!pos} />
 
       {/* ── 評価額 ── */}
@@ -192,10 +209,10 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
         <SectionTitle c={c} text="EQUITY CURVE / 資産推移" />
         <EquityCurve c={c} points={account.equity_curve} initial={account.initial_cash} theme={theme} />
       </div>
-      </div>{/* /第1カラム */}
+      </div>{/* /ロボ口座 */}
 
-      {/* ══ 第2カラム: 成績 ══ */}
-      <div style={{ ...col(1), ...divider }}>
+      {/* ══ ② 成績（PERFORMANCE ＋ YOUR CALL）══ */}
+      <div style={col()}>
 
       {/* ── 成績（対照群比較 ＋ 従った/外した を1枚に）── */}
       <div className="robo-rise" style={panel(c, 140)}>
@@ -223,9 +240,9 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
         <SectionTitle c={c} text="YOUR CALL / 従った時 vs 外した時" />
         <FollowPanel c={c} data={fvd} theme={theme} />
       </div>
-      </div>{/* /第2カラム */}
+      </div>{/* /成績 */}
 
-      {/* ══ 右カラム: 約定履歴（ここだけスクロールする）══ */}
+      {/* ══ ③ 履歴（約定履歴）══ */}
       <div style={rightCol}>
         <div style={{
           position: 'relative', zIndex: 1, flexShrink: 0,
@@ -259,7 +276,9 @@ export function RoboAccountPanel({ theme, isMobile }: Props) {
             {recent.map(t => <TradeRow key={t.id} t={t} c={c} theme={theme} />)}
           </div>
         )}
-      </div>
+      </div>{/* /履歴 */}
+
+      </div>{/* /スライダートラック */}
     </div>
   )
 }
