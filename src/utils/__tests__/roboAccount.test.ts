@@ -442,10 +442,11 @@ describe('applyTrail', () => {
   })
 
   it('含み益が伸びたぶんだけ損切りを引き上げる', () => {
-    // 現値 30000・ATR 600・VIX 15 → 30000 - 2.0 x 600 = 28800
+    // 現値 30000・ATR 600・VIX 15・トレーリングは幅2倍 → 30000 - 2.0 x 600 x 2.0 = 27600
+    // 🔴 建値と同じ幅（28800）にすると、26年の検証で DDそろえ後 -0.93%・売買回数166→434 と悪化した。
     const r = applyTrail({ account: acct(27000), priceOf, atrOf, vix: 15 })
     expect(r.raised).toBe(true)
-    expect(r.account.position.stop_price).toBe(28800)
+    expect(r.account.position.stop_price).toBe(27600)
     expect(r.account.position.stop_rule).toContain('trail')
   })
 

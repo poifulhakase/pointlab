@@ -4,7 +4,7 @@ import {
   computeIndicators, donchianStates, inSeason,
   baselineTimeline, BASELINE_PARAMS,
   stopMultiplier, stopPrice, trailStop, isStopHit, swingLow,
-  volumeRatio, obvChange, volumeConfirms, VOLUME_GATE, baselineTimeline as blTimeline,
+  volumeRatio, obvChange, volumeConfirms, VOLUME_GATE, TRAIL_WIDEN, baselineTimeline as blTimeline,
   maxQty, clampQty,
   // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../robotStrategy.mjs'
@@ -247,8 +247,18 @@ describe('trailStop', () => {
   it('利が乗ったら損切りを引き上げる', () => {
     const t = trailStop({ current: 1200, atr20: 20, vix: 15, prevStop: 1000 })
     expect(t.raised).toBe(true)
-    expect(t.price).toBe(1160) // 1200 - 2.0 x 20（VIX 15 → 倍率2.0）
+    // 1200 - 2.0(VIX15) x 20 x 2.0(TRAIL_WIDEN) = 1120
+    expect(t.price).toBe(1120)
     expect(t.rule).toContain('trail')
+  })
+
+  // 🔴 建値と同じ幅で引き上げると、26年の検証で DDそろえ後 -0.93%・売買回数166→434 と
+  //    明確に悪化した（刈られては入り直す）。幅を広げて -0.02%＝実質ノーコストにしてある。
+  it('🔴 トレーリングの幅は建値のときより広い', () => {
+    const entry = stopPrice({ entry: 1200, atr20: 20, vix: 15 })
+    const t = trailStop({ current: 1200, atr20: 20, vix: 15, prevStop: 0 })
+    expect(t.price).toBeLessThan(entry.price)   // より遠い＝広い
+    expect(1200 - t.price).toBeCloseTo((1200 - entry.price) * TRAIL_WIDEN, 5)
   })
 
   it('🔴 値が下がっても損切りは下げない', () => {
@@ -271,7 +281,7 @@ describe('trailStop', () => {
       expect(t.price).toBeGreaterThanOrEqual(stop as number)
       stop = t.price
     }
-    expect(stop).toBe(1460)
+    expect(stop).toBe(1420)   // 1500 - 2.0 x 20 x 2.0
   })
 
   it('値やATRが取れない日は何もしない', () => {
@@ -349,12 +359,13 @@ describe('構造を見る損切り', () => {
     expect(near.rule).toContain('event')
   })
 
-  it('🔴 トレーリングも建てたときと同じ幅の決め方を使う', () => {
+  it('🔴 トレーリングも同じ決め方（構造を見る）を通る', () => {
+    // 幅が2倍になるぶん ATR 損切りは 1020 - 2.0x20x2.0 = 940 で、安値980より下。
+    // 「安値のすぐ内側」ではないので構造は効かず、素の値になる。
     const rows = rowsWithLow([...Array(24).fill(1100), 980])
     const t = trailStop({ current: 1020, atr20: 20, vix: 15, prevStop: 900, rows })
-    expect(t.rule).toContain('swing25')
     expect(t.rule).toContain('trail')
-    expect(t.price).toBe(978)
+    expect(t.price).toBe(940)
   })
 })
 

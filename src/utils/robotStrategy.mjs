@@ -378,14 +378,27 @@ export function stopPrice({ entry, atr20, vix, rows = null, eventNear = false, m
  *    「負けを小さく」が崩れて期待値が壊れる。max() で必ず片方向にする。
  * 🔴 **利確はしない。** ここでやるのは「利が乗ったぶんだけ損切りを持ち上げる」ことだけ。
  *    上限を決めて降りると、いちばん大きな勝ちを取り逃す。
- * 🔴 幅の決め方は建てたときと**まったく同じ関数**（stopPrice）を使う。基準を現値に移すだけ。
+ * 🔴 幅の決め方は建てたときと**同じ関数**（stopPrice）を使う。基準を現値に移すだけ。
  *    2か所に持つと、建値のときだけ構造を見てトレーリングでは見ない、という食い違いが起きる。
+ *
+ * 🔴 **幅は建値のときの TRAIL_WIDEN 倍に広げる**（2026-08-11 夕方に修正）。
+ *    26年の検証で、建値と同じ幅で引き上げると **DDそろえ後 -0.93%・売買回数 166→434** と
+ *    明確に悪化した（刈られては入り直すを繰り返す）。幅を2倍にすると -0.02%＝実質ノーコスト。
+ *    🔵 なぜ狭いと悪いのか＝**ドンチャン25の安値割れ**という手仕舞いが、すでに価格構造で
+ *       追いかけるトレーリングとして働いている。値幅ベースの線を上から重ねると二重になる。
+ *       ボラターゲティングが効かなかったのと同じ構造。
+ *    🔴 それでも**外さない**理由＝対照群はルールで降りるが、ロボ口座の手仕舞いは**AIが判断する**。
+ *       AIが降りそこねたときの歯止めがこれで、その価値は対照群の検証には映らない。
+ *       役目が「保険」なら、幅は広いほうが本来の役目に合う。
  *
  * @param {{current:number|null, atr20:number|null, vix:number|null, prevStop:number|null, rows?:Array, eventNear?:boolean}} p
  * @returns {{price:number, rule:string, raised:boolean}|null} 動かす必要が無ければ prevStop のまま返す
  */
+/** トレーリングの幅を建値のときの何倍にするか。🔴 1.0（同じ幅）は実測で明確に悪化する */
+export const TRAIL_WIDEN = 2.0
+
 export function trailStop({ current, atr20, vix, prevStop, rows = null, eventNear = false }) {
-  const s = stopPrice({ entry: current, atr20, vix, rows, eventNear })
+  const s = stopPrice({ entry: current, atr20: atr20 == null ? null : atr20 * TRAIL_WIDEN, vix, rows, eventNear })
   if (!s) return prevStop == null ? null : { price: prevStop, rule: null, raised: false }
   const candidate = s.price
   const rule = `${s.rule} (trail)`
