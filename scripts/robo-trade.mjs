@@ -24,7 +24,7 @@ import path from 'node:path'
 
 import { loadLocalEnv } from './loadLocalEnv.mjs'
 import { baselineTimeline } from '../src/utils/robotStrategy.mjs'
-import { loadPrices, etfFeatures, priceMap, atrMap, summarizeSupply, DATA_DIR } from './roboData.mjs'
+import { loadPrices, etfFeatures, priceMap, atrMap, rowsMap, summarizeSupply, DATA_DIR } from './roboData.mjs'
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
 import { decide, holdOnFailure, validateDecision, ROBO_MODEL, ROBO_EFFORT } from './llmDecide.mjs'
 import {
@@ -35,7 +35,7 @@ import {
 } from './chatwork.mjs'
 import { readPositionImage, toRealPosition, checkRealPosition } from './readPosition.mjs'
 import { validateRealPosition } from './roboAccount.mjs'
-import { marketStatus, upcomingEventsText, todayJst } from './roboCalendar.mjs'
+import { marketStatus, upcomingEventsText, eventNear, todayJst } from './roboCalendar.mjs'
 
 // ローカルで試すとき用に `.env.local` を読む（Actions では無いので何も起きない）。
 // 🔵 Anthropic / Chatwork のクライアントは呼び出し時に process.env を見るので、ここで間に合う。
@@ -149,8 +149,15 @@ async function main() {
   let account = loadAccount()
   const prices = priceMap(etf)
   const atrs = atrMap(etf)
+  const rowsByCode = rowsMap(etf)
   const priceOf = (s) => prices[s] ?? null
   const atrOf = (s) => atrs[s] ?? null
+  const rowsOf = (s) => rowsByCode[s] ?? null
+
+  // 🔴 ATR は過去の値幅なので、イベント前は**まだ広がっていない**。
+  //    FOMC・日銀・米CPI・雇用統計・SQ が2営業日内にある日は損切りを少し広げる。
+  const nearEvent = await eventNear()
+  if (nearEvent) log('[5] 🔵 2営業日内に大きなイベントあり → 損切りを広めに取る')
 
   // 損切りの確認を先に行う
   const stopped = applyStop({ account, priceOf, date, execDate: date })
@@ -160,7 +167,7 @@ async function main() {
   // 損切りを引き上げる（トレーリング）。
   // 🔴 **確認の後**に行う。今日引き上げた線が効くのは明日から。
   // 🔵 利確はしない。利が乗ったぶんだけ「負けない位置」へ線を寄せるだけ。
-  const trailed = applyTrail({ account, priceOf, atrOf, vix })
+  const trailed = applyTrail({ account, priceOf, atrOf, rowsOf, vix, eventNear: nearEvent })
   account = trailed.account
   if (trailed.raised) log(`[5] 🔵 損切りを引き上げた（${trailed.from ?? '—'} → ${trailed.to}）`)
 
@@ -272,7 +279,7 @@ async function main() {
   decision = v.normalized ?? decision
 
   // ── 7) 口座に反映 ──
-  const applied = applyDecision({ account, decision, priceOf, atrOf, vix, date, execDate: date })
+  const applied = applyDecision({ account, decision, priceOf, atrOf, rowsOf, vix, eventNear: nearEvent, date, execDate: date })
   account = applied.account
   log(`[7] 口座への反映: ${applied.actions.join(', ')}`)
 

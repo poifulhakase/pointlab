@@ -90,6 +90,16 @@ export function priceMap(etf) {
   return m
 }
 
+/**
+ * 銘柄コード → 日次配列。損切りを価格の構造（スイング安値・キリ番）に
+ * 合わせるために使う（`stopPrice` に渡す）。
+ */
+export function rowsMap(etf) {
+  const m = {}
+  for (const [code, v] of Object.entries(etf)) m[code] = v.rows ?? null
+  return m
+}
+
 export function atrMap(etf) {
   const m = {}
   for (const [code, v] of Object.entries(etf)) {

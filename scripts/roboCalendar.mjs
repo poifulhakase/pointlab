@@ -64,3 +64,41 @@ export async function upcomingEventsText(date = todayJst(), n = 5) {
   if (!lines.length) return `  今後${n}営業日に主要イベントの予定はありません。`
   return lines.join('\n')
 }
+
+/**
+ * 数営業日内に「値が飛ぶ」大きなイベントがあるか。損切りの幅を広げる判断に使う。
+ *
+ * 🔴 ATR は過去の値幅なので、イベント前は**まだ広がっていない**。
+ *    その狭い幅のまま損切りを置くと、当日の窓であっさり飛び越される。
+ * 🔴 対象は「その日に値が飛ぶ」ものだけに絞る（FOMC・日銀・米CPI・雇用統計・SQ）。
+ *    何でも拾うとほぼ毎日 true になり、ただ損切りが広いだけの設定になる。
+ *
+ * @returns {Promise<boolean>} 判定できないときは false（＝広げない・従来どおり）
+ */
+const WIDEN_EVENTS = ['fomc', 'boj', 'cpi', 'nfp']
+
+export async function eventNear(date = todayJst(), n = 2) {
+  let macro, sq
+  try {
+    macro = await import('../src/utils/macroCalendar.ts')
+    sq    = await import('../src/utils/sqCalendar.ts')
+  } catch {
+    return false   // 型ストリップが使えない環境 → 広げない（従来どおり）
+  }
+  const { getMacroEventsForDate } = macro
+  const { getSqDates, getSqMarkersForDate } = sq
+  if (typeof getMacroEventsForDate !== 'function') return false
+
+  const days = [date, ...upcomingBusinessDays(date, n)]
+  for (const d of days) {
+    try {
+      const events = getMacroEventsForDate(d, { us: true, jp: true }) ?? []
+      if (events.some(e => WIDEN_EVENTS.includes(e.type))) return true
+    } catch { /* 拾えない日は無視して続ける */ }
+    // 🔴 SQ は macroCalendar には入っていない（別ファイル）。ここで拾わないと素通りする。
+    try {
+      if ((getSqMarkersForDate(d, getSqDates(d.getFullYear())) ?? []).length) return true
+    } catch { /* 同上 */ }
+  }
+  return false
+}

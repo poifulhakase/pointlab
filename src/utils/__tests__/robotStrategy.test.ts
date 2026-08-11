@@ -3,7 +3,7 @@ import {
   UNIVERSE, bySymbol,
   computeIndicators, donchianStates, inSeason,
   baselineTimeline, BASELINE_PARAMS,
-  stopMultiplier, stopPrice, trailStop, isStopHit,
+  stopMultiplier, stopPrice, trailStop, isStopHit, swingLow,
   maxQty, clampQty,
   // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../robotStrategy.mjs'
@@ -277,5 +277,82 @@ describe('trailStop', () => {
     expect(trailStop({ current: null, atr20: 20, vix: 15, prevStop: 1000 }).price).toBe(1000)
     expect(trailStop({ current: 1200, atr20: null, vix: 15, prevStop: 1000 }).raised).toBe(false)
     expect(trailStop({ current: null, atr20: null, vix: null, prevStop: null })).toBe(null)
+  })
+})
+
+// ── 価格の構造を見る損切り（2026-08-11 追加）──
+// 🔴 ATR は値幅しか見ない。誰が見ても支持されている水準のすぐ内側に置くと、
+//    真っ先に試されて刈られ、そのあと元の方向へ戻られる形がいちばん痛い。
+// 🔴 ただし「その場で決める」に戻してはいけない。構造を見るのは純関数の中だけで、
+//    AI には触らせない（損切りが交渉可能になると、負けている場面ほど言い訳が通る）。
+describe('構造を見る損切り', () => {
+  // low を明示した日次配列。最後の25本の最安値が「スイング安値」になる
+  const rowsWithLow = (lows: number[]) =>
+    lows.map((lo, i) => ({ date: `d${i}`, open: lo, high: lo * 1.02, low: lo, close: lo * 1.01 }))
+
+  it('スイング安値は直近25本の最安値', () => {
+    expect(swingLow(rowsWithLow([900, 980, 1010, 1200]), 25)).toBe(900)
+    expect(swingLow([], 25)).toBe(null)
+    expect(swingLow(null, 25)).toBe(null)
+  })
+
+  it('rows を渡さなければ従来と同じ値', () => {
+    const s = stopPrice({ entry: 30000, atr20: 300, vix: 15 })
+    expect(s.price).toBe(29400)          // 30000 - 2.0 x 300
+    expect(s.rule).toBe('atr20x2.0')
+  })
+
+  it('🔴 損切りが安値のすぐ内側なら、安値の下へ回す', () => {
+    // ATR損切り = 1020 - 2.0x20 = 980。安値も 980 ＝ ちょうど内側
+    const rows = rowsWithLow([...Array(24).fill(1100), 980])
+    const s = stopPrice({ entry: 1020, atr20: 20, vix: 15, rows })
+    expect(s.rule).toContain('swing25')
+    expect(s.price).toBe(978)            // 980 - 20x0.1
+  })
+
+  it('🔴 安値がはるか下なら動かさない（引きずられて深くしない）', () => {
+    // ATR損切り = 1740。安値 500 は遠すぎて「支持を試す位置」ではない
+    const rows = rowsWithLow([500, ...Array(24).fill(1800)])
+    const s = stopPrice({ entry: 1780, atr20: 20, vix: 15, rows })
+    expect(s.rule).toBe('atr20x2.0')
+    expect(s.price).toBe(1740)
+  })
+
+  it('安値が損切りより上（＝すでに支持の下）なら動かさない', () => {
+    const rows = rowsWithLow(Array(25).fill(1500))
+    const s = stopPrice({ entry: 1020, atr20: 20, vix: 15, rows })
+    expect(s.rule).toBe('atr20x2.0')
+  })
+
+  // 🔵 既定値ではここに当たらない（構造で深くなるのは最大 0.6ATR・k は 2.0 以上）。
+  //    上限を締めて、安全網そのものが効くことだけ確かめる。
+  it('🔴 構造につられて青天井に深くならない（上限で止まる）', () => {
+    const rows = rowsWithLow([...Array(24).fill(1100), 980])
+    const s = stopPrice({ entry: 1020, atr20: 20, vix: 15, rows, maxWiden: 1.0 })
+    expect(s.rule).toContain('cap1x')
+    expect(s.price).toBe(980)            // 1020 - 2.0x20x1.0
+  })
+
+  it('既定値では構造が上限を突き破らない', () => {
+    for (const sl of [930, 950, 960, 970, 980, 1000]) {
+      const rows = rowsWithLow([...Array(24).fill(1200), sl])
+      const s = stopPrice({ entry: 1020, atr20: 20, vix: 15, rows })
+      expect(s.rule).not.toContain('cap')
+    }
+  })
+
+  it('イベントが近い日は幅を広げる', () => {
+    const plain = stopPrice({ entry: 30000, atr20: 300, vix: 15 })
+    const near  = stopPrice({ entry: 30000, atr20: 300, vix: 15, eventNear: true })
+    expect(near.price).toBeLessThan(plain.price)
+    expect(near.rule).toContain('event')
+  })
+
+  it('🔴 トレーリングも建てたときと同じ幅の決め方を使う', () => {
+    const rows = rowsWithLow([...Array(24).fill(1100), 980])
+    const t = trailStop({ current: 1020, atr20: 20, vix: 15, prevStop: 900, rows })
+    expect(t.rule).toContain('swing25')
+    expect(t.rule).toContain('trail')
+    expect(t.price).toBe(978)
   })
 })

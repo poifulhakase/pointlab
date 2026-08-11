@@ -72,12 +72,12 @@ export function closePosition({ account, price, date, execDate, reason, cost = 0
  * 新規建てする。返り値は新しい account（非破壊）。
  * 🔴 qty は資金でクリップする（LLM に上限を破らせない）。
  */
-export function openPosition({ account, symbol, qty, price, atr20, vix, date, execDate, decision, cost = 0.0004 }) {
+export function openPosition({ account, symbol, qty, price, atr20, vix, rows = null, eventNear = false, date, execDate, decision, cost = 0.0004 }) {
   if (!symbol || symbol === 'none' || price == null || price <= 0) return account
   const capped = clampQty({ qty, cash: account.cash * (1 - cost), price })
   if (capped <= 0) return account
 
-  const s = stopPrice({ entry: price, atr20, vix })
+  const s = stopPrice({ entry: price, atr20, vix, rows, eventNear })
   const spend = capped * price * (1 + cost)
   const trade = {
     id: `${date}-open`,
@@ -107,7 +107,7 @@ export function openPosition({ account, symbol, qty, price, atr20, vix, date, ex
  *
  * @returns {{ account, actions: string[] }}
  */
-export function applyDecision({ account, decision, priceOf, atrOf, vix, date, execDate }) {
+export function applyDecision({ account, decision, priceOf, atrOf, rowsOf = () => null, vix, eventNear = false, date, execDate }) {
   const actions = []
   let acc = account
   const d = decision ?? {}
@@ -138,7 +138,8 @@ export function applyDecision({ account, decision, priceOf, atrOf, vix, date, ex
     }
     acc = openPosition({
       account: acc, symbol: d.symbol, qty: d.qty,
-      price: priceOf(d.symbol), atr20: atrOf(d.symbol), vix, date, execDate, decision: d,
+      price: priceOf(d.symbol), atr20: atrOf(d.symbol), rows: rowsOf(d.symbol),
+      vix, eventNear, date, execDate, decision: d,
     })
     if (acc.position) actions.push('open')
     return { account: acc, actions }
@@ -167,13 +168,15 @@ export function applyStop({ account, priceOf, date, execDate }) {
  *    損切りには永遠に触れない。今日引き上げた線が効くのは明日から。
  * 🔴 引き上げるだけで下げない（判断は trailStop 側）。ここは口座に書くだけ。
  */
-export function applyTrail({ account, priceOf, atrOf, vix }) {
+export function applyTrail({ account, priceOf, atrOf, rowsOf = () => null, vix, eventNear = false }) {
   const pos = account.position
   if (!pos) return { account, raised: false, from: null, to: null }
   const t = trailStop({
     current: priceOf(pos.symbol),
     atr20: atrOf(pos.symbol),
+    rows: rowsOf(pos.symbol),
     vix,
+    eventNear,
     prevStop: pos.stop_price ?? null,
   })
   if (!t || !t.raised) return { account, raised: false, from: pos.stop_price ?? null, to: pos.stop_price ?? null }

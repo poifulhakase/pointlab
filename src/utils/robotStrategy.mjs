@@ -194,18 +194,80 @@ export function stopMultiplier(vix) {
 }
 
 /**
+ * 直近 n 本の安値（スイング安値）。損切りを**価格の構造**に合わせるために使う。
+ * 🔵 rows は computeIndicators を通した日次配列（無ければ null を返す）。
+ */
+export function swingLow(rows, n = 25) {
+  if (!Array.isArray(rows) || rows.length === 0) return null
+  let lo = Infinity
+  for (let i = Math.max(0, rows.length - n); i < rows.length; i++) {
+    const v = rows[i]?.low ?? rows[i]?.close
+    if (v != null) lo = Math.min(lo, v)
+  }
+  return lo === Infinity ? null : lo
+}
+
+/**
  * 損切り価格を決める。建てた瞬間に確定させ、あとから動かさない。
  * 🔴 side は「建玉の銘柄がブル系かベア系か」。ベアETFも現物を買うので、
  *    価格が下がったら損切り＝どちらも entry より下に置く。
  *    （ベアETFは日経が上がると下がる。つまり読みが外れると価格が下がる）
+ *
+ * 🔴 **値幅（ATR）だけでは足りない**（2026-08-11 ユーザー指摘で拡張）。
+ *    ATR×k は値幅しか見ないので、誰が見ても支持されている水準の**すぐ内側**に
+ *    置いてしまうことがある。そこは真っ先に試される場所で、雑音で刈られやすい。
+ *    → **損切りが直近のスイング安値のすぐ内側に来たときだけ、安値の少し下へ回す**。
+ * 🔵 キリ番を避ける案も検討したが**入れなかった**。刻みを桁から出すと、
+ *    200円台のETFと40,000円台のETFのどちらかで必ず意味を失う。実データが出るまで持たない。
+ *
+ * 🔴 ただし**「その場で決める」に戻してはいけない**。構造を見るのは事前に決めた
+ *    純関数の中だけで、AI には触らせない。損切りが交渉可能になると、負けている場面ほど
+ *    「まだ支持線の内側だから」が通ってしまう。ここが設計原則3の本体。
+ *
+ * 🔴 構造で広げるのは **ATR幅の maxWiden 倍まで**。遠いスイング安値に引きずられて
+ *    損切りが青天井に深くなると、「負けを小さく」が壊れる。
+ *
+ * @param {object} p
+ * @param {number} p.entry     基準価格（建値、またはトレーリング時の現値）
+ * @param {number} p.atr20     対象ETFの ATR20
+ * @param {number} p.vix       VIX（倍率の決定に使う）
+ * @param {Array}  [p.rows]    対象ETFの日次配列。無ければ ATR だけで決める（従来どおり）
+ * @param {boolean}[p.eventNear] 数営業日内に大きなイベントがあるか。あれば幅を広げる
  */
-export function stopPrice({ entry, atr20, vix }) {
+export function stopPrice({ entry, atr20, vix, rows = null, eventNear = false, maxWiden = 1.5 }) {
   if (entry == null || atr20 == null) return null
-  const k = stopMultiplier(vix)
-  const stop = entry - k * atr20
+  const baseK = stopMultiplier(vix)
+  // 🔴 ATR は**過去の値幅**なので、イベント前は広がる前の狭い値になっている。
+  //    FOMC・日銀・SQ が近い日は、飛ぶ前提で少し広げておく。
+  const k = eventNear ? baseK * 1.2 : baseK
+
+  const atrStop = entry - k * atr20
+  const floor = entry - k * atr20 * maxWiden   // これ以上は深くしない
+  const parts = [`atr20x${k.toFixed(1)}`]
+  if (eventNear) parts.push('event')
+
+  let stop = atrStop
+
+  // 🔴 直すのは「損切りが安値の**すぐ内側**にある」ときだけ。
+  //    そこは真っ先に試される場所で、刈られてから元の方向へ戻られるのがいちばん痛い。
+  //    → 安値のわずか下へ回す。
+  // 🔴 安値がはるか下にあるときは**動かさない**。それは支持を試す位置ではなく
+  //    ただ遠いだけで、引きずられると損切りが無意味に深くなる。
+  const sl = swingLow(rows, 25)
+  if (sl != null && atrStop >= sl && atrStop - sl < atr20 * 0.5) {
+    stop = sl - atr20 * 0.1
+    parts.push('swing25')
+  }
+
+  // 🔴 広げすぎない（安全網）。
+  // 🔵 いまの定数（安値を見る範囲 0.5ATR ＋ 逃がし 0.1ATR）だと、構造で深くなるのは
+  //    最大でも 0.6ATR ぶん。k は 2.0 以上なので **既定値ではここに当たらない**。
+  //    それでも残すのは、あとで定数をいじったときに黙って深くならないようにするため。
+  if (stop < floor) { stop = floor; parts.push(`cap${maxWiden}x`) }
+
   return {
     price: Math.max(0, Math.round(stop * 10) / 10),
-    rule: `atr20x${k.toFixed(1)}`,
+    rule: parts.join('+'),
     multiplier: k,
   }
 }
@@ -223,18 +285,20 @@ export function stopPrice({ entry, atr20, vix }) {
  *    「負けを小さく」が崩れて期待値が壊れる。max() で必ず片方向にする。
  * 🔴 **利確はしない。** ここでやるのは「利が乗ったぶんだけ損切りを持ち上げる」ことだけ。
  *    上限を決めて降りると、いちばん大きな勝ちを取り逃す。
- * 🔵 幅は建てたときと同じ考え方（VIXに応じた ATR 倍率）。基準を現値に移すだけ。
+ * 🔴 幅の決め方は建てたときと**まったく同じ関数**（stopPrice）を使う。基準を現値に移すだけ。
+ *    2か所に持つと、建値のときだけ構造を見てトレーリングでは見ない、という食い違いが起きる。
  *
- * @param {{current:number|null, atr20:number|null, vix:number|null, prevStop:number|null}} p
+ * @param {{current:number|null, atr20:number|null, vix:number|null, prevStop:number|null, rows?:Array, eventNear?:boolean}} p
  * @returns {{price:number, rule:string, raised:boolean}|null} 動かす必要が無ければ prevStop のまま返す
  */
-export function trailStop({ current, atr20, vix, prevStop }) {
-  if (current == null || atr20 == null) return prevStop == null ? null : { price: prevStop, rule: null, raised: false }
-  const k = stopMultiplier(vix)
-  const candidate = Math.max(0, Math.round((current - k * atr20) * 10) / 10)
-  if (prevStop == null) return { price: candidate, rule: `atr20x${k.toFixed(1)} (trail)`, raised: true }
+export function trailStop({ current, atr20, vix, prevStop, rows = null, eventNear = false }) {
+  const s = stopPrice({ entry: current, atr20, vix, rows, eventNear })
+  if (!s) return prevStop == null ? null : { price: prevStop, rule: null, raised: false }
+  const candidate = s.price
+  const rule = `${s.rule} (trail)`
+  if (prevStop == null) return { price: candidate, rule, raised: true }
   if (candidate <= prevStop) return { price: prevStop, rule: null, raised: false }
-  return { price: candidate, rule: `atr20x${k.toFixed(1)} (trail)`, raised: true }
+  return { price: candidate, rule, raised: true }
 }
 
 /** 損切りに触れたか。終値ベースで判定する（v1 はザラ場を見ない）。 */
