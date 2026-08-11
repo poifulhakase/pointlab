@@ -197,6 +197,35 @@ export function volumeConfirms(vr, obvChg, i) {
   return true
 }
 
+/**
+ * 3月の最終 n 営業日か（2026-08-11 追加）。
+ *
+ * 🔴 **年度末の最終2営業日は、26年中18年が下げている**（69%・平均 −1.24%・中央 −0.77%）。
+ *    配当落ちの機械的な下落に、期末の益出し・ドレッシング解消が重なる。
+ *    実測 t=−3.10、前半 −0.623% / 後半 −0.707% と**前後半でほぼ同じ大きさ**。
+ *
+ * 🔴 **9月末は効かない**（t=−1.34）。年度末という日本特有の事情が3月に集中している。
+ *    権利付最終日・権利落ち日・決算期も全滅（t=0.4〜0.7）。**3月末だけが本物**。
+ *
+ * 🔵 最終1営業日だけでは効かない（バックテストで −0.18%）。落ちは最終2日に広がっている。
+ */
+export function isMarchEnd(rows, i, n = MARCH_END_DAYS) {
+  const m = rows[i]?.date?.slice(5, 7)
+  if (m !== '03') return false
+  // その月の最終営業日を探す（先の行は見るが、価格は使わないので先読みにならない）
+  let last = i
+  while (last + 1 < rows.length && rows[last + 1].date.slice(0, 7) === rows[i].date.slice(0, 7)) last++
+  return last - i < n
+}
+
+/**
+ * 3月末にベアを建てる日数。
+ * 🔴 2日を採る。3日のほうが CAGR は高い（15.25% vs 13.77%）が、
+ *    3日は 前半+1.14% / 後半+5.07% と偏る。2日は 前半+1.71% / 後半+1.77% でほぼ同じ、
+ *    しかも DD が −37.5% と現行(−38.4%)より浅い。**安定を採る**。
+ */
+export const MARCH_END_DAYS = 2
+
 export const BASELINE_PARAMS = Object.freeze({
   dipDev: -10,      // −極限買いのトリガー（25日MA乖離%）
   dipHold: 5,       // 押し目の保有営業日数
@@ -264,7 +293,7 @@ export function baselineTimeline(rowsWithIndicators, { volumeGate = true } = {})
   const vr = volumeRatio(rows, VOLUME_GATE.window)
   const obvChg = obvChange(rows, VOLUME_GATE.obvWindow)
   let held = false
-  return raw.map((row, i) => {
+  const gated = raw.map((row, i) => {
     if (row.side !== 'bull') { held = false; return row }
     if (!held) {
       if (row.reason.includes('ドンチャン') && !volumeConfirms(vr, obvChg, i)) {
@@ -274,6 +303,17 @@ export function baselineTimeline(rowsWithIndicators, { volumeGate = true } = {})
     }
     return row
   })
+
+  // 🔴 年度末の最終2営業日は、ルールの判断より優先してベアを建てる。
+  //    26年中18年が下げており（69%・平均 −1.24%）、配当落ち＋期末の益出しという**機械的な需給**が理由。
+  //    実測でバックテスト DDそろえ後 +1.67%（前半 +1.71% / 後半 +1.77%）。
+  // 🔴 **出来高フィルターの後に上書きする**。前に入れると、2日間の割り込みで
+  //    フィルターの「入る瞬間か」の判定がリセットされ、明けにブルへ戻れないことがある。
+  //    実測で DD が −37.5% → −41.9% に悪化した（2026-08-11 に踏んだ）。
+  return gated.map((row, i) =>
+    (isMarchEnd(rows, i)
+      ? { date: row.date, side: 'bear', reason: '年度末の最終2営業日（配当落ち＋期末の益出し）' }
+      : row))
 }
 
 // ── 損切り（🔴 LLM には決めさせない部分・設計原則3）────────────────────────

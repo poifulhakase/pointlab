@@ -4,7 +4,8 @@ import {
   computeIndicators, donchianStates, inSeason,
   baselineTimeline, BASELINE_PARAMS,
   stopMultiplier, stopPrice, trailStop, isStopHit, swingLow,
-  volumeRatio, obvChange, volumeConfirms, VOLUME_GATE, TRAIL_WIDEN, baselineTimeline as blTimeline,
+  volumeRatio, obvChange, volumeConfirms, VOLUME_GATE, TRAIL_WIDEN, isMarchEnd, MARCH_END_DAYS,
+  baselineTimeline as blTimeline,
   maxQty, clampQty,
   // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../robotStrategy.mjs'
@@ -423,5 +424,47 @@ describe('出来高フィルター', () => {
     // 出来高が平坦（比率1.0）なので、フィルターありでは見送りが出る
     expect(on.filter((r: { side: string | null }) => r.side === 'bull').length)
       .toBeLessThanOrEqual(off.filter((r: { side: string | null }) => r.side === 'bull').length)
+  })
+})
+
+// ── 年度末ベア（2026-08-11 追加）──
+// 🔴 3月の最終2営業日は **26年中18年が下げている**（69%・平均 −1.24%・中央 −0.77%）。
+//    配当落ちの機械的な下落に、期末の益出し・ドレッシング解消が重なる。
+//    実測 t=−3.10、前半 −0.623% / 後半 −0.707% と前後半でほぼ同じ大きさ。
+// 🔴 9月末は効かない（t=−1.34）。権利付最終日・権利落ち日・決算期も全滅（t=0.4〜0.7）。
+//    **年度末という日本特有の事情が3月だけに効いている。**
+describe('年度末ベア', () => {
+  const mk = (dates: string[]) =>
+    dates.map(d => ({ date: d, open: 100, high: 101, low: 99, close: 100, volume: 100 }))
+
+  it('3月の最終2営業日を拾う', () => {
+    const rows = mk(['2026-03-26', '2026-03-27', '2026-03-30', '2026-03-31', '2026-04-01'])
+    expect(isMarchEnd(rows, 0)).toBe(false)
+    expect(isMarchEnd(rows, 1)).toBe(false)
+    expect(isMarchEnd(rows, 2)).toBe(true)    // 最終2営業日
+    expect(isMarchEnd(rows, 3)).toBe(true)    // 最終営業日
+    expect(isMarchEnd(rows, 4)).toBe(false)   // 4月
+  })
+
+  it('🔴 3月以外の月末では発火しない（9月は実測で効かない）', () => {
+    const rows = mk(['2026-09-29', '2026-09-30', '2026-10-01'])
+    expect(isMarchEnd(rows, 0)).toBe(false)
+    expect(isMarchEnd(rows, 1)).toBe(false)
+  })
+
+  it('日数は2（3日はCAGRが高いが前後半で偏る）', () => {
+    expect(MARCH_END_DAYS).toBe(2)
+  })
+
+  // 🔴 出来高フィルターの**後**に上書きすること。前に入れると2日間の割り込みで
+  //    フィルターの「入る瞬間か」の判定がリセットされ、DD が −37.5% → −41.9% に悪化した。
+  it('🔴 年度末は出来高フィルターより後に効く（ブルを上書きする）', () => {
+    const dates: string[] = []
+    for (let d = 1; d <= 31; d++) dates.push(`2026-03-${String(d).padStart(2, '0')}`)
+    const rows = dates.map((d, i) => ({ date: d, open: 100 + i, high: 101 + i, low: 99 + i, close: 100 + i, volume: 100 }))
+    const tl = blTimeline(computeIndicators(rows))
+    const last = tl[tl.length - 1] as { side: string | null; reason: string }
+    expect(last.side).toBe('bear')
+    expect(last.reason).toContain('年度末')
   })
 })
