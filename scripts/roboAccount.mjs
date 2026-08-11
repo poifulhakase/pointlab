@@ -23,6 +23,12 @@ export function emptyAccount({ logicVersion = 'robo-v1-llm', decider = null } = 
     equity_curve: [],
     stats: { closed_trades: 0, win_rate: null, expectancy: null, max_drawdown_pct: null, stop_then_reversed: 0 },
     baseline: null,
+    // 🔴 **翌営業日の寄り付きで約定させる注文**（2026-08-11 追加）。
+    //    08:30 の判断は前営業日の**終値**を見て下すが、実際に買えるのは 09:00 の**寄値**。
+    //    実測で 1570 の窓（前日終値→寄値）は平均 2.08%・上位10%で 4.82% あり、
+    //    終値で約定したことにすると口座の成績が実物と別のものになる。
+    //    → 判断した日はここに積むだけにして、**次の実行で実際の寄値を見て約定させる**。
+    pending: null,
     // 🔴 実保有に合わせた同期の記録。同期しても差分は消さずここに残す
     divergences: [],
     last_synced_file_id: null,
@@ -149,16 +155,77 @@ export function applyDecision({ account, decision, priceOf, atrOf, rowsOf = () =
   return { account: acc, actions }
 }
 
-/** 損切りに触れていれば決済する */
-export function applyStop({ account, priceOf, date, execDate }) {
+/**
+ * 損切りに触れたか**判定するだけ**。決済はしない。
+ * 🔴 2026-08-11 に「判定して即決済」から変えた。終値で触れても、実際に降りられるのは
+ *    翌営業日の寄り付き。窓で飛べばもっと悪い値段になる。決済は保留注文にして、
+ *    次の実行で実際の寄値を見て約定させる（`applyPending`）。
+ */
+export function detectStopHit({ account, priceOf }) {
   const pos = account.position
-  if (!pos || !pos.stop_price) return { account, hit: false }
+  if (!pos || !pos.stop_price) return false
   const close = priceOf(pos.symbol)
-  if (close == null || close > pos.stop_price) return { account, hit: false }
+  return close != null && close <= pos.stop_price
+}
+
+/**
+ * 判断を**保留注文**として積む。約定はしない。
+ * @param {object} p
+ * @param {object} p.decision   LLM の判断
+ * @param {boolean} p.stopExit  損切りに触れているか（触れていれば寄りでまず手仕舞う）
+ * @param {number|null} p.plannedStop 判断した時点の終値から引いた損切り値。窓ガードの基準に使う
+ */
+export function queueOrder({ account, decision, stopExit = false, plannedStop = null, decidedOn }) {
   return {
-    account: closePosition({ account, price: close, date, execDate, reason: 'stop' }),
-    hit: true,
+    ...account,
+    pending: { decision: decision ?? null, stop_exit: !!stopExit, planned_stop: plannedStop, decided_on: decidedOn },
   }
+}
+
+/**
+ * 保留注文を、**実際の寄値**で約定させる。
+ *
+ * 🔴 呼ぶのは「次の実行」。そのとき日足の最終行は判断の翌営業日になっていて、
+ *    その行の **始値＝実際に買えた/売れた値段** が入っている。
+ *
+ * 🔴 **窓ガード**＝新規建ての注文で、寄値が既に「判断時点で引いた損切り値」の
+ *    向こう側にあるなら**建てない**。判断の前提が寄り付きで壊れているので、
+ *    入った瞬間に損切りという形になるだけ。見送って翌日また判断する。
+ *    🔵 損切り値は「判断時点の終値」から引いた値を使う（寄値から引き直すと、
+ *       どんなに飛んでいても必ず内側に収まってしまい、ガードが働かない）。
+ */
+export function applyPending({ account, openOf, atrOf, rowsOf = () => null, vix, eventNear = false, date }) {
+  const p = account.pending
+  if (!p) return { account, actions: [], gapSkipped: false }
+
+  let acc = { ...account, pending: null }
+  const actions = []
+
+  // ① 損切りに触れていたら、まず寄りで手仕舞う
+  if (p.stop_exit && acc.position) {
+    const px = openOf(acc.position.symbol)
+    if (px != null) {
+      acc = closePosition({ account: acc, price: px, date, execDate: date, reason: 'stop' })
+      actions.push('stop(open)')
+    }
+  }
+
+  const d = p.decision ?? {}
+
+  // ② 窓ガード
+  if (d.action === 'open' && d.symbol && d.symbol !== 'none' && p.planned_stop != null) {
+    const px = openOf(d.symbol)
+    if (px != null && px <= p.planned_stop) {
+      actions.push('gap-skip')
+      return { account: acc, actions, gapSkipped: true }
+    }
+  }
+
+  // ③ 判断を寄値で約定させる
+  const r = applyDecision({
+    account: acc, decision: d, priceOf: openOf, atrOf, rowsOf, vix, eventNear, date, execDate: date,
+  })
+  return { account: r.account, actions: [...actions, ...r.actions], gapSkipped: false }
 }
 
 /**

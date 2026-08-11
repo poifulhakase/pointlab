@@ -23,12 +23,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { loadLocalEnv } from './loadLocalEnv.mjs'
-import { baselineTimeline } from '../src/utils/robotStrategy.mjs'
-import { loadPrices, etfFeatures, priceMap, atrMap, rowsMap, summarizeSupply, DATA_DIR } from './roboData.mjs'
+import { baselineTimeline, stopPrice } from '../src/utils/robotStrategy.mjs'
+import { loadPrices, etfFeatures, priceMap, openMap, atrMap, rowsMap, summarizeSupply, DATA_DIR } from './roboData.mjs'
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
 import { decide, holdOnFailure, validateDecision, ROBO_MODEL, ROBO_EFFORT } from './llmDecide.mjs'
 import {
-  emptyAccount, applyDecision, applyStop, applyTrail, equityOf, pushEquity, recomputeStats, syncWithReal,
+  emptyAccount, detectStopHit, queueOrder, applyPending, applyTrail, equityOf, pushEquity, recomputeStats, syncWithReal,
 } from './roboAccount.mjs'
 import {
   fetchLatestImages, downloadFile, ageInDays, sendMessage, buildNotification,
@@ -148,9 +148,11 @@ async function main() {
   // ── 5) 口座 ──
   let account = loadAccount()
   const prices = priceMap(etf)
+  const opens = openMap(etf)
   const atrs = atrMap(etf)
   const rowsByCode = rowsMap(etf)
   const priceOf = (s) => prices[s] ?? null
+  const openOf = (s) => opens[s] ?? null
   const atrOf = (s) => atrs[s] ?? null
   const rowsOf = (s) => rowsByCode[s] ?? null
 
@@ -159,10 +161,18 @@ async function main() {
   const nearEvent = await eventNear()
   if (nearEvent) log('[5] 🔵 2営業日内に大きなイベントあり → 損切りを広めに取る')
 
-  // 損切りの確認を先に行う
-  const stopped = applyStop({ account, priceOf, date, execDate: date })
-  account = stopped.account
-  if (stopped.hit) log('[5] 🔴 損切りに触れたため決済した')
+  // 🔴 まず**前回の判断を、実際に買えた値段（今日の寄値）で約定させる**。
+  //    判断は前営業日の終値を見て下すが、買えるのは翌朝の寄り付き。
+  //    実測で 1570 の窓（前日終値→寄値）は平均 2.08%・上位10%で 4.82% あり、
+  //    終値で約定したことにすると、口座の成績が実物と別のものになる。
+  const filled = applyPending({ account, openOf, atrOf, rowsOf, vix, eventNear: nearEvent, date })
+  account = filled.account
+  if (filled.actions.length) log(`[5] 前回の注文を寄値で約定: ${filled.actions.join(', ')}`)
+  if (filled.gapSkipped) log('[5] 🔴 窓で前提が壊れたため見送った（寄値が損切り値の向こう側）')
+
+  // 損切りの確認（前営業日の終値で判定するだけ。決済は翌朝の寄値で行う）
+  const stopHit = detectStopHit({ account, priceOf })
+  if (stopHit) log('[5] 🔴 損切りに触れた → 翌営業日の寄りで手仕舞う')
 
   // 損切りを引き上げる（トレーリング）。
   // 🔴 **確認の後**に行う。今日引き上げた線が効くのは明日から。
@@ -278,10 +288,20 @@ async function main() {
   }
   decision = v.normalized ?? decision
 
-  // ── 7) 口座に反映 ──
-  const applied = applyDecision({ account, decision, priceOf, atrOf, rowsOf, vix, eventNear: nearEvent, date, execDate: date })
-  account = applied.account
-  log(`[7] 口座への反映: ${applied.actions.join(', ')}`)
+  // ── 7) 口座に反映（＝**注文を積むだけ**。約定は次の実行で寄値を見て行う）──
+  // 🔴 窓ガードの基準になる損切り値は、**判断時点の終値**から引く。
+  //    寄値から引き直すと、どんなに飛んでいても必ず内側に収まりガードが働かない。
+  const plannedStop = (() => {
+    const d = decision ?? {}
+    if (d.action !== 'open' || !d.symbol || d.symbol === 'none') return null
+    const s = stopPrice({
+      entry: priceOf(d.symbol), atr20: atrOf(d.symbol), vix,
+      rows: rowsOf(d.symbol), eventNear: nearEvent,
+    })
+    return s?.price ?? null
+  })()
+  account = queueOrder({ account, decision, stopExit: stopHit, plannedStop, decidedOn: date })
+  log(`[7] 注文を積んだ（次の寄りで約定）: ${decision?.action ?? 'hold'}${stopHit ? ' ＋ 損切り手仕舞い' : ''}`)
 
   account = pushEquity(account, date, equityOf(account, priceOf))
   account = recomputeStats(account)

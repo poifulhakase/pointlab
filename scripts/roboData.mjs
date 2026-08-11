@@ -100,6 +100,19 @@ export function rowsMap(etf) {
   return m
 }
 
+/**
+ * 銘柄コード → 最終行の**始値**。
+ * 🔴 保留注文を「実際に買えた値段」で約定させるために使う。
+ *    次の実行のとき、この最終行は判断の翌営業日になっている＝その日の寄値。
+ */
+export function openMap(etf) {
+  const m = {}
+  for (const [code, v] of Object.entries(etf)) {
+    m[code] = v.rows?.length ? v.rows[v.rows.length - 1].open : null
+  }
+  return m
+}
+
 export function atrMap(etf) {
   const m = {}
   for (const [code, v] of Object.entries(etf)) {

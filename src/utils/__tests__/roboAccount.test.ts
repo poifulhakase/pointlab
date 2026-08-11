@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   emptyAccount, equityOf, openPosition, closePosition,
-  applyDecision, applyStop, applyTrail, recomputeStats, pushEquity,
+  applyDecision, detectStopHit, queueOrder, applyPending, applyTrail, recomputeStats, pushEquity,
   syncWithReal, describeChange, validateRealPosition, INITIAL_CASH,
 // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../../../scripts/roboAccount.mjs'
@@ -145,27 +145,76 @@ describe('applyDecision', () => {
   })
 })
 
-describe('applyStop', () => {
+describe('detectStopHit（判定するだけ・決済はしない）', () => {
   const held = openPosition({
     account: emptyAccount(), symbol: '1570', qty: 10, price: 30000,
     atr20: 600, vix: 15, date: '2026-08-10', execDate: '2026-08-11',
   })
 
-  it('損切り値を割ったら決済される', () => {
-    const r = applyStop({ account: held, priceOf: () => 28000, date: 'x', execDate: 'y' })
-    expect(r.hit).toBe(true)
+  it('損切り値を割ったら true', () => {
+    expect(detectStopHit({ account: held, priceOf: () => 28000 })).toBe(true)
+  })
+
+  it('損切り値より上なら false', () => {
+    expect(detectStopHit({ account: held, priceOf: () => 29000 })).toBe(false)
+  })
+
+  it('建玉が無ければ false', () => {
+    expect(detectStopHit({ account: emptyAccount(), priceOf: () => 1 })).toBe(false)
+  })
+})
+
+// ── 保留注文（2026-08-11 追加）──
+// 🔴 08:30 の判断は前営業日の**終値**を見て下すが、実際に買えるのは 09:00 の**寄値**。
+//    実測で 1570 の窓（前日終値→寄値）は平均 2.08%・上位10%で 4.82% ある。
+//    終値で約定したことにすると、口座の成績が実物と別のものになる。
+describe('保留注文を寄値で約定させる', () => {
+  const openDay = (symbol: string, qty = 10) => ({
+    action: 'open', symbol, qty, confidence_pct: 60, reason: 'テスト', counter: 'テスト', user_note: '',
+  })
+
+  it('積んだ時点では約定していない', () => {
+    const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), decidedOn: '2026-08-10' })
+    expect(a.position).toBe(null)
+    expect(a.trades.length).toBe(0)
+    expect(a.pending.decision.symbol).toBe('1570')
+  })
+
+  it('🔴 約定価格は終値ではなく寄値になる', () => {
+    const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), plannedStop: 28000, decidedOn: '2026-08-10' })
+    // 判断時の終値は 30000（PRICES）。翌朝の寄値は 31000 で飛んでいる
+    const r = applyPending({ account: a, openOf: () => 31000, atrOf: () => 600, vix: 15, date: '2026-08-11' })
+    expect(r.account.position.avg_price).toBe(31000)
+    expect(r.account.trades[0].price).toBe(31000)
+  })
+
+  it('🔴 窓ガード＝寄値が損切り値の向こう側なら建てない', () => {
+    const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), plannedStop: 28000, decidedOn: '2026-08-10' })
+    const r = applyPending({ account: a, openOf: () => 27500, atrOf: () => 600, vix: 15, date: '2026-08-11' })
+    expect(r.gapSkipped).toBe(true)
     expect(r.account.position).toBe(null)
-    expect(r.account.trades[1].exit_reason).toBe('stop')
+    expect(r.account.trades.length).toBe(0)
+    expect(r.account.pending).toBe(null)   // 持ち越さない。翌日また判断する
   })
 
-  it('損切り値より上なら何も起きない', () => {
-    const r = applyStop({ account: held, priceOf: () => 29000, date: 'x', execDate: 'y' })
-    expect(r.hit).toBe(false)
-    expect(r.account.position).not.toBe(null)
+  it('損切りに触れていた建玉は、寄値で手仕舞われる', () => {
+    const held = openPosition({
+      account: emptyAccount(), symbol: '1570', qty: 10, price: 30000,
+      atr20: 600, vix: 15, date: '2026-08-10', execDate: '2026-08-10',
+    })
+    const a = queueOrder({ account: held, decision: { action: 'hold' }, stopExit: true, decidedOn: '2026-08-11' })
+    // 終値で損切りに触れ、翌朝さらに窓を開けて下に飛んだ
+    const r = applyPending({ account: a, openOf: () => 27000, atrOf: () => 600, vix: 15, date: '2026-08-12' })
+    expect(r.account.position).toBe(null)
+    const t = r.account.trades[1]
+    expect(t.exit_reason).toBe('stop')
+    expect(t.price).toBe(27000)          // 🔴 損切り値(28800)ではなく、実際に降りられた寄値
   })
 
-  it('建玉が無ければ何も起きない', () => {
-    expect(applyStop({ account: emptyAccount(), priceOf: () => 1, date: 'x', execDate: 'y' }).hit).toBe(false)
+  it('保留が無ければ何も起きない', () => {
+    const r = applyPending({ account: emptyAccount(), openOf: () => 1, atrOf: () => 1, vix: 15, date: 'x' })
+    expect(r.actions).toEqual([])
+    expect(r.account.trades.length).toBe(0)
   })
 })
 
