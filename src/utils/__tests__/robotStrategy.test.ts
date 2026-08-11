@@ -3,7 +3,7 @@ import {
   UNIVERSE, bySymbol,
   computeIndicators, donchianStates, inSeason,
   baselineTimeline, BASELINE_PARAMS,
-  stopMultiplier, stopPrice, isStopHit,
+  stopMultiplier, stopPrice, trailStop, isStopHit,
   maxQty, clampQty,
   // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../robotStrategy.mjs'
@@ -236,5 +236,46 @@ describe('maxQty / clampQty', () => {
   it('価格や資金が無ければ 0（発注しない）', () => {
     expect(maxQty({ cash: 1000000, price: 0 })).toBe(0)
     expect(maxQty({ cash: 0, price: 30000 })).toBe(0)
+  })
+})
+
+// ── トレーリングストップ（2026-08-11 追加）──
+// 🔴 ここは「積極化」の中身そのもの。負けの大きさを変えずに勝ちを伸ばすための仕組みで、
+//    引き上げるだけ・下げない、が壊れると期待値の前提ごと崩れる。
+describe('trailStop', () => {
+  it('利が乗ったら損切りを引き上げる', () => {
+    const t = trailStop({ current: 1200, atr20: 20, vix: 15, prevStop: 1000 })
+    expect(t.raised).toBe(true)
+    expect(t.price).toBe(1160) // 1200 - 2.0 x 20（VIX 15 → 倍率2.0）
+    expect(t.rule).toContain('trail')
+  })
+
+  it('🔴 値が下がっても損切りは下げない', () => {
+    const t = trailStop({ current: 1010, atr20: 20, vix: 15, prevStop: 1000 })
+    expect(t.raised).toBe(false)
+    expect(t.price).toBe(1000)
+  })
+
+  it('🔴 ボラが膨らんでも損切りは下げない（倍率が上がって幅が広がるケース）', () => {
+    // VIX 35 → 倍率3.0。1200 - 3.0 x 60 = 1020 で、直前の 1100 より下
+    const t = trailStop({ current: 1200, atr20: 60, vix: 35, prevStop: 1100 })
+    expect(t.raised).toBe(false)
+    expect(t.price).toBe(1100)
+  })
+
+  it('何度上げても単調に上がっていく', () => {
+    let stop: number | null = 1000
+    for (const px of [1100, 1050, 1300, 1200, 1500]) {
+      const t: { price: number } = trailStop({ current: px, atr20: 20, vix: 15, prevStop: stop })
+      expect(t.price).toBeGreaterThanOrEqual(stop as number)
+      stop = t.price
+    }
+    expect(stop).toBe(1460)
+  })
+
+  it('値やATRが取れない日は何もしない', () => {
+    expect(trailStop({ current: null, atr20: 20, vix: 15, prevStop: 1000 }).price).toBe(1000)
+    expect(trailStop({ current: 1200, atr20: null, vix: 15, prevStop: 1000 }).raised).toBe(false)
+    expect(trailStop({ current: null, atr20: null, vix: null, prevStop: null })).toBe(null)
   })
 })

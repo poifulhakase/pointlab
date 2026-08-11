@@ -28,7 +28,7 @@ import { loadPrices, etfFeatures, priceMap, atrMap, summarizeSupply, DATA_DIR } 
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
 import { decide, holdOnFailure, validateDecision, ROBO_MODEL, ROBO_EFFORT } from './llmDecide.mjs'
 import {
-  emptyAccount, applyDecision, applyStop, equityOf, pushEquity, recomputeStats, syncWithReal,
+  emptyAccount, applyDecision, applyStop, applyTrail, equityOf, pushEquity, recomputeStats, syncWithReal,
 } from './roboAccount.mjs'
 import {
   fetchLatestImages, downloadFile, ageInDays, sendMessage, buildNotification,
@@ -156,6 +156,13 @@ async function main() {
   const stopped = applyStop({ account, priceOf, date, execDate: date })
   account = stopped.account
   if (stopped.hit) log('[5] 🔴 損切りに触れたため決済した')
+
+  // 損切りを引き上げる（トレーリング）。
+  // 🔴 **確認の後**に行う。今日引き上げた線が効くのは明日から。
+  // 🔵 利確はしない。利が乗ったぶんだけ「負けない位置」へ線を寄せるだけ。
+  const trailed = applyTrail({ account, priceOf, atrOf, vix })
+  account = trailed.account
+  if (trailed.raised) log(`[5] 🔵 損切りを引き上げた（${trailed.from ?? '—'} → ${trailed.to}）`)
 
   // ── 5b) 実保有の読み取り ──
   // 🔴 ロボ口座とは別ファイル。同期させると AI の成績と人の介入が分離できなくなる。

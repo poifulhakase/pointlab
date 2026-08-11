@@ -72,9 +72,9 @@ const MAIN_VIEWS = [
   { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
   // 🔴 2026-08-09 に名称を入れ替えた（需給分析=シールド／ポジション分析=エンジン）。
   //    内部識別子 'quant'/'shield' と localStorage キーは据え置き（保存レポートの中身が入れ替わるため）。
+  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: 'シールド',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <ShieldIcon /> },
   { label: 'エンジン',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon /> },
-  { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 
@@ -83,7 +83,9 @@ export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, o
   const showMenu = isMobile
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
-  const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal' || view === 'playbook' || view === 'original' || view === 'timemachine'
+  // 🔵 エンジン（内部識別子 'shield'）も研究室と同じサイバー調にする（2026-08-11 ユーザー指示）。
+  //    中身がロボの機械寄りの画面なので、研究室と地続きに見せる。
+  const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal' || view === 'playbook' || view === 'original' || view === 'timemachine' || view === 'shield'
   const useNeon  = (isLab || forceNeon) && theme === 'dark'
   const neonColor      = '#00e5ff'
   const neonDim        = 'rgba(0,229,255,0.42)'

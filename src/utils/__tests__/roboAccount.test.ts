@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   emptyAccount, equityOf, openPosition, closePosition,
-  applyDecision, applyStop, recomputeStats, pushEquity,
+  applyDecision, applyStop, applyTrail, recomputeStats, pushEquity,
   syncWithReal, describeChange, validateRealPosition, INITIAL_CASH,
 // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../../../scripts/roboAccount.mjs'
@@ -372,5 +372,38 @@ describe('equityOf / pushEquity / recomputeStats', () => {
     expect(s.win_rate).toBe(1)
     expect(s.expectancy).toBeGreaterThan(0)
     expect(s.max_drawdown_pct).toBeLessThan(0)
+  })
+})
+
+describe('applyTrail', () => {
+  const acct = (stop: number | null) => ({
+    ...emptyAccount(),
+    position: { symbol: '1570', qty: 10, avg_price: 30000, stop_price: stop, stop_rule: 'atr20x2.0', opened_on: '2026-08-01' },
+  })
+
+  it('含み益が伸びたぶんだけ損切りを引き上げる', () => {
+    // 現値 30000・ATR 600・VIX 15 → 30000 - 2.0 x 600 = 28800
+    const r = applyTrail({ account: acct(27000), priceOf, atrOf, vix: 15 })
+    expect(r.raised).toBe(true)
+    expect(r.account.position.stop_price).toBe(28800)
+    expect(r.account.position.stop_rule).toContain('trail')
+  })
+
+  it('🔴 損切りは下がらない', () => {
+    const r = applyTrail({ account: acct(29500), priceOf, atrOf, vix: 15 })
+    expect(r.raised).toBe(false)
+    expect(r.account.position.stop_price).toBe(29500)
+  })
+
+  it('建玉が無ければ何もしない', () => {
+    const r = applyTrail({ account: emptyAccount(), priceOf, atrOf, vix: 15 })
+    expect(r.raised).toBe(false)
+    expect(r.account.position).toBe(null)
+  })
+
+  it('🔴 引き上げても約定は増えない（利確はしない）', () => {
+    const r = applyTrail({ account: acct(27000), priceOf, atrOf, vix: 15 })
+    expect(r.account.trades.length).toBe(0)
+    expect(r.account.position.qty).toBe(10)
   })
 })

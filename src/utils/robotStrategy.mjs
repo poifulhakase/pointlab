@@ -210,6 +210,33 @@ export function stopPrice({ entry, atr20, vix }) {
   }
 }
 
+/**
+ * 損切りを**引き上げる**（トレーリングストップ・2026-08-11 追加）。
+ *
+ * 🔴 なぜ入れるか＝この戦略は**勝率34〜40%が正常**なトレンドフォロー型で、
+ *    期待値は「たまに来る大きな勝ちを取り切れるか」だけで決まる。
+ *    それまでの作りは「建てた瞬間の損切りを動かさない」＋「手仕舞いはAIが毎日判断」で、
+ *    **AIが早めに利確してしまう余地が構造的に残っていた**（プロンプトで戒めてはいたが、
+ *    文章でお願いしていただけで仕組みで止めていなかった）。
+ *
+ * 🔴 **上げるだけ。下げない。** ボラが膨らんだ日に損切りを下へずらすと、
+ *    「負けを小さく」が崩れて期待値が壊れる。max() で必ず片方向にする。
+ * 🔴 **利確はしない。** ここでやるのは「利が乗ったぶんだけ損切りを持ち上げる」ことだけ。
+ *    上限を決めて降りると、いちばん大きな勝ちを取り逃す。
+ * 🔵 幅は建てたときと同じ考え方（VIXに応じた ATR 倍率）。基準を現値に移すだけ。
+ *
+ * @param {{current:number|null, atr20:number|null, vix:number|null, prevStop:number|null}} p
+ * @returns {{price:number, rule:string, raised:boolean}|null} 動かす必要が無ければ prevStop のまま返す
+ */
+export function trailStop({ current, atr20, vix, prevStop }) {
+  if (current == null || atr20 == null) return prevStop == null ? null : { price: prevStop, rule: null, raised: false }
+  const k = stopMultiplier(vix)
+  const candidate = Math.max(0, Math.round((current - k * atr20) * 10) / 10)
+  if (prevStop == null) return { price: candidate, rule: `atr20x${k.toFixed(1)} (trail)`, raised: true }
+  if (candidate <= prevStop) return { price: prevStop, rule: null, raised: false }
+  return { price: candidate, rule: `atr20x${k.toFixed(1)} (trail)`, raised: true }
+}
+
 /** 損切りに触れたか。終値ベースで判定する（v1 はザラ場を見ない）。 */
 export function isStopHit({ close, stopPrice: stop }) {
   if (close == null || stop == null) return false

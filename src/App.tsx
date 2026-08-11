@@ -143,6 +143,10 @@ export default function App() {
 
   const { isMobile, isTablet, isDesktop } = useBreakpoint()
   const isLegalNeon = cal.view === 'legal' && theme === 'dark'
+  // 🔵 エンジン（内部識別子 'shield'）も研究室と同じサイバー調にする（2026-08-11 ユーザー指示）。
+  //    下の帯（フッター）は CalendarHeader 側の isLab に 'shield' を足して合わせてある。
+  const isEngineNeon = cal.view === 'shield' && theme === 'dark'
+  const isNeonBar = isLegalNeon || isEngineNeon
 
   // ── 日/週/月 スワイプ ─────────────────────────────────────────────────
   const calTouchStartXRef  = useRef(0)
@@ -380,6 +384,14 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   const handleMenuClick    = useCallback(() => setSidebarOpen(p => !p), [])
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), [])
 
+  // 🔴 スマホでメニューを開いたまま画面を替えると、行き先に黒い覆いだけが残る
+  //    （覆いはメニューの一部で、画面を替えても自分では閉じない）。
+  //    メニューの中から画面を替えるものは、必ずここを通してメニューごと閉じること。
+  const handleOpenSector = useCallback(() => {
+    setSidebarOpen(false)
+    setViewWithTransition('sector')
+  }, [setViewWithTransition])
+
   // ── フローティングタブ: ページを離れるタイミングでリセット（戻った瞬間に正しい状態で表示）
   const prevViewRef2 = useRef(cal.view)
   useEffect(() => {
@@ -554,7 +566,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             onPoiroboAlertOpen={handlePoiroboAlertOpen}
             onGoToday={() => cal.goToDate(cal.today)}
             theme={theme}
-            onOpenSector={() => setViewWithTransition('sector')}
+            onOpenSector={handleOpenSector}
           />
         )}
 
@@ -781,9 +793,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* コミュニティ限定ビュー（カレンダー/シールド/エンジン）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
       {(((isCalView || cal.view === 'quant' || cal.view === 'shield') && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
-        <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isLegalNeon ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
-          <div style={styles.floatSubBar} className={isLegalNeon ? undefined : 'glass'}>
-          <div style={styles.floatPill} className={isLegalNeon ? undefined : 'glass'}>
+        <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
+          <div style={styles.floatSubBar} className={isNeonBar ? undefined : 'glass'}>
+          <div style={styles.floatPill} className={isNeonBar ? undefined : 'glass'}>
             {isCalView && (
               <>
                 {CAL_VIEW_TABS.filter(([key]) => isMobile || key !== 'day').map(([key, label]) => (
@@ -831,13 +843,20 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 {ENGINE_TABS.map((tab) => (
                   <button
                     key={tab}
-                    style={{ ...styles.floatTab, ...(engineTab === tab ? styles.floatTabActive : {}) }}
+                    style={{
+                      ...styles.floatTab,
+                      color: isEngineNeon ? (engineTab === tab ? NEON_CLR : NEON_DIM) : undefined,
+                      ...(engineTab === tab
+                        ? isEngineNeon
+                          ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
+                          : styles.floatTabActive
+                        : {}),
+                    }}
                     onClick={() => setEngineTab(tab)}
                   >{ENGINE_LABELS[tab]}</button>
                 ))}
               </>
             )}
-            {/* 🔵 エンジン（'shield'）はロボ口座1枚なのでサブタブを出さない */}
             {cal.view === 'legal' && (
               <>
                 {LEGAL_TABS.map((tab, i) => (

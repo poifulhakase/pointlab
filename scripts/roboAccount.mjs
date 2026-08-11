@@ -6,7 +6,7 @@
 //    （ドテン。LLM に2ステップ書かせず、コード側で保証する）。
 // ──────────────────────────────────────────────────────────────────────────
 
-import { bySymbol, stopPrice, clampQty } from '../src/utils/robotStrategy.mjs'
+import { bySymbol, stopPrice, trailStop, clampQty } from '../src/utils/robotStrategy.mjs'
 
 export const INITIAL_CASH = 1000000
 
@@ -157,6 +157,31 @@ export function applyStop({ account, priceOf, date, execDate }) {
   return {
     account: closePosition({ account, price: close, date, execDate, reason: 'stop' }),
     hit: true,
+  }
+}
+
+/**
+ * 損切りを**引き上げる**（トレーリング・2026-08-11 追加）。
+ *
+ * 🔴 **損切りの確認より後に呼ぶこと。** 今日の終値で持ち上げてから今日の終値と比べたら、
+ *    損切りには永遠に触れない。今日引き上げた線が効くのは明日から。
+ * 🔴 引き上げるだけで下げない（判断は trailStop 側）。ここは口座に書くだけ。
+ */
+export function applyTrail({ account, priceOf, atrOf, vix }) {
+  const pos = account.position
+  if (!pos) return { account, raised: false, from: null, to: null }
+  const t = trailStop({
+    current: priceOf(pos.symbol),
+    atr20: atrOf(pos.symbol),
+    vix,
+    prevStop: pos.stop_price ?? null,
+  })
+  if (!t || !t.raised) return { account, raised: false, from: pos.stop_price ?? null, to: pos.stop_price ?? null }
+  return {
+    account: { ...account, position: { ...pos, stop_price: t.price, stop_rule: t.rule ?? pos.stop_rule ?? null } },
+    raised: true,
+    from: pos.stop_price ?? null,
+    to: t.price,
   }
 }
 
