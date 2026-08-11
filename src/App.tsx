@@ -973,7 +973,13 @@ const styles: Record<string, React.CSSProperties> = {
 
   mobileCalNav: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0, padding: '16px 12px 12px' },
   subNavBtn:    { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 7, color: 'var(--text-sub)', flexShrink: 0 },
-  subLabel:     { fontWeight: 500, fontSize: 17, letterSpacing: '-0.3px', color: 'var(--text)', whiteSpace: 'nowrap', margin: '0 2px', flexShrink: 0, minWidth: 112, textAlign: 'center' },
+  // 🔴 幅は**固定**にする（2026-08-11 ユーザー指摘）。
+  //    以前は minWidth だったので、週ビューで月をまたぐと
+  //    「2026年 9月」→「2026年 9月 – 10月」と伸び、**その分だけ ＜＞ が右へずれていた**。
+  //    いちばん長い形（例「2026年 12月 – 1月」）が収まる幅で固定する。
+  // 🔵 中央寄せではなく**左寄せ**にするのが要点。中央寄せだと幅を固定しても
+  //    文字数が変わるたびにタイトル自身の左端が動いて、結局ちらつく。
+  subLabel:     { fontWeight: 500, fontSize: 17, letterSpacing: '-0.3px', color: 'var(--text)', whiteSpace: 'nowrap', margin: '0 2px', flexShrink: 0, width: 172, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis' },
 
   toast: { position: 'fixed', bottom: 130, right: 24, zIndex: Z.popover, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, background: 'var(--glass-bg-strong)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--glass-border)', boxShadow: 'var(--glass-shadow)', fontSize: 13, fontWeight: 500, color: 'var(--text)', animation: 'toastIn 0.25s ease' },
 
