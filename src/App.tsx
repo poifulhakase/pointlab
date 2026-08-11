@@ -391,10 +391,14 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   // 🔴 スマホでメニューを開いたまま画面を替えると、行き先に黒い覆いだけが残る
   //    （覆いはメニューの一部で、画面を替えても自分では閉じない）。
   //    メニューの中から画面を替えるものは、必ずここを通してメニューごと閉じること。
+  // 🔴 **閉じるのはスマホだけ**。PC のサイドバーは常設で、覆いも出ない。
+  //    ここを無条件に閉じると、周期から戻ったときに PC でもサイドバーが消えたままになる
+  //    （`sidebarOpen` を戻す唯一の経路が isDesktop の変化なので、画面幅を変えるまで直らない）。
+  //    2026-08-11 に実際に踏んだ。
   const handleOpenSector = useCallback(() => {
-    setSidebarOpen(false)
+    if (!isDesktop) setSidebarOpen(false)
     setViewWithTransition('sector')
-  }, [setViewWithTransition])
+  }, [isDesktop, setViewWithTransition])
 
   // ── フローティングタブ: ページを離れるタイミングでリセット（戻った瞬間に正しい状態で表示）
   const prevViewRef2 = useRef(cal.view)
