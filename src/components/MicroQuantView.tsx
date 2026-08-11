@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { PoiroboLoader } from './PoiroboLoader'
+import { blockedInPreview } from '../utils/previewMode'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -331,6 +332,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
 
   // スナップショット保存（ログイン時・今日の日付で保存・ログ日付を自動更新）
   const handleSnapSave = useCallback(() => {
+    if (blockedInPreview('プレビューでは保存できません')) return
     if (!user) return
     const today = jstTodayKey()
     const updatedMemo = updateLogDate(quantMemo, today)
@@ -351,6 +353,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
 
   // 保存（ゲスト・1件上書き）
   const handleSave = useCallback(() => {
+    if (blockedInPreview('プレビューでは保存できません')) return
     localStorage.setItem(QUANT_MEMO_KEY, quantMemo)
     setSavedMemo(quantMemo)
     setMemoSaveFlash(true)

@@ -1,3 +1,6 @@
+import { isPreviewMode } from './previewMode'
+import { previewNotes } from './previewData'
+
 export type ScheduleEntry = {
   id: string
   title: string
@@ -63,6 +66,8 @@ export function dateKey(date: Date): string {
 }
 
 function load(): Record<string, Partial<DayNote>> {
+  // 🔴 プレビューでは実際のメモを一切読まない（端末に本物が入っていても出さない）
+  if (isPreviewMode()) return previewNotes()
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') } catch { return {} }
 }
 
@@ -91,6 +96,9 @@ export function getNote(date: Date): DayNote {
 }
 
 export function saveNote(date: Date, note: DayNote): void {
+  // 🔴 プレビューは閲覧だけ。**ここでは黙って捨てる**（入力のたびに自動保存が走るので、
+  //    ここで理由を出すと1文字ごとにトーストが飛ぶ）。理由は「保存」を押したときに出す。
+  if (isPreviewMode()) return
   const all = load()
   const k = dateKey(date)
   const hasContent = note.title.trim() || note.memo.trim()

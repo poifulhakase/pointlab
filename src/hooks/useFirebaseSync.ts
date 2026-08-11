@@ -8,6 +8,7 @@ import {
 import { dateKey } from '../utils/noteStorage'
 import type { DayNote } from '../utils/noteStorage'
 import { loadStickyNotes, saveStickyNotes, type StickyNote } from '../utils/stickyNotes'
+import { blockedInPreview } from '../utils/previewMode'
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error'
 
@@ -128,6 +129,8 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
   }, [doSync])
 
   const signIn = async () => {
+    // 🔴 プレビューは閲覧だけ。ログインすると本物のデータが同期されてしまう
+    if (blockedInPreview('プレビューではログインできません')) return
     newLoginRef.current = true
     const [{ GoogleAuthProvider, signInWithPopup, browserPopupRedirectResolver }, auth] =
       await Promise.all([import('firebase/auth'), getAuthInstance()])

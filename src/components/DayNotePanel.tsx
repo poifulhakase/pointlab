@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { type DayNote, type ScheduleEntry, getNote, saveNote } from '../utils/noteStorage'
+import { blockedInPreview } from '../utils/previewMode'
 import { TimeField } from './TimeField'
 
 type Props = {
@@ -122,6 +123,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
 
   const handleDelete = () => {
     if (!date) return
+    if (blockedInPreview('プレビューではメモを削除できません')) return
     if (!window.confirm('このメモ・スケジュールを削除してよろしいですか？')) return
     const emptyNote: DayNote = { title: '', memo: '', schedules: [] }
     saveNote(date, emptyNote)
@@ -345,7 +347,12 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
           <button
             disabled={!isDirty || hasEmptySchTitle}
             style={{ ...styles.saveFooterBtn, ...(!isDirty || hasEmptySchTitle ? styles.saveFooterBtnDisabled : {}) }}
-            onClick={() => { onSaved?.(); onClose() }}
+            // 🔴 プレビューでは保存しない。ここで止めないと保存されていないのに
+            //    「保存しました」のトーストだけ出て、保存できたように見える
+            onClick={() => {
+              if (blockedInPreview('プレビューではメモを保存できません')) { onClose(); return }
+              onSaved?.(); onClose()
+            }}
           >保存</button>
         </div>
       </div>

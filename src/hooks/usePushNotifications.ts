@@ -3,6 +3,7 @@ import type { User } from 'firebase/auth'
 import { enablePush, disablePush, syncPushSettings } from '../utils/fcmNotifications'
 import { getSettings, type PoiroboAlertConfig } from '../utils/settingsStorage'
 import { LS } from '../utils/storageKeys'
+import { blockedInPreview } from '../utils/previewMode'
 
 /**
  * プッシュ通知（FCM）の ON/OFF・種別設定の管理。
@@ -22,6 +23,7 @@ export function usePushNotifications(user: User | null, poiroboAlertConfig: Poir
   }, [pushToast])
 
   const handleTogglePush = useCallback(async () => {
+    if (blockedInPreview('プレビューでは通知を設定できません')) return
     if (!user || pushBusy) return
     setPushBusy(true)
     try {

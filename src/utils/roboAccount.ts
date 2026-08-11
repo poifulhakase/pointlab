@@ -1,6 +1,7 @@
 // ロボ口座（疑似トレード）の読み込み。
 // 🔴 書き込みはしない。robo_account.json を書くのは GitHub Actions（scripts/robo-trade.mjs）だけ。
 import { fetchWithCache } from './dataCache'
+import { isPreviewMode } from './previewMode'
 
 export type RoboTrade = {
   id: string
@@ -86,6 +87,11 @@ export function symbolLabel(code: string): string {
 }
 
 export async function fetchRoboAccount(force = false): Promise<RoboAccount | null> {
+  // 🔴 プレビューでは実際の売買判断・損益を出さない（デモ用の口座を見せる）
+  if (isPreviewMode()) {
+    const { demoAccount } = await import('./roboDemo')
+    return demoAccount('full')
+  }
   try {
     return await fetchWithCache<RoboAccount>({
       key: CACHE_KEY,

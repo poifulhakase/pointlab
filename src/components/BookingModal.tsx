@@ -10,6 +10,7 @@ import {
   sendBookingPush,
 } from '../utils/bookingApi'
 import { getCancelPolicy, isSessionNow, formatBookingLabel, statusLabel } from '../utils/bookingTypes'
+import { blockedInPreview } from '../utils/previewMode'
 
 type Props = {
   isOpen:       boolean
@@ -101,6 +102,8 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
   }
 
   async function handleBook() {
+    // 🔴 プレビューは閲覧だけ（本物の予約枠を埋めてしまわないように止める）
+    if (blockedInPreview('プレビューでは予約できません')) return
     if (!selectedSlot) return
     if (!userId || !userName || !userEmail) {
       sessionStorage.setItem('poical-pending-connect', '1')
@@ -146,6 +149,7 @@ export function BookingModal({ isOpen, theme, userId, userName, userEmail, onClo
   }
 
   async function handleCancel() {
+    if (blockedInPreview('プレビューでは予約の取消はできません')) return
     if (!activeBooking) return
     const policy = getCancelPolicy(activeBooking, false)
     if (policy === 'forbidden') return

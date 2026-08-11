@@ -5,6 +5,7 @@ import { SectorBanner } from './SectorBanner'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter } from '../utils/macroCalendar'
+import { blockedInPreview } from '../utils/previewMode'
 
 const POIROBO_ALERT_COLOR = '#f87171'
 
@@ -109,6 +110,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
   }
 
   const handleAddNote = () => {
+    if (blockedInPreview('プレビューではメモを追加できません')) return
     if (notes.length >= 1) return
     setEditingNote(newStickyNote())
   }
@@ -125,6 +127,7 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
   }
 
   const handleDeleteNote = (id: string) => {
+    if (blockedInPreview('プレビューではメモを削除できません')) return
     if (!window.confirm('このメモを削除してよろしいですか？')) return
     onStickyNotesSaved(notes.filter(n => n.id !== id))
   }

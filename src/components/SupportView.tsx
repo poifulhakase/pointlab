@@ -4,6 +4,7 @@ import type { ConnectUser }  from './JitsiPanel'
 import { isAdminEmail } from '../utils/admin'
 import { NotificationSettings } from './NotificationSettings'
 import { forceAppUpdate } from '../utils/forceUpdate'
+import { blockedInPreview } from '../utils/previewMode'
 
 const NoteView                = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const PoiroboAboutPanel       = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
@@ -134,6 +135,8 @@ function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
   const canSubmit = customerType !== '' && content.trim().length > 0
 
   const handleSubmit = async () => {
+    // 🔴 プレビューは閲覧だけ（本物の問い合わせフォームへ送らない）
+    if (blockedInPreview('プレビューでは送信できません')) return
     if (!canSubmit || status === 'sending') return
     setStatus('sending')
     const typeFormValue = customerType === 'other'
