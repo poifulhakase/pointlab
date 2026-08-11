@@ -305,6 +305,10 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
                 onClick={() => setOpen(isOpen ? null : p.name)}
                 className="cp-card"
                 style={{
+                  // 🔴 グリッドは行の中で高さが揃うので、1枚を開くと隣のカードも背が伸びる。
+                  //    button は中身を**縦中央**に置くため、そのままだとタイトルと図が下へずれる。
+                  //    flex の縦並び＋上揃えに固定して、開いても他のカードの見た目が動かないようにする。
+                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'stretch',
                   textAlign: 'left', background: c.card, border: `1px solid ${isOpen ? col : c.border}`,
                   borderRadius: 12, padding: 14, cursor: 'pointer', color: c.text,
                   transition: 'border-color .15s, transform .15s, box-shadow .15s',
