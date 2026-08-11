@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react'
-import { loadSectorPerf } from '../utils/sectorData'
+import { useEffect, useMemo, useState } from 'react'
 import { PHASES, macroPhase, type SectorPhaseId } from '../utils/sectorRotation'
+import { loadSectorPerf } from '../utils/sectorData'
 
 // ──────────────────────────────────────────────────────────────────────────
-// セクターローテーションの入口（サイドバー・メモの上）
+// セクターローテーションの入口（サイドバー・メモの上）＝**ドット絵の円環**
 //
 // 🔴 2026-08-11: 周期をシールド画面のタブから外し、独立ページにした（ユーザー指示）。
 //    理由＝**周期は日経平均の話ではない**。日経を見る道具と同居させない。
+// 🔴 **ビジュアル特化**（同日ユーザー指示）。文字は中心の「SECTOR / ROTATION」だけで、
+//    局面名や次の局面といった説明は**すべてページ本体に任せる**。読ませる場所にしない。
+// 🔴 **ドット絵で描く**（同日ユーザー指示）。ぽいロボのサイバー調に合わせる。
 //
-// 🔴 **ビジュアル特化**（2026-08-11 ユーザー指示）。文字は「SECTOR ROTATION」だけ。
-//    局面名・移行期・次の局面といった説明は**すべてページ本体に任せる**。
-//    ここは「いまどのあたりか」が絵で伝わればよく、読ませる場所にしない。
-// 🔵 4分割の円環そのものを描き、現在地の象限だけを光らせる。
-//    色は本体の図と同じ（金融=シアン／業績=グリーン／逆金融=オレンジ／逆業績=パープル）ので、
-//    ページを開いたときに同じ色が同じ位置にあり、迷わない。
+// 🔵 なぜ SVG の円弧ではなくドットか：
+//    ① 拡大してもぼやけない（四角のまま）②色をテーマに紐づけられる
+//    ③ gitで1ドット単位の差分が見える ④画像ファイルを増やさない
+// 🔵 ドットは**升目に沿って置く**（極座標で計算した位置に丸を打つのではない）。
+//    格子に乗っていないと「ドット絵」に見えず、ただの点描になる。
 // 🔴 判定できない日は**どこも光らせない**（薄い輪だけ）。根拠の無い現在地を見せない。
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -22,14 +24,43 @@ type Props = {
   onOpen: () => void
 }
 
-/** 円環の見た目（px）。サイドバーの幅に収まる範囲で、絵として成立する大きさにする。 */
-const SIZE = 128
-const R_OUT = 52
-const R_IN = 33
+/** 升目の数（奇数にすると中心が1マスに定まる）。 */
+const N = 23
+/** 1ドットの大きさ(px)と隙間。隙間があるほど「ドット」に見える。 */
+const CELL = 5
+const GAP = 1
+/** 環の内外の半径（マス単位）。 */
+const R_OUT = 10.6
+const R_IN = 7.0
+
+type Dot = { x: number; y: number; phase: SectorPhaseId }
+
+/**
+ * 升目を走査して、環の帯に入るマスだけを拾う（純粋関数・テスト対象）。
+ * 角度は**12時起点・時計回り**＝ページ本体の図と同じ向き。
+ */
+function buildDots(): Dot[] {
+  const c = N / 2
+  const out: Dot[] = []
+  for (let gy = 0; gy < N; gy++) {
+    for (let gx = 0; gx < N; gx++) {
+      const dx = gx + 0.5 - c
+      const dy = gy + 0.5 - c
+      const r = Math.hypot(dx, dy)
+      if (r < R_IN || r > R_OUT) continue
+      // atan2(dx, -dy)＝12時から時計回りに増える角度
+      const deg = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360
+      const phase = PHASES.find(p => deg >= p.angle && deg < p.angle + 90) ?? PHASES[0]
+      out.push({ x: gx, y: gy, phase: phase.id })
+    }
+  }
+  return out
+}
 
 export function SectorBanner({ theme, onOpen }: Props) {
   const [hereId, setHereId] = useState<SectorPhaseId | null>(null)
   const [hover, setHover] = useState(false)
+  const dots = useMemo(() => buildDots(), [])
 
   useEffect(() => {
     let alive = true
@@ -50,6 +81,7 @@ export function SectorBanner({ theme, onOpen }: Props) {
   const dark = theme === 'dark'
   const here = hereId ? PHASES.find(p => p.id === hereId) ?? null : null
   const accent = here?.color ?? (dark ? '#7c8794' : '#94a3b8')
+  const px = N * CELL
 
   return (
     <button
@@ -66,74 +98,37 @@ export function SectorBanner({ theme, onOpen }: Props) {
       }}
     >
       <svg
-        width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
+        width={px} height={px} viewBox={`0 0 ${px} ${px}`}
+        shapeRendering="crispEdges"
         style={{
           display: 'block', margin: '0 auto',
-          filter: here ? `drop-shadow(0 0 ${hover ? 14 : 8}px ${accent}55)` : 'none',
-          transform: hover ? 'scale(1.04)' : 'scale(1)',
-          transition: 'transform 0.25s ease, filter 0.25s ease',
+          filter: here ? `drop-shadow(0 0 ${hover ? 12 : 7}px ${accent}66)` : 'none',
+          transition: 'filter 0.25s ease',
         }}
       >
-        {/* 4つの象限。現在地だけ濃く、ほかは沈める＝どこにいるかが一目で分かる */}
-        {PHASES.map(p => {
-          const on = p.id === hereId
+        {dots.map(d => {
+          const on = d.phase === hereId
+          const color = PHASES.find(p => p.id === d.phase)!.color
           return (
-            <path
-              key={p.id}
-              d={arc(p.angle, p.angle + 90)}
-              fill={p.color}
-              fillOpacity={on ? 0.92 : (dark ? 0.13 : 0.16)}
+            <rect
+              key={`${d.x}-${d.y}`}
+              x={d.x * CELL} y={d.y * CELL}
+              width={CELL - GAP} height={CELL - GAP}
+              fill={color}
+              fillOpacity={on ? 0.95 : (dark ? 0.16 : 0.20)}
               style={{ transition: 'fill-opacity 0.3s ease' }}
             />
           )
         })}
 
-        {/* 外周のリング（図としての輪郭） */}
-        <circle cx={SIZE / 2} cy={SIZE / 2} r={R_OUT + 5} fill="none" strokeWidth="1"
-          stroke={dark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.12)'} />
-
-        {/* 現在地の目印。外周の上を回るので、角度＝いまの位置がそのまま読める */}
-        {here && (() => {
-          const m = pointOn(here.angle + 45, R_OUT + 5)
-          return (
-            <>
-              <circle cx={m.x} cy={m.y} r="9" fill={accent} fillOpacity="0.18" />
-              <circle cx={m.x} cy={m.y} r="4" fill={accent} />
-            </>
-          )
-        })()}
-
         {/* 中心。文字はここだけ＝「何の絵か」が分かれば十分 */}
-        <circle cx={SIZE / 2} cy={SIZE / 2} r={R_IN - 3}
-          fill={dark ? 'rgba(12,16,24,0.92)' : 'rgba(255,255,255,0.94)'} />
-        <text x={SIZE / 2} y={SIZE / 2 - 3} textAnchor="middle"
-          style={{ fontSize: 8.5, letterSpacing: '0.1em', fontWeight: 700 }}
+        <text x={px / 2} y={px / 2 - 3} textAnchor="middle"
+          style={{ fontSize: 8, letterSpacing: '0.12em', fontWeight: 700 }}
           fill={dark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.66)'}>SECTOR</text>
-        <text x={SIZE / 2} y={SIZE / 2 + 8} textAnchor="middle"
-          style={{ fontSize: 8.5, letterSpacing: '0.1em', fontWeight: 700 }}
+        <text x={px / 2} y={px / 2 + 7} textAnchor="middle"
+          style={{ fontSize: 8, letterSpacing: '0.12em', fontWeight: 700 }}
           fill={dark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.66)'}>ROTATION</text>
       </svg>
     </button>
   )
-}
-
-/** 12時を起点に時計回りで角度→座標（本体の図と同じ向き）。 */
-function pointOn(deg: number, r: number) {
-  const rad = (deg - 90) * Math.PI / 180
-  return { x: SIZE / 2 + r * Math.cos(rad), y: SIZE / 2 + r * Math.sin(rad) }
-}
-
-/** ドーナツの一片（from〜to度）のパス。 */
-function arc(from: number, to: number): string {
-  const a = pointOn(from, R_OUT)
-  const b = pointOn(to, R_OUT)
-  const c = pointOn(to, R_IN)
-  const d = pointOn(from, R_IN)
-  return [
-    `M ${a.x} ${a.y}`,
-    `A ${R_OUT} ${R_OUT} 0 0 1 ${b.x} ${b.y}`,
-    `L ${c.x} ${c.y}`,
-    `A ${R_IN} ${R_IN} 0 0 0 ${d.x} ${d.y}`,
-    'Z',
-  ].join(' ')
 }
