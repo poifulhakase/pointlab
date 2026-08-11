@@ -24,7 +24,7 @@ import path from 'node:path'
 
 import { loadLocalEnv } from './loadLocalEnv.mjs'
 import { baselineTimeline, stopPrice } from '../src/utils/robotStrategy.mjs'
-import { loadPrices, etfFeatures, priceMap, openMap, atrMap, rowsMap, summarizeSupply, DATA_DIR } from './roboData.mjs'
+import { loadPrices, etfFeatures, priceMap, openMap, atrMap, rowsMap, summarizeSupply, fetchOvernight, DATA_DIR } from './roboData.mjs'
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
 import { decide, holdOnFailure, validateDecision, ROBO_MODEL, ROBO_EFFORT } from './llmDecide.mjs'
 import {
@@ -133,6 +133,15 @@ async function main() {
   const supply = summarizeSupply()
   const vix = supply.vix ?? null
   log(`[2] 需給を要約（${Object.keys(supply).length}項目・VIX ${vix ?? '不明'}）`)
+
+  // 🔴 前夜の海外市場。**08:30 の判断時点で遅れゼロなのはここだけ**（米国は 05:00〜06:00 JST に引ける）。
+  //    実測（21年）で前夜S&P500 → 翌日の**寄り**は相関 0.650・方向一致 74.7%。
+  //    🔴 ただし寄り→引けは 49.8%＝コインの裏表。寄りで執行する我々には**取れない**。
+  //       方向の材料ではなく「今日は飛んで始まる」を知るための材料として渡す。
+  //    🔵 public/data の JSON は 19:30/21:30 更新なので前夜ぶんが入らない。実行時に直接取る。
+  const overnight = await fetchOvernight()
+  const ovLog = Object.values(overnight).map(v => `${v.name} ${v.changePct > 0 ? '+' : ''}${v.changePct.toFixed(2)}%`).join(' / ')
+  log(`[2b] 前夜の海外市場: ${ovLog || '取得できず'}`)
 
   // ── 3) 対照群 ──
   const timeline = baselineTimeline(nk)
@@ -246,6 +255,8 @@ async function main() {
     priceFeatures: buildPriceFeatures(nk),
     etfFeatures: etfFeatures(etf),
     supply,
+    overnight,
+    today: date,
     baseline,
     events,
     account: { ...account, equity: equityOf(account, priceOf) },

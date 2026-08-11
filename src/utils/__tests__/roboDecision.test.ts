@@ -109,13 +109,46 @@ describe('buildRoboPrompt', () => {
   )
   const f = buildPriceFeatures(rows)
 
-  it('価格が需給より先に出る（優先順位を並び順で伝える）', () => {
+  // 🔴 2026-08-11 に需給を【二次情報】から【背景】へ**格下げ**した。
+  //    需給12項目を全部足しても翌日の方向の的中率は 52.8%（何もしないと 52.2%）で、
+  //    +0.6ポイントしか足せていないため。並び順でも後ろに置く。
+  it('一次情報（価格・前夜の海外）が需給より先に出る', () => {
     const p = buildRoboPrompt({
       priceFeatures: f, supply: { marginRatio: 8.5 },
+      overnight: { spx: { name: 'S&P500', date: '2026-08-10', close: 7000, changePct: 1.2 } },
       baseline: { side: 'bull', reason: 'テスト' },
       account: { cash: 1000000 },
     })
-    expect(p.indexOf('【一次情報】')).toBeLessThan(p.indexOf('【二次情報】'))
+    expect(p.indexOf('【一次情報】')).toBeLessThan(p.indexOf('【背景】需給'))
+    expect(p).not.toContain('【二次情報】')
+  })
+
+  // 🔴 08:30 の判断時点で遅れゼロなのは価格と前夜の海外だけ。
+  //    実測（21年）で前夜S&P500 → 翌日の**寄り**は方向一致 74.7%。
+  //    🔴 ただし寄り→引けは 49.8%＝コインの裏表で、寄りで執行する我々には取れない。
+  //       「取れない」ことをプロンプトに書いておかないと、方向の根拠に使われる。
+  it('前夜の海外市場が入り、寄りで織り込まれ済みだと明記されている', () => {
+    const p = buildRoboPrompt({
+      priceFeatures: f, supply: { marginRatio: 8.5 },
+      overnight: { spx: { name: 'S&P500', date: '2026-08-10', close: 7000, changePct: 1.2 } },
+      baseline: { side: 'bull', reason: 'テスト' },
+      account: { cash: 1000000 },
+    })
+    expect(p).toContain('前夜の海外市場')
+    expect(p).toContain('S&P500')
+    expect(p).toContain('取りに行けない')
+  })
+
+  // 🔴 日付を伏せて数字だけ渡すと、10日前の数字を「いま」の話として読まれる
+  it('需給には何日前の数字かが付く', () => {
+    const p = buildRoboPrompt({
+      priceFeatures: f,
+      supply: { marginRatio: 8.5, _asOf: { margin: '2026-07-31' } },
+      today: '2026-08-10',
+      baseline: { side: 'bull', reason: 'テスト' },
+      account: { cash: 1000000 },
+    })
+    expect(p).toContain('10日前')
   })
 
   it('過去データは背景として、需給より後に出る', () => {

@@ -149,11 +149,21 @@ export function latestRow(rows) {
  */
 export function summarizeSupply() {
   const s = {}
+  // 🔴 **いつの数字か**を必ず持ち回る（2026-08-11 追加）。
+  //    需給12項目のうち日次はVIX・PCR・先物建玉くらいで、残りは**週次**。
+  //    しかもJPXの投資部門別は集計期間の2営業日後公表で、実測で**10日遅れ**のことがある。
+  //    日付を伏せて数字だけ渡すと、LLM は古い数字を「いま」の話として読む。
+  s._asOf = {}
+  const stamp = (key, row) => {
+    const v = row?.date ?? row?.time ?? null
+    if (v) s._asOf[key] = String(v).replace(/\//g, '-')
+  }
 
   // 信用（週次・新しい順）
   const margin = rowsOf('margin.json')
   const m = latestRow(margin)
   if (m) {
+    stamp('margin', m)
     s.marginRatio = m.ratio ?? (m.longBal && m.shortBal ? m.longBal / m.shortBal : null)
     const longs = margin.map(r => r.longBal).filter(v => typeof v === 'number')
     if (longs.length && m.longBal) {
@@ -165,40 +175,76 @@ export function summarizeSupply() {
   // 投資主体別（週次・億円）
   const inv = latestRow(rowsOf('investor.json'))
   if (inv) {
+    stamp('investor', inv)
     s.foreignNet = inv.foreigner ?? null
     s.individualNet = inv.individual ?? null
   }
 
   // 海外投機筋（CFTC・週次）
   const cot = latestRow(rowsOf('cot_nikkei.json'))
-  if (cot) s.cotNet = cot.nonCommNet ?? null
+  if (cot) { stamp('cot', cot); s.cotNet = cot.nonCommNet ?? null }
 
   // 空売り比率・騰落レシオ・裁定（週次）
   const ss = latestRow(rowsOf('short_sell.json'))
-  if (ss) s.shortRatio = ss.ratio ?? null
+  if (ss) { stamp('shortSell', ss); s.shortRatio = ss.ratio ?? null }
 
   const ad = latestRow(rowsOf('advance_decline.json'))
-  if (ad) s.adRatio = ad.ratio25 ?? null
+  if (ad) { stamp('advanceDecline', ad); s.adRatio = ad.ratio25 ?? null }
 
   const arb = latestRow(rowsOf('arbitrage.json'))
-  if (arb) s.arbitrageLong = arb.longBal ?? null
+  if (arb) { stamp('arbitrage', arb); s.arbitrageLong = arb.longBal ?? null }
 
   // VIX（日次・古い順）
   const vix = latestRow(rowsOf('vix_daily.json'))
-  if (vix) s.vix = vix.close ?? null
+  if (vix) { stamp('vix', vix); s.vix = vix.close ?? null }
 
   // NT倍率（topix.json と日経から出す方が確実だが、無ければ載せない）
   const topix = latestRow(rowsOf('topix.json'))
-  if (topix?.close) s.topixClose = topix.close
+  if (topix?.close) { stamp('topix', topix); s.topixClose = topix.close }
 
   // PCR（先物日次）
   const fut = latestRow(rowsOf('futures_daily.json'))
   if (fut) {
+    stamp('futures', fut)
     s.pcr = fut.pcr ?? null
     s.futuresOi = fut.oi ?? null
   }
 
   return s
+}
+
+/**
+ * 前夜の海外市場（2026-08-11 追加）。
+ *
+ * 🔴 **遅れゼロの唯一の材料**。米国市場は 05:00〜06:00 JST に引けるので、
+ *    08:30 の判断時点で確定している。実測（21年・5,131営業日）で
+ *    前夜S&P500 → 翌日の**寄り** の相関 0.650・方向一致 74.7%。
+ *    需給12項目を全部足しても的中率 52.8% だったのと比べて桁が違う。
+ *
+ * 🔴 ただし **寄り→引け の一致率は 49.8%＝コインの裏表**。
+ *    米国の情報は**寄り付きで織り込まれて終わる**。我々は寄りで執行するので、
+ *    この 74.7% は**取れない**。方向を当てる材料ではなく、
+ *    「今日は大きく飛んで始まる」を事前に知って**執行の質を上げる**材料として渡す。
+ *
+ * 🔵 public/data の JSON は前夜ぶんが入らない（更新が 19:30/21:30 JST のため）。
+ *    ここは実行時に Yahoo から直接取る。
+ */
+export async function fetchOvernight() {
+  const want = [
+    ['spx', '^GSPC', 'S&P500'],
+    ['ndx', '^IXIC', 'NASDAQ総合'],
+    ['usdjpy', 'JPY=X', 'ドル円'],
+  ]
+  const out = {}
+  await Promise.all(want.map(async ([key, sym, name]) => {
+    try {
+      const rows = await fetchDaily(sym, { range: '1mo' })
+      if (rows.length < 2) return
+      const a = rows[rows.length - 1], b = rows[rows.length - 2]
+      out[key] = { name, date: a.date, close: a.close, changePct: (a.close / b.close - 1) * 100 }
+    } catch { /* 取れなければ載せない。推測で埋めない */ }
+  }))
+  return out
 }
 
 /** VIX の直近値（損切り倍率に使う）。取れなければ null */

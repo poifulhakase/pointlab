@@ -108,26 +108,91 @@ export function formatEtfSection(etfFeatures) {
 
 // ── 需給（二次情報）────────────────────────────────────────────────────────
 
-export function formatSupplySection(supply) {
-  if (!supply) return '## 【二次情報】需給\n取得できず'
+/** その数字が何日前のものか（営業日ではなく暦日。ざっくりで十分） */
+function ageDays(asOf, today) {
+  if (!asOf || !today) return null
+  const d = Math.round((new Date(today) - new Date(asOf)) / 86400000)
+  return Number.isFinite(d) && d >= 0 ? d : null
+}
+
+/**
+ * 需給。
+ *
+ * 🔴 2026-08-11 に**格下げ**した（ユーザー判断）。それまでは日付を伏せて数字だけ並べており、
+ *    LLM が**10日前の数字を「いま」の話として読める**状態だった。
+ *    実際 investor/margin/arbitrage は週次で、実測で10日遅れのことがある。
+ *
+ * 🔴 需給12項目を全部足しても、方向の的中率は 52.8%（何もしない 52.2% に対して +0.6pt）。
+ *    **翌日の方向を当てる材料にはならない**ことが実測で分かっている。
+ *    → 日次と週次を分けて並べ、週次には遅れ日数を明記し、「地合いの背景」と位置づける。
+ */
+export function formatSupplySection(supply, today = null) {
+  if (!supply) return '## 【背景】需給\n取得できず'
+  const asOf = supply._asOf ?? {}
+  const tag = (key) => {
+    const d = ageDays(asOf[key], today)
+    return asOf[key] ? `（${asOf[key]}${d != null ? ` = ${d}日前` : ''}）` : ''
+  }
+
+  const daily = []
+  if (supply.vix != null) daily.push(`VIX: ${r2(supply.vix)} ${tag('vix')}`)
+  if (supply.pcr != null) daily.push(`PCR: ${r2(supply.pcr)} ${tag('futures')}`)
+  if (supply.futuresOi != null) daily.push(`先物建玉: ${yen(supply.futuresOi)}枚 ${tag('futures')}`)
+  if (supply.topixClose != null) daily.push(`TOPIX: ${r2(supply.topixClose)} ${tag('topix')}`)
+
+  const weekly = []
+  if (supply.marginRatio != null) weekly.push(`信用倍率: ${r2(supply.marginRatio)}倍 ${tag('margin')}`)
+  if (supply.marginLongPeakDrop != null) weekly.push(`買い残のピークからの解消率: ${pct(supply.marginLongPeakDrop)} ${tag('margin')}`)
+  if (supply.foreignNet != null) weekly.push(`外国人ネット: ${yen(supply.foreignNet)}億円 ${tag('investor')}`)
+  if (supply.individualNet != null) weekly.push(`個人ネット: ${yen(supply.individualNet)}億円 ${tag('investor')}`)
+  if (supply.cotNet != null) weekly.push(`海外投機筋(CFTC)ネット: ${yen(supply.cotNet)}枚 ${tag('cot')}`)
+  if (supply.shortRatio != null) weekly.push(`空売り比率: ${r2(supply.shortRatio)}% ${tag('shortSell')}`)
+  if (supply.adRatio != null) weekly.push(`騰落レシオ: ${r2(supply.adRatio)} ${tag('advanceDecline')}`)
+  if (supply.arbitrageLong != null) weekly.push(`裁定買い残: ${yen(supply.arbitrageLong)}千株 ${tag('arbitrage')}`)
+
+  return `## 【背景】需給（🔴 方向を決める材料ではない）
+
+日次（新しい）
+${daily.length ? daily.map(s => `  ${s}`).join('\n') : '  データなし'}
+
+週次（🔴 **古い**。カッコ内が何日前の数字か）
+${weekly.length ? weekly.map(s => `  ${s}`).join('\n') : '  データなし'}
+
+🔴 **需給12項目を全部足しても、翌日の方向の的中率は 52.8% しかない**（何もしないと 52.2%）。
+　 実測で +0.6ポイントしか足せていない。**方向の根拠にしないこと。**
+🔴 週次の数字は最大10日前のものになる。「いまの需給」ではなく「先週こうだった」という記録として読む。
+🔵 使い道は、価格で決めた方向に対する**地合いの背景**まで。確信度をわずかに上下させる程度に留める。`
+}
+
+/**
+ * 前夜の海外市場（2026-08-11 追加）。
+ *
+ * 🔴 **08:30 の判断時点で確定していて遅れがゼロなのは、これだけ**。
+ *    実測（21年・5,131営業日）で前夜S&P500 → 翌日の**寄り**は相関 0.650・方向一致 74.7%。
+ *    需給12項目を全部足しても 52.8% だったのと比べて桁が違う。
+ *
+ * 🔴 ただし **寄り→引けの一致率は 49.8%＝コインの裏表**。米国の材料は寄り付きで
+ *    織り込まれて終わる。**我々は寄りで執行するので、この 74.7% は取れない。**
+ *    方向を当てる材料ではなく、「今日は大きく飛んで始まる」を事前に知るための材料として渡す。
+ */
+export function formatOvernightSection(ov) {
+  if (!ov || !Object.keys(ov).length) return '## 【一次情報】前夜の海外市場\n取得できず'
   const l = []
-  if (supply.marginRatio != null) l.push(`信用倍率: ${r2(supply.marginRatio)}倍`)
-  if (supply.marginLongPeakDrop != null) l.push(`買い残のピークからの解消率: ${pct(supply.marginLongPeakDrop)}`)
-  if (supply.foreignNet != null) l.push(`外国人ネット: ${yen(supply.foreignNet)}億円`)
-  if (supply.individualNet != null) l.push(`個人ネット: ${yen(supply.individualNet)}億円`)
-  if (supply.cotNet != null) l.push(`海外投機筋(CFTC)ネット: ${yen(supply.cotNet)}枚`)
-  if (supply.shortRatio != null) l.push(`空売り比率: ${r2(supply.shortRatio)}%`)
-  if (supply.adRatio != null) l.push(`騰落レシオ: ${r2(supply.adRatio)}`)
-  if (supply.arbitrageLong != null) l.push(`裁定買い残: ${yen(supply.arbitrageLong)}千株`)
-  if (supply.pcr != null) l.push(`PCR: ${r2(supply.pcr)}`)
-  if (supply.futuresOi != null) l.push(`先物建玉: ${yen(supply.futuresOi)}枚`)
-  if (supply.vix != null) l.push(`VIX: ${r2(supply.vix)}`)
-  if (supply.topixClose != null) l.push(`TOPIX: ${r2(supply.topixClose)}`)
+  for (const k of ['spx', 'ndx', 'usdjpy']) {
+    const v = ov[k]
+    if (v) l.push(`${v.name}: ${r2(v.close)}（前日比 ${pct(v.changePct)}・${v.date}）`)
+  }
+  return `## 【一次情報】前夜の海外市場（遅れゼロ）
+${l.map(s => `  ${s}`).join('\n')}
 
-  return `## 【二次情報】需給
-${l.length ? l.map(s => `  ${s}`).join('\n') : '  データなし'}
-
-🔵 需給は**方向を決める材料ではなく、価格で決めた方向の確信度（＝倍率）を調整する材料**として使う。`
+🔴 実測（21年）＝前夜S&P500 と翌日の**寄り**は相関 0.650・方向の一致 74.7%。
+　 一方で**寄り→引けの一致は 49.8%（コインの裏表）**。米国の材料は**寄り付きで織り込まれて終わる**。
+🔴 我々は**翌営業日の寄り付きで執行する**。つまりこの一致率は**取りに行けない**。
+　 「前夜が強いから買う」は、既に上がった値段を買うことになる。
+🔵 正しい使い道は**執行の見立て**：
+　 ・前夜が大きく動いていれば、明日の寄りは大きく飛ぶ。建てるなら不利な値段から始まると考える。
+　 ・飛んだ結果、建てる前提（損切りの位置）が壊れるなら、その日は見送ってよい。
+　 ・ドル円の相関は 0.206 と弱い。補助として見る程度に留める。`
 }
 
 // ── 背景（過去データ・統計。縛らない）──────────────────────────────────────
@@ -188,6 +253,9 @@ export const ROBO_ROLE = `あなたは日経平均のブル／ベアETFを売買
 
 export const ROBO_PRIORITY = `# 判断の優先順位（これが最も重要なルール）
 
+0. 🔴 **どの材料が新しいか**をまず確認する。08:30 の判断時点で確定していて遅れがゼロなのは
+   **価格（前営業日の終値）と、前夜の海外市場**だけ。需給の大半は**週次で最大10日前**の数字。
+   古い数字を「いま」の話として読まないこと。
 1. **一次＝価格**。まず今の値動きを見て、方向（ブル / ベア / 持たない）を決める。
    数値（移動平均との位置・高安・トレンド・ボラティリティ）と、
    添付されたチャート画像があればその**形**（持ち合い・天井/底の形・節目）の両方を使う。
@@ -312,7 +380,7 @@ export function formatRealPositionSection(real) {
  * 🔴 並び順が優先順位を伝える。価格を先頭に置き、背景を後ろに置く。
  */
 export function buildRoboPrompt({
-  priceFeatures, etfFeatures, supply, baseline, account, realPosition, events, background, images,
+  priceFeatures, etfFeatures, supply, overnight, baseline, account, realPosition, events, background, images, today,
 }) {
   return [
     ROBO_ROLE,
@@ -322,11 +390,13 @@ export function buildRoboPrompt({
     '━'.repeat(30),
     formatPriceSection(priceFeatures),
     '',
+    formatOvernightSection(overnight ?? {}),
+    '',
     formatImagesSection(images ?? {}),
     '',
     formatEtfSection(etfFeatures ?? {}),
     '',
-    formatSupplySection(supply),
+    formatSupplySection(supply, today),
     '',
     events ? `## 今後5営業日のイベント\n${events}` : '',
     '',
