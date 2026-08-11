@@ -127,6 +127,76 @@ export function inSeason(dateStr) {
 // ── 対照群（ベースライン）のシグナル ──────────────────────────────────────
 
 /** 押し目の閾値・保有日数・過熱の閾値。ここを動かすと別のロジックになる。 */
+/**
+ * 出来高の n 日平均比。取れない日は null（推測で埋めない）。
+ * 🔴 指数の出来高は欠ける日がある。0 の日を平均に混ぜると比率が壊れるので、
+ *    その日は null にして判定を通す側で「見なかったことにする」。
+ */
+export function volumeRatio(rows, n = 20) {
+  const out = new Array(rows.length).fill(null)
+  let s = 0
+  for (let i = 0; i < rows.length; i++) {
+    s += rows[i].volume ?? 0
+    if (i >= n) s -= rows[i - n].volume ?? 0
+    if (i >= n && s > 0 && (rows[i].volume ?? 0) > 0) out[i] = rows[i].volume / (s / n)
+  }
+  return out
+}
+
+/**
+ * OBV（上げた日は出来高を足し、下げた日は引く）と、その n 日変化率。
+ * 🔵 「値動きに出来高がついてきているか」を1本で見る古典的な指標。
+ */
+export function obvChange(rows, n = 20) {
+  const obv = new Array(rows.length).fill(0)
+  for (let i = 1; i < rows.length; i++) {
+    const v = rows[i].volume ?? 0
+    obv[i] = obv[i - 1] + (rows[i].close > rows[i - 1].close ? v : rows[i].close < rows[i - 1].close ? -v : 0)
+  }
+  const out = new Array(rows.length).fill(null)
+  for (let i = n; i < rows.length; i++) {
+    if (Math.abs(obv[i - n]) > 0) out[i] = (obv[i] - obv[i - n]) / Math.abs(obv[i - n])
+  }
+  return out
+}
+
+/**
+ * ブレイクに出来高が伴っているか（2026-08-11 追加）。
+ *
+ * 🔴 **入る瞬間だけ**の条件。保有中は見ない。
+ *    保有中も見ると建玉が細切れになり、この戦略の期待値の源泉（87回中5回の大勝ち）が育たない。
+ *    実際、価格帯別出来高を保有中も見る形で試したら売買回数が 170→424 に爆発して悪化した。
+ *
+ * 🔴 なぜ効くか＝この戦略の稼ぎ頭は**ドンチャン＝高値ブレイク**。
+ *    「出来高なきブレイクはダマシ」を機械的に落とす。26年の実測で:
+ *      出来高比のみ            DDそろえ後 +3.10%（前半 +6.11% / 後半 +1.16%）
+ *      OBVのみ                        +2.40%（+4.77% / -0.22%）
+ *      **両方**                       **+3.71%（+6.85% / +1.72%）** ← 採用
+ *    頑健性も確認済み＝窓(10/20/60日)×閾値(0.9〜1.3)の**15通り全部がプラス**。
+ *
+ * 🔴 CVDダイバージェンス（価格だけ高値更新）は日次で t=6.56 と最強だったが
+ *    **バックテストでは −0.91%**。ドンチャンが発火する瞬間そのものなので、除外すると
+ *    エントリーが消える。日次の予測力と、この戦略に足せるかは別物。
+ */
+export const VOLUME_GATE = Object.freeze({
+  ratio: 1.1,        // 20日平均比。1.1〜1.3 は平ら（尖った1点ではない）
+  window: 20,
+  obvWindow: 20,
+})
+
+/**
+ * ブレイクを採ってよいか。
+ * 🔵 出来高が取れない日は **通す**（データが無いことを理由に見送らない）。
+ */
+export function volumeConfirms(vr, obvChg, i) {
+  const v = vr?.[i]
+  const o = obvChg?.[i]
+  if (v == null && o == null) return true
+  if (v != null && v < VOLUME_GATE.ratio) return false
+  if (o != null && o <= 0) return false
+  return true
+}
+
 export const BASELINE_PARAMS = Object.freeze({
   dipDev: -10,      // −極限買いのトリガー（25日MA乖離%）
   dipHold: 5,       // 押し目の保有営業日数
@@ -141,7 +211,7 @@ export const BASELINE_PARAMS = Object.freeze({
  * 🔴 ベアが立つ日はベアを優先する。過熱（+9%）はブルの利確地点でもあり、
  *    ブルとベアを同時に持てない以上どちらかに寄せる必要があるため。
  */
-export function baselineTimeline(rowsWithIndicators) {
+export function baselineTimeline(rowsWithIndicators, { volumeGate = true } = {}) {
   const rows = rowsWithIndicators
   const n = rows.length
   const { long, bear } = donchianStates(rows)
@@ -174,12 +244,35 @@ export function baselineTimeline(rowsWithIndicators) {
     }
   }
 
-  return rows.map((r, i) => {
+  const raw = rows.map((r, i) => {
     if (bearPos[i]) return { date: r.date, side: 'bear', reason: `25日MA乖離 +${P.heatDev}%以上の過熱` }
     if (long[i]) return { date: r.date, side: 'bull', reason: 'ドンチャン50/25 上昇トレンド' }
     if (dip[i]) return { date: r.date, side: 'bull', reason: `25日MA乖離 ${P.dipDev}%以下の押し目（確定下落でない）` }
     if (season[i]) return { date: r.date, side: 'bull', reason: '季節性の窓（確定下落でない）' }
     return { date: r.date, side: null, reason: '条件を満たさない' }
+  })
+
+  // 🔴 出来高フィルター（2026-08-11 追加）。
+  //    ドンチャンのブレイクに**入る瞬間だけ**、出来高が伴っているかを見る。
+  //    🔴 保有中は見ない。見ると建玉が細切れになり、この戦略の期待値の源泉
+  //       （87回中5回の大勝ち）が育たない。価格帯別出来高を保有中も見る形で試したら
+  //       売買回数が 170→424 に爆発して悪化した。
+  //    🔴 出来高が足りない日は**その日ごと見送る**（押し目や季節性に落とさない）。
+  //       落とすと「ブレイクは見送ったのに別の理由で建てている」ことになり、検証した形と変わる。
+  if (!volumeGate) return raw   // 🔵 効果を測るとき用。本番は必ず有効
+
+  const vr = volumeRatio(rows, VOLUME_GATE.window)
+  const obvChg = obvChange(rows, VOLUME_GATE.obvWindow)
+  let held = false
+  return raw.map((row, i) => {
+    if (row.side !== 'bull') { held = false; return row }
+    if (!held) {
+      if (row.reason.includes('ドンチャン') && !volumeConfirms(vr, obvChg, i)) {
+        return { date: row.date, side: null, reason: 'ブレイクに出来高が伴わない（見送り）' }
+      }
+      held = true
+    }
+    return row
   })
 }
 

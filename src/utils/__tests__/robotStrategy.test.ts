@@ -4,6 +4,7 @@ import {
   computeIndicators, donchianStates, inSeason,
   baselineTimeline, BASELINE_PARAMS,
   stopMultiplier, stopPrice, trailStop, isStopHit, swingLow,
+  volumeRatio, obvChange, volumeConfirms, VOLUME_GATE, baselineTimeline as blTimeline,
   maxQty, clampQty,
   // @ts-expect-error — .mjs に型定義は無い（tevCore.mjs と同じ扱い）
 } from '../robotStrategy.mjs'
@@ -354,5 +355,62 @@ describe('構造を見る損切り', () => {
     expect(t.rule).toContain('swing25')
     expect(t.rule).toContain('trail')
     expect(t.price).toBe(978)
+  })
+})
+
+// ── 出来高フィルター（2026-08-11 追加）──
+// 🔴 ドンチャンのブレイクに**入る瞬間だけ**、出来高が伴っているかを見る。
+//    保有中は見ない。見ると建玉が細切れになり、この戦略の期待値の源泉
+//    （87回中5回の大勝ち）が育たない。実際、価格帯別出来高を保有中も見る形で
+//    試したら売買回数が 170→424 に爆発して悪化した。
+describe('出来高フィルター', () => {
+  const mk = (closes: number[], vols: number[]) =>
+    closes.map((c, i) => ({ date: `d${i}`, open: c, high: c * 1.01, low: c * 0.99, close: c, volume: vols[i] }))
+
+  it('出来高比は「当日を含む直近n本の平均」に対する比', () => {
+    const rows = mk(Array(25).fill(100), [...Array(20).fill(100), 200, 50, 100, 100, 100])
+    const vr = volumeRatio(rows, 20)
+    // 直近20本 = 100×19 + 200 → 平均105。200/105 ≒ 1.90
+    expect(vr[20]).toBeCloseTo(200 / 105, 3)
+    expect(vr[21]).toBeLessThan(1)
+  })
+
+  it('出来高が取れない日は null（推測で埋めない）', () => {
+    const rows = mk(Array(25).fill(100), Array(25).fill(0))
+    expect(volumeRatio(rows, 20)[24]).toBe(null)
+  })
+
+  it('OBVは上げた日に足し、下げた日に引く', () => {
+    // 5日連続で上げた後の20日変化はプラス／下げ続けたらマイナス
+    const up = mk([...Array(21).fill(0).map((_, i) => 100 + i), 130], Array(22).fill(10))
+    expect(obvChange(up, 20)[21]).toBeGreaterThan(0)
+    const down = mk([...Array(21).fill(0).map((_, i) => 130 - i), 100], Array(22).fill(10))
+    expect(obvChange(down, 20)[21]).toBeLessThan(0)
+  })
+
+  it('🔴 出来高が足りないブレイクは通さない', () => {
+    expect(volumeConfirms([1.0], [0.5], 0)).toBe(false)          // 比率が閾値未満
+    expect(volumeConfirms([1.5], [-0.1], 0)).toBe(false)         // OBVがマイナス
+    expect(volumeConfirms([1.5], [0.1], 0)).toBe(true)           // 両方満たす
+  })
+
+  it('🔵 データが無い日は通す（データが無いことを理由に見送らない）', () => {
+    expect(volumeConfirms([null], [null], 0)).toBe(true)
+  })
+
+  it('閾値は 1.1（1.1〜1.3 は平らな場所を選んである）', () => {
+    expect(VOLUME_GATE.ratio).toBe(1.1)
+  })
+
+  // 🔴 効果を測るための逃げ道。本番では必ず有効
+  it('volumeGate: false で従来の判定に戻せる', () => {
+    const closes = Array.from({ length: 120 }, (_, i) => 100 + i)
+    const rows = mk(closes, Array(120).fill(100))
+    const on = blTimeline(computeIndicators(rows))
+    const off = blTimeline(computeIndicators(rows), { volumeGate: false })
+    expect(off.some((r: { side: string | null }) => r.side === 'bull')).toBe(true)
+    // 出来高が平坦（比率1.0）なので、フィルターありでは見送りが出る
+    expect(on.filter((r: { side: string | null }) => r.side === 'bull').length)
+      .toBeLessThanOrEqual(off.filter((r: { side: string | null }) => r.side === 'bull').length)
   })
 })
