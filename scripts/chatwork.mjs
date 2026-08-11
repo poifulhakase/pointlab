@@ -196,7 +196,7 @@ export function buildNotification({ date, decision, execPrice, account, baseline
 
   const lines = [`[info][title]${head}[/title]`]
   lines.push(`日付: ${date}`)
-  if (d.action !== 'hold' && execPrice != null) lines.push(`想定執行: 翌営業日の寄付き（前日終値 ${Math.round(execPrice).toLocaleString()}円）`)
+  if (d.action !== 'hold' && execPrice != null) lines.push(`🔴 執行: 本日の引成（MOC）で発注してください。15:25まで（15:00時点 ${Math.round(execPrice).toLocaleString()}円）`)
   lines.push(`確信度: ${d.confidence_pct ?? '—'}%`)
   lines.push('')
   lines.push(`■ 理由`)
@@ -236,11 +236,11 @@ export function buildNotification({ date, decision, execPrice, account, baseline
   // 🔴 判断した日には約定していない（買えるのは翌朝の寄り付き）。
   //    ここを書かないと「注文したのに口座が変わっていない」と読めてしまう。
   if (account?.pending?.decision && account.pending.decision.action !== 'hold') {
-    lines.push(`翌営業日の寄りで執行予定: ${account.pending.decision.action === 'open'
+    lines.push(`本日の引成で執行予定: ${account.pending.decision.action === 'open'
       ? `${SIDE_LABEL[account.pending.decision.symbol] ?? account.pending.decision.symbol} を ${account.pending.decision.qty}口`
       : '手仕舞い'}`)
   }
-  if (account?.pending?.stop_exit) lines.push('翌営業日の寄りで損切り手仕舞い')
+  if (account?.pending?.stop_exit) lines.push('本日の引成で損切り手仕舞い')
 
   if (stats?.closed_trades) {
     lines.push('')

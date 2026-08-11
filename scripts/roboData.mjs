@@ -101,6 +101,24 @@ export function rowsMap(etf) {
 }
 
 /**
+ * 銘柄コード → 「その日付の足」を引く関数。
+ *
+ * 🔴 15:00 に判断する運用（2026-08-11〜）では、日足の最終行が
+ *    **今日の途中経過**のこともあれば**前営業日の確定足**のこともある。
+ *    位置（末尾・末尾-1）で取ると、休場や取得タイミングで簡単にずれる。
+ *    → 保留注文に記録した日付で**引き当てる**。ずれようがない。
+ */
+export function barByDateMap(etf) {
+  const m = {}
+  for (const [code, v] of Object.entries(etf)) {
+    const byDate = {}
+    for (const r of v.rows ?? []) byDate[r.date] = r
+    m[code] = byDate
+  }
+  return m
+}
+
+/**
  * 銘柄コード → 最終行の**始値**。
  * 🔴 保留注文を「実際に買えた値段」で約定させるために使う。
  *    次の実行のとき、この最終行は判断の翌営業日になっている＝その日の寄値。

@@ -165,13 +165,17 @@ describe('detectStopHit（判定するだけ・決済はしない）', () => {
 })
 
 // ── 保留注文（2026-08-11 追加）──
-// 🔴 08:30 の判断は前営業日の**終値**を見て下すが、実際に買えるのは 09:00 の**寄値**。
-//    実測で 1570 の窓（前日終値→寄値）は平均 2.08%・上位10%で 4.82% ある。
-//    終値で約定したことにすると、口座の成績が実物と別のものになる。
-describe('保留注文を寄値で約定させる', () => {
+// 🔴 15:00 に判断して**引成（MOC）**で執行する運用。約定値は 15:30 まで確定しないので、
+//    判断した日は積むだけにして、次の実行で「その日付の足の終値」を引いて約定させる。
+// 🔴 値段は**位置ではなく日付で引き当てる**。15:00 実行だと日足の最終行が「今日の途中経過」の
+//    ことも「前営業日の確定足」のこともあり、末尾から数えると簡単にずれる。
+describe('保留注文を引けの値段で約定させる', () => {
   const openDay = (symbol: string, qty = 10) => ({
     action: 'open', symbol, qty, confidence_pct: 60, reason: 'テスト', counter: 'テスト', user_note: '',
   })
+  // 2026-08-10 の終値だけ持つ約定価格表
+  const fillAt = (price: number | null) =>
+    (_sym: string, d: string) => (d === '2026-08-10' ? price : null)
 
   it('積んだ時点では約定していない', () => {
     const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), decidedOn: '2026-08-10' })
@@ -180,39 +184,46 @@ describe('保留注文を寄値で約定させる', () => {
     expect(a.pending.decision.symbol).toBe('1570')
   })
 
-  it('🔴 約定価格は終値ではなく寄値になる', () => {
+  it('🔴 約定価格は判断した日の終値になる', () => {
     const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), plannedStop: 28000, decidedOn: '2026-08-10' })
-    // 判断時の終値は 30000（PRICES）。翌朝の寄値は 31000 で飛んでいる
-    const r = applyPending({ account: a, openOf: () => 31000, atrOf: () => 600, vix: 15, date: '2026-08-11' })
+    const r = applyPending({ account: a, fillPriceOf: fillAt(31000), atrOf: () => 600, vix: 15, date: '2026-08-11' })
     expect(r.account.position.avg_price).toBe(31000)
     expect(r.account.trades[0].price).toBe(31000)
+    expect(r.account.trades[0].executed_on).toBe('2026-08-10')
   })
 
-  it('🔴 窓ガード＝寄値が損切り値の向こう側なら建てない', () => {
+  it('🔴 その日付の足がまだ無いなら約定させず持ち越す', () => {
     const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), plannedStop: 28000, decidedOn: '2026-08-10' })
-    const r = applyPending({ account: a, openOf: () => 27500, atrOf: () => 600, vix: 15, date: '2026-08-11' })
+    const r = applyPending({ account: a, fillPriceOf: () => null, atrOf: () => 600, vix: 15, date: '2026-08-11' })
+    expect(r.actions).toEqual(['pending-wait'])
+    expect(r.account.pending).not.toBe(null)     // 消さない
+    expect(r.account.trades.length).toBe(0)
+  })
+
+  it('🔴 窓ガード＝約定値が損切り値の向こう側なら建てない', () => {
+    const a = queueOrder({ account: emptyAccount(), decision: openDay('1570'), plannedStop: 28000, decidedOn: '2026-08-10' })
+    const r = applyPending({ account: a, fillPriceOf: fillAt(27500), atrOf: () => 600, vix: 15, date: '2026-08-11' })
     expect(r.gapSkipped).toBe(true)
     expect(r.account.position).toBe(null)
     expect(r.account.trades.length).toBe(0)
     expect(r.account.pending).toBe(null)   // 持ち越さない。翌日また判断する
   })
 
-  it('損切りに触れていた建玉は、寄値で手仕舞われる', () => {
+  it('損切りに触れていた建玉は、その日の引けで手仕舞われる', () => {
     const held = openPosition({
       account: emptyAccount(), symbol: '1570', qty: 10, price: 30000,
-      atr20: 600, vix: 15, date: '2026-08-10', execDate: '2026-08-10',
+      atr20: 600, vix: 15, date: '2026-08-07', execDate: '2026-08-07',
     })
-    const a = queueOrder({ account: held, decision: { action: 'hold' }, stopExit: true, decidedOn: '2026-08-11' })
-    // 終値で損切りに触れ、翌朝さらに窓を開けて下に飛んだ
-    const r = applyPending({ account: a, openOf: () => 27000, atrOf: () => 600, vix: 15, date: '2026-08-12' })
+    const a = queueOrder({ account: held, decision: { action: 'hold' }, stopExit: true, decidedOn: '2026-08-10' })
+    const r = applyPending({ account: a, fillPriceOf: fillAt(27000), atrOf: () => 600, vix: 15, date: '2026-08-11' })
     expect(r.account.position).toBe(null)
     const t = r.account.trades[1]
     expect(t.exit_reason).toBe('stop')
-    expect(t.price).toBe(27000)          // 🔴 損切り値(28800)ではなく、実際に降りられた寄値
+    expect(t.price).toBe(27000)          // 🔴 損切り値(28800)ではなく、実際に降りられた終値
   })
 
   it('保留が無ければ何も起きない', () => {
-    const r = applyPending({ account: emptyAccount(), openOf: () => 1, atrOf: () => 1, vix: 15, date: 'x' })
+    const r = applyPending({ account: emptyAccount(), fillPriceOf: () => 1, atrOf: () => 1, vix: 15, date: 'x' })
     expect(r.actions).toEqual([])
     expect(r.account.trades.length).toBe(0)
   })

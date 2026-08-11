@@ -23,11 +23,13 @@ export function emptyAccount({ logicVersion = 'robo-v1-llm', decider = null } = 
     equity_curve: [],
     stats: { closed_trades: 0, win_rate: null, expectancy: null, max_drawdown_pct: null, stop_then_reversed: 0 },
     baseline: null,
-    // 🔴 **翌営業日の寄り付きで約定させる注文**（2026-08-11 追加）。
-    //    08:30 の判断は前営業日の**終値**を見て下すが、実際に買えるのは 09:00 の**寄値**。
-    //    実測で 1570 の窓（前日終値→寄値）は平均 2.08%・上位10%で 4.82% あり、
-    //    終値で約定したことにすると口座の成績が実物と別のものになる。
-    //    → 判断した日はここに積むだけにして、**次の実行で実際の寄値を見て約定させる**。
+    // 🔴 **その日の大引けで約定させる注文**（2026-08-11 追加 → 同日 15:00 判断に変更）。
+    //    15:00 に判断して**引成（MOC）**を出し、当日の**終値**で約定する運用。
+    //    終値は 15:30 まで確定しないので、判断した時点ではここに積むだけにして、
+    //    **次の実行で、その日付の足の終値を引いて約定させる**。
+    //    🔵 なぜ引けで建てるか＝日経のリターンは**オーバーナイト（引け→寄り）に集中**している
+    //       （26年・1倍で オーバーナイト +11.07% / 日中 −4.90%）。翌朝の寄りまで待つと、
+    //       建てる初日のオーバーナイトを丸ごと逃す。実測で CAGR +8.00% → +10.33%・DD も改善。
     pending: null,
     // 🔴 実保有に合わせた同期の記録。同期しても差分は消さずここに残す
     divergences: [],
@@ -183,30 +185,40 @@ export function queueOrder({ account, decision, stopExit = false, plannedStop = 
 }
 
 /**
- * 保留注文を、**実際の寄値**で約定させる。
+ * 保留注文を、**判断した日の終値**で約定させる（引成／MOC）。
  *
- * 🔴 呼ぶのは「次の実行」。そのとき日足の最終行は判断の翌営業日になっていて、
- *    その行の **始値＝実際に買えた/売れた値段** が入っている。
+ * 🔴 呼ぶのは「次の実行」。判断した日の終値は 15:30 まで確定しないため。
+ * 🔴 値段は**位置ではなく日付で引き当てる**（`fillPriceOf(symbol, date)`）。
+ *    15:00 実行だと日足の最終行が「今日の途中経過」のことも「前営業日の確定足」のこともあり、
+ *    末尾から数えると休場や取得タイミングで簡単にずれる。
  *
- * 🔴 **窓ガード**＝新規建ての注文で、寄値が既に「判断時点で引いた損切り値」の
- *    向こう側にあるなら**建てない**。判断の前提が寄り付きで壊れているので、
- *    入った瞬間に損切りという形になるだけ。見送って翌日また判断する。
- *    🔵 損切り値は「判断時点の終値」から引いた値を使う（寄値から引き直すと、
+ * 🔴 **窓ガード**＝新規建ての注文で、約定値が既に「判断時点で引いた損切り値」の
+ *    向こう側にあるなら**建てない**。前提が壊れた状態で入っても、入った瞬間に損切りになるだけ。
+ *    🔵 損切り値は「判断時点の価格」から引いた値を使う（約定値から引き直すと、
  *       どんなに飛んでいても必ず内側に収まってしまい、ガードが働かない）。
  */
-export function applyPending({ account, openOf, atrOf, rowsOf = () => null, vix, eventNear = false, date }) {
+export function applyPending({ account, fillPriceOf, atrOf, rowsOf = () => null, vix, eventNear = false, date }) {
   const p = account.pending
   if (!p) return { account, actions: [], gapSkipped: false }
+
+  const on = p.decided_on ?? null
+  const px = (sym) => fillPriceOf(sym, on)
+
+  // 🔴 その日付の足がまだ取れていないなら**約定させずに持ち越す**。
+  //    位置で代用すると別の日の値段で約定してしまう。
+  if (on && p.decision?.action !== 'hold' && px(p.decision?.symbol ?? account.position?.symbol) == null) {
+    return { account, actions: ['pending-wait'], gapSkipped: false }
+  }
 
   let acc = { ...account, pending: null }
   const actions = []
 
-  // ① 損切りに触れていたら、まず寄りで手仕舞う
+  // ① 損切りに触れていたら、まず引けで手仕舞う
   if (p.stop_exit && acc.position) {
-    const px = openOf(acc.position.symbol)
-    if (px != null) {
-      acc = closePosition({ account: acc, price: px, date, execDate: date, reason: 'stop' })
-      actions.push('stop(open)')
+    const q = px(acc.position.symbol)
+    if (q != null) {
+      acc = closePosition({ account: acc, price: q, date, execDate: on ?? date, reason: 'stop' })
+      actions.push('stop(close)')
     }
   }
 
@@ -214,16 +226,16 @@ export function applyPending({ account, openOf, atrOf, rowsOf = () => null, vix,
 
   // ② 窓ガード
   if (d.action === 'open' && d.symbol && d.symbol !== 'none' && p.planned_stop != null) {
-    const px = openOf(d.symbol)
-    if (px != null && px <= p.planned_stop) {
+    const q = px(d.symbol)
+    if (q != null && q <= p.planned_stop) {
       actions.push('gap-skip')
       return { account: acc, actions, gapSkipped: true }
     }
   }
 
-  // ③ 判断を寄値で約定させる
+  // ③ 判断をその日の終値で約定させる
   const r = applyDecision({
-    account: acc, decision: d, priceOf: openOf, atrOf, rowsOf, vix, eventNear, date, execDate: date,
+    account: acc, decision: d, priceOf: px, atrOf, rowsOf, vix, eventNear, date, execDate: on ?? date,
   })
   return { account: r.account, actions: [...actions, ...r.actions], gapSkipped: false }
 }
