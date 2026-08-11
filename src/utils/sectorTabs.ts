@@ -8,7 +8,12 @@
 //    （`quantTabs.ts` / `engineTabs.ts` と同じ約束。2か所に持つと壊れる）。
 //
 // 🔵 中身の割り当て：
-//    sector = 円環（局面）＋業種の話 ／ stock = 銘柄検索とAI分析
+//    sector = 円環（いまどの局面か）
+//    stock  = 業種カード（次に来る業種／いま強い業種）→ 銘柄検索とAI分析
+//
+// 🔴 **業種カードは stock 側**。業種を押す＝その業種の銘柄を検索する、という
+//    つながりがあるため、円環側に置くと押した結果が裏のタブに出てしまう
+//    （2026-08-11 ユーザー指摘で sector → stock へ移した）。
 
 export const SECTOR_TABS = ['sector', 'stock'] as const
 

@@ -145,11 +145,15 @@ function signed(v: number | null): string {
 
 export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Props) {
   // 🔴 スマホは3列を1本のスクロールに縦積みしていたため、銘柄検索まで遠かった。
-  //    タブで「セクター（円環＋業種）」と「個別（検索＋AI）」に分ける（2026-08-11 ユーザー指示）。
+  //    タブで「セクター」と「個別」に分ける（2026-08-11 ユーザー指示）。
+  // 🔴 **業種カードは「個別」側に置く**。業種を押す＝その業種の銘柄を出す、という
+  //    つながりがあるため、円環側に置くと押した結果が裏のタブに出てしまう。
+  //    セクター＝円環（いまどの局面か） ／ 個別＝業種カード → 銘柄検索、で流れが1タブに収まる。
   // 🔵 消すのではなく **display で隠す**。作り直すと検索欄に打った文字や
   //    AI の結果が、タブを行き来するたびに消えてしまう。
   const showSector = !isMobile || sectorTab === 'sector'
   const showStock  = !isMobile || sectorTab === 'stock'
+
   const c    = cy(theme)
   const glow = theme === 'dark'
   // 🔵 管理者判定は `utils/admin.ts` に集約（firestore.rules の isAdmin() と齟齬が出ないようテストあり）
@@ -215,6 +219,14 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
       .then(d => { setMaster(d.rows); setAsOf(d.asOf) })
       .catch(e => setMasterErr(e instanceof Error ? e.message : String(e)))
   }, [master, masterErr])
+
+  // 業種を押す＝その業種の銘柄を検索する。
+  // 🔴 押した先の検索欄と**同じタブ**に置くこと（上のコメント参照）。
+  const searchSector = useCallback((label: string) => {
+    ensureMaster()
+    setQuery(label)
+    setPicked(null)
+  }, [ensureMaster])
 
   const strengths = useMemo(
     () => (perf ? phaseStrengths(perf, perfKey) : []),
@@ -398,10 +410,14 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
 
       {/* ── 左：円環 ── 🔵 上下中央に置く ───────────────── */}
       <div style={{
-        flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
+        // 🔵 スマホの「セクター」タブでは円環がひとりなので、**縦の中央に置く**
+        //    （'1 0 auto' ＝ 余った高さは受け取るが、小さい画面で潰されはしない）。
+        //    3列を縦積みしていた頃と違い、同じタブに他の中身が無いので取り合いにならない。
+        flex: isMobile ? '1 0 auto' : 1, minWidth: 0,
         display: showSector ? 'flex' : 'none', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
+        // 🔵 スマホの下の余白は、浮いているタブとフッターに中身が隠れないための逃げ
+        padding: isMobile ? '24px 16px 120px' : '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           fontSize: 12, letterSpacing: '0.18em', color: c.GREEN, marginBottom: 2,
@@ -746,7 +762,7 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
 
       <div style={{
         ...(isMobile ? { height: 1 } : { width: 1 }),
-        display: showSector ? 'block' : 'none',
+        display: isMobile ? 'none' : 'block',
         background: 'var(--border-dim)', flexShrink: 0,
       }} />
 
@@ -759,10 +775,9 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
              スクロールは親（このコンポーネントのルート）に1本だけ持たせる。 */}
       <div style={{
         flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
-        display: showSector ? 'flex' : 'none', flexDirection: 'column',
+        display: showStock ? 'flex' : 'none', flexDirection: 'column',
         alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center',
-        // 🔵 スマホの下の余白は、浮いているタブとフッターに最後の項目が隠れないための逃げ
-        padding: isMobile ? '24px 16px 120px' : '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
+        padding: '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           width: '100%', maxWidth: 460,
@@ -822,9 +837,7 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
                       className="sector-hit"
                       onClick={() => {
                         setSelected(nextPh.id)
-                        ensureMaster()
-                        setQuery(r.row.label)
-                        setPicked(null)
+                        searchSector(r.row.label)
                       }}
                       title={`${r.row.label}の銘柄を検索`}
                       style={{
@@ -900,9 +913,7 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
                         className="sector-hit"
                         onClick={() => {
                           if (r.phase) setSelected(r.phase.id)
-                          ensureMaster()
-                          setQuery(r.row.label)
-                          setPicked(null)
+                          searchSector(r.row.label)
                         }}
                         title={`${r.row.label}の銘柄を検索`}
                         style={{
@@ -954,7 +965,7 @@ export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Pro
 
       <div style={{
         ...(isMobile ? { height: 1 } : { width: 1 }),
-        display: isMobile ? 'none' : 'block',
+        display: showStock ? 'block' : 'none',
         background: 'var(--border-dim)', flexShrink: 0,
       }} />
 
