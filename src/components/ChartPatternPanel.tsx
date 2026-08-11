@@ -41,7 +41,7 @@ const PATTERNS: Pattern[] = [
     kind: 'top',
     says: '上昇の終わり。中央の山がいちばん高く、両肩がそろう。ネックラインを割ったら成立。',
     how: '山3つで真ん中が最も高い／両肩の高さが近い／谷2つを結んだ線を下抜け',
-    measured: '🔴 26年で測ると **符号すら定まらない**。9通りの定義で先20日が +1.15% 〜 −1.34% とバラバラ（n=8〜26）。「下落転換の代表格」だが、日経では確認できなかった。',
+    measured: '🔴 26年で測ると 符号すら定まらない。9通りの定義で先20日が +1.15% 〜 −1.34% とバラバラ（n=8〜26）。「下落転換の代表格」だが、日経では確認できなかった。',
     path: [[0, 70], [12, 45], [22, 58], [34, 22], [46, 60], [58, 38], [70, 62], [85, 82], [100, 90]],
     lines: [{ y: 60, x1: 18, x2: 74, kind: 'neck' }],
   },
@@ -50,7 +50,7 @@ const PATTERNS: Pattern[] = [
     kind: 'bottom',
     says: '下落の終わり。中央の谷がいちばん深く、両肩がそろう。ネックラインを超えたら成立。',
     how: '谷3つで真ん中が最も深い／両肩の深さが近い／山2つを結んだ線を上抜け',
-    measured: '🔴 先5日で +0.81〜+1.16%（基準 +0.16%）と方向は合うが、t=0.72〜1.91 で**統計的には未確定**（n=10〜26）。',
+    measured: '🔴 先5日で +0.81〜+1.16%（基準 +0.16%）と方向は合うが、t=0.72〜1.91 で統計的には未確定（n=10〜26）。',
     path: [[0, 30], [12, 55], [22, 42], [34, 78], [46, 40], [58, 62], [70, 38], [85, 18], [100, 10]],
     lines: [{ y: 40, x1: 18, x2: 74, kind: 'neck' }],
   },
@@ -59,7 +59,7 @@ const PATTERNS: Pattern[] = [
     kind: 'top',
     says: '同じ高さの山を2つ作って失速。間の谷を割ったら成立。',
     how: '山2つの高さが近い（1%以内など）／その間の谷を下抜け',
-    measured: '🔴 先20日で −0.99% 〜 +1.19% と符号が定まらない（8通り・n=15〜91）。**最大でも t=1.01**。',
+    measured: '🔴 先20日で −0.99% 〜 +1.19% と符号が定まらない（8通り・n=15〜91）。最大でも t=1.01。',
     path: [[0, 75], [15, 30], [32, 58], [50, 28], [68, 62], [85, 80], [100, 88]],
     lines: [{ y: 58, x1: 10, x2: 74, kind: 'neck' }],
   },
@@ -68,7 +68,7 @@ const PATTERNS: Pattern[] = [
     kind: 'bottom',
     says: '同じ深さの谷を2つ作って底打ち。間の山を超えたら成立。',
     how: '谷2つの深さが近い／その間の山を上抜け',
-    measured: '🔵 **16種でいちばんマシ**。先5日で +0.73〜+0.82%（基準 +0.16%）と**9通りすべてプラス**。ただし基準（t≧2）に届いたのは1通りだけ（t=2.57・n=97）。',
+    measured: '🔵 16種でいちばんマシ。先5日で +0.73〜+0.82%（基準 +0.16%）と9通りすべてプラス。ただし基準（t≧2）に届いたのは1通りだけ（t=2.57・n=97）。',
     path: [[0, 25], [15, 70], [32, 42], [50, 72], [68, 38], [85, 20], [100, 12]],
     lines: [{ y: 42, x1: 10, x2: 74, kind: 'neck' }],
   },
@@ -77,7 +77,7 @@ const PATTERNS: Pattern[] = [
     kind: 'top',
     says: '同じ高さの山を3つ作って失速。谷を割ったら成立。',
     how: '山3つの高さが近い／いちばん低い谷を下抜け',
-    measured: '🔴 先20日で −1.76% 〜 −0.31% と**方向は合う**が t=−0.40 〜 −1.49 で未確定。n=13〜40 と少ない。',
+    measured: '🔴 先20日で −1.76% 〜 −0.31% と方向は合うが t=−0.40 〜 −1.49 で未確定。n=13〜40 と少ない。',
     path: [[0, 78], [12, 32], [26, 58], [40, 30], [54, 58], [68, 31], [82, 62], [100, 85]],
     lines: [{ y: 58, x1: 8, x2: 86, kind: 'neck' }],
   },
@@ -111,7 +111,7 @@ const PATTERNS: Pattern[] = [
   {
     name: '上昇ウェッジ',
     kind: 'cont-down',
-    says: '2本の線が上向きに狭まっていく。🔴 形は上向きだが**下抜けやすい**とされる。',
+    says: '2本の線が上向きに狭まっていく。🔴 形は上向きだが下抜けやすいとされる。',
     how: '高値も安値も切り上がるが、上値の傾きのほうがゆるい／下抜けで成立',
     measured: null,
     path: [[0, 80], [14, 50], [26, 66], [40, 42], [52, 58], [66, 38], [78, 50], [88, 62], [100, 88]],
@@ -120,7 +120,7 @@ const PATTERNS: Pattern[] = [
   {
     name: '下降ウェッジ',
     kind: 'cont-up',
-    says: '2本の線が下向きに狭まっていく。🔴 形は下向きだが**上抜けやすい**とされる。',
+    says: '2本の線が下向きに狭まっていく。🔴 形は下向きだが上抜けやすいとされる。',
     how: '高値も安値も切り下がるが、下値の傾きのほうがゆるい／上抜けで成立',
     measured: null,
     path: [[0, 20], [14, 52], [26, 36], [40, 60], [52, 44], [66, 64], [78, 52], [88, 36], [100, 12]],
@@ -149,7 +149,7 @@ const PATTERNS: Pattern[] = [
   {
     name: '対称三角保ち合い',
     kind: 'cont-up',
-    says: '上下から狭まって、どちらかへ放れる。🔴 **方向は形からは決まらない**。',
+    says: '上下から狭まって、どちらかへ放れる。🔴 方向は形からは決まらない。',
     how: '切り下がる上値ライン＋切り上がる下値ライン／抜けた方向へ',
     measured: null,
     path: [[0, 18], [14, 74], [28, 30], [42, 66], [56, 38], [70, 58], [82, 44], [92, 52], [100, 20]],
@@ -194,6 +194,7 @@ const KIND_LABEL: Record<Pattern['kind'], string> = {
 export function ChartPatternPanel({ theme, isMobile }: Props) {
   const dark = theme === 'dark'
   const [open, setOpen] = useState<string | null>(null)
+  const [help, setHelp] = useState(false)
 
   const c = {
     bg: dark ? '#04070f' : '#f6f8fc',
@@ -252,23 +253,44 @@ export function ChartPatternPanel({ theme, isMobile }: Props) {
           </div>
         </div>
 
-        {/* 🔴 このページの立場を最初に置く。教科書だけ並べると「当たる」と読める */}
-        <div style={{
-          border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
-          background: c.card, borderRadius: 8, padding: isMobile ? 12 : 16, marginBottom: 22,
-          fontSize: isMobile ? 12 : 13, lineHeight: 1.8,
-        }}>
-          <div style={{ fontWeight: 700, marginBottom: 6, color: c.text }}>先に大事なこと</div>
-          <div style={{ color: c.sub }}>
-            形の意味は<b style={{ color: c.text }}>「そう言われている」</b>という話であって、当たるという意味ではありません。
-            2026-08-11 に<b style={{ color: c.text }}>日経225の26年・6,361営業日</b>で6種類を測ったところ、
-            <b style={{ color: c.stop }}>108通りの定義のうち基準を超えたのは1つだけ</b>でした。
-            三尊にいたっては<b style={{ color: c.stop }}>上がるか下がるかの符号すら定まりません</b>。
-            <br />
-            測れたものには実測を併記しています。<b style={{ color: c.text }}>形を覚えることより、
-            覚えた形が効かないと知っていることのほうが役に立ちます。</b>
+        {/* 🔴 立場の説明は**ヘルプに畳む**（2026-08-11 ユーザー指示）。
+            最初から大きく出すと、図鑑として見に来た人の邪魔になる。
+            🔴 ただし**消さない**。教科書の説明だけ並べると「これを見れば当たる」と読めるので、
+               いつでも開ける場所には必ず置いておく。 */}
+        <button
+          onClick={() => setHelp(v => !v)}
+          aria-label="このページについて"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: help ? 10 : 22,
+            background: 'transparent', border: `1px solid ${c.border}`, borderRadius: 999,
+            padding: '5px 12px', cursor: 'pointer', color: c.accent, fontSize: 11,
+            fontFamily: 'inherit', letterSpacing: '0.06em',
+          }}
+        >
+          <span style={{
+            width: 15, height: 15, borderRadius: '50%', border: `1px solid ${c.accent}`,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10,
+          }}>?</span>
+          このページについて
+        </button>
+
+        {help && (
+          <div style={{
+            border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
+            background: c.card, borderRadius: 8, padding: isMobile ? 12 : 16, marginBottom: 22,
+            fontSize: isMobile ? 12 : 13, lineHeight: 1.8, animation: 'cpRise .3s ease both',
+          }}>
+            <div style={{ color: c.sub }}>
+              形の意味は<b style={{ color: c.text }}>「そう言われている」</b>という話であって、当たるという意味ではありません。
+              2026-08-11 に<b style={{ color: c.text }}>日経225の26年・6,361営業日</b>で6種類を測ったところ、
+              <b style={{ color: c.stop }}>108通りの定義のうち基準を超えたのは1つだけ</b>でした。
+              三尊にいたっては<b style={{ color: c.stop }}>上がるか下がるかの符号すら定まりません</b>。
+              <br />
+              測れたものには実測を併記しています。<b style={{ color: c.text }}>形を覚えることより、
+              覚えた形が効かないと知っていることのほうが役に立ちます。</b>
+            </div>
           </div>
-        </div>
+        )}
 
         <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
