@@ -24,11 +24,21 @@
 //    頑健性も合格＝窓(120/250/500)×刻み(0.25/0.5/1/2%)の**12通り全部が -3.4〜-4.7**。
 //    🔴 弱点＝前半(2000-2013) t=-0.38 でほぼゼロ、後半(2013-) t=-4.77。
 //       符号は一致するが**実質的に後半だけの現象**。20日先で見ると前後半で反転する。
-//    → 次は実際のバックテストで確かめる（日次で差が出ても使えるとは限らない）。
+//    🔴 **バックテストでは効かなかった**（閾値5つのうち4つがマイナス・1つが+0.04%）。
+//       原因＝売買回数が 170 → 290〜428 に爆発した。厚い／薄いは日ごとに切り替わるので、
+//       濾すと**保有が寸断される**。この戦略の利益は87回中5回の大勝ちから来ているので、
+//       途中で何度も降ろされるとその5回が育たない。
+//    🔴 抵抗線（t=-3.52）に続いて2件目。**「日次で予測力がある」と「この戦略に足せる」は別**。
+//       細かく正しくなることが、大きく当たることを邪魔する。
 //
 // 使い方: node scripts/analyze-volume-profile.mjs
 
+import { computeIndicators, baselineTimeline } from '../src/utils/robotStrategy.mjs'
+
 const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)' }
+const COST = 0.0004
+const CAPITAL = 1_000_000
+const LEV = 2
 const WIN = 250        // 何日ぶんの出来高を積むか
 const STEP = 0.005     // 価格帯の刻み（0.5%）。桁が3つ違う期間をまたぐので比率で切る
 const NEAR = 0.10      // 「上／下」を見る範囲（±10%）
@@ -153,7 +163,49 @@ async function main() {
     }
     console.log('')
   }
-  console.log('🔴 候補が出ても、次は実際のバックテストで確かめること（日次の差＝使えるとは限らない）。')
+  // ── 実際のバックテスト ──
+  // 🔴 日次で差が出ても、この戦略で使えるかは別問題。
+  //    今日の抵抗線では日次 t=-3.52 が出たのにバックテストは全部悪化した。
+  console.log('── 実際に濾してみる（厚い価格帯にいる日はブルを建てない）──')
+  const nk = computeIndicators(rows)
+  const tl = baselineTimeline(nk)
+  const thick = i => feats[i]?.atPriceRel ?? null
+
+  const run = (sideAt, L) => {
+    let cash = CAPITAL, qty = 0, side = null, trades = 0
+    const curve = []
+    for (let i = WIN + 1; i < rows.length; i++) {
+      const want = sideAt(i)
+      if (want !== side) {
+        const px = rows[i].close
+        if (qty !== 0) { cash += qty * px * (1 - COST); qty = 0; trades++ }
+        if (want) { const d = want === 'bull' ? 1 : -1; qty = (cash * L * d) / px; cash -= qty * px + Math.abs(qty * px) * COST; trades++ }
+        side = want
+      }
+      curve.push(Math.max(0, cash + qty * rows[i].close))
+    }
+    let peak = -Infinity, dd = 0
+    for (const e of curve) { peak = Math.max(peak, e); dd = Math.min(dd, e / peak - 1) }
+    const yrs = (new Date(rows[rows.length - 1].date) - new Date(rows[WIN + 1].date)) / (365.25 * 864e5)
+    return { cagr: (curve[curve.length - 1] / CAPITAL) ** (1 / yrs) - 1, dd, trades, fin: curve[curve.length - 1] }
+  }
+
+  const base = run(i => tl[i].side, LEV)
+  const p = v => `${v >= 0 ? '+' : ''}${(v * 100).toFixed(2)}%`
+  console.log(`  現行                          CAGR ${p(base.cagr).padStart(8)}  DD ${p(base.dd).padStart(8)}  回数 ${base.trades}`)
+  for (const thr of [0.5, 0.6, 0.7, 0.8, 0.9]) {
+    const f = i => (tl[i].side === 'bull' && (thick(i) ?? 0) >= thr ? null : tl[i].side)
+    const r = run(f, LEV)
+    let lo = 0.3, hi = 12, best = null
+    for (let n = 0; n < 40; n++) {
+      const m = (lo + hi) / 2
+      const x = run(f, m)
+      if (x.dd < base.dd) hi = m; else { lo = m; best = { L: m, ...x } }
+    }
+    console.log(`  厚さ ${thr.toFixed(1)} 以上は建てない       CAGR ${p(r.cagr).padStart(8)}  DD ${p(r.dd).padStart(8)}  回数 ${String(r.trades).padStart(4)}   DDそろえ後の差 ${best ? p(best.cagr - base.cagr) : '—'}`)
+  }
+  console.log('')
+  console.log('🔴 日次で差が出ても、この戦略で使えるかは別問題。'.replace('\U0001f534', '🔴'))
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
