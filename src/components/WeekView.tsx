@@ -209,8 +209,13 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               const heightPx = Math.max(30 / TOTAL_MINUTES * HOUR_HEIGHT * 24, 22)
               return { topPx, heightPx, ...slot, key: `bk-${i}` }
             }) : []
+            // 🔴 休場（土日・祝日）の列は必ず色を敷く。**今日かどうかは関係ない**（2026-08-11 修正）。
+            //    以前は `closed && !td` としていたため、**今日がちょうど祝日の日だけ色が消えて**、
+            //    祝日なのに平日と同じに見えていた（8/11 山の日で発覚）。
+            //    🔵 今日の強調はヘッダー側で出しているので、ここで外す必要は無い。
+            //    🔵 日ビューは元から `closed ?` だけで見ており、これで揃った。
             return (
-              <div key={di} style={{ ...styles.dayCol, position: 'relative', background: closed && !td ? 'var(--closed-cell-bg)' : !td && alertDateSet.has(d.toDateString()) ? 'rgba(248,113,113,0.08)' : undefined }}>
+              <div key={di} style={{ ...styles.dayCol, position: 'relative', background: closed ? 'var(--closed-cell-bg)' : !td && alertDateSet.has(d.toDateString()) ? 'rgba(248,113,113,0.08)' : undefined }}>
                 {!closed && <SessionBands />}
                 {HOURS.map(h => (
                   <div
