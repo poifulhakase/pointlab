@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
+import { PoiroboLoader } from './PoiroboLoader'
 import { fetchStocksDaily, STOCKS_CACHE_KEY, type StocksItem, type SectorItem, type StocksDailyData, type NkFuturesDayData } from '../utils/stocksDailyData'
 import { getCachedUpdatedAt } from '../utils/dataCache'
 
@@ -266,13 +267,8 @@ function Panel({ title, upItems, downItems, renderUp, renderDown, isDark }: {
 }
 
 function Spinner() {
-  return (
-    <div style={{
-      width: 22, height: 22, borderRadius: '50%',
-      border: '2.5px solid var(--glass-border)', borderTopColor: 'var(--accent)',
-      animation: 'spin 0.8s linear infinite',
-    }} />
-  )
+  // 🔵 読み込み中の表示はアプリ全体でドットロボに揃える（2026-08-11）
+  return <PoiroboLoader />
 }
 
 // ── メインコンポーネント ───────────────────────────────────

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { PoiroboLoader } from './PoiroboLoader'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
@@ -588,10 +589,7 @@ export function MicroQuantView({ theme, isMobile, data, loading, error, onReload
           }}>
 
             {loading && data.length === 0 ? (
-              <div style={s.center}>
-                <div style={s.spinner} />
-                <span style={{ color: 'var(--text-sub)', fontSize: 13 }}>取得中…</span>
-              </div>
+              <PoiroboLoader label="取得中" />
             ) : error ? (
               <div style={s.center}>
                 <span style={{ color: 'var(--text-sub)', fontSize: 12, textAlign: 'center' }}>{error}</span>

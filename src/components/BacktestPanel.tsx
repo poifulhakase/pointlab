@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { PoiroboLoader } from './PoiroboLoader'
 import { fetchBacktestResult, type BacktestResult, type WeeklyEntry } from '../utils/backtestData'
 
 type Props = {
@@ -148,9 +149,7 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
 
         {/* Loading */}
         {loading && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: mono, fontSize: 11, color: c.DIM, letterSpacing: '0.18em' }}>読み込み中...</span>
-          </div>
+          <PoiroboLoader label="読み込み中" />
         )}
 
         {/* No data */}

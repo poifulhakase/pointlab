@@ -3,6 +3,8 @@ import { lazyWithReload as lazy } from '../utils/lazyWithReload'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
+// 読み込み中の表示はアプリ全体でドットロボに揃える（2026-08-11）
+import { PoiroboLoader } from './PoiroboLoader'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
 import { fetchVixData, fetchVixDailyData, type VixWeekData, type VixDayData } from '../utils/vixData'
@@ -302,10 +304,7 @@ function PanelHeader({
 
 function PanelCenter({ loading, error, onRetry }: { loading: boolean; error: string; onRetry: () => void }) {
   if (loading) return (
-    <div style={s.center}>
-      <div style={s.spinner} />
-      <span style={{ color: 'var(--text-sub)', fontSize: 13 }}>取得中…</span>
-    </div>
+    <PoiroboLoader label="取得中" />
   )
   if (error) return (
     <div style={s.center}>
@@ -1017,7 +1016,7 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
                     </div>
                   </div>
                   {loadingEmpty
-                    ? <div style={s.center}><div style={s.spinner} /></div>
+                    ? <PoiroboLoader />
                     : errorEmpty
                     ? <div style={s.center}>
                         <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{futuresDailyError}</div>
@@ -1136,7 +1135,7 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
                     </div>
                   </div>
                   {!nkFuturesPriceLoaded || (nkFuturesPriceLoading && nkRows.length === 0)
-                    ? <div style={s.center}><div style={s.spinner} /></div>
+                    ? <PoiroboLoader />
                     : nkFuturesPriceError && nkRows.length === 0
                     ? <div style={s.center}>
                         <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>取得エラー</div>

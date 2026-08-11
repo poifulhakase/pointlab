@@ -3,6 +3,7 @@
 // 🔴 この画面は読むだけ。売買の操作はしない（書き込むのは GitHub Actions）。
 // 🔵 配色・演出は ぽいロボ系（サイバー調・シアン）に揃える。cyberTheme の cy() を使う。
 import { useEffect, useState } from 'react'
+import { PoiroboLoader } from './PoiroboLoader'
 import type React from 'react'
 import { cy } from '../utils/cyberTheme'
 import {
@@ -98,9 +99,7 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
     return (
       <div style={shell}>
         <Keyframes />
-        <div style={{ color: c.DIM, fontSize: 12, letterSpacing: '0.1em' }}>
-          <span className="robo-blink">▌</span> ACCOUNT DATA ....... 読込中
-        </div>
+        <PoiroboLoader label="ACCOUNT DATA" />
       </div>
     )
   }

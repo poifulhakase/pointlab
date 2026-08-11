@@ -1,4 +1,5 @@
 import type { User } from 'firebase/auth'
+import { PoiroboLoader } from './PoiroboLoader'
 import { QuantSkeleton, ChartSkeleton, ShieldSkeleton, CalendarSkeleton } from './LockSkeletons'
 
 export type LockedView = 'calendar' | 'chart' | 'quant' | 'shield'
@@ -75,17 +76,7 @@ export function CommunityLockScreen({ user, authLoading, memberLoading, view = '
       `}</style>
 
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, zIndex: 2 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: '50%',
-            border: `2px solid ${CY_FAINT}`,
-            borderTopColor: CY_ACCENT,
-            animation: 'spin 0.9s linear infinite',
-          }} />
-          <span style={{ fontFamily: CY_FONT, fontSize: 10, color: CY_DIM, letterSpacing: '0.12em' }}>
-            CHECKING ACCESS...
-          </span>
-        </div>
+        <div style={{ zIndex: 2 }}><PoiroboLoader label="CHECKING ACCESS" size={72} /></div>
       ) : (
         <>
           {/* ぽいロボ画像 */}

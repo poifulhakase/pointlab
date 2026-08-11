@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PoiroboLoader } from './PoiroboLoader'
 import type { UsdjpyDayData } from '../utils/usdjpyData'
 
 const MOBILE_ROW_LIMIT = 10
@@ -79,10 +80,7 @@ export function MarketDailyPanel({
       {/* ── テーブル ── */}
       <div style={tblWrap}>
         {usdjpyLoading && usdjpyData.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, flex: 1, padding: 32 }}>
-            <div style={{ width: 24, height: 24, borderRadius: '50%', border: '3px solid var(--glass-border)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ color: 'var(--text-sub)', fontSize: 13 }}>取得中…</span>
-          </div>
+          <PoiroboLoader label="取得中" />
         ) : usdjpyError && usdjpyData.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, flex: 1, padding: 32 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,100,80,0.7)" strokeWidth="1.5" strokeLinecap="round">
