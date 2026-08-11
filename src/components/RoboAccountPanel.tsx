@@ -328,7 +328,10 @@ function VisualColumn({ theme }: { theme: 'dark' | 'light' }) {
           textShadow: theme === 'dark' ? `0 0 10px ${c.GREEN}55` : 'none',
         }}>ROBO ACCOUNT</div>
         <div style={{ marginTop: 8, fontSize: 11, color: c.DIM, letterSpacing: '0.08em', lineHeight: 1.9 }}>
-          毎営業日 08:30 に判断しています<br />
+          {/* 🔴 判断の時刻はここに直書き。cron を変えたらここも直すこと
+              （2026-08-11 に 08:30 → 15:00 へ移したとき、画面が古いまま残っていた）。 */}
+          毎営業日 15:00 に判断しています<br />
+          <span style={{ color: c.DESC }}>執行は当日の引成（MOC）</span><br />
           <span style={{ color: c.DESC }}>実際の売買はしません</span>
         </div>
       </div>
