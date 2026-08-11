@@ -50,6 +50,21 @@ const OUT_DIR = path.resolve(process.cwd(), '.captures')
 const CHART_URL = process.env.ROBO_CHART_URL
   ?? 'https://jp.tradingview.com/chart/?symbol=INDEX%3ANKY&interval=D'
 
+// 🔴 **週足も撮る**（2026-08-11 追加・ユーザー判断）。
+//    上位トレンドや抵抗ラインは幾何なので、数値にするより見せたほうが早い、という判断。
+// 🔴 ただし**位置づけを間違えないこと**。画像から読んだものは過去に遡って再現できず、
+//    **検証できない**。効いたか効かなかったかを永久に測れない材料なので、
+//    「AIの読みの補助」までに留め、**検証したいものをチャートに任せない**。
+//    仕組みで効かせたいもの（上位トレンドのフィルターなど）は数値で定義して測ること。
+const WEEKLY_URL = process.env.ROBO_CHART_URL_W
+  ?? CHART_URL.replace(/interval=[^&]*/, 'interval=W')
+
+// 撮る対象。file 名の接尾辞と、Chatwork に出す名前。
+const SHOTS = [
+  { key: 'D', url: CHART_URL,  label: '日足' },
+  { key: 'W', url: WEEKLY_URL, label: '週足' },
+]
+
 const log = (s = '') => console.log(s)
 
 async function loadPlaywright() {
@@ -111,44 +126,53 @@ async function main() {
       return
     }
 
-    // チャートの描画を待つ。
-    // 🔴 **canvas が出ないときは撮れていない**＝チャートが1本も描かれていない。
-    //    以前は「撮れないより撮る」で先へ進めていたが、それだと**ログインが切れた日から毎日
-    //    エラー画面を Chatwork へ投げ続ける**（平日16:00の自動実行にしたので毎日流れる）。
-    //    AI はそれをチャートとして読むので、黙って判断が濁る。ここで止める。
-    log('[2] 描画を待つ...')
-    let drawn = true
-    try {
-      await page.waitForSelector('canvas', { timeout: 45000 })
-    } catch {
-      drawn = false
-    }
-    await page.waitForTimeout(8000)
-
     const date = new Date().toISOString().slice(0, 10)
-    const file = path.join(OUT_DIR, `chart_${date}.png`)
-    await page.screenshot({ path: file, fullPage: false })
-    log(`[3] 撮影: ${file}`)
+    const shots = []
 
-    // 🔴 ログイン切れの検知。
-    //    以前は「ログイン」を含み「チャート」を含まないことを条件にしていたが、
-    //    実際のエラー画面は「このチャートレイアウトを開くことができません…ログインする必要があります」で
-    //    **両方の語を含むため検知をすり抜けた**（2026-08-10 の空撃ちで発覚）。
-    //    文言に頼らず、**canvas が描かれたか**で判定する。
-    const bodyText = (await page.textContent('body').catch(() => '')) ?? ''
-    const blocked = /開くことができません|Can't open|ログインする必要があります/.test(bodyText)
+    // 🔴 日足と週足を順に撮る。
+    //    **canvas が出ないときは撮れていない**＝チャートが1本も描かれていない。
+    //    以前は「撮れないより撮る」で先へ進めていたが、それだと**ログインが切れた日から毎日
+    //    エラー画面を Chatwork へ投げ続ける**（平日の自動実行なので毎日流れる）。
+    //    AI はそれをチャートとして読むので、黙って判断が濁る。ここで止める。
+    for (const shot of SHOTS) {
+      if (shot.url !== CHART_URL) {
+        log(`[1] チャートを開く（${shot.label}）: ${shot.url}`)
+        await page.goto(shot.url, { waitUntil: 'domcontentloaded', timeout: 90000 })
+      }
+      log(`[2] 描画を待つ（${shot.label}）...`)
+      let drawn = true
+      try {
+        await page.waitForSelector('canvas', { timeout: 45000 })
+      } catch {
+        drawn = false
+      }
+      await page.waitForTimeout(8000)
 
-    if (!drawn || blocked) {
-      log('')
-      log('  🔴 チャートが描かれていません（ログイン切れの可能性が高い）。')
-      log('  🔴 中身が無い画像を投げると AI がそれを読んでしまうので、投稿しません。')
-      log('     直し方: npm run capture-chart -- --login')
-      log(`     撮れたものは確認用に残してあります: ${file}`)
-      return
+      const file = path.join(OUT_DIR, `chart_${shot.key}_${date}.png`)
+      await page.screenshot({ path: file, fullPage: false })
+      log(`[3] 撮影: ${file}`)
+
+      // 🔴 ログイン切れの検知。
+      //    以前は「ログイン」を含み「チャート」を含まないことを条件にしていたが、
+      //    実際のエラー画面は「このチャートレイアウトを開くことができません…ログインする必要があります」で
+      //    **両方の語を含むため検知をすり抜けた**（2026-08-10 の空撃ちで発覚）。
+      //    文言に頼らず、**canvas が描かれたか**で判定する。
+      const bodyText = (await page.textContent('body').catch(() => '')) ?? ''
+      const blocked = /開くことができません|Can't open|ログインする必要があります/.test(bodyText)
+
+      if (!drawn || blocked) {
+        log('')
+        log(`  🔴 チャートが描かれていません（${shot.label}・ログイン切れの可能性が高い）。`)
+        log('  🔴 中身が無い画像を投げると AI がそれを読んでしまうので、投稿しません。')
+        log('     直し方: npm run capture-chart -- --login')
+        log(`     撮れたものは確認用に残してあります: ${file}`)
+        return
+      }
+      shots.push({ ...shot, file })
     }
 
     if (DRY) {
-      log('[4] --dry のため投稿しない')
+      log(`[4] --dry のため投稿しない（${shots.length}枚 撮影済み）`)
       return
     }
 
@@ -161,16 +185,18 @@ async function main() {
       log('       CHATWORK_API_TOKEN=...')
       log('       CHATWORK_ROOM_ID=...')
       log('     🔵 GitHub Secrets は Actions 専用です。撮影はローカルPCで動くので届きません。')
-      log(`     撮れたものはここにあります: ${file}`)
+      log(`     撮れたものはここにあります: ${shots.map(s => s.file).join(' / ')}`)
       return
     }
 
     const { uploadFile } = await import('./chatwork.mjs')
-    await uploadFile({
-      filePath: file,
-      message: `[info][title]TradingView チャート ${date}[/title]ロボ口座の判断材料です（自動投稿）[/info]`,
-    })
-    log('[4] Chatwork へ投稿した')
+    for (const shot of shots) {
+      await uploadFile({
+        filePath: shot.file,
+        message: `[info][title]TradingView ${shot.label} ${date}[/title]ロボ口座の判断材料です（自動投稿）[/info]`,
+      })
+    }
+    log(`[4] Chatwork へ投稿した（${shots.length}枚）`)
   } finally {
     await ctx.close()
   }
