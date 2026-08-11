@@ -5,6 +5,7 @@ import { lazyWithReload as lazy } from './utils/lazyWithReload'
 // 🔴 シールド画面のタブの並び順は、ここ1か所だけで決める（QuantView のDOM順もこれに合わせる）
 import { QUANT_TABS, QUANT_LABELS, type QuantTabKey } from './utils/quantTabs'
 import { ENGINE_TABS, ENGINE_LABELS, type EngineTabKey } from './utils/engineTabs'
+import { SECTOR_TABS, SECTOR_LABELS, type SectorTabKey } from './utils/sectorTabs'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
@@ -146,7 +147,9 @@ export default function App() {
   // 🔵 エンジン（内部識別子 'shield'）も研究室と同じサイバー調にする（2026-08-11 ユーザー指示）。
   //    下の帯（フッター）は CalendarHeader 側の isLab に 'shield' を足して合わせてある。
   const isEngineNeon = cal.view === 'shield' && theme === 'dark'
-  const isNeonBar = isLegalNeon || isEngineNeon
+  // 🔵 周期（セクターローテーション）も中身がサイバー調の画面なので、帯とタブを合わせる
+  const isSectorNeon = cal.view === 'sector' && theme === 'dark'
+  const isNeonBar = isLegalNeon || isEngineNeon || isSectorNeon
 
   // ── 日/週/月 スワイプ ─────────────────────────────────────────────────
   const calTouchStartXRef  = useRef(0)
@@ -251,6 +254,7 @@ export default function App() {
   const [quantTab,          setQuantTab]          = useState<QuantTabKey>('bunseki')
   // エンジン画面（ロボ口座）のタブ（2026-08-11 追加・ロボ口座／成績／履歴）
   const [engineTab,         setEngineTab]         = useState<EngineTabKey>('account')
+  const [sectorTab,         setSectorTab]         = useState<SectorTabKey>('sector')
   const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
@@ -399,6 +403,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     prevViewRef2.current = cal.view
     if (prev === 'chart')  setChartSymbol('INDEX:NKY')
     if (prev === 'quant')  setQuantTab('bunseki')
+    if (prev === 'sector') setSectorTab('sector')
   }, [cal.view])
 
   // ── Android 戻るボタン対応 ────────────────────────────────────────────
@@ -665,7 +670,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               **周期は日経平均の話ではない**ので、日経を見る道具と同居させない。 */}
           {cal.view === 'sector' && (
             canViewMemberPages
-              ? <ErrorBoundary label="セクターローテーション"><Suspense fallback={<ViewLoader />}><SectorPanel theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="セクターローテーション"><Suspense fallback={<ViewLoader />}><SectorPanel theme={theme} isMobile={isMobile} user={user} sectorTab={sectorTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
@@ -792,7 +797,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {/* コミュニティ限定ビュー（カレンダー/シールド/エンジン）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
-      {(((isCalView || cal.view === 'quant' || cal.view === 'shield') && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
+      {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || (cal.view === 'sector' && isMobile)) && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isNeonBar ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isNeonBar ? undefined : 'glass'}>
@@ -854,6 +859,26 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                     }}
                     onClick={() => setEngineTab(tab)}
                   >{ENGINE_LABELS[tab]}</button>
+                ))}
+              </>
+            )}
+            {/* 周期＝セクター / 個別（🔴 スマホだけ。PC は3列とも見えている・2026-08-11 追加） */}
+            {cal.view === 'sector' && isMobile && (
+              <>
+                {SECTOR_TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    style={{
+                      ...styles.floatTab,
+                      color: isSectorNeon ? (sectorTab === tab ? NEON_CLR : NEON_DIM) : undefined,
+                      ...(sectorTab === tab
+                        ? isSectorNeon
+                          ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
+                          : styles.floatTabActive
+                        : {}),
+                    }}
+                    onClick={() => setSectorTab(tab)}
+                  >{SECTOR_LABELS[tab]}</button>
                 ))}
               </>
             )}

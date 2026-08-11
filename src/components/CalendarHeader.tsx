@@ -83,9 +83,9 @@ export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, o
   const showMenu = isMobile
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
-  // 🔵 エンジン（内部識別子 'shield'）も研究室と同じサイバー調にする（2026-08-11 ユーザー指示）。
-  //    中身がロボの機械寄りの画面なので、研究室と地続きに見せる。
-  const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal' || view === 'playbook' || view === 'original' || view === 'timemachine' || view === 'shield'
+  // 🔵 エンジン（内部識別子 'shield'）と周期（'sector'）も研究室と同じサイバー調にする
+  //    （2026-08-11 ユーザー指示）。どちらも中身が機械寄りの画面なので、研究室と地続きに見せる。
+  const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal' || view === 'playbook' || view === 'original' || view === 'timemachine' || view === 'shield' || view === 'sector'
   const useNeon  = (isLab || forceNeon) && theme === 'dark'
   const neonColor      = '#00e5ff'
   const neonDim        = 'rgba(0,229,255,0.42)'

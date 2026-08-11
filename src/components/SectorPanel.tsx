@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
+import type { SectorTabKey } from '../utils/sectorTabs'
 import { isAdminEmail } from '../utils/admin'
 import { cy } from '../utils/cyberTheme'
 import { AILaunchRow } from './CyberAiLaunch'
@@ -57,6 +58,8 @@ type Props = {
   isMobile: boolean
   /** 管理者判定に使う（TradingView を自分のチャートレイアウトで開くかの分岐） */
   user: User | null
+  /** 🔴 スマホだけのタブ。PC は3列とも見えているので無視される */
+  sectorTab?: SectorTabKey
 }
 
 // 🔵 SIZE は「次はこちら」の矢印を**円の外側**に描く余白ぶんだけ R_OUT より大きく取る
@@ -140,7 +143,13 @@ function signed(v: number | null): string {
   return `${v > 0 ? '+' : ''}${v}%`
 }
 
-export function SectorPanel({ theme, isMobile, user }: Props) {
+export function SectorPanel({ theme, isMobile, user, sectorTab = 'sector' }: Props) {
+  // 🔴 スマホは3列を1本のスクロールに縦積みしていたため、銘柄検索まで遠かった。
+  //    タブで「セクター（円環＋業種）」と「個別（検索＋AI）」に分ける（2026-08-11 ユーザー指示）。
+  // 🔵 消すのではなく **display で隠す**。作り直すと検索欄に打った文字や
+  //    AI の結果が、タブを行き来するたびに消えてしまう。
+  const showSector = !isMobile || sectorTab === 'sector'
+  const showStock  = !isMobile || sectorTab === 'stock'
   const c    = cy(theme)
   const glow = theme === 'dark'
   // 🔵 管理者判定は `utils/admin.ts` に集約（firestore.rules の isAdmin() と齟齬が出ないようテストあり）
@@ -390,7 +399,7 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
       {/* ── 左：円環 ── 🔵 上下中央に置く ───────────────── */}
       <div style={{
         flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
-        display: 'flex', flexDirection: 'column',
+        display: showSector ? 'flex' : 'none', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         padding: '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
@@ -735,9 +744,11 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
         </div>
       </div>
 
-      <div style={isMobile
-        ? { height: 1, background: 'var(--border-dim)', flexShrink: 0 }
-        : { width: 1, background: 'var(--border-dim)', flexShrink: 0 }} />
+      <div style={{
+        ...(isMobile ? { height: 1 } : { width: 1 }),
+        display: showSector ? 'block' : 'none',
+        background: 'var(--border-dim)', flexShrink: 0,
+      }} />
 
       {/* ── 中：業種の話 ── 選んだ局面の内訳／次に来る業種／いま強い業種 ──── */}
       {/* 🔵 上下中央寄せ。カードに `minHeight` を入れて**高さが変わらないようにした**ので、
@@ -747,9 +758,11 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
              （2026-08-08 実測）。縦積みのときは中身の高さのまま並べて、
              スクロールは親（このコンポーネントのルート）に1本だけ持たせる。 */}
       <div style={{
-        flex: isMobile ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+        flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
+        display: showSector ? 'flex' : 'none', flexDirection: 'column',
         alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center',
-        padding: '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
+        // 🔵 スマホの下の余白は、浮いているタブとフッターに最後の項目が隠れないための逃げ
+        padding: isMobile ? '24px 16px 120px' : '24px 16px', overflowY: isMobile ? 'visible' : 'auto',
       }}>
         <div style={{
           width: '100%', maxWidth: 460,
@@ -939,9 +952,11 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
         </div>
       </div>
 
-      <div style={isMobile
-        ? { height: 1, background: 'var(--border-dim)', flexShrink: 0 }
-        : { width: 1, background: 'var(--border-dim)', flexShrink: 0 }} />
+      <div style={{
+        ...(isMobile ? { height: 1 } : { width: 1 }),
+        display: isMobile ? 'none' : 'block',
+        background: 'var(--border-dim)', flexShrink: 0,
+      }} />
 
       {/* ── 右：銘柄の話 ── 検索とAI分析だけ ─────────────────── */}
       {/* 🔴 この列だけ上揃え。検索結果とAIパネルで**高さが変わる**ため、
@@ -951,7 +966,8 @@ export function SectorPanel({ theme, isMobile, user }: Props) {
           🔵 上の 44px は3列のときに左右の高さを揃えるためのもの。縦積みでは
              区切り線のすぐ下に無駄な余白が空くだけなので 24px に落とす。 */}
       <div style={{
-        flex: isMobile ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+        flex: isMobile ? '0 0 auto' : 1, minWidth: 0,
+        display: showStock ? 'flex' : 'none', flexDirection: 'column',
         // 🔵 スマホの下の余白（120px）は、浮いている「エンジン／周期」トグルと
         //    フッターに最後の項目が隠れないための逃げ。**スクロールの中身の末尾**に置くこと
         //    （親のコンテナに padding で持たせると、常時見える空白の帯になる・2026-08-08）。
