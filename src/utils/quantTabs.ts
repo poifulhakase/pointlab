@@ -1,0 +1,27 @@
+// シールド画面のタブの並び順（単一情報源）。
+//
+// 🔴 **ここ1か所だけで並び順を決める。**
+//    以前は App.tsx（タブボタンの並び）と QuantView.tsx（パネルのDOM順）で
+//    別々に配列を持っていて、片方だけ直したときに
+//    **内容は正しいのにスライドが左右逆に動く**という壊れ方をした（2026-08-11 ユーザー指摘）。
+//    「右のタブを押したのに左へ戻る」はこの形。
+//
+// 🔴 **パネルを JSX に書く順も、この順に合わせること。**
+//    移動量は DOM 上の並びで計算しているので、JSX の順がこことズレると
+//    今度は別のパネルが表示される（2026-08-09 に発生）。
+//
+// 🔵 識別子は据え置き（'bunseki' などは画面名を変える前の名残だが、
+//    保存済みの状態や既存コードが参照しているので変えない）。
+
+export const QUANT_TABS = ['bunseki', 'kankyou', 'genbutsu', 'micro', 'sector'] as const
+
+export type QuantTabKey = typeof QUANT_TABS[number]
+
+/** タブボタンに出す名前（QUANT_TABS と同じ並び・同じ本数）。 */
+export const QUANT_LABELS: Record<QuantTabKey, string> = {
+  bunseki:  'シールド',
+  kankyou:  '環境',
+  genbutsu: '現物',
+  micro:    '先物',
+  sector:   '周期',
+}

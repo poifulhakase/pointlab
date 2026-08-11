@@ -34,8 +34,11 @@ import type { NtRatioPoint } from '../utils/ntRatioData'
 //    QuantView は**両方の画面から使われる**ので、どのタブを並べるかは visibleTabs で受け取る。
 //    データ取得は分析タブの AI プロンプト（buildExportJson）が全項目を使うため、
 //    タブ集合に関わらず従来どおり全部読み込む（分割しない）。
-export type QuantTabKey = 'bunseki' | 'sector' | 'kankyou' | 'genbutsu' | 'micro'
-const ALL_QUANT_TABS: readonly QuantTabKey[] = ['bunseki', 'sector', 'kankyou', 'genbutsu', 'micro']
+import { QUANT_TABS, type QuantTabKey } from '../utils/quantTabs'
+export type { QuantTabKey }
+// 🔴 並び順は `src/utils/quantTabs.ts` の1か所で決める（タブボタンと共通）。
+//    別々に持っていたときは、内容は正しいのに**スライドが左右逆に動いた**（2026-08-11）。
+const ALL_QUANT_TABS: readonly QuantTabKey[] = QUANT_TABS
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
@@ -401,6 +404,9 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
   //    パネルは JSX に書いた順（ALL_QUANT_TABS の順）で並ぶので、
   //    タブボタンの並び順（visibleTabs）で index を取ると別のパネルが表示される。
   //    （2026-08-09: 周期をタブの末尾へ動かしたときに実際に起きた）
+  // 🔴 さらに **ALL_QUANT_TABS 自体をボタンの並び順に合わせること**（2026-08-11）。
+  //    DOM順とボタン順がズレていると、出る内容は正しいのに**スライドが左右逆に動く**。
+  //    「右のタブを押したのに左へ戻る」は、たいていこれ。
   const domOrder = ALL_QUANT_TABS.filter(t => visibleTabs.includes(t))
   const tabCount = domOrder.length
   const tabIndex = Math.max(0, domOrder.indexOf(quantTab))
@@ -595,20 +601,6 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
           {/* ② スマホ: SYSTEM LOG は QuantMemoPanel の下に表示 */}
           {isMobile && <EngineSystemLog {...engineLogState} theme={theme} />}
         </div>}{/* /分析 */}
-
-        {/* ━━ 周期（セクター）━━ */}
-        {/* 🔴 2026-08-09: エンジン画面（ShieldView）からタブごと移設 */}
-        {showTab('sector') && <div style={{
-          width: paneWidth,
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          height: '100%',
-          overflowX: 'hidden',
-          overflowY: isMobile ? 'auto' : 'hidden',
-        }}>
-          <Suspense fallback={null}><SectorPanel theme={theme} isMobile={isMobile} user={user} /></Suspense>
-        </div>}{/* /周期 */}
 
         {/* ━━ 環境 ━━ */}
         {showTab('kankyou') && <div style={{
@@ -1201,6 +1193,20 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
           })()}
 
         </div>}{/* /先物需給 */}
+
+        {/* ━━ 周期（セクター）━━ */}
+        {/* 🔴 2026-08-09: エンジン画面（ShieldView）からタブごと移設 */}
+        {showTab('sector') && <div style={{
+          width: paneWidth,
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          height: '100%',
+          overflowX: 'hidden',
+          overflowY: isMobile ? 'auto' : 'hidden',
+        }}>
+          <Suspense fallback={null}><SectorPanel theme={theme} isMobile={isMobile} user={user} /></Suspense>
+        </div>}{/* /周期 */}
 
         </div>{/* /スライダートラック */}
 

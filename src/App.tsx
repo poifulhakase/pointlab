@@ -2,6 +2,8 @@ import { Suspense, memo, useMemo, useState, useEffect, useCallback, useRef } fro
 import { flushSync } from 'react-dom'
 // 旧チャンク 404（デプロイでハッシュ変化）時に一度だけ自動リロードする lazy ラッパー
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
+// 🔴 シールド画面のタブの並び順は、ここ1か所だけで決める（QuantView のDOM順もこれに合わせる）
+import { QUANT_TABS, QUANT_LABELS } from './utils/quantTabs'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
@@ -792,12 +794,12 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             )}
             {cal.view === 'quant' && (
               <>
-                {QUANT_TABS.map((tab, i) => (
+                {QUANT_TABS.map((tab) => (
                   <button
                     key={tab}
                     style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
                     onClick={() => setQuantTab(tab)}
-                  >{QUANT_LABELS[i]}</button>
+                  >{QUANT_LABELS[tab]}</button>
                 ))}
               </>
             )}
@@ -890,8 +892,8 @@ const CAL_VIEW_TABS = [['month','月'],['week','週'],['day','日']] as const
 //    🔴 タブの識別子はすべて据え置き（'bunseki'/'kankyou'/'genbutsu'/'micro'/'sector'）。
 //    🔵 いったん市場データをエンジン側へ移したが、旧ポジション分析の削除でエンジンが
 //       ロボ口座専用になったため、シールド側へ戻した（周期の左に並べる・ユーザー指示）。
-const QUANT_TABS    = ['bunseki', 'kankyou', 'genbutsu', 'micro', 'sector'] as const
-const QUANT_LABELS  = ['シールド', '環境', '現物', '先物', '周期'] as const
+//    🔴 **並び順は `src/utils/quantTabs.ts` の1か所で決める**（2026-08-11）。
+//       ここと QuantView のDOM順が別々だったため、スライドが左右逆に動いていた。
 // QuantView に渡すタブ集合
 const SHIELD_VIEW_TABS = QUANT_TABS
 const LEGAL_TABS    = ['terms', 'disclaimer', 'privacy'] as const
