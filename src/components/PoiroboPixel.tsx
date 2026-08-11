@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { SPRITE, PALETTE } from '../utils/poiroboSprite'
 
 // ぽいロボのドット絵（24×24）。
@@ -10,26 +11,20 @@ import { SPRITE, PALETTE } from '../utils/poiroboSprite'
 //    ③ gitで**1ドット単位の差分が見える** ④画像ファイルを増やさない（読み込みが増えない）
 // 🔵 直すときは `SPRITE` の文字を書き換えるだけ。1文字＝1ドット。
 // 🔴 行の長さは全部そろえること（テストで固定してある）。ずれると絵が崩れる。
+//
+// 🔴🔴 **1ドット＝1つの四角で描いてはいけない**（2026-08-11 に2度踏んだ）。
+//    端末の画素比（125%表示など）では、隣り合う四角の下端と上端が1画素ぶんずれ、
+//    **体の途中に薄い横線が出る**。四角を少し重ねても、動かし方を変えても消えなかった。
+//    → **同じ色のドットをまとめて1つの図形（path）にする**。1つの図形の内部に境目は無いので、
+//      画素比がいくつでも線は出ない。これが根本的な直し方。
 
 /** 目のドット（まばたきさせる位置）。SPRITE を変えたらここも見直す。 */
 const EYE_ROWS = [8, 9]
 
-/**
- * ドットをほんの少しだけ重ねて描く倍率。
- *
- * 🔴 これが無いと**体の途中に薄い横線が出る**（2026-08-11 にユーザーが指摘）。
- *    原因は端末の画素比（1.25倍など）。`crispEdges` は1つ1つの四角を独立して丸めるので、
- *    行によって「下端」と次の行の「上端」が1画素ぶんずれ、そこが背景として透ける。
- * 🔵 重なるのは同じ色どうしがほとんどなので見た目は変わらない。
- *    色の境目でも 5% ＝ 1ドット9pxなら 0.45px なので、目では分からない。
- */
-const OVERLAP = 1.05
-
 type Props = {
   /**
    * 一辺の大きさ(px)。
-   * 🔴 **必ず升目の数（24）の倍数にすること。**端数だと1ドットが割り切れず、
-   *    行ごとに継ぎ目（薄い横線）が出る。220pxで実際に出た（2026-08-11）。
+   * 🔵 升目の数（24）の倍数にすると1ドットが整数になり、いちばんきれいに出る。
    */
   size?: number
   /** ふわふわ上下に動かす（読み込み中など「待っている」ときに使う）。 */
@@ -38,23 +33,46 @@ type Props = {
   alt?: string
 }
 
+/**
+ * 同じ色のドットを1本の `d` にまとめる（純粋関数）。
+ * 各ドットは「そこへ移動 → 右1 → 下1 → 左1 → 閉じる」の小さな正方形。
+ * まとめて1つの図形にすることで、ドット同士の境目が消える。
+ */
+function buildPaths(): { color: string; d: string; eye: boolean }[] {
+  const byKey = new Map<string, string[]>()
+  SPRITE.forEach((row, y) => {
+    ;[...row].forEach((ch, x) => {
+      const color = PALETTE[ch]
+      if (!color) return
+      // 🔵 まばたきする目だけ別の図形に分ける（お腹のLEDは点きっぱなしにする）
+      const eye = ch === 'e' && EYE_ROWS.includes(y)
+      const key = `${color}|${eye ? 'eye' : ''}`
+      const list = byKey.get(key) ?? []
+      list.push(`M${x} ${y}h1v1h-1z`)
+      byKey.set(key, list)
+    })
+  })
+  return [...byKey].map(([key, parts]) => ({
+    color: key.split('|')[0],
+    eye: key.endsWith('|eye'),
+    d: parts.join(''),
+  }))
+}
+
 export function PoiroboPixel({ size = 48, animate = false, alt = 'ぽいロボ' }: Props) {
   const n = SPRITE.length
-  const cell = 1 // viewBox は 24×24。実サイズは width/height 側で決める
+  const paths = useMemo(() => buildPaths(), [])
 
   return (
     <svg
       width={size} height={size} viewBox={`0 0 ${n} ${n}`}
-      shapeRendering="crispEdges"
       role={alt ? 'img' : 'presentation'}
       aria-label={alt || undefined}
       aria-hidden={alt ? undefined : true}
       style={animate ? {
-        // 🔴 **1ドットぶんずつカクッと動かす**（2026-08-11）。
-        //    なめらかに動かすと小数ピクセルの位置に来て、crispEdges の四角が行ごとに
-        //    丸め直され、**体の途中に薄い横線が出る**（ユーザーが気づいて発覚）。
-        //    steps() で升目に乗ったまま動かせば線は出ず、ドット絵らしい動きにもなる。
-        ['--poirobo-dot' as string]: `${size / SPRITE.length}px`,
+        // 🔴 **1ドットぶんずつカクッと動かす**。なめらかに動かすと小数ピクセルの位置に来て、
+        //    せっかく図形をまとめても輪郭がにじむ。steps() なら升目に乗ったまま動く。
+        ['--poirobo-dot' as string]: `${size / n}px`,
         animation: 'poiroboBob 1.2s steps(1, end) infinite',
       } : undefined}
     >
@@ -67,22 +85,14 @@ export function PoiroboPixel({ size = 48, animate = false, alt = 'ぽいロボ' 
           @keyframes poiroboBlink { 0%,92%,100% { opacity: 1 } 96% { opacity: 0.15 } }
         `}</style>
       )}
-      {SPRITE.map((row, y) =>
-        row.split('').map((ch, x) => {
-          const fill = PALETTE[ch]
-          if (!fill) return null
-          const isEye = ch === 'e' && EYE_ROWS.includes(y)
-          return (
-            <rect
-              key={`${x}-${y}`}
-              x={x * cell} y={y * cell} width={cell * OVERLAP} height={cell * OVERLAP}
-              fill={fill}
-              // 🔵 まばたきは目のドットだけ。お腹のLEDは点きっぱなしにする（動きが増えすぎるため）
-              style={animate && isEye ? { animation: 'poiroboBlink 3.4s ease-in-out infinite' } : undefined}
-            />
-          )
-        })
-      )}
+      {paths.map(p => (
+        <path
+          key={`${p.color}${p.eye ? '-eye' : ''}`}
+          d={p.d}
+          fill={p.color}
+          style={animate && p.eye ? { animation: 'poiroboBlink 3.4s ease-in-out infinite' } : undefined}
+        />
+      ))}
     </svg>
   )
 }
