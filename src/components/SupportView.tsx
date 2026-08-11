@@ -124,6 +124,8 @@ type RadioValue = typeof RADIO_OPTIONS[number]['value'] | ''
 
 function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
   const [customerType, setCustomerType] = useState<RadioValue>('individual')
+  // キーボードで選択中の項目（透明な radio にフォーカスが乗っていることを見せるため）
+  const [focusedRadio, setFocusedRadio] = useState<RadioValue | null>(null)
   const [otherText,    setOtherText]    = useState('')
   const [content,      setContent]      = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
@@ -205,16 +207,20 @@ function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
           お客様種別 <span style={{ color: errColor, marginLeft: 2 }}>*</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }} role="radiogroup" aria-label="お客様種別">
           {RADIO_OPTIONS.map(opt => (
             <label
               key={opt.value}
               style={{
+                position: 'relative',
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '9px 14px', borderRadius: 10, cursor: 'pointer',
                 background: customerType === opt.value ? 'var(--view-btn-active-bg)' : 'var(--glass-bg)',
                 border: '1px solid var(--glass-border)',
                 transition: 'background 0.15s',
+                // キーボードで選んでいる位置が見えるようにする（実体の input は透明なため）
+                outline: focusedRadio === opt.value ? '2px solid var(--view-btn-active-color)' : 'none',
+                outlineOffset: 2,
               }}
             >
               <div style={{
@@ -227,10 +233,14 @@ function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--view-btn-active-color)' }} />
                 )}
               </div>
+              {/* 🔴 display:none にすると Tab で到達できず、キーボードでは選べなくなる。
+                  見た目は上の丸が担うので、実体は**透明にして重ねる**（2026-08-12 是正）。 */}
               <input type="radio" name="customerType" value={opt.value}
                 checked={customerType === opt.value}
                 onChange={() => setCustomerType(opt.value)}
-                style={{ display: 'none' }} />
+                onFocus={() => setFocusedRadio(opt.value)}
+                onBlur={() => setFocusedRadio(null)}
+                style={{ position: 'absolute', opacity: 0, width: 16, height: 16, margin: 0, cursor: 'pointer' }} />
               <span style={{
                 fontSize: 13,
                 color: customerType === opt.value ? 'var(--view-btn-active-color)' : 'var(--text-sub)',
@@ -244,6 +254,7 @@ function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
             <input
               type="text"
               placeholder="詳しく教えてください（任意）"
+              aria-label="その他の内容（任意）"
               value={otherText}
               onChange={e => setOtherText(e.target.value)}
               style={{ ...baseInput, marginTop: 2 }}
@@ -260,6 +271,7 @@ function ContactForm({ theme }: { theme: 'dark' | 'light' }) {
         <textarea
           rows={6}
           placeholder="ご要望・バグ報告・ご意見をご自由にどうぞ"
+          aria-label="お問い合わせ内容"
           value={content}
           onChange={e => setContent(e.target.value)}
           style={{ ...baseInput, resize: 'vertical', minHeight: 120 }}

@@ -9,6 +9,7 @@ import { type MacroEvent } from '../utils/macroCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
 import { type BookingSlot } from '../utils/bookingTypes'
+import { activateOnKey } from '../utils/a11y'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const HOUR_HEIGHT = 56
@@ -176,6 +177,11 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                 }}
                 onClick={() => onOpenNote(date)}
                 title={evtBlock.title}
+                // 🔴 予定のブロックもキーボードで開けるようにする（時間帯のマスは24個あるので対象外）
+                role="button"
+                tabIndex={0}
+                aria-label={`${evtBlock.timeLabel} ${evtBlock.title || '（無題）'} のメモ・タスクを開く`}
+                onKeyDown={activateOnKey(() => onOpenNote(date))}
               >
                 {evtBlock.heightPx < 36
                   ? <div style={{ ...styles.eventTitleInline, color: isLight ? '#1e3a8a' : 'rgba(255,255,255,0.97)' }}>

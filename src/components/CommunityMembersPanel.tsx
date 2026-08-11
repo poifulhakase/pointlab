@@ -114,6 +114,7 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
             onChange={e => setInputEmail(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
             placeholder="メールアドレス（必須）"
+            aria-label="追加するメンバーのメールアドレス（必須）"
             style={{
               padding: '8px 12px', borderRadius: 7,
               background: 'rgba(0,229,255,0.06)', border: `1px solid ${CY_BORDER}`,
@@ -126,6 +127,7 @@ export function CommunityMembersPanel({ theme: _theme, onClose }: Props) {
               value={inputName}
               onChange={e => setInputName(e.target.value)}
               placeholder="表示名（任意）"
+              aria-label="追加するメンバーの表示名（任意）"
               style={{
                 flex: 1, padding: '8px 12px', borderRadius: 7,
                 background: 'rgba(0,229,255,0.06)', border: `1px solid ${CY_BORDER}`,

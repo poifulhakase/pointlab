@@ -413,6 +413,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
             <select
               value={selectedDate}
               onChange={e => handleSelectSnapshot(e.target.value)}
+              aria-label="表示する日付（スナップショット）"
               style={{
                 fontFamily: c.FONT, fontSize: 11, padding: '0 8px', height: 26, borderRadius: 6,
                 background: c.SELECT_BG, border: `1px solid ${c.BORDBR}`,
@@ -492,6 +493,7 @@ export function QuantMemoPanel({ theme, user, isMobile }: { theme: 'dark' | 'lig
                 onScroll={() => { if (backdropRef.current && textareaRef.current) backdropRef.current.scrollTop = textareaRef.current.scrollTop }}
                 onBlur={() => { if (!memoIsDirty) setIsEditing(false) }}
                 placeholder="▌ エントリー分析レポートを記録..."
+                aria-label="エントリー分析レポート"
                 style={{
                   flex: 1, resize: 'none',
                   padding: '12px 14px', fontSize: 14, lineHeight: 1.8,

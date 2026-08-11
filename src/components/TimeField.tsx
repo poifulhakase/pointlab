@@ -115,6 +115,8 @@ export function TimeField({ value, onChange, placeholder = '時刻を設定' }: 
         type="text"
         value={inputVal}
         placeholder={placeholder}
+        // 🔵 placeholder は入力すると消えるので、名前としては当てにできない（読み上げ用に明示する）
+        aria-label={placeholder ? `${placeholder}時刻` : '時刻'}
         style={{ ...s.input, ...(open ? s.inputOpen : {}) }}
         onChange={e => setInputVal(e.target.value)}
         onFocus={() => { inputRef.current?.select(); openDropdown() }}

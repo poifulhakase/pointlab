@@ -239,6 +239,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
             onFocus={() => setTitleFocused(true)}
             onBlur={() => setTitleFocused(false)}
             placeholder="タイトルを追加..."
+            aria-label="この日のタイトル"
             style={{
               ...styles.titleInput,
               borderBottomColor: titleFocused ? 'var(--accent)' : 'var(--glass-border)',
@@ -269,6 +270,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
                       value={sch.title}
                       onChange={e => handleSchTitle(sch.id, e.target.value)}
                       placeholder="スケジュールのタイトル"
+                      aria-label="スケジュールのタイトル"
                       style={styles.schTitleInput}
                     />
                     <button style={styles.schDeleteBtn} onClick={() => handleSchDelete(sch.id)} title="削除">
@@ -319,6 +321,7 @@ export function DayNotePanel({ date, prefillTime, onClose, onSave, onAfterSave, 
               value={memo}
               onChange={e => handleMemo(e.target.value)}
               placeholder="メモを入力..."
+              aria-label="この日のメモ"
               style={{ ...styles.textarea, ...(!isMobile ? styles.textareaGrow : {}) }}
             />
           </section>

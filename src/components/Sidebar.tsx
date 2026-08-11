@@ -37,6 +37,63 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
   { key: 'jp', label: '日本' },
 ]
 
+/**
+ * フィルタの1行（本物のチェックボックス＋見た目用の四角）。
+ *
+ * 🔴 2026-08-12 是正：以前は `<label>` の中に**見た目だけの `<span>`** があるだけで、
+ *    実体の `<input>` が無かった。そのため
+ *    ①Tabで到達できない（マウス専用）②読み上げでチェックボックスとして扱われず ON/OFF も分からない、
+ *    という状態だった。
+ * 🔵 `input` は**透明にして重ねる**だけなので、見た目は従来どおり。
+ *    フォーカスされたら行に輪郭を出す（どこにいるか見えないと辿れないため）。
+ */
+function FilterCheck({ checked, onToggle, label, color = 'rgba(96,165,250,0.85)' }: {
+  checked: boolean
+  onToggle: () => void
+  label: string
+  color?: string
+}) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <label
+      style={{
+        ...styles.filterRow,
+        borderRadius: 4,
+        outline: focused ? '2px solid rgba(96,165,250,0.9)' : 'none',
+        outlineOffset: 3,
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={styles.srCheckbox}
+      />
+      <span
+        aria-hidden="true"
+        style={{
+          ...styles.customCheckbox,
+          background: checked ? color : 'transparent',
+          borderColor: checked ? color : 'var(--text-dim)',
+        }}
+      >
+        {checked && (
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        )}
+      </span>
+      <span style={styles.filterLabel}>
+        <span style={{ ...styles.filterCountry, color: checked ? 'var(--text)' : 'var(--text-dim)' }}>
+          {label}
+        </span>
+      </span>
+    </label>
+  )
+}
+
 export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, onGoToday, theme = 'dark', onOpenSector }: Props) {
   const isFixed = isMobile
 
@@ -188,27 +245,11 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 
         {/* ──── プライベート ──── */}
         <div style={styles.privateWrap}>
-          <label style={styles.filterRow}>
-            <span
-              style={{
-                ...styles.customCheckbox,
-                background: showPrivate ? 'rgba(96,165,250,0.85)' : 'transparent',
-                borderColor: showPrivate ? 'rgba(96,165,250,0.85)' : 'var(--text-dim)',
-              }}
-              onClick={() => onShowPrivateChange(!showPrivate)}
-            >
-              {showPrivate && (
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              )}
-            </span>
-            <span style={styles.filterLabel} onClick={() => onShowPrivateChange(!showPrivate)}>
-              <span style={{ ...styles.filterCountry, color: showPrivate ? 'var(--text)' : 'var(--text-dim)' }}>
-                プライベート
-              </span>
-            </span>
-          </label>
+          <FilterCheck
+            checked={showPrivate}
+            onToggle={() => onShowPrivateChange(!showPrivate)}
+            label="プライベート"
+          />
         </div>
 
         {/* ──── マーケット情報フィルター ──── */}
@@ -223,76 +264,31 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
           </div>
 
           {FILTER_ITEMS.map(item => (
-            <label key={item.key} style={styles.filterRow}>
-              <span
-                style={{
-                  ...styles.customCheckbox,
-                  background: macroFilter[item.key] ? 'rgba(96,165,250,0.85)' : 'transparent',
-                  borderColor: macroFilter[item.key] ? 'rgba(96,165,250,0.85)' : 'var(--text-dim)',
-                }}
-                onClick={() => onMacroFilterChange({ ...macroFilter, [item.key]: !macroFilter[item.key] })}
-              >
-                {macroFilter[item.key] && (
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                )}
-              </span>
-              <span style={styles.filterLabel} onClick={() => onMacroFilterChange({ ...macroFilter, [item.key]: !macroFilter[item.key] })}>
-                <span style={{ ...styles.filterCountry, color: macroFilter[item.key] ? 'var(--text)' : 'var(--text-dim)' }}>
-                  {item.label}
-                </span>
-              </span>
-            </label>
+            <FilterCheck
+              key={item.key}
+              checked={macroFilter[item.key]}
+              onToggle={() => onMacroFilterChange({ ...macroFilter, [item.key]: !macroFilter[item.key] })}
+              label={item.label}
+            />
           ))}
 
           {/* アノマリー（PC限定・月ビューのみ） */}
           {!isMobile && (
-            <label style={styles.filterRow}>
-              <span
-                style={{
-                  ...styles.customCheckbox,
-                  background: showAnomaly ? 'rgba(96,165,250,0.85)' : 'transparent',
-                  borderColor: showAnomaly ? 'rgba(96,165,250,0.85)' : 'var(--text-dim)',
-                }}
-                onClick={() => onShowAnomalyChange(!showAnomaly)}
-              >
-                {showAnomaly && (
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                )}
-              </span>
-              <span style={styles.filterLabel} onClick={() => onShowAnomalyChange(!showAnomaly)}>
-                <span style={{ ...styles.filterCountry, color: showAnomaly ? 'var(--text)' : 'var(--text-dim)' }}>
-                  アノマリー
-                </span>
-              </span>
-            </label>
+            <FilterCheck
+              checked={showAnomaly}
+              onToggle={() => onShowAnomalyChange(!showAnomaly)}
+              label="アノマリー"
+            />
           )}
 
           {/* ぽいロボアラート */}
-          <label style={styles.filterRow}>
-            <span
-              style={{
-                ...styles.customCheckbox,
-                background: showPoiroboAlert ? POIROBO_ALERT_COLOR : 'transparent',
-                borderColor: showPoiroboAlert ? POIROBO_ALERT_COLOR : 'var(--text-dim)',
-              }}
-              onClick={() => showPoiroboAlert ? onShowPoiroboAlertChange(false) : onPoiroboAlertOpen()}
-            >
-              {showPoiroboAlert && (
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              )}
-            </span>
-            <span style={styles.filterLabel} onClick={() => showPoiroboAlert ? onShowPoiroboAlertChange(false) : onPoiroboAlertOpen()}>
-              <span style={{ ...styles.filterCountry, color: showPoiroboAlert ? 'var(--text)' : 'var(--text-dim)' }}>
-                ぽいロボ レーダー
-              </span>
-            </span>
-          </label>
+          {/* 🔵 ONにするときは設定モーダルを開く（そのまま点けるのではない）ので onToggle が非対称 */}
+          <FilterCheck
+            checked={showPoiroboAlert}
+            onToggle={() => showPoiroboAlert ? onShowPoiroboAlertChange(false) : onPoiroboAlertOpen()}
+            label="ぽいロボ レーダー"
+            color={POIROBO_ALERT_COLOR}
+          />
         </div>
 
         </div>
@@ -415,6 +411,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 10,
     cursor: 'pointer',
     userSelect: 'none' as const,
+  },
+  // 🔴 見た目は上の customCheckbox が担うので、実体のチェックボックスは透明にして重ねる。
+  //    display:none にはしない＝Tabで到達できなくなるため（キーボード操作が死ぬ）。
+  srCheckbox: {
+    position: 'absolute' as const,
+    opacity: 0,
+    width: 16, height: 16,
+    margin: 0,
+    cursor: 'pointer',
   },
   customCheckbox: {
     width: 16, height: 16, borderRadius: 4, flexShrink: 0,

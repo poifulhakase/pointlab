@@ -11,6 +11,7 @@ import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
 import { type BookingSlot } from '../utils/bookingTypes'
+import { activateOnKey, dateLabel } from '../utils/a11y'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const HOUR_HEIGHT = 56
@@ -142,6 +143,11 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               }}
               onClick={() => onOpenNote(d)}
               title="クリックでメモ・タスクを開く"
+              // 🔴 キーボードからこの日のメモ・タスクを開く入口（時間帯のマスは24×7で多すぎるため対象外）
+              role="button"
+              tabIndex={0}
+              aria-label={`${dateLabel(d)}のメモ・タスクを開く`}
+              onKeyDown={activateOnKey(() => onOpenNote(d))}
             >
               <span style={{ ...styles.dowLabel, color: isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text-sub)' }}>
                 {d.toLocaleDateString('ja-JP', { weekday: 'short' })}
@@ -234,6 +240,10 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                     }}
                     onClick={() => onOpenNote(d)}
                     title={evtBlock.title}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${dateLabel(d)} ${evtBlock.timeLabel} ${evtBlock.title || '（無題）'} のメモ・タスクを開く`}
+                    onKeyDown={activateOnKey(() => onOpenNote(d))}
                   >
                     <div style={{ ...styles.eventTitle, color: isLight ? '#1e3a8a' : 'rgba(255,255,255,0.97)' }}>{evtBlock.title || '（無題）'}</div>
                     {evtBlock.heightPx >= 34 && (

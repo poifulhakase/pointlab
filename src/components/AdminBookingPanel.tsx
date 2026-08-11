@@ -529,6 +529,7 @@ export function AdminBookingPanel({ isOpen, theme, onClose, onConnectNow }: Prop
             <div style={{ fontSize: 13, color: CY_FAINT, lineHeight: 1.7, marginBottom: 16 }}>{confirmAction.msg}</div>
             <textarea
               placeholder="メッセージ（任意）"
+              aria-label="参加者へのメッセージ（任意）"
               value={adminMsg}
               onChange={e => setAdminMsg(e.target.value)}
               rows={2}

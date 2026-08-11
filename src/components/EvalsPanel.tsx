@@ -388,7 +388,7 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
               {totalPassed}/{totalChecks}（{scenariosDone}/3）
             </div>
           )}
-          <button onClick={onClose} style={{
+          <button onClick={onClose} aria-label="閉じる" style={{
             background: 'transparent', border: `1px solid ${c.RULE}`,
             color: c.SUB, cursor: 'pointer', fontSize: 18, lineHeight: 1,
             width: 32, height: 32, borderRadius: 6, fontFamily: mono,
@@ -464,6 +464,7 @@ export function EvalsPanel({ theme, isMobile, onClose }: Props) {
                   value={output}
                   onChange={e => setOutputs(prev => ({ ...prev, [scenario.id]: e.target.value }))}
                   placeholder={'AIの出力のみをペーストしてください\n（プロンプトやJSONは不要です）'}
+                  aria-label={`${scenario.id} のAI出力`}
                   style={{
                     width: '100%', height: 110, resize: 'vertical',
                     background: c.L ? 'rgba(255,255,255,0.8)' : 'rgba(0,10,30,0.6)',

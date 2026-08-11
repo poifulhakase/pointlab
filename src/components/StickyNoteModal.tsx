@@ -63,6 +63,7 @@ export function StickyNoteModal({ note, onSave, onClose }: Props) {
           value={content}
           onChange={e => setContent(e.target.value)}
           placeholder="メモを入力..."
+          aria-label="メモの内容"
           style={styles.textarea}
         />
 

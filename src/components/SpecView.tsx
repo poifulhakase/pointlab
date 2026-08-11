@@ -880,8 +880,12 @@ const SPEC_SECTIONS = [
       },
       {
         type: 'list' as const,
-        heading: 'アクセシビリティ（★2026-05-28 対応）',
+        heading: 'アクセシビリティ（★2026-05-28 対応 / ★2026-08-12 追加対応）',
         items: [
+          '★2026-08-12 カレンダーをキーボードで操作可能に: 月ビューのセル（メモ・タスクを開く）と日付数字（その日へ移動）、週ビューの日付ヘッダー、週/日ビューの予定ブロックを Tab で辿れるようにし、Enter / Space で実行。時間帯のマス（24時間×7日＝168個）は意図的に対象外（Tab が168回止まると実用にならないため、時刻は入力欄で指定する）。共通処理は src/utils/a11y.ts（activateOnKey / dateLabel・テスト5件）',
+          '★2026-08-12 サイドバーのフィルタを本物のチェックボックスに: プライベート / 米国 / 日本 / アノマリー / ぽいロボレーダーは「見た目だけの span」で実体の input が無く、Tab で到達できず ON/OFF も読み上げられなかった。透明な input を重ねる形に統一（見た目は不変・フォーカス時に行へ輪郭）。Sidebar の FilterCheck コンポーネントに集約',
+          '★2026-08-12 ピンチズームの禁止を解除: 全HTML（index / poirobo / poinavi / hakaseAI 計11ファイル）の viewport から maximum-scale=1.0, user-scalable=no を削除（WCAG 1.4.4／Android Chrome では実際に拡大できなかった）',
+          '★2026-08-12 入力欄に名前を付けた: placeholder 頼みだった14箇所（メモ / スケジュール / 時刻 / 問い合わせ / メンバー追加 / エントリー分析レポート ほか）に aria-label を付与。お問い合わせのお客様種別は display:none だった radio を透明配置に変えてキーボードで選べるようにし、role="radiogroup" を付与',
           '全モーダルに role="dialog" + aria-modal="true" を追加: AuthModal / SettingsPanel / StickyNoteModal / DayNotePanel / BookingModal',
           'SettingsPanel / DayNotePanel: aria-labelledby でモーダルタイトルを参照（スクリーンリーダー対応）',
           'アイコンボタンの aria-label: SettingsPanel / BookingModal の閉じるボタンに aria-label="閉じる" を追加',

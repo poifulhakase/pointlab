@@ -5,6 +5,7 @@ import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
 import { type BookingSlot } from '../utils/bookingTypes'
 import { getMonthBand } from '../utils/earningsSeason'
+import { activateOnKey, dateLabel } from '../utils/a11y'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
 import { MacroEventBadge } from './MacroEventBadge'
@@ -84,6 +85,12 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
             <div
               key={i}
               onClick={() => onOpenNote(d)}
+              // 🔴 キーボードでも開けるようにする（マウス専用にしない）。
+              //    セル＝メモ・タスクを開く／中の日付ボタン＝その日のビューへ、と役割を分けている。
+              role="button"
+              tabIndex={0}
+              aria-label={`${dateLabel(d)}${noted && noteTitle ? `（メモあり：${noteTitle}）` : ''}のメモ・タスクを開く`}
+              onKeyDown={activateOnKey(() => onOpenNote(d))}
               style={{
                 ...styles.cell,
                 padding: isMobile ? '3px' : '6px',
@@ -103,19 +110,29 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
               className={`glass${td && !dim ? ' today-pulse' : ''}`}
             >
               <div style={styles.dateNumWrap}>
-                {/* 日付数字：クリックでナビゲート */}
-                <span
+                {/* 日付数字：クリック／Enterでその日のビューへ（button＝キーボードでも押せる） */}
+                <button
+                  type="button"
                   style={{
                     ...styles.dateNum,
                     width: isMobile ? 22 : 26, height: isMobile ? 22 : 26,
                     fontSize: isMobile ? 11 : 13,
                     color: td ? (isLight ? '#1d4ed8' : 'rgba(255,255,255,0.95)') : isS ? 'var(--color-sun)' : isSat ? 'var(--color-sat)' : 'var(--text)',
                     fontWeight: td ? 700 : undefined,
+                    // button の既定（枠・余白・フォント）を打ち消して見た目を span のときと揃える
+                    // 🔴 `font: 'inherit'` は上の fontSize / fontWeight ごと打ち消すので使わない
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
                   }}
+                  aria-label={`${dateLabel(d)}を開く`}
                   onClick={e => { e.stopPropagation(); onClickDay(d) }}
+                  onKeyDown={activateOnKey(() => onClickDay(d))}
                 >
                   {d.getDate()}
-                </span>
+                </button>
                 {showBadge && reason && (
                   <span style={{
                     ...styles.closedBadge,
