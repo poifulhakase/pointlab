@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from 'react'
 
-export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook' | 'timemachine'
+export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook' | 'timemachine' | 'sector'
 
 const VIEW_SESSION_KEY = 'poical-view-session'
-const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original', 'playbook', 'timemachine']
+const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original', 'playbook', 'timemachine', 'sector']
 const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
 /**

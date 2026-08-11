@@ -13,7 +13,10 @@
 // 🔵 識別子は据え置き（'bunseki' などは画面名を変える前の名残だが、
 //    保存済みの状態や既存コードが参照しているので変えない）。
 
-export const QUANT_TABS = ['bunseki', 'kankyou', 'genbutsu', 'micro', 'sector'] as const
+// 🔴 2026-08-11: 周期（セクターローテーション）を外した（ユーザー指示）。
+//    理由＝**周期は日経平均の話ではない**。日経を見る道具と同居させない。
+//    独立ページ（ViewMode 'sector'）へ移し、入口はサイドバーのバナー。
+export const QUANT_TABS = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 
 export type QuantTabKey = typeof QUANT_TABS[number]
 
@@ -23,5 +26,4 @@ export const QUANT_LABELS: Record<QuantTabKey, string> = {
   kankyou:  '環境',
   genbutsu: '現物',
   micro:    '先物',
-  sector:   '周期',
 }

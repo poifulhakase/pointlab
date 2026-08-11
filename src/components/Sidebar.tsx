@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ClockWidget } from './ClockWidget'
+import { SectorBanner } from './SectorBanner'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter } from '../utils/macroCalendar'
@@ -25,6 +26,10 @@ type Props = {
   onShowPoiroboAlertChange: (v: boolean) => void
   onPoiroboAlertOpen: () => void
   onGoToday?: () => void
+  /** 画面の配色（バナーが局面の色を敷くのに使う） */
+  theme?: 'dark' | 'light'
+  /** セクターローテーションのページを開く（2026-08-11 追加） */
+  onOpenSector?: () => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
@@ -32,7 +37,7 @@ const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
   { key: 'jp', label: '日本' },
 ]
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, onGoToday }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, onGoToday, theme = 'dark', onOpenSector }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -121,6 +126,14 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 
         {/* マーケットイベント・スティッキーメモ（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
+
+        {/* ──── セクターローテーションの入口（2026-08-11 追加）────
+             🔵 メモの上に置く＝毎日通る場所なので、開かなくても現在地が目に入る。 */}
+        {onOpenSector && (
+          <div style={{ padding: '12px 12px 0' }}>
+            <SectorBanner theme={theme} onOpen={onOpenSector} />
+          </div>
+        )}
 
         {/* ──── スティッキーメモ ──── */}
         <div style={styles.memoWrap}>

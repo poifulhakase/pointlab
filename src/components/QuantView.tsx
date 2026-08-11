@@ -26,11 +26,10 @@ const MicroQuantView = lazy(() => import('./MicroQuantView').then(m => ({ defaul
 const QuantMemoPanel = lazy(() => import('./MicroQuantView').then(m => ({ default: m.QuantMemoPanel })))
 const MarketDailyPanel = lazy(() => import('./MarketDailyPanel').then(m => ({ default: m.MarketDailyPanel })))
 const ContribSectorPanel = lazy(() => import('./StocksView').then(m => ({ default: m.ContribSectorPanel })))
-const SectorPanel = lazy(() => import('./SectorPanel').then(m => ({ default: m.SectorPanel })))
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
 // 🔴 2026-08-09: タブを機能ごと2画面に振り分けた（ユーザー指示）。
-//    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= 環境 + 現物 + 先物。
+//    シールド画面（'quant'）= 分析 + 環境 + 現物 + 先物。周期は独立ページへ移した（2026-08-11）。
 //    QuantView は**両方の画面から使われる**ので、どのタブを並べるかは visibleTabs で受け取る。
 //    データ取得は分析タブの AI プロンプト（buildExportJson）が全項目を使うため、
 //    タブ集合に関わらず従来どおり全部読み込む（分割しない）。
@@ -1194,19 +1193,9 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
 
         </div>}{/* /先物需給 */}
 
-        {/* ━━ 周期（セクター）━━ */}
-        {/* 🔴 2026-08-09: エンジン画面（ShieldView）からタブごと移設 */}
-        {showTab('sector') && <div style={{
-          width: paneWidth,
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          height: '100%',
-          overflowX: 'hidden',
-          overflowY: isMobile ? 'auto' : 'hidden',
-        }}>
-          <Suspense fallback={null}><SectorPanel theme={theme} isMobile={isMobile} user={user} /></Suspense>
-        </div>}{/* /周期 */}
+        {/* 🔴 2026-08-11: 周期（セクターローテーション）はここから外した（ユーザー指示）。
+            理由＝**周期は日経平均の話ではない**ので、日経を見る道具と同居させない。
+            独立ページ（ViewMode 'sector'）へ移し、入口はサイドバーのバナー。 */}
 
         </div>{/* /スライダートラック */}
 

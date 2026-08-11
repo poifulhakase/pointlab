@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 // 旧チャンク 404（デプロイでハッシュ変化）時に一度だけ自動リロードする lazy ラッパー
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
 // 🔴 シールド画面のタブの並び順は、ここ1か所だけで決める（QuantView のDOM順もこれに合わせる）
-import { QUANT_TABS, QUANT_LABELS } from './utils/quantTabs'
+import { QUANT_TABS, QUANT_LABELS, type QuantTabKey } from './utils/quantTabs'
 import { ENGINE_TABS, ENGINE_LABELS, type EngineTabKey } from './utils/engineTabs'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
@@ -44,6 +44,8 @@ const ManualView        = lazy(() => import('./components/ManualView').then(m =>
 const SupportView       = lazy(() => import('./components/SupportView').then(m => ({ default: m.SupportView })))
 const JitsiPanel        = lazy(() => import('./components/JitsiPanel').then(m => ({ default: m.JitsiPanel })))
 const ShieldView        = lazy(() => import('./components/ShieldView').then(m => ({ default: m.ShieldView })))
+// 🔴 2026-08-11: 周期をシールド画面から独立ページへ（周期は日経平均の話ではないため）
+const SectorPanel       = lazy(() => import('./components/SectorPanel').then(m => ({ default: m.SectorPanel })))
 const LegalModal        = lazy(() => import('./components/LegalModal').then(m => ({ default: m.LegalModal })))
 const BacktestPanel     = lazy(() => import('./components/BacktestPanel').then(m => ({ default: m.BacktestPanel })))
 const StrategyPlaybookPanel = lazy(() => import('./components/StrategyPlaybookPanel').then(m => ({ default: m.StrategyPlaybookPanel })))
@@ -237,7 +239,7 @@ export default function App() {
   // 🔴 2026-08-09: タブを機能ごと2画面に振り分けた（ユーザー指示）。
   //    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= エンジン + 環境 + 現物 + 先物。
   //    環境/現物/先物 の中身は QuantView のままなので、エンジン画面からも QuantView を使う。
-  const [quantTab,          setQuantTab]          = useState<'bunseki' | 'kankyou' | 'genbutsu' | 'micro' | 'sector'>('bunseki')
+  const [quantTab,          setQuantTab]          = useState<QuantTabKey>('bunseki')
   // エンジン画面（ロボ口座）のタブ（2026-08-11 追加・ロボ口座／成績／履歴）
   const [engineTab,         setEngineTab]         = useState<EngineTabKey>('account')
   const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
@@ -422,7 +424,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       if (supportBackRef.current)  { supportBackRef.current();                return }   // 研究室内モーダル
       const v = s.view
       if (v === 'spec' || v === 'legal' || v === 'manual' || v === 'backtest' || v === 'evals' || v === 'playbook' || v === 'original' || v === 'timemachine') { a.setView('support'); return }
-      if (v === 'support' || v === 'shield' || v === 'chart' || v === 'quant') { a.setView('month'); return }
+      // 🔵 セクターローテーションはカレンダーのサイドバーから開くので、戻り先はカレンダー（2026-08-11）
+      if (v === 'support' || v === 'shield' || v === 'chart' || v === 'quant' || v === 'sector') { a.setView('month'); return }
       if (v === 'day')     { a.setView('week');  return }
       if (v === 'week')    { a.setView('month'); return }
     }
@@ -545,6 +548,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             onShowPoiroboAlertChange={handleShowPoiroboAlertChange}
             onPoiroboAlertOpen={handlePoiroboAlertOpen}
             onGoToday={() => cal.goToDate(cal.today)}
+            theme={theme}
+            onOpenSector={() => setViewWithTransition('sector')}
           />
         )}
 
@@ -636,6 +641,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             canViewMemberPages
               ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
+          )}
+
+          {/* セクターローテーション（周期）＝独立ページ。入口はサイドバーのバナー。
+              🔴 2026-08-11: シールド画面のタブから外した（ユーザー指示）。
+              **周期は日経平均の話ではない**ので、日経を見る道具と同居させない。 */}
+          {cal.view === 'sector' && (
+            canViewMemberPages
+              ? <ErrorBoundary label="セクターローテーション"><Suspense fallback={<ViewLoader />}><SectorPanel theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {/* ── カレンダー（日/週/月 スワイプ） ── */}
