@@ -13,6 +13,7 @@ type Props = {
   onOpenCommunity?: () => void
   onOpenPlaybook?: () => void
   onOpenTimeMachine?: () => void
+  onOpenChartPattern?: () => void
 }
 
 type Article = {
@@ -21,7 +22,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine' | 'chartpattern'
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -47,7 +48,6 @@ const ARTICLES: Article[] = [
   // ── イベントドリブン ──────────────────────────────────────────
   { genre: 'イベントドリブン', title: 'タックスロスセリング', url: 'https://note.com/pointlab/n/nc96324c04c97', thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Tax_Loss_Selling.webp' },
   { genre: 'イベントドリブン', title: '権利落ち日',    url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Ex_Rights_Day.webp' },
-  { genre: 'イベントドリブン', title: '権利確定日前',  url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_Rights_Record_Day.webp' },
   { genre: 'イベントドリブン', title: 'TOPIX組入れ',   url: null, thumb: BASE + 'Stock_Trade_Lab_Event_Driven_TOPIX_Inclusion.webp' },
   // ── 管理メニュー ──────────────────────────────────────────────
   { genre: '管理メニュー', title: 'システム仕様', url: null, thumb: null, internalAction: 'spec' },
@@ -57,6 +57,7 @@ const ARTICLES: Article[] = [
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
   { genre: '未来ガジェット', title: 'タイムマシン', url: null, thumb: BASE + 'Future_Gadget_TimeMachine.webp', internalAction: 'timemachine' },
+  { genre: '未来ガジェット', title: 'フォーメーション分析', url: null, thumb: null, internalAction: 'chartpattern' },
 ]
 
 const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
@@ -123,7 +124,7 @@ function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
-function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine }: {
+function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern }: {
   article: Article
   isMobile: boolean
   theme: 'dark' | 'light'
@@ -136,6 +137,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   onOpenCommunity?: () => void
   onOpenPlaybook?: () => void
   onOpenTimeMachine?: () => void
+  onOpenChartPattern?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -151,6 +153,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
     if (article.internalAction === 'community') { onOpenCommunity?.(); return }
     if (article.internalAction === 'playbook')  { onOpenPlaybook?.();  return }
     if (article.internalAction === 'timemachine') { onOpenTimeMachine?.(); return }
+    if (article.internalAction === 'chartpattern') { onOpenChartPattern?.(); return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -194,7 +197,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern }: Props) {
   // バックテスト等は検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
   // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
@@ -216,7 +219,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} />
                   ))}
                 </div>
               </section>
