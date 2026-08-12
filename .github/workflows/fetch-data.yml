@@ -90,6 +90,12 @@ jobs:
             npm run robo-trade -- --dry --force
             exit 0
           fi
+          # 🔴 待つ前に休場かどうかを見る。待ってから判定すると、祝日でも2時間
+          #    ランナーを占有してから「何もしない」と分かることになる。
+          if ! node scripts/market-open.mjs; then
+            echo "→ 休場日なので待たずに終了します"
+            exit 0
+          fi
           target=$(TZ=Asia/Tokyo date -d 'today 15:00' +%s)
           now=$(date +%s)
           wait=$(( target - now ))
