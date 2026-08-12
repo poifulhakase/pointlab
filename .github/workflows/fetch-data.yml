@@ -21,8 +21,15 @@ on:
     #       **729日中728日で一致（99.9%）**。ドンチャン50/25も25日線乖離も動きが遅く、
     #       最後の30分で判定が変わることがほぼない。
     #    🔴 執行は**引成（MOC）**。15:00 の通知を見て 15:25 までに発注する運用。
-    #    UTC 06:00 は同じ日なので `1-5`（JSTの月〜金）。
-    - cron: '0 6 * * 1-5'
+    #
+    # 🔴 **13:00 JST に起動して、ジョブの中で 15:00 JST まで待つ**（2026-08-12 変更）。
+    #    理由＝GitHub の schedule は**時刻を保証しない**。実測で **1時間41分** 遅れ、
+    #    15:00 の通知が 16:41 に届いて「15:25 までに発注」に間に合わなかった。
+    #    2時間の余裕をとって早めに起動し、**待ってから 15:00 ちょうどに判断する**。
+    #    🔵 判断スクリプトは価格を**実行時に直接取りに行く**ので、早く起動しても材料は古くならない。
+    #    🔵 リポジトリは公開なので Actions の待ち時間に課金は発生しない。
+    #    UTC 04:00 は同じ日なので `1-5`（JSTの月〜金）。
+    - cron: '0 4 * * 1-5'
   workflow_dispatch:
     inputs:
       robo_dry:
@@ -71,14 +78,29 @@ jobs:
       # 🔴 continue-on-error: 判断が失敗してもデータ更新とコミットは止めない。
       # 🔵 手動実行で robo_dry にチェックを入れたときだけ、--dry の空撃ちとして走らせる
       #    （Secrets が Actions 上で通るかの確認用。休場日でも見たいので --force を付ける）。
-      - name: ロボ口座の判断（平日15:00のみ／手動は空撃ち）
-        if: (github.event_name == 'schedule' && contains(github.event.schedule, '0 6 * * 1-5')) || inputs.robo_dry
+      - name: ロボ口座の判断（15:00 JST ちょうど／手動は空撃ち）
+        if: (github.event_name == 'schedule' && contains(github.event.schedule, '0 4 * * 1-5')) || inputs.robo_dry
+        # 🔴 **15:00 JST まで待ってから判断する**。起動は 13:00 JST だが、GitHub の
+        #    スケジュールは数十分〜数時間ずれるため、起動時刻をあてにできない
+        #    （2026-08-12 に 1時間41分 遅れて 16:41 に通知が届いた）。
+        # 🔵 すでに 15:00 を過ぎていたら**待たずにすぐ判断する**（遅れても出さないよりは良い）。
+        #    どれだけ遅れたかはログに残す＝遅延が常態化していないか後から見られる。
         run: |
           if [ "${{ inputs.robo_dry }}" = "true" ]; then
             npm run robo-trade -- --dry --force
-          else
-            npm run robo-trade
+            exit 0
           fi
+          target=$(TZ=Asia/Tokyo date -d 'today 15:00' +%s)
+          now=$(date +%s)
+          wait=$(( target - now ))
+          if [ "$wait" -gt 0 ]; then
+            echo "15:00 JST まで ${wait} 秒待ちます（現在 $(TZ=Asia/Tokyo date '+%H:%M:%S') JST）"
+            sleep "$wait"
+          else
+            echo "⚠ すでに 15:00 JST を過ぎています（$(( -wait )) 秒遅れ）。待たずに判断します。"
+          fi
+          echo "判断開始: $(TZ=Asia/Tokyo date '+%H:%M:%S') JST"
+          npm run robo-trade
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
