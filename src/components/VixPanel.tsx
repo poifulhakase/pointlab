@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { createChart, LineSeries, HistogramSeries, ColorType, CrosshairMode, type ISeriesApi, type Time } from 'lightweight-charts'
 import { fetchVixData, type VixWeekData } from '../utils/vixData'
 import { proxyFetch } from '../utils/proxyFetch'
+import { isPreviewMode } from '../utils/previewMode'
 
 type Props = { theme: 'dark' | 'light'; vixWeekData?: VixWeekData[]; isMobile?: boolean }
 type Point = { time: string; value: number }
@@ -68,6 +69,12 @@ async function fetchVixPoints(target: string): Promise<Point[]> {
 }
 
 async function fetchVix(force = false): Promise<Point[]> {
+  // 🔴 このパネルは dataCache を通さず Yahoo を直接叩く（自前キャッシュ）ので、
+  //    プレビューの差し替えもここに置く。置き忘れると VIX だけ実データが出る（2026-08-12 に踏んだ）。
+  if (isPreviewMode()) {
+    const { previewVixDaily } = await import('../utils/previewMarketData')
+    return previewVixDaily().map(p => ({ time: p.time, value: p.close }))
+  }
   if (!force) {
     const cached = readVixCache()
     if (cached) return cached.data

@@ -14,6 +14,14 @@ import type { ShortSellWeekData } from './shortSellData'
 import type { AdvanceDeclineWeekData } from './advanceDeclineData'
 import type { ArbitrageWeekData, ArbitrageDayData } from './arbitrageData'
 import type { StocksDailyData } from './stocksDailyData'
+import type { VixDayData, VixWeekData } from './vixData'
+import type { NtRatioPoint } from './ntRatioData'
+import type { UsdjpyDayData } from './usdjpyData'
+import type { Nas100DayData } from './nas100Data'
+import type { NkFuturesDayData } from './nkFuturesPriceData'
+import type { CotNikkeiWeekData } from './cotNikkeiData'
+import type { FuturesOiWeekData } from './futuresOiData'
+import type { FuturesDayData } from './futuresDailyData'
 
 /** 決まった並びの疑似乱数（0〜1）。seed が同じなら毎回同じ列になる。 */
 function seeded(seed: number): () => number {
@@ -189,15 +197,193 @@ export function previewStocksDaily(): StocksDailyData {
     contribution: { up, down, total: Math.round(up.concat(down).reduce((s, x) => s + x.contribution, 0) * 100) / 100 },
     sector: { up: sectorUp, down: sectorDown, advanceSectorCount: 21, declineSectorCount: 12 },
     nkFutures: days,
-    updatedAt: new Date().toISOString(),
+    // 🔵 「今日の0時」で固定する。`new Date()` そのままだとミリ秒までズレて、
+    //    呼ぶたびに中身が変わってしまう（＝画面が無駄に再描画される）
+    updatedAt: new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
   }
+}
+
+// ── 環境タブ（VIX / NT倍率 / USD・JPY / NASDAQ100 / 先物価格）────────────────
+
+/** 直近 n 営業日（新しい順で作って最後に古い順へ）。 */
+function businessDays(n: number): Date[] {
+  const base = new Date()
+  base.setHours(0, 0, 0, 0)
+  const out: Date[] = []
+  for (let i = 0; out.length < n; i++) {
+    const d = new Date(base)
+    d.setDate(base.getDate() - i)
+    if (d.getDay() === 0 || d.getDay() === 6) continue
+    out.push(d)
+  }
+  return out.reverse()
+}
+
+export function previewVixDaily(): VixDayData[] {
+  const r = seeded(801)
+  let close = 16.4
+  return businessDays(180).map(d => {
+    const prev = close
+    close = Math.max(10.5, Math.min(34, close * (1 + (r() - 0.5) * 0.09)))
+    return {
+      time: isoDate(d),
+      close: Math.round(close * 100) / 100,
+      changePct: Math.round(((close - prev) / prev) * 10000) / 100,
+    }
+  })
+}
+
+export function previewVixWeekly(): VixWeekData[] {
+  const r = seeded(802)
+  let close = 17.2
+  return weekFridays(WEEKS).map(d => {
+    const prev = close
+    close = Math.max(11, Math.min(32, close * (1 + (r() - 0.5) * 0.14)))
+    return {
+      date: slashDate(d),
+      close: Math.round(close * 100) / 100,
+      change: Math.round((close - prev) * 100) / 100,
+      changePct: Math.round(((close - prev) / prev) * 10000) / 100,
+    }
+  })
+}
+
+export function previewNtRatio(): NtRatioPoint[] {
+  const r = seeded(803)
+  let nikkei = 41_500
+  let topix = 2_900
+  let prevRatio: number | null = null
+  return businessDays(180).map(d => {
+    nikkei = Math.round(nikkei * (1 + (r() - 0.5) * 0.016))
+    topix = Math.round(topix * (1 + (r() - 0.5) * 0.014) * 100) / 100
+    const ratio = Math.round((nikkei / topix) * 1000) / 1000
+    const change = prevRatio === null ? null : Math.round((ratio - prevRatio) * 1000) / 1000
+    prevRatio = ratio
+    return { time: isoDate(d), nikkei, benchmark: topix, ratio, change }
+  })
+}
+
+export function previewUsdjpy(): UsdjpyDayData[] {
+  const r = seeded(804)
+  let close = 152.4
+  const rows: UsdjpyDayData[] = []
+  for (const d of businessDays(180)) {
+    const prev = close
+    close = Math.round(close * (1 + (r() - 0.5) * 0.008) * 100) / 100
+    const last5 = [...rows.slice(-4).map(x => x.close), close]
+    const ma5 = Math.round((last5.reduce((s, x) => s + x, 0) / last5.length) * 100) / 100
+    rows.push({
+      time: isoDate(d),
+      close,
+      change: Math.round((close - prev) * 100) / 100,
+      changePct: Math.round(((close - prev) / prev) * 10000) / 100,
+      ma5,
+      ma5dev: Math.round(((close - ma5) / ma5) * 10000) / 100,
+    })
+  }
+  return rows
+}
+
+export function previewNas100(): Nas100DayData[] {
+  const r = seeded(805)
+  let close = 20_400
+  return businessDays(180).map(d => {
+    const prev = close
+    close = Math.round(close * (1 + (r() - 0.5) * 0.016))
+    return {
+      time: isoDate(d),
+      close,
+      changePct: Math.round(((close - prev) / prev) * 10000) / 100,
+    }
+  })
+}
+
+/** 日経225先物の日足（25日線乖離つき）。 */
+export function previewNkFuturesPrice(): NkFuturesDayData[] {
+  const r = seeded(806)
+  let close = 41_800
+  const rows: NkFuturesDayData[] = []
+  for (const d of businessDays(180)) {
+    const prev = close
+    close = Math.round(close * (1 + (r() - 0.5) * 0.018))
+    const last25 = [...rows.slice(-24).map(x => x.close), close]
+    const ma25 = last25.reduce((s, x) => s + x, 0) / last25.length
+    rows.push({
+      date: isoDate(d),
+      open: prev,
+      high: Math.max(prev, close) + 130,
+      low: Math.min(prev, close) - 150,
+      close,
+      volume: Math.round(28_000 + r() * 22_000),
+      prev_close: prev,
+      change: close - prev,
+      change_pct: Math.round(((close - prev) / prev) * 10000) / 100,
+      ma25_dev: last25.length < 25 ? null : Math.round(((close - ma25) / ma25) * 10000) / 100,
+    })
+  }
+  // 🔴 25日線乖離は古い順に積まないと計算できないが、**保存は新しい順**（画面はそのまま上から並べる）。
+  //    計算し終えてから反転する（古い順のまま返すと表の先頭が去年の日付になる・2026-08-12 に踏んだ）。
+  return rows.reverse()
+}
+
+// ── 先物タブ（CFTC手口 / 建玉残高・取引高・PCR）──────────────────────────
+
+export function previewCotNikkei(): CotNikkeiWeekData[] {
+  const r = seeded(807)
+  return weekFridays(WEEKS).map(d => {
+    // 🔵 CFTC は火曜基準なので、金曜から3日戻して火曜にする
+    const tue = new Date(d)
+    tue.setDate(d.getDate() - 3)
+    const nonCommLong = Math.round(5_000 + r() * 8_000)
+    const nonCommShort = Math.round(4_000 + r() * 7_000)
+    const commLong = Math.round(16_000 + r() * 8_000)
+    const commShort = Math.round(8_000 + r() * 6_000)
+    const nonReptLong = Math.round(9_000 + r() * 4_000)
+    const nonReptShort = Math.round(7_000 + r() * 4_000)
+    return {
+      date: isoDate(tue),
+      label: weekLabel(tue),
+      openInterest: Math.round(26_000 + r() * 16_000),
+      nonCommLong, nonCommShort, nonCommNet: nonCommLong - nonCommShort,
+      commLong, commShort, commNet: commLong - commShort,
+      nonReptLong, nonReptShort, nonReptNet: nonReptLong - nonReptShort,
+    }
+  })
+}
+
+export function previewFuturesOi(): FuturesOiWeekData[] {
+  const r = seeded(808)
+  return weekFridays(WEEKS).map(d => ({
+    date: slashDate(d),
+    label: weekLabel(d),
+    oi: Math.round(180_000 + r() * 40_000),
+  }))
+}
+
+export function previewFuturesDaily(): FuturesDayData[] {
+  const r = seeded(809)
+  let close = 41_800
+  // 🔴 このデータは**新しい順**で保存されている（画面はそのまま上から並べる）。
+  //    古い順で返すと、表の一番上に何ヶ月も前の日付が出る（2026-08-12 に踏んだ）。
+  return businessDays(60).reverse().map(d => {
+    close = Math.round(close * (1 + (r() - 0.5) * 0.018))
+    return {
+      date: slashDate(d),
+      volume: Math.round(25_000 + r() * 45_000),
+      oi: Math.round(190_000 + r() * 20_000),
+      pcr: Math.round((2.4 + (r() - 0.5) * 0.9) * 100) / 100,
+      close,
+    }
+  })
 }
 
 /**
  * キャッシュキー → ダミー。ここに無いキーは実データのまま流す。
  * 🔵 キーは各 `fetch*Data()` が使っているものと同じ文字列（`dataCache.ts` の一覧が正）。
+ * 🔵 ダミーを増やすときは、その型を import してここへ1行足すだけ（画面側は触らない）。
  */
 export const PREVIEW_BY_CACHE_KEY: Record<string, () => unknown> = {
+  // 現物タブ
   'poical-investor-data':        previewInvestor,
   'poical-margin-data-v2':       previewMargin,
   'poical-short-sell-data':      previewShortSell,
@@ -205,4 +391,16 @@ export const PREVIEW_BY_CACHE_KEY: Record<string, () => unknown> = {
   'poical-arbitrage-data':       previewArbitrage,
   'poical-arbitrage-daily-data': previewArbitrageDaily,
   'poical-stocks-daily-v3':      previewStocksDaily,
+  // 環境タブ
+  'poical-vix-data':             previewVixWeekly,
+  'poical-vix-daily-data':       previewVixDaily,
+  'poical-nt-ratio-v1':          previewNtRatio,
+  'poical-usdjpy-data':          previewUsdjpy,
+  'poical-nas100-data':          previewNas100,
+  // 🔴 キーは v5（dataCache.ts の purge 一覧に v4 が残っているが、実際に使われているのは v5）
+  'poical-nk-futures-price-v5':  previewNkFuturesPrice,
+  // 先物タブ
+  'poical-cot-nikkei-v1':        previewCotNikkei,
+  'poical-futures-oi-data':      previewFuturesOi,
+  'poical-futures-daily-data-v2': previewFuturesDaily,
 }

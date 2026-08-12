@@ -146,16 +146,29 @@ describe('プレビュー中の需給データ', () => {
   })
 
   it('何度呼んでも同じ数字（開き直すたびに変わらない）', async () => {
-    const { previewMargin } = await import('../previewMarketData')
-    expect(JSON.stringify(previewMargin())).toBe(JSON.stringify(previewMargin()))
+    const { PREVIEW_BY_CACHE_KEY } = await import('../previewMarketData')
+    for (const [key, make] of Object.entries(PREVIEW_BY_CACHE_KEY)) {
+      expect(JSON.stringify(make()), `${key} は呼ぶたびに変わってはいけない`).toBe(JSON.stringify(make()))
+    }
+  })
+
+  it('登録した全キーが中身のあるデータを返す', async () => {
+    const { PREVIEW_BY_CACHE_KEY } = await import('../previewMarketData')
+    // 🔴 空配列を返すと画面が「データなし」になり、ダミーを足した意味がなくなる
+    for (const [key, make] of Object.entries(PREVIEW_BY_CACHE_KEY)) {
+      const v = make()
+      if (Array.isArray(v)) expect(v.length, `${key} が空`).toBeGreaterThan(0)
+      else expect(v, `${key} が空`).toBeTruthy()
+    }
   })
 
   it('ダミーに無いキーは実データの取得へ通す', async () => {
     vi.resetModules()
     const { fetchWithCache } = await import('../dataCache')
 
+    // 🔵 ニュース見出しはダミーにしていない（公開情報で、隠す意味がないため）
     const v = await fetchWithCache({
-      key: 'poical-vix-data',
+      key: 'poical-nhk-news',
       ttl: 1000,
       fetcher: async () => ({ data: 'real' }),
     })
