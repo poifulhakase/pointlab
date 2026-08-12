@@ -3,6 +3,7 @@
 // 使い方: npm run fetch-data
 // 出力:   public/data/investor.json, public/data/margin.json, public/data/cot_nikkei.json 他
 
+import { shortSellFromRow } from './shortSell.mjs'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -371,7 +372,7 @@ let _daily2yearCache = null
  *   col[7]:  騰落レシオ(25日) - 範囲 76〜155
  *   col[11]: 空売り比率(%)    - 範囲 16〜71
  *   col[16]: PCR（プット/コールOI比） - 範囲 0.75〜2.52
- * Returns: { touhiMap, shortSellMap, pcrMap }
+ * Returns: { touhiMap, shortSellMap, shortSellBreakdownMap, pcrMap }
  */
 async function fetchDaily2YearMetrics() {
   if (_daily2yearCache) return _daily2yearCache
@@ -398,7 +399,9 @@ async function fetchDaily2YearMetrics() {
   }
 
   const touhiMap    = new Map()  // col[7]: 騰落レシオ(25日)
-  const shortSellMap = new Map() // col[11]: 空売り比率(%)
+  // 🔴 空売り比率は col[11] ではない（2026-08-12 修正・理由は scripts/shortSell.mjs）
+  const shortSellMap = new Map()          // 合計(%) = col[22] + col[24]
+  const shortSellBreakdownMap = new Map() // { total, unrestricted, restricted }
   const pcrMap       = new Map() // col[16]: PCR
 
   for (const row of rows) {
@@ -406,14 +409,17 @@ async function fetchDaily2YearMetrics() {
     const dateStr = tsToJSTDateStr(row[0])
     if (typeof row[7] === 'number')
       touhiMap.set(dateStr, Math.round(row[7] * 100) / 100)
-    if (typeof row[11] === 'number')
-      shortSellMap.set(dateStr, Math.round(row[11] * 100) / 100)
+    const ss = shortSellFromRow(row)
+    if (ss) {
+      shortSellMap.set(dateStr, ss.total)
+      shortSellBreakdownMap.set(dateStr, ss)
+    }
     if (typeof row[16] === 'number' && row[16] > 0)
       pcrMap.set(dateStr, Math.round(row[16] * 1000) / 1000)
   }
 
   console.log(`  騰落レシオ: ${touhiMap.size}件, 空売り比率: ${shortSellMap.size}件, PCR: ${pcrMap.size}件`)
-  _daily2yearCache = { touhiMap, shortSellMap, pcrMap }
+  _daily2yearCache = { touhiMap, shortSellMap, shortSellBreakdownMap, pcrMap }
   return _daily2yearCache
 }
 
@@ -492,11 +498,26 @@ async function buildAdvanceDeclineData() {
 
 async function buildShortSellData() {
   console.log('\n[shortSell] 空売り比率取得中...')
-  const { shortSellMap } = await fetchDaily2YearMetrics()
+  const { shortSellMap, shortSellBreakdownMap } = await fetchDaily2YearMetrics()
   if (shortSellMap.size === 0) throw new Error('空売り比率データが空です')
 
+  // 🔵 週次は**その週の最終営業日の値**（他の週次指標＝信用残・裁定残・投資主体別と揃える）。
+  //    週の途中の山は日次（下）で見る。
   const weekly = dailyToWeekly(shortSellMap)
-  return weekly.map(({ date, label, val }) => ({ date, label, ratio: val }))
+
+  // 🔴 **日次も残す**（2026-08-12 追加）。元データが日次なので、日次で持っておけば
+  //    週次はいつでも作れるが、週次だけ保存すると元に戻せない。
+  //    空売り比率は「1日で45%台へ跳ねる」ような動きを見る指標で、週末値だけだと山を見落とす。
+  const daily = [...shortSellBreakdownMap.entries()]
+    .map(([date, v]) => ({ date, ratio: v.total, unrestricted: v.unrestricted, restricted: v.restricted }))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 500)   // 約2年ぶん
+
+  console.log(`  → 週次 ${weekly.length}件 / 日次 ${daily.length}件（最新 ${daily[0]?.date} = ${daily[0]?.ratio}%）`)
+  return {
+    weekly: weekly.map(({ date, label, val }) => ({ date, label, ratio: val })),
+    daily,
+  }
 }
 
 // ── 信用倍率 ──────────────────────────────────
@@ -1794,10 +1815,11 @@ async function main() {
   }
 
   try {
-    const data = await buildShortSellData()
-    const out  = { updatedAt: new Date().toISOString(), data }
+    const { weekly, daily } = await buildShortSellData()
+    // 🔵 `data` は週次のまま（画面が読んでいる形を変えない）。日次は `daily` に足す。
+    const out  = { updatedAt: new Date().toISOString(), data: weekly, daily }
     writeFileSync(join(OUT_DIR, 'short_sell.json'), JSON.stringify(out, null, 2))
-    console.log(`\n✓ short_sell.json 保存 (${data.length}件)`)
+    console.log(`\n✓ short_sell.json 保存 (週次 ${weekly.length}件 / 日次 ${daily.length}件)`)
     shortSellOk = true
   } catch (e) {
     console.error('\n✗ short_sell:', e.message)

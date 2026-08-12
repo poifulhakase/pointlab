@@ -9,7 +9,7 @@ import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorDa
 import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
 import { fetchVixData, fetchVixDailyData, type VixWeekData, type VixDayData } from '../utils/vixData'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
-import { fetchShortSellData, type ShortSellWeekData } from '../utils/shortSellData'
+import { fetchShortSellData, fetchShortSellDaily, type ShortSellWeekData, type ShortSellDayData } from '../utils/shortSellData'
 import { fetchArbitrageData, fetchArbitrageDailyData, type ArbitrageWeekData, type ArbitrageDayData } from '../utils/arbitrageData'
 import { fetchCotNikkeiData, type CotNikkeiWeekData } from '../utils/cotNikkeiData'
 import { fetchFuturesDailyData, type FuturesDayData } from '../utils/futuresDailyData'
@@ -343,6 +343,8 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
   const [ssLoading, setSsLoading] = useState(false)
   const [ssError,   setSsError]   = useState('')
   const [ssLoaded,  setSsLoaded]  = useState(false)
+  // 日次の空売り比率（週末値だけだと週の途中の山が見えないため・2026-08-12 追加）
+  const [ssDaily,   setSsDaily]   = useState<ShortSellDayData[]>([])
 
   const [arbData,    setArbData]    = useState<ArbitrageWeekData[]>([])
   const [arbLoading, setArbLoading] = useState(false)
@@ -446,7 +448,11 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
 
   const loadShortSell = useCallback(async (force = false) => {
     setSsLoading(true); setSsError('')
-    try { setSsData(await fetchShortSellData(force)); setSsLoaded(true) }
+    try {
+      setSsData(await fetchShortSellData(force)); setSsLoaded(true)
+      // 🔵 同じファイルなので取得は軽い。失敗しても週次の表示は止めない
+      fetchShortSellDaily(force).then(setSsDaily).catch(() => {})
+    }
     catch (e) { setSsError(e instanceof Error ? e.message : 'データ取得エラー') }
     finally { setSsLoading(false) }
   }, [])
@@ -822,6 +828,28 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
                   sub="空売り比率・騰落レシオ・裁定残高（週次）"
                   latestDate={latestDate}
                 />
+                {/* 🔵 空売り比率だけ日次でも見せる（2026-08-12 追加）。
+                    週次は「その週の最終営業日の値」なので、週の途中で45%台へ跳ねた日が消える。
+                    表そのものは週次のまま＝他の需給（裁定残・騰落レシオ）と横に並べて比べられる形を崩さない。 */}
+                {ssDaily.length > 0 && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto',
+                    padding: '4px 10px 6px', borderBottom: '1px solid var(--border-dim)',
+                  }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-dim)', flexShrink: 0 }}>空売り比率・日次</span>
+                    {ssDaily.slice(0, 10).map(d => (
+                      <span key={d.date} style={{ flexShrink: 0, textAlign: 'center', lineHeight: 1.3 }}
+                        title={`${d.date} 価格規制なし ${d.unrestricted}% ／ 規制あり ${d.restricted}%`}>
+                        <span style={{ display: 'block', fontSize: 9, color: 'var(--text-dim)' }}>{d.date.slice(5)}</span>
+                        <span style={{
+                          display: 'block', fontSize: 11, fontWeight: 700,
+                          // 🔵 40%以上＝売り方が厚い日。目で拾えるように色を変える
+                          color: d.ratio >= 45 ? 'var(--color-sun)' : d.ratio >= 40 ? 'var(--text)' : 'var(--text-sub)',
+                        }}>{d.ratio.toFixed(1)}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div style={mTblWrap}>
                   {combinedLoading || combinedError
                     ? <PanelCenter loading={combinedLoading} error={combinedError} onRetry={() => { loadShortSell(true); loadAdvanceDecline(true); loadArbitrage(true) }} />
