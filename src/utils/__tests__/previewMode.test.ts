@@ -108,6 +108,79 @@ describe('プレビュー中のメモ', () => {
   })
 })
 
+describe('プレビュー中の需給データ', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+    localStorage.clear()
+    setSearch(`?preview=${TOKEN}`)
+  })
+
+  it('本物を取りに行かず、ダミーを返す', async () => {
+    vi.resetModules()
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const { fetchWithCache } = await import('../dataCache')
+
+    const rows = await fetchWithCache<{ ratio: number }[]>({
+      key: 'poical-margin-data-v2',
+      ttl: 1000,
+      fetcher: async () => { throw new Error('本物を取りに行ってはいけない') },
+    })
+
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows[0].ratio).toBeGreaterThan(0)
+    expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it('キャッシュに書かない（通常表示に戻したとき偽の数字が残らない）', async () => {
+    vi.resetModules()
+    const { fetchWithCache } = await import('../dataCache')
+
+    await fetchWithCache({
+      key: 'poical-investor-data',
+      ttl: 1000,
+      fetcher: async () => ({ data: [] }),
+    })
+
+    expect(localStorage.getItem('poical-investor-data')).toBeNull()
+  })
+
+  it('何度呼んでも同じ数字（開き直すたびに変わらない）', async () => {
+    const { previewMargin } = await import('../previewMarketData')
+    expect(JSON.stringify(previewMargin())).toBe(JSON.stringify(previewMargin()))
+  })
+
+  it('ダミーに無いキーは実データの取得へ通す', async () => {
+    vi.resetModules()
+    const { fetchWithCache } = await import('../dataCache')
+
+    const v = await fetchWithCache({
+      key: 'poical-vix-data',
+      ttl: 1000,
+      fetcher: async () => ({ data: 'real' }),
+    })
+
+    expect(v).toBe('real')
+  })
+})
+
+describe('プレビュー中のカレンダーは今月だけ', () => {
+  it('同じ月の日付は通す', async () => {
+    const { isWithinPreviewRange } = await import('../../hooks/useCalendar')
+    const today = new Date(2026, 7, 12)
+    expect(isWithinPreviewRange(new Date(2026, 7, 1), today)).toBe(true)
+    expect(isWithinPreviewRange(new Date(2026, 7, 31), today)).toBe(true)
+  })
+
+  it('前月・翌月・翌年の同じ月は止める', async () => {
+    const { isWithinPreviewRange } = await import('../../hooks/useCalendar')
+    const today = new Date(2026, 7, 12)
+    expect(isWithinPreviewRange(new Date(2026, 6, 31), today)).toBe(false)
+    expect(isWithinPreviewRange(new Date(2026, 8, 1), today)).toBe(false)
+    expect(isWithinPreviewRange(new Date(2027, 7, 12), today)).toBe(false)
+  })
+})
+
 describe('previewData', () => {
   it('メモのダミーは「今日」を含む（月をまたいでも空にならない）', async () => {
     const { previewNotes } = await import('../previewData')

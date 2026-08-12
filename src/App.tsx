@@ -400,6 +400,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   //    （`sidebarOpen` を戻す唯一の経路が isDesktop の変化なので、画面幅を変えるまで直らない）。
   //    2026-08-11 に実際に踏んだ。
   const handleOpenSector = useCallback(() => {
+    // 🔴 プレビューでは開かない（入口は隠してあるが、直接呼ばれても開かないようにする）
+    if (isPreviewMode()) return
     if (!isDesktop) setSidebarOpen(false)
     setViewWithTransition('sector')
   }, [isDesktop, setViewWithTransition])

@@ -1,3 +1,6 @@
+import { isPreviewMode } from './previewMode'
+import { PREVIEW_BY_CACHE_KEY } from './previewMarketData'
+
 // ── 統一データキャッシュ管理 ───────────────────────────────────────────────
 // すべての poical-* データキャッシュの read / write / evict を一元管理する。
 //
@@ -75,6 +78,15 @@ export async function fetchWithCache<T>(opts: {
   fetcher:        () => Promise<{ data: T; updatedAt?: string }>
 }): Promise<T> {
   const { key, force = false, fetcher, checkUpdatedAt = false } = opts
+
+  // 🔴 プレビューでは需給データをダミーに差し替える（2026-08-12）。
+  //    ここ1か所で受けると、どの画面から呼ばれても同じダミーが出る。
+  // 🔴 **キャッシュには触らない**（読みも書きもしない）＝プレビューを見たあと通常表示に戻したときに
+  //    ダミーが残っていると、本物のつもりで偽の数字を見ることになる。
+  if (isPreviewMode()) {
+    const dummy = PREVIEW_BY_CACHE_KEY[key]
+    if (dummy) return dummy() as T
+  }
   const ttl = typeof opts.ttl === 'function' ? opts.ttl() : opts.ttl
   const SESSION_MS = 60_000 // 60秒以内の連続リクエストはスキップ
 

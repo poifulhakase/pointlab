@@ -5,7 +5,7 @@ import { SectorBanner } from './SectorBanner'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter } from '../utils/macroCalendar'
-import { blockedInPreview } from '../utils/previewMode'
+import { blockedInPreview, isPreviewMode } from '../utils/previewMode'
 
 const POIROBO_ALERT_COLOR = '#f87171'
 
@@ -189,7 +189,9 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
 
         {/* ──── セクターローテーションの入口（2026-08-11 追加）────
              🔵 メモの上に置く＝毎日通る場所なので、開かなくても現在地が目に入る。 */}
-        {onOpenSector && (
+        {/* 🔴 プレビューでは出さない（2026-08-12 ユーザー指示）。
+            セクターローテーションは実データそのもので、ダミーに置き換えられないため。 */}
+        {onOpenSector && !isPreviewMode() && (
           <div style={{ padding: '12px 12px 0' }}>
             <SectorBanner theme={theme} onOpen={onOpenSector} />
           </div>

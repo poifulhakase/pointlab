@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import { isPreviewMode, notifyPreviewBlocked } from '../utils/previewMode'
 
 export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook' | 'timemachine' | 'sector' | 'chartpattern'
 
@@ -23,6 +24,17 @@ export function stepDate(prev: Date, view: ViewMode, delta: number): Date {
     d.setDate(d.getDate() + delta)
   }
   return d
+}
+
+/**
+ * プレビュー中に表示してよい日付か（純粋関数・テスト対象）。
+ *
+ * 🔴 プレビューは**今月だけ**（2026-08-12 ユーザー指示）。先の月まで動かせると
+ *    「予定が何も無い月」を延々と見せることになり、ダミーが尽きているだけなのに
+ *    「中身が無いアプリ」に見える。
+ */
+export function isWithinPreviewRange(next: Date, today: Date): boolean {
+  return next.getFullYear() === today.getFullYear() && next.getMonth() === today.getMonth()
 }
 
 function loadView(): ViewMode {
@@ -56,11 +68,19 @@ export function useCalendar() {
   }, [])
 
   const goToday   = useCallback(() => setCurrent(new Date(today)), [today])
+  // 🔵 日付クリックでの移動は当月内なので素通し（月をまたぐのは go だけ）
   const goToDate  = useCallback((date: Date) => setCurrent(new Date(date)), [])
 
   const go = useCallback((delta: number) => {
-    setCurrent(prev => stepDate(prev, view, delta))
-  }, [view])
+    setCurrent(prev => {
+      const next = stepDate(prev, view, delta)
+      if (isPreviewMode() && !isWithinPreviewRange(next, today)) {
+        notifyPreviewBlocked('プレビューで見られるのは今月だけです')
+        return prev
+      }
+      return next
+    })
+  }, [view, today])
 
   /** 月ビュー用：その月のカレンダーグリッド（前後月を含む6週×7日） */
   const getMonthGrid = useCallback((): Date[] => {
