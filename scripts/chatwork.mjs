@@ -186,17 +186,24 @@ const SIDE_LABEL = {
  * 🔴 hold の日も毎日送る（ユーザー決定・2026-08-09）。
  * 🔴 反証（counter）を必ず載せる。判断を鵜呑みにさせないため。
  */
-export function buildNotification({ date, decision, execPrice, account, baseline, stats, syncDiff, warnings = [] }) {
+export function buildNotification({ date, decision, execPrice, account, baseline, stats, syncDiff, warnings = [], late = false, deadline = '15:25', nowJst = '' }) {
   const d = decision ?? {}
-  const head = d.action === 'open'
+  const normalHead = d.action === 'open'
     ? `【ロボ口座】${SIDE_LABEL[d.symbol] ?? d.symbol} を ${d.qty}口 新規建て`
     : d.action === 'close'
       ? `【ロボ口座】${SIDE_LABEL[d.symbol] ?? d.symbol} を手仕舞い`
       : '【ロボ口座】本日は見送り（ポジションなし）'
+  // 🔴 発注期限を過ぎた日は、**建てたように読めない見出し**にする。
+  //    中身は普段どおり見せるが、口座には積んでいないことを最初の2行で言い切る。
+  const head = late ? '【ロボ口座】⚠ 本日は見送り（通知が遅れて発注期限を過ぎました）' : normalHead
 
   const lines = [`[info][title]${head}[/title]`]
   lines.push(`日付: ${date}`)
-  if (d.action !== 'hold' && execPrice != null) lines.push(`🔴 執行: 本日の引成（MOC）で発注してください。15:25まで（15:00時点 ${Math.round(execPrice).toLocaleString()}円）`)
+  if (late) {
+    lines.push(`🔴 この判断は**記録していません**（${nowJst || '現在'} JST＝引成の期限 ${deadline} を過ぎたため）。発注しないでください。`)
+    lines.push(`🔵 本来の判断: ${normalHead.replace('【ロボ口座】', '')}`)
+  }
+  if (!late && d.action !== 'hold' && execPrice != null) lines.push(`🔴 執行: 本日の引成（MOC）で発注してください。${deadline}まで（15:00時点 ${Math.round(execPrice).toLocaleString()}円）`)
   lines.push(`確信度: ${d.confidence_pct ?? '—'}%`)
   lines.push('')
   lines.push(`■ 理由`)

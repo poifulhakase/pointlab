@@ -46,6 +46,24 @@ describe('buildNotification', () => {
     expect(m).toContain('30口')
   })
 
+  /**
+   * 🔴 発注期限（15:25）を過ぎて届いた日は「建てた」と読めてはいけない。
+   *    2026-08-12 に GitHub の遅延で 16:42 に届き、発注できないのに
+   *    記録だけ残りかけた（口座には積まない仕様に変更した）。
+   */
+  it('🔴 期限を過ぎた日は「見送り」と分かる見出しにして、発注しないよう書く', () => {
+    const m = buildNotification({ ...base, late: true, nowJst: '16:42', deadline: '15:25' })
+
+    expect(m).toContain('見送り')
+    expect(m).toContain('記録していません')
+    expect(m).toContain('発注しないでください')
+    expect(m).toContain('16:42')
+    // 本来どう判断したかは分かるように残す
+    expect(m).toContain('新規建て')
+    // 期限を過ぎた日に「引成で発注してください」を出さない（矛盾するため）
+    expect(m).not.toContain('で発注してください。15:25まで')
+  })
+
   it('🔴 反証（この判断が外れるとき）を必ず載せる', () => {
     const m = buildNotification(base)
     expect(m).toContain('この判断が外れるとき')

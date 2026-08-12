@@ -51,6 +51,19 @@ const NO_LLM = args.includes('--no-llm')
 // 🔴 休場日でも強制的に走らせる（配線確認用）。本番では付けない
 const FORCE = args.includes('--force')
 
+/**
+ * 引成（MOC）の発注期限（JST）。これを過ぎて判断が出た日は**注文を積まない**。
+ * 🔵 大引けは15:00だが、引成は15:25まで受け付ける証券会社が多いのでそこに合わせている。
+ */
+const ORDER_DEADLINE_JST = '15:25'
+
+/** いまの JST の時刻（'HH:MM'）。文字列のまま比較できる形にしてある。 */
+function nowHhmmJst() {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date())
+}
+
 const log = (s = '') => console.log(s)
 
 function loadAccount() {
@@ -119,6 +132,15 @@ async function main() {
   }
   if (!market.open && FORCE) log(`[0] ⚠ ${market.date} は休場（${market.reason}）だが --force のため続行`)
   else log(`[0] ${market.date} は営業日`)
+
+  // 🔴 **発注期限を過ぎていたら注文は積まない**（2026-08-12 ユーザー決定）。
+  //    運用の約束は「15:00の通知を見て 15:25 までに引成（MOC）で発注」。
+  //    GitHub のスケジュールが遅れて通知が 15:25 より後に届くと、**発注できないのに
+  //    記録だけ『終値で約定した』ことになり、記録と実物がズレる**（2026-08-12 に実際に発生）。
+  //    そのときは判断内容は見せるが、口座には積まない＝その日は無かったことにする。
+  // 🔵 `--force` を付けたときは期限を無視する（配線確認・手動での取り直し用）。
+  const late = !FORCE && nowHhmmJst() > ORDER_DEADLINE_JST
+  if (late) log(`[0] ⚠ いま ${nowHhmmJst()} JST＝発注期限（${ORDER_DEADLINE_JST}）を過ぎている → 本日は注文を積まない`)
 
   // ── 1) 価格・需給 ──
   log('[1] 価格を取得...')
@@ -311,8 +333,14 @@ async function main() {
     })
     return s?.price ?? null
   })()
-  account = queueOrder({ account, decision, stopExit: stopHit, plannedStop, decidedOn: date })
-  log(`[7] 注文を積んだ（本日の引成で執行）: ${decision?.action ?? 'hold'}${stopHit ? ' ＋ 損切り手仕舞い' : ''}`)
+  if (late) {
+    // 🔴 期限を過ぎた日は**積まない**＝その日は無かったことにする。
+    //    判断の中身は通知で見せる（何が起きるはずだったかは分かるようにする）。
+    log(`[7] ⚠ 発注期限を過ぎているため注文を積まなかった（判断は ${decision?.action ?? 'hold'} だった）`)
+  } else {
+    account = queueOrder({ account, decision, stopExit: stopHit, plannedStop, decidedOn: date })
+    log(`[7] 注文を積んだ（本日の引成で執行）: ${decision?.action ?? 'hold'}${stopHit ? ' ＋ 損切り手仕舞い' : ''}`)
+  }
 
   account = pushEquity(account, date, equityOf(account, priceOf))
   account = recomputeStats(account)
@@ -341,6 +369,9 @@ async function main() {
   const message = buildNotification({
     date,
     decision,
+    late,
+    deadline: ORDER_DEADLINE_JST,
+    nowJst: nowHhmmJst(),
     execPrice: decision.symbol !== 'none' ? priceOf(decision.symbol) : null,
     account: { ...account, equity: equityOf(account, priceOf) },
     baseline,
