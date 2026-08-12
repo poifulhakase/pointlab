@@ -149,9 +149,15 @@ jobs:
       #    topix.json が 7/13 から2週間止まっていても誰にも通知されなかった。
       #    許容日数と公表サイクルは scripts/check-freshness.mjs に集約してある
       #    （ローカルでも `npm run check-freshness` で同じ判定ができる）。
+      # 🔴 **13:00 JST の回では走らせない**（2026-08-12 追加）。
+      #    13:00 は判断のために早めに起動している回で、**当日ぶんのデータはまだ存在しない**。
+      #    閾値（日次ファイルは5日）は「その日のぶんが取れている」前提なので、
+      #    連休明けの13:00に走らせると古いと誤判定する
+      #    （例：GW明けの木曜13:00＝最新は連休前の金曜＝6日前 > 5日 → 誤ってIssueが立つ）。
+      #    鮮度は当日ぶんを取ったあと（19:30／21:30／土曜）の回で見れば十分。
       - name: データ鮮度チェック
         id: freshness_check
-        if: always()
+        if: always() && !(github.event_name == 'schedule' && contains(github.event.schedule, '0 4 * * 1-5'))
         run: npm run check-freshness
         continue-on-error: true
 
