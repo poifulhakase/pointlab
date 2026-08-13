@@ -66,7 +66,7 @@ const ARTICLES: Article[] = [
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
   { genre: '未来ガジェット', title: 'タイムマシン', url: null, thumb: BASE + 'Future_Gadget_TimeMachine.webp', internalAction: 'timemachine' },
-  { genre: '未来ガジェット', title: 'フォーメーション分析', url: null, thumb: null, internalAction: 'chartpattern' },
+  { genre: '未来ガジェット', title: '波動探知機', url: null, thumb: null, internalAction: 'chartpattern' },
 ]
 
 const GENRES = ['ぽいロボ', '地下室', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
