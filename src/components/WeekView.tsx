@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { SessionBands, SessionTimeMarkers } from './SessionBands'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
@@ -11,6 +11,7 @@ import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
 import { type RoboJob, ROBO_JOB_META } from '../utils/roboSchedule'
+import { BadgePopup } from './BadgePopup'
 import { type BookingSlot } from '../utils/bookingTypes'
 import { activateOnKey, dateLabel } from '../utils/a11y'
 
@@ -62,9 +63,13 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
+type RoboPopup = { job: RoboJob; x: number; y: number }
+
 export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, getRoboJobs, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT, getBookingEvents }: Props) {
   const now = new Date()
   const isLight = theme === 'light'
+  // 🔵 押したら「何をしているか」を出す（2026-08-13 ユーザー要望）
+  const [roboPopup, setRoboPopup] = useState<RoboPopup | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -248,13 +253,23 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                       position: 'absolute', left: 2, right: 2, zIndex: 4,
                       top: job.topPx, height: job.heightPx,
                       borderRadius: 4, padding: '1px 4px', overflow: 'hidden',
-                      pointerEvents: 'none',
+                      cursor: 'pointer',
                       background: job.needsPc
                         ? (isLight ? 'rgba(217,119,6,0.16)' : 'rgba(251,191,36,0.14)')
                         : (isLight ? 'rgba(13,148,136,0.12)' : 'rgba(45,212,191,0.10)'),
                       borderLeft: `3px solid ${job.needsPc ? (isLight ? '#b45309' : '#fbbf24') : (isLight ? '#0d9488' : '#2dd4bf')}`,
                     }}
                     title={`${job.startTime} ${job.title}${job.needsPc ? '（PCを開けておく）' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={ev => {
+                      ev.stopPropagation()
+                      const r = (ev.currentTarget as HTMLElement).getBoundingClientRect()
+                      setRoboPopup(prev => prev?.job.id === job.id ? null : { job, x: r.left, y: r.bottom + 6 })
+                    }}
+                    onKeyDown={activateOnKey(() => {
+                      setRoboPopup(prev => prev?.job.id === job.id ? null : { job, x: window.innerWidth / 2 - 130, y: 160 })
+                    })}
                   >
                     <div style={{
                       fontSize: 9.5, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -343,6 +358,15 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
           </span>
         )) : <span>&nbsp;</span>}
       </div>
+
+      {roboPopup && (
+        <BadgePopup
+          x={roboPopup.x} y={roboPopup.y}
+          label={`${roboPopup.job.startTime} ${ROBO_JOB_META[roboPopup.job.kind].icon} ${roboPopup.job.title}`}
+          desc={(roboPopup.job.needsPc ? '🖥 PCを開けておく必要があります。\n\n' : '') + roboPopup.job.desc}
+          onClose={() => setRoboPopup(null)}
+        />
+      )}
     </div>
   )
 }

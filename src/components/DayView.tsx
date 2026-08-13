@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { SessionBands, SessionTimeMarkers } from './SessionBands'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
@@ -9,6 +9,7 @@ import { type MacroEvent } from '../utils/macroCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
 import { type RoboJob, ROBO_JOB_META } from '../utils/roboSchedule'
+import { BadgePopup } from './BadgePopup'
 import { type BookingSlot } from '../utils/bookingTypes'
 import { activateOnKey } from '../utils/a11y'
 
@@ -54,10 +55,14 @@ type Props = {
   theme?: 'dark' | 'light'
 }
 
+type RoboPopup = { job: RoboJob; x: number; y: number }
+
 export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, getRoboJobs, getBookingEvents, theme = 'dark' }: Props) {
   const now = new Date()
   const td = isToday(date)
   const isLight = theme === 'light'
+  // 🔵 押したら「何をしているか」を出す（2026-08-13 ユーザー要望）
+  const [roboPopup, setRoboPopup] = useState<RoboPopup | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -183,13 +188,23 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                 style={{
                   position: 'absolute', left: 4, right: 4, zIndex: 4,
                   top: job.topPx, height: job.heightPx,
-                  borderRadius: 5, padding: '2px 8px', overflow: 'hidden', pointerEvents: 'none',
+                  borderRadius: 5, padding: '2px 8px', overflow: 'hidden', cursor: 'pointer',
                   background: job.needsPc
                     ? (isLight ? 'rgba(217,119,6,0.16)' : 'rgba(251,191,36,0.14)')
                     : (isLight ? 'rgba(13,148,136,0.12)' : 'rgba(45,212,191,0.10)'),
                   borderLeft: `3px solid ${job.needsPc ? (isLight ? '#b45309' : '#fbbf24') : (isLight ? '#0d9488' : '#2dd4bf')}`,
                 }}
                 title={job.desc}
+                role="button"
+                tabIndex={0}
+                onClick={ev => {
+                  ev.stopPropagation()
+                  const r = (ev.currentTarget as HTMLElement).getBoundingClientRect()
+                  setRoboPopup(prev => prev?.job.id === job.id ? null : { job, x: r.left, y: r.bottom + 6 })
+                }}
+                onKeyDown={activateOnKey(() => {
+                  setRoboPopup(prev => prev?.job.id === job.id ? null : { job, x: window.innerWidth / 2 - 130, y: 160 })
+                })}
               >
                 <div style={{
                   fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -270,6 +285,15 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
           </div>
         </div>
       </div>
+
+      {roboPopup && (
+        <BadgePopup
+          x={roboPopup.x} y={roboPopup.y}
+          label={`${roboPopup.job.startTime} ${ROBO_JOB_META[roboPopup.job.kind].icon} ${roboPopup.job.title}`}
+          desc={(roboPopup.job.needsPc ? '🖥 PCを開けておく必要があります。\n\n' : '') + roboPopup.job.desc}
+          onClose={() => setRoboPopup(null)}
+        />
+      )}
     </div>
   )
 }
