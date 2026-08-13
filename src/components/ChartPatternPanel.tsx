@@ -206,7 +206,7 @@ type WaveColors = {
 
 /** 波の図。points は 0-100 座標（y は上が0）。label があれば点の脇に付く。 */
 function WaveFigure({
-  pts, labels, levels, c, dark, height, delay = 0, colorFrom = 0, show = true,
+  pts, labels, levels, slopes, second, c, dark, height, delay = 0, colorFrom = 0, show = true,
 }: {
   pts: number[][]
   labels?: (string | null)[]
@@ -219,6 +219,10 @@ function WaveFigure({
   colorFrom?: number
   /** false のあいだは描かない（画面に入ってから描く） */
   show?: boolean
+  /** 並べて比べるもう1本（相互確認の図で使う） */
+  second?: number[][]
+  /** 斜めの線（トレンドライン・チャネル） */
+  slopes?: { p: number[]; kind: 'up' | 'down' }[]
 }) {
   const d = pts.map(([x, y]) => `${x},${y}`).join(' ')
   const corr = colorFrom > 0 ? pts.slice(colorFrom).map(([x, y]) => `${x},${y}`).join(' ') : null
@@ -237,6 +241,14 @@ function WaveFigure({
         </g>
       ))}
 
+      {slopes?.map((sl, i) => (
+        <line key={`sl${i}`} x1={sl.p[0]} y1={sl.p[1]} x2={sl.p[2]} y2={sl.p[3]}
+          stroke={sl.kind === 'up' ? c.up : c.down} strokeWidth={1.5}
+          style={{
+            opacity: 0, animation: show ? `cpFade .5s ease ${delay + 0.9}s forwards` : 'none',
+            filter: dark ? `drop-shadow(0 0 4px ${(sl.kind === 'up' ? c.up : c.down)}88)` : undefined,
+          }} />
+      ))}
       {/* 推進波 */}
       <polyline points={imp} fill="none" stroke={c.line} strokeWidth={2.1}
         strokeLinejoin="round" strokeLinecap="round" pathLength={100}
@@ -256,6 +268,15 @@ function WaveFigure({
           }} />
       )}
 
+      {second && (
+        <polyline points={second.map(([x, y]) => `${x},${y}`).join(' ')} fill="none"
+          stroke={c.accent} strokeWidth={1.6} strokeDasharray="4 3" strokeLinejoin="round" strokeLinecap="round"
+          pathLength={100}
+          style={{
+            strokeDasharray: '4 3', opacity: 0,
+            animation: show ? `cpFade .6s ease ${delay + 0.8}s forwards` : 'none',
+          }} />
+      )}
       {labels?.map((t, i) => {
         if (!t) return null
         const [x, y] = pts[i]
@@ -273,7 +294,7 @@ function WaveFigure({
 }
 
 type Level = { y: number; x1: number; x2: number; label?: string; warn?: boolean }
-type Fig = { pts: number[][]; labels?: (string | null)[]; levels?: Level[] }
+type Fig = { pts: number[][]; labels?: (string | null)[]; levels?: Level[]; slopes?: { p: number[]; kind: 'up' | 'down' }[] }
 
 /** 3つの絶対ルール。これを満たさない数え方は「間違い」と言える数少ない部分。 */
 const RULES: (Fig & { no: string; title: string; body: string })[] = [
@@ -342,6 +363,77 @@ function WCard({ c, dark, isMobile, accent, children }: {
 const WH = ({ c, children }: { c: WaveColors; children: React.ReactNode }) => (
   <div style={{ fontSize: 10, letterSpacing: '0.18em', color: c.accent, marginBottom: 8 }}>{children}</div>
 )
+
+/** 推進波の変形。🔵 「5波が素直に伸びない」ときの型。エリオットで実務的に効くのはここ。 */
+const ELLIOTT_VARIANTS: (Fig & { name: string; body: string; detail: string })[] = [
+  {
+    name: 'エンディングダイアゴナル',
+    body: '第5波（またはC波）が、先すぼまりの5波になる。',
+    detail: '上値も下値も切り上がるが幅が狭まっていく（上昇ウェッジの形）。**終わりに出る**型で、抜けたあと元の起点まで一気に戻されやすい。1波と4波が重なってもよい、という例外がある。',
+    pts: [[0, 88], [16, 44], [30, 62], [46, 30], [60, 46], [74, 22], [86, 36], [100, 74]],
+    labels: [null, '1', '2', '3', '4', '5', null, null],
+    slopes: [{ p: [10, 46, 84, 20], kind: 'up' }, { p: [10, 76, 84, 40], kind: 'up' }],
+  },
+  {
+    name: 'リーディングダイアゴナル',
+    body: '第1波（またはA波）が、先すぼまりの5波になる。',
+    detail: '**始まりに出る**型。エンディングと形は似ているが、位置が逆。これが出たあと第2波で深く押し、そこから本格的な第3波が来るとされる。',
+    pts: [[0, 90], [18, 56], [30, 70], [46, 44], [58, 58], [72, 38], [88, 66], [100, 22]],
+    labels: [null, '1', '2', '3', '4', '5', '2波', null],
+    slopes: [{ p: [12, 58, 78, 36], kind: 'up' }, { p: [12, 80, 78, 60], kind: 'up' }],
+  },
+  {
+    name: 'エクステンション（延長）',
+    body: '1・3・5のどれかが、他より極端に長く伸びる。',
+    detail: '伸びた波の中がさらに5つに分かれて数えられる。株では第3波が延びることが多いとされる。🔴 延長が起きると波の数が増えるので、数え方が割れる原因にもなる。',
+    pts: [[0, 92], [10, 74], [18, 82], [50, 26], [60, 42], [76, 20], [88, 32], [100, 12]],
+    labels: [null, '1', '2', '3', '4', '5', null, null],
+  },
+  {
+    name: 'トランケーション（フェイラー）',
+    body: '第5波が、第3波の高値を超えられずに終わる。',
+    detail: '買う力が尽きている印で、そのあとの下げが強くなりやすい。🔴 高値を更新しないまま終わるので、あとから数えないと分からない（渦中では「まだ5波の途中」と見える）。',
+    pts: [[0, 90], [14, 66], [26, 76], [50, 22], [66, 44], [84, 30], [100, 62]],
+    labels: [null, '1', '2', '3', '4', '5', null],
+    levels: [{ y: 22, x1: 50, x2: 100, label: '3波の高値', warn: true }],
+  },
+]
+
+
+/** ハーモニック。🔵 波の形をフィボナッチ比率で縛ったもの。比率が決まっているぶん、判定は機械的にできる。 */
+const HARMONICS: (Fig & { name: string; body: string; detail: string })[] = [
+  {
+    name: 'AB=CD',
+    body: 'すべての基本。AB と CD の値幅を同じにする。',
+    detail: 'A→B の下げと同じだけ C→D で下げたところが到達点。BC の戻りは AB の 0.382〜0.786。ここが揃うと、他のハーモニックの部品としても使える。',
+    pts: [[0, 18], [28, 74], [54, 44], [86, 90], [100, 66]],
+    labels: ['A', 'B', 'C', 'D', null],
+  },
+  {
+    name: 'ガートレー',
+    body: 'X-A-B-C-D。D が XA の 0.786 戻しで止まる形。',
+    detail: 'B は XA の 0.618 戻し、D は 0.786 戻し。🔵 5つの点すべてが比率を満たしたときだけ成立とするので、当てはめの余地が形の中では小さい。',
+    pts: [[0, 88], [22, 18], [44, 56], [64, 32], [84, 68], [100, 34]],
+    labels: ['X', 'A', 'B', 'C', 'D', null],
+    levels: [{ y: 68, x1: 0, x2: 100, label: '0.786 戻し' }],
+  },
+  {
+    name: 'バタフライ',
+    body: 'D が X を超えて伸びる（XA の 1.272〜1.414）。',
+    detail: 'ガートレーと並びは同じだが、最後の D が起点 X を割り込む（超える）。行き過ぎたところで折り返す、という想定の形。',
+    pts: [[0, 72], [22, 16], [44, 48], [64, 28], [86, 92], [100, 50]],
+    labels: ['X', 'A', 'B', 'C', 'D', null],
+    levels: [{ y: 72, x1: 0, x2: 100, label: '起点 X' }],
+  },
+  {
+    name: 'クラブ',
+    body: 'さらに深く、D が XA の 1.618 まで伸びる。',
+    detail: 'バタフライより行き過ぎる型。深いぶん、外れたときの傷も大きい。🔴 どれも「比率が揃ったから当たる」わけではなく、**揃った形をそう呼ぶ**というだけ。',
+    pts: [[0, 66], [22, 14], [44, 44], [64, 26], [90, 96], [100, 58]],
+    labels: ['X', 'A', 'B', 'C', 'D', null],
+  },
+]
+
 function ElliottScroll({ c, dark, isMobile }: {
   c: PanelColors
   dark: boolean
@@ -402,6 +494,42 @@ function ElliottScroll({ c, dark, isMobile }: {
         </div>
       </div>
 
+      {/* 推進の変形（ダイアゴナル・延長・フェイラー）*/}
+      <div>
+        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '8px 0 10px' }}>
+          推進の変形<span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>5波が素直に伸びないとき</span>
+        </div>
+        <div style={{
+          display: 'grid', gap: isMobile ? 12 : 16,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        }}>
+          {ELLIOTT_VARIANTS.map((w, i) => (
+            <WaveCard key={w.name} c={c} dark={dark} isMobile={isMobile}
+              id={`cp-wave-${w.name}`} no={`No.${String(i + 9).padStart(2, '0')}`}
+              title={w.name} body={w.body} detail={w.detail}
+              fig={{ pts: w.pts, labels: w.labels, levels: w.levels, slopes: w.slopes, height: isMobile ? 130 : 155 }} />
+          ))}
+        </div>
+      </div>
+
+      {/* ハーモニック */}
+      <div>
+        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '8px 0 10px' }}>
+          ハーモニック<span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>波をフィボナッチ比率で縛る</span>
+        </div>
+        <div style={{
+          display: 'grid', gap: isMobile ? 12 : 16,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        }}>
+          {HARMONICS.map((w, i) => (
+            <WaveCard key={w.name} c={c} dark={dark} isMobile={isMobile}
+              id={`cp-wave-${w.name}`} no={`No.${String(i + 13).padStart(2, '0')}`}
+              title={w.name} body={w.body} detail={w.detail}
+              fig={{ pts: w.pts, labels: w.labels, levels: w.levels, height: isMobile ? 130 : 155 }} />
+          ))}
+        </div>
+      </div>
+
       {/* 目安（ルールではない） */}
       <WCard c={c} dark={dark} isMobile={isMobile}>
         <WH c={c}>▶ 目安 ／ ルールではなく「よくある」話</WH>
@@ -445,6 +573,8 @@ type Candle = {
   says: string
   how: string
   bars: Bar[]
+  /** 窓（ギャップ）が開いた足の番号。指定すると、前の足との空きに帯を敷く */
+  gapAt?: number
 }
 
 const CANDLE_KIND: Record<Candle['kind'], string> = {
@@ -573,11 +703,45 @@ const CANDLES: Candle[] = [
       { o: 44, h: 94, l: 40, c: 90 },
     ],
   },
+
+  // ── 窓（ギャップ）──
+  // 🔵 窓は**どこで開いたか**で意味が変わる。同じ「空き」でも、持ち合いの中なら無意味、
+  //    抜け際なら始まり、途中なら折り返し地点、天井際なら終わり。位置が全て。
+  {
+    name: '普通の窓（コモン）', n: '窓', kind: 'neutral',
+    says: '持ち合いの中で開く小さな窓。たいてい数日で埋まり、方向の意味は持たない。',
+    how: '値動きの薄い場面／出来高が増えていない／前後が横ばい。🔴 窓が開いたこと自体はニュースではない。',
+    bars: [{ o: 44, h: 52, l: 38, c: 48 }, { o: 58, h: 66, l: 56, c: 62 }, { o: 60, h: 64, l: 48, c: 50 }, { o: 48, h: 54, l: 42, c: 46 }],
+    gapAt: 1,
+  },
+  {
+    name: '放れの窓（ブレイクアウェイ）', n: '窓', kind: 'cont-up',
+    says: '持ち合いを抜ける瞬間に開く窓。ここからトレンドが始まるとされる。',
+    how: '持ち合いの上（下）限を窓で抜ける／出来高が大きく増える／その窓は埋めずに進みやすい。',
+    bars: [{ o: 36, h: 44, l: 30, c: 40 }, { o: 40, h: 46, l: 34, c: 38 }, { o: 58, h: 72, l: 56, c: 70 }, { o: 70, h: 86, l: 66, c: 82 }],
+    gapAt: 2,
+  },
+  {
+    name: '中間の窓（ランナウェイ）', n: '窓', kind: 'cont-up',
+    says: 'トレンドの途中で開く窓。「ちょうど半分まで来た」の目印として使われる（測定の窓）。',
+    how: '既に方向が出ている場面で開く／🔵 ここまでの値幅と同じだけ先へ伸びる、という目安に使う。',
+    bars: [{ o: 20, h: 34, l: 16, c: 32 }, { o: 36, h: 48, l: 34, c: 46 }, { o: 58, h: 70, l: 56, c: 68 }, { o: 70, h: 88, l: 66, c: 84 }],
+    gapAt: 2,
+  },
+  {
+    name: '尽きの窓（エグゾースチョン）', n: '窓', kind: 'top',
+    says: '上げの最終盤に開く窓。すぐ埋められたら、買いが尽きた合図とされる。',
+    how: '長い上げの後／出来高が異常に膨らむ／🔴 開けた窓を数日で埋め返したら転換を疑う。三空踏み上げと同じ考え方。',
+    bars: [{ o: 30, h: 48, l: 26, c: 46 }, { o: 52, h: 68, l: 50, c: 66 }, { o: 78, h: 92, l: 76, c: 84 }, { o: 82, h: 86, l: 52, c: 56 }],
+    gapAt: 2,
+  },
 ]
 
 /** ローソク足の図。0-100 の価格座標を上下反転して描く。 */
-function CandleFigure({ bars, c, dark, height, delay = 0, show = true }: {
+function CandleFigure({ bars, gapAt, c, dark, height, delay = 0, show = true }: {
   bars: Bar[]
+  /** 窓が開いた足の番号（前の足との空きに帯を敷く） */
+  gapAt?: number
   c: { up: string; down: string; line: string }
   dark: boolean
   height: number
@@ -589,8 +753,25 @@ function CandleFigure({ bars, c, dark, height, delay = 0, show = true }: {
   const slot = 100 / n
   const bw = Math.min(slot * 0.46, 13)
 
+  // 窓＝前の足の高値と当日の安値のあいだ（下向きなら逆）に空く帯
+  const gap = (() => {
+    if (gapAt == null || gapAt < 1) return null
+    const prev = bars[gapAt - 1], cur = bars[gapAt]
+    if (cur.l > prev.h) return { top: 100 - cur.l, bot: 100 - prev.h, up: true }
+    if (cur.h < prev.l) return { top: 100 - prev.l, bot: 100 - cur.h, up: false }
+    return null
+  })()
+
   return (
     <svg viewBox="0 0 100 100" width="100%" height={height} style={{ display: 'block', overflow: 'visible' }}>
+      {gap && (
+        <g style={{ opacity: 0, animation: show ? `cpFade .5s ease ${delay + bars.length * 0.13}s forwards` : 'none' }}>
+          <rect x={0} y={gap.top} width={100} height={Math.max(gap.bot - gap.top, 1)}
+            fill={gap.up ? c.up : c.down} fillOpacity={dark ? 0.16 : 0.10} />
+          <line x1={0} y1={gap.top} x2={100} y2={gap.top} stroke={gap.up ? c.up : c.down} strokeWidth={0.9} strokeDasharray="3 2" />
+          <line x1={0} y1={gap.bot} x2={100} y2={gap.bot} stroke={gap.up ? c.up : c.down} strokeWidth={0.9} strokeDasharray="3 2" />
+        </g>
+      )}
       {bars.map((b, i) => {
         const cx = slot * (i + 0.5)
         const up = b.c > b.o
@@ -790,7 +971,7 @@ function CandleCard({ p, idx, no, c, dark, isMobile, isOpen, onToggle }: {
         <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{CANDLE_KIND[p.kind]}</span>
       </div>
 
-      <CandleFigure bars={p.bars} c={c} dark={dark} height={isMobile ? 140 : 170} delay={d} show={show} />
+      <CandleFigure bars={p.bars} gapAt={p.gapAt} c={c} dark={dark} height={isMobile ? 140 : 170} delay={d} show={show} />
 
       <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
 
@@ -842,7 +1023,7 @@ function WaveCard({ c, dark, isMobile, title, sub, body, detail, fig, accent, no
           {title && <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text }}>{title}</span>}
         </div>
       )}
-      <WaveFigure pts={fig.pts} labels={fig.labels} levels={fig.levels} colorFrom={fig.colorFrom}
+      <WaveFigure pts={fig.pts} labels={fig.labels} levels={fig.levels} slopes={fig.slopes} colorFrom={fig.colorFrom}
         c={c} dark={dark} height={fig.height} show={show} />
       <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.8, marginTop: 8 }}>{body}</div>
       {detail && (open
@@ -1061,11 +1242,11 @@ const IndexHead = ({ c, isMobile, no, name, sub, n }: {
 /** 索引：3巻の型を図だけで一覧する。 */
 function IndexView({ c, dark, isMobile, jump }: {
   c: PanelColors; dark: boolean; isMobile: boolean
-  jump: (maki: 'candle' | 'form' | 'wave', name: string) => void
+  jump: (maki: 'dow' | 'candle' | 'form' | 'wave' | 'vol', name: string) => void
 }) {
   const grid: React.CSSProperties = {
     display: 'grid', gap: isMobile ? 8 : 10,
-    gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(132px, 1fr))',
+    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(132px, 1fr))',
   }
   // 🔴 見出しはレンダーのたびに作り直さない（module scope の IndexHead を使う）
   const head = (no: string, name: string, sub: string, n: number) => (
@@ -1075,12 +1256,30 @@ function IndexView({ c, dark, isMobile, jump }: {
 
   return (
     <div style={{ animation: 'cpRise .4s ease both' }}>
+      {head('巻零', '理', 'ダウ理論・線の引き方', DOW.length + LINES.length)}
+      <div style={grid}>
+        {DOW.map((d, i) => (
+          <IndexTile key={d.title} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={d.title}
+            onClick={() => jump('dow', d.title)}>
+            {d.vol
+              ? <VolumeFigure price={d.price!} vol={d.vol} c={c} dark={dark} height={h} show />
+              : <WaveFigure pts={d.price!} levels={d.levels} second={d.second} c={c} dark={dark} height={h} show />}
+          </IndexTile>
+        ))}
+        {LINES.map((l, i) => (
+          <IndexTile key={l.name} c={c} dark={dark} no={`No.${String(i + 7).padStart(2, '0')}`} name={l.name}
+            onClick={() => jump('dow', l.name)}>
+            <WaveFigure pts={l.pts} levels={l.levels} slopes={l.slopes} c={c} dark={dark} height={h} show />
+          </IndexTile>
+        ))}
+      </div>
+
       {head('巻一', '灯', 'ローソク足の型', CANDLES.length)}
       <div style={grid}>
         {CANDLES.map((p, i) => (
           <IndexTile key={p.name} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={p.name}
             onClick={() => jump('candle', p.name)}>
-            <CandleFigure bars={p.bars} c={c} dark={dark} height={h} show />
+            <CandleFigure bars={p.bars} gapAt={p.gapAt} c={c} dark={dark} height={h} show />
           </IndexTile>
         ))}
       </div>
@@ -1103,15 +1302,332 @@ function IndexView({ c, dark, isMobile, jump }: {
         ))}
       </div>
 
-      {head('巻三', '波', 'エリオット・一目', CORRECTIONS.length + ICHI_WAVES.length)}
+      {head('巻三', '波', 'エリオット・一目', CORRECTIONS.length + ICHI_WAVES.length + ELLIOTT_VARIANTS.length + HARMONICS.length)}
       <div style={grid}>
-        {[...CORRECTIONS, ...ICHI_WAVES].map((w, i) => (
+        {[...CORRECTIONS, ...ICHI_WAVES, ...ELLIOTT_VARIANTS, ...HARMONICS].map((w, i) => (
           <IndexTile key={w.name} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={w.name}
             onClick={() => jump('wave', w.name)}>
-            <WaveFigure pts={w.pts} c={c} dark={dark} height={h} show />
+            <WaveFigure pts={w.pts} levels={w.levels} slopes={w.slopes} c={c} dark={dark} height={h} show />
           </IndexTile>
         ))}
       </div>
+
+      {head('巻四', '力', '出来高の型', VOLUMES.length)}
+      <div style={grid}>
+        {VOLUMES.map((v, i) => (
+          <IndexTile key={v.name} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={v.name}
+            onClick={() => jump('vol', v.name)}>
+            <VolumeFigure price={v.price} vol={v.vol} mark={v.mark} c={c} dark={dark} height={h} show />
+          </IndexTile>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── 巻零・理（ダウ理論）／巻四・力（出来高）─────────────────────────────
+//
+// 🔵 巻零は**全部の前提**。トレンドとは何か、が決まっていないまま形や波の話をしても
+//    「どっち向きの何なのか」が言えない。だから巻頭に置く（2026-08-13 ユーザー指示）。
+// 🔵 巻四は**値段以外**の唯一の材料。他の巻はすべて値段の形だけを見ている。
+
+/** 出来高つきの図。上に値動き、下に棒。 */
+function VolumeFigure({ price, vol, mark, c, dark, height, show = true, delay = 0 }: {
+  /** 0-100 座標の値動き（y は上が0） */
+  price: number[][]
+  /** 0-100 の出来高（大きいほど多い）。price と同じ本数 */
+  vol: number[]
+  /** 目立たせる棒の番号 */
+  mark?: number
+  c: PanelColors
+  dark: boolean
+  height: number
+  show?: boolean
+  delay?: number
+}) {
+  const n = vol.length
+  const slot = 100 / n
+  const bw = Math.min(slot * 0.5, 9)
+  // 上60%が値動き、下35%が出来高
+  const py = (y: number) => y * 0.58
+  const VOL_TOP = 66
+
+  return (
+    <svg viewBox="0 0 100 100" width="100%" height={height} style={{ display: 'block', overflow: 'visible' }}>
+      {/* 出来高の棒 */}
+      {vol.map((v, i) => {
+        const h = Math.max((v / 100) * (100 - VOL_TOP), 1.2)
+        const on = mark === i
+        return (
+          <rect key={i} x={slot * (i + 0.5) - bw / 2} y={100 - h} width={bw} height={h} rx={0.8}
+            fill={on ? c.accent : c.sub} fillOpacity={on ? 0.95 : 0.42}
+            style={{
+              opacity: 0, animation: show ? `cpFade .4s ease ${delay + i * 0.06}s forwards` : 'none',
+              filter: (dark && on) ? `drop-shadow(0 0 5px ${c.accent})` : undefined,
+            }} />
+        )
+      })}
+      {/* 区切り */}
+      <line x1={0} y1={VOL_TOP - 2} x2={100} y2={VOL_TOP - 2} stroke={c.border} strokeWidth={0.8} />
+      {/* 値動き */}
+      <polyline points={price.map(([x, y]) => `${x},${py(y)}`).join(' ')}
+        fill="none" stroke={c.line} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round"
+        pathLength={100}
+        style={{
+          strokeDasharray: 100, strokeDashoffset: 100,
+          animation: show ? `cpDraw 1.1s ease-out ${delay}s forwards` : 'none',
+          filter: dark ? 'drop-shadow(0 0 3px rgba(226,240,252,0.35))' : undefined,
+        }} />
+    </svg>
+  )
+}
+
+/** ダウ理論の6原則。🔵 図は「言っていること」を1枚で見せるだけに留める。 */
+type DowItem = {
+  no: string
+  title: string
+  body: string
+  detail: string
+  price?: number[][]
+  vol?: number[]
+  labels?: (string | null)[]
+  levels?: Level[]
+  second?: number[][]
+}
+
+const DOW: DowItem[] = [
+  {
+    no: '其の一', title: '平均はすべてを織り込む',
+    body: '材料はすべて値段に入っている、という前提。',
+    detail: '決算も金利もニュースも、知られた時点で値段に反映されている。だから「知っている材料で勝てる」とは考えない。ぽいロボが需給（誰が買って誰が売ったか）を見ているのも同じ理由で、値段に出た後の話をしないため。',
+    price: [[0, 78], [18, 60], [34, 66], [52, 40], [70, 48], [86, 24], [100, 18]],
+  },
+  {
+    no: '其の二', title: 'トレンドは3つの波でできている',
+    body: '主要（年単位）・二次（月単位）・小（日単位）が入れ子になっている。',
+    detail: '大きな上げの中に押しがあり、その中にも小さな上下がある。どれを見ているかを決めないと、同じチャートで強気と弱気が同時に成り立つ。エリオットの入れ子と同じ話を、先に言っている。',
+    price: [[0, 88], [14, 62], [24, 74], [40, 44], [52, 56], [68, 28], [80, 40], [100, 12]],
+  },
+  {
+    no: '其の三', title: '主要トレンドは3つの段階を通る',
+    body: '先行期（気づいた人が買う）→ 追随期（流れが乗る）→ 利食い期（皆が買い、先行者が売る）。',
+    detail: '最後の段階でいちばんニュースが出て、いちばん値動きが速い。「話題になってから入ると終盤」というのは、この3段階の言い換え。',
+    price: [[0, 86], [22, 74], [40, 66], [58, 40], [76, 22], [88, 10], [100, 26]],
+    labels: [null, '先行', null, '追随', null, '利食い', null],
+  },
+  {
+    no: '其の四', title: '平均は互いに確認されなければならない',
+    body: '2つの指数が同じ方向を向いて、はじめてトレンドとみなす。',
+    detail: '元は工業株平均と鉄道株平均。作った物が運ばれて初めて景気だ、という考え方。今なら日経とTOPIX、あるいは主力と中小型。片方だけが高値を更新している状態は、確認されていない。',
+    price: [[0, 80], [20, 58], [40, 64], [60, 36], [80, 30], [100, 16]],
+    second: [[0, 88], [20, 70], [40, 74], [60, 52], [80, 46], [100, 34]],
+  },
+  {
+    no: '其の五', title: 'トレンドは出来高で確認される',
+    body: 'トレンドの向きに動くとき出来高は増え、逆行するときは細る。',
+    detail: '上げているのに出来高が細っていく、下げているのに出来高が増える——このズレが出たら、トレンドは疑わしい。巻四で型として並べている。',
+    price: [[0, 84], [20, 66], [40, 72], [60, 44], [80, 34], [100, 20]],
+    vol: [30, 62, 26, 70, 84, 92],
+  },
+  {
+    no: '其の六', title: 'トレンドは、転換の合図が出るまで続く',
+    body: '高値・安値の切り上げが崩れるまでは、上昇トレンドは生きている。',
+    detail: '🔴 いちばん実用的な原則。「そろそろ高い」は転換の理由にならない。直近の押し安値を割ったかどうか、という**目に見える出来事**だけを転換の条件にする。',
+    price: [[0, 86], [16, 56], [28, 68], [44, 34], [58, 48], [72, 26], [86, 52], [100, 72]],
+    levels: [{ y: 48, x1: 44, x2: 100, label: '押し安値', warn: true }],
+  },
+]
+
+
+/** 線の引き方。🔵 巻一以降で当たり前のように出てくる「ネックライン」「上値」の下ごしらえ。 */
+const LINES: (Fig & { name: string; body: string; detail: string })[] = [
+  {
+    name: '支持線（サポート）',
+    body: '何度も下げ止まった値段を、横に結んだ線。',
+    detail: '買いたい人が待っている値段。2回以上止まった水準を結ぶ。🔴 線は「点」ではなく帯として見る（1円単位で効くわけではない）。',
+    pts: [[0, 26], [16, 66], [32, 40], [50, 68], [66, 42], [84, 67], [100, 30]],
+    levels: [{ y: 68, x1: 0, x2: 100, label: '支持' }],
+  },
+  {
+    name: '抵抗線（レジスタンス）',
+    body: '何度も跳ね返された値段を、横に結んだ線。',
+    detail: 'そこで売りたい人が待っている値段。戻り待ちの売り、というやつ。抜けると一気に動きやすい。',
+    pts: [[0, 74], [16, 34], [32, 60], [50, 32], [66, 58], [84, 33], [100, 70]],
+    levels: [{ y: 32, x1: 0, x2: 100, label: '抵抗' }],
+  },
+  {
+    name: '役割転換',
+    body: '抜けた抵抗線は、次は支持線として働く。',
+    detail: '🔵 いちばん実用的な考え方。抜けた後に戻ってきて、その線で止まるかどうかを見る（戻りを待って入る根拠になる）。下向きでも同じで、割れた支持は抵抗に変わる。',
+    pts: [[0, 76], [20, 40], [36, 62], [54, 24], [70, 40], [86, 26], [100, 14]],
+    levels: [{ y: 40, x1: 0, x2: 100, label: '抵抗 → 支持' }],
+  },
+  {
+    name: 'トレンドライン',
+    body: '上昇なら安値どうし、下落なら高値どうしを結ぶ斜めの線。',
+    detail: '2点で引いて、3点目で効いているかを確かめる。🔴 引き方に幅があるぶん、当てはめすぎに注意（線は後から動かせてしまう）。割れたら流れが変わった合図として使う。',
+    pts: [[0, 86], [16, 56], [28, 70], [44, 36], [58, 52], [74, 24], [88, 40], [100, 18]],
+    slopes: [{ p: [4, 92, 96, 46], kind: 'up' }],
+  },
+  {
+    name: 'チャネル',
+    body: 'トレンドラインと平行な線をもう1本引いて、通り道にする。',
+    detail: '上限に近ければ利食い、下限に近ければ拾う、という目安に使う。上限を超えて伸びたら加速、下限を割ったらトレンドの終わり。',
+    pts: [[0, 84], [16, 58], [28, 72], [44, 40], [58, 54], [74, 26], [88, 40], [100, 20]],
+    slopes: [{ p: [4, 90, 96, 44], kind: 'up' }, { p: [4, 64, 96, 14], kind: 'up' }],
+  },
+  {
+    name: 'ラインのだまし',
+    body: 'ヒゲだけ抜けて、終値では内側に戻る。',
+    detail: '🔴 線を抜けたかどうかは**終値**で見る。ヒゲで判断すると、毎回だまされる。抜けた後に戻された線は、逆向きに効きやすい（上抜け失敗＝天井）。',
+    pts: [[0, 70], [18, 38], [30, 26], [42, 44], [58, 34], [72, 48], [86, 62], [100, 76]],
+    levels: [{ y: 34, x1: 0, x2: 100, label: '抵抗', warn: true }],
+  },
+]
+
+/** 出来高の型。値段以外の材料はここだけ。 */
+type VolItem = {
+  name: string
+  kind: 'ok' | 'warn' | 'bottom'
+  says: string
+  how: string
+  price: number[][]
+  vol: number[]
+  mark?: number
+}
+
+const VOLUMES: VolItem[] = [
+  {
+    name: '順行（上げに出来高がついてくる）', kind: 'ok',
+    says: '値段が上がるほど出来高も増えている、素直な上げ。',
+    how: '高値を更新した日に出来高も直近より多い／押しの日は出来高が細る。この形が続くうちは押しを買う側の理屈が立つ。',
+    price: [[0, 84], [20, 70], [40, 74], [60, 48], [80, 38], [100, 22]],
+    vol: [28, 52, 24, 66, 74, 88],
+  },
+  {
+    name: '息切れ（上げなのに出来高が細る）', kind: 'warn',
+    says: '値段は上がっているのに、出来高が日に日に減っていく。',
+    how: '高値更新の出来高が前の高値のときより少ない。🔴 上げが止まる保証ではないが、**買いが薄いところを上がっている**状態。',
+    price: [[0, 80], [20, 62], [40, 66], [60, 42], [80, 32], [100, 24]],
+    vol: [88, 70, 52, 44, 32, 22],
+  },
+  {
+    name: '出来高を伴う放れ', kind: 'ok',
+    says: '持ち合いを抜けた日に、出来高がはっきり増えた。',
+    how: '抜けた日の出来高が直近平均の1.5〜2倍以上。🔵 巻一の「放れの窓」と同じ場面を、出来高の側から見たもの。',
+    price: [[0, 62], [20, 58], [40, 62], [60, 56], [78, 30], [100, 16]],
+    vol: [26, 22, 28, 24, 92, 76], mark: 4,
+  },
+  {
+    name: '出来高なしの放れ（だまし）', kind: 'warn',
+    says: '抜けたのに出来高が増えない。戻されやすい。',
+    how: '抜けた日の出来高が普段と変わらない／翌日以降も増えない。🔴 抜けた値段の内側へ戻ったら、そこが天井になりやすい。',
+    price: [[0, 62], [20, 58], [40, 62], [60, 54], [78, 34], [100, 58]],
+    vol: [26, 24, 28, 22, 30, 26],
+  },
+  {
+    name: 'セリングクライマックス', kind: 'bottom',
+    says: '下げの最後に出来高が爆発し、長い下ヒゲを残して切り返す。',
+    how: '出来高が直近の3倍以上／その日の安値が数か月の最安値／翌日に戻す。🔵 投げ売りが出尽くした形とされる。',
+    price: [[0, 22], [20, 40], [40, 58], [62, 88], [78, 56], [100, 44]],
+    vol: [24, 30, 46, 96, 62, 40], mark: 3,
+  },
+  {
+    name: '閑散に売りなし', kind: 'bottom',
+    says: '下げ続けたあと、出来高が枯れて値動きも止まる。',
+    how: '出来高が数か月で最も少ない水準／値幅も縮む。売りたい人が売り終わった状態で、ここから戻る場面が多いとされる。',
+    price: [[0, 24], [20, 44], [40, 62], [60, 72], [80, 74], [100, 70]],
+    vol: [72, 58, 40, 26, 18, 14],
+  },
+]
+
+/** 巻零のカード（ダウ理論）。図は見えてから描かれる。 */
+function DowCard({ d, no, c, dark, isMobile }: {
+  d: DowItem; no: number; c: PanelColors; dark: boolean; isMobile: boolean
+}) {
+  const [ref, show] = useInView<HTMLDivElement>()
+  const [open, setOpen] = useState(false)
+  const h = isMobile ? 130 : 155
+
+  return (
+    <div ref={ref} id={`cp-dow-${d.title}`} className="cp-card"
+      onClick={() => setOpen(v => !v)}
+      style={{
+        background: c.card, border: `1px solid ${open ? c.accent : c.border}`, borderRadius: 12,
+        padding: 14, cursor: 'pointer', color: c.text,
+        opacity: show ? undefined : 0,
+        animation: show ? 'cpRise .5s ease both' : 'none',
+        boxShadow: open && dark ? `0 0 24px ${c.accent}22` : undefined,
+        transition: 'border-color .15s, box-shadow .15s',
+      }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: c.sub, letterSpacing: '0.1em' }}>No.{String(no).padStart(2, '0')}</span>
+        <span style={{ fontSize: 10, letterSpacing: '0.14em', color: c.accent }}>{d.no}</span>
+        <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700 }}>{d.title}</span>
+      </div>
+
+      {d.vol
+        ? <VolumeFigure price={d.price!} vol={d.vol} c={c} dark={dark} height={h} show={show} />
+        : <WaveFigure pts={d.price!} labels={d.labels} levels={d.levels} second={d.second}
+            c={c} dark={dark} height={h} show={show} />}
+
+      <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{d.body}</div>
+
+      {open
+        ? (
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+            <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>詳しく</div>
+            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}>{d.detail}</div>
+          </div>
+        )
+        : <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで詳しく →</div>}
+    </div>
+  )
+}
+
+const VOL_LABEL: Record<VolItem['kind'], string> = {
+  ok: '素直',
+  warn: '疑わしい',
+  bottom: '底の気配',
+}
+
+/** 巻四のカード（出来高）。 */
+function VolCard({ v, no, c, dark, isMobile }: {
+  v: VolItem; no: number; c: PanelColors; dark: boolean; isMobile: boolean
+}) {
+  const [ref, show] = useInView<HTMLDivElement>()
+  const [open, setOpen] = useState(false)
+  const col = v.kind === 'warn' ? c.stop : v.kind === 'bottom' ? c.up : c.accent
+
+  return (
+    <div ref={ref} id={`cp-vol-${v.name}`} className="cp-card"
+      onClick={() => setOpen(o => !o)}
+      style={{
+        background: c.card, border: `1px solid ${open ? col : c.border}`, borderRadius: 12,
+        padding: 14, cursor: 'pointer', color: c.text,
+        opacity: show ? undefined : 0,
+        animation: show ? 'cpRise .5s ease both' : 'none',
+        boxShadow: open && dark ? `0 0 24px ${col}22` : undefined,
+        transition: 'border-color .15s, box-shadow .15s',
+      }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: c.sub, letterSpacing: '0.1em' }}>No.{String(no).padStart(2, '0')}</span>
+        <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700 }}>{v.name}</span>
+        <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{VOL_LABEL[v.kind]}</span>
+      </div>
+
+      <VolumeFigure price={v.price} vol={v.vol} mark={v.mark} c={c} dark={dark} height={isMobile ? 150 : 180} show={show} />
+
+      <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{v.says}</div>
+
+      {open
+        ? (
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+            <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
+            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}>{v.how}</div>
+          </div>
+        )
+        : <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>}
     </div>
   )
 }
@@ -1123,7 +1639,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   // 🔵 巻を分ける（2026-08-13）。**形**は機械的に定義でき、実際に26年で測れた。
   //    **波**（エリオット）は数え方が一意に決まらず、そもそも同じやり方で測れない。
   //    性質が違うものを同じ棚に並べると「どちらも同じ根拠」に見えてしまうので、巻で隔てる。
-  const [maki, setMaki] = useState<'candle' | 'form' | 'wave' | 'index'>('candle')
+  const [maki, setMaki] = useState<'dow' | 'candle' | 'form' | 'wave' | 'vol' | 'index'>('dow')
   // 図鑑なので**分類で絞り込める**ようにする（2026-08-13）。巻ごとに軸が違う。
   const [fCandle, setFCandle] = useState('all')
   const [fForm, setFForm] = useState('all')
@@ -1142,7 +1658,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   }
 
   // 🔵 索引から本文へ飛ぶ。絞り込みで隠れていると飛べないので、飛ぶ前に「すべて」に戻す。
-  const jump = (m: 'candle' | 'form' | 'wave', name: string) => {
+  const jump = (m: 'dow' | 'candle' | 'form' | 'wave' | 'vol', name: string) => {
     setMaki(m)
     if (m === 'candle') setFCandle('all')
     if (m === 'form') setFForm('all')
@@ -1152,7 +1668,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
     }))
   }
 
-  const candleGroup = (n: string) => (n === '1本' ? '1' : n === '2本' ? '2' : '3')
+  const candleGroup = (n: string) => (n === '1本' ? '1' : n === '2本' ? '2' : n === '窓' ? 'gap' : '3')
   const shownCandles = CANDLES.map((p, i) => ({ p, no: i + 1 }))
     .filter(({ p }) => fCandle === 'all' || candleGroup(p.n) === fCandle)
   const shownPatterns = PATTERNS.map((p, i) => ({ p, no: i + 1 }))
@@ -1198,7 +1714,9 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
         </span>
         <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>
           {maki === 'form' ? `${PATTERNS.length} 種` : maki === 'wave' ? '5-3'
-            : maki === 'index' ? `${CANDLES.length + PATTERNS.length + CORRECTIONS.length + ICHI_WAVES.length} 点` : `${CANDLES.length} 型`}
+            : maki === 'dow' ? `${DOW.length + LINES.length} 項` : maki === 'vol' ? `${VOLUMES.length} 型`
+              : maki === 'index' ? `${DOW.length + LINES.length + CANDLES.length + PATTERNS.length + CORRECTIONS.length + ICHI_WAVES.length + ELLIOTT_VARIANTS.length + HARMONICS.length + VOLUMES.length} 点`
+                : `${CANDLES.length} 型`}
         </span>
         {/* 🔴 ヘッダー右端は**閉じる**（タイムマシンと同じ位置・同じ役目）。
             ヘルプは見出しの右に置く（2026-08-11 ユーザー指示）。 */}
@@ -1223,25 +1741,32 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
             fontSize: isMobile ? 64 : 120, fontWeight: 900, lineHeight: 1,
             color: 'transparent', WebkitTextStroke: `1px ${dark ? 'rgba(0,229,255,0.10)' : 'rgba(20,60,110,0.08)'}`,
             letterSpacing: '-0.04em', pointerEvents: 'none', userSelect: 'none',
-          }}>{maki === 'form' ? 'FORMATION' : maki === 'wave' ? 'ELLIOTT' : maki === 'index' ? 'INDEX' : 'CANDLE'}</div>
+          }}>{maki === 'form' ? 'FORMATION' : maki === 'wave' ? 'ELLIOTT' : maki === 'index' ? 'INDEX'
+            : maki === 'dow' ? 'DOW' : maki === 'vol' ? 'VOLUME' : 'CANDLE'}</div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{
               fontSize: 12, letterSpacing: '0.28em', color: c.accent, marginBottom: 8,
               textShadow: dark ? `0 0 12px ${c.accent}55` : undefined,
               animation: 'cpBlink 2.4s ease-in-out infinite',
-            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : maki === 'wave' ? 'ELLIOTT WAVE PRINCIPLE' : maki === 'index' ? 'INDEX OF ALL FIGURES' : 'CANDLESTICK PATTERNS'}</div>
+            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : maki === 'wave' ? 'ELLIOTT WAVE PRINCIPLE'
+              : maki === 'index' ? 'INDEX OF ALL FIGURES' : maki === 'dow' ? 'DOW THEORY'
+                : maki === 'vol' ? 'VOLUME PATTERNS' : 'CANDLESTICK PATTERNS'}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <h1 style={{
                 fontSize: isMobile ? 26 : 40, fontWeight: 800, margin: 0, letterSpacing: '-0.01em',
                 textShadow: dark ? `0 0 24px ${c.accent}22` : undefined,
               }}>
-                {maki === 'form'
-                  ? <>フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種</>
-                  : maki === 'wave'
-                    ? <>エリオット<span style={{ color: c.accent }}>波動</span></>
-                    : maki === 'index'
-                      ? <>索<span style={{ color: c.accent }}>引</span></>
-                      : <>ローソク足<span style={{ color: c.accent }}>{CANDLES.length}</span>型</>}
+                {maki === 'dow'
+                  ? <>ダウ<span style={{ color: c.accent }}>理論</span></>
+                  : maki === 'form'
+                    ? <>フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種</>
+                    : maki === 'wave'
+                      ? <>エリオット<span style={{ color: c.accent }}>波動</span></>
+                      : maki === 'vol'
+                        ? <>出来高の<span style={{ color: c.accent }}>{VOLUMES.length}</span>型</>
+                        : maki === 'index'
+                          ? <>索<span style={{ color: c.accent }}>引</span></>
+                          : <>ローソク足<span style={{ color: c.accent }}>{CANDLES.length}</span>型</>}
               </h1>
               {/* 🔵 ? は巻一だけ。巻二には畳む中身が無いので出さない。 */}
               {maki === 'form' && <button
@@ -1262,9 +1787,11 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
         {/* 🔵 巻の切り替え。書物なので「タブ」ではなく**巻**と呼ぶ。 */}
         <div style={{ display: 'flex', gap: 8, marginBottom: isMobile ? 16 : 22, flexWrap: 'wrap' }}>
           {([
+            { key: 'dow' as const, no: '巻零', name: '理', sub: 'ダウ理論' },
             { key: 'candle' as const, no: '巻一', name: '灯', sub: 'ローソク足の型' },
             { key: 'form' as const, no: '巻二', name: '形', sub: 'フォーメーション16種' },
             { key: 'wave' as const, no: '巻三', name: '波', sub: 'エリオット波動・一目' },
+            { key: 'vol' as const, no: '巻四', name: '力', sub: '出来高の型' },
             { key: 'index' as const, no: '索引', name: '目', sub: '全ての型を一覧' },
           ]).map(t => {
             const on = maki === t.key
@@ -1280,7 +1807,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
               }}>
                 <span style={{ fontSize: 10, letterSpacing: '0.18em' }}>{t.no}</span>
                 <span style={{ fontSize: isMobile ? 15 : 17, fontWeight: 800 }}>{t.name}</span>
-                <span style={{ fontSize: 10, opacity: 0.85 }}>{t.sub}</span>
+                {!isMobile && <span style={{ fontSize: 10, opacity: 0.85 }}>{t.sub}</span>}
               </button>
             )
           })}
@@ -1326,6 +1853,60 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
 
         {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} />}
 
+        {maki === 'dow' && <>
+          {/* 🔵 巻零は全部の前提。トレンドの定義が決まらないと、形も波も「何の」形か言えない。 */}
+          <div style={{
+            fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.85,
+            marginBottom: isMobile ? 14 : 18, maxWidth: 760,
+          }}>
+            チャートの読み方の土台。<b style={{ color: c.text }}>トレンドとは「高値と安値がそろって切り上がっている状態」</b>と定め、
+            それが崩れるまでは続くとみなす。巻一以降の形も波も、この定義の上に乗っている。
+          </div>
+          <div style={{
+            display: 'grid', gap: isMobile ? 12 : 16,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
+          }}>
+            {DOW.map((d, i) => <DowCard key={d.title} d={d} no={i + 1} c={c} dark={dark} isMobile={isMobile} />)}
+          </div>
+
+          <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: `${isMobile ? 20 : 28}px 0 4px` }}>
+            線の引き方
+            <span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>支持・抵抗・トレンドライン・チャネル</span>
+          </div>
+          <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.85, marginBottom: 10, maxWidth: 760 }}>
+            巻一以降で当たり前のように出てくる「ネックライン」「上値」は、ここで引く線のこと。
+          </div>
+          <div style={{
+            display: 'grid', gap: isMobile ? 12 : 16,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
+          }}>
+            {LINES.map((l, i) => (
+              <WaveCard key={l.name} c={c} dark={dark} isMobile={isMobile}
+                id={`cp-dow-${l.name}`} no={`No.${String(i + 7).padStart(2, '0')}`}
+                title={l.name} body={l.body} detail={l.detail}
+                fig={{ pts: l.pts, labels: l.labels, levels: l.levels, slopes: l.slopes, height: isMobile ? 130 : 155 }} />
+            ))}
+          </div>
+        </>}
+
+        {maki === 'vol' && <>
+          {/* 🔵 巻四だけが値段以外の材料。他の巻はすべて値段の形しか見ていない。 */}
+          <div style={{
+            fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.85,
+            marginBottom: isMobile ? 14 : 18, maxWidth: 760,
+          }}>
+            この書で<b style={{ color: c.text }}>値段以外を見るのはここだけ</b>。
+            同じ値動きでも、出来高が増えているのか細っているのかで意味が変わる。
+            上が値動き、下の棒が出来高。
+          </div>
+          <div style={{
+            display: 'grid', gap: isMobile ? 12 : 16,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
+          }}>
+            {VOLUMES.map((v, i) => <VolCard key={v.name} v={v} no={i + 1} c={c} dark={dark} isMobile={isMobile} />)}
+          </div>
+        </>}
+
         {maki === 'index' && <IndexView c={c} dark={dark} isMobile={isMobile} jump={jump} />}
 
         {/* 巻一・灯：1〜3本で読む型。巻二と同じカードの作りにそろえる（並べ方が変わると別物に見える）*/}
@@ -1335,6 +1916,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
             { key: '1', label: '1本', count: CANDLES.filter(p => candleGroup(p.n) === '1').length },
             { key: '2', label: '2本', count: CANDLES.filter(p => candleGroup(p.n) === '2').length },
             { key: '3', label: '3本以上', count: CANDLES.filter(p => candleGroup(p.n) === '3').length },
+            { key: 'gap', label: '窓', count: CANDLES.filter(p => candleGroup(p.n) === 'gap').length },
           ]} />}
 
         {maki === 'candle' && <div style={{
