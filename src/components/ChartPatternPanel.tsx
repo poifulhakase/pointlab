@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-// フォーメーション分析（DATA → 未来ガジェット）
+// 波動の書（DATA → 未来ガジェット。旧名「フォーメーション分析」）
 //
 // 🔵 「チャートパターン」ではなく**フォーメーション分析**。テクニカル分析での正式な呼称で、
 //    値動きが作る「形（フォーメーション）」から次の展開を読む手法群を指す。
@@ -246,7 +246,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: c.sub,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
-          ぽいロボ ▸ フォーメーション分析
+          ぽいロボ ▸ 波動の書
         </span>
         <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>{PATTERNS.length} 種</span>
         {/* 🔴 ヘッダー右端は**閉じる**（タイムマシンと同じ位置・同じ役目）。

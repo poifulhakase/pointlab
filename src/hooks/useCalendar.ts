@@ -129,7 +129,7 @@ export function useCalendar() {
     if (view === 'legal')    return '利用規約・免責・プライバシー'
     if (view === 'backtest') return 'TEVバックテスト'
     if (view === 'timemachine') return 'タイムマシン'
-    if (view === 'chartpattern') return 'フォーメーション分析'
+    if (view === 'chartpattern') return '波動の書'
     if (view === 'daytrade') return '地下室 デイトレード'
     if (view === 'swing') return '地下室 スイングトレード'
 if (view === 'month') return `${y}年 ${m}`
