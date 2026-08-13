@@ -421,17 +421,15 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
                 {isOpen && (
                   <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
                     <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
-                    <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginBottom: 10 }}>{p.how}</div>
-                    <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>
-                      日経225・26年で測った結果
-                    </div>
-                    <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>
-                      {p.measured ?? '未測定。測っていないものを「効く」とも「効かない」とも書きません。'}
-                    </div>
+                    <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
+                    {/* 🔵 2026-08-13 ユーザー判断で「日経225・26年で測った結果」は非表示にした。
+                        統計的に未確定（t<2・n が小さい）のものが多く、読む人には
+                        「効く/効かない」の判断材料にならないため。
+                        🔴 データ（p.measured）は消していないので、表示を戻すのはこのブロックを戻すだけ。 */}
                   </div>
                 )}
                 {!isOpen && (
-                  <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方と実測 →</div>
+                  <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>
                 )}
               </button>
             )
