@@ -8,6 +8,7 @@ import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
+import { type RoboJob, ROBO_JOB_META } from '../utils/roboSchedule'
 import { type BookingSlot } from '../utils/bookingTypes'
 import { activateOnKey } from '../utils/a11y'
 
@@ -47,11 +48,13 @@ type Props = {
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
   getScheduledEvents: (d: Date) => ScheduleEntry[]
+  /** ぽいロボが自動で動く予定（オフなら空配列） */
+  getRoboJobs?: (d: Date) => RoboJob[]
   getBookingEvents?: (d: Date) => BookingSlot[]
   theme?: 'dark' | 'light'
 }
 
-export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, getBookingEvents, theme = 'dark' }: Props) {
+export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, getRoboJobs, getBookingEvents, theme = 'dark' }: Props) {
   const now = new Date()
   const td = isToday(date)
   const isLight = theme === 'light'
@@ -87,6 +90,13 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
       const timeLabel = formatTimeRangeJa(evt.startTime, evt.endTime || undefined)
       return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
     })
+  // 🔵 ぽいロボの動き。撮影だけ「PCを開けておく」色にする。
+  const roboBlocks = (getRoboJobs?.(date) ?? []).map(job => {
+    const startMin = timeToMinutes(job.startTime)
+    const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
+    const heightPx = Math.max(job.minutes / TOTAL_MINUTES * HOUR_HEIGHT * 24, 22)
+    return { ...job, topPx, heightPx }
+  })
   const bookingBlocks = getBookingEvents ? getBookingEvents(date).map((slot, i) => {
     const startMin = timeToMinutes(slot.startTime)
     const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
@@ -166,6 +176,29 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                 style={styles.hourCell}
                 onClick={() => onOpenNote(date, `${String(h).padStart(2, '0')}:00`)}
               />
+            ))}
+            {roboBlocks.map(job => (
+              <div
+                key={job.id}
+                style={{
+                  position: 'absolute', left: 4, right: 4, zIndex: 4,
+                  top: job.topPx, height: job.heightPx,
+                  borderRadius: 5, padding: '2px 8px', overflow: 'hidden', pointerEvents: 'none',
+                  background: job.needsPc
+                    ? (isLight ? 'rgba(217,119,6,0.16)' : 'rgba(251,191,36,0.14)')
+                    : (isLight ? 'rgba(13,148,136,0.12)' : 'rgba(45,212,191,0.10)'),
+                  borderLeft: `3px solid ${job.needsPc ? (isLight ? '#b45309' : '#fbbf24') : (isLight ? '#0d9488' : '#2dd4bf')}`,
+                }}
+                title={job.desc}
+              >
+                <div style={{
+                  fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  color: job.needsPc ? (isLight ? '#92400e' : '#fcd34d') : (isLight ? '#0f766e' : '#5eead4'),
+                }}>
+                  {ROBO_JOB_META[job.kind].icon} {job.startTime} {job.title}
+                  {job.needsPc && <span style={{ marginLeft: 6, fontSize: 10 }}>🖥 PCを開けておく</span>}
+                </div>
+              </div>
             ))}
             {evtBlocks.map(evtBlock => (
               <div

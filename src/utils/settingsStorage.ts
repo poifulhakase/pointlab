@@ -54,6 +54,8 @@ export type AppSettings = {
   showPrivate: boolean
   showAnomaly: boolean
   showPoiroboAlert: boolean
+  /** ぽいロボが自動で動く時刻を週・日ビューに出すか */
+  showRoboJobs: boolean
   poiroboAlertConfig: PoiroboAlertConfig
 }
 
@@ -65,6 +67,7 @@ const DEFAULTS: AppSettings = {
   showPrivate: true,
   showAnomaly: false,
   showPoiroboAlert: false,
+  showRoboJobs: false,
   poiroboAlertConfig: POIROBO_ALERT_CONFIG_DEFAULT,
 }
 

@@ -10,6 +10,7 @@ import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
 import { getMonthBand } from '../utils/earningsSeason'
 import { type ScheduleEntry } from '../utils/noteStorage'
+import { type RoboJob, ROBO_JOB_META } from '../utils/roboSchedule'
 import { type BookingSlot } from '../utils/bookingTypes'
 import { activateOnKey, dateLabel } from '../utils/a11y'
 
@@ -44,6 +45,8 @@ type Props = {
   hasNote: (d: Date) => boolean
   getNoteTitle: (d: Date) => string
   getScheduledEvents: (d: Date) => ScheduleEntry[]
+  /** ぽいロボが自動で動く予定（オフなら空配列） */
+  getRoboJobs?: (d: Date) => RoboJob[]
   getAnomalyEvents?: (d: Date) => AnomalyEvent[]
   isMobile: boolean
   theme?: 'dark' | 'light'
@@ -59,7 +62,7 @@ function timeToMinutes(t: string): number {
   return h * 60 + m
 }
 
-export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT, getBookingEvents }: Props) {
+export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, getMacroEvents, getAnomalyEvents, isMarketClosed, getClosedReason, onOpenNote, hasNote, getNoteTitle, getScheduledEvents, getRoboJobs, isMobile, theme = 'dark', showPoiroboAlert = false, poiroboAlertConfig = POIROBO_ALERT_CONFIG_DEFAULT, getBookingEvents }: Props) {
   const now = new Date()
   const isLight = theme === 'light'
 
@@ -209,6 +212,14 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                 const timeLabel = formatTimeRangeJa(evt.startTime, evt.endTime || undefined)
                 return { topPx, heightPx, title: evt.title, timeLabel, id: evt.id }
               })
+            // 🔵 ぽいロボの動き。**PCが要るもの（撮影）だけ色を変える**＝
+            //    「この時間はPCを開けておく」が一目で分かるようにするため（2026-08-13）。
+            const roboBlocks = (getRoboJobs?.(d) ?? []).map(job => {
+              const startMin = timeToMinutes(job.startTime)
+              const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
+              const heightPx = Math.max(job.minutes / TOTAL_MINUTES * HOUR_HEIGHT * 24, 20)
+              return { ...job, topPx, heightPx }
+            })
             const bookingBlocks = getBookingEvents ? getBookingEvents(d).map((slot, i) => {
               const startMin = timeToMinutes(slot.startTime)
               const topPx    = startMin / TOTAL_MINUTES * HOUR_HEIGHT * 24
@@ -229,6 +240,29 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
                     style={styles.hourCell}
                     onClick={() => onOpenNote(d, `${String(h).padStart(2, '0')}:00`)}
                   />
+                ))}
+                {roboBlocks.map(job => (
+                  <div
+                    key={job.id}
+                    style={{
+                      position: 'absolute', left: 2, right: 2, zIndex: 4,
+                      top: job.topPx, height: job.heightPx,
+                      borderRadius: 4, padding: '1px 4px', overflow: 'hidden',
+                      pointerEvents: 'none',
+                      background: job.needsPc
+                        ? (isLight ? 'rgba(217,119,6,0.16)' : 'rgba(251,191,36,0.14)')
+                        : (isLight ? 'rgba(13,148,136,0.12)' : 'rgba(45,212,191,0.10)'),
+                      borderLeft: `3px solid ${job.needsPc ? (isLight ? '#b45309' : '#fbbf24') : (isLight ? '#0d9488' : '#2dd4bf')}`,
+                    }}
+                    title={`${job.startTime} ${job.title}${job.needsPc ? '（PCを開けておく）' : ''}`}
+                  >
+                    <div style={{
+                      fontSize: 9.5, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      color: job.needsPc ? (isLight ? '#92400e' : '#fcd34d') : (isLight ? '#0f766e' : '#5eead4'),
+                    }}>
+                      {ROBO_JOB_META[job.kind].icon} {job.title}
+                    </div>
+                  </div>
                 ))}
                 {evtBlocks.map(evtBlock => (
                   <div

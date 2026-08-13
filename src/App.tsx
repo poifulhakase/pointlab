@@ -21,6 +21,7 @@ import { getMacroEventsForDate, type MacroFilter } from './utils/macroCalendar'
 import { getAllNoteData, dateKey, type NoteMapEntry, type ScheduleEntry } from './utils/noteStorage'
 import { getSettings, saveSettings, type PoiroboAlertConfig } from './utils/settingsStorage'
 import { getAnomalyRanges, type AnomalyRange } from './utils/anomalyCalendar'
+import { getRoboJobsForDate } from './utils/roboSchedule'
 import { Z } from './utils/zIndex'
 import { purgeStaleDataCaches } from './utils/dataCache'
 import { PWAUpdateBanner } from './components/PWAUpdateBanner'
@@ -229,6 +230,14 @@ export default function App() {
     saveSettings({ ...getSettings(), showAnomaly: v })
   }, [])
 
+  // ── ぽいロボの動き（自動実行の時刻） ──────────────────────────────────
+  // 🔵 「この時間はPCを開けておく」が分かるようにするためのもの（2026-08-13）。
+  const [showRoboJobs, setShowRoboJobs] = useState<boolean>(() => getSettings().showRoboJobs)
+  const handleShowRoboJobsChange = useCallback((v: boolean) => {
+    setShowRoboJobs(v)
+    saveSettings({ ...getSettings(), showRoboJobs: v })
+  }, [])
+
   // ── ぽいロボアラート（SQ日ハイライト） ────────────────────────────────
   const [showPoiroboAlert,    setShowPoiroboAlert]    = useState<boolean>(() => getSettings().showPoiroboAlert)
   const [poiroboAlertConfig,  setPoiroboAlertConfig]  = useState(() => getSettings().poiroboAlertConfig)
@@ -372,6 +381,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     }
     return data.title || 'メモ'
   }, [noteMap, showPrivate])
+  const getRoboJobs = useCallback((d: Date) =>
+    showRoboJobs ? getRoboJobsForDate(d, isMarketClosed) : [], [showRoboJobs])
+
   const getScheduledEvents = useCallback((d: Date): ScheduleEntry[] =>
     showPrivate ? (noteMap.get(dateKey(d))?.schedules ?? []) : [], [noteMap, showPrivate])
 
@@ -577,6 +589,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             showPrivate={showPrivate}
             onShowPrivateChange={handleShowPrivateChange}
             showAnomaly={showAnomaly}
+            showRoboJobs={showRoboJobs}
+            onShowRoboJobsChange={handleShowRoboJobsChange}
             onShowAnomalyChange={handleShowAnomalyChange}
             showPoiroboAlert={showPoiroboAlert}
             onShowPoiroboAlertChange={handleShowPoiroboAlertChange}
@@ -770,7 +784,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                         getAnomalyEvents={getAnomalyEvents}
                         isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
                         onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-                        getScheduledEvents={getScheduledEvents} isMobile={isMobile} theme={theme}
+                        getScheduledEvents={getScheduledEvents} getRoboJobs={getRoboJobs} isMobile={isMobile} theme={theme}
                         showPoiroboAlert={showPoiroboAlert}
                         poiroboAlertConfig={poiroboAlertConfig}
                         getBookingEvents={getBookingEvents}
@@ -786,7 +800,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                         getMarkers={getMarkers} getSqMarkers={getSqMarkers} getMacroEvents={getMacroEvents}
                         isMarketClosed={isMarketClosed} getClosedReason={getClosedReason}
                         onOpenNote={openNote} hasNote={hasNote} getNoteTitle={getNoteTitle}
-                        getScheduledEvents={getScheduledEvents} theme={theme}
+                        getScheduledEvents={getScheduledEvents} getRoboJobs={getRoboJobs} theme={theme}
                         getBookingEvents={getBookingEvents}
                       />
                     </Suspense>
