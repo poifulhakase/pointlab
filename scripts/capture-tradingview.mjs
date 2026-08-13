@@ -47,8 +47,13 @@ const OUT_DIR = path.resolve(process.cwd(), '.captures')
 //    🔵 代償＝保存レイアウトのインジケーター（BB等）は使えない。必要になったら
 //       ログインして `ROBO_CHART_URL=https://jp.tradingview.com/chart/ecEzo0V0/?symbol=INDEX%3ANKY&interval=D`
 //       に差し替える（`.env.local` に置けばよい）。
+//
+// 🔴 **シンボルは日経225先物（SGX:NK1!）**（2026-08-13 変更）。
+//    現物指数（INDEX:NKY）には**出来高データが無い**ため、出来高が描けなかった。
+//    波動の書の巻四（出来高の型）を読ませる以上、出来高の無い画像では意味が半分になる。
+//    🔵 先物の出来高は現物の売買代金とは別物だが、「盛り上がったか・枯れたか」を見るには足りる。
 const CHART_URL = process.env.ROBO_CHART_URL
-  ?? 'https://jp.tradingview.com/chart/?symbol=INDEX%3ANKY&interval=D'
+  ?? 'https://jp.tradingview.com/chart/?symbol=SGX%3ANK1%21&interval=D'
 
 // 🔴 **週足も撮る**（2026-08-11 追加・ユーザー判断）。
 //    上位トレンドや抵抗ラインは幾何なので、数値にするより見せたほうが早い、という判断。
