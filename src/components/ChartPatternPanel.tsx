@@ -827,9 +827,10 @@ function WaveCard({ c, dark, isMobile, title, sub, body, fig, accent }: {
 // ── 巻三のうしろ半分：一目均衡表の波動論 ────────────────────────────────
 //
 // 🔵 エリオットと同じ「波の数え方」の話なので、巻を分けずにここへ置く（2026-08-13 ユーザー判断）。
-// 🔴 ただしエリオットと違い、一目は**測れる部分がある**（型・時間論・水準論はすべて数式）。
-//    載せる前に26年で測った。数字の出どころ＝`scripts/analyze-ichimoku.mjs`。
-//    🔴 ここの数字を書き換えるときは必ずスクリプトを走らせ直すこと。手打ちしない。
+// 🔵 **ここは読み物**。当たる/当たらないの検証結果は載せない（2026-08-13 ユーザー判断）。
+//    検証は地下室（デイトレード／スイングトレード）でやる、という住み分け。
+// 🔴 一目は測れる部分がある（型・時間論・水準論はすべて数式）ので、実際に26年で測ってある。
+//    結果は `scripts/analyze-ichimoku.mjs` を走らせれば出る（当たらなかった）。画面には出さない。
 
 /** 波動論の5つの型。I→V→N と増えていき、P・Y は持ち合いの形。 */
 const ICHI_WAVES: (Fig & { name: string; body: string })[] = [
@@ -859,28 +860,6 @@ const ICHI_WAVES: (Fig & { name: string; body: string })[] = [
     name: 'Y波',
     body: '高値も安値も広がっていく、先広がりの持ち合い。荒れている場面で出る。',
     pts: [[0, 50], [16, 40], [32, 62], [48, 26], [66, 76], [82, 14], [100, 88]],
-  },
-]
-
-/** 26年で測った結果。🔴 手打ち禁止・出どころは analyze-ichimoku.mjs（2026-08-13 実行）。 */
-const ICHI_MEASURED = [
-  {
-    head: '型（三役好転・雲抜け・転換/基準クロス）',
-    verdict: 'ng' as const,
-    body: '基準（全日の平均）と比べた差はどれも小さく、t はすべて 2 未満。パラメータを (9,26,52) から動かすと符号まで入れ替わる。'
-      + ' 🔴 いちばん困るのは**三役逆転（売りの合図）のあと 20日で +1.08〜+1.25%**と、基準より上げていること。合図と逆に動いている。',
-  },
-  {
-    head: '時間論（基本数値 9・17・26）',
-    verdict: 'half' as const,
-    body: '転換点どうしの間隔で 9日±1 は 23〜26%（一様なら11.5%）と多い。ただし間隔の分布を見ると 5日が最も多く、そこから単調に減っていくだけ。'
-      + ' つまり「9が特別」ではなく**短い波が多い**という話。17日・26日はむしろ一様より少ない（2〜12%）。',
-  },
-  {
-    head: '水準論（V・N・E・NT計算値）',
-    verdict: 'ng' as const,
-    body: '次の山をどれだけ当てたかを見ると、誤差の中央値は NT 3.5%・N 3.5%・V 4.4%・E 7.1%。'
-      + ' 🔴 一方「前の山と同じ値段」と置いただけの予想は誤差 1.8%。**何も考えない予想のほうが近い**。',
   },
 ]
 
@@ -942,32 +921,6 @@ function IchimokuSection({ c, dark, isMobile }: { c: PanelColors; dark: boolean;
         </>}
       />
 
-      {/* 🔴 測った結果。巻二と同じで、載せるなら実測も一緒に出す。 */}
-      <div style={{
-        border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
-        background: c.card, borderRadius: 12, padding: isMobile ? 14 : 18,
-      }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.18em', color: c.accent, marginBottom: 4 }}>▶ 測った結果</div>
-        <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: c.text, marginBottom: 8 }}>
-          日経225・26年（6,361営業日）で測ると、当たらない
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {ICHI_MEASURED.map(m => (
-            <div key={m.head}>
-              <div style={{ fontSize: isMobile ? 12 : 12.5, fontWeight: 700, color: m.verdict === 'ng' ? c.stop : c.text, marginBottom: 3 }}>
-                {m.verdict === 'ng' ? '×' : '△'} {m.head}
-              </div>
-              <div style={{ fontSize: isMobile ? 11.5 : 12, color: c.sub, lineHeight: 1.85 }}>{m.body}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
-          測り方＝合図が出た日の終値から先5日・20日・60日を見て、全日の平均と比べています。
-          パラメータは (9,26,52) のほか (7,22,44)・(12,30,60) も振って全部並べました
-          （<b style={{ color: c.text }}>1つだけ当たったら、当たる設定を選んだだけ</b>なので）。
-          検証コード: <span style={{ color: c.text }}>scripts/analyze-ichimoku.mjs</span>
-        </div>
-      </div>
     </>
   )
 }
