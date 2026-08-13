@@ -66,7 +66,7 @@ const ARTICLES: Article[] = [
   // ── 未来ガジェット ────────────────────────────────────────────
   { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
   { genre: '未来ガジェット', title: 'タイムマシン', url: null, thumb: BASE + 'Future_Gadget_TimeMachine.webp', internalAction: 'timemachine' },
-  { genre: '未来ガジェット', title: '波動探知機', url: null, thumb: null, internalAction: 'chartpattern' },
+  { genre: '未来ガジェット', title: '波動の書', url: null, thumb: null, internalAction: 'chartpattern' },
 ]
 
 const GENRES = ['ぽいロボ', '地下室', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
@@ -137,6 +137,74 @@ function BasementThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
+/**
+ * 波動の書バナー（未来ガジェット＞波動の書）。
+ *
+ * 🔵 「チャート自身が筆を執って書き残した巻物」という見立て。
+ *    値動きの波を墨の一筆で書き、落款（朱印）を押す。
+ * 🔴 ここも画像は使わない（読み込みを増やさない）。和紙の質感まで CSS と SVG で描く。
+ */
+function ScrollThumb({ theme }: { theme: 'dark' | 'light' }) {
+  const dark = theme === 'dark'
+  const paper1 = dark ? '#2b2318' : '#f6ecd8'
+  const paper2 = dark ? '#3a2f20' : '#eaddc2'
+  const fiber  = dark ? 'rgba(255,236,200,0.05)' : 'rgba(120,90,40,0.07)'
+  const ink    = dark ? 'rgba(248,242,230,0.90)' : 'rgba(28,22,14,0.86)'
+  const inkPale= dark ? 'rgba(248,242,230,0.30)' : 'rgba(28,22,14,0.26)'
+  const rod    = dark ? '#5a4324' : '#8a6a35'
+  const seal   = dark ? '#d4553f' : '#b83b28'
+
+  // 値動きの波を一筆で。押し目 → 上昇 → 天井 → 下げ、の形をそのまま書き跡にしている。
+  const WAVE = 'M14 46 C 24 40, 30 52, 38 44 C 46 36, 52 20, 62 24 C 70 27, 74 14, 84 18 C 92 21, 96 30, 106 26'
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, overflow: 'hidden',
+      background: `linear-gradient(160deg, ${paper1} 0%, ${paper2} 52%, ${paper1} 100%)`,
+    }}>
+      {/* 和紙の繊維 */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `repeating-linear-gradient(90deg, ${fiber} 0 1px, transparent 1px 7px), repeating-linear-gradient(0deg, ${fiber} 0 1px, transparent 1px 13px)`,
+      }} />
+      {/* 上下の巻き軸 */}
+      {[{ top: 0 }, { bottom: 0 }].map((pos, i) => (
+        <div key={i} style={{
+          position: 'absolute', left: 0, right: 0, height: 9, ...pos,
+          background: `linear-gradient(180deg, ${rod} 0%, rgba(0,0,0,0.42) 55%, ${rod} 100%)`,
+          boxShadow: '0 0 8px rgba(0,0,0,0.35)',
+        }} />
+      ))}
+      {/* 墨の波（チャートが書いた一筆）*/}
+      <svg viewBox="0 0 120 64" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        {/* にじみ */}
+        <path d={WAVE} fill="none" stroke={inkPale} strokeWidth={5.5} strokeLinecap="round" style={{ filter: 'blur(2.2px)' }} />
+        {/* 本線（描かれていく）*/}
+        <path className="scroll-ink" d={WAVE} fill="none" stroke={ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+        {/* 足跡（ローソクの名残）*/}
+        {[[38, 44], [62, 24], [84, 18]].map(([x, y]) => (
+          <line key={x} x1={x} y1={y - 6} x2={x} y2={y + 6} stroke={inkPale} strokeWidth={1.1} strokeLinecap="round" />
+        ))}
+      </svg>
+      {/* 落款（朱印）*/}
+      <div style={{
+        position: 'absolute', right: 11, bottom: 15,
+        width: 17, height: 17, borderRadius: 3,
+        border: `1.6px solid ${seal}`, color: seal,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 10, fontWeight: 800, lineHeight: 1,
+        boxShadow: dark ? `0 0 8px rgba(212,85,63,0.35)` : 'none',
+      }}>波</div>
+      {/* 題箋 */}
+      <span style={{
+        position: 'absolute', left: 10, top: 14, writingMode: 'vertical-rl',
+        fontSize: 9, fontWeight: 700, letterSpacing: '0.32em',
+        color: inkPale,
+      }}>波動之書</span>
+    </div>
+  )
+}
+
 // サムネイル画像が未設定のカード用：全カード共通のプレースホルダー
 function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   const dark = theme === 'dark'
@@ -199,7 +267,7 @@ function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
-function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing }: {
+function ArticleCard({ article, isMobile, theme, locked, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing }: {
   article: Article
   isMobile: boolean
   theme: 'dark' | 'light'
@@ -215,12 +283,13 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   onOpenChartPattern?: () => void
   onOpenDaytrade?: () => void
   onOpenSwing?: () => void
+  locked?: boolean
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
 
   const handleClick = () => {
-    if (isComingSoon) return
+    if (isComingSoon || locked) return
     if (article.internalAction === 'manual')    { onOpenManual?.();    return }
     if (article.internalAction === 'legal')     { onOpenLegal?.();     return }
     if (article.internalAction === 'backtest')  { onOpenBacktest?.();  return }
@@ -245,17 +314,18 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
     <div
       style={{
         ...s.card,
-        cursor: isComingSoon ? 'default' : 'pointer',
+        cursor: (isComingSoon || locked) ? 'default' : 'pointer',
         opacity: isComingSoon ? 0.55 : 1,
-        transform: (!isComingSoon && hovered) ? 'translateY(-3px)' : 'none',
-        boxShadow: (!isComingSoon && hovered) ? '0 8px 24px rgba(0,0,0,0.2)' : 'none',
+        transform: (!isComingSoon && !locked && hovered) ? 'translateY(-3px)' : 'none',
+        boxShadow: (!isComingSoon && !locked && hovered) ? '0 8px 24px rgba(0,0,0,0.2)' : 'none',
       }}
       onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      role={isComingSoon ? undefined : 'button'}
-      tabIndex={isComingSoon ? undefined : 0}
-      onKeyDown={e => { if (!isComingSoon && (e.key === 'Enter' || e.key === ' ')) handleClick() }}
+      role={(isComingSoon || locked) ? undefined : 'button'}
+      tabIndex={(isComingSoon || locked) ? undefined : 0}
+      onKeyDown={e => { if (!isComingSoon && !locked && (e.key === 'Enter' || e.key === ' ')) handleClick() }}
+      aria-disabled={locked || undefined}
     >
       {/* サムネイル */}
       <div style={s.thumbWrap}>
@@ -263,10 +333,20 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
           ? <img src={article.thumb} alt={article.title} style={s.thumb} loading="lazy" />
           : article.genre === '地下室'
             ? <BasementThumb theme={theme} />
-            : <PlaceholderThumb theme={theme} />
+            : article.internalAction === 'chartpattern'
+              ? <ScrollThumb theme={theme} />
+              : <PlaceholderThumb theme={theme} />
         }
         {isComingSoon && (
           <div style={s.comingSoonBadge}>近日公開</div>
+        )}
+        {/* 🔵 会員限定は**隠さず、鍵をかけて見せる**（2026-08-13）。
+            存在すら見えないと「無い」のと同じで、入る動機にならない。 */}
+        {locked && (
+          <>
+            <div style={s.lockVeil} />
+            <div style={s.lockBadge}>🔒 会員限定</div>
+          </>
         )}
       </div>
 
@@ -283,10 +363,11 @@ export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, o
   // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
     if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest') && !isAdmin) return false
-    // 🔴 研究記録は**管理者か会員だけ**。検証途中の生の数字なので、外向けには出さない。
-    if (a.memberOnly && !isAdmin && !isMember) return false
+    // 🔵 地下室（研究記録）は**カードは全員に見せて、中身だけ会員限定**にする。
+    //    中身は検証途中の生の数字なので開けないが、「そこに何かある」ことは見せる（2026-08-13）。
     return true
   })
+  const canOpenMemberOnly = isAdmin || isMember
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: theme === 'dark' ? 'transparent' : '#f4f6f9' }}>
@@ -302,7 +383,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, o
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} onOpenDaytrade={onOpenDaytrade} onOpenSwing={onOpenSwing} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} onOpenDaytrade={onOpenDaytrade} onOpenSwing={onOpenSwing} locked={!!article.memberOnly && !canOpenMemberOnly} />
                   ))}
                 </div>
               </section>
@@ -456,6 +537,29 @@ const s: Record<string, React.CSSProperties> = {
     color: 'rgba(255,255,255,0.7)',
     fontSize: 10,
     fontWeight: 600,
+    padding: '3px 8px',
+    borderRadius: 20,
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+    letterSpacing: '0.05em',
+  },
+  // 会員限定：中身は伏せる（すりガラス）が、そこに在ることは見せる
+  lockVeil: {
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(6,8,12,0.34)',
+    backdropFilter: 'blur(3px)',
+    WebkitBackdropFilter: 'blur(3px)',
+  },
+  lockBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    background: 'rgba(0,0,0,0.62)',
+    color: 'rgba(255,214,150,0.92)',
+    border: '1px solid rgba(255,205,130,0.28)',
+    fontSize: 10,
+    fontWeight: 700,
     padding: '3px 8px',
     borderRadius: 20,
     backdropFilter: 'blur(4px)',

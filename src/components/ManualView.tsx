@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type FC } from 'react'
+import { useState, useRef, useEffect, useCallback, type CSSProperties, type FC } from 'react'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose?: () => void }
 
@@ -203,43 +203,34 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
     SUBTAG:  L ? 'rgba(3,105,161,0.55)'   : 'rgba(0,229,255,0.60)',
     SCAN:    L ? ''                       : 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.013) 3px,rgba(0,229,255,0.013) 4px)',
     BULLET:  L ? 'rgba(3,105,161,0.50)'   : 'rgba(0,229,255,0.45)',
+    GHOST:   L ? 'rgba(3,105,161,0.055)'  : 'rgba(0,229,255,0.05)',
   }
 
   const mono = "'Courier New', Courier, monospace" as const
 
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [activeId, setActiveId] = useState(SECTIONS[0].id)
+  // ── スライド（1章＝1枚）─────────────────────────────────────────────
+  // 🔵 説明書は「調べもの」でもあるので、PCの目次は残したまま**見せ方だけスライドにする**。
+  //    目次を押せばその章へ一発で飛べるので、頭からめくり続ける必要はない。
+  // 🔵 わくわく感＝章番号を背景に大きく出し、切り替えでスライドインさせる。
+  //    タイムマシン・戦略プレイブックと同じ作法に揃えてある（2026-08-13）。
+  const total = SECTIONS.length
+  const [idx, setIdx] = useState(0)
+  const go = useCallback((n: number) => setIdx(Math.max(0, Math.min(total - 1, n))), [total])
+
+  // スワイプ：スライド内のスクロールが端に着いている方向にだけページを送る
+  const touchY = useRef<number | null>(null)
+  const atTop = useRef(true)
+  const atBottom = useRef(true)
 
   useEffect(() => {
-    const container = scrollRef.current
-    if (!container || isMobile) return
-    const handler = () => {
-      const secs = [...container.querySelectorAll<HTMLElement>('.mv-toc-section')]
-      if (!secs.length) return
-      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 4
-      if (atBottom) { setActiveId(secs[secs.length - 1].id); return }
-      const ct = container.getBoundingClientRect().top
-      let cur = secs[0].id
-      for (const s of secs) {
-        if (s.getBoundingClientRect().top - ct <= 56) cur = s.id
-      }
-      setActiveId(cur)
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(idx + 1) }
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); go(idx - 1) }
+      else if (e.key === 'Escape') onClose?.()
     }
-    container.addEventListener('scroll', handler, { passive: true })
-    handler()
-    return () => container.removeEventListener('scroll', handler)
-  }, [isMobile])
-
-  const scrollToId = (id: string) => {
-    const container = scrollRef.current
-    if (!container) return
-    const target = document.getElementById(id)
-    if (!target) return
-    container.scrollTo({
-      top: container.scrollTop + target.getBoundingClientRect().top - container.getBoundingClientRect().top - 52,
-      behavior: 'smooth',
-    })
-  }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [idx, go, onClose])
 
   const BulletItem = ({ text }: { text: string }) => (
     <div style={{ display: 'flex', gap: isMobile ? 9 : 10, alignItems: 'flex-start' }}>
@@ -254,9 +245,24 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
     </div>
   )
 
+  const chevron = (down: boolean) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: down ? 'none' : 'rotate(180deg)' }}>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+
+  const navBtn = (disabled: boolean): CSSProperties => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 34, height: 34, borderRadius: 9,
+    border: `1px solid ${c.CARDBR}`, background: c.CARD, color: c.ACCENT,
+    cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.28 : 1,
+    transition: 'opacity .2s',
+  })
+
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 30,
+      display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
       background: c.BG,
       backgroundImage: c.SCAN,
@@ -265,11 +271,14 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
       <style>{`
         @keyframes mvFadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
         @keyframes mvSweep  { from { transform:translateY(-100%); } to { transform:translateY(250%); } }
-        .mv-s { opacity:0; animation: mvFadeUp .55s cubic-bezier(.16,1,.3,1) forwards; }
+        @keyframes mvNumIn  { from { opacity:0; transform:translateX(26px) scale(1.06); } to { opacity:1; transform:none; } }
+        .mv-page-in { animation: mvFadeUp .5s cubic-bezier(.16,1,.3,1) both; }
+        .mv-num-in  { animation: mvNumIn .6s cubic-bezier(.16,1,.3,1) both; }
+        @media (prefers-reduced-motion: reduce) { .mv-page-in, .mv-num-in { animation: none; } }
       `}</style>
 
       {!L && (
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
           <div style={{
             position: 'absolute', left: 0, right: 0, height: '26%',
             background: 'linear-gradient(to bottom,transparent 0%,rgba(0,229,255,0.024) 50%,transparent 100%)',
@@ -278,165 +287,238 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
         </div>
       )}
 
-      <div ref={scrollRef} style={{ position: 'absolute', inset: 0, overflowY: 'auto', zIndex: 1 }}>
-        {/* Sticky header */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 5,
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: isMobile ? '11px 16px' : '12px 28px',
-          background: c.HDRBG,
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${c.RULE}`,
+      {/* ── ヘッダー ── */}
+      <div style={{
+        flexShrink: 0, zIndex: 5,
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: isMobile ? '11px 16px' : '12px 28px',
+        background: c.HDRBG,
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: `1px solid ${c.RULE}`,
+      }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
+        <span style={{
+          flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em',
+          color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          textShadow: L ? 'none' : '0 0 10px rgba(0,229,255,0.28)',
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.ACCENT, boxShadow: L ? 'none' : `0 0 7px ${c.ACCENT}`, flexShrink: 0 }} />
-          <span style={{
-            flex: 1, fontSize: 10, fontWeight: 700, letterSpacing: '0.22em',
-            color: c.DIM, fontFamily: mono, whiteSpace: 'nowrap',
-            textShadow: L ? 'none' : '0 0 10px rgba(0,229,255,0.28)',
-          }}>
-            ぽいロボ ▸ 使い方ガイド
-          </span>
-          <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>v2.0</span>
-          {onClose && (
-            <button onClick={onClose} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 7,
-              border: L ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
-              background: L ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
-              color: L ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)',
-              cursor: 'pointer', flexShrink: 0,
-            }} aria-label="閉じる">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          )}
-        </div>
+          ぽいロボ ▸ 使い方ガイド
+        </span>
+        <span style={{ fontSize: 9, color: c.SUB, fontFamily: mono, flexShrink: 0, letterSpacing: '0.06em' }}>{idx + 1} / {total}</span>
+        {onClose && (
+          <button onClick={onClose} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 28, height: 28, borderRadius: 7,
+            border: L ? '1px solid rgba(0,100,180,0.25)' : '1px solid rgba(0,200,255,0.2)',
+            background: L ? 'rgba(0,100,180,0.08)' : 'rgba(0,200,255,0.06)',
+            color: L ? 'rgba(0,80,160,0.70)' : 'rgba(0,200,255,0.65)',
+            cursor: 'pointer', flexShrink: 0,
+          }} aria-label="閉じる">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        )}
+      </div>
 
-        {/* Content with TOC */}
+      {/* ── 進捗バー ── */}
+      <div style={{ flexShrink: 0, height: 2, background: c.RULE, zIndex: 5 }}>
         <div style={{
-          maxWidth: isMobile ? '100%' : 1200,
-          margin: '0 auto',
-          padding: isMobile ? '20px 16px 80px' : '0 40px 200px',
-          ...(isMobile ? {} : { display: 'flex', gap: 28, alignItems: 'flex-start' }),
-        }}>
+          height: '100%', width: `${((idx + 1) / total) * 100}%`,
+          background: c.ACCENT, boxShadow: L ? 'none' : `0 0 8px ${c.ACCENT}`,
+          transition: 'width .52s cubic-bezier(.22,1,.36,1)',
+        }} />
+      </div>
 
-          {/* 追従目次 — PC のみ */}
-          {!isMobile && (
-            <nav style={{ width: 176, flexShrink: 0, position: 'sticky', top: 52, alignSelf: 'flex-start', paddingRight: 4, paddingTop: 28 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
-                CONTENTS
-              </div>
-              {SECTIONS.map(sec => (
-                <button key={sec.id} onClick={() => scrollToId(sec.id)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                  padding: '5px 8px', marginBottom: 2, borderRadius: 7,
-                  border: 'none', cursor: 'pointer', textAlign: 'left' as const,
-                  background: activeId === sec.id ? c.CARD : 'transparent',
-                  borderLeft: `2px solid ${activeId === sec.id ? c.ACCENT : 'transparent'}`,
-                  color: activeId === sec.id ? c.ACCENT : c.DIM,
-                  fontSize: 12, fontFamily: mono, lineHeight: 1.35,
-                  transition: 'color 0.15s, background 0.15s',
-                }}>
-                  <span style={{ fontSize: 14, flexShrink: 0 }}>{sec.icon}</span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {sec.tocLabel ?? sec.title}
-                  </span>
-                </button>
-              ))}
-            </nav>
-          )}
+      {/* ── 本体（PCは目次＋ステージ）── */}
+      <div style={{
+        flex: 1, minHeight: 0, display: 'flex',
+        gap: isMobile ? 0 : 22,
+        padding: isMobile ? 0 : '18px 32px 16px 28px',
+        zIndex: 1,
+      }}>
 
-          {/* 2カラムグリッド（PCのみ）*/}
+        {/* 目次 — PC のみ。押した章へ一発で飛ぶ（頭からめくらなくてよい） */}
+        {!isMobile && (
+          <nav style={{ width: 176, flexShrink: 0, paddingTop: 6 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
+              CONTENTS
+            </div>
+            {SECTIONS.map((sec, i) => (
+              <button key={sec.id} onClick={() => go(i)} style={{
+                display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                padding: '5px 8px', marginBottom: 2, borderRadius: 7,
+                border: 'none', cursor: 'pointer', textAlign: 'left' as const,
+                background: idx === i ? c.CARD : 'transparent',
+                borderLeft: `2px solid ${idx === i ? c.ACCENT : 'transparent'}`,
+                color: idx === i ? c.ACCENT : c.DIM,
+                fontSize: 12, fontFamily: mono, lineHeight: 1.35,
+                transition: 'color 0.15s, background 0.15s',
+              }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>{sec.icon}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {sec.tocLabel ?? sec.title}
+                </span>
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {/* ステージ（1枚ずつ縦にめくる） */}
+        <div
+          style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}
+          onTouchStart={e => {
+            touchY.current = e.touches[0].clientY
+            const el = (e.target as HTMLElement).closest('[data-mv-page]') as HTMLElement | null
+            if (el) {
+              atTop.current = el.scrollTop <= 1
+              atBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+            } else {
+              atTop.current = true
+              atBottom.current = true
+            }
+          }}
+          onTouchEnd={e => {
+            if (touchY.current == null) return
+            const d = touchY.current - e.changedTouches[0].clientY
+            touchY.current = null
+            if (Math.abs(d) < 48) return
+            if (d > 0) { if (atBottom.current) go(idx + 1) }
+            else if (atTop.current) go(idx - 1)
+          }}
+        >
           <div style={{
-            flex: 1, minWidth: 0,
-            display: isMobile ? 'flex' : 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            flexDirection: 'column',
-            gap: isMobile ? 14 : 18,
-            alignItems: 'start',
-            paddingTop: isMobile ? 0 : 28,
+            height: `${total * 100}%`,
+            transform: `translateY(-${idx * (100 / total)}%)`,
+            transition: 'transform .52s cubic-bezier(.22,1,.36,1)',
           }}>
             {SECTIONS.map((sec, i) => (
               <div
-                key={sec.title}
-                id={sec.id}
-                className="mv-s mv-toc-section"
+                key={sec.id}
+                data-mv-page
                 style={{
-                  animationDelay: `${i * 60}ms`,
-                  gridColumn: (!isMobile && sec.wide) ? '1 / -1' : 'auto',
+                  height: `${100 / total}%`, overflowY: 'auto', position: 'relative',
+                  padding: isMobile ? '18px 16px 96px' : '0 6px 56px 0',
                 }}
               >
-                <div style={{ background: c.CARD, border: `1px solid ${c.CARDBR}`, borderRadius: 12, overflow: 'hidden' }}>
-                  {/* セクションヘッダー */}
-                  <div style={{
-                    padding: isMobile ? '11px 16px' : '12px 20px',
-                    borderBottom: `1px solid ${c.CARDBR}`,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}>
-                    <span style={{ width: 4, height: 14, borderRadius: 2, background: c.ACCENT, flexShrink: 0, boxShadow: L ? 'none' : `0 0 6px ${c.ACCENT}` }} />
-                    <span style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: c.TEXT, letterSpacing: '0.03em' }}>
-                      {sec.title}
-                    </span>
+                {/* 背景の巨大な章番号 */}
+                <span key={`n${idx}`} className="mv-num-in" aria-hidden style={{
+                  position: 'absolute', right: isMobile ? 6 : 18, top: isMobile ? 4 : -12,
+                  fontFamily: mono, fontWeight: 700, fontSize: isMobile ? 88 : 150,
+                  lineHeight: 1, color: c.GHOST, pointerEvents: 'none', userSelect: 'none',
+                }}>{String(i + 1).padStart(2, '0')}</span>
+
+                <div key={`p${idx}`} className="mv-page-in" style={{ position: 'relative', maxWidth: 980 }}>
+                  <div style={{ background: c.CARD, border: `1px solid ${c.CARDBR}`, borderRadius: 12, overflow: 'hidden' }}>
+                    {/* 章ヘッダー */}
+                    <div style={{
+                      padding: isMobile ? '11px 16px' : '12px 20px',
+                      borderBottom: `1px solid ${c.CARDBR}`,
+                      display: 'flex', alignItems: 'center', gap: 8,
+                    }}>
+                      <span style={{ width: 4, height: 14, borderRadius: 2, background: c.ACCENT, flexShrink: 0, boxShadow: L ? 'none' : `0 0 6px ${c.ACCENT}` }} />
+                      <span style={{ fontSize: 16, flexShrink: 0 }}>{sec.icon}</span>
+                      <span style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: c.TEXT, letterSpacing: '0.03em' }}>
+                        {sec.title}
+                      </span>
+                    </div>
+
+                    {/* イントロ箇条書き */}
+                    {sec.intro && (
+                      <div style={{
+                        padding: isMobile ? '14px 16px 12px' : '16px 20px 12px',
+                        display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
+                        borderBottom: `1px solid ${c.CARDBR}`,
+                      }}>
+                        {sec.intro.map((item, ii) => <BulletItem key={ii} text={item} />)}
+                      </div>
+                    )}
+
+                    {/* フラット箇条書き */}
+                    {sec.items && (
+                      <div style={{
+                        padding: isMobile ? '14px 16px' : '16px 20px',
+                        display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
+                      }}>
+                        {sec.items.map((item, ii) => <BulletItem key={ii} text={item} />)}
+                      </div>
+                    )}
+
+                    {/* サブセクション */}
+                    {sec.subs && (
+                      <div style={{
+                        display: isMobile ? 'flex' : 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        flexDirection: 'column',
+                        gap: 0,
+                      }}>
+                        {sec.subs.map((sub, si) => (
+                          <div key={sub.subtitle} style={{
+                            background: c.SUBBG,
+                            borderTop: `1px solid ${c.SUBBR}`,
+                            borderLeft: (!isMobile && si % 2 === 1) ? `1px solid ${c.SUBBR}` : 'none',
+                            padding: isMobile ? '12px 16px' : '14px 20px',
+                            display: 'flex', flexDirection: 'column', gap: 10,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                              <span style={{
+                                fontSize: 11, fontWeight: 700, color: c.SUBTAG,
+                                letterSpacing: '0.04em',
+                                textShadow: L ? 'none' : `0 0 8px rgba(0,229,255,0.4)`,
+                              }}>
+                                {sub.subtitle}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 9 : 10 }}>
+                              {sub.items.map((item, ii) => <BulletItem key={ii} text={item} />)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* イントロ箇条書き */}
-                  {sec.intro && (
-                    <div style={{
-                      padding: isMobile ? '14px 16px 12px' : '16px 20px 12px',
-                      display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
-                      borderBottom: `1px solid ${c.CARDBR}`,
+                  {/* 次の章の予告（読み終わりで手が止まらないように） */}
+                  {i < total - 1 && (
+                    <button onClick={() => go(i + 1)} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      marginTop: 12, padding: '9px 14px', borderRadius: 10,
+                      border: `1px solid ${c.CARDBR}`, background: 'transparent',
+                      color: c.DIM, fontFamily: mono, fontSize: 11, cursor: 'pointer',
+                      letterSpacing: '0.06em',
                     }}>
-                      {sec.intro.map((item, ii) => <BulletItem key={ii} text={item} />)}
-                    </div>
-                  )}
-
-                  {/* フラット箇条書き */}
-                  {sec.items && (
-                    <div style={{
-                      padding: isMobile ? '14px 16px' : '16px 20px',
-                      display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
-                    }}>
-                      {sec.items.map((item, ii) => <BulletItem key={ii} text={item} />)}
-                    </div>
-                  )}
-
-                  {/* サブセクション */}
-                  {sec.subs && (
-                    <div style={{
-                      display: isMobile ? 'flex' : 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      flexDirection: 'column',
-                      gap: 0,
-                    }}>
-                      {sec.subs.map((sub, si) => (
-                        <div key={sub.subtitle} style={{
-                          background: c.SUBBG,
-                          borderTop: `1px solid ${c.SUBBR}`,
-                          borderLeft: (!isMobile && si % 2 === 1) ? `1px solid ${c.SUBBR}` : 'none',
-                          padding: isMobile ? '12px 16px' : '14px 20px',
-                          display: 'flex', flexDirection: 'column', gap: 10,
-                        }}>
-                          {/* サブセクションタイトル */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                            <span style={{
-                              fontSize: 11, fontWeight: 700, color: c.SUBTAG,
-                              letterSpacing: '0.04em',
-                              textShadow: L ? 'none' : `0 0 8px rgba(0,229,255,0.4)`,
-                            }}>
-                              {sub.subtitle}
-                            </span>
-                          </div>
-                          {/* サブセクション箇条書き */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 9 : 10 }}>
-                            {sub.items.map((item, ii) => <BulletItem key={ii} text={item} />)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                      <span>NEXT ▸</span>
+                      <span style={{ fontSize: 13 }}>{SECTIONS[i + 1].icon}</span>
+                      <span>{SECTIONS[i + 1].tocLabel ?? SECTIONS[i + 1].title}</span>
+                    </button>
                   )}
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* めくる矢印 */}
+          <div style={{
+            position: 'absolute', right: isMobile ? 12 : 10, bottom: isMobile ? 18 : 10,
+            display: 'flex', flexDirection: 'column', gap: 8, zIndex: 4,
+          }}>
+            <button onClick={() => go(idx - 1)} disabled={idx === 0} style={navBtn(idx === 0)} aria-label="前の章">{chevron(false)}</button>
+            <button onClick={() => go(idx + 1)} disabled={idx === total - 1} style={navBtn(idx === total - 1)} aria-label="次の章">{chevron(true)}</button>
+          </div>
+
+          {/* ドット（スマホは目次の代わり） */}
+          <div style={{
+            position: 'absolute', left: isMobile ? 16 : 2, bottom: isMobile ? 24 : 16,
+            display: 'flex', gap: 6, zIndex: 4,
+          }}>
+            {SECTIONS.map((sec, i) => (
+              <button key={sec.id} onClick={() => go(i)} aria-label={`${i + 1}章 ${sec.tocLabel ?? sec.title}`} style={{
+                width: idx === i ? 18 : 6, height: 6, borderRadius: 3, padding: 0,
+                border: 'none', cursor: 'pointer',
+                background: idx === i ? c.ACCENT : c.CARDBR,
+                boxShadow: (!L && idx === i) ? `0 0 8px ${c.ACCENT}` : 'none',
+                transition: 'width .3s, background .3s',
+              }} />
             ))}
           </div>
         </div>
