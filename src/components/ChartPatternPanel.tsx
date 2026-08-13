@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 // 波動の書（DATA → 未来ガジェット。旧名「フォーメーション分析」）
 //
@@ -191,22 +191,22 @@ const KIND_LABEL: Record<Pattern['kind'], string> = {
   'cont-down': '下落の途中',
 }
 
-// ── 巻二・波（エリオット波動）───────────────────────────────────────────────
+// ── 巻三・波（エリオット波動／一目均衡表の波動論）─────────────────────────────
 //
-// 🔴 巻一（形）と決定的に違うのは、**同じやり方で測れない**こと。
+// 🔴 巻二（形）と決定的に違うのは、**同じやり方で測れない**こと。
 //    形はネックライン割れなど機械的に定義できるが、波は数え方が一意に決まらない。
 //    同じチャートを見ても人によって「今は第3波」「いや第1波」と割れる。
 //    だから ぽいロボは**判断には使わない**。相場を語るための語彙として置いている。
 //    この立場はページ冒頭に常時出す（畳まない）。畳むと「使える道具」に見えてしまう。
 
 type WaveColors = {
-  card: string; border: string; text: string; sub: string
+  bg: string; card: string; border: string; text: string; sub: string
   accent: string; up: string; down: string; line: string; stop: string
 }
 
 /** 波の図。points は 0-100 座標（y は上が0）。label があれば点の脇に付く。 */
 function WaveFigure({
-  pts, labels, levels, c, dark, height, delay = 0, colorFrom = 0,
+  pts, labels, levels, c, dark, height, delay = 0, colorFrom = 0, show = true,
 }: {
   pts: number[][]
   labels?: (string | null)[]
@@ -217,6 +217,8 @@ function WaveFigure({
   delay?: number
   /** この番号以降の点を修正波の色にする（推進＝上げ色、修正＝下げ色） */
   colorFrom?: number
+  /** false のあいだは描かない（画面に入ってから描く） */
+  show?: boolean
 }) {
   const d = pts.map(([x, y]) => `${x},${y}`).join(' ')
   const corr = colorFrom > 0 ? pts.slice(colorFrom).map(([x, y]) => `${x},${y}`).join(' ') : null
@@ -225,7 +227,7 @@ function WaveFigure({
   return (
     <svg viewBox="-4 -6 108 112" width="100%" height={height} style={{ display: 'block', overflow: 'visible' }}>
       {levels?.map((lv, i) => (
-        <g key={`lv${i}`} style={{ opacity: 0, animation: `cpFade .5s ease ${delay + 0.9}s forwards` }}>
+        <g key={`lv${i}`} style={{ opacity: 0, animation: show ? `cpFade .5s ease ${delay + 0.9}s forwards` : 'none' }}>
           <line x1={lv.x1} y1={lv.y} x2={lv.x2} y2={lv.y}
             stroke={lv.warn ? c.stop : c.accent} strokeWidth={1.2} strokeDasharray="3 2" />
           {lv.label && (
@@ -240,7 +242,7 @@ function WaveFigure({
         strokeLinejoin="round" strokeLinecap="round" pathLength={100}
         style={{
           strokeDasharray: 100, strokeDashoffset: 100,
-          animation: `cpDraw 1.2s ease-out ${delay}s forwards`,
+          animation: show ? `cpDraw 1.2s ease-out ${delay}s forwards` : 'none',
           filter: dark ? 'drop-shadow(0 0 3px rgba(226,240,252,0.35))' : undefined,
         }} />
       {/* 修正波（色を変えて、推進と修正の別を見せる） */}
@@ -249,7 +251,7 @@ function WaveFigure({
           strokeLinejoin="round" strokeLinecap="round" pathLength={100}
           style={{
             strokeDasharray: 100, strokeDashoffset: 100,
-            animation: `cpDraw .8s ease-out ${delay + 1.1}s forwards`,
+            animation: show ? `cpDraw .8s ease-out ${delay + 1.1}s forwards` : 'none',
             filter: dark ? `drop-shadow(0 0 4px ${c.down}88)` : undefined,
           }} />
       )}
@@ -263,7 +265,7 @@ function WaveFigure({
         return (
           <text key={`t${i}`} x={x} y={low ? y + 8 : y - 4.5} textAnchor="middle" fontSize={7} fontWeight={700}
             fill={/[ABC]/.test(t) ? c.down : c.accent} fontFamily="inherit"
-            style={{ opacity: 0, animation: `cpFade .4s ease ${delay + 0.5 + i * 0.09}s forwards` }}>{t}</text>
+            style={{ opacity: 0, animation: show ? `cpFade .4s ease ${delay + 0.5 + i * 0.09}s forwards` : 'none' }}>{t}</text>
         )
       })}
     </svg>
@@ -322,7 +324,7 @@ const CORRECTIONS: (Fig & { name: string; body: string })[] = [
   },
 ]
 
-/** 巻二で使う囲み・見出し・本文。🔴 レンダーのたびに作り直さないよう module scope に置く。 */
+/** 巻三で使う囲み・見出し・本文。🔴 レンダーのたびに作り直さないよう module scope に置く。 */
 function WCard({ c, dark, isMobile, accent, children }: {
   c: WaveColors; dark: boolean; isMobile: boolean; accent?: boolean; children: React.ReactNode
 }) {
@@ -337,12 +339,8 @@ function WCard({ c, dark, isMobile, accent, children }: {
 const WH = ({ c, children }: { c: WaveColors; children: React.ReactNode }) => (
   <div style={{ fontSize: 10, letterSpacing: '0.18em', color: c.accent, marginBottom: 8 }}>{children}</div>
 )
-const WT = ({ c, isMobile, children }: { c: WaveColors; isMobile: boolean; children: React.ReactNode }) => (
-  <div style={{ fontSize: isMobile ? 12 : 13, color: c.sub, lineHeight: 1.9 }}>{children}</div>
-)
-
 function ElliottScroll({ c, dark, isMobile }: {
-  c: WaveColors
+  c: PanelColors
   dark: boolean
   isMobile: boolean
 }) {
@@ -350,22 +348,21 @@ function ElliottScroll({ c, dark, isMobile }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18, animation: 'cpRise .4s ease both' }}>
 
       {/* 全体像 */}
-      <WCard c={c} dark={dark} isMobile={isMobile} accent>
-        <WH c={c}>▶ 全体像 ／ 推進5波 ＋ 修正3波</WH>
-        <WT c={c} isMobile={isMobile}>
+      <WaveCard c={c} dark={dark} isMobile={isMobile} accent
+        sub="▶ 全体像"
+        title="推進5波 ＋ 修正3波"
+        fig={{
+          pts: [[0, 92], [12, 62], [22, 76], [48, 24], [58, 42], [72, 14], [84, 40], [91, 27], [100, 52]],
+          labels: [null, '1', '2', '3', '4', '5', 'A', 'B', 'C'],
+          colorFrom: 5,
+          height: isMobile ? 190 : 250,
+        }}
+        body={<>
           相場は<b style={{ color: c.text }}>上げ5つ・下げ3つ</b>のかたまりで進む、という見方。
           1・3・5が進む波（推進）、2・4が押し（修正）、そのあとの A・B・C がまとめての調整。
           そして<b style={{ color: c.text }}>この8つが、より大きな1つの波の一部でもある</b>（入れ子）。
-        </WT>
-        <div style={{ marginTop: 10 }}>
-          <WaveFigure
-            pts={[[0, 92], [12, 62], [22, 76], [48, 24], [58, 42], [72, 14], [84, 40], [91, 27], [100, 52]]}
-            labels={[null, '1', '2', '3', '4', '5', 'A', 'B', 'C']}
-            colorFrom={5}
-            c={c} dark={dark} height={isMobile ? 190 : 250}
-          />
-        </div>
-      </WCard>
+        </>}
+      />
 
       {/* 3つの絶対ルール */}
       <div>
@@ -376,19 +373,10 @@ function ElliottScroll({ c, dark, isMobile }: {
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
         }}>
-          {RULES.map((r, i) => (
-            <div key={r.no} className="cp-card" style={{
-              background: c.card, border: `1px solid ${c.border}`, borderRadius: 12,
-              padding: 14, animationDelay: `${i * 0.06}s`,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 10, letterSpacing: '0.14em', color: c.accent }}>{r.no}</span>
-                <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text }}>{r.title}</span>
-              </div>
-              <WaveFigure pts={r.pts} labels={r.labels} levels={r.levels}
-                c={c} dark={dark} height={isMobile ? 120 : 140} delay={i * 0.12} />
-              <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{r.body}</div>
-            </div>
+          {RULES.map(r => (
+            <WaveCard key={r.no} c={c} dark={dark} isMobile={isMobile}
+              sub={r.no} title={r.title} body={r.body}
+              fig={{ pts: r.pts, labels: r.labels, levels: r.levels, height: isMobile ? 120 : 140 }} />
           ))}
         </div>
       </div>
@@ -402,16 +390,10 @@ function ElliottScroll({ c, dark, isMobile }: {
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
         }}>
-          {CORRECTIONS.map((w, i) => (
-            <div key={w.name} className="cp-card" style={{
-              background: c.card, border: `1px solid ${c.border}`, borderRadius: 12,
-              padding: 14, animationDelay: `${i * 0.06}s`,
-            }}>
-              <div style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text, marginBottom: 6 }}>{w.name}</div>
-              <WaveFigure pts={w.pts} labels={w.labels}
-                c={c} dark={dark} height={isMobile ? 120 : 140} delay={i * 0.12} colorFrom={1} />
-              <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{w.body}</div>
-            </div>
+          {CORRECTIONS.map(w => (
+            <WaveCard key={w.name} c={c} dark={dark} isMobile={isMobile}
+              title={w.name} body={w.body}
+              fig={{ pts: w.pts, labels: w.labels, colorFrom: 1, height: isMobile ? 120 : 140 }} />
           ))}
         </div>
       </div>
@@ -434,17 +416,18 @@ function ElliottScroll({ c, dark, isMobile }: {
         </div>
       </WCard>
 
+      <IchimokuSection c={c} dark={dark} isMobile={isMobile} />
     </div>
   )
 }
 
-// ── 巻三・灯（ローソク足の型）─────────────────────────────────────────────
+// ── 巻一・灯（ローソク足の型）─────────────────────────────────────────────
 //
-// 🔵 巻一「形」が数十本で作る図形、巻二「波」が数え方の話なのに対して、
-//    ここは**1〜3本で読む**いちばん短い足あと。粒度が違うので巻を分ける。
+// 🔵 巻二「形」が数十本で作る図形、巻三「波」が数え方の話なのに対して、
+//    ここは**1〜3本で読む**いちばん短い足あと。いちばん短いので巻一に置く。
 // 🔵 酒田五法のうち 三川（明星）・三空・三兵・三法 はここに入る。
-//    残る「三山」は三尊そのものなので巻一に置いてある（同じものを別の粒度で見ている）。
-// 🔴 巻一と同じで、**載っているのは「そう言われている」という話**。
+//    残る「三山」は三尊そのものなので巻二に置いてある（同じものを別の粒度で見ている）。
+// 🔴 巻二と同じで、**載っているのは「そう言われている」という話**。
 //    ローソクの型は成立日が機械的に決まるので、後から26年で測れる（`scripts/analyze-candles.mjs` 予定）。
 
 /** 1本のローソク。0-100 の価格座標（大きいほど高い）。 */
@@ -589,12 +572,14 @@ const CANDLES: Candle[] = [
 ]
 
 /** ローソク足の図。0-100 の価格座標を上下反転して描く。 */
-function CandleFigure({ bars, c, dark, height, delay = 0 }: {
+function CandleFigure({ bars, c, dark, height, delay = 0, show = true }: {
   bars: Bar[]
   c: { up: string; down: string; line: string }
   dark: boolean
   height: number
   delay?: number
+  /** false のあいだは灯さない（画面に入ってから1本ずつ） */
+  show?: boolean
 }) {
   const n = bars.length
   const slot = 100 / n
@@ -611,7 +596,7 @@ function CandleFigure({ bars, c, dark, height, delay = 0 }: {
         const h = Math.max(Math.abs(b.c - b.o), 1.6)
         return (
           <g key={i} style={{
-            opacity: 0, animation: `cpFade .42s ease ${delay + i * 0.13}s forwards`,
+            opacity: 0, animation: show ? `cpFade .42s ease ${delay + i * 0.13}s forwards` : 'none',
             filter: dark ? `drop-shadow(0 0 4px ${col}66)` : undefined,
           }}>
             {/* ヒゲ */}
@@ -627,6 +612,366 @@ function CandleFigure({ bars, c, dark, height, delay = 0 }: {
   )
 }
 
+type PanelColors = {
+  bg: string; card: string; border: string; text: string; sub: string
+  accent: string; up: string; down: string; line: string; stop: string
+}
+
+/**
+ * 画面に入ったかどうか。
+ *
+ * 🔵 図が一斉に動くと、目がどこを見ればいいのか分からなくなる（2026-08-13 ユーザー指摘）。
+ *    スクロールして**そのカードが見えたときに、その図だけ動き出す**ようにする。
+ * 🔴 一度動いたら戻さない（`disconnect`）。行き来のたびに描き直すとうるさい。
+ * 🔴 IntersectionObserver が無い環境では素直に最初から見せる（動かないより出るほうが良い）。
+ */
+function useInView<T extends HTMLElement>(): [React.RefObject<T | null>, boolean] {
+  const ref = useRef<T>(null)
+  const [seen, setSeen] = useState(false)
+  useEffect(() => {
+    if (seen) return
+    const el = ref.current
+    if (!el) return
+    if (typeof IntersectionObserver === 'undefined') { setSeen(true); return }
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) { setSeen(true); io.disconnect() }
+    }, { threshold: 0.2 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [seen])
+  return [ref, seen]
+}
+
+/** 巻二のカード（フォーメーション）。図は見えてから描かれる。 */
+function PatternCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
+  p: Pattern; idx: number; c: PanelColors; dark: boolean; isMobile: boolean
+  isOpen: boolean; onToggle: () => void
+}) {
+  const [ref, show] = useInView<HTMLButtonElement>()
+  const col = (p.kind === 'bottom' || p.kind === 'cont-up') ? c.up : c.down
+  // 🔵 遅延は「画面に入った順」で少しずつ。列ごとの見え方が自然になる程度に留める。
+  const d = (idx % 3) * 0.08
+
+  return (
+    <button
+      ref={ref}
+      onClick={onToggle}
+      className="cp-card"
+      style={{
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'stretch',
+        textAlign: 'left', background: c.card, border: `1px solid ${isOpen ? col : c.border}`,
+        borderRadius: 12, padding: 14, cursor: 'pointer', color: c.text,
+        transition: 'border-color .15s, transform .15s, box-shadow .15s',
+        opacity: show ? undefined : 0,
+        animation: show ? `cpRise .5s ease ${d}s both` : 'none',
+        boxShadow: isOpen && dark ? `0 0 24px ${col}22` : undefined,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
+        <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{KIND_LABEL[p.kind]}</span>
+      </div>
+
+      {/* 🔵 図は画像ではなくSVG。読み込みを増やさず、テーマにも追随できる。
+          🔴 線を**描かれていく**演出にする。形は動きで覚えるものなので、
+             静止画で並べるより「どう作られたか」が伝わる。 */}
+      <div style={{ position: 'relative' }}>
+        <svg viewBox="0 0 100 100" width="100%" height={isMobile ? 140 : 170} style={{ display: 'block', overflow: 'visible' }}>
+          <defs>
+            <linearGradient id={`cpg-${idx}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={col} stopOpacity={dark ? 0.16 : 0.10} />
+              <stop offset="100%" stopColor={col} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* 面で塗って厚みを出す */}
+          <polygon
+            points={`0,100 ${p.path.map(([x, y]) => `${x},${y}`).join(' ')} 100,100`}
+            fill={`url(#cpg-${idx})`}
+            style={{ opacity: show ? undefined : 0 }} />
+          {p.lines?.map((l, i) => (
+            <line key={`l${i}`} x1={l.x1} y1={l.y} x2={l.x2} y2={l.y}
+              stroke={l.kind === 'sup' ? c.up : l.kind === 'res' ? c.down : col}
+              strokeWidth={1.6} strokeDasharray={l.kind === 'neck' ? '0' : '3 2'}
+              style={{
+                filter: dark ? `drop-shadow(0 0 4px ${col}88)` : undefined,
+                opacity: 0, animation: show ? `cpFade .5s ease ${d + 0.35}s forwards` : 'none',
+              }} />
+          ))}
+          {p.slopes?.map((sl, i) => (
+            <line key={`s${i}`} x1={sl.p[0]} y1={sl.p[1]} x2={sl.p[2]} y2={sl.p[3]}
+              stroke={sl.kind === 'up' ? c.up : c.down} strokeWidth={1.6}
+              style={{
+                filter: dark ? `drop-shadow(0 0 4px ${col}88)` : undefined,
+                opacity: 0, animation: show ? `cpFade .5s ease ${d + 0.35}s forwards` : 'none',
+              }} />
+          ))}
+          <polyline
+            points={p.path.map(([x, y]) => `${x},${y}`).join(' ')}
+            fill="none" stroke={c.line} strokeWidth={2}
+            strokeLinejoin="round" strokeLinecap="round"
+            pathLength={100}
+            style={{
+              strokeDasharray: 100, strokeDashoffset: 100,
+              animation: show ? `cpDraw 1.1s ease-out ${d}s forwards` : 'none',
+              filter: dark ? 'drop-shadow(0 0 3px rgba(226,240,252,0.35))' : undefined,
+            }} />
+          {/* 抜けた先を示す矢印 */}
+          <polyline
+            points={(p.kind === 'bottom' || p.kind === 'cont-up') ? '92,26 100,8 100,20' : '92,74 100,92 100,80'}
+            fill="none" stroke={col} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+            style={{
+              opacity: 0, animation: show ? `cpFade .5s ease ${d + 1.0}s forwards` : 'none',
+              filter: dark ? `drop-shadow(0 0 6px ${col})` : undefined,
+            }} />
+        </svg>
+      </div>
+
+      <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
+
+      {isOpen && (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+          <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
+          <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
+          {/* 🔵 2026-08-13 ユーザー判断で「日経225・26年で測った結果」は非表示にした。
+              統計的に未確定（t<2・n が小さい）のものが多く、読む人には
+              「効く/効かない」の判断材料にならないため。
+              🔴 データ（p.measured）は消していないので、表示を戻すのはこのブロックを戻すだけ。 */}
+        </div>
+      )}
+      {!isOpen && (
+        <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>
+      )}
+    </button>
+  )
+}
+
+/** 巻一のカード（ローソク足）。1本ずつ順に灯る。 */
+function CandleCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
+  p: Candle; idx: number; c: PanelColors; dark: boolean; isMobile: boolean
+  isOpen: boolean; onToggle: () => void
+}) {
+  const [ref, show] = useInView<HTMLButtonElement>()
+  const col = p.kind === 'neutral' ? c.line : (p.kind === 'bottom' || p.kind === 'cont-up') ? c.up : c.down
+  const d = (idx % 3) * 0.08
+
+  return (
+    <button
+      ref={ref}
+      onClick={onToggle}
+      className="cp-card"
+      style={{
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'stretch',
+        textAlign: 'left', background: c.card, border: `1px solid ${isOpen ? col : c.border}`,
+        borderRadius: 12, padding: 14, cursor: 'pointer', color: c.text,
+        transition: 'border-color .15s, transform .15s, box-shadow .15s',
+        opacity: show ? undefined : 0,
+        animation: show ? `cpRise .5s ease ${d}s both` : 'none',
+        boxShadow: isOpen && dark ? `0 0 24px ${col}22` : undefined,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
+        <span style={{
+          fontSize: 9, color: c.sub, border: `1px solid ${c.border}`,
+          borderRadius: 20, padding: '1px 6px', letterSpacing: '0.06em',
+        }}>{p.n}</span>
+        <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{CANDLE_KIND[p.kind]}</span>
+      </div>
+
+      <CandleFigure bars={p.bars} c={c} dark={dark} height={isMobile ? 140 : 170} delay={d} show={show} />
+
+      <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
+
+      {isOpen && (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+          <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
+          <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
+        </div>
+      )}
+      {!isOpen && (
+        <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>
+      )}
+    </button>
+  )
+}
+
+/** 巻三のカード（波の図つき）。見えたときに波が描かれる。 */
+function WaveCard({ c, dark, isMobile, title, sub, body, fig, accent }: {
+  c: PanelColors; dark: boolean; isMobile: boolean
+  title?: string; sub?: string; body: React.ReactNode
+  fig: Fig & { colorFrom?: number; height: number }
+  accent?: boolean
+}) {
+  const [ref, show] = useInView<HTMLDivElement>()
+  return (
+    <div ref={ref} className="cp-card" style={{
+      background: c.card, border: `1px solid ${accent ? c.accent : c.border}`, borderRadius: 12,
+      padding: isMobile ? 14 : 18,
+      opacity: show ? undefined : 0,
+      animation: show ? 'cpRise .5s ease both' : 'none',
+      boxShadow: accent && dark ? `0 0 24px ${c.accent}18` : undefined,
+    }}>
+      {(title || sub) && (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+          {sub && <span style={{ fontSize: 10, letterSpacing: '0.14em', color: c.accent }}>{sub}</span>}
+          {title && <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text }}>{title}</span>}
+        </div>
+      )}
+      <WaveFigure pts={fig.pts} labels={fig.labels} levels={fig.levels} colorFrom={fig.colorFrom}
+        c={c} dark={dark} height={fig.height} show={show} />
+      <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.8, marginTop: 8 }}>{body}</div>
+    </div>
+  )
+}
+
+// ── 巻三のうしろ半分：一目均衡表の波動論 ────────────────────────────────
+//
+// 🔵 エリオットと同じ「波の数え方」の話なので、巻を分けずにここへ置く（2026-08-13 ユーザー判断）。
+// 🔴 ただしエリオットと違い、一目は**測れる部分がある**（型・時間論・水準論はすべて数式）。
+//    載せる前に26年で測った。数字の出どころ＝`scripts/analyze-ichimoku.mjs`。
+//    🔴 ここの数字を書き換えるときは必ずスクリプトを走らせ直すこと。手打ちしない。
+
+/** 波動論の5つの型。I→V→N と増えていき、P・Y は持ち合いの形。 */
+const ICHI_WAVES: (Fig & { name: string; body: string })[] = [
+  {
+    name: 'I波',
+    body: '上げ（または下げ）だけの一本調子。いちばん小さい単位で、これが積み重なって他の波になる。',
+    pts: [[0, 90], [100, 16]],
+  },
+  {
+    name: 'V波',
+    body: '上げて下げる（または下げて上げる）。行って来いの形。',
+    pts: [[0, 86], [50, 16], [100, 72]],
+    labels: [null, null, null],
+  },
+  {
+    name: 'N波',
+    body: '上げ→押し→上げ。**一目ではこれが基本形**で、他の波もN波の組み合わせとして数える。',
+    pts: [[0, 90], [32, 40], [60, 62], [100, 14]],
+    labels: ['A', 'B', 'C', 'D'],
+  },
+  {
+    name: 'P波',
+    body: '高値が切り下がり安値が切り上がる、先すぼまりの持ち合い（三角保ち合いと同じ形）。',
+    pts: [[0, 14], [16, 84], [34, 28], [50, 72], [66, 40], [82, 62], [100, 50]],
+  },
+  {
+    name: 'Y波',
+    body: '高値も安値も広がっていく、先広がりの持ち合い。荒れている場面で出る。',
+    pts: [[0, 50], [16, 40], [32, 62], [48, 26], [66, 76], [82, 14], [100, 88]],
+  },
+]
+
+/** 26年で測った結果。🔴 手打ち禁止・出どころは analyze-ichimoku.mjs（2026-08-13 実行）。 */
+const ICHI_MEASURED = [
+  {
+    head: '型（三役好転・雲抜け・転換/基準クロス）',
+    verdict: 'ng' as const,
+    body: '基準（全日の平均）と比べた差はどれも小さく、t はすべて 2 未満。パラメータを (9,26,52) から動かすと符号まで入れ替わる。'
+      + ' 🔴 いちばん困るのは**三役逆転（売りの合図）のあと 20日で +1.08〜+1.25%**と、基準より上げていること。合図と逆に動いている。',
+  },
+  {
+    head: '時間論（基本数値 9・17・26）',
+    verdict: 'half' as const,
+    body: '転換点どうしの間隔で 9日±1 は 23〜26%（一様なら11.5%）と多い。ただし間隔の分布を見ると 5日が最も多く、そこから単調に減っていくだけ。'
+      + ' つまり「9が特別」ではなく**短い波が多い**という話。17日・26日はむしろ一様より少ない（2〜12%）。',
+  },
+  {
+    head: '水準論（V・N・E・NT計算値）',
+    verdict: 'ng' as const,
+    body: '次の山をどれだけ当てたかを見ると、誤差の中央値は NT 3.5%・N 3.5%・V 4.4%・E 7.1%。'
+      + ' 🔴 一方「前の山と同じ値段」と置いただけの予想は誤差 1.8%。**何も考えない予想のほうが近い**。',
+  },
+]
+
+function IchimokuSection({ c, dark, isMobile }: { c: PanelColors; dark: boolean; isMobile: boolean }) {
+  return (
+    <>
+      <div style={{ marginTop: isMobile ? 10 : 18 }}>
+        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '4px 0 4px' }}>
+          一目均衡表の波動論
+          <span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>日本発の「波」の数え方</span>
+        </div>
+        <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.85, marginBottom: 10 }}>
+          エリオットが5波と3波で数えるのに対して、一目は<b style={{ color: c.text }}>I・V・N・P・Y</b> の5つの形で数える。
+          さらに<b style={{ color: c.text }}>値幅の目標（水準論）</b>と<b style={{ color: c.text }}>日柄（時間論）</b>がセットになっているのが特徴。
+        </div>
+        <div style={{
+          display: 'grid', gap: isMobile ? 12 : 16,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        }}>
+          {ICHI_WAVES.map(w => (
+            <WaveCard key={w.name} c={c} dark={dark} isMobile={isMobile}
+              title={w.name} body={w.body}
+              fig={{ pts: w.pts, labels: w.labels, height: isMobile ? 120 : 140 }} />
+          ))}
+        </div>
+      </div>
+
+      {/* 水準論 */}
+      <WaveCard c={c} dark={dark} isMobile={isMobile}
+        sub="▶ 水準論"
+        title="次にどこまで行くかを、4つの式で置く"
+        fig={{
+          pts: [[0, 84], [30, 26], [56, 54], [100, 12]],
+          labels: ['A', 'B', 'C', 'D'],
+          levels: [{ y: 12, x1: 56, x2: 100, label: '目標 D' }],
+          height: isMobile ? 150 : 190,
+        }}
+        body={<>
+          谷 A → 山 B → 谷 C と来たあと、次の山 D を式で置く。
+          <b style={{ color: c.text }}>V＝B+(B−C)</b> ／ <b style={{ color: c.text }}>N＝C+(B−A)</b> ／
+          <b style={{ color: c.text }}>E＝B+(B−A)</b> ／ <b style={{ color: c.text }}>NT＝C+(C−A)</b>。
+          上から順に強気で、E がいちばん高い目標になる。
+        </>}
+      />
+
+      {/* 時間論 */}
+      <WaveCard c={c} dark={dark} isMobile={isMobile}
+        sub="▶ 時間論"
+        title="値段ではなく、日数を数える"
+        fig={{
+          pts: [[0, 86], [22, 34], [44, 62], [70, 18], [100, 44]],
+          labels: [null, '9', '17', '26', null],
+          height: isMobile ? 130 : 160,
+        }}
+        body={<>
+          基本数値は <b style={{ color: c.text }}>9・17・26</b>（さらに 33・42・65・76…）。
+          転換点から数えてこの日数のところで、次の転換が起きやすいとされる。
+          一目でいちばん独特なのがこの<b style={{ color: c.text }}>日柄</b>の考え方で、値段の予想（水準論）と組で使う。
+        </>}
+      />
+
+      {/* 🔴 測った結果。巻二と同じで、載せるなら実測も一緒に出す。 */}
+      <div style={{
+        border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
+        background: c.card, borderRadius: 12, padding: isMobile ? 14 : 18,
+      }}>
+        <div style={{ fontSize: 10, letterSpacing: '0.18em', color: c.accent, marginBottom: 4 }}>▶ 測った結果</div>
+        <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: c.text, marginBottom: 8 }}>
+          日経225・26年（6,361営業日）で測ると、当たらない
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {ICHI_MEASURED.map(m => (
+            <div key={m.head}>
+              <div style={{ fontSize: isMobile ? 12 : 12.5, fontWeight: 700, color: m.verdict === 'ng' ? c.stop : c.text, marginBottom: 3 }}>
+                {m.verdict === 'ng' ? '×' : '△'} {m.head}
+              </div>
+              <div style={{ fontSize: isMobile ? 11.5 : 12, color: c.sub, lineHeight: 1.85 }}>{m.body}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+          測り方＝合図が出た日の終値から先5日・20日・60日を見て、全日の平均と比べています。
+          パラメータは (9,26,52) のほか (7,22,44)・(12,30,60) も振って全部並べました
+          （<b style={{ color: c.text }}>1つだけ当たったら、当たる設定を選んだだけ</b>なので）。
+          検証コード: <span style={{ color: c.text }}>scripts/analyze-ichimoku.mjs</span>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   const dark = theme === 'dark'
   const [open, setOpen] = useState<string | null>(null)
@@ -634,7 +979,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   // 🔵 巻を分ける（2026-08-13）。**形**は機械的に定義でき、実際に26年で測れた。
   //    **波**（エリオット）は数え方が一意に決まらず、そもそも同じやり方で測れない。
   //    性質が違うものを同じ棚に並べると「どちらも同じ根拠」に見えてしまうので、巻で隔てる。
-  const [maki, setMaki] = useState<'form' | 'wave' | 'candle'>('form')
+  const [maki, setMaki] = useState<'candle' | 'form' | 'wave'>('candle')
 
   const c = {
     bg: dark ? '#04070f' : '#f6f8fc',
@@ -648,7 +993,6 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
     line: dark ? 'rgba(226,240,252,0.92)' : '#22304a',
     stop: dark ? 'rgba(255,110,110,0.85)' : 'rgba(200,50,50,0.85)',
   }
-  const isUp = (k: Pattern['kind']) => k === 'bottom' || k === 'cont-up'
 
   return (
     <div style={{
@@ -751,9 +1095,9 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
         {/* 🔵 巻の切り替え。書物なので「タブ」ではなく**巻**と呼ぶ。 */}
         <div style={{ display: 'flex', gap: 8, marginBottom: isMobile ? 16 : 22, flexWrap: 'wrap' }}>
           {([
-            { key: 'form' as const, no: '巻一', name: '形', sub: 'フォーメーション16種' },
-            { key: 'wave' as const, no: '巻二', name: '波', sub: 'エリオット波動' },
-            { key: 'candle' as const, no: '巻三', name: '灯', sub: 'ローソク足の型' },
+            { key: 'candle' as const, no: '巻一', name: '灯', sub: 'ローソク足の型' },
+            { key: 'form' as const, no: '巻二', name: '形', sub: 'フォーメーション16種' },
+            { key: 'wave' as const, no: '巻三', name: '波', sub: 'エリオット波動・一目' },
           ]).map(t => {
             const on = maki === t.key
             return (
@@ -814,150 +1158,25 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
 
         {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} />}
 
-        {/* 巻三・灯：1〜3本で読む型。巻一と同じカードの作りにそろえる（並べ方が変わると別物に見える）*/}
+        {/* 巻一・灯：1〜3本で読む型。巻二と同じカードの作りにそろえる（並べ方が変わると別物に見える）*/}
         {maki === 'candle' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
         }}>
-          {CANDLES.map((p, idx) => {
-            const col = p.kind === 'neutral' ? c.line : (p.kind === 'bottom' || p.kind === 'cont-up') ? c.up : c.down
-            const isOpen = open === p.name
-            return (
-              <button
-                key={p.name}
-                onClick={() => setOpen(isOpen ? null : p.name)}
-                className="cp-card"
-                style={{
-                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'stretch',
-                  textAlign: 'left', background: c.card, border: `1px solid ${isOpen ? col : c.border}`,
-                  borderRadius: 12, padding: 14, cursor: 'pointer', color: c.text,
-                  transition: 'border-color .15s, transform .15s, box-shadow .15s',
-                  animationDelay: `${idx * 0.04}s`,
-                  boxShadow: isOpen && dark ? `0 0 24px ${col}22` : undefined,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
-                  <span style={{
-                    fontSize: 9, color: c.sub, border: `1px solid ${c.border}`,
-                    borderRadius: 20, padding: '1px 6px', letterSpacing: '0.06em',
-                  }}>{p.n}</span>
-                  <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{CANDLE_KIND[p.kind]}</span>
-                </div>
-
-                <CandleFigure bars={p.bars} c={c} dark={dark} height={isMobile ? 140 : 170} delay={idx * 0.05} />
-
-                <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
-
-                {isOpen && (
-                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
-                    <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
-                    <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
-                  </div>
-                )}
-                {!isOpen && (
-                  <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>
-                )}
-              </button>
-            )
-          })}
+          {CANDLES.map((p, idx) => (
+            <CandleCard key={p.name} p={p} idx={idx} c={c} dark={dark} isMobile={isMobile}
+              isOpen={open === p.name} onToggle={() => setOpen(open === p.name ? null : p.name)} />
+          ))}
         </div>}
 
         {maki === 'form' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
         }}>
-          {PATTERNS.map((p, idx) => {
-            const col = isUp(p.kind) ? c.up : c.down
-            const isOpen = open === p.name
-            return (
-              <button
-                key={p.name}
-                onClick={() => setOpen(isOpen ? null : p.name)}
-                className="cp-card"
-                style={{
-                  // 🔴 グリッドは行の中で高さが揃うので、1枚を開くと隣のカードも背が伸びる。
-                  //    button は中身を**縦中央**に置くため、そのままだとタイトルと図が下へずれる。
-                  //    flex の縦並び＋上揃えに固定して、開いても他のカードの見た目が動かないようにする。
-                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'stretch',
-                  textAlign: 'left', background: c.card, border: `1px solid ${isOpen ? col : c.border}`,
-                  borderRadius: 12, padding: 14, cursor: 'pointer', color: c.text,
-                  transition: 'border-color .15s, transform .15s, box-shadow .15s',
-                  animationDelay: `${idx * 0.04}s`,
-                  boxShadow: isOpen && dark ? `0 0 24px ${col}22` : undefined,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
-                  <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{KIND_LABEL[p.kind]}</span>
-                </div>
-
-                {/* 🔵 図は画像ではなくSVG。読み込みを増やさず、テーマにも追随できる。
-                    🔴 線を**描かれていく**演出にする。形は動きで覚えるものなので、
-                       静止画で並べるより「どう作られたか」が伝わる。
-                    🔴 遅延をカードごとにずらして、一斉に動かない（画面がうるさくなる）ようにする。 */}
-                <div style={{ position: 'relative' }}>
-                  <svg viewBox="0 0 100 100" width="100%" height={isMobile ? 140 : 170} style={{ display: 'block', overflow: 'visible' }}>
-                    <defs>
-                      <linearGradient id={`cpg-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={col} stopOpacity={dark ? 0.16 : 0.10} />
-                        <stop offset="100%" stopColor={col} stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    {/* 面で塗って厚みを出す */}
-                    <polygon
-                      points={`0,100 ${p.path.map(([x, y]) => `${x},${y}`).join(' ')} 100,100`}
-                      fill={`url(#cpg-${idx})`} />
-                    {p.lines?.map((l, i) => (
-                      <line key={`l${i}`} x1={l.x1} y1={l.y} x2={l.x2} y2={l.y}
-                        stroke={l.kind === 'sup' ? c.up : l.kind === 'res' ? c.down : col}
-                        strokeWidth={1.6} strokeDasharray={l.kind === 'neck' ? '0' : '3 2'}
-                        style={{ filter: dark ? `drop-shadow(0 0 4px ${col}88)` : undefined,
-                          opacity: 0, animation: `cpFade .5s ease ${0.35 + idx * 0.05}s forwards` }} />
-                    ))}
-                    {p.slopes?.map((sl, i) => (
-                      <line key={`s${i}`} x1={sl.p[0]} y1={sl.p[1]} x2={sl.p[2]} y2={sl.p[3]}
-                        stroke={sl.kind === 'up' ? c.up : c.down} strokeWidth={1.6}
-                        style={{ filter: dark ? `drop-shadow(0 0 4px ${col}88)` : undefined,
-                          opacity: 0, animation: `cpFade .5s ease ${0.35 + idx * 0.05}s forwards` }} />
-                    ))}
-                    <polyline
-                      points={p.path.map(([x, y]) => `${x},${y}`).join(' ')}
-                      fill="none" stroke={c.line} strokeWidth={2}
-                      strokeLinejoin="round" strokeLinecap="round"
-                      pathLength={100}
-                      style={{
-                        strokeDasharray: 100, strokeDashoffset: 100,
-                        animation: `cpDraw 1.1s ease-out ${idx * 0.05}s forwards`,
-                        filter: dark ? 'drop-shadow(0 0 3px rgba(226,240,252,0.35))' : undefined,
-                      }} />
-                    {/* 抜けた先を示す矢印 */}
-                    <polyline
-                      points={isUp(p.kind) ? '92,26 100,8 100,20' : '92,74 100,92 100,80'}
-                      fill="none" stroke={col} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                      style={{ opacity: 0, animation: `cpFade .5s ease ${1.0 + idx * 0.05}s forwards`,
-                        filter: dark ? `drop-shadow(0 0 6px ${col})` : undefined }} />
-                  </svg>
-                </div>
-
-                <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
-
-                {isOpen && (
-                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
-                    <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
-                    <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
-                    {/* 🔵 2026-08-13 ユーザー判断で「日経225・26年で測った結果」は非表示にした。
-                        統計的に未確定（t<2・n が小さい）のものが多く、読む人には
-                        「効く/効かない」の判断材料にならないため。
-                        🔴 データ（p.measured）は消していないので、表示を戻すのはこのブロックを戻すだけ。 */}
-                  </div>
-                )}
-                {!isOpen && (
-                  <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>
-                )}
-              </button>
-            )
-          })}
+          {PATTERNS.map((p, idx) => (
+            <PatternCard key={p.name} p={p} idx={idx} c={c} dark={dark} isMobile={isMobile}
+              isOpen={open === p.name} onToggle={() => setOpen(open === p.name ? null : p.name)} />
+          ))}
         </div>}
 
       </div>
