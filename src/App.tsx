@@ -646,7 +646,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           )}
 
           {cal.view === 'daytrade' && (
-            <ErrorBoundary label="研究記録〜デイトレード">
+            <ErrorBoundary label="地下室 デイトレード">
               <Suspense fallback={<ViewLoader />}>
                 <DaytradeResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
               </Suspense>

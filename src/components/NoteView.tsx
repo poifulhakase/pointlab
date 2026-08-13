@@ -37,9 +37,9 @@ const ARTICLES: Article[] = [
   { genre: 'ぽいロボ', title: '戦略プレイブック', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'playbook' },
   // ── 地下室（研究記録）──────────────────────────────────────────
   // 🔴 会員限定。検証途中の生の記録なので、外向けの説明としては読ませない。
-  { genre: '地下室', title: '研究記録〜デイトレード', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
+  { genre: '地下室', title: 'デイトレード', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
   // 🔵 スイングトレードぶんは検証の途中。カードだけ先に置く（「近日公開」と出る）。
-  { genre: '地下室', title: '研究記録〜スイングトレード', url: null, thumb: null, memberOnly: true },
+  { genre: '地下室', title: 'スイングトレード', url: null, thumb: null, memberOnly: true },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },

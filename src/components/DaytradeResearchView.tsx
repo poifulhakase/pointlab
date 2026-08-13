@@ -1,4 +1,4 @@
-// 地下室 ＞ 研究記録〜デイトレード（2026-08-13）
+// 地下室 ＞ デイトレード（2026-08-13）
 //
 // 🔴 このページは「デイトレのやり方」ではなく**測った結果の記録**。
 //    ぽいロボの思想＝まず研究する。効かなかったことも、効かなかったと書いて残す。
@@ -72,7 +72,7 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
             width: 8, height: 8, borderRadius: '50%', background: '#ffd79a',
             boxShadow: '0 0 8px 3px rgba(255,205,130,0.5)', display: 'inline-block',
           }} />
-          地下室 / 研究記録〜デイトレード
+          地下室 / デイトレード
         </div>
         <button type="button" onClick={onClose} aria-label="閉じる"
           style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
