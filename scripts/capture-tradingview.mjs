@@ -146,10 +146,30 @@ async function main() {
       } catch {
         drawn = false
       }
+      // 🔴 AIに読ませる画像なので、**チャート以外は写さない**（2026-08-13 ユーザー指示）。
+      //    右のウォッチリストや左の描画ツールは判断材料にならないうえ、
+      //    銘柄名や価格が並ぶぶん、AIがそちらを読みに行く余地を作る。
+      // 🔵 表示を消したあと resize を投げるのは、TradingView が自前で幅を測り直して
+      //    チャートを広げてくれるため（消すだけだと右に空白が残る）。
+      await page.addStyleTag({
+        content: `
+          .layout__area--right, .widgetbar-wrap,
+          .layout__area--left, [data-name="drawing-toolbar"] { display: none !important; }
+        `,
+      })
+      await page.evaluate(() => window.dispatchEvent(new Event('resize')))
+
       await page.waitForTimeout(8000)
 
       const file = path.join(OUT_DIR, `chart_${shot.key}_${date}.png`)
-      await page.screenshot({ path: file, fullPage: false })
+      // 🔵 パネルを消しただけだとチャートは広がらず右に余白が残るので、
+      //    **中央のチャート領域だけを切り出して**撮る。取れなければ全体にフォールバックする。
+      const area = page.locator('.layout__area--center').first()
+      let clipped = false
+      try {
+        if (await area.count()) { await area.screenshot({ path: file }); clipped = true }
+      } catch { clipped = false }
+      if (!clipped) await page.screenshot({ path: file, fullPage: false })
       log(`[3] 撮影: ${file}`)
 
       // 🔴 ログイン切れの検知。
