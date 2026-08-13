@@ -303,22 +303,25 @@ const RULES: (Fig & { no: string; title: string; body: string })[] = [
 ]
 
 /** 修正波の型。3つとも「下げ」ではなく「持ち合い」も含むのが要点。 */
-const CORRECTIONS: (Fig & { name: string; body: string })[] = [
+const CORRECTIONS: (Fig & { name: string; body: string; detail: string })[] = [
   {
     name: 'ジグザグ（5-3-5）',
-    body: '深く速い調整。A で大きく落ち、B は浅く戻し、C が A より下まで伸びる。',
+    body: '深く速い調整。',
+    detail: 'A で大きく落ち、B は浅く戻し、C が A より下まで伸びる。5-3-5 の並びで、下げの勢いが残っているときに出やすい。',
     pts: [[0, 12], [30, 62], [52, 38], [100, 84]],
     labels: [null, 'A', 'B', 'C'],
   },
   {
     name: 'フラット（3-3-5）',
-    body: '横ばいの調整。B が A の始点近くまで戻り、C が A の底あたりで止まる。',
+    body: '横ばいの調整。',
+    detail: 'B が A の始点近くまで戻り、C が A の底あたりで止まる。3-3-5 の並び。値幅ではなく時間で調整する形。',
     pts: [[0, 16], [30, 62], [58, 22], [100, 66]],
     labels: [null, 'A', 'B', 'C'],
   },
   {
     name: 'トライアングル（3-3-3-3-3）',
-    body: '値幅が狭まっていく持ち合い。多くは第4波に現れ、抜けた先が最後の波。',
+    body: '値幅が狭まっていく持ち合い。',
+    detail: '3-3-3-3-3 の並び。多くは第4波に現れ、抜けた先が最後の波（第5波）になるとされる。',
     pts: [[0, 12], [20, 74], [38, 28], [56, 64], [72, 40], [86, 56], [100, 20]],
     labels: [null, 'A', 'B', 'C', 'D', 'E', null],
   },
@@ -390,9 +393,10 @@ function ElliottScroll({ c, dark, isMobile }: {
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
         }}>
-          {CORRECTIONS.map(w => (
+          {CORRECTIONS.map((w, i) => (
             <WaveCard key={w.name} c={c} dark={dark} isMobile={isMobile}
-              title={w.name} body={w.body}
+              id={`cp-wave-${w.name}`} no={`No.${String(i + 1).padStart(2, '0')}`}
+              title={w.name} body={w.body} detail={w.detail}
               fig={{ pts: w.pts, labels: w.labels, colorFrom: 1, height: isMobile ? 120 : 140 }} />
           ))}
         </div>
@@ -643,8 +647,8 @@ function useInView<T extends HTMLElement>(): [React.RefObject<T | null>, boolean
 }
 
 /** 巻二のカード（フォーメーション）。図は見えてから描かれる。 */
-function PatternCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
-  p: Pattern; idx: number; c: PanelColors; dark: boolean; isMobile: boolean
+function PatternCard({ p, idx, no, c, dark, isMobile, isOpen, onToggle }: {
+  p: Pattern; idx: number; no: number; c: PanelColors; dark: boolean; isMobile: boolean
   isOpen: boolean; onToggle: () => void
 }) {
   const [ref, show] = useInView<HTMLButtonElement>()
@@ -655,6 +659,7 @@ function PatternCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
   return (
     <button
       ref={ref}
+      id={`cp-form-${p.name}`}
       onClick={onToggle}
       className="cp-card"
       style={{
@@ -667,8 +672,13 @@ function PatternCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
         boxShadow: isOpen && dark ? `0 0 24px ${col}22` : undefined,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: c.sub, letterSpacing: '0.1em' }}>No.{String(no).padStart(2, '0')}</span>
         <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
+        <span style={{
+          fontSize: 9, color: c.sub, border: `1px solid ${c.border}`,
+          borderRadius: 20, padding: '1px 6px', letterSpacing: '0.06em',
+        }}>{(p.kind === 'top' || p.kind === 'bottom') ? '反転' : '継続'}</span>
         <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{KIND_LABEL[p.kind]}</span>
       </div>
 
@@ -746,8 +756,8 @@ function PatternCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
 }
 
 /** 巻一のカード（ローソク足）。1本ずつ順に灯る。 */
-function CandleCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
-  p: Candle; idx: number; c: PanelColors; dark: boolean; isMobile: boolean
+function CandleCard({ p, idx, no, c, dark, isMobile, isOpen, onToggle }: {
+  p: Candle; idx: number; no: number; c: PanelColors; dark: boolean; isMobile: boolean
   isOpen: boolean; onToggle: () => void
 }) {
   const [ref, show] = useInView<HTMLButtonElement>()
@@ -757,6 +767,7 @@ function CandleCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
   return (
     <button
       ref={ref}
+      id={`cp-candle-${p.name}`}
       onClick={onToggle}
       className="cp-card"
       style={{
@@ -770,6 +781,7 @@ function CandleCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: c.sub, letterSpacing: '0.1em' }}>No.{String(no).padStart(2, '0')}</span>
         <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
         <span style={{
           fontSize: 9, color: c.sub, border: `1px solid ${c.border}`,
@@ -796,23 +808,36 @@ function CandleCard({ p, idx, c, dark, isMobile, isOpen, onToggle }: {
 }
 
 /** 巻三のカード（波の図つき）。見えたときに波が描かれる。 */
-function WaveCard({ c, dark, isMobile, title, sub, body, fig, accent }: {
+function WaveCard({ c, dark, isMobile, title, sub, body, detail, fig, accent, no, id }: {
   c: PanelColors; dark: boolean; isMobile: boolean
   title?: string; sub?: string; body: React.ReactNode
+  /** タップで開く詳しい話。図鑑なので、表は1行・中身は開いてから（2026-08-13） */
+  detail?: React.ReactNode
   fig: Fig & { colorFrom?: number; height: number }
   accent?: boolean
+  /** 図鑑の通し番号 */
+  no?: string
+  id?: string
 }) {
   const [ref, show] = useInView<HTMLDivElement>()
+  const [open, setOpen] = useState(false)
   return (
-    <div ref={ref} className="cp-card" style={{
-      background: c.card, border: `1px solid ${accent ? c.accent : c.border}`, borderRadius: 12,
-      padding: isMobile ? 14 : 18,
-      opacity: show ? undefined : 0,
-      animation: show ? 'cpRise .5s ease both' : 'none',
-      boxShadow: accent && dark ? `0 0 24px ${c.accent}18` : undefined,
-    }}>
-      {(title || sub) && (
+    <div
+      ref={ref}
+      id={id}
+      className="cp-card"
+      onClick={detail ? () => setOpen(v => !v) : undefined}
+      style={{
+        background: c.card, border: `1px solid ${accent ? c.accent : c.border}`, borderRadius: 12,
+        padding: isMobile ? 14 : 18,
+        cursor: detail ? 'pointer' : undefined,
+        opacity: show ? undefined : 0,
+        animation: show ? 'cpRise .5s ease both' : 'none',
+        boxShadow: accent && dark ? `0 0 24px ${c.accent}18` : undefined,
+      }}>
+      {(title || sub || no) && (
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+          {no && <span style={{ fontSize: 10, color: c.sub, letterSpacing: '0.1em' }}>{no}</span>}
           {sub && <span style={{ fontSize: 10, letterSpacing: '0.14em', color: c.accent }}>{sub}</span>}
           {title && <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text }}>{title}</span>}
         </div>
@@ -820,6 +845,15 @@ function WaveCard({ c, dark, isMobile, title, sub, body, fig, accent }: {
       <WaveFigure pts={fig.pts} labels={fig.labels} levels={fig.levels} colorFrom={fig.colorFrom}
         c={c} dark={dark} height={fig.height} show={show} />
       <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.8, marginTop: 8 }}>{body}</div>
+      {detail && (open
+        ? (
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+            <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>詳しく</div>
+            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}>{detail}</div>
+          </div>
+        )
+        : <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで詳しく →</div>
+      )}
     </div>
   )
 }
@@ -833,32 +867,37 @@ function WaveCard({ c, dark, isMobile, title, sub, body, fig, accent }: {
 //    結果は `scripts/analyze-ichimoku.mjs` を走らせれば出る（当たらなかった）。画面には出さない。
 
 /** 波動論の5つの型。I→V→N と増えていき、P・Y は持ち合いの形。 */
-const ICHI_WAVES: (Fig & { name: string; body: string })[] = [
+const ICHI_WAVES: (Fig & { name: string; body: string; detail: string })[] = [
   {
     name: 'I波',
-    body: '上げ（または下げ）だけの一本調子。いちばん小さい単位で、これが積み重なって他の波になる。',
+    body: '一本調子の上げ（下げ）。',
+    detail: 'いちばん小さい単位。これが積み重なって V波・N波になる。',
     pts: [[0, 90], [100, 16]],
   },
   {
     name: 'V波',
-    body: '上げて下げる（または下げて上げる）。行って来いの形。',
+    body: '上げて下げる、行って来い。',
+    detail: '（または下げて上げる）。折り返し1回ぶんの波。',
     pts: [[0, 86], [50, 16], [100, 72]],
     labels: [null, null, null],
   },
   {
     name: 'N波',
-    body: '上げ→押し→上げ。**一目ではこれが基本形**で、他の波もN波の組み合わせとして数える。',
+    body: '上げ→押し→上げ。一目の基本形。',
+    detail: '他の波もN波の組み合わせとして数える。水準論の計算も、この A-B-C-D の並びを使う。',
     pts: [[0, 90], [32, 40], [60, 62], [100, 14]],
     labels: ['A', 'B', 'C', 'D'],
   },
   {
     name: 'P波',
-    body: '高値が切り下がり安値が切り上がる、先すぼまりの持ち合い（三角保ち合いと同じ形）。',
+    body: '先すぼまりの持ち合い。',
+    detail: '高値が切り下がり、安値が切り上がる。巻二の対称三角保ち合いと同じ形を、波の数え方の側から見たもの。',
     pts: [[0, 14], [16, 84], [34, 28], [50, 72], [66, 40], [82, 62], [100, 50]],
   },
   {
     name: 'Y波',
-    body: '高値も安値も広がっていく、先広がりの持ち合い。荒れている場面で出る。',
+    body: '先広がりの持ち合い。',
+    detail: '高値も安値も広がっていく。値動きが荒れている場面で出る。',
     pts: [[0, 50], [16, 40], [32, 62], [48, 26], [66, 76], [82, 14], [100, 88]],
   },
 ]
@@ -902,9 +941,10 @@ function IchimokuSection({ c, dark, isMobile }: { c: PanelColors; dark: boolean;
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
         }}>
-          {ICHI_WAVES.map(w => (
+          {ICHI_WAVES.map((w, i) => (
             <WaveCard key={w.name} c={c} dark={dark} isMobile={isMobile}
-              title={w.name} body={w.body}
+              id={`cp-wave-${w.name}`} no={`No.${String(i + 4).padStart(2, '0')}`}
+              title={w.name} body={w.body} detail={w.detail}
               fig={{ pts: w.pts, labels: w.labels, height: isMobile ? 120 : 140 }} />
           ))}
         </div>
@@ -948,6 +988,134 @@ function IchimokuSection({ c, dark, isMobile }: { c: PanelColors; dark: boolean;
   )
 }
 
+/** 図鑑の絞り込み。押した分類だけ残す。 */
+function FilterBar({ c, dark, isMobile, options, value, onChange }: {
+  c: PanelColors; dark: boolean; isMobile: boolean
+  options: { key: string; label: string; count: number }[]
+  value: string
+  onChange: (k: string) => void
+}) {
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: isMobile ? 14 : 18 }}>
+      {options.map(o => {
+        const on = value === o.key
+        return (
+          <button key={o.key} onClick={() => onChange(o.key)} style={{
+            display: 'flex', alignItems: 'baseline', gap: 6,
+            padding: isMobile ? '5px 10px' : '6px 13px', borderRadius: 20,
+            border: `1px solid ${on ? c.accent : c.border}`,
+            background: on ? (dark ? 'rgba(0,229,255,0.10)' : 'rgba(11,114,168,0.08)') : 'transparent',
+            color: on ? c.accent : c.sub, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: isMobile ? 11 : 12,
+            boxShadow: on && dark ? `0 0 14px ${c.accent}22` : undefined,
+            transition: 'border-color .15s, background .15s, color .15s',
+          }}>
+            <span>{o.label}</span>
+            <span style={{ fontSize: 9, opacity: 0.75 }}>{o.count}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** 索引の1枚。図だけを小さく並べ、押すとその項目へ飛ぶ。 */
+function IndexTile({ c, dark, no, name, onClick, children }: {
+  c: PanelColors; dark: boolean; no: string; name: string
+  onClick: () => void; children: React.ReactNode
+}) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4,
+        background: c.card, border: `1px solid ${hover ? c.accent : c.border}`,
+        borderRadius: 10, padding: 8, cursor: 'pointer', color: c.text, textAlign: 'left',
+        transform: hover ? 'translateY(-2px)' : 'none',
+        boxShadow: hover && dark ? `0 0 18px ${c.accent}22` : undefined,
+        transition: 'border-color .15s, transform .15s, box-shadow .15s',
+      }}>
+      <div style={{ position: 'relative' }}>{children}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+        <span style={{ fontSize: 8.5, color: c.sub, letterSpacing: '0.08em' }}>{no}</span>
+        <span style={{ fontSize: 10.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+      </div>
+    </button>
+  )
+}
+
+const IndexHead = ({ c, isMobile, no, name, sub, n }: {
+  c: PanelColors; isMobile: boolean; no: string; name: string; sub: string; n: number
+}) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '18px 0 10px', flexWrap: 'wrap' }}>
+    <span style={{ fontSize: 10, letterSpacing: '0.18em', color: c.accent }}>{no}</span>
+    <span style={{ fontSize: isMobile ? 15 : 17, fontWeight: 800, color: c.text }}>{name}</span>
+    <span style={{ fontSize: 11, color: c.sub }}>{sub}</span>
+    <span style={{ fontSize: 10, color: c.sub, marginLeft: 'auto' }}>{n} 点</span>
+  </div>
+)
+
+/** 索引：3巻の型を図だけで一覧する。 */
+function IndexView({ c, dark, isMobile, jump }: {
+  c: PanelColors; dark: boolean; isMobile: boolean
+  jump: (maki: 'candle' | 'form' | 'wave', name: string) => void
+}) {
+  const grid: React.CSSProperties = {
+    display: 'grid', gap: isMobile ? 8 : 10,
+    gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(132px, 1fr))',
+  }
+  // 🔴 見出しはレンダーのたびに作り直さない（module scope の IndexHead を使う）
+  const head = (no: string, name: string, sub: string, n: number) => (
+    <IndexHead c={c} isMobile={isMobile} no={no} name={name} sub={sub} n={n} />
+  )
+  const h = isMobile ? 62 : 74
+
+  return (
+    <div style={{ animation: 'cpRise .4s ease both' }}>
+      {head('巻一', '灯', 'ローソク足の型', CANDLES.length)}
+      <div style={grid}>
+        {CANDLES.map((p, i) => (
+          <IndexTile key={p.name} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={p.name}
+            onClick={() => jump('candle', p.name)}>
+            <CandleFigure bars={p.bars} c={c} dark={dark} height={h} show />
+          </IndexTile>
+        ))}
+      </div>
+
+      {head('巻二', '形', 'フォーメーション', PATTERNS.length)}
+      <div style={grid}>
+        {PATTERNS.map((p, i) => (
+          <IndexTile key={p.name} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={p.name}
+            onClick={() => jump('form', p.name)}>
+            <svg viewBox="0 0 100 100" width="100%" height={h} style={{ display: 'block' }}>
+              <polyline points={p.path.map(([x, y]) => `${x},${y}`).join(' ')}
+                fill="none" stroke={c.line} strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
+              {p.lines?.map((l, li) => (
+                <line key={li} x1={l.x1} y1={l.y} x2={l.x2} y2={l.y}
+                  stroke={(p.kind === 'bottom' || p.kind === 'cont-up') ? c.up : c.down}
+                  strokeWidth={1.6} strokeDasharray={l.kind === 'neck' ? '0' : '3 2'} />
+              ))}
+            </svg>
+          </IndexTile>
+        ))}
+      </div>
+
+      {head('巻三', '波', 'エリオット・一目', CORRECTIONS.length + ICHI_WAVES.length)}
+      <div style={grid}>
+        {[...CORRECTIONS, ...ICHI_WAVES].map((w, i) => (
+          <IndexTile key={w.name} c={c} dark={dark} no={`No.${String(i + 1).padStart(2, '0')}`} name={w.name}
+            onClick={() => jump('wave', w.name)}>
+            <WaveFigure pts={w.pts} c={c} dark={dark} height={h} show />
+          </IndexTile>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   const dark = theme === 'dark'
   const [open, setOpen] = useState<string | null>(null)
@@ -955,7 +1123,10 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   // 🔵 巻を分ける（2026-08-13）。**形**は機械的に定義でき、実際に26年で測れた。
   //    **波**（エリオット）は数え方が一意に決まらず、そもそも同じやり方で測れない。
   //    性質が違うものを同じ棚に並べると「どちらも同じ根拠」に見えてしまうので、巻で隔てる。
-  const [maki, setMaki] = useState<'candle' | 'form' | 'wave'>('candle')
+  const [maki, setMaki] = useState<'candle' | 'form' | 'wave' | 'index'>('candle')
+  // 図鑑なので**分類で絞り込める**ようにする（2026-08-13）。巻ごとに軸が違う。
+  const [fCandle, setFCandle] = useState('all')
+  const [fForm, setFForm] = useState('all')
 
   const c = {
     bg: dark ? '#04070f' : '#f6f8fc',
@@ -969,6 +1140,23 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
     line: dark ? 'rgba(226,240,252,0.92)' : '#22304a',
     stop: dark ? 'rgba(255,110,110,0.85)' : 'rgba(200,50,50,0.85)',
   }
+
+  // 🔵 索引から本文へ飛ぶ。絞り込みで隠れていると飛べないので、飛ぶ前に「すべて」に戻す。
+  const jump = (m: 'candle' | 'form' | 'wave', name: string) => {
+    setMaki(m)
+    if (m === 'candle') setFCandle('all')
+    if (m === 'form') setFForm('all')
+    setOpen(name)
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.getElementById(`cp-${m}-${name}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }))
+  }
+
+  const candleGroup = (n: string) => (n === '1本' ? '1' : n === '2本' ? '2' : '3')
+  const shownCandles = CANDLES.map((p, i) => ({ p, no: i + 1 }))
+    .filter(({ p }) => fCandle === 'all' || candleGroup(p.n) === fCandle)
+  const shownPatterns = PATTERNS.map((p, i) => ({ p, no: i + 1 }))
+    .filter(({ p }) => fForm === 'all' || (fForm === 'cont' ? p.kind.startsWith('cont') : p.kind === fForm))
 
   return (
     <div style={{
@@ -1009,7 +1197,8 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           ぽいロボ ▸ 波動の書
         </span>
         <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>
-          {maki === 'form' ? `${PATTERNS.length} 種` : maki === 'wave' ? '5-3' : `${CANDLES.length} 型`}
+          {maki === 'form' ? `${PATTERNS.length} 種` : maki === 'wave' ? '5-3'
+            : maki === 'index' ? `${CANDLES.length + PATTERNS.length + CORRECTIONS.length + ICHI_WAVES.length} 点` : `${CANDLES.length} 型`}
         </span>
         {/* 🔴 ヘッダー右端は**閉じる**（タイムマシンと同じ位置・同じ役目）。
             ヘルプは見出しの右に置く（2026-08-11 ユーザー指示）。 */}
@@ -1034,13 +1223,13 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
             fontSize: isMobile ? 64 : 120, fontWeight: 900, lineHeight: 1,
             color: 'transparent', WebkitTextStroke: `1px ${dark ? 'rgba(0,229,255,0.10)' : 'rgba(20,60,110,0.08)'}`,
             letterSpacing: '-0.04em', pointerEvents: 'none', userSelect: 'none',
-          }}>{maki === 'form' ? 'FORMATION' : maki === 'wave' ? 'ELLIOTT' : 'CANDLE'}</div>
+          }}>{maki === 'form' ? 'FORMATION' : maki === 'wave' ? 'ELLIOTT' : maki === 'index' ? 'INDEX' : 'CANDLE'}</div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{
               fontSize: 12, letterSpacing: '0.28em', color: c.accent, marginBottom: 8,
               textShadow: dark ? `0 0 12px ${c.accent}55` : undefined,
               animation: 'cpBlink 2.4s ease-in-out infinite',
-            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : maki === 'wave' ? 'ELLIOTT WAVE PRINCIPLE' : 'CANDLESTICK PATTERNS'}</div>
+            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : maki === 'wave' ? 'ELLIOTT WAVE PRINCIPLE' : maki === 'index' ? 'INDEX OF ALL FIGURES' : 'CANDLESTICK PATTERNS'}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <h1 style={{
                 fontSize: isMobile ? 26 : 40, fontWeight: 800, margin: 0, letterSpacing: '-0.01em',
@@ -1050,7 +1239,9 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
                   ? <>フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種</>
                   : maki === 'wave'
                     ? <>エリオット<span style={{ color: c.accent }}>波動</span></>
-                    : <>ローソク足<span style={{ color: c.accent }}>{CANDLES.length}</span>型</>}
+                    : maki === 'index'
+                      ? <>索<span style={{ color: c.accent }}>引</span></>
+                      : <>ローソク足<span style={{ color: c.accent }}>{CANDLES.length}</span>型</>}
               </h1>
               {/* 🔵 ? は巻一だけ。巻二には畳む中身が無いので出さない。 */}
               {maki === 'form' && <button
@@ -1074,6 +1265,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
             { key: 'candle' as const, no: '巻一', name: '灯', sub: 'ローソク足の型' },
             { key: 'form' as const, no: '巻二', name: '形', sub: 'フォーメーション16種' },
             { key: 'wave' as const, no: '巻三', name: '波', sub: 'エリオット波動・一目' },
+            { key: 'index' as const, no: '索引', name: '目', sub: '全ての型を一覧' },
           ]).map(t => {
             const on = maki === t.key
             return (
@@ -1134,23 +1326,41 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
 
         {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} />}
 
+        {maki === 'index' && <IndexView c={c} dark={dark} isMobile={isMobile} jump={jump} />}
+
         {/* 巻一・灯：1〜3本で読む型。巻二と同じカードの作りにそろえる（並べ方が変わると別物に見える）*/}
+        {maki === 'candle' && <FilterBar c={c} dark={dark} isMobile={isMobile} value={fCandle} onChange={setFCandle}
+          options={[
+            { key: 'all', label: 'すべて', count: CANDLES.length },
+            { key: '1', label: '1本', count: CANDLES.filter(p => candleGroup(p.n) === '1').length },
+            { key: '2', label: '2本', count: CANDLES.filter(p => candleGroup(p.n) === '2').length },
+            { key: '3', label: '3本以上', count: CANDLES.filter(p => candleGroup(p.n) === '3').length },
+          ]} />}
+
         {maki === 'candle' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
         }}>
-          {CANDLES.map((p, idx) => (
-            <CandleCard key={p.name} p={p} idx={idx} c={c} dark={dark} isMobile={isMobile}
+          {shownCandles.map(({ p, no }, idx) => (
+            <CandleCard key={p.name} p={p} idx={idx} no={no} c={c} dark={dark} isMobile={isMobile}
               isOpen={open === p.name} onToggle={() => setOpen(open === p.name ? null : p.name)} />
           ))}
         </div>}
+
+        {maki === 'form' && <FilterBar c={c} dark={dark} isMobile={isMobile} value={fForm} onChange={setFForm}
+          options={[
+            { key: 'all', label: 'すべて', count: PATTERNS.length },
+            { key: 'top', label: '天井', count: PATTERNS.filter(p => p.kind === 'top').length },
+            { key: 'bottom', label: '底', count: PATTERNS.filter(p => p.kind === 'bottom').length },
+            { key: 'cont', label: '継続', count: PATTERNS.filter(p => p.kind.startsWith('cont')).length },
+          ]} />}
 
         {maki === 'form' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
         }}>
-          {PATTERNS.map((p, idx) => (
-            <PatternCard key={p.name} p={p} idx={idx} c={c} dark={dark} isMobile={isMobile}
+          {shownPatterns.map(({ p, no }, idx) => (
+            <PatternCard key={p.name} p={p} idx={idx} no={no} c={c} dark={dark} isMobile={isMobile}
               isOpen={open === p.name} onToggle={() => setOpen(open === p.name ? null : p.name)} />
           ))}
         </div>}
