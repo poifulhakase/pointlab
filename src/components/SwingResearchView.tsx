@@ -26,17 +26,21 @@ const UNKNOWN = [
   '運用者の保有を読ませる意味があるか … 2026-08-13 に読めるようにしたばかり',
 ]
 
+// 🔵 見出し・本文は**毎レンダーで作り直さない**（コンポーネントの中で定義すると
+//    描き直しのたびに別物になり、React が中身を捨てて作り直す）。
+type TextProps = { c: { accent: string; sub: string }; isMobile: boolean; children: React.ReactNode }
+
+const Head = ({ c, isMobile, children }: TextProps) => (
+  <h3 style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.accent, letterSpacing: '0.06em', margin: '28px 0 10px' }}>{children}</h3>
+)
+const P = ({ c, isMobile, children }: TextProps) => (
+  <p style={{ fontSize: isMobile ? 12 : 13, lineHeight: 1.9, color: c.sub, margin: '0 0 10px' }}>{children}</p>
+)
+
 export default function SwingResearchView({ theme, isMobile, onClose }: Props) {
   const c = basementColors(theme)
   const pad = isMobile ? 14 : 24
   const mono = BASEMENT_MONO
-
-  const Head = ({ children }: { children: React.ReactNode }) => (
-    <h3 style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.accent, letterSpacing: '0.06em', margin: '28px 0 10px' }}>{children}</h3>
-  )
-  const P = ({ children }: { children: React.ReactNode }) => (
-    <p style={{ fontSize: isMobile ? 12 : 13, lineHeight: 1.9, color: c.sub, margin: '0 0 10px' }}>{children}</p>
-  )
 
   return (
     <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text, position: 'relative' }}>
@@ -65,10 +69,10 @@ export default function SwingResearchView({ theme, isMobile, onClose }: Props) {
             結論：<span style={{ color: c.ok }}>ルールとしては成立している。</span>
             <span style={{ color: c.trap }}>ただしAIがそれを上回るかは、まだ誰にも分からない。</span>
           </div>
-          <P>対照群（決定論ルール）は11年で CAGR 13% を出している。AIの判断がその上を行くかは、実トレード30件が貯まるまで判定できない。</P>
+          <P c={c} isMobile={isMobile}>対照群（決定論ルール）は11年で CAGR 13% を出している。AIの判断がその上を行くかは、実トレード30件が貯まるまで判定できない。</P>
         </div>
 
-        <Head>分かっていること</Head>
+        <Head c={c} isMobile={isMobile}>分かっていること</Head>
         <div style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: 'hidden' }}>
           {KNOWN.map((k, i) => (
             <div key={k.label} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 2 : 12, padding: '10px 12px', background: i % 2 ? 'transparent' : c.card, borderTop: i ? `1px solid ${c.border}` : 'none' }}>
@@ -81,21 +85,21 @@ export default function SwingResearchView({ theme, isMobile, onClose }: Props) {
           ))}
         </div>
 
-        <Head>まだ分かっていないこと</Head>
+        <Head c={c} isMobile={isMobile}>まだ分かっていないこと</Head>
         <ul style={{ margin: 0, paddingLeft: '1.2em', fontSize: isMobile ? 12 : 13, lineHeight: 1.95, color: c.sub }}>
           {UNKNOWN.map((u) => <li key={u} style={{ marginBottom: 6 }}>{u.replace(/\*\*/g, '')}</li>)}
         </ul>
 
-        <Head>いちばん大事な数字</Head>
-        <P>
+        <Head c={c} isMobile={isMobile}>いちばん大事な数字</Head>
+        <P c={c} isMobile={isMobile}>
           <strong>最大ドローダウン −46%</strong>。対照群は11年で CAGR 13% を出しているが、
           途中で<strong>資金が半分近くまで減る局面を通る</strong>。
           100万円なら一時的に54万円まで沈む計算で、そこで降りると成績は残らない。
           スイングで一番効くのは判断の精度ではなく、<strong>この谷を通り抜けられる金額で張ること</strong>。
         </P>
 
-        <Head>なぜ引けで建てるのか</Head>
-        <P>
+        <Head c={c} isMobile={isMobile}>なぜ引けで建てるのか</Head>
+        <P c={c} isMobile={isMobile}>
           日本株のリターンは<strong>オーバーナイト（引け→翌日の寄り）に集中</strong>していて、
           日中（寄り→引け）はほぼゼロ。26年の実測で 1倍あたり
           オーバーナイト <strong>+11.07%</strong>／日中 <strong>−4.90%</strong>／買い持ち +5.62%。
@@ -103,15 +107,15 @@ export default function SwingResearchView({ theme, isMobile, onClose }: Props) {
           15:00に判断して<strong>引成で建てる</strong>形にしている（同じルールで実測 CAGR +8.00% → +10.33%）。
         </P>
 
-        <Head>需給シグナル（TEV）の現在地</Head>
-        <P>
+        <Head c={c} isMobile={isMobile}>需給シグナル（TEV）の現在地</Head>
+        <P c={c} isMobile={isMobile}>
           52週で全体47% → <strong>五分五分（確信度52%以下）を出さないようにして63%</strong>。
           🔴 ただし閾値を同じデータで決めているので、実運用ではこれより低く出る。
           見送った週も方向は記録し続けているので、標本が増えたら測り直せる。
         </P>
 
-        <Head>これから</Head>
-        <P>
+        <Head c={c} isMobile={isMobile}>これから</Head>
+        <P c={c} isMobile={isMobile}>
           <strong>30トレード貯まるまで、設計は動かさない。</strong>
           途中でルールを変えると、それまでの記録が比較に使えなくなる。
           時間軸を変える（デイトレ化する）のも同じ理由で保留している。
