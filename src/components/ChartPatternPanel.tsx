@@ -438,6 +438,195 @@ function ElliottScroll({ c, dark, isMobile }: {
   )
 }
 
+// ── 巻三・灯（ローソク足の型）─────────────────────────────────────────────
+//
+// 🔵 巻一「形」が数十本で作る図形、巻二「波」が数え方の話なのに対して、
+//    ここは**1〜3本で読む**いちばん短い足あと。粒度が違うので巻を分ける。
+// 🔵 酒田五法のうち 三川（明星）・三空・三兵・三法 はここに入る。
+//    残る「三山」は三尊そのものなので巻一に置いてある（同じものを別の粒度で見ている）。
+// 🔴 巻一と同じで、**載っているのは「そう言われている」という話**。
+//    ローソクの型は成立日が機械的に決まるので、後から26年で測れる（`scripts/analyze-candles.mjs` 予定）。
+
+/** 1本のローソク。0-100 の価格座標（大きいほど高い）。 */
+type Bar = { o: number; h: number; l: number; c: number }
+
+type Candle = {
+  name: string
+  /** 何本で見る型か */
+  n: string
+  kind: 'top' | 'bottom' | 'cont-up' | 'cont-down' | 'neutral'
+  says: string
+  how: string
+  bars: Bar[]
+}
+
+const CANDLE_KIND: Record<Candle['kind'], string> = {
+  top: '天井（下落へ）',
+  bottom: '底（上昇へ）',
+  'cont-up': '上昇の途中',
+  'cont-down': '下落の途中',
+  neutral: '迷い（どちらへも）',
+}
+
+const CANDLES: Candle[] = [
+  // ── 1本で読む ──
+  {
+    name: '大陽線', n: '1本', kind: 'cont-up',
+    says: '始値から終値までまっすぐ上げた1本。買いが一日中優勢だった跡。',
+    how: '実体が直近の足よりはっきり長い／ヒゲが短い。安値圏で出れば転換、上げの途中なら継続。',
+    bars: [{ o: 20, h: 92, l: 16, c: 88 }],
+  },
+  {
+    name: '大陰線', n: '1本', kind: 'cont-down',
+    says: '始値から終値までまっすぐ下げた1本。売りが一日中優勢だった跡。',
+    how: '実体が長くヒゲが短い／高値圏で出れば天井のサインとされる。',
+    bars: [{ o: 88, h: 92, l: 14, c: 20 }],
+  },
+  {
+    name: '十字線（同時線）', n: '1本', kind: 'neutral',
+    says: '始値と終値がほぼ同じ。買いと売りが押し合って決着がつかなかった。',
+    how: '実体がほとんど無い／トレンドの端で出ると転換の目印にされる。持ち合いの中では意味が薄い。',
+    bars: [{ o: 52, h: 84, l: 20, c: 50 }],
+  },
+  {
+    name: 'カラカサ（ハンマー）', n: '1本', kind: 'bottom',
+    says: '長い下ヒゲ。一度大きく売られたが、そこから買い戻された跡。',
+    how: '下ヒゲが実体の2倍以上／上ヒゲはほぼ無い。🔴 高値圏で同じ形が出たら「首吊り線」と呼ばれ意味が逆になる。',
+    bars: [{ o: 66, h: 74, l: 14, c: 70 }],
+  },
+  {
+    name: 'トンカチ（流れ星）', n: '1本', kind: 'top',
+    says: '長い上ヒゲ。一度買われたが、そこから売り戻された跡。',
+    how: '上ヒゲが実体の2倍以上／下ヒゲはほぼ無い。安値圏で出た場合は「たぐり線」で意味が逆。',
+    bars: [{ o: 30, h: 88, l: 24, c: 34 }],
+  },
+  {
+    name: 'コマ', n: '1本', kind: 'neutral',
+    says: '小さい実体に上下のヒゲ。方向が定まらない一日。',
+    how: '実体もヒゲも小さい／単独では判断材料にならず、次の1本とセットで見る。',
+    bars: [{ o: 46, h: 74, l: 28, c: 54 }],
+  },
+
+  // ── 2本で読む ──
+  {
+    name: '包み線（抱き線）', n: '2本', kind: 'bottom',
+    says: '2本目が1本目をすっぽり包む。前日の動きを全部飲み込むほど力が入れ替わった。',
+    how: '2本目の実体が1本目の実体を上下とも包む／安値圏で陽が陰を包めば買い、高値圏で陰が陽を包めば売り。',
+    bars: [{ o: 62, h: 66, l: 44, c: 46 }, { o: 40, h: 76, l: 36, c: 72 }],
+  },
+  {
+    name: 'はらみ線', n: '2本', kind: 'neutral',
+    says: '2本目が1本目の内側に収まる。大きく動いた翌日に動きが止まった＝勢いが切れた合図。',
+    how: '2本目の実体が1本目の実体の中に完全に入る／包み線と逆の並び。',
+    bars: [{ o: 82, h: 86, l: 30, c: 34 }, { o: 44, h: 56, l: 40, c: 52 }],
+  },
+  {
+    name: 'かぶせ線', n: '2本', kind: 'top',
+    says: '陽線の翌日、上に窓を開けて始まったのに、前日の実体の半分より下で引けた。',
+    how: '2本目は1本目の高値より上で寄り、1本目の実体の中心より下で引ける／高値圏で意味を持つ。',
+    bars: [{ o: 30, h: 74, l: 26, c: 70 }, { o: 80, h: 84, l: 40, c: 46 }],
+  },
+  {
+    name: '切り込み線', n: '2本', kind: 'bottom',
+    says: 'かぶせ線の逆。下に窓を開けて始まったのに、前日の実体の半分より上まで戻した。',
+    how: '2本目は1本目の安値より下で寄り、1本目の実体の中心より上で引ける／安値圏で意味を持つ。',
+    bars: [{ o: 74, h: 78, l: 26, c: 30 }, { o: 20, h: 62, l: 18, c: 58 }],
+  },
+  {
+    name: '毛抜き天井', n: '2本', kind: 'top',
+    says: '2本の高値がぴたりとそろう。同じ値段で2度はね返された。',
+    how: '高値が同値（ヒゲの先がそろう）／上昇のあとに出たものを指す。',
+    bars: [{ o: 40, h: 84, l: 36, c: 78 }, { o: 76, h: 84, l: 44, c: 48 }],
+  },
+  {
+    name: '毛抜き底', n: '2本', kind: 'bottom',
+    says: '2本の安値がぴたりとそろう。同じ値段で2度支えられた。',
+    how: '安値が同値／下落のあとに出たものを指す。',
+    bars: [{ o: 60, h: 64, l: 18, c: 22 }, { o: 24, h: 56, l: 18, c: 52 }],
+  },
+
+  // ── 3本以上で読む ──
+  {
+    name: '明けの明星（三川）', n: '3本', kind: 'bottom',
+    says: '大陰線 → 小さな星 → 大陽線。下げが止まり、間の一日を挟んで買いが戻った。',
+    how: '真ん中の足は上下から離れて小さい／3本目が1本目の実体の半分より上まで戻す。酒田五法「三川」。',
+    bars: [{ o: 82, h: 86, l: 36, c: 40 }, { o: 26, h: 32, l: 20, c: 24 }, { o: 38, h: 80, l: 34, c: 76 }],
+  },
+  {
+    name: '宵の明星', n: '3本', kind: 'top',
+    says: '大陽線 → 小さな星 → 大陰線。明けの明星の裏返しで、上げが止まった形。',
+    how: '真ん中の足が上に離れて小さい／3本目が1本目の実体の半分より下まで沈む。',
+    bars: [{ o: 24, h: 70, l: 20, c: 66 }, { o: 78, h: 86, l: 74, c: 82 }, { o: 64, h: 68, l: 24, c: 28 }],
+  },
+  {
+    name: '赤三兵', n: '3本', kind: 'cont-up',
+    says: '陽線が3本、少しずつ切り上がる。買いが続いている状態。酒田五法「三兵」。',
+    how: '3本とも陽線／終値が前日より高い。🔴 3本目に長い上ヒゲが出たら「赤三兵先詰まり」で逆に警戒。',
+    bars: [{ o: 20, h: 44, l: 16, c: 40 }, { o: 36, h: 62, l: 32, c: 58 }, { o: 54, h: 82, l: 50, c: 78 }],
+  },
+  {
+    name: '三羽烏（黒三兵）', n: '3本', kind: 'cont-down',
+    says: '陰線が3本、少しずつ切り下がる。売りが続いている状態。',
+    how: '3本とも陰線／終値が前日より安い／高値圏から始まると下げが長引くとされる。',
+    bars: [{ o: 82, h: 86, l: 58, c: 60 }, { o: 64, h: 68, l: 40, c: 42 }, { o: 46, h: 50, l: 20, c: 22 }],
+  },
+  {
+    name: '三空踏み上げ', n: '4本', kind: 'top',
+    says: '窓を3つ開けて一気に上げた形。買いが行き過ぎているので、酒田では**売り場**とされる。',
+    how: '連続する足のあいだに空（窓）が3つ／下げで同じ形になったものが「三空叩き込み」で買い場。',
+    bars: [{ o: 16, h: 30, l: 12, c: 28 }, { o: 36, h: 50, l: 34, c: 48 }, { o: 56, h: 70, l: 54, c: 68 }, { o: 76, h: 92, l: 74, c: 90 }],
+  },
+  {
+    name: '上げ三法', n: '5本', kind: 'cont-up',
+    says: '大陽線のあと小さな足で3日休み、また大陽線で上抜ける。「休むも相場」の形。酒田五法「三法」。',
+    how: '間の小さい足が1本目の値幅の中に収まる／最後の足が1本目の高値を上抜けて成立。下向きが「下げ三法」。',
+    bars: [
+      { o: 14, h: 60, l: 10, c: 56 },
+      { o: 52, h: 56, l: 44, c: 46 }, { o: 48, h: 52, l: 40, c: 42 }, { o: 46, h: 50, l: 38, c: 40 },
+      { o: 44, h: 94, l: 40, c: 90 },
+    ],
+  },
+]
+
+/** ローソク足の図。0-100 の価格座標を上下反転して描く。 */
+function CandleFigure({ bars, c, dark, height, delay = 0 }: {
+  bars: Bar[]
+  c: { up: string; down: string; line: string }
+  dark: boolean
+  height: number
+  delay?: number
+}) {
+  const n = bars.length
+  const slot = 100 / n
+  const bw = Math.min(slot * 0.46, 13)
+
+  return (
+    <svg viewBox="0 0 100 100" width="100%" height={height} style={{ display: 'block', overflow: 'visible' }}>
+      {bars.map((b, i) => {
+        const cx = slot * (i + 0.5)
+        const up = b.c > b.o
+        const doji = Math.abs(b.c - b.o) < 2.5
+        const col = doji ? c.line : up ? c.up : c.down
+        const top = 100 - Math.max(b.o, b.c)
+        const h = Math.max(Math.abs(b.c - b.o), 1.6)
+        return (
+          <g key={i} style={{
+            opacity: 0, animation: `cpFade .42s ease ${delay + i * 0.13}s forwards`,
+            filter: dark ? `drop-shadow(0 0 4px ${col}66)` : undefined,
+          }}>
+            {/* ヒゲ */}
+            <line x1={cx} y1={100 - b.h} x2={cx} y2={100 - b.l} stroke={col} strokeWidth={1.5} strokeLinecap="round" />
+            {/* 実体（陽は塗り、陰は塗り＋濃い枠で日本式の見た目に寄せる）*/}
+            <rect x={cx - bw / 2} y={top} width={bw} height={h} rx={1}
+              fill={up ? col : col} fillOpacity={up ? 0.9 : 0.55}
+              stroke={col} strokeWidth={1.2} />
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   const dark = theme === 'dark'
   const [open, setOpen] = useState<string | null>(null)
@@ -445,7 +634,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   // 🔵 巻を分ける（2026-08-13）。**形**は機械的に定義でき、実際に26年で測れた。
   //    **波**（エリオット）は数え方が一意に決まらず、そもそも同じやり方で測れない。
   //    性質が違うものを同じ棚に並べると「どちらも同じ根拠」に見えてしまうので、巻で隔てる。
-  const [maki, setMaki] = useState<'form' | 'wave'>('form')
+  const [maki, setMaki] = useState<'form' | 'wave' | 'candle'>('form')
 
   const c = {
     bg: dark ? '#04070f' : '#f6f8fc',
@@ -500,7 +689,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           ぽいロボ ▸ 波動の書
         </span>
         <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>
-          {maki === 'form' ? `${PATTERNS.length} 種` : '5-3'}
+          {maki === 'form' ? `${PATTERNS.length} 種` : maki === 'wave' ? '5-3' : `${CANDLES.length} 型`}
         </span>
         {/* 🔴 ヘッダー右端は**閉じる**（タイムマシンと同じ位置・同じ役目）。
             ヘルプは見出しの右に置く（2026-08-11 ユーザー指示）。 */}
@@ -525,13 +714,13 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
             fontSize: isMobile ? 64 : 120, fontWeight: 900, lineHeight: 1,
             color: 'transparent', WebkitTextStroke: `1px ${dark ? 'rgba(0,229,255,0.10)' : 'rgba(20,60,110,0.08)'}`,
             letterSpacing: '-0.04em', pointerEvents: 'none', userSelect: 'none',
-          }}>{maki === 'form' ? 'FORMATION' : 'ELLIOTT'}</div>
+          }}>{maki === 'form' ? 'FORMATION' : maki === 'wave' ? 'ELLIOTT' : 'CANDLE'}</div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{
               fontSize: 12, letterSpacing: '0.28em', color: c.accent, marginBottom: 8,
               textShadow: dark ? `0 0 12px ${c.accent}55` : undefined,
               animation: 'cpBlink 2.4s ease-in-out infinite',
-            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : 'ELLIOTT WAVE PRINCIPLE'}</div>
+            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : maki === 'wave' ? 'ELLIOTT WAVE PRINCIPLE' : 'CANDLESTICK PATTERNS'}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <h1 style={{
                 fontSize: isMobile ? 26 : 40, fontWeight: 800, margin: 0, letterSpacing: '-0.01em',
@@ -539,7 +728,9 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
               }}>
                 {maki === 'form'
                   ? <>フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種</>
-                  : <>エリオット<span style={{ color: c.accent }}>波動</span></>}
+                  : maki === 'wave'
+                    ? <>エリオット<span style={{ color: c.accent }}>波動</span></>
+                    : <>ローソク足<span style={{ color: c.accent }}>{CANDLES.length}</span>型</>}
               </h1>
               {/* 🔵 ? は巻一だけ。巻二には畳む中身が無いので出さない。 */}
               {maki === 'form' && <button
@@ -562,6 +753,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           {([
             { key: 'form' as const, no: '巻一', name: '形', sub: 'フォーメーション16種' },
             { key: 'wave' as const, no: '巻二', name: '波', sub: 'エリオット波動' },
+            { key: 'candle' as const, no: '巻三', name: '灯', sub: 'ローソク足の型' },
           ]).map(t => {
             const on = maki === t.key
             return (
@@ -621,6 +813,55 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
         )}
 
         {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} />}
+
+        {/* 巻三・灯：1〜3本で読む型。巻一と同じカードの作りにそろえる（並べ方が変わると別物に見える）*/}
+        {maki === 'candle' && <div style={{
+          display: 'grid', gap: isMobile ? 12 : 16,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        }}>
+          {CANDLES.map((p, idx) => {
+            const col = p.kind === 'neutral' ? c.line : (p.kind === 'bottom' || p.kind === 'cont-up') ? c.up : c.down
+            const isOpen = open === p.name
+            return (
+              <button
+                key={p.name}
+                onClick={() => setOpen(isOpen ? null : p.name)}
+                className="cp-card"
+                style={{
+                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'stretch',
+                  textAlign: 'left', background: c.card, border: `1px solid ${isOpen ? col : c.border}`,
+                  borderRadius: 12, padding: 14, cursor: 'pointer', color: c.text,
+                  transition: 'border-color .15s, transform .15s, box-shadow .15s',
+                  animationDelay: `${idx * 0.04}s`,
+                  boxShadow: isOpen && dark ? `0 0 24px ${col}22` : undefined,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700 }}>{p.name}</span>
+                  <span style={{
+                    fontSize: 9, color: c.sub, border: `1px solid ${c.border}`,
+                    borderRadius: 20, padding: '1px 6px', letterSpacing: '0.06em',
+                  }}>{p.n}</span>
+                  <span style={{ fontSize: 10, color: col, letterSpacing: '0.06em' }}>{CANDLE_KIND[p.kind]}</span>
+                </div>
+
+                <CandleFigure bars={p.bars} c={c} dark={dark} height={isMobile ? 140 : 170} delay={idx * 0.05} />
+
+                <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
+
+                {isOpen && (
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+                    <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
+                    <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
+                  </div>
+                )}
+                {!isOpen && (
+                  <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>
+                )}
+              </button>
+            )
+          })}
+        </div>}
 
         {maki === 'form' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
