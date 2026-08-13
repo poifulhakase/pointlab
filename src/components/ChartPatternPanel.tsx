@@ -341,32 +341,13 @@ const WT = ({ c, isMobile, children }: { c: WaveColors; isMobile: boolean; child
   <div style={{ fontSize: isMobile ? 12 : 13, color: c.sub, lineHeight: 1.9 }}>{children}</div>
 )
 
-function ElliottScroll({ c, dark, isMobile, detail }: {
+function ElliottScroll({ c, dark, isMobile }: {
   c: WaveColors
   dark: boolean
   isMobile: boolean
-  detail: boolean
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18, animation: 'cpRise .4s ease both' }}>
-
-      {/* 🔴 立場は畳まない。冒頭に必ず出す。 */}
-      <div style={{
-        border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
-        background: c.card, borderRadius: 8, padding: isMobile ? 12 : 16,
-        fontSize: isMobile ? 12 : 13, lineHeight: 1.9, color: c.sub,
-      }}>
-        <div style={{ fontWeight: 700, color: c.text, marginBottom: 6 }}>この巻の立場</div>
-        エリオット波動は<b style={{ color: c.text }}>ぽいロボの判断には使いません</b>。
-        巻一の形は「ネックラインを割った日」のように機械的に決められるので26年ぶんを測れましたが、
-        波は<b style={{ color: c.stop }}>数え方が一意に決まりません</b>。
-        同じチャートでも人によって「今は第3波」「いや第1波」と割れ、
-        <b style={{ color: c.text }}>後から見れば必ず綺麗に数えられる</b>——つまり測ろうとすると答えが先に決まってしまいます。
-        <br />
-        ここに置くのは、<b style={{ color: c.text }}>相場を語るための語彙</b>としてです。
-        「上げの三つ目の途中で、そろそろ息切れしそう」と長く言う代わりに「3波の終わりかけ」と言える。
-        それ以上の意味は持たせていません。
-      </div>
 
       {/* 全体像 */}
       <WCard c={c} dark={dark} isMobile={isMobile} accent>
@@ -453,27 +434,6 @@ function ElliottScroll({ c, dark, isMobile, detail }: {
         </div>
       </WCard>
 
-      {/* なぜ判断に使わないか（? で詳細） */}
-      <WCard c={c} dark={dark} isMobile={isMobile}>
-        <WH c={c}>▶ なぜ ぽいロボは数えないのか</WH>
-        <WT c={c} isMobile={isMobile}>
-          数え方が一つに決まらない道具は、<b style={{ color: c.text }}>当たったかどうかを後から判定できません</b>。
-          外れたときに「数え方が違っただけ」と言えてしまうからです。
-          ぽいロボは<b style={{ color: c.text }}>外れたと分かる形</b>でしか判断を出さない、という方針で作ってあります
-          （需給シグナルは毎週勝敗が付き、記録が残る）。
-        </WT>
-        {detail && (
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
-            <WT c={c} isMobile={isMobile}>
-              🔴 もし将来これを検証するなら、<b style={{ color: c.text }}>カウントを機械が一意に決める規則</b>
-              （ピボットの取り方・波の最小値幅・三つの掟の判定）を先に固定し、
-              それを26年に当てる必要があります。人が数えた波を後から集めても、それは検証になりません。
-              <br />
-              🔵 巻一と同じ土俵に乗せられた時点で、この巻にも実測を併記します。
-            </WT>
-          </div>
-        )}
-      </WCard>
     </div>
   )
 }
@@ -581,7 +541,8 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
                   ? <>フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種</>
                   : <>エリオット<span style={{ color: c.accent }}>波動</span></>}
               </h1>
-              <button
+              {/* 🔵 ? は巻一だけ。巻二には畳む中身が無いので出さない。 */}
+              {maki === 'form' && <button
                 onClick={() => setHelp(v => !v)}
                 aria-label="このページについて"
                 style={{
@@ -591,7 +552,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
                   background: help ? (dark ? 'rgba(0,229,255,0.14)' : 'rgba(11,114,168,0.12)') : 'transparent',
                   color: c.accent,
                 }}
-              >?</button>
+              >?</button>}
             </div>
           </div>
         </div>
@@ -659,7 +620,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           </div>
         )}
 
-        {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} detail={help} />}
+        {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} />}
 
         {maki === 'form' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
