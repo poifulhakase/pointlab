@@ -14,6 +14,8 @@ type Props = {
   onOpenPlaybook?: () => void
   onOpenTimeMachine?: () => void
   onOpenChartPattern?: () => void
+  onOpenDaytrade?: () => void
+  isMember?: boolean
 }
 
 type Article = {
@@ -22,7 +24,9 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine' | 'chartpattern'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine' | 'chartpattern' | 'daytrade'
+  /** 会員（またはメンバー）だけに見せるカード。研究途中の記録など */
+  memberOnly?: boolean
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -31,6 +35,9 @@ const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
   { genre: 'ぽいロボ', title: '戦略プレイブック', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'playbook' },
+  // ── 研究記録 ──────────────────────────────────────────────────
+  // 🔴 会員限定。検証途中の生の記録なので、外向けの説明としては読ませない。
+  { genre: '研究記録', title: 'デイトレ', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
@@ -60,7 +67,7 @@ const ARTICLES: Article[] = [
   { genre: '未来ガジェット', title: 'フォーメーション分析', url: null, thumb: null, internalAction: 'chartpattern' },
 ]
 
-const GENRES = ['ぽいロボ', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
+const GENRES = ['ぽいロボ', '研究記録', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
 
 // サムネイル画像が未設定のカード用：全カード共通のプレースホルダー
 function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
@@ -124,7 +131,7 @@ function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
-function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern }: {
+function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade }: {
   article: Article
   isMobile: boolean
   theme: 'dark' | 'light'
@@ -138,6 +145,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   onOpenPlaybook?: () => void
   onOpenTimeMachine?: () => void
   onOpenChartPattern?: () => void
+  onOpenDaytrade?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -154,6 +162,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
     if (article.internalAction === 'playbook')  { onOpenPlaybook?.();  return }
     if (article.internalAction === 'timemachine') { onOpenTimeMachine?.(); return }
     if (article.internalAction === 'chartpattern') { onOpenChartPattern?.(); return }
+    if (article.internalAction === 'daytrade') { onOpenDaytrade?.(); return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -197,11 +206,13 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade }: Props) {
   // バックテスト等は検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
   // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
     if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest') && !isAdmin) return false
+    // 🔴 研究記録は**管理者か会員だけ**。検証途中の生の数字なので、外向けには出さない。
+    if (a.memberOnly && !isAdmin && !isMember) return false
     return true
   })
 
@@ -219,7 +230,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, onOpenManual, onOpe
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} onOpenDaytrade={onOpenDaytrade} />
                   ))}
                 </div>
               </section>

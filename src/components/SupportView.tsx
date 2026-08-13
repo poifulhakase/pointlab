@@ -31,6 +31,7 @@ type Props = {
   onOpenPlaybook?: () => void
   onOpenTimeMachine?: () => void
   onOpenChartPattern?: () => void
+  onOpenDaytrade?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant') => void
   onOpenAccount?: () => void
   onToggleTheme?: () => void
@@ -344,7 +345,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const isAdmin     = isAdminEmail(user?.email)
 
   const [visible,       setVisible]       = useState(false)
@@ -1106,6 +1107,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                 <Suspense fallback={<ViewLoader />}>
                   <NoteView theme={theme} isMobile={isMobile}
                     isAdmin={isAdmin}
+                    isMember={isMember}
                     onOpenManual={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenManual?.() }}
                     onOpenLegal={(tab) => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenLegal?.(tab) }}
                     onOpenBacktest={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenBacktest?.() }}
@@ -1116,6 +1118,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                     onOpenPlaybook={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenPlaybook?.() }}
                     onOpenTimeMachine={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenTimeMachine?.() }}
                     onOpenChartPattern={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenChartPattern?.() }}
+                    onOpenDaytrade={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenDaytrade?.() }}
                   />
                 </Suspense>
               )}
