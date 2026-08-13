@@ -10,6 +10,12 @@ export type WeeklyEntry = {
   foreign4w_pct: number | null
   cot_pct: number | null
   signal: 'bull' | 'bear' | 'neutral'
+  /** 確信度が五分五分（52%以下）でシグナルを見送った週（★2026-08-13） */
+  low_conviction?: boolean
+  /** 見送らなかった場合に出ていた方向（ゲートの効き目を後から検証するため） */
+  shadow_signal?: 'bull' | 'bear' | 'neutral'
+  /** その方向が当たっていたか（見送った週のみ意味がある） */
+  shadow_win?: boolean | null
   nk_close: number | null
   price_change_pct: number | null
   win: boolean | null

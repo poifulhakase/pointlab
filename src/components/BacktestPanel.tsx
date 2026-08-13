@@ -170,6 +170,10 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
           const allSig     = data.weekly_log.filter(w => w.signal !== 'neutral' && w.win !== null)
           const noExh      = allSig.filter(w => inertiaPhase(w) !== 'exhausted')
           const strongOnly = allSig.filter(w => inertiaPhase(w) === 'strong')
+          // ★2026-08-13 五分五分ゲート：見送った週と、「もし出していたら」の成績。
+          //   🔵 中立が増えた理由を読む人に説明できないと、ただ勝率が上がったように見える。
+          const skipped   = data.weekly_log.filter(w => w.low_conviction && w.shadow_signal && w.shadow_signal !== 'neutral' && w.shadow_win !== null)
+          const skippedWr = skipped.length ? Math.round(skipped.filter(w => w.shadow_win).length / skipped.length * 100) : null
           const regimeRows = [
             { label: '全シグナル', entries: allSig },
             { label: '枯渇圏除外', entries: noExh },
@@ -181,6 +185,14 @@ export function BacktestPanel({ theme, isMobile, onClose }: Props) {
               <div style={{ flexShrink: 0, fontSize: isMobile ? 9 : 10, color: c.DIM, fontFamily: mono, letterSpacing: '0.10em' }}>
                 {data_range.from} ▸ {data_range.to}&nbsp;&nbsp;{summary.total_weeks}週&nbsp;&nbsp;|&nbsp;&nbsp;{new Date(computed_at).toLocaleDateString('ja-JP')} 算出
               </div>
+
+              {/* 五分五分ゲートの説明（中立が増えた理由を必ず添える） */}
+              {skippedWr !== null && (
+                <div style={{ flexShrink: 0, fontSize: isMobile ? 9 : 10, lineHeight: 1.7, color: c.DIM, fontFamily: mono, letterSpacing: '0.04em' }}>
+                  確信度52%以下（五分五分）は<strong style={{ color: c.ACCENT }}>シグナルを出していません</strong>。
+                  見送った{skipped.length}週の方向は実勝率{skippedWr}%でした。
+                </div>
+              )}
 
               {/* Summary cards（4列固定） */}
               <div style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: isMobile ? 6 : 10 }}>
