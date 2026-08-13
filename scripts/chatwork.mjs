@@ -145,25 +145,42 @@ export function isImage(filename) {
  *    ファイル名に含める運用にする。判別できないものは「保有画面」として扱う
  *    （証券アプリのキャプチャをそのまま投げる方が多いため）。
  *
- * @returns {{ chart: object|null, position: object|null }}
+ * 🔴 チャートは**日足と週足の2枚**を別々に返す（2026-08-13）。
+ *    撮影側は毎日 `chart_D_YYYY-MM-DD.png` と `chart_W_...` の2枚を上げているのに、
+ *    受け取り側が「最初に見つけた1枚」しか使っておらず、**日によって日足か週足の
+ *    どちらか片方しか見ていなかった**（8/12は週足・8/13は日足を拾っていた）。
+ *
+ * @returns {{ chart: object|null, chartDaily: object|null, chartWeekly: object|null, position: object|null }}
  */
 export async function fetchLatestImages({ roomId, token, maxAgeDays = 10 } = {}) {
   const files = await listFiles({ roomId, token })
   const now = Math.floor(Date.now() / 1000)
   const limit = maxAgeDays * 86400
 
-  let chart = null
+  let chartDaily = null
+  let chartWeekly = null
+  let chartOther = null
   let position = null
   for (const f of files) {
     if (!isImage(f.filename)) continue
     if (f.upload_time && now - f.upload_time > limit) break   // 新しい順なので打ち切ってよい
     const name = String(f.filename).toLowerCase()
     const isChart = /chart|tv|tradingview|チャート/.test(name)
-    if (isChart) { if (!chart) chart = f }
-    else if (!position) position = f
-    if (chart && position) break
+    if (isChart) {
+      // 撮影側の名前は chart_D_YYYY-MM-DD.png / chart_W_...。人が投げる画像は判別できないので other。
+      if (/_w_|週足|weekly/.test(name)) { if (!chartWeekly) chartWeekly = f }
+      else if (/_d_|日足|daily/.test(name)) { if (!chartDaily) chartDaily = f }
+      else if (!chartOther) chartOther = f
+    } else if (!position) {
+      position = f
+    }
+    if (chartDaily && chartWeekly && position) break
   }
-  return { chart, position }
+
+  // 🔵 名前で判別できない1枚しか無いときは、それを日足として扱う（従来の動き）。
+  if (!chartDaily && !chartWeekly && chartOther) chartDaily = chartOther
+
+  return { chart: chartDaily ?? chartWeekly, chartDaily, chartWeekly, position }
 }
 
 /** upload_time（秒）から「何日前か」を出す */

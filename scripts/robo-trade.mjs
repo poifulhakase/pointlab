@@ -84,21 +84,26 @@ function saveJson(p, obj) {
 async function loadImages() {
   if (!process.env.CHATWORK_API_TOKEN || !process.env.CHATWORK_ROOM_ID) {
     log('⚠ Chatwork の設定が無い → 画像なしで進む')
-    return { chart: null, position: null, warnings: ['Chatwork 未設定のため画像なし'] }
+    return { chart: null, chartWeekly: null, position: null, warnings: ['Chatwork 未設定のため画像なし'] }
   }
   const warnings = []
   try {
-    const { chart, position } = await fetchLatestImages({})
-    const out = { chart: null, position: null, warnings }
+    const { chartDaily, chartWeekly, position } = await fetchLatestImages({})
+    const out = { chart: null, chartWeekly: null, position: null, warnings }
 
-    if (chart) {
+    // 🔴 日足と週足は**両方**渡す（2026-08-13）。片方しか見ないと、
+    //    その日たまたま拾えた足だけで形を判断することになる。
+    for (const [key, f, label] of [['chart', chartDaily, '日足'], ['chartWeekly', chartWeekly, '週足']]) {
+      if (!f) {
+        warnings.push(`${label}のチャート画像が見つかりませんでした`)
+        continue
+      }
       try {
-        out.chart = { ...(await downloadFile(chart.file_id ?? chart.fileId ?? chart.id)), ageDays: ageInDays(chart.upload_time) }
-        if (out.chart.ageDays > 0) warnings.push(`チャート画像が${out.chart.ageDays}営業日前のものです`)
-      } catch (e) { warnings.push(`チャート画像の取得に失敗: ${e.message}`) }
-    } else {
-      warnings.push('チャート画像が見つかりませんでした（数値だけで判断しています）')
+        out[key] = { ...(await downloadFile(f.file_id ?? f.fileId ?? f.id)), ageDays: ageInDays(f.upload_time), label }
+        if (out[key].ageDays > 0) warnings.push(`${label}のチャート画像が${out[key].ageDays}営業日前のものです`)
+      } catch (e) { warnings.push(`${label}のチャート画像の取得に失敗: ${e.message}`) }
     }
+    if (!out.chart && !out.chartWeekly) warnings.push('チャート画像が1枚も無いので、数値だけで判断しています')
 
     if (position) {
       try {
@@ -109,7 +114,7 @@ async function loadImages() {
     return out
   } catch (e) {
     log(`⚠ Chatwork から画像を取れなかった（${e.message}）→ 画像なしで進む`)
-    return { chart: null, position: null, warnings: [`画像の取得に失敗: ${e.message}`] }
+    return { chart: null, chartWeekly: null, position: null, warnings: [`画像の取得に失敗: ${e.message}`] }
   }
 }
 
@@ -173,7 +178,8 @@ async function main() {
   // ── 4) 画像 ──
   log('[4] Chatwork から画像を取得...')
   const images = await loadImages()
-  log(`  チャート: ${images.chart ? `${images.chart.filename}（${images.chart.ageDays}日前）` : 'なし'}`)
+  log(`  チャート日足: ${images.chart ? `${images.chart.filename}（${images.chart.ageDays}日前）` : 'なし'}`)
+  log(`  チャート週足: ${images.chartWeekly ? `${images.chartWeekly.filename}（${images.chartWeekly.ageDays}日前）` : 'なし'}`)
   log(`  保有画面: ${images.position ? `${images.position.filename}（${images.position.ageDays}日前）` : 'なし'}`)
 
   // ── 5) 口座 ──
@@ -285,6 +291,7 @@ async function main() {
     realPosition,
     images: {
       hasChart: !!images.chart, chartAgeDays: images.chart?.ageDays ?? null,
+      hasWeekly: !!images.chartWeekly, weeklyAgeDays: images.chartWeekly?.ageDays ?? null,
       hasPosition: !!images.position,
     },
   })
@@ -297,9 +304,11 @@ async function main() {
     log('[6] LLM を呼ばずに対照群の判断を使った')
   } else {
     log(`[6] LLM に判断させる（${ROBO_MODEL} / effort=${ROBO_EFFORT}）...`)
+    // 🔵 どの画像が何なのかを LLM に伝える（ラベル無しで並べると取り違える）
     const imgs = []
-    if (images.chart) imgs.push({ base64: images.chart.base64, mediaType: images.chart.mediaType })
-    if (images.position) imgs.push({ base64: images.position.base64, mediaType: images.position.mediaType })
+    if (images.chart) imgs.push({ base64: images.chart.base64, mediaType: images.chart.mediaType, label: '日経平均 日足チャート' })
+    if (images.chartWeekly) imgs.push({ base64: images.chartWeekly.base64, mediaType: images.chartWeekly.mediaType, label: '日経平均 週足チャート' })
+    if (images.position) imgs.push({ base64: images.position.base64, mediaType: images.position.mediaType, label: '運用者の保有画面' })
 
     llmResult = await decide({ prompt, images: imgs })
     if (!llmResult.ok) {
@@ -356,7 +365,7 @@ async function main() {
       date,
       model: ROBO_MODEL,
       effort: ROBO_EFFORT,
-      input: { prompt, supply, baseline, images: { chart: images.chart?.filename ?? null, position: images.position?.filename ?? null } },
+      input: { prompt, supply, baseline, images: { chart: images.chart?.filename ?? null, chartWeekly: images.chartWeekly?.filename ?? null, position: images.position?.filename ?? null } },
       output: decision,
       validation: v.issues,
       raw_stop_reason: llmResult?.raw?.stop_reason ?? null,

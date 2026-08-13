@@ -50,8 +50,12 @@ export async function decide({
   const anthropic = client ?? new Anthropic()   // ANTHROPIC_API_KEY を環境から読む
 
   // 画像はテキストより前に置く（Claude は画像→指示の順が読みやすい）
+  // 🔴 ラベルを画像の直前に入れる（2026-08-13）。日足・週足・保有画面を並べて渡すので、
+  //    名札が無いと**どれが何か分からず取り違える**。
   const content = [
-    ...images.map(imageBlock),
+    ...images.flatMap((img) => (
+      img.label ? [{ type: 'text', text: `【${img.label}】` }, imageBlock(img)] : [imageBlock(img)]
+    )),
     { type: 'text', text: prompt },
   ]
 

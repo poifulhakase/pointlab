@@ -21,6 +21,8 @@ export const POSITION_SCHEMA = {
         properties: {
           symbol: { type: 'string' },       // 銘柄コード。読めなければ空文字
           name: { type: 'string' },
+          // 🔴 現物か信用か。売建は「下げに賭けている」ので、買建と同じ扱いにすると方向を取り違える。
+          kind: { type: 'string', enum: ['cash', 'margin_long', 'margin_short', 'unknown'] },
           qty: { type: 'integer' },
           avg_price: { type: 'number' },
           last_price: { type: 'number' },
@@ -41,15 +43,24 @@ export const POSITION_SCHEMA = {
 
 // 🔴 読む対象を4銘柄に絞る。個別株が並んでいるほど行ずれの誤読が起きやすいので、
 //    「探して読む」範囲を最小にする（ユーザー指摘・2026-08-09）。
-const PROMPT = `添付された**松井証券の保有株式（残高照会）**のスクリーンショットを読み取ってください。
+const PROMPT = `添付された**松井証券の保有状況**（保有株式／残高照会／**建玉一覧**）のスクリーンショットを読み取ってください。
 
 🔴 **これは「いま何を何口持っているか」の画面です。取引履歴（約定履歴）ではありません。**
 　 もし添付が取引履歴の画面だった場合は、positions を空にして note に「取引履歴の画面」と書いてください。
 　 読み取るのは**保有数量**であって、約定した数量ではありません。
 
-🔵 松井証券の保有株式画面は、1銘柄が1行で
-　 「銘柄コード・銘柄名 / 保有数量 / 平均取得単価 / 現在値 / 評価損益 / 評価損益率」
-　 の並びになっている。現物と信用が別の区分で表示されることがあるが、**現物の保有を読むこと**。
+🔴 **現物・信用のどちらも読み取ること**（2026-08-13 是正）。
+　 運用者は**信用の買建**で持つことがあるため、「現物ではないから空にする」という扱いはしない。
+　 画面が「建玉一覧」（信用取引）でも、そこに並んでいる建玉が保有である。
+　 それぞれ kind に次を入れる:
+　   cash … 現物
+　   margin_long … 信用の**買建**（上げに賭けている）
+　   margin_short … 信用の**売建**（下げに賭けている）
+　   unknown … 画面から区別が付かない
+　 🔴 **売建を買建と取り違えないこと。** 方向が逆になり、判断が丸ごとひっくり返る。
+
+🔵 建玉一覧では「建数量／建単価／評価単価／評価損益／評価損益率」という並びになる。
+　 その場合 qty=建数量、avg_price=建単価、last_price=評価単価 として読む。
 
 # 読み取る銘柄（この4つだけ）
 
@@ -65,6 +76,7 @@ const PROMPT = `添付された**松井証券の保有株式（残高照会）**
 
   symbol      … 銘柄コード（上の4つのいずれか）
   name        … 画面に表示されている銘柄名
+  kind        … cash / margin_long / margin_short / unknown（上記のとおり）
   qty         … 保有数量（口数・株数）
   avg_price   … 平均取得単価
   last_price  … 現在値
@@ -148,6 +160,13 @@ export function checkRealPosition(rp) {
   if (rp.confidence === 'low') warnings.push('保有画面の読み取り精度が低いと判定されました')
   if (rp.unreadable_fields?.length) warnings.push(`保有画面で読み取れなかった項目: ${rp.unreadable_fields.join(', ')}`)
   if (rp.age_days != null && rp.age_days >= 5) warnings.push(`保有画面のキャプチャが${rp.age_days}営業日前のものです`)
+
+  // 🔴 売建（下げに賭けている）は、買建と同じ扱いにすると方向が丸ごと逆になる。
+  //    いまの口座同期は「持っている＝上げ方向」の前提なので、売建が来たら止めて人に見せる。
+  const shorts = (rp.positions ?? []).filter((p) => p.kind === 'margin_short')
+  if (shorts.length) {
+    warnings.push(`🔴 信用の売建が${shorts.length}件あります（${shorts.map((p) => p.name || p.symbol).join('／')}）。売建は下げに賭ける建玉なので、口座の同期はせず内容をご確認ください`)
+  }
 
   for (const p of rp.positions ?? []) {
     // 損益率と、単価差から計算した率が大きく食い違っていたら疑う

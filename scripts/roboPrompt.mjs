@@ -345,8 +345,8 @@ ${held}
  * 添付画像の説明。画像そのものは llmDecide 側で content に載せる。
  * 🔴 画像が無い日も判断は止めない（撮影はローカルPC依存で落ちうるため）。
  */
-export function formatImagesSection({ hasChart, chartAgeDays, hasPosition }) {
-  if (!hasChart && !hasPosition) {
+export function formatImagesSection({ hasChart, chartAgeDays, hasWeekly, weeklyAgeDays, hasPosition }) {
+  if (!hasChart && !hasWeekly && !hasPosition) {
     return `## 添付画像\n  なし。**数値だけで判断すること**（画像が無いのは異常ではない）。`
   }
   const l = []
@@ -354,7 +354,15 @@ export function formatImagesSection({ hasChart, chartAgeDays, hasPosition }) {
     const age = chartAgeDays == null || chartAgeDays <= 0
       ? '本日'
       : `🔴 ${chartAgeDays}営業日前（古い。現在の値動きは数値のほうを信頼すること）`
-    l.push(`  ・TradingView のチャート（${age}）— **形**を読むために使う。数値と食い違ったら数値を優先。`)
+    l.push(`  ・TradingView のチャート【日足】（${age}）— 短期の**形**（直近の押し目・節目）を読むために使う。数値と食い違ったら数値を優先。`)
+  }
+  if (hasWeekly) {
+    const age = weeklyAgeDays == null || weeklyAgeDays <= 0
+      ? '本日'
+      : `🔴 ${weeklyAgeDays}営業日前（古い）`
+    // 🔵 週足は「いまがどの局面か」を見るために渡す。日足だけだと、押し目なのか
+    //    上昇の終わりなのかが読めない（2026-08-13 に両方渡すようにした）。
+    l.push(`  ・TradingView のチャート【週足】（${age}）— **大きな流れ**（上昇/下降の途中か、天井/底の形か）を読むために使う。`)
   }
   if (hasPosition) l.push('  ・運用者の保有画面 — 実際の建玉。あなた自身の口座とは別物。')
   return `## 添付画像\n${l.join('\n')}`
