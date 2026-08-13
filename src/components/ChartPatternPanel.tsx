@@ -866,14 +866,37 @@ const ICHI_WAVES: (Fig & { name: string; body: string })[] = [
 function IchimokuSection({ c, dark, isMobile }: { c: PanelColors; dark: boolean; isMobile: boolean }) {
   return (
     <>
-      <div style={{ marginTop: isMobile ? 10 : 18 }}>
-        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '4px 0 4px' }}>
-          一目均衡表の波動論
-          <span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>日本発の「波」の数え方</span>
-        </div>
-        <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.85, marginBottom: 10 }}>
-          エリオットが5波と3波で数えるのに対して、一目は<b style={{ color: c.text }}>I・V・N・P・Y</b> の5つの形で数える。
-          さらに<b style={{ color: c.text }}>値幅の目標（水準論）</b>と<b style={{ color: c.text }}>日柄（時間論）</b>がセットになっているのが特徴。
+      {/* 🔵 エリオットと同じ流れにそろえる（2026-08-13 ユーザー指示）＝
+          まず**全体像を1枚**見せて、そのあとに部品を分けて説明する。 */}
+      <div style={{ fontSize: isMobile ? 15 : 17, fontWeight: 800, color: c.text, margin: `${isMobile ? 12 : 20}px 0 6px` }}>
+        一目均衡表の波動論
+        <span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>日本発の「波」の数え方</span>
+      </div>
+
+      <WaveCard c={c} dark={dark} isMobile={isMobile} accent
+        sub="▶ 全体像"
+        title="N波を基本に数え、値幅と日柄を出す"
+        fig={{
+          pts: [[0, 88], [26, 30], [52, 56], [88, 14], [100, 22]],
+          labels: ['A', 'B', 'C', 'D', null],
+          levels: [
+            { y: 14, x1: 52, x2: 100, label: '目標（水準論）' },
+            { y: 56, x1: 26, x2: 100, label: '押し C' },
+          ],
+          height: isMobile ? 200 : 260,
+        }}
+        body={<>
+          エリオットが5波と3波で数えるのに対して、一目は <b style={{ color: c.text }}>I・V・N・P・Y</b> の5つの形で数え、
+          そのうち<b style={{ color: c.text }}>N波（上げ→押し→上げ）を基本</b>に置く。
+          そのうえで<b style={{ color: c.text }}>どこまで行くか（水準論）</b>と
+          <b style={{ color: c.text }}>いつ変わるか（時間論）</b>を出すところまでが一目の作法で、
+          形だけを見るエリオットとはここが違う。
+        </>}
+      />
+
+      <div>
+        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '4px 0 10px' }}>
+          波の型<span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>I・V・N・P・Y の5つ</span>
         </div>
         <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
