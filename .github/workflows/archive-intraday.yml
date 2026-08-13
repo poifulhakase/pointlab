@@ -1,0 +1,51 @@
+name: 5分足アーカイブ
+
+# 🔴 なぜ要るか＝**5分足は60日しか遡れない**（Yahoo の制限）。過去に戻って買うこともできない。
+#    いま貯め始めないと、1年後に「日中の形を検証したい」と思っても材料が無い。
+#    2026-08-13 の調査では、日足・1時間足の範囲では日計りの根拠が見つからなかった。
+#    細かい足で見えるかは貯めてからでないと分からないので、選択肢だけ残しておく。
+#
+# 🔵 毎回「足りない日を埋める」動きなので、**数日止まっても後から自動で埋まる**（60日の猶予）。
+#    だから失敗しても慌てなくてよい。1分足（7日）を選ばなかったのはこの猶予のため。
+#
+# 🔵 データ更新（fetch-data.yml）とは分けてある。あちらは判断や通知まで含む本番の流れで、
+#    こちらは「貯めるだけ」。混ぜると、貯める処理の失敗が判断まで巻き込む。
+
+on:
+  schedule:
+    # 月〜金 16:30 JST (07:30 UTC)。引け（15:30）の後、その日ぶんが確定してから。
+    - cron: '30 7 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: archive-intraday
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 5分足を保存（足りない日だけ）
+        run: node scripts/archive-intraday.mjs
+
+      - name: コミット
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/intraday
+          # 変更が無ければ何もしない（毎日ムダなコミットを作らない）
+          if git diff --cached --quiet; then
+            echo "新しい日はありません"
+          else
+            git commit -m "chore: 5分足アーカイブ $(date -u -d '+9 hours' +%Y-%m-%d)"
+            git push
+          fi
