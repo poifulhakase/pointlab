@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo } from 'react'
 import { isPreviewMode, notifyPreviewBlocked } from '../utils/previewMode'
 
-export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook' | 'timemachine' | 'sector' | 'chartpattern' | 'daytrade'
+export type ViewMode = 'month' | 'week' | 'day' | 'chart' | 'quant' | 'shield' | 'spec' | 'legal' | 'manual' | 'support' | 'backtest' | 'evals' | 'original' | 'playbook' | 'timemachine' | 'sector' | 'chartpattern' | 'daytrade' | 'swing'
 
 const VIEW_SESSION_KEY = 'poical-view-session'
-const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original', 'playbook', 'timemachine', 'sector', 'chartpattern', 'daytrade']
+const VALID_VIEWS: ViewMode[] = ['month', 'week', 'day', 'chart', 'quant', 'shield', 'spec', 'legal', 'manual', 'support', 'backtest', 'evals', 'original', 'playbook', 'timemachine', 'sector', 'chartpattern', 'daytrade', 'swing']
 const ADMIN_WELCOMED_KEY = 'poical-admin-welcomed'
 
 /**
@@ -131,6 +131,7 @@ export function useCalendar() {
     if (view === 'timemachine') return 'タイムマシン'
     if (view === 'chartpattern') return 'フォーメーション分析'
     if (view === 'daytrade') return '地下室 デイトレード'
+    if (view === 'swing') return '地下室 スイングトレード'
 if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
       const week = getWeekDays()

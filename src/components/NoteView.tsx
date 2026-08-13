@@ -15,6 +15,7 @@ type Props = {
   onOpenTimeMachine?: () => void
   onOpenChartPattern?: () => void
   onOpenDaytrade?: () => void
+  onOpenSwing?: () => void
   isMember?: boolean
 }
 
@@ -24,7 +25,7 @@ type Article = {
   mobileTitle?: string
   url: string | null
   thumb: string | null
-  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine' | 'chartpattern' | 'daytrade'
+  internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine' | 'chartpattern' | 'daytrade' | 'swing'
   /** 会員（またはメンバー）だけに見せるカード。研究途中の記録など */
   memberOnly?: boolean
 }
@@ -38,8 +39,7 @@ const ARTICLES: Article[] = [
   // ── 地下室（研究記録）──────────────────────────────────────────
   // 🔴 会員限定。検証途中の生の記録なので、外向けの説明としては読ませない。
   { genre: '地下室', title: 'デイトレード', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
-  // 🔵 スイングトレードぶんは検証の途中。カードだけ先に置く（「近日公開」と出る）。
-  { genre: '地下室', title: 'スイングトレード', url: null, thumb: null, memberOnly: true },
+  { genre: '地下室', title: 'スイングトレード', url: null, thumb: null, internalAction: 'swing', memberOnly: true },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
@@ -199,7 +199,7 @@ function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
   )
 }
 
-function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade }: {
+function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing }: {
   article: Article
   isMobile: boolean
   theme: 'dark' | 'light'
@@ -214,6 +214,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   onOpenTimeMachine?: () => void
   onOpenChartPattern?: () => void
   onOpenDaytrade?: () => void
+  onOpenSwing?: () => void
 }) {
   const isComingSoon = article.url === null && !article.internalAction
   const [hovered, setHovered] = React.useState(false)
@@ -231,6 +232,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
     if (article.internalAction === 'timemachine') { onOpenTimeMachine?.(); return }
     if (article.internalAction === 'chartpattern') { onOpenChartPattern?.(); return }
     if (article.internalAction === 'daytrade') { onOpenDaytrade?.(); return }
+    if (article.internalAction === 'swing') { onOpenSwing?.(); return }
     if (!article.url) return
     if (isMobile) {
       window.open(article.url, '_blank')
@@ -276,7 +278,7 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
   )
 }
 
-export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade }: Props) {
+export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenSpec, onOpenOriginal, onOpenCommunity, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing }: Props) {
   // バックテスト等は検証途上（サンプル不足）のため管理者限定の内部R&D扱い。
   // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
@@ -300,7 +302,7 @@ export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, o
                 <h2 style={s.genreHeading}>{genre}</h2>
                 <div style={{ ...s.grid, ...(isMobile ? s.gridMobile : {}) }}>
                   {items.map(article => (
-                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} onOpenDaytrade={onOpenDaytrade} />
+                    <ArticleCard key={article.title} article={article} isMobile={isMobile} theme={theme} onOpenManual={onOpenManual} onOpenLegal={onOpenLegal} onOpenBacktest={onOpenBacktest} onOpenEvals={onOpenEvals} onOpenSpec={onOpenSpec} onOpenOriginal={onOpenOriginal} onOpenCommunity={onOpenCommunity} onOpenPlaybook={onOpenPlaybook} onOpenTimeMachine={onOpenTimeMachine} onOpenChartPattern={onOpenChartPattern} onOpenDaytrade={onOpenDaytrade} onOpenSwing={onOpenSwing} />
                   ))}
                 </div>
               </section>

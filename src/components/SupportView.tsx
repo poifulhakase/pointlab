@@ -32,6 +32,7 @@ type Props = {
   onOpenTimeMachine?: () => void
   onOpenChartPattern?: () => void
   onOpenDaytrade?: () => void
+  onOpenSwing?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant') => void
   onOpenAccount?: () => void
   onToggleTheme?: () => void
@@ -345,7 +346,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const isAdmin     = isAdminEmail(user?.email)
 
   const [visible,       setVisible]       = useState(false)
@@ -1119,6 +1120,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                     onOpenTimeMachine={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenTimeMachine?.() }}
                     onOpenChartPattern={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenChartPattern?.() }}
                     onOpenDaytrade={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenDaytrade?.() }}
+                    onOpenSwing={() => { sessionStorage.setItem(DATA_RETURN_KEY, '1'); onOpenSwing?.() }}
                   />
                 </Suspense>
               )}
