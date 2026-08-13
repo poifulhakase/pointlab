@@ -191,10 +191,301 @@ const KIND_LABEL: Record<Pattern['kind'], string> = {
   'cont-down': '下落の途中',
 }
 
+// ── 巻二・波（エリオット波動）───────────────────────────────────────────────
+//
+// 🔴 巻一（形）と決定的に違うのは、**同じやり方で測れない**こと。
+//    形はネックライン割れなど機械的に定義できるが、波は数え方が一意に決まらない。
+//    同じチャートを見ても人によって「今は第3波」「いや第1波」と割れる。
+//    だから ぽいロボは**判断には使わない**。相場を語るための語彙として置いている。
+//    この立場はページ冒頭に常時出す（畳まない）。畳むと「使える道具」に見えてしまう。
+
+type WaveColors = {
+  card: string; border: string; text: string; sub: string
+  accent: string; up: string; down: string; line: string; stop: string
+}
+
+/** 波の図。points は 0-100 座標（y は上が0）。label があれば点の脇に付く。 */
+function WaveFigure({
+  pts, labels, levels, c, dark, height, delay = 0, colorFrom = 0,
+}: {
+  pts: number[][]
+  labels?: (string | null)[]
+  levels?: { y: number; x1: number; x2: number; label?: string; warn?: boolean }[]
+  c: WaveColors
+  dark: boolean
+  height: number
+  delay?: number
+  /** この番号以降の点を修正波の色にする（推進＝上げ色、修正＝下げ色） */
+  colorFrom?: number
+}) {
+  const d = pts.map(([x, y]) => `${x},${y}`).join(' ')
+  const corr = colorFrom > 0 ? pts.slice(colorFrom).map(([x, y]) => `${x},${y}`).join(' ') : null
+  const imp = colorFrom > 0 ? pts.slice(0, colorFrom + 1).map(([x, y]) => `${x},${y}`).join(' ') : d
+
+  return (
+    <svg viewBox="-4 -6 108 112" width="100%" height={height} style={{ display: 'block', overflow: 'visible' }}>
+      {levels?.map((lv, i) => (
+        <g key={`lv${i}`} style={{ opacity: 0, animation: `cpFade .5s ease ${delay + 0.9}s forwards` }}>
+          <line x1={lv.x1} y1={lv.y} x2={lv.x2} y2={lv.y}
+            stroke={lv.warn ? c.stop : c.accent} strokeWidth={1.2} strokeDasharray="3 2" />
+          {lv.label && (
+            <text x={lv.x2} y={lv.y - 2.5} textAnchor="end" fontSize={5.5}
+              fill={lv.warn ? c.stop : c.accent} fontFamily="inherit">{lv.label}</text>
+          )}
+        </g>
+      ))}
+
+      {/* 推進波 */}
+      <polyline points={imp} fill="none" stroke={c.line} strokeWidth={2.1}
+        strokeLinejoin="round" strokeLinecap="round" pathLength={100}
+        style={{
+          strokeDasharray: 100, strokeDashoffset: 100,
+          animation: `cpDraw 1.2s ease-out ${delay}s forwards`,
+          filter: dark ? 'drop-shadow(0 0 3px rgba(226,240,252,0.35))' : undefined,
+        }} />
+      {/* 修正波（色を変えて、推進と修正の別を見せる） */}
+      {corr && (
+        <polyline points={corr} fill="none" stroke={c.down} strokeWidth={2.1}
+          strokeLinejoin="round" strokeLinecap="round" pathLength={100}
+          style={{
+            strokeDasharray: 100, strokeDashoffset: 100,
+            animation: `cpDraw .8s ease-out ${delay + 1.1}s forwards`,
+            filter: dark ? `drop-shadow(0 0 4px ${c.down}88)` : undefined,
+          }} />
+      )}
+
+      {labels?.map((t, i) => {
+        if (!t) return null
+        const [x, y] = pts[i]
+        // 谷（前後より下）ならラベルを下に、山なら上に置く
+        const prev = pts[i - 1]?.[1] ?? y
+        const low = y > prev
+        return (
+          <text key={`t${i}`} x={x} y={low ? y + 8 : y - 4.5} textAnchor="middle" fontSize={7} fontWeight={700}
+            fill={/[ABC]/.test(t) ? c.down : c.accent} fontFamily="inherit"
+            style={{ opacity: 0, animation: `cpFade .4s ease ${delay + 0.5 + i * 0.09}s forwards` }}>{t}</text>
+        )
+      })}
+    </svg>
+  )
+}
+
+type Level = { y: number; x1: number; x2: number; label?: string; warn?: boolean }
+type Fig = { pts: number[][]; labels?: (string | null)[]; levels?: Level[] }
+
+/** 3つの絶対ルール。これを満たさない数え方は「間違い」と言える数少ない部分。 */
+const RULES: (Fig & { no: string; title: string; body: string })[] = [
+  {
+    no: '其の一',
+    title: '第2波は、第1波の始点を割らない',
+    body: '割ったら、その数え方は間違い。第1波はまだ始まっていなかったことになる。',
+    pts: [[0, 88], [26, 34], [56, 70], [78, 44], [100, 30]],
+    labels: [null, '1', '2', null, null],
+    levels: [{ y: 88, x1: 0, x2: 100, label: '始点', warn: true }],
+  },
+  {
+    no: '其の二',
+    title: '第3波は、1・3・5の中で最も短くならない',
+    body: 'いちばん伸びる波であることが多い。最短なら数え直す。',
+    pts: [[0, 90], [16, 60], [30, 74], [62, 22], [74, 40], [100, 14]],
+    labels: [null, '1', '2', '3', '4', '5'],
+  },
+  {
+    no: '其の三',
+    title: '第4波は、第1波の高値の領域に重ならない',
+    body: '重なったら数え直す（株式では例外もあるとされる）。',
+    pts: [[0, 90], [18, 56], [32, 72], [62, 26], [78, 48], [100, 16]],
+    labels: [null, '1', '2', '3', '4', '5'],
+    levels: [{ y: 56, x1: 0, x2: 100, label: '1波の高値', warn: false }],
+  },
+]
+
+/** 修正波の型。3つとも「下げ」ではなく「持ち合い」も含むのが要点。 */
+const CORRECTIONS: (Fig & { name: string; body: string })[] = [
+  {
+    name: 'ジグザグ（5-3-5）',
+    body: '深く速い調整。A で大きく落ち、B は浅く戻し、C が A より下まで伸びる。',
+    pts: [[0, 12], [30, 62], [52, 38], [100, 84]],
+    labels: [null, 'A', 'B', 'C'],
+  },
+  {
+    name: 'フラット（3-3-5）',
+    body: '横ばいの調整。B が A の始点近くまで戻り、C が A の底あたりで止まる。',
+    pts: [[0, 16], [30, 62], [58, 22], [100, 66]],
+    labels: [null, 'A', 'B', 'C'],
+  },
+  {
+    name: 'トライアングル（3-3-3-3-3）',
+    body: '値幅が狭まっていく持ち合い。多くは第4波に現れ、抜けた先が最後の波。',
+    pts: [[0, 12], [20, 74], [38, 28], [56, 64], [72, 40], [86, 56], [100, 20]],
+    labels: [null, 'A', 'B', 'C', 'D', 'E', null],
+  },
+]
+
+/** 巻二で使う囲み・見出し・本文。🔴 レンダーのたびに作り直さないよう module scope に置く。 */
+function WCard({ c, dark, isMobile, accent, children }: {
+  c: WaveColors; dark: boolean; isMobile: boolean; accent?: boolean; children: React.ReactNode
+}) {
+  return (
+    <div style={{
+      background: c.card, border: `1px solid ${accent ? c.accent : c.border}`,
+      borderRadius: 12, padding: isMobile ? 14 : 18,
+      boxShadow: accent && dark ? `0 0 24px ${c.accent}18` : undefined,
+    }}>{children}</div>
+  )
+}
+const WH = ({ c, children }: { c: WaveColors; children: React.ReactNode }) => (
+  <div style={{ fontSize: 10, letterSpacing: '0.18em', color: c.accent, marginBottom: 8 }}>{children}</div>
+)
+const WT = ({ c, isMobile, children }: { c: WaveColors; isMobile: boolean; children: React.ReactNode }) => (
+  <div style={{ fontSize: isMobile ? 12 : 13, color: c.sub, lineHeight: 1.9 }}>{children}</div>
+)
+
+function ElliottScroll({ c, dark, isMobile, detail }: {
+  c: WaveColors
+  dark: boolean
+  isMobile: boolean
+  detail: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 18, animation: 'cpRise .4s ease both' }}>
+
+      {/* 🔴 立場は畳まない。冒頭に必ず出す。 */}
+      <div style={{
+        border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
+        background: c.card, borderRadius: 8, padding: isMobile ? 12 : 16,
+        fontSize: isMobile ? 12 : 13, lineHeight: 1.9, color: c.sub,
+      }}>
+        <div style={{ fontWeight: 700, color: c.text, marginBottom: 6 }}>この巻の立場</div>
+        エリオット波動は<b style={{ color: c.text }}>ぽいロボの判断には使いません</b>。
+        巻一の形は「ネックラインを割った日」のように機械的に決められるので26年ぶんを測れましたが、
+        波は<b style={{ color: c.stop }}>数え方が一意に決まりません</b>。
+        同じチャートでも人によって「今は第3波」「いや第1波」と割れ、
+        <b style={{ color: c.text }}>後から見れば必ず綺麗に数えられる</b>——つまり測ろうとすると答えが先に決まってしまいます。
+        <br />
+        ここに置くのは、<b style={{ color: c.text }}>相場を語るための語彙</b>としてです。
+        「上げの三つ目の途中で、そろそろ息切れしそう」と長く言う代わりに「3波の終わりかけ」と言える。
+        それ以上の意味は持たせていません。
+      </div>
+
+      {/* 全体像 */}
+      <WCard c={c} dark={dark} isMobile={isMobile} accent>
+        <WH c={c}>▶ 全体像 ／ 推進5波 ＋ 修正3波</WH>
+        <WT c={c} isMobile={isMobile}>
+          相場は<b style={{ color: c.text }}>上げ5つ・下げ3つ</b>のかたまりで進む、という見方。
+          1・3・5が進む波（推進）、2・4が押し（修正）、そのあとの A・B・C がまとめての調整。
+          そして<b style={{ color: c.text }}>この8つが、より大きな1つの波の一部でもある</b>（入れ子）。
+        </WT>
+        <div style={{ marginTop: 10 }}>
+          <WaveFigure
+            pts={[[0, 92], [12, 62], [22, 76], [48, 24], [58, 42], [72, 14], [84, 40], [91, 27], [100, 52]]}
+            labels={[null, '1', '2', '3', '4', '5', 'A', 'B', 'C']}
+            colorFrom={5}
+            c={c} dark={dark} height={isMobile ? 190 : 250}
+          />
+        </div>
+      </WCard>
+
+      {/* 3つの絶対ルール */}
+      <div>
+        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '4px 0 10px' }}>
+          三つの掟<span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>これを破る数え方は間違い</span>
+        </div>
+        <div style={{
+          display: 'grid', gap: isMobile ? 12 : 16,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        }}>
+          {RULES.map((r, i) => (
+            <div key={r.no} className="cp-card" style={{
+              background: c.card, border: `1px solid ${c.border}`, borderRadius: 12,
+              padding: 14, animationDelay: `${i * 0.06}s`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 10, letterSpacing: '0.14em', color: c.accent }}>{r.no}</span>
+                <span style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text }}>{r.title}</span>
+              </div>
+              <WaveFigure pts={r.pts} labels={r.labels} levels={r.levels}
+                c={c} dark={dark} height={isMobile ? 120 : 140} delay={i * 0.12} />
+              <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{r.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 修正波の型 */}
+      <div>
+        <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 800, color: c.text, margin: '8px 0 10px' }}>
+          修正の型<span style={{ fontSize: 11, fontWeight: 400, color: c.sub, marginLeft: 8 }}>A・B・C の並び方</span>
+        </div>
+        <div style={{
+          display: 'grid', gap: isMobile ? 12 : 16,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+        }}>
+          {CORRECTIONS.map((w, i) => (
+            <div key={w.name} className="cp-card" style={{
+              background: c.card, border: `1px solid ${c.border}`, borderRadius: 12,
+              padding: 14, animationDelay: `${i * 0.06}s`,
+            }}>
+              <div style={{ fontSize: isMobile ? 12.5 : 13.5, fontWeight: 700, color: c.text, marginBottom: 6 }}>{w.name}</div>
+              <WaveFigure pts={w.pts} labels={w.labels}
+                c={c} dark={dark} height={isMobile ? 120 : 140} delay={i * 0.12} colorFrom={1} />
+              <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{w.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 目安（ルールではない） */}
+      <WCard c={c} dark={dark} isMobile={isMobile}>
+        <WH c={c}>▶ 目安 ／ ルールではなく「よくある」話</WH>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            ['オルタネーション', '第2波が鋭い（深く速い）なら、第4波は横ばいになりやすい。逆もまた。同じ顔の押しは続かない。'],
+            ['フィボナッチ', '第2波は第1波の 38.2〜61.8% 押し、第3波は第1波の 1.618 倍——といった比率がよく持ち出される。'],
+            ['第3波', 'いちばん出来高が増え、いちばん伸びやすいとされる波。ニュースが後から追いつく。'],
+            ['チャネル', '1と3の高値、2と4の安値を結ぶと平行に近い帯になり、第5波の終点の目安に使われる。'],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 10, color: c.accent, flexShrink: 0, marginTop: 4, minWidth: isMobile ? 74 : 96 }}>{k}</span>
+              <span style={{ fontSize: isMobile ? 12 : 13, color: c.sub, lineHeight: 1.85 }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      </WCard>
+
+      {/* なぜ判断に使わないか（? で詳細） */}
+      <WCard c={c} dark={dark} isMobile={isMobile}>
+        <WH c={c}>▶ なぜ ぽいロボは数えないのか</WH>
+        <WT c={c} isMobile={isMobile}>
+          数え方が一つに決まらない道具は、<b style={{ color: c.text }}>当たったかどうかを後から判定できません</b>。
+          外れたときに「数え方が違っただけ」と言えてしまうからです。
+          ぽいロボは<b style={{ color: c.text }}>外れたと分かる形</b>でしか判断を出さない、という方針で作ってあります
+          （需給シグナルは毎週勝敗が付き、記録が残る）。
+        </WT>
+        {detail && (
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
+            <WT c={c} isMobile={isMobile}>
+              🔴 もし将来これを検証するなら、<b style={{ color: c.text }}>カウントを機械が一意に決める規則</b>
+              （ピボットの取り方・波の最小値幅・三つの掟の判定）を先に固定し、
+              それを26年に当てる必要があります。人が数えた波を後から集めても、それは検証になりません。
+              <br />
+              🔵 巻一と同じ土俵に乗せられた時点で、この巻にも実測を併記します。
+            </WT>
+          </div>
+        )}
+      </WCard>
+    </div>
+  )
+}
+
 export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
   const dark = theme === 'dark'
   const [open, setOpen] = useState<string | null>(null)
   const [help, setHelp] = useState(false)
+  // 🔵 巻を分ける（2026-08-13）。**形**は機械的に定義でき、実際に26年で測れた。
+  //    **波**（エリオット）は数え方が一意に決まらず、そもそも同じやり方で測れない。
+  //    性質が違うものを同じ棚に並べると「どちらも同じ根拠」に見えてしまうので、巻で隔てる。
+  const [maki, setMaki] = useState<'form' | 'wave'>('form')
 
   const c = {
     bg: dark ? '#04070f' : '#f6f8fc',
@@ -248,7 +539,9 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
         }}>
           ぽいロボ ▸ 波動の書
         </span>
-        <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>{PATTERNS.length} 種</span>
+        <span style={{ fontSize: 9, color: c.sub, letterSpacing: '0.06em', flexShrink: 0 }}>
+          {maki === 'form' ? `${PATTERNS.length} 種` : '5-3'}
+        </span>
         {/* 🔴 ヘッダー右端は**閉じる**（タイムマシンと同じ位置・同じ役目）。
             ヘルプは見出しの右に置く（2026-08-11 ユーザー指示）。 */}
         <button onClick={onClose} aria-label="閉じる" style={{
@@ -272,19 +565,21 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
             fontSize: isMobile ? 64 : 120, fontWeight: 900, lineHeight: 1,
             color: 'transparent', WebkitTextStroke: `1px ${dark ? 'rgba(0,229,255,0.10)' : 'rgba(20,60,110,0.08)'}`,
             letterSpacing: '-0.04em', pointerEvents: 'none', userSelect: 'none',
-          }}>FORMATION</div>
+          }}>{maki === 'form' ? 'FORMATION' : 'ELLIOTT'}</div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{
               fontSize: 12, letterSpacing: '0.28em', color: c.accent, marginBottom: 8,
               textShadow: dark ? `0 0 12px ${c.accent}55` : undefined,
               animation: 'cpBlink 2.4s ease-in-out infinite',
-            }}>▶ FORMATION ANALYSIS</div>
+            }}>▶ {maki === 'form' ? 'FORMATION ANALYSIS' : 'ELLIOTT WAVE PRINCIPLE'}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <h1 style={{
                 fontSize: isMobile ? 26 : 40, fontWeight: 800, margin: 0, letterSpacing: '-0.01em',
                 textShadow: dark ? `0 0 24px ${c.accent}22` : undefined,
               }}>
-                フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種
+                {maki === 'form'
+                  ? <>フォーメーション<span style={{ color: c.accent }}>{PATTERNS.length}</span>種</>
+                  : <>エリオット<span style={{ color: c.accent }}>波動</span></>}
               </h1>
               <button
                 onClick={() => setHelp(v => !v)}
@@ -301,11 +596,36 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           </div>
         </div>
 
+        {/* 🔵 巻の切り替え。書物なので「タブ」ではなく**巻**と呼ぶ。 */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: isMobile ? 16 : 22, flexWrap: 'wrap' }}>
+          {([
+            { key: 'form' as const, no: '巻一', name: '形', sub: 'フォーメーション16種' },
+            { key: 'wave' as const, no: '巻二', name: '波', sub: 'エリオット波動' },
+          ]).map(t => {
+            const on = maki === t.key
+            return (
+              <button key={t.key} onClick={() => { setMaki(t.key); setOpen(null); setHelp(false) }} style={{
+                display: 'flex', alignItems: 'baseline', gap: 8,
+                padding: isMobile ? '8px 12px' : '9px 16px', borderRadius: 10,
+                border: `1px solid ${on ? c.accent : c.border}`,
+                background: on ? (dark ? 'rgba(0,229,255,0.10)' : 'rgba(11,114,168,0.08)') : 'transparent',
+                color: on ? c.accent : c.sub, cursor: 'pointer', fontFamily: 'inherit',
+                boxShadow: on && dark ? `0 0 18px ${c.accent}22` : undefined,
+                transition: 'border-color .15s, background .15s, color .15s',
+              }}>
+                <span style={{ fontSize: 10, letterSpacing: '0.18em' }}>{t.no}</span>
+                <span style={{ fontSize: isMobile ? 15 : 17, fontWeight: 800 }}>{t.name}</span>
+                <span style={{ fontSize: 10, opacity: 0.85 }}>{t.sub}</span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* 🔴 このページの立場と測り方は**ヘルプに畳む**（2026-08-11 ユーザー指示）。
             図鑑として見に来た人の邪魔にならないよう、既定では出さない。
             🔴 ただし**消さない**。教科書の説明だけ並べると「これを見れば当たる」と読めるので、
                ヘッダーの ? からいつでも開ける場所には必ず置いておく。 */}
-        {help && (
+        {help && maki === 'form' && (
           <div style={{
             border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.stop}`,
             background: c.card, borderRadius: 8, padding: isMobile ? 12 : 16, marginBottom: 22,
@@ -339,7 +659,9 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
           </div>
         )}
 
-        <div style={{
+        {maki === 'wave' && <ElliottScroll c={c} dark={dark} isMobile={isMobile} detail={help} />}
+
+        {maki === 'form' && <div style={{
           display: 'grid', gap: isMobile ? 12 : 16,
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
         }}>
@@ -434,7 +756,7 @@ export function ChartPatternPanel({ theme, isMobile, onClose }: Props) {
               </button>
             )
           })}
-        </div>
+        </div>}
 
       </div>
       </div>

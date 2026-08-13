@@ -185,6 +185,42 @@ const SECTIONS: Section[] = [
   },
 ]
 
+// ── スライドの割り方 ────────────────────────────────────────────────────────
+// 🔴 1枚に入れるのは**1トピックだけ**。章の中のタブ解説（サブセクション）も1枚ずつに割る。
+//    章まるごと1枚だと中身がはみ出して**スライドの中でスクロール**することになり、
+//    「めくる」と「スクロールする」が混ざって読みづらい（2026-08-13 ユーザー指摘）。
+// 🔵 目次は章単位のまま。押せばその章の1枚目へ飛ぶ。
+type Page = {
+  key: string
+  secIdx: number
+  sec: Section
+  sub?: SubSection
+  /** 章の中で何枚目か（1始まり）。1枚しかない章では出さない */
+  part: number
+  parts: number
+}
+
+function buildPages(sections: Section[]): Page[] {
+  const pages: Page[] = []
+  sections.forEach((sec, secIdx) => {
+    const parts = (sec.intro || sec.items ? 1 : 0) + (sec.subs?.length ?? 0)
+    let part = 0
+    if (sec.intro || sec.items) {
+      part += 1
+      pages.push({ key: sec.id, secIdx, sec, part, parts })
+    }
+    sec.subs?.forEach(sub => {
+      part += 1
+      pages.push({ key: `${sec.id}-${sub.subtitle}`, secIdx, sec, sub, part, parts })
+    })
+  })
+  return pages
+}
+
+const PAGES = buildPages(SECTIONS)
+/** 章 → その章の1枚目のページ番号 */
+const FIRST_PAGE = SECTIONS.map(sec => PAGES.findIndex(p => p.sec === sec))
+
 export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
   const L = theme === 'light'
 
@@ -198,8 +234,6 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
     RULE:    L ? 'rgba(3,105,161,0.12)'   : 'rgba(0,200,255,0.10)',
     CARD:    L ? 'rgba(255,255,255,0.52)' : 'rgba(0,200,255,0.04)',
     CARDBR:  L ? 'rgba(3,105,161,0.14)'   : 'rgba(0,200,255,0.10)',
-    SUBBG:   L ? 'rgba(3,105,161,0.04)'   : 'rgba(0,229,255,0.04)',
-    SUBBR:   L ? 'rgba(3,105,161,0.10)'   : 'rgba(0,229,255,0.10)',
     SUBTAG:  L ? 'rgba(3,105,161,0.55)'   : 'rgba(0,229,255,0.60)',
     SCAN:    L ? ''                       : 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,229,255,0.013) 3px,rgba(0,229,255,0.013) 4px)',
     BULLET:  L ? 'rgba(3,105,161,0.50)'   : 'rgba(0,229,255,0.45)',
@@ -208,42 +242,25 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
 
   const mono = "'Courier New', Courier, monospace" as const
 
-  // ── スライド（1章＝1枚）─────────────────────────────────────────────
-  // 🔵 説明書は「調べもの」でもあるので、PCの目次は残したまま**見せ方だけスライドにする**。
-  //    目次を押せばその章へ一発で飛べるので、頭からめくり続ける必要はない。
-  // 🔵 わくわく感＝章番号を背景に大きく出し、切り替えでスライドインさせる。
-  //    タイムマシン・戦略プレイブックと同じ作法に揃えてある（2026-08-13）。
-  const total = SECTIONS.length
+  const total = PAGES.length
   const [idx, setIdx] = useState(0)
   const go = useCallback((n: number) => setIdx(Math.max(0, Math.min(total - 1, n))), [total])
+  const page = PAGES[idx]
 
-  // スワイプ：スライド内のスクロールが端に着いている方向にだけページを送る
+  // スワイプ：万一はみ出したときのため、スクロール端に着いた向きにだけ送る
   const touchY = useRef<number | null>(null)
   const atTop = useRef(true)
   const atBottom = useRef(true)
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(idx + 1) }
-      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); go(idx - 1) }
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1) }
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1) }
       else if (e.key === 'Escape') onClose?.()
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [idx, go, onClose])
-
-  const BulletItem = ({ text }: { text: string }) => (
-    <div style={{ display: 'flex', gap: isMobile ? 9 : 10, alignItems: 'flex-start' }}>
-      <span style={{
-        fontFamily: mono, fontSize: isMobile ? 9 : 10, fontWeight: 700,
-        color: c.BULLET, flexShrink: 0, marginTop: isMobile ? 4 : 5,
-        textShadow: L ? 'none' : `0 0 6px ${c.BULLET}`,
-      }}>▸</span>
-      <span style={{ fontSize: isMobile ? 13 : 13.5, color: c.SUB, lineHeight: 1.82, letterSpacing: '0.01em' }}>
-        {text}
-      </span>
-    </div>
-  )
 
   const chevron = (down: boolean) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ transform: down ? 'none' : 'rotate(180deg)' }}>
@@ -259,6 +276,10 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
     transition: 'opacity .2s',
   })
 
+  const bullets = page.sub ? page.sub.items : [...(page.sec.intro ?? []), ...(page.sec.items ?? [])]
+  const next = PAGES[idx + 1]
+  const nextLabel = next ? (next.sub ? next.sub.subtitle : (next.sec.tocLabel ?? next.sec.title)) : ''
+
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 30,
@@ -269,12 +290,14 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
       backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
     }}>
       <style>{`
-        @keyframes mvFadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes mvFadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
         @keyframes mvSweep  { from { transform:translateY(-100%); } to { transform:translateY(250%); } }
-        @keyframes mvNumIn  { from { opacity:0; transform:translateX(26px) scale(1.06); } to { opacity:1; transform:none; } }
-        .mv-page-in { animation: mvFadeUp .5s cubic-bezier(.16,1,.3,1) both; }
-        .mv-num-in  { animation: mvNumIn .6s cubic-bezier(.16,1,.3,1) both; }
-        @media (prefers-reduced-motion: reduce) { .mv-page-in, .mv-num-in { animation: none; } }
+        @keyframes mvNumIn  { from { opacity:0; transform:translateX(24px) scale(1.06); } to { opacity:1; transform:none; } }
+        @keyframes mvRow    { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+        .mv-page-in { animation: mvFadeUp .45s cubic-bezier(.16,1,.3,1) both; }
+        .mv-num-in  { animation: mvNumIn .55s cubic-bezier(.16,1,.3,1) both; }
+        .mv-row     { animation: mvRow .4s ease both; }
+        @media (prefers-reduced-motion: reduce) { .mv-page-in, .mv-num-in, .mv-row { animation: none; } }
       `}</style>
 
       {!L && (
@@ -326,47 +349,53 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
         <div style={{
           height: '100%', width: `${((idx + 1) / total) * 100}%`,
           background: c.ACCENT, boxShadow: L ? 'none' : `0 0 8px ${c.ACCENT}`,
-          transition: 'width .52s cubic-bezier(.22,1,.36,1)',
+          transition: 'width .45s cubic-bezier(.22,1,.36,1)',
         }} />
       </div>
 
-      {/* ── 本体（PCは目次＋ステージ）── */}
+      {/* ── 本体（PCは目次＋1枚）── */}
       <div style={{
         flex: 1, minHeight: 0, display: 'flex',
         gap: isMobile ? 0 : 22,
-        padding: isMobile ? 0 : '18px 32px 16px 28px',
+        padding: isMobile ? 0 : '18px 32px 14px 28px',
         zIndex: 1,
       }}>
 
-        {/* 目次 — PC のみ。押した章へ一発で飛ぶ（頭からめくらなくてよい） */}
+        {/* 目次 — PC のみ。章の1枚目へ飛ぶ */}
         {!isMobile && (
           <nav style={{ width: 176, flexShrink: 0, paddingTop: 6 }}>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: c.DIM, fontFamily: mono, marginBottom: 12, paddingLeft: 4 }}>
               CONTENTS
             </div>
-            {SECTIONS.map((sec, i) => (
-              <button key={sec.id} onClick={() => go(i)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                padding: '5px 8px', marginBottom: 2, borderRadius: 7,
-                border: 'none', cursor: 'pointer', textAlign: 'left' as const,
-                background: idx === i ? c.CARD : 'transparent',
-                borderLeft: `2px solid ${idx === i ? c.ACCENT : 'transparent'}`,
-                color: idx === i ? c.ACCENT : c.DIM,
-                fontSize: 12, fontFamily: mono, lineHeight: 1.35,
-                transition: 'color 0.15s, background 0.15s',
-              }}>
-                <span style={{ fontSize: 14, flexShrink: 0 }}>{sec.icon}</span>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {sec.tocLabel ?? sec.title}
-                </span>
-              </button>
-            ))}
+            {SECTIONS.map((sec, i) => {
+              const on = page.secIdx === i
+              return (
+                <button key={sec.id} onClick={() => go(FIRST_PAGE[i])} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                  padding: '5px 8px', marginBottom: 2, borderRadius: 7,
+                  border: 'none', cursor: 'pointer', textAlign: 'left' as const,
+                  background: on ? c.CARD : 'transparent',
+                  borderLeft: `2px solid ${on ? c.ACCENT : 'transparent'}`,
+                  color: on ? c.ACCENT : c.DIM,
+                  fontSize: 12, fontFamily: mono, lineHeight: 1.35,
+                  transition: 'color 0.15s, background 0.15s',
+                }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{sec.icon}</span>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {sec.tocLabel ?? sec.title}
+                  </span>
+                  {on && page.parts > 1 && (
+                    <span style={{ fontSize: 9, opacity: 0.75, flexShrink: 0 }}>{page.part}/{page.parts}</span>
+                  )}
+                </button>
+              )
+            })}
           </nav>
         )}
 
-        {/* ステージ（1枚ずつ縦にめくる） */}
+        {/* 1枚（めくる） */}
         <div
-          style={{ position: 'relative', flex: 1, minWidth: 0, overflow: 'hidden' }}
+          style={{ position: 'relative', flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}
           onTouchStart={e => {
             touchY.current = e.touches[0].clientY
             const el = (e.target as HTMLElement).closest('[data-mv-page]') as HTMLElement | null
@@ -387,114 +416,83 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
             else if (atTop.current) go(idx - 1)
           }}
         >
-          <div style={{
-            height: `${total * 100}%`,
-            transform: `translateY(-${idx * (100 / total)}%)`,
-            transition: 'transform .52s cubic-bezier(.22,1,.36,1)',
-          }}>
-            {SECTIONS.map((sec, i) => (
-              <div
-                key={sec.id}
-                data-mv-page
-                style={{
-                  height: `${100 / total}%`, overflowY: 'auto', position: 'relative',
-                  padding: isMobile ? '18px 16px 96px' : '0 6px 56px 0',
-                }}
-              >
-                {/* 背景の巨大な章番号 */}
-                <span key={`n${idx}`} className="mv-num-in" aria-hidden style={{
-                  position: 'absolute', right: isMobile ? 6 : 18, top: isMobile ? 4 : -12,
-                  fontFamily: mono, fontWeight: 700, fontSize: isMobile ? 88 : 150,
-                  lineHeight: 1, color: c.GHOST, pointerEvents: 'none', userSelect: 'none',
-                }}>{String(i + 1).padStart(2, '0')}</span>
+          {/* 背景の巨大な章番号 */}
+          <span key={`n${idx}`} className="mv-num-in" aria-hidden style={{
+            position: 'absolute', right: isMobile ? 6 : 18, top: isMobile ? 4 : -12,
+            fontFamily: mono, fontWeight: 700, fontSize: isMobile ? 84 : 150,
+            lineHeight: 1, color: c.GHOST, pointerEvents: 'none', userSelect: 'none', zIndex: 0,
+          }}>{String(page.secIdx + 1).padStart(2, '0')}</span>
 
-                <div key={`p${idx}`} className="mv-page-in" style={{ position: 'relative', maxWidth: 980 }}>
-                  <div style={{ background: c.CARD, border: `1px solid ${c.CARDBR}`, borderRadius: 12, overflow: 'hidden' }}>
-                    {/* 章ヘッダー */}
-                    <div style={{
-                      padding: isMobile ? '11px 16px' : '12px 20px',
-                      borderBottom: `1px solid ${c.CARDBR}`,
-                      display: 'flex', alignItems: 'center', gap: 8,
-                    }}>
-                      <span style={{ width: 4, height: 14, borderRadius: 2, background: c.ACCENT, flexShrink: 0, boxShadow: L ? 'none' : `0 0 6px ${c.ACCENT}` }} />
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{sec.icon}</span>
-                      <span style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: c.TEXT, letterSpacing: '0.03em' }}>
-                        {sec.title}
+          <div
+            data-mv-page
+            style={{
+              flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative', zIndex: 1,
+              padding: isMobile ? '18px 16px 84px' : '0 6px 8px 0',
+            }}
+          >
+            <div key={`p${idx}`} className="mv-page-in" style={{ maxWidth: 860 }}>
+              <div style={{ background: c.CARD, border: `1px solid ${c.CARDBR}`, borderRadius: 12, overflow: 'hidden' }}>
+                {/* 章ヘッダー（サブがある枚は「章 ▸ タブ名」）*/}
+                <div style={{
+                  padding: isMobile ? '11px 16px' : '13px 20px',
+                  borderBottom: `1px solid ${c.CARDBR}`,
+                  display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                }}>
+                  <span style={{ width: 4, height: 14, borderRadius: 2, background: c.ACCENT, flexShrink: 0, boxShadow: L ? 'none' : `0 0 6px ${c.ACCENT}` }} />
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>{page.sec.icon}</span>
+                  <span style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: page.sub ? c.SUB : c.TEXT, letterSpacing: '0.03em' }}>
+                    {page.sec.title}
+                  </span>
+                  {page.sub && (
+                    <>
+                      <span style={{ color: c.SUBTAG, fontSize: 12 }}>▸</span>
+                      <span style={{ fontSize: isMobile ? 14 : 15, fontWeight: 800, color: c.TEXT, letterSpacing: '0.03em' }}>
+                        {page.sub.subtitle}
                       </span>
-                    </div>
-
-                    {/* イントロ箇条書き */}
-                    {sec.intro && (
-                      <div style={{
-                        padding: isMobile ? '14px 16px 12px' : '16px 20px 12px',
-                        display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
-                        borderBottom: `1px solid ${c.CARDBR}`,
-                      }}>
-                        {sec.intro.map((item, ii) => <BulletItem key={ii} text={item} />)}
-                      </div>
-                    )}
-
-                    {/* フラット箇条書き */}
-                    {sec.items && (
-                      <div style={{
-                        padding: isMobile ? '14px 16px' : '16px 20px',
-                        display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
-                      }}>
-                        {sec.items.map((item, ii) => <BulletItem key={ii} text={item} />)}
-                      </div>
-                    )}
-
-                    {/* サブセクション */}
-                    {sec.subs && (
-                      <div style={{
-                        display: isMobile ? 'flex' : 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        flexDirection: 'column',
-                        gap: 0,
-                      }}>
-                        {sec.subs.map((sub, si) => (
-                          <div key={sub.subtitle} style={{
-                            background: c.SUBBG,
-                            borderTop: `1px solid ${c.SUBBR}`,
-                            borderLeft: (!isMobile && si % 2 === 1) ? `1px solid ${c.SUBBR}` : 'none',
-                            padding: isMobile ? '12px 16px' : '14px 20px',
-                            display: 'flex', flexDirection: 'column', gap: 10,
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                              <span style={{
-                                fontSize: 11, fontWeight: 700, color: c.SUBTAG,
-                                letterSpacing: '0.04em',
-                                textShadow: L ? 'none' : `0 0 8px rgba(0,229,255,0.4)`,
-                              }}>
-                                {sub.subtitle}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 9 : 10 }}>
-                              {sub.items.map((item, ii) => <BulletItem key={ii} text={item} />)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 次の章の予告（読み終わりで手が止まらないように） */}
-                  {i < total - 1 && (
-                    <button onClick={() => go(i + 1)} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      marginTop: 12, padding: '9px 14px', borderRadius: 10,
-                      border: `1px solid ${c.CARDBR}`, background: 'transparent',
-                      color: c.DIM, fontFamily: mono, fontSize: 11, cursor: 'pointer',
-                      letterSpacing: '0.06em',
-                    }}>
-                      <span>NEXT ▸</span>
-                      <span style={{ fontSize: 13 }}>{SECTIONS[i + 1].icon}</span>
-                      <span>{SECTIONS[i + 1].tocLabel ?? SECTIONS[i + 1].title}</span>
-                    </button>
+                    </>
+                  )}
+                  {page.parts > 1 && (
+                    <span style={{ marginLeft: 'auto', fontSize: 9, color: c.SUB, fontFamily: mono, letterSpacing: '0.08em' }}>
+                      {page.part} / {page.parts}
+                    </span>
                   )}
                 </div>
+
+                {/* 本文（1枚1トピックなので1カラム。横に切れない）*/}
+                <div style={{
+                  padding: isMobile ? '14px 16px' : '16px 20px',
+                  display: 'flex', flexDirection: 'column', gap: isMobile ? 11 : 13,
+                }}>
+                  {bullets.map((item, ii) => (
+                    <div key={ii} className="mv-row" style={{ display: 'flex', gap: isMobile ? 9 : 10, alignItems: 'flex-start', animationDelay: `${0.06 + ii * 0.05}s` }}>
+                      <span style={{
+                        fontFamily: mono, fontSize: isMobile ? 9 : 10, fontWeight: 700,
+                        color: c.BULLET, flexShrink: 0, marginTop: isMobile ? 4 : 5,
+                        textShadow: L ? 'none' : `0 0 6px ${c.BULLET}`,
+                      }}>▸</span>
+                      <span style={{ fontSize: isMobile ? 13 : 13.5, color: c.SUB, lineHeight: 1.82, letterSpacing: '0.01em' }}>
+                        {item}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+
+              {/* 次の1枚の予告 */}
+              {next && (
+                <button onClick={() => go(idx + 1)} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  marginTop: 12, padding: '9px 14px', borderRadius: 10,
+                  border: `1px solid ${c.CARDBR}`, background: 'transparent',
+                  color: c.DIM, fontFamily: mono, fontSize: 11, cursor: 'pointer',
+                  letterSpacing: '0.06em',
+                }}>
+                  <span>NEXT ▸</span>
+                  <span style={{ fontSize: 13 }}>{next.sec.icon}</span>
+                  <span>{nextLabel}</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* めくる矢印 */}
@@ -502,23 +500,26 @@ export const ManualView: FC<Props> = ({ theme, isMobile, onClose }) => {
             position: 'absolute', right: isMobile ? 12 : 10, bottom: isMobile ? 18 : 10,
             display: 'flex', flexDirection: 'column', gap: 8, zIndex: 4,
           }}>
-            <button onClick={() => go(idx - 1)} disabled={idx === 0} style={navBtn(idx === 0)} aria-label="前の章">{chevron(false)}</button>
-            <button onClick={() => go(idx + 1)} disabled={idx === total - 1} style={navBtn(idx === total - 1)} aria-label="次の章">{chevron(true)}</button>
+            <button onClick={() => go(idx - 1)} disabled={idx === 0} style={navBtn(idx === 0)} aria-label="前へ">{chevron(false)}</button>
+            <button onClick={() => go(idx + 1)} disabled={idx === total - 1} style={navBtn(idx === total - 1)} aria-label="次へ">{chevron(true)}</button>
           </div>
 
-          {/* ドット（スマホは目次の代わり） */}
+          {/* ドット（章の切れ目で間隔をあける。スマホでは目次の代わり）*/}
           <div style={{
-            position: 'absolute', left: isMobile ? 16 : 2, bottom: isMobile ? 24 : 16,
-            display: 'flex', gap: 6, zIndex: 4,
+            position: 'absolute', left: isMobile ? 16 : 2, bottom: isMobile ? 24 : 14,
+            display: 'flex', alignItems: 'center', gap: 4, zIndex: 4, flexWrap: 'wrap', maxWidth: '70%',
           }}>
-            {SECTIONS.map((sec, i) => (
-              <button key={sec.id} onClick={() => go(i)} aria-label={`${i + 1}章 ${sec.tocLabel ?? sec.title}`} style={{
-                width: idx === i ? 18 : 6, height: 6, borderRadius: 3, padding: 0,
-                border: 'none', cursor: 'pointer',
-                background: idx === i ? c.ACCENT : c.CARDBR,
-                boxShadow: (!L && idx === i) ? `0 0 8px ${c.ACCENT}` : 'none',
-                transition: 'width .3s, background .3s',
-              }} />
+            {PAGES.map((p, i) => (
+              <button key={p.key} onClick={() => go(i)}
+                aria-label={`${p.sec.tocLabel ?? p.sec.title}${p.sub ? ` ${p.sub.subtitle}` : ''}`}
+                style={{
+                  width: idx === i ? 16 : 5, height: 5, borderRadius: 3, padding: 0,
+                  marginLeft: i > 0 && PAGES[i - 1].secIdx !== p.secIdx ? 7 : 0,
+                  border: 'none', cursor: 'pointer',
+                  background: idx === i ? c.ACCENT : (p.secIdx === page.secIdx ? c.SUBTAG : c.CARDBR),
+                  boxShadow: (!L && idx === i) ? `0 0 8px ${c.ACCENT}` : 'none',
+                  transition: 'width .3s, background .3s',
+                }} />
             ))}
           </div>
         </div>
