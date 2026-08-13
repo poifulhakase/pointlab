@@ -827,6 +827,26 @@ function useInView<T extends HTMLElement>(): [React.RefObject<T | null>, boolean
   return [ref, seen]
 }
 
+/**
+ * 本文の **強調** を太字にする。
+ *
+ * 🔴 データの文章には Markdown の `**` をそのまま書いてあるので、素で出すと画面に * が残る
+ *    （2026-08-13 ユーザー指摘）。データ側から消すのではなく、ここで解釈する。
+ *    強調そのものは図鑑として要る（どこが要点かが一目で分かる）。
+ */
+function Rich({ text, c }: { text: React.ReactNode; c: PanelColors }) {
+  if (typeof text !== 'string') return <>{text}</>
+  return (
+    <>
+      {text.split(/\*\*(.+?)\*\*/g).map((part, i) => (
+        i % 2 === 1
+          ? <b key={i} style={{ color: c.text }}>{part}</b>
+          : <span key={i}>{part}</span>
+      ))}
+    </>
+  )
+}
+
 /** 巻二のカード（フォーメーション）。図は見えてから描かれる。 */
 function PatternCard({ p, idx, no, c, dark, isMobile, isOpen, onToggle }: {
   p: Pattern; idx: number; no: number; c: PanelColors; dark: boolean; isMobile: boolean
@@ -917,12 +937,12 @@ function PatternCard({ p, idx, no, c, dark, isMobile, isOpen, onToggle }: {
         </svg>
       </div>
 
-      <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}>{p.says}</div>
+      <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7, marginTop: 8 }}><Rich text={p.says} c={c} /></div>
 
       {isOpen && (
         <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
           <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
-          <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}>{p.how}</div>
+          <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.7 }}><Rich text={p.how} c={c} /></div>
           {/* 🔵 2026-08-13 ユーザー判断で「日経225・26年で測った結果」は非表示にした。
               統計的に未確定（t<2・n が小さい）のものが多く、読む人には
               「効く/効かない」の判断材料にならないため。
@@ -1025,12 +1045,12 @@ function WaveCard({ c, dark, isMobile, title, sub, body, detail, fig, accent, no
       )}
       <WaveFigure pts={fig.pts} labels={fig.labels} levels={fig.levels} slopes={fig.slopes} colorFrom={fig.colorFrom}
         c={c} dark={dark} height={fig.height} show={show} />
-      <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.8, marginTop: 8 }}>{body}</div>
+      <div style={{ fontSize: isMobile ? 12 : 12.5, color: c.sub, lineHeight: 1.8, marginTop: 8 }}><Rich text={body} c={c} /></div>
       {detail && (open
         ? (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
             <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>詳しく</div>
-            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}>{detail}</div>
+            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}><Rich text={detail} c={c} /></div>
           </div>
         )
         : <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで詳しく →</div>
@@ -1571,13 +1591,13 @@ function DowCard({ d, no, c, dark, isMobile }: {
         : <WaveFigure pts={d.price!} labels={d.labels} levels={d.levels} second={d.second}
             c={c} dark={dark} height={h} show={show} />}
 
-      <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{d.body}</div>
+      <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.75, marginTop: 8 }}><Rich text={d.body} c={c} /></div>
 
       {open
         ? (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
             <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>詳しく</div>
-            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}>{d.detail}</div>
+            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}><Rich text={d.detail} c={c} /></div>
           </div>
         )
         : <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで詳しく →</div>}
@@ -1618,13 +1638,13 @@ function VolCard({ v, no, c, dark, isMobile }: {
 
       <VolumeFigure price={v.price} vol={v.vol} mark={v.mark} c={c} dark={dark} height={isMobile ? 150 : 180} show={show} />
 
-      <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.75, marginTop: 8 }}>{v.says}</div>
+      <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.75, marginTop: 8 }}><Rich text={v.says} c={c} /></div>
 
       {open
         ? (
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}` }}>
             <div style={{ fontSize: 10, color: c.accent, letterSpacing: '0.1em', marginBottom: 4 }}>見つけ方</div>
-            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}>{v.how}</div>
+            <div style={{ fontSize: 11, color: c.sub, lineHeight: 1.75 }}><Rich text={v.how} c={c} /></div>
           </div>
         )
         : <div style={{ fontSize: 10, color: c.accent, marginTop: 8 }}>タップで見つけ方 →</div>}
