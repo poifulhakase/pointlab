@@ -26,6 +26,8 @@ type Props = {
   showPoiroboAlert: boolean
   showRoboJobs: boolean
   onShowRoboJobsChange: (v: boolean) => void
+  /** 🔴 システムの動きは中の話なので、管理者と会員だけに見せる */
+  canSeeSystem: boolean
   onShowPoiroboAlertChange: (v: boolean) => void
   onPoiroboAlertOpen: () => void
   onGoToday?: () => void
@@ -97,7 +99,7 @@ function FilterCheck({ checked, onToggle, label, color = 'rgba(96,165,250,0.85)'
   )
 }
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, showRoboJobs, onShowRoboJobsChange, onGoToday, theme = 'dark', onOpenSector }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, showRoboJobs, onShowRoboJobsChange, canSeeSystem, onGoToday, theme = 'dark', onOpenSector }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -298,13 +300,14 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
           />
 
           {/* 🔵 ぽいロボが自動で動く時刻（週・日ビューの時間帯に出る）。
-              撮影だけはPCが起動していないと動かないので、そこが分かるようにするためのもの。 */}
-          <FilterCheck
+              撮影だけはPCが起動していないと動かないので、そこが分かるようにするためのもの。
+              🔴 中の運用の話なので**管理者と会員だけ**（地下室と同じ扱い・2026-08-13）。 */}
+          {canSeeSystem && <FilterCheck
             checked={showRoboJobs}
             onToggle={() => onShowRoboJobsChange(!showRoboJobs)}
-            label="ぽいロボの動き"
+            label="システム"
             color="#2dd4bf"
-          />
+          />}
         </div>
 
         </div>

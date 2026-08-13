@@ -289,6 +289,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   const {
     isAdminUser, memberLoading, membershipResolved, previewAsNonMember, togglePreviewAsNonMember, isMember,
   } = useCommunityAccess(user)
+  // 🔴 システムの動き（自動実行の時刻）は中の運用の話なので、管理者と会員だけ（地下室と同じ扱い）
+  const canSeeSystem = isAdminUser || isMember
 
   // 🚧 ページ「閲覧」用のゲート。一時公開フラグが立っている間は非メンバー
   //   （管理者の「非メンバーとして確認」中も含む）でも会員限定ページを閲覧可。
@@ -382,7 +384,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     return data.title || 'メモ'
   }, [noteMap, showPrivate])
   const getRoboJobs = useCallback((d: Date) =>
-    showRoboJobs ? getRoboJobsForDate(d, isMarketClosed) : [], [showRoboJobs])
+    (showRoboJobs && canSeeSystem) ? getRoboJobsForDate(d, isMarketClosed) : [], [showRoboJobs, canSeeSystem])
 
   const getScheduledEvents = useCallback((d: Date): ScheduleEntry[] =>
     showPrivate ? (noteMap.get(dateKey(d))?.schedules ?? []) : [], [noteMap, showPrivate])
@@ -590,6 +592,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             onShowPrivateChange={handleShowPrivateChange}
             showAnomaly={showAnomaly}
             showRoboJobs={showRoboJobs}
+            canSeeSystem={canSeeSystem}
             onShowRoboJobsChange={handleShowRoboJobsChange}
             onShowAnomalyChange={handleShowAnomalyChange}
             showPoiroboAlert={showPoiroboAlert}

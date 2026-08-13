@@ -27,6 +27,7 @@ import { baselineTimeline, stopPrice } from '../src/utils/robotStrategy.mjs'
 import { loadPrices, etfFeatures, priceMap, barByDateMap, atrMap, rowsMap, summarizeSupply, fetchOvernight, DATA_DIR } from './roboData.mjs'
 import { buildPriceFeatures, buildRoboPrompt } from './roboPrompt.mjs'
 import { decide, holdOnFailure, validateDecision, ROBO_MODEL, ROBO_EFFORT } from './llmDecide.mjs'
+import { runShadowDecisions } from './shadowDecide.mjs'
 import {
   emptyAccount, detectStopHit, queueOrder, applyPending, applyTrail, equityOf, pushEquity, recomputeStats, syncWithReal,
 } from './roboAccount.mjs'
@@ -48,6 +49,8 @@ const REAL_POS_PATH = path.join(DATA_DIR, 'real_position.json')
 const args = process.argv.slice(2)
 const DRY = args.includes('--dry')
 const NO_LLM = args.includes('--no-llm')
+// 🔵 影の判断（チャートのみ／数値のみ）を止める。既定は走らせる（記録だけで本番には触らない）
+const NO_SHADOW = args.includes('--no-shadow') || process.env.ROBO_SHADOW === '0'
 // 🔴 休場日でも強制的に走らせる（配線確認用）。本番では付けない
 const FORCE = args.includes('--force')
 
@@ -322,6 +325,19 @@ async function main() {
     }
   }
 
+  // ── 6.5) 影の判断（記録だけ・本番には触らない）────────────────────────
+  // 🔴 材料を減らしたら成績はどう変わるかを測るため、同じ日に3通り出して記録する。
+  //    建てるのは本番だけ。30トレード貯まるまで比較しない（途中で乗り換えない）。
+  let shadows = null
+  if (!NO_LLM && !NO_SHADOW) {
+    log('[6.5] 影の判断（チャートのみ／数値のみ）...')
+    const imgsForShadow = []
+    if (images.chart) imgsForShadow.push({ base64: images.chart.base64, mediaType: images.chart.mediaType, label: '日経平均 日足チャート' })
+    if (images.chartWeekly) imgsForShadow.push({ base64: images.chartWeekly.base64, mediaType: images.chartWeekly.mediaType, label: '日経平均 週足チャート' })
+    shadows = await runShadowDecisions({ prompt, images: imgsForShadow, log })
+    for (const e of shadows.errors) log(`  ⚠ ${e}`)
+  }
+
   // 意味の整合チェック
   const v = validateDecision(decision)
   if (!v.valid) {
@@ -367,6 +383,8 @@ async function main() {
       effort: ROBO_EFFORT,
       input: { prompt, supply, baseline, images: { chart: images.chart?.filename ?? null, chartWeekly: images.chartWeekly?.filename ?? null, position: images.position?.filename ?? null } },
       output: decision,
+      // 🔴 影は記録だけ。口座にも通知にも入っていない（比較用）
+      shadows: shadows ? { chart_only: shadows.chart_only, numbers_only: shadows.numbers_only, errors: shadows.errors } : null,
       validation: v.issues,
       raw_stop_reason: llmResult?.raw?.stop_reason ?? null,
       usage: llmResult?.usage ?? null,
