@@ -2,6 +2,9 @@
 
 export function r2(n: number): number
 
+/** 「五分五分」とみなす確信度の上限（これ以下はシグナルを出さない） */
+export const LOW_CONVICTION_MAX: number
+
 export function sig(pct: number): 'BULL' | 'NEUTRAL' | 'BEAR'
 
 export interface TevPhysicsInput {
@@ -38,6 +41,8 @@ export interface TevPhysicsResult {
   tev_confidence: number
   /** シグナルが価格トレンドに逆行し確信度を抑制したか（★2026-06-10） */
   tev_counterTrend: boolean
+  /** 確信度が五分五分（LOW_CONVICTION_MAX 以下）＝シグナルとしては出さない（★2026-08-13） */
+  tev_lowConviction: boolean
 }
 
 export function computeTevPhysics(input: TevPhysicsInput): TevPhysicsResult | null

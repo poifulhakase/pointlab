@@ -14,6 +14,13 @@
 export const r2 = (n) => Math.round(n * 100) / 100
 
 /**
+ * 「五分五分」とみなす確信度の上限（★2026-08-13）。
+ * これ以下なら方向は記録しつつ**シグナルとしては出さない**。
+ * 🔵 50 は「情報なし」の既定値（限界膨張系の固定値）なので、その周辺は判断材料にならない。
+ */
+export const LOW_CONVICTION_MAX = 52
+
+/**
  * パーセンタイル(0-100) → シグナル。
  * 閾値は 65/35（実エンジン基準に統一・★2026-06-08。旧 backtest は 60/40 で乖離していた）。
  */
@@ -99,5 +106,14 @@ export function computeTevPhysics({
     }
   }
 
-  return { tev_fBase, tev_fInertia, tev_decay, tev_decayReasons, tev_rResist, tev_value, tev_status, tev_confidence, tev_counterTrend }
+  // ★2026-08-13 五分五分ゲート: 確信度が LOW_CONVICTION_MAX 以下なら「見送り」とする。
+  //   🔵 これはデータへのフィッティングではなく**設計の整合**。確信度50%＝「五分五分」と
+  //      自分で言っているのに売買シグナルを出すのは矛盾しているので、そこは出さない。
+  //   🔵 52週の検証では 50-52% 帯が 14回中3勝（21%）／53%以上が 24回中15勝（62%）で
+  //      Fisher 正確検定 p=0.021。ただし**閾値をデータを見てから決めている**ので、この値は
+  //      楽観的に出る。だから「原理として正しいか」を先に置き、数字は裏付けとしてのみ扱う。
+  //   🔴 tev_value の符号（＝方向）は変えない。見送りの間も観測は続け、標本が増えたら測り直す。
+  const tev_lowConviction = tev_confidence <= LOW_CONVICTION_MAX
+
+  return { tev_fBase, tev_fInertia, tev_decay, tev_decayReasons, tev_rResist, tev_value, tev_status, tev_confidence, tev_counterTrend, tev_lowConviction }
 }

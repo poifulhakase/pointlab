@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sig, r2, computeTevPhysics } from '../tevCore.mjs'
+import { sig, r2, computeTevPhysics, LOW_CONVICTION_MAX } from '../tevCore.mjs'
 
 describe('sig（正準シグナル閾値 65/35）', () => {
   it('65以上=BULL / 35以下=BEAR / その間=NEUTRAL', () => {
@@ -61,5 +61,45 @@ describe('computeTevPhysics', () => {
   it('is10dLow=false なら底打ち反転にならない（backtest 相当）', () => {
     const r = computeTevPhysics({ tev_V: -10, tev_A: 60, foreign4wPct: 50, cotLfPct: 50, creditRatioPct: 50, ssPct: 50, compositeScore: 0, is10dLow: false })!
     expect(r.tev_status).not.toBe('底打ち反転')
+  })
+})
+
+// ★2026-08-13 五分五分ゲート
+describe('五分五分ゲート（LOW_CONVICTION_MAX）', () => {
+  // 🔴 これは「データに合わせた閾値」ではなく**設計の整合**。
+  //    確信度50%＝五分五分と自分で言っているのに売買シグナルを出すのは矛盾している。
+  //    52週の検証でも 50-52% 帯は 14回中3勝（21%）で、見送るほうが良かった。
+  it('限界膨張（確信度50%固定）は五分五分として扱う', () => {
+    const r = computeTevPhysics({
+      tev_V: 5, tev_A: -2, foreign4wPct: 28, cotLfPct: 50,
+      creditRatioPct: 50, ssPct: 50, compositeScore: 2,
+    })
+    expect(r?.tev_confidence).toBe(50)
+    expect(r?.tev_lowConviction).toBe(true)
+  })
+
+  it('確信度が閾値を超えれば五分五分ではない', () => {
+    const r = computeTevPhysics({
+      tev_V: 60, tev_A: 20, foreign4wPct: 80, cotLfPct: 70,
+      creditRatioPct: 30, ssPct: 30, compositeScore: 40,
+    })
+    expect(r!.tev_confidence).toBeGreaterThan(LOW_CONVICTION_MAX)
+    expect(r?.tev_lowConviction).toBe(false)
+  })
+
+  it('境界は「以下」＝52は五分五分・53は違う', () => {
+    // compositeScore から confidence = min(70, |score|*0.3+50)
+    const at52 = computeTevPhysics({
+      tev_V: 60, tev_A: 20, foreign4wPct: 80, cotLfPct: 70,
+      creditRatioPct: 30, ssPct: 30, compositeScore: 7,   // 7*0.3+50 = 52.1 → 52
+    })
+    const at53 = computeTevPhysics({
+      tev_V: 60, tev_A: 20, foreign4wPct: 80, cotLfPct: 70,
+      creditRatioPct: 30, ssPct: 30, compositeScore: 10,  // 10*0.3+50 = 53
+    })
+    expect(at52?.tev_confidence).toBe(52)
+    expect(at52?.tev_lowConviction).toBe(true)
+    expect(at53?.tev_confidence).toBe(53)
+    expect(at53?.tev_lowConviction).toBe(false)
   })
 })

@@ -159,6 +159,10 @@ function computeTEV({ invSlice, marSlice, ssSlice, cotSlice, vixSlice, arbSlice,
     tev_value: phys.tev_value,
     tev_status: phys.tev_status,
     tev_confidence: phys.tev_confidence,
+    // 🔴 ここは詰め替えなので、tevCore に項目を足したら**この行も足す**。
+    //    忘れると「新しい判定が黙って無効」になる（2026-08-13 に五分五分ゲートで踏んだ）。
+    tev_lowConviction: phys.tev_lowConviction,
+    tev_counterTrend: phys.tev_counterTrend,
     tev_decay: phys.tev_decay,
     tev_acc: tev_A,
     foreign4w_pct: foreign4wPct,
@@ -241,18 +245,33 @@ async function main() {
     const priceChangePct = (nkCur && nkNext) ? r2((nkNext - nkCur) / nkCur * 100) : null
 
     // シグナル判定（限界膨張は中立扱い）
+    // ★2026-08-13 五分五分（確信度52%以下）も中立扱い＝出さない。
+    //   🔵 方向は tev_value に残るので、見送った週も後から測り直せる。
     const signal = !tev                              ? 'neutral'
       : tev.tev_status.startsWith('限界膨張')        ? 'neutral'
+      : tev.tev_lowConviction                        ? 'neutral'
       : tev.tev_value > 0                            ? 'bull'
       :                                                'bear'
+
+    // 見送った週の「もし出していたら」も記録する（ゲートの効き目を後から検証するため）
+    const shadowSignal = !tev || tev.tev_status.startsWith('限界膨張')
+      ? 'neutral'
+      : tev.tev_value > 0 ? 'bull' : 'bear'
 
     // 勝敗
     let win = null
     if (priceChangePct !== null && signal !== 'neutral')
       win = signal === 'bull' ? priceChangePct > 0 : priceChangePct < 0
 
+    let shadowWin = null
+    if (priceChangePct !== null && shadowSignal !== 'neutral')
+      shadowWin = shadowSignal === 'bull' ? priceChangePct > 0 : priceChangePct < 0
+
     weeklyLog.push({
       week,
+      low_conviction: tev ? !!tev.tev_lowConviction : false,
+      shadow_signal: shadowSignal,
+      shadow_win: shadowWin,
       tev:              tev?.tev_value       ?? null,
       status:           tev?.tev_status      ?? null,
       confidence:       tev?.tev_confidence  ?? null,

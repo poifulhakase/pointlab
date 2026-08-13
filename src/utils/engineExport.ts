@@ -529,6 +529,9 @@ export function buildExportJson(
   const tev_value        = tev_phys?.tev_value ?? null
   const tev_status       = tev_phys?.tev_status ?? null
   const tev_confidence   = tev_phys?.tev_confidence ?? null
+  // ★2026-08-13 五分五分ゲート（tevCore と同じ判定を使う＝二重定義しない）。
+  //   確信度が「五分五分」の水準なら、方向は出さず見送りとして扱う。
+  const tev_lowConviction = tev_phys?.tev_lowConviction ?? false
 
   // ── TEV 整合性検証 ───────────────────────────────
   const tev_sanityWarnings: string[] = []
@@ -815,6 +818,12 @@ export function buildExportJson(
       status:                tev_status,
       confidence_pct:        tev_confidence,
       confidence_pct_is_fixed: confidence_pct_is_fixed,
+      // 🔴 true のときは**方向を採らない**（確信度が五分五分＝判断材料にならない）。
+      //    52週の検証では、この帯のシグナルは14回中3勝（21%）だった。
+      low_conviction:        tev_lowConviction,
+      low_conviction_note:   tev_lowConviction
+        ? '確信度が五分五分の水準。方向は参考にとどめ、需給を根拠にした売買判断には使わないこと。'
+        : null,
       decay_factor:          r2(tev_decay),
       decay_reasons:         tev_decayReasons,
       sanity_ok:             tev_sanityOk,
