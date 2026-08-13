@@ -130,7 +130,7 @@ export function useCalendar() {
     if (view === 'backtest') return 'TEVバックテスト'
     if (view === 'timemachine') return 'タイムマシン'
     if (view === 'chartpattern') return 'フォーメーション分析'
-    if (view === 'daytrade') return '研究記録 デイトレ'
+    if (view === 'daytrade') return '研究記録〜デイトレード'
 if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
       const week = getWeekDays()

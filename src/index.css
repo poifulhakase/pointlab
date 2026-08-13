@@ -304,3 +304,32 @@ button {
 
 [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
+
+/* 地下室バナー（DATA＞地下室のカード）
+   🔵 裸電球がわずかに揺れて、埃が舞う。研究の生データが眠っている場所の空気を出す。
+   🔴 動きは弱く長め＝一覧に並んだとき目が疲れないように。 */
+@keyframes bsmt-flicker {
+  0%, 100% { opacity: 1; }
+  46%      { opacity: 0.96; }
+  47%      { opacity: 0.62; }
+  49%      { opacity: 1; }
+  72%      { opacity: 0.86; }
+  74%      { opacity: 1; }
+}
+@keyframes bsmt-swing {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50%      { transform: rotate(1.4deg); }
+}
+@keyframes bsmt-dust {
+  0%   { transform: translate3d(0, 8px, 0);   opacity: 0; }
+  25%  { opacity: 0.75; }
+  100% { transform: translate3d(6px, -26px, 0); opacity: 0; }
+}
+.bsmt-lamp   { transform-origin: 50% 0; animation: bsmt-swing 7s ease-in-out infinite; }
+.bsmt-glow   { animation: bsmt-flicker 6s ease-in-out infinite; }
+.bsmt-dust   { animation: bsmt-dust 7s linear infinite; }
+.bsmt-card:hover .bsmt-glow { opacity: 1; filter: brightness(1.25); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bsmt-lamp, .bsmt-glow, .bsmt-dust { animation: none; }
+}

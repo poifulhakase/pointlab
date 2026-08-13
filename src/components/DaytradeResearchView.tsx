@@ -1,4 +1,4 @@
-// 研究記録：デイトレ（2026-08-13）
+// 地下室 ＞ 研究記録〜デイトレード（2026-08-13）
 //
 // 🔴 このページは「デイトレのやり方」ではなく**測った結果の記録**。
 //    ぽいロボの思想＝まず研究する。効かなかったことも、効かなかったと書いて残す。
@@ -30,15 +30,17 @@ const DAY_TYPES = [
 
 export default function DaytradeResearchView({ theme, isMobile, onClose }: Props) {
   const dark = theme === 'dark'
+  // 🔵 地下室の配色＝コンクリートの壁に裸電球ひとつ。青い研究室ではなく、
+  //    「まだ形になっていないものが置いてある場所」の暖色＋薄暗さで統一する。
   const c = {
-    bg: dark ? '#080b12' : '#f4f6f9',
-    card: dark ? 'rgba(255,255,255,0.03)' : '#fff',
-    border: dark ? 'rgba(120,200,255,0.18)' : '#dde3ec',
-    text: dark ? '#dbe7f5' : '#1a2230',
-    sub: dark ? '#8fa3bb' : '#5c6b80',
-    accent: dark ? '#4fd1e5' : '#0d7c96',
-    no: dark ? '#8fa3bb' : '#6b7a8d',
-    trap: dark ? '#f0a94a' : '#b3701a',
+    bg: dark ? '#0b0c0e' : '#efece7',
+    card: dark ? 'rgba(255,255,255,0.035)' : '#fff',
+    border: dark ? 'rgba(255,205,130,0.16)' : '#ddd6c9',
+    text: dark ? '#e6e0d5' : '#26221c',
+    sub: dark ? '#9c9488' : '#5f584e',
+    accent: dark ? '#ffd79a' : '#8a5a12',
+    no: dark ? '#8a8378' : '#6b6459',
+    trap: dark ? '#f0a94a' : '#a8650f',
   }
   const pad = isMobile ? 14 : 24
   const mono = "'Consolas','SF Mono',ui-monospace,monospace"
@@ -51,18 +53,38 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
   )
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text }}>
-      <div style={{ position: 'sticky', top: 0, zIndex: 2, background: c.bg, borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontFamily: mono, fontSize: isMobile ? 10 : 11, letterSpacing: '0.14em', color: c.accent }}>
-          研究記録 / デイトレ
+    <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text, position: 'relative' }}>
+      {/* コンクリートの目地（薄く敷くだけ。読みやすさを壊さない） */}
+      <div aria-hidden style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none', opacity: dark ? 1 : 0.6,
+        backgroundImage: `linear-gradient(${dark ? 'rgba(255,255,255,0.028)' : 'rgba(0,0,0,0.035)'} 1px, transparent 1px), linear-gradient(90deg, ${dark ? 'rgba(255,255,255,0.028)' : 'rgba(0,0,0,0.035)'} 1px, transparent 1px)`,
+        backgroundSize: '72px 34px',
+      }} />
+      {/* 裸電球の光（上からぼんやり） */}
+      <div aria-hidden className="bsmt-glow" style={{
+        position: 'fixed', left: '50%', top: 0, width: '120%', height: '52%', transform: 'translateX(-50%)',
+        pointerEvents: 'none',
+        background: 'radial-gradient(46% 60% at 50% 0%, rgba(255,205,130,0.16) 0%, rgba(255,205,130,0.05) 45%, transparent 74%)',
+      }} />
+      <div style={{ position: 'sticky', top: 0, zIndex: 3, background: c.bg, borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: mono, fontSize: isMobile ? 10 : 11, letterSpacing: '0.14em', color: c.accent }}>
+          <span aria-hidden className="bsmt-glow" style={{
+            width: 8, height: 8, borderRadius: '50%', background: '#ffd79a',
+            boxShadow: '0 0 8px 3px rgba(255,205,130,0.5)', display: 'inline-block',
+          }} />
+          地下室 / 研究記録〜デイトレード
         </div>
         <button type="button" onClick={onClose} aria-label="閉じる"
           style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: pad }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: pad, position: 'relative' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: '4px 0 6px' }}>デイトレは成立するか</h1>
-        <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginBottom: 16 }}>2026-08-13 計測 ／ 日経225・1321 の20年＋1時間足3年</div>
+        <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginBottom: 6 }}>2026-08-13 計測 ／ 日経225・1321 の20年＋1時間足3年</div>
+        <div style={{ fontSize: isMobile ? 11 : 12, color: c.sub, marginBottom: 16, lineHeight: 1.8 }}>
+          ここは<strong style={{ color: c.accent }}>地下室</strong>——まだ人に見せる形になっていない研究を置いておく場所。
+          効かなかったことも、効かなかったまま残す。
+        </div>
 
         <div style={{ padding: pad, border: `1px solid ${c.border}`, borderRadius: 10, background: c.card, marginBottom: 8 }}>
           <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 700, lineHeight: 1.8 }}>

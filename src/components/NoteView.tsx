@@ -35,9 +35,11 @@ const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
   { genre: 'ぽいロボ', title: '戦略プレイブック', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'playbook' },
-  // ── 研究記録 ──────────────────────────────────────────────────
+  // ── 地下室（研究記録）──────────────────────────────────────────
   // 🔴 会員限定。検証途中の生の記録なので、外向けの説明としては読ませない。
-  { genre: '研究記録', title: 'デイトレ', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
+  { genre: '地下室', title: '研究記録〜デイトレード', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
+  // 🔵 スイングトレードぶんは検証の途中。カードだけ先に置く（「近日公開」と出る）。
+  { genre: '地下室', title: '研究記録〜スイングトレード', url: null, thumb: null, memberOnly: true },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
@@ -67,7 +69,73 @@ const ARTICLES: Article[] = [
   { genre: '未来ガジェット', title: 'フォーメーション分析', url: null, thumb: null, internalAction: 'chartpattern' },
 ]
 
-const GENRES = ['ぽいロボ', '研究記録', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
+const GENRES = ['ぽいロボ', '地下室', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
+
+/**
+ * 地下室バナー（DATA＞地下室のカード専用）。
+ *
+ * 🔵 コンクリートの壁に裸電球が1つ、下に階段。埃が舞う。
+ *    「まだ人に見せる形になっていない研究が置いてある場所」の空気を出す。
+ * 🔴 画像は使わない（読み込みが増えるので）。CSS と SVG だけで描く。
+ */
+function BasementThumb({ theme }: { theme: 'dark' | 'light' }) {
+  const dark = theme === 'dark'
+  // 🔵 ライトテーマでも「地下」に見えるよう、明るくしすぎない（薄暗いコンクリート色に留める）
+  const wall  = dark ? '#0b0c0e' : '#3a3a3e'
+  const wall2 = dark ? '#15171b' : '#4a4a50'
+  const line  = dark ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.07)'
+  const bulb  = '#ffd79a'
+  const warm  = '255,205,130'
+
+  return (
+    <div className="bsmt-card" style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: `linear-gradient(180deg, ${wall} 0%, ${wall2} 62%, ${wall} 100%)` }}>
+      {/* コンクリートブロックの目地 */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `linear-gradient(${line} 1px, transparent 1px), linear-gradient(90deg, ${line} 1px, transparent 1px)`,
+        backgroundSize: '58px 26px',
+      }} />
+      {/* 電球の光（円錐） */}
+      <div className="bsmt-glow" style={{
+        position: 'absolute', left: '50%', top: 0, width: '150%', height: '100%',
+        transform: 'translateX(-50%)',
+        background: `radial-gradient(58% 42% at 50% 22%, rgba(${warm},0.30) 0%, rgba(${warm},0.10) 42%, transparent 72%)`,
+        pointerEvents: 'none',
+      }} />
+      {/* 吊り下げた裸電球 */}
+      <div className="bsmt-lamp" style={{ position: 'absolute', left: '50%', top: 0, marginLeft: -1, width: 2, height: '46%' }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, width: 2, height: '74%', background: dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.35)' }} />
+        <div className="bsmt-glow" style={{
+          position: 'absolute', left: '50%', top: '74%', width: 13, height: 13, marginLeft: -6.5,
+          borderRadius: '50%', background: bulb,
+          boxShadow: `0 0 14px 5px rgba(${warm},0.55), 0 0 34px 14px rgba(${warm},0.22)`,
+        }} />
+      </div>
+      {/* 埃 */}
+      {[18, 34, 52, 68, 82].map((x, i) => (
+        <span key={x} className="bsmt-dust" style={{
+          position: 'absolute', left: `${x}%`, bottom: `${18 + i * 7}%`,
+          width: 2, height: 2, borderRadius: '50%', background: `rgba(${warm},0.85)`,
+          animationDelay: `${i * 1.3}s`,
+        }} />
+      ))}
+      {/* 階段（左下） */}
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, bottom: 0, width: '42%', height: '48%', opacity: dark ? 0.5 : 0.42 }}>
+        <path d="M0 60 L0 44 L14 44 L14 34 L28 34 L28 24 L42 24 L42 14 L56 14 L56 60 Z"
+          fill={dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.16)'}
+          stroke={`rgba(${warm},0.28)`} strokeWidth={0.8} />
+      </svg>
+      {/* 床 */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '18%', background: dark ? 'linear-gradient(180deg, transparent, rgba(0,0,0,0.55))' : 'linear-gradient(180deg, transparent, rgba(0,0,0,0.4))' }} />
+      {/* ラベル */}
+      <span style={{
+        position: 'absolute', bottom: 9, left: 0, right: 0, textAlign: 'center',
+        fontSize: 8, fontWeight: 800, letterSpacing: '0.34em',
+        color: `rgba(${warm},0.62)`, fontFamily: "'Consolas','SF Mono',ui-monospace,monospace",
+      }}>BASEMENT</span>
+    </div>
+  )
+}
 
 // サムネイル画像が未設定のカード用：全カード共通のプレースホルダー
 function PlaceholderThumb({ theme }: { theme: 'dark' | 'light' }) {
@@ -191,7 +259,9 @@ function ArticleCard({ article, isMobile, theme, onOpenManual, onOpenLegal, onOp
       <div style={s.thumbWrap}>
         {article.thumb
           ? <img src={article.thumb} alt={article.title} style={s.thumb} loading="lazy" />
-          : <PlaceholderThumb theme={theme} />
+          : article.genre === '地下室'
+            ? <BasementThumb theme={theme} />
+            : <PlaceholderThumb theme={theme} />
         }
         {isComingSoon && (
           <div style={s.comingSoonBadge}>近日公開</div>
