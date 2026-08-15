@@ -1,6 +1,20 @@
 {
-  "updatedAt": "2026-08-14T13:55:44.941Z",
+  "updatedAt": "2026-08-15T00:45:12.622Z",
   "data": [
+    {
+      "date": "2026-08-11",
+      "label": "8月第3週",
+      "openInterest": 28863,
+      "nonCommLong": 3882,
+      "nonCommShort": 2861,
+      "nonCommNet": 1021,
+      "commLong": 18374,
+      "commShort": 10206,
+      "commNet": 8168,
+      "nonReptLong": 23289,
+      "nonReptShort": 14100,
+      "nonReptNet": 9189
+    },
     {
       "date": "2026-08-04",
       "label": "8月第2週",
@@ -714,20 +728,6 @@
       "nonReptLong": 30081,
       "nonReptShort": 13074,
       "nonReptNet": 17007
-    },
-    {
-      "date": "2025-08-12",
-      "label": "8月第3週",
-      "openInterest": 34558,
-      "nonCommLong": 5838,
-      "nonCommShort": 4542,
-      "nonCommNet": 1296,
-      "commLong": 20309,
-      "commShort": 5778,
-      "commNet": 14531,
-      "nonReptLong": 29111,
-      "nonReptShort": 13058,
-      "nonReptNet": 16053
     }
   ]
 }
