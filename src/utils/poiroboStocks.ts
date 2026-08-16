@@ -68,7 +68,9 @@ export type PoiroboStocksData = {
   layers?: AiLayer[]
 }
 
-const CACHE_KEY = 'poical-poirobo-stocks-v1'
+// 🔴 枠を入れ替えたらキーを上げる（2026-08-16 v2＝安川電機を外して3枠にした）。
+//    上げないと、すでに開いた人のブラウザに**外した銘柄が最大30分残る**。
+const CACHE_KEY = 'poical-poirobo-stocks-v2'
 const TTL = 30 * 60 * 1000
 
 export async function fetchPoiroboStocks(force = false): Promise<PoiroboStocksData | null> {
