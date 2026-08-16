@@ -4,7 +4,7 @@
 //    とくに **本文の userEmail を宛先にしない** ことを固定する。
 //    ここが緩むと、任意のアドレスに「ぽいロボ」名義のメールを送れる踏み台になる。
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 // @ts-expect-error — api/*.js に型定義は無い（サーバー側は素の JS）
 import { authorizeBookingNotify } from '../../../api/_bookingAuth.js'
 
@@ -69,16 +69,14 @@ const call = (args: Record<string, unknown>): Promise<Gate> =>
   authorizeBookingNotify({ action: 'test', ...args }) as Promise<Gate>
 
 describe('authorizeBookingNotify', () => {
-  const savedUid = process.env.ADMIN_UID
-  const savedEmail = process.env.ADMIN_EMAIL
-
+  // 🔵 `process` を直接触ると本番ビルド側の tsc（node の型を入れていない）が落ちるので
+  //    vitest の stubEnv を使う。
   beforeEach(() => {
-    process.env.ADMIN_UID = 'admin-uid'
-    process.env.ADMIN_EMAIL = 'admin@example.com'
+    vi.stubEnv('ADMIN_UID', 'admin-uid')
+    vi.stubEnv('ADMIN_EMAIL', 'admin@example.com')
   })
   afterEach(() => {
-    process.env.ADMIN_UID = savedUid
-    process.env.ADMIN_EMAIL = savedEmail
+    vi.unstubAllEnvs()
   })
 
   it('トークンが無ければ 401', async () => {

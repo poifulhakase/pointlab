@@ -174,6 +174,23 @@ idToken 検証＋レート制限があり、**通知の2本だけが取り残さ
   使っているのは `scripts/fetch-jpx.mjs` など**サーバー側だけ**（ブラウザには入らない）。
 - 🔵 `overrides` と xlsx の理由は `package.json` の `//overrides` / `//xlsx` に書いてある。
 
+#### 🔴 この作業で本番デプロイを2回落とした（教訓）
+
+`package.json` の **`dependencies` の中にコメント行（`"//xlsx": "…"`）を書いた**ため、
+npm がこれを `//xlsx` というパッケージ名として読み、`EINVALIDPACKAGENAME` で
+install ごと失敗した。**Vercel のビルドが2回失敗**し、その間 本番は古いままだった。
+
+- 🔵 手元では `npm install`（引数なし）が通ってしまい気づけなかった。**まっさらな場所で
+  `npm ci` を通す**のが確実（`.npmrc` の `legacy-peer-deps=true` も一緒にコピーしないと
+  vite 8 と vite-plugin-pwa の peer で別の失敗が出る＝これは既存の事情で無関係）。
+- 🔵 **コメントはトップレベルに置く**（`//xlsx` / `//overrides` は今そうしてある）。
+- 🔴 **デプロイの成否は push しただけでは分からない**。GitHub の commit status で見られる：
+  `curl -s https://api.github.com/repos/poifulhakase/pointlab/commits/main/status`
+  → `state` が `success` か `failure`。Vercel のダッシュボードはログイン必須で、
+  CLI のトークンは失効している（`npx vercel ls` は通らない）。
+- 🔴 あわせて**テストに `process.env` を直接書くと本番ビルドの tsc が落ちる**（app 側の
+  tsconfig に node の型を入れていないため）。`vi.stubEnv()` を使うこと。
+
 #### 点検して**問題なし**だったもの
 
 - ソースマップは本番に出ていない（`.map` は index.html にフォールバック）
