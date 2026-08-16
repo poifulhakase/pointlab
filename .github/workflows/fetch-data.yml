@@ -113,6 +113,18 @@ jobs:
           CHATWORK_API_TOKEN: ${{ secrets.CHATWORK_API_TOKEN }}
           CHATWORK_ROOM_ID: ${{ secrets.CHATWORK_ROOM_ID }}
 
+      # 判断の答え合わせ（⑤b・2026-08-14）。過去の判断ログに「その後どうなったか」を書き足し、
+      # 確信度の帯ごとの「言った確率 vs 実勝率」を robo_calibration.json に出す。
+      # 🔴 判断そのものには触らない（すでに出た判断を後から採点するだけ）。
+      #    LLM を呼ばないので API 費用はかからない。
+      # 🔵 **毎回走らせてよい**＝5営業日後がまだ来ていないぶんは null のままで、
+      #    日が経つと次の実行で勝手に埋まる（何度走らせても同じ結果になる）。
+      # 🔵 判断ステップの**後**に置く＝15:00 の回では、その日の判断を出したうえで
+      #    過去ぶんの答え合わせまで一度に終わる。
+      - name: 判断の答え合わせ（結果の紐付け・確信度の集計）
+        run: npm run robo-outcome
+        continue-on-error: true
+
       - name: 変更チェック & コミット
         id: commit
         run: |

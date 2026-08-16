@@ -64,5 +64,33 @@
     },
     "service_tier": "standard",
     "inference_geo": "global"
+  },
+  "outcome": {
+    "main": {
+      "side": "bull",
+      "action": "open",
+      "symbol": "1321",
+      "confidence_pct": 58,
+      "entry_date": "2026-08-13",
+      "entry_close": 68308.59375,
+      "next_open": 68811.171875,
+      "horizons": {
+        "1d": {
+          "date": "2026-08-14",
+          "close": 68617.4375,
+          "ret_pct": 0.45,
+          "edge_pct": 0.45,
+          "hit": true
+        },
+        "5d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        }
+      },
+      "complete": false
+    }
   }
 }

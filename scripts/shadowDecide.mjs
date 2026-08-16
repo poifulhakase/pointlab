@@ -15,7 +15,8 @@
 // 🔴 ②は**過去に遡って再現できない**（当時のチャート画像が無いと同じ入力を作れない）。
 //    だから貯める以外に測る道がない。30トレード貯まるまで比較しない。
 //
-// 🔵 30件貯まったら `scripts/compare-shadows.mjs`（未作成）で3通りの勝率・損益を並べる。
+// 🔵 3通りの採点は `scripts/robo-outcome.mjs` が毎日やっている（本番と同じ物差し）。
+//    30件貯まったら `public/data/robo_calibration.json` の `variants` を並べて比べる。
 
 import { decide, validateDecision } from './llmDecide.mjs'
 

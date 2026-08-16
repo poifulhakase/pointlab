@@ -1,0 +1,99 @@
+{
+  "updatedAt": "2026-08-14T05:45:06.727Z",
+  "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
+  "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
+  "horizons": [
+    "1d",
+    "5d"
+  ],
+  "variants": {
+    "main": {
+      "label": "本番（需給＋価格＋チャート）",
+      "summary": {
+        "logs": 3,
+        "directional": 2,
+        "hold": 1,
+        "by_horizon": {
+          "1d": {
+            "n": 2,
+            "wins": 2,
+            "win_rate_pct": 100,
+            "avg_confidence": 57,
+            "avg_edge_pct": 0.81,
+            "bull": {
+              "n": 2,
+              "win_rate_pct": 100
+            },
+            "bear": {
+              "n": 0,
+              "win_rate_pct": null
+            }
+          },
+          "5d": {
+            "n": 0,
+            "wins": 0,
+            "win_rate_pct": null,
+            "avg_confidence": null,
+            "avg_edge_pct": null,
+            "bull": {
+              "n": 0,
+              "win_rate_pct": null
+            },
+            "bear": {
+              "n": 0,
+              "win_rate_pct": null
+            }
+          }
+        }
+      },
+      "calibration": {
+        "1d": [
+          {
+            "range": "50-59%",
+            "n": 2,
+            "wins": 2,
+            "avg_confidence": 57,
+            "win_rate_pct": 100,
+            "gap": 43
+          }
+        ],
+        "5d": []
+      }
+    }
+  },
+  "rows": [
+    {
+      "date": "2026-08-10",
+      "side": null,
+      "symbol": "none",
+      "confidence_pct": 42,
+      "ret_1d": 0.83,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-08-12",
+      "side": "bull",
+      "symbol": "1321",
+      "confidence_pct": 56,
+      "ret_1d": 1.16,
+      "hit_1d": true,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-08-13",
+      "side": "bull",
+      "symbol": "1321",
+      "confidence_pct": 58,
+      "ret_1d": 0.45,
+      "hit_1d": true,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    }
+  ]
+}

@@ -53,5 +53,33 @@
     },
     "service_tier": "standard",
     "inference_geo": "global"
+  },
+  "outcome": {
+    "main": {
+      "side": null,
+      "action": "hold",
+      "symbol": "none",
+      "confidence_pct": 42,
+      "entry_date": "2026-08-10",
+      "entry_close": 66970.21875,
+      "next_open": 66994.046875,
+      "horizons": {
+        "1d": {
+          "date": "2026-08-12",
+          "close": 67524.0625,
+          "ret_pct": 0.83,
+          "edge_pct": null,
+          "hit": null
+        },
+        "5d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        }
+      },
+      "complete": false
+    }
   }
 }
