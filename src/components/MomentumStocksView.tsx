@@ -69,11 +69,6 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
           <span style={{ fontSize: isMobile ? 10 : 11, letterSpacing: '0.2em', color: c.GREEN, whiteSpace: 'nowrap' }}>
             BELIEVE / 第4次産業革命
           </span>
-          {data?.index?.close != null && (
-            <span style={{ fontSize: isMobile ? 9.5 : 10.5, color: c.DIM, letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              ／ 日経 {data.index.close.toLocaleString()} {pct(data.index.change_pct)}
-            </span>
-          )}
         </div>
         <button type="button" onClick={onClose} aria-label="閉じる"
           style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 6, border: `1px solid ${c.BORDER}`, background: 'transparent', color: c.TXTCLR, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
@@ -145,13 +140,13 @@ function Intro({ c, isMobile }: { c: C; isMobile: boolean }) {
 /**
  * AIの4層と、そこに付いた値段。左にロボット、右に棒。
  * 🔵 ロボットの部位が層と対応する（頭＝考える／胸＝記憶／配線＝つなぐ／関節＝動く）。
- * 🔴 出しているのは対日経12ヶ月＝指数に対してどれだけ買われたか。
+ * 🔴 出しているのは12ヶ月の上がり方。層ごとに桁が違うことが分かればいい。
  */
 function LayerGap({ c, dark, isMobile, layers }: {
   c: C; dark: boolean; isMobile: boolean; layers: AiLayer[]
 }) {
   const [ref, seen] = useInView<HTMLDivElement>(0.2)
-  const max = Math.max(100, ...layers.map(l => Math.abs(l.rel12m ?? 0)))
+  const max = Math.max(100, ...layers.map(l => Math.abs(l.ret12m ?? 0)))
   // 桁が違いすぎる（記憶は+2000%）ので対数で圧縮して形を見せる
   const width = (v: number) => Math.min(100, (Math.log10(Math.abs(v) + 1) / Math.log10(max + 1)) * 100)
   const dim = dark ? 'rgba(255,255,255,0.34)' : 'rgba(3,105,161,0.32)'
@@ -168,11 +163,11 @@ function LayerGap({ c, dark, isMobile, layers }: {
 
         <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
           <div style={{ fontSize: 9.5, letterSpacing: '0.22em', color: c.DIM, marginBottom: 12 }}>
-            AIの4層と、付いた値段（対日経・12ヶ月）
+            AIの4層と、付いた値段（12ヶ月）
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13 }}>
             {layers.map((l, i) => {
-              const v = l.rel12m ?? 0
+              const v = l.ret12m ?? 0
               const ours = !!l.ours
               return (
                 <div key={l.key}>
@@ -308,10 +303,10 @@ function StockCard({ c, dark, isMobile, s }: {
         <PriceChart c={c} dark={dark} isMobile={isMobile} s={s} seen={seen} />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-          <MiniStat c={c} label="対日経 12ヶ月" value={pct(s.momentum?.ret_vs_index?.m12)} strong />
-          <MiniStat c={c} label="対日経 3ヶ月" value={pct(s.momentum?.ret_vs_index?.m3)} />
+          <MiniStat c={c} label="12ヶ月" value={pct(s.momentum?.ret?.m12)} strong />
+          <MiniStat c={c} label="3ヶ月" value={pct(s.momentum?.ret?.m3)} />
           <MiniStat c={c} label="52週高値から" value={pct(s.momentum?.from_52w_high_pct)} />
-          <MiniStat c={c} label="25日線からの乖離" value={pct(s.dev25_pct)} />
+          <MiniStat c={c} label="25日線から" value={pct(s.dev25_pct)} />
         </div>
 
         {th && (
