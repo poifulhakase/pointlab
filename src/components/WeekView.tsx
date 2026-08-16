@@ -8,7 +8,7 @@ import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
 import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
-import { getMonthBand } from '../utils/earningsSeason'
+import { getMonthBand } from '../utils/monthBands'
 import { type ScheduleEntry } from '../utils/noteStorage'
 import { type RoboJob, ROBO_JOB_META } from '../utils/roboSchedule'
 import { BadgePopup } from './BadgePopup'
@@ -341,10 +341,11 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
         </div>
       </div>
 
-      {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: `1px solid ${band ? 'var(--banner-border)' : 'transparent'}`, background: band ? 'var(--banner-bg)' : 'transparent', fontSize: 12, backdropFilter: 'blur(8px)', visibility: band ? 'visible' : 'hidden' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: band ? 'var(--banner-color)' : 'transparent', flexShrink: 0 }} />
-        {band ? band.items.map((item, i) => (
+      {/* 月次イベントバナー（カレンダー下部）
+          🔴 帯が無い月は枠ごと出さない（2026-08-16・決算関連の削除で無い月が増えたため） */}
+      {band && <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px', margin: '8px 0 0', padding: '5px 12px', borderRadius: 8, border: '1px solid var(--banner-border)', background: 'var(--banner-bg)', fontSize: 12, backdropFilter: 'blur(8px)' }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--banner-color)', flexShrink: 0 }} />
+        {band.items.map((item, i) => (
           <span key={i} style={styles.seasonItem}>
             {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: 10 }}>／</span>}
             {item.url ? (
@@ -356,8 +357,8 @@ export function WeekView({ days, current, isToday, getMarkers, getSqMarkers, get
               <span style={styles.seasonLabel}>{item.label}</span>
             )}
           </span>
-        )) : <span>&nbsp;</span>}
-      </div>
+        ))}
+      </div>}
 
       {roboPopup && (
         <BadgePopup

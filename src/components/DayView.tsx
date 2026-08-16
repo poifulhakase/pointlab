@@ -6,7 +6,7 @@ import { MacroEventBadge } from './MacroEventBadge'
 import { type MarkerType } from '../utils/dividendCalendar'
 import { type SqMarker } from '../utils/sqCalendar'
 import { type MacroEvent } from '../utils/macroCalendar'
-import { getMonthBand } from '../utils/earningsSeason'
+import { getMonthBand } from '../utils/monthBands'
 import { type ScheduleEntry } from '../utils/noteStorage'
 import { type RoboJob, ROBO_JOB_META } from '../utils/roboSchedule'
 import { BadgePopup } from './BadgePopup'
@@ -129,9 +129,10 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
             {date.getDate()}
           </span>
           {closed && reason && <span style={styles.closedBadge}>🏦 休場（{reason}）</span>}
-          {/* 月次イベントバッジ — イベントがない月も同一高さを確保 */}
-          <span style={{ visibility: band ? 'visible' : 'hidden', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
-            {band ? band.items.map((item, i) => (
+          {/* 月次イベントバッジ
+              🔴 帯が無い月は枠ごと出さない（2026-08-16・決算関連の削除で無い月が増えたため） */}
+          {band && <span style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
+            {band.items.map((item, i) => (
               item.url ? (
                 <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                   style={styles.seasonLink}>
@@ -143,8 +144,8 @@ export function DayView({ date, isToday, getMarkers, getSqMarkers, getMacroEvent
                   {item.label}
                 </span>
               )
-            )) : <span style={styles.seasonEmpty}>&nbsp;</span>}
-          </span>
+            ))}
+          </span>}
           <DividendMarker markers={markers} size="md" />
           <SqMarkerBadge markers={sqMarkers} size="md" />
           <MacroEventBadge events={macroEvts} size="md" />
@@ -309,7 +310,6 @@ const styles: Record<string, React.CSSProperties> = {
   // 季節バナー（完全静的なインラインを定数化）
   seasonLink: { fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 },
   seasonLabel: { fontSize: 11, fontWeight: 500, color: 'var(--banner-color)', background: 'var(--banner-bg)', border: '1px solid var(--banner-border)', borderRadius: 5, padding: '2px 8px' },
-  seasonEmpty: { fontSize: 11, padding: '2px 8px' },
   extLinkIcon: { opacity: 0.7, flexShrink: 0 },
   noteBtn: {
     display: 'flex', alignItems: 'center', gap: 6,

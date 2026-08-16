@@ -4,7 +4,7 @@ import { type MacroEvent } from '../utils/macroCalendar'
 import { type AnomalyEvent } from '../utils/anomalyCalendar'
 import { type PoiroboAlertConfig, POIROBO_ALERT_CONFIG_DEFAULT } from '../utils/settingsStorage'
 import { type BookingSlot } from '../utils/bookingTypes'
-import { getMonthBand } from '../utils/earningsSeason'
+import { getMonthBand } from '../utils/monthBands'
 import { activateOnKey, dateLabel } from '../utils/a11y'
 import { DividendMarker } from './DividendMarker'
 import { SqMarkerBadge } from './SqMarker'
@@ -180,18 +180,19 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
         )}
       </div>
 
-      {/* 月次イベントバナー（カレンダー下部）— イベントがない月も同一高さを確保 */}
-      <div style={{
+      {/* 月次イベントバナー（カレンダー下部）
+          🔴 帯が無い月は**枠ごと出さない**（2026-08-16）。旧実装は空の帯で高さを確保していたが、
+             決算関連を削除して無い月が増えたので、詰めてカレンダーを広く使う。 */}
+      {band && <div style={{
         ...styles.seasonBanner,
         fontSize: isMobile ? 10 : 12,
         padding: isMobile ? '4px 8px' : '5px 12px',
         borderColor: 'var(--banner-border)',
-        background: band ? 'var(--banner-bg)' : 'transparent',
-        visibility: band ? 'visible' : 'hidden',
+        background: 'var(--banner-bg)',
       }}>
         <span style={{ ...styles.seasonDot, background: 'var(--banner-color)', flexShrink: 0 }} />
         <span style={styles.seasonItems}>
-          {band && band.items.map((item, i) => (
+          {band.items.map((item, i) => (
             <span key={i} style={styles.seasonItem}>
               {i > 0 && <span style={{ color: 'var(--text-dim)', fontSize: isMobile ? 9 : 10 }}>／</span>}
               {item.url ? (
@@ -210,9 +211,8 @@ export function MonthView({ days, current, isToday, isCurrentMonth, onClickDay, 
               )}
             </span>
           ))}
-          {!band && <span>&nbsp;</span>}
         </span>
-      </div>
+      </div>}
     </div>
   )
 }
