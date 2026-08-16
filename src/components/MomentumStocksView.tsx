@@ -14,7 +14,6 @@ import {
 } from '../utils/poiroboStocks'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
-import { PoiroboPixel } from './PoiroboPixel'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
 type C = ReturnType<typeof cy>
@@ -205,54 +204,50 @@ function LayerGap({ c, dark, isMobile, layers }: {
 }
 
 /**
- * ぽいロボの体で4層を示す。
- *
- * 🔴 ロボットは**ぽいロボ本人**（`PoiroboPixel`＝24×24のドット絵）を使う（2026-08-16 ユーザー指示）。
- *    別のロボットを描くと世界観が2つになるので、印だけを重ねる。
- * 🔵 印の位置はスプライトの升目に合わせてある＝アンテナ(つなぐ)／目(考える)／お腹のLED(記憶)／足(動く)。
+ * ロボットの図。4層＝部位（頭＝考える／胸＝記憶／配線＝つなぐ／関節＝動く）。
  * 🔵 値段が付いた層は鈍く、まだ付いていない層（＝賭けている側）だけが光る。
+ * 🔴 画像は使わない（SVGのみ）。
  */
-const ROBOT_MARKS = [
-  { key: 'connect', label: 'つなぐ', x: 27, y: 8 },   // アンテナ
-  { key: 'think', label: '考える', x: 50, y: 36 },    // 目
-  { key: 'memory', label: '記憶', x: 50, y: 51 },     // お腹のLED
-  { key: 'move', label: '動く', x: 37, y: 88 },       // 足
-] as const
-
 function RobotFigure({ c, dark, layers, seen, size }: {
   c: C; dark: boolean; layers: AiLayer[]; seen: boolean; size: number
 }) {
   const on = (key: string) => !!layers.find(l => l.key === key)?.ours
+  const lit = (key: string) => (on(key) ? c.GREEN : (dark ? 'rgba(255,255,255,0.30)' : 'rgba(3,105,161,0.30)'))
+  const glow = (key: string) => (on(key) && dark ? `drop-shadow(0 0 6px ${c.GREEN})` : 'none')
 
   return (
-    <div style={{
-      position: 'relative', width: size, height: size, flexShrink: 0,
-      opacity: seen ? 1 : 0, transition: 'opacity 700ms ease',
-    }}>
-      <PoiroboPixel size={size} alt="" />
-      {ROBOT_MARKS.map(m => {
-        const lit = on(m.key)
-        const color = lit ? c.GREEN : (dark ? 'rgba(255,255,255,0.36)' : 'rgba(3,105,161,0.4)')
-        return (
-          <div key={m.key} style={{
-            position: 'absolute', left: `${m.x}%`, top: `${m.y}%`,
-            transform: 'translate(-50%, -50%)',
-            display: 'flex', alignItems: 'center', gap: 5, pointerEvents: 'none',
-          }}>
-            <span className={lit ? 'mom-pulse' : undefined} style={{
-              width: lit ? 9 : 6, height: lit ? 9 : 6, borderRadius: '50%',
-              border: `2px solid ${color}`, background: lit ? color : 'transparent',
-              boxShadow: lit && dark ? `0 0 10px ${c.GREEN}` : 'none',
-            }} />
-            <span style={{
-              fontSize: 9, letterSpacing: '0.06em', color,
-              fontWeight: lit ? 800 : 500, whiteSpace: 'nowrap',
-              textShadow: dark ? '0 1px 3px rgba(0,0,0,0.9)' : '0 1px 3px rgba(255,255,255,0.9)',
-            }}>{m.label}</span>
-          </div>
-        )
-      })}
-    </div>
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden
+      style={{ flexShrink: 0, opacity: seen ? 1 : 0, transition: 'opacity 700ms ease' }}>
+      {/* つなぐ＝配線 */}
+      <g style={{ filter: glow('connect') }}>
+        <path d="M60 34 V44 M60 40 H40 M60 40 H80 M40 40 V52 M80 40 V52"
+          fill="none" stroke={lit('connect')} strokeWidth="1.6" strokeLinecap="round" strokeDasharray="3 3" />
+      </g>
+
+      {/* 考える＝頭 */}
+      <g style={{ filter: glow('think') }}>
+        <rect x="44" y="10" width="32" height="24" rx="7" fill="none" stroke={lit('think')} strokeWidth="2.4" />
+        <circle cx="53" cy="22" r="2.6" fill={lit('think')} />
+        <circle cx="67" cy="22" r="2.6" fill={lit('think')} />
+        <path d="M60 10 V5" stroke={lit('think')} strokeWidth="2" strokeLinecap="round" />
+        <circle cx="60" cy="4" r="2" fill={lit('think')} />
+      </g>
+
+      {/* 記憶＝胸のコア */}
+      <g style={{ filter: glow('memory') }}>
+        <rect x="46" y="44" width="28" height="30" rx="5" fill="none" stroke={lit('memory')} strokeWidth="2.4" />
+        <path d="M52 52 H68 M52 58 H68 M52 64 H68" stroke={lit('memory')} strokeWidth="1.6" strokeLinecap="round" />
+      </g>
+
+      {/* 動く＝手足と関節 */}
+      <g style={{ filter: glow('move') }}>
+        <path d="M46 50 H34 V72 M74 50 H86 V72" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M52 74 V96 M68 74 V96 M52 96 H44 M68 96 H76" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        {[[34, 50], [86, 50], [34, 72], [86, 72], [52, 74], [68, 74], [52, 96], [68, 96]].map(([x, y]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r="3.4" fill={c.BG} stroke={lit('move')} strokeWidth="2" />
+        ))}
+      </g>
+    </svg>
   )
 }
 
