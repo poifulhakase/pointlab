@@ -26,13 +26,18 @@
     "@anthropic-ai/sdk": "^0.116.0",
     "@sentry/react": "^10.53.1",
     "firebase": "^12.12.0",
-    "firebase-admin": "^13.10.0",
+    "firebase-admin": "^14.2.0",
     "jose": "^6.2.3",
     "lightweight-charts": "^5.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "resend": "^6.12.3",
-    "xlsx": "^0.18.5"
+    "//xlsx": "🔴 npm レジストリ版（0.18.5）は更新が止まっており Prototype Pollution / ReDoS が未修正。作者の公式配布（CDN 0.20.3）が修正版なので、そちらを直接指す（2026-08-16）。取得元が npm 以外になるので CI が落ちたらここを疑う。",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "//overrides": "🔴 uuid: firebase-admin の依存（gaxios / teeny-request）が古い uuid を掴んでおり moderate 6件の原因。上流の更新待ちにせず、ここで 11 系に寄せて解消する（2026-08-16）。",
+  "overrides": {
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

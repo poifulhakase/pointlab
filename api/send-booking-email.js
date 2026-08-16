@@ -1,4 +1,25 @@
+// 🔴 2026-08-16：Origin チェックだけでは誰でも叩けた（Origin は詐称できる）。
+//    idToken 検証＋レート制限＋**宛先はサーバー側の予約ドキュメントから**に変更。
+//    詳細は `_bookingAuth.js` の冒頭コメント。
+import admin from 'firebase-admin'
+import { authorizeBookingNotify } from './_bookingAuth.js'
+
 const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
+
+// Firebase Admin は遅延初期化（env 不備でモジュール読み込み時にクラッシュさせない）。
+let _admin = null
+function getAdmin() {
+  if (!_admin) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT
+    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT is not set')
+    const sa = JSON.parse(raw)
+    if (!admin.apps.length) {
+      admin.initializeApp({ credential: admin.credential.cert(sa) })
+    }
+    _admin = { db: admin.firestore(), auth: admin.auth() }
+  }
+  return _admin
+}
 
 const DAYS = ['日', '月', '火', '水', '木', '金', '土']
 
@@ -66,11 +87,19 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || ''
   if (origin === ALLOWED_ORIGIN) res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' })
   if (origin !== ALLOWED_ORIGIN) return res.status(403).json({ error: 'Forbidden' })
+
+  let db, auth
+  try {
+    ({ db, auth } = getAdmin())
+  } catch (e) {
+    console.error('[send-booking-email] admin init failed:', e)
+    return res.status(503).json({ error: 'Mail service unavailable (server misconfiguration)' })
+  }
 
   let body = req.body
   if (!body || typeof body !== 'object') {
@@ -83,8 +112,12 @@ export default async function handler(req, res) {
     body = raw ? JSON.parse(raw) : {}
   }
 
-  const { type, booking } = body
-  if (!type || !booking) return res.status(400).json({ error: 'Missing fields' })
+  const { type } = body
+
+  // 🔴 本人／管理者の確認と、宛先の差し替え（本文の userEmail は信用しない）
+  const gate = await authorizeBookingNotify({ req, db, auth, body, action: 'send-booking-email' })
+  if (gate.error) return res.status(gate.status).json({ error: gate.error })
+  const booking = gate.booking
 
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL
   if (!ADMIN_EMAIL) return res.status(500).json({ error: 'ADMIN_EMAIL not configured' })

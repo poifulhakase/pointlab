@@ -276,13 +276,17 @@ export async function completeBooking(booking: Booking): Promise<void> {
 
 // ── Email notification ─────────────────────────────────────────────────────
 
+// 🔴 通知APIは Authorization: Bearer <idToken> が必須（2026-08-16）。
+//    サーバー側は宛先を予約ドキュメントから引き直すので、body は「どの予約か」を
+//    伝えるだけの役割になった（booking.id が要る）。
 export async function sendBookingEmail(payload: {
   type: 'request' | 'confirm' | 'cancel_user' | 'cancel_admin'
   booking: Booking
 }): Promise<void> {
+  const idToken = await token()
   const res = await fetch('/api/send-booking-email', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body:    JSON.stringify(payload),
   })
   if (!res.ok) {
@@ -295,9 +299,10 @@ export async function sendBookingPush(payload: {
   type: 'request' | 'confirm' | 'cancel_user' | 'cancel_admin'
   booking: Booking
 }): Promise<void> {
+  const idToken = await token()
   await fetch('/api/send-booking-push', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body:    JSON.stringify(payload),
   })
 }

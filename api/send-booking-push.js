@@ -1,4 +1,8 @@
+// 🔴 2026-08-16：Origin チェックだけでは誰でも叩けた（＝任意の uid へ任意の文面を
+//    プッシュできた）。idToken 検証＋レート制限＋**内容はサーバー側の予約ドキュメントから**
+//    に変更。詳細は `_bookingAuth.js` の冒頭コメント。
 import admin from 'firebase-admin'
+import { authorizeBookingNotify } from './_bookingAuth.js'
 
 const ALLOWED_ORIGIN = 'https://pointlab.vercel.app'
 
@@ -12,7 +16,7 @@ function getAdmin() {
     if (!admin.apps.length) {
       admin.initializeApp({ credential: admin.credential.cert(sa) })
     }
-    _admin = { db: admin.firestore(), fcm: admin.messaging() }
+    _admin = { db: admin.firestore(), fcm: admin.messaging(), auth: admin.auth() }
   }
   return _admin
 }
@@ -50,15 +54,15 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || ''
   if (origin === ALLOWED_ORIGIN) res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' })
   if (origin !== ALLOWED_ORIGIN) return res.status(403).json({ error: 'Forbidden' })
 
-  let db, fcm
+  let db, fcm, auth
   try {
-    ({ db, fcm } = getAdmin())
+    ({ db, fcm, auth } = getAdmin())
   } catch (e) {
     console.error('[send-booking-push] admin init failed:', e)
     return res.status(503).json({ error: 'Push service unavailable (server misconfiguration)' })
@@ -75,8 +79,12 @@ export default async function handler(req, res) {
     body = raw ? JSON.parse(raw) : {}
   }
 
-  const { type, booking } = body
-  if (!type || !booking) return res.status(400).json({ error: 'Missing fields' })
+  const { type } = body
+
+  // 🔴 本人／管理者の確認と、内容の差し替え（本文の userId・氏名は信用しない）
+  const gate = await authorizeBookingNotify({ req, db, auth, body, action: 'send-booking-push' })
+  if (gate.error) return res.status(gate.status).json({ error: gate.error })
+  const booking = gate.booking
 
   const ADMIN_UID = process.env.ADMIN_UID
   const dateLabel = `${booking.date} ${booking.startTime}`
