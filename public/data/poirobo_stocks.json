@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-16T05:19:54.510Z",
+  "updatedAt": "2026-08-16T05:28:34.129Z",
   "basis": "Yahoo Finance の日足。連動（β・相関）は日経225との直近60営業日の日次リターンで計算",
   "caveat": "🔴 観測用。ロボ口座の判断・売買対象には入っていない。",
   "index": {
@@ -9145,6 +9145,61 @@
         6750,
         6510
       ]
+    }
+  ],
+  "layers": [
+    {
+      "key": "think",
+      "label": "考える",
+      "sub": "半導体・テスタ",
+      "code": "6857",
+      "symbol": "6857.T",
+      "name": "アドバンテスト",
+      "close": 36870,
+      "rel12m": 188.92,
+      "rel3m": 27.98,
+      "ret12m": 256.23,
+      "from_52w_high_pct": -4.8
+    },
+    {
+      "key": "memory",
+      "label": "記憶",
+      "sub": "メモリ",
+      "code": "285A",
+      "symbol": "285A.T",
+      "name": "キオクシア",
+      "close": 53740,
+      "rel12m": 2001.37,
+      "rel3m": 9.01,
+      "ret12m": 2068.68,
+      "from_52w_high_pct": -52.32
+    },
+    {
+      "key": "connect",
+      "label": "つなぐ",
+      "sub": "電線・光",
+      "code": "5803",
+      "symbol": "5803.T",
+      "name": "フジクラ",
+      "close": 5665,
+      "rel12m": 160.3,
+      "rel3m": -14.54,
+      "ret12m": 227.61,
+      "from_52w_high_pct": -28.59
+    },
+    {
+      "key": "move",
+      "label": "動く",
+      "sub": "ロボット",
+      "code": "6954",
+      "symbol": "6954.T",
+      "name": "ファナック",
+      "ours": true,
+      "close": 6435,
+      "rel12m": -16.64,
+      "rel3m": -33.68,
+      "ret12m": 50.67,
+      "from_52w_high_pct": -27.53
     }
   ]
 }

@@ -14,7 +14,7 @@ import { cy } from '../utils/cyberTheme'
 import { useInView, useCountUp, reduceMotion } from '../hooks/useMotion'
 import {
   fetchPoiroboStocks, sliceSeries, RANGES,
-  type PoiroboStocksData, type PoiroboStock, type RangeKey, type StockSeriesPoint,
+  type PoiroboStocksData, type PoiroboStock, type RangeKey, type StockSeriesPoint, type AiLayer,
 } from '../utils/poiroboStocks'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
@@ -100,6 +100,9 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
       {data && (
         <>
           <Intro c={c} isMobile={isMobile} n={data.stocks.length} />
+          {data.layers && data.layers.length > 0 && (
+            <LayerGap c={c} dark={dark} isMobile={isMobile} layers={data.layers} />
+          )}
           {data.stocks.map((s, i) => (
             <StockPanel key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} order={i + 1} />
           ))}
@@ -148,6 +151,86 @@ function Intro({ c, isMobile, n }: { c: C; isMobile: boolean; n: number }) {
           ここはその未来に賭けた銘柄を、<b style={{ color: c.TXTCLR }}>見立て・チャート・日経との強さ比べ</b>で並べる場所です。
           <br />🔵 数ヶ月〜年単位で持つ前提。途中の上下は判定材料にしません。
         </p>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * AIの4層と、そこに付いた値段。**この画面の主張を1枚で言う絵**。
+ *
+ * 🔴 出しているのは「対日経12ヶ月」＝**指数に対してどれだけ買われたか**。
+ *    素のリターンだと日経自体の上昇（12ヶ月+67%）が混ざって、層の差が見えない。
+ * 🔵 動く側だけ棒が反対向きに出る。ここが仮説の全部。
+ */
+function LayerGap({ c, dark, isMobile, layers }: {
+  c: C; dark: boolean; isMobile: boolean; layers: AiLayer[]
+}) {
+  const [ref, seen] = useInView<HTMLDivElement>(0.2)
+  const max = Math.max(100, ...layers.map(l => Math.abs(l.rel12m ?? 0)))
+  // 🔵 桁が違いすぎる（記憶は+2000%）ので、棒は対数っぽく圧縮して形を見せる
+  const width = (v: number) => Math.min(100, (Math.log10(Math.abs(v) + 1) / Math.log10(max + 1)) * 100)
+
+  return (
+    <div ref={ref} style={{
+      maxWidth: 1080, margin: '0 auto', padding: isMobile ? '10px 14px 0' : '18px 28px 0',
+    }}>
+      <div style={{
+        border: `1px solid ${c.BORDER}`, borderRadius: 14, background: c.TAREA,
+        padding: isMobile ? 16 : 24,
+      }}>
+        <div style={{ fontSize: 9.5, letterSpacing: '0.24em', color: c.DIM, marginBottom: 4 }}>
+          WHERE THE MONEY WENT / AIの4層と、付いた値段
+        </div>
+        <div style={{ fontSize: isMobile ? 11.5 : 13, color: c.DESC, lineHeight: 1.9, marginBottom: 16 }}>
+          対日経225・12ヶ月（＝指数に対してどれだけ買われたか）
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 15 }}>
+          {layers.map((l, i) => {
+            const v = l.rel12m ?? 0
+            const ours = !!l.ours
+            const color = ours ? c.GREEN : (dark ? 'rgba(255,255,255,0.34)' : 'rgba(3,105,161,0.32)')
+            return (
+              <div key={l.key}>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                  fontSize: isMobile ? 11 : 12.5, marginBottom: 5,
+                }}>
+                  <span style={{ color: ours ? c.GREEN : c.DESC, fontWeight: ours ? 800 : 600 }}>
+                    {l.label}
+                    <span style={{ fontSize: isMobile ? 9.5 : 10.5, color: c.DIM, marginLeft: 8 }}>{l.sub} ／ {l.name}</span>
+                  </span>
+                  <span style={{
+                    fontWeight: 800, color: v >= 0 ? (ours ? c.GREEN : c.DESC) : c.GREEN,
+                    fontSize: isMobile ? 12 : 15,
+                  }}>{pct(v, 1)}</span>
+                </div>
+                <div style={{ position: 'relative', height: ours ? 14 : 10, background: c.LOGBG, borderRadius: 7, overflow: 'hidden' }}>
+                  <div style={{
+                    position: 'absolute', top: 0, bottom: 0, left: 0,
+                    width: seen ? `${width(v)}%` : 0,
+                    background: color,
+                    boxShadow: ours && dark ? `0 0 16px ${c.GREEN}` : 'none',
+                    transition: 'width 1100ms cubic-bezier(0.2,0.8,0.2,1)',
+                    transitionDelay: `${i * 110}ms`,
+                  }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div style={{
+          marginTop: 16, paddingTop: 14, borderTop: `1px solid ${c.BORDER}`,
+          fontSize: isMobile ? 11.5 : 13, color: c.TXTCLR, lineHeight: 1.9, fontWeight: 700,
+        }}>
+          AIは来ている。<span style={{ color: c.GREEN }}>ロボットだけが、まだ来ていない。</span>
+        </div>
+        <div style={{ marginTop: 6, fontSize: isMobile ? 10 : 11, color: c.DIM, lineHeight: 1.9 }}>
+          🔴 「まだ来ていない」は「これから来る」を意味しません。来ない理由（利益がまだ出ていない・中国勢の台頭）が
+          正当である可能性も同じだけあります。だからこの画面は、来たかどうかを**数字で確かめ続ける**ために置いています。
+        </div>
       </div>
     </div>
   )

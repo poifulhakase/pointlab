@@ -27,6 +27,19 @@ export const STOCKS = [
   { code: '6324', symbol: '6324.T', name: 'ハーモニック・ドライブ・システムズ', kana: 'HARMONIC', note: '精密減速機（波動歯車装置）で世界シェア約50%。ロボットの関節そのもの' },
 ]
 
+/**
+ * 🔵 **ものさし（AIの4層）**。この画面の主張＝
+ *    「AIは考える・記憶・つなぐの3層にはもう値段が付いた。**動く側だけまだ**」を、
+ *    毎営業日そのまま数字で確かめるために、各層の代表銘柄も測って並べる。
+ * 🔴 これは比較用で、枠（採用銘柄）ではない。
+ */
+export const LAYERS = [
+  { key: 'think', label: '考える', sub: '半導体・テスタ', code: '6857', symbol: '6857.T', name: 'アドバンテスト' },
+  { key: 'memory', label: '記憶', sub: 'メモリ', code: '285A', symbol: '285A.T', name: 'キオクシア' },
+  { key: 'connect', label: 'つなぐ', sub: '電線・光', code: '5803', symbol: '5803.T', name: 'フジクラ' },
+  { key: 'move', label: '動く', sub: 'ロボット', code: '6954', symbol: '6954.T', name: 'ファナック', ours: true },
+]
+
 /** Yahoo の日足（出来高つき）。roboData の fetchDaily は出来高を返さないので別に持つ */
 async function fetchDailyWithVolume(symbol, range = '2y') {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=${range}`
@@ -73,6 +86,27 @@ async function main() {
   }
   if (!stocks.length) { console.log('1銘柄も取れなかった → 何も書かない'); return }
 
+  // ── ものさし（4層の比較）──
+  const layers = []
+  for (const l of LAYERS) {
+    try {
+      const rows = computeIndicators(await fetchDailyWithVolume(l.symbol))
+      const sum = summarizeStock(rows, index)
+      if (!sum) throw new Error('要約できなかった')
+      layers.push({
+        ...l,
+        close: sum.close,
+        rel12m: sum.momentum.ret_vs_index.m12,
+        rel3m: sum.momentum.ret_vs_index.m3,
+        ret12m: sum.momentum.ret.m12,
+        from_52w_high_pct: sum.momentum.from_52w_high_pct,
+      })
+      console.log(`  [層] ${l.label}（${l.name}）対日経12M ${layers[layers.length - 1].rel12m}%`)
+    } catch (e) {
+      console.log(`  ⚠ [層] ${l.label} は取れなかった（${e.message}）`)
+    }
+  }
+
   const nkLast = index[index.length - 1]
   const nkPrev = index[index.length - 2]
   const out = {
@@ -90,6 +124,7 @@ async function main() {
       dev25_pct: nkLast?.dev25 == null ? null : Math.round(nkLast.dev25 * 100) / 100,
     },
     stocks,
+    layers,
   }
 
   if (DRY) { console.log('[2] --dry のため書いていない'); return }

@@ -40,12 +40,32 @@ export type PoiroboStock = {
   spark: (number | null)[]
 }
 
+/**
+ * ものさし（AIの4層）。
+ * 🔵 この画面の主張＝「考える・記憶・つなぐには値段が付いた。**動く側だけまだ**」を
+ *    毎営業日そのまま確かめるための比較用。枠（採用銘柄）ではない。
+ */
+export type AiLayer = {
+  key: string
+  label: string
+  sub: string
+  code: string
+  name: string
+  ours?: boolean
+  close: number | null
+  rel12m: number | null
+  rel3m: number | null
+  ret12m: number | null
+  from_52w_high_pct: number | null
+}
+
 export type PoiroboStocksData = {
   updatedAt: string
   basis: string
   caveat: string
   index: { code: string; name: string; date: string | null; close: number | null; change_pct: number | null; dev25_pct: number | null }
   stocks: PoiroboStock[]
+  layers?: AiLayer[]
 }
 
 const CACHE_KEY = 'poical-poirobo-stocks-v1'
