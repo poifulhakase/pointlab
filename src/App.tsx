@@ -666,7 +666,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'swing' && (
             <ErrorBoundary label="地下室 スイングトレード">
               <Suspense fallback={<ViewLoader />}>
-                <SwingResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+                <SwingResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')}
+                  onSwitchRoom={(k) => setViewWithTransition(k)} />
               </Suspense>
             </ErrorBoundary>
           )}
@@ -674,7 +675,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'daytrade' && (
             <ErrorBoundary label="地下室 デイトレード">
               <Suspense fallback={<ViewLoader />}>
-                <DaytradeResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+                <DaytradeResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')}
+                  onSwitchRoom={(k) => setViewWithTransition(k)} />
               </Suspense>
             </ErrorBoundary>
           )}

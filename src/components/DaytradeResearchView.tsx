@@ -7,13 +7,20 @@
 // 🔵 数字はすべて `scripts/analyze-intraday-bias.mjs` の実行結果。
 //    条件を変えて測り直したら、ここも書き換える（測っていないことは書かない）。
 
-import { basementColors, BASEMENT_MONO, basementVeil } from './basementTheme'
+import { basementColors, BASEMENT_MONO, basementVeil, type BasementRoomKey } from './basementTheme'
 import {
   BasementKeyframes, BasementBackdrop, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
+  BasementRoomSwitch, BasementNextRoom,
   type JudgeRow,
 } from './basementKit'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
+type Props = {
+  theme: 'dark' | 'light'
+  isMobile: boolean
+  onClose: () => void
+  /** 地下室の別の部屋へ移る（🔵 地下室はひと続きなので、DATA に戻らず行き来できる） */
+  onSwitchRoom?: (key: BasementRoomKey) => void
+}
 
 /** 測った条件と、その判定。🔵 strength は t 値の目安（2で満タン） */
 const FINDINGS: JudgeRow[] = [
@@ -41,7 +48,7 @@ const NUMBERS = [
   { name: '5分足の保存（60日しか遡れないため）', value: '2026-08-13 から毎日・平日16:30' },
 ]
 
-export default function DaytradeResearchView({ theme, isMobile, onClose }: Props) {
+export default function DaytradeResearchView({ theme, isMobile, onClose, onSwitchRoom }: Props) {
   const c = basementColors(theme)
   const pad = isMobile ? 14 : 24
   const mono = BASEMENT_MONO
@@ -57,10 +64,13 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
             width: 8, height: 8, borderRadius: '50%', background: '#ffd79a',
             boxShadow: '0 0 8px 3px rgba(255,205,130,0.5)', display: 'inline-block',
           }} />
-          地下室 / デイトレード
+          地下室{!isMobile && ' / デイトレード'}
         </div>
-        <button type="button" onClick={onClose} aria-label="閉じる"
-          style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {onSwitchRoom && <BasementRoomSwitch c={c} isMobile={isMobile} current="daytrade" onSwitch={onSwitchRoom} />}
+          <button type="button" onClick={onClose} aria-label="閉じる"
+            style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
+        </div>
       </div>
 
       <div style={{ maxWidth: 940, margin: '0 auto', padding: pad, position: 'relative' }}>
@@ -125,6 +135,8 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
             </div>
           ))}
         </div>
+
+        {onSwitchRoom && <BasementNextRoom c={c} isMobile={isMobile} current="daytrade" onSwitch={onSwitchRoom} />}
 
         <div style={{ marginTop: 24, padding: pad, border: `1px dashed ${c.border}`, borderRadius: 10, fontSize: isMobile ? 11 : 12, lineHeight: 1.9, color: c.sub }}>
           🔴 このページは研究の記録であり、売買の推奨ではありません。数値は特定期間の過去データにもとづくもので、将来の成果を示すものではありません。

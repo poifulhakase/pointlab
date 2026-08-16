@@ -25,6 +25,20 @@ export function basementColors(theme: 'dark' | 'light') {
 export const BASEMENT_MONO = "'Consolas','SF Mono',ui-monospace,monospace"
 
 /**
+ * 地下室にある部屋（＝ページ）の一覧。
+ * 🔴 **ここが単一情報源**（2026-08-16）。部屋を増やすときは1行足すだけで、
+ *    ヘッダーの切替も「隣の部屋」も自動で追従する。
+ * 🔵 `verdict` は各ページの判定スタンプと**同じ短文**にすること（別のことを言うと部屋が別物に見える）。
+ * 🔵 `key` は App の ViewMode と同じ文字列にしてある（そのまま画面切替に渡せる）。
+ */
+export const BASEMENT_ROOMS = [
+  { key: 'daytrade', label: 'デイトレード', short: 'デイ', mark: '×', verdict: '日計りの根拠は、見つからなかった。' },
+  { key: 'swing', label: 'スイングトレード', short: 'スイング', mark: '○', verdict: 'ルールとしては成立している。AIが上回るかは未判定。' },
+] as const
+
+export type BasementRoomKey = typeof BASEMENT_ROOMS[number]['key']
+
+/**
  * 上に浮かせる帯（ヘッダー）の地。
  * 🔵 背景（`BasementBackdrop`）の壁が透けるように、不透明色ではなく半透明＋ぼかしにする
  *    （2026-08-16。不透明だと壁の質感がヘッダーの所だけ切れて見える）。

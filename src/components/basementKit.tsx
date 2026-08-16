@@ -7,7 +7,7 @@
 // 🔴 画像は使わない。CSS と SVG だけ。`prefers-reduced-motion` で止まる。
 
 import type React from 'react'
-import { BASEMENT_MONO, type basementColors } from './basementTheme'
+import { BASEMENT_MONO, BASEMENT_ROOMS, type BasementRoomKey, type basementColors } from './basementTheme'
 import { useInView, useCountUp } from './basementHooks'
 
 type C = ReturnType<typeof basementColors>
@@ -131,6 +131,95 @@ export function BasementBackdrop({ c }: { c: C }) {
         borderBottom: `1px solid ${d ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
       }} />
     </div>
+  )
+}
+
+/**
+ * 部屋の切替（ヘッダーに置く）。
+ * 🔵 地下室は**ひと続きの場所**なので、いま居る部屋と隣の部屋を常に出す。
+ *    毎回 DATA まで戻らないと行き来できないと、2ページが別々のものに見える（2026-08-16 ユーザー指摘）。
+ */
+export function BasementRoomSwitch({ c, isMobile, current, onSwitch }: {
+  c: C; isMobile: boolean
+  current: BasementRoomKey
+  onSwitch: (key: BasementRoomKey) => void
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 2, padding: 2,
+      border: `1px solid ${c.border}`, borderRadius: 999,
+      background: c.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.5)',
+    }}>
+      {BASEMENT_ROOMS.map(r => {
+        const on = r.key === current
+        return (
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => { if (!on) onSwitch(r.key) }}
+            aria-current={on ? 'page' : undefined}
+            style={{
+              cursor: on ? 'default' : 'pointer',
+              border: 'none', borderRadius: 999,
+              padding: isMobile ? '4px 10px' : '5px 14px',
+              fontFamily: BASEMENT_MONO, fontSize: isMobile ? 10 : 11, letterSpacing: '0.08em',
+              color: on ? (c.dark ? '#1b1610' : '#fff') : c.sub,
+              background: on ? c.accent : 'transparent',
+              boxShadow: on && c.dark ? `0 0 14px ${c.accent}55` : 'none',
+              transition: 'background 0.18s, color 0.18s',
+            }}
+          >{isMobile ? r.short : r.label}</button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * 隣の部屋へ（ページ末尾）。
+ * 🔵 押すと隣の判定がそのまま出るので、読み終わりがそのまま次の入口になる。
+ */
+export function BasementNextRoom({ c, isMobile, current, onSwitch }: {
+  c: C; isMobile: boolean
+  current: BasementRoomKey
+  onSwitch: (key: BasementRoomKey) => void
+}) {
+  const [ref, seen] = useInView<HTMLButtonElement>()
+  const i = BASEMENT_ROOMS.findIndex(r => r.key === current)
+  const next = BASEMENT_ROOMS[(i + 1) % BASEMENT_ROOMS.length]
+  if (!next || next.key === current) return null
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={() => onSwitch(next.key)}
+      className={seen ? 'bsmt-rise' : undefined}
+      style={{
+        opacity: seen ? undefined : 0,
+        display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 18, width: '100%',
+        marginTop: 26, padding: isMobile ? '16px 14px' : '20px 22px',
+        border: `1px solid ${c.border}`, borderLeft: `3px solid ${c.accent}`, borderRadius: 12,
+        background: c.card, backdropFilter: 'blur(8px)', cursor: 'pointer', textAlign: 'left',
+        boxShadow: c.dark ? '0 12px 26px rgba(0,0,0,0.4)' : '0 8px 20px rgba(90,78,58,0.08)',
+      }}
+    >
+      <span aria-hidden style={{
+        fontSize: isMobile ? 28 : 38, fontWeight: 900, lineHeight: 1,
+        color: c.accent, flexShrink: 0,
+      }}>{next.mark}</span>
+      <span style={{ minWidth: 0 }}>
+        <span style={{ display: 'block', fontFamily: BASEMENT_MONO, fontSize: 10, letterSpacing: '0.28em', color: c.sub }}>
+          NEXT ROOM
+        </span>
+        <span style={{ display: 'block', marginTop: 4, fontSize: isMobile ? 14 : 17, fontWeight: 800, color: c.text }}>
+          {next.label}
+        </span>
+        <span style={{ display: 'block', marginTop: 3, fontSize: isMobile ? 11.5 : 12.5, color: c.sub, lineHeight: 1.7 }}>
+          {next.verdict}
+        </span>
+      </span>
+      <span aria-hidden style={{ marginLeft: 'auto', color: c.accent, fontSize: 20, flexShrink: 0 }}>→</span>
+    </button>
   )
 }
 

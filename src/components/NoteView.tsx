@@ -34,8 +34,9 @@ const BASE = import.meta.env.BASE_URL + 'notes/'
 
 const ARTICLES: Article[] = [
   // ── ぽいロボ ──────────────────────────────────────────────────
-  { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
+  // 🔵 並び順はこの配列の順。ジャンル内の順も画面にそのまま出る（2026-08-16 ユーザー指定）
   { genre: 'ぽいロボ', title: '戦略プレイブック', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'playbook' },
+  { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
   // ── 地下室（研究記録）──────────────────────────────────────────
   // 🔴 会員限定。検証途中の生の記録なので、外向けの説明としては読ませない。
   { genre: '地下室', title: 'デイトレード', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
@@ -64,9 +65,9 @@ const ARTICLES: Article[] = [
   { genre: '管理メニュー', title: 'コミュニティメンバー', url: null, thumb: null, internalAction: 'community' },
   { genre: '管理メニュー', title: 'バックテスト', url: null, thumb: null, internalAction: 'backtest' },
   // ── 未来ガジェット ────────────────────────────────────────────
-  { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
-  { genre: '未来ガジェット', title: 'タイムマシン', url: null, thumb: BASE + 'Future_Gadget_TimeMachine.webp', internalAction: 'timemachine' },
   { genre: '未来ガジェット', title: '波動の書', url: null, thumb: null, internalAction: 'chartpattern' },
+  { genre: '未来ガジェット', title: 'タイムマシン', url: null, thumb: BASE + 'Future_Gadget_TimeMachine.webp', internalAction: 'timemachine' },
+  { genre: '未来ガジェット', title: 'PER市場温度計', url: 'https://note.com/pointlab/n/n27ca54c2922e', thumb: BASE + 'Future_Gadget_per_line_autogeneration_device.webp' },
 ]
 
 const GENRES = ['ぽいロボ', '地下室', '未来ガジェット', '基礎', 'インジケーター', 'イベントドリブン', '管理メニュー']
