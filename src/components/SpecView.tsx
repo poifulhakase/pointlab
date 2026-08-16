@@ -519,7 +519,7 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: 'ぽいロボ コネクト — 通知仕様（Resend / .ics）★2026-05-18 新規',
         items: [
-          'メール通知: Vercel API Route `api/send-booking-email.js`（Resend API 経由）',
+          'メール通知: Vercel API Route `api/send-booking-email.js`（Resend API 経由）。🔴 **Authorization: Bearer <idToken> が必須**で、宛先は本文ではなく `bookings/{id}` から引き直す（★2026-08-16。詳細はセキュリティの節）',
           '通知タイミング: 予約申請時（ユーザー受付確認 ＋ 管理者通知）/ 承認時 / ユーザーキャンセル時 / 管理者キャンセル時',
           '必要環境変数: RESEND_API_KEY / RESEND_FROM_EMAIL（後方互換: RESEND_FROM_DOMAIN）。値はメールアドレス形式（例: noreply@yourdomain.com）で設定すること',
           '.ics 生成: Vercel API Route `api/booking-ics.js`。クエリパラメータ: date/startTime/bookingId/name',
@@ -831,7 +831,10 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: 'API セキュリティ対策（api/*.js）',
         items: [
-          'CORS: 全APIで ALLOWED_ORIGIN（https://pointlab.vercel.app）による Origin ヘッダー検証を実施',
+          '🔴 Origin 検証は防御ではない（★2026-08-16 是正）: 全APIで ALLOWED_ORIGIN（https://pointlab.vercel.app）を見てはいるが、Origin はブラウザ外から自由に名乗れるため、これ単体では「誰でも叩ける」状態と同じ。書き込み・送信系は必ず idToken 検証を併用する',
+          '🔴 予約通知API の認証必須化（★2026-08-16）: send-booking-email.js / send-booking-push.js は Origin チェックのみで、かつ宛先をリクエスト本文の userEmail から取っていた＝任意のアドレスへ「ぽいロボ」名義のメールを送れる踏み台だった（プッシュも任意 uid へ任意の文面）。api/_bookingAuth.js を新設し ①Authorization: Bearer <idToken> を Admin SDK で検証 ②宛先・氏名・日時は bookings/{id} から引き直す（本文は信用しない）③request / cancel_user は本人・confirm / cancel_admin は管理者のみ ④uid あたり 60秒10通のレート制限。管理者からの一言だけは本文を採用（キャンセルAPIがドキュメントに書かないため）',
+          '再発防止テスト: src/utils/__tests__/bookingNotifyAuth.test.ts（9件）。「本文の userEmail は無視され、予約ドキュメントの宛先が使われる」ことを固定している',
+          '認証つきAPI一覧: create-booking / cancel-booking / jitsi-token / send-booking-email / send-booking-push（いずれも idToken 検証＋Firestore ベースのレート制限）。無認証で残るのは読み取り専用または取得先ホスト固定の booking-ics / rainviewer-weather-maps / stocks-daily / youtube-rss',
           'jitsi-token.js: 管理者判定をメールアドレス（クライアント入力・信頼不可）→ uid + ADMIN_UID 環境変数に変更。ADMIN_EMAIL のハードコードを削除',
           'send-booking-email.js: escapeHtml() 関数でユーザー入力の HTML 特殊文字をエスケープ（XSS防止）。ADMIN_EMAIL を環境変数化',
           'booking-ics.js: escapeIcs() 関数で RFC 5545 準拠の ICS フィールドエスケープ。date / startTime の書式バリデーション（正規表現 + 値域チェック）を追加',
@@ -852,6 +855,19 @@ const SPEC_SECTIONS = [
           'PWA precache: data/*.json・notes/*.webp を除外し、JS/CSS/HTML/アイコンのみキャッシュ（約 1780KB）。data/*.json は runtimeCaching で扱う（★2026-06-03 StaleWhileRevalidate→NetworkFirst・3秒タイムアウト＝オンライン初回リロードで最新、オフライン時のみキャッシュ）',
           'Console / debugger 削除: vite.config.ts の esbuild.drop で本番ビルドから自動除去',
           'Cache-Control immutable: /calendar/assets/* に max-age=31536000, immutable 設定（ハッシュ付きファイル名のため安全）',
+          '🔴 起動時の転送量を4割削減（★2026-08-16）: 実測で最初の描画は速く（FCP 188ms・DCL 85ms）、遅さの正体は描画後の転送量だった。最初の2秒 1,297KB → 776KB。①Firestore 同期を requestIdleCallback まで遅延（useFirebaseSync の whenIdle・裏タブなら visibilitychange まで待つ）＝firestore 291KB とメモ 169KB が 4.4秒後へ ②モーダルを開くまでマウントしない ③icon-192.png 43→16KB・logo.svg を最適化',
+          '🔴 svgo は public/icons.svg（SVGスプライト）を破壊する（41バイトになる）。画像最適化の対象から除外すること',
+          'メモの月別分割は見送り（★2026-08-16 判断）: notes ドキュメント 169KB は初期ロードから外れて優先度が下がったため、データ構造の移行リスクの方が大きいと判断。500KB を超えたら再検討',
+        ],
+      },
+      {
+        type: 'list' as const,
+        heading: '依存パッケージの脆弱性（★2026-08-16 時点 0件）',
+        items: [
+          'npm audit（--omit=dev）で 13件 → 0件。firebase-admin 13.10.0 → 14.2.0',
+          'uuid: firebase-admin の依存（gaxios / teeny-request）が古い uuid を掴んでおり moderate 6件の原因だった。package.json の overrides で 11 系に固定して解消',
+          '🔴 xlsx: npm レジストリ版（0.18.5）は更新が止まっており Prototype Pollution / ReDoS が未修正。作者の公式配布（https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz）が修正版なので package.json から直接指している。取得元が npm ではないため、CI の npm ci が落ちたらまずここを疑う。利用箇所は scripts/fetch-jpx.mjs などサーバー側のみでブラウザには入らない',
+          'ソースマップは本番に配信されない（.map は index.html にフォールバック）。Firebase の web apiKey はクライアントに露出する前提の値で、防御は firestore.rules 側',
         ],
       },
       {
