@@ -164,6 +164,8 @@ export function summarizeStock(rows, index) {
     dev25_pct: r2(last.dev25),
     ma75: r2(last.sma75, 1),
     ma200: r2(last.sma200, 1),
+    // 🔵 購入時に考えることの2つ目＝「200日線付近か」（2026-08-16 の相談で確定）
+    dev200_pct: last.sma200 ? r2(((last.close - last.sma200) / last.sma200) * 100) : null,
     // 200日線が上向きか（20営業日前との差）
     trend_up: last.sma200slope == null ? null : last.sma200slope > 0,
     range20: { high: r2(range20.high, 1), low: r2(range20.low, 1), pos_pct: r2(posPct, 1) },

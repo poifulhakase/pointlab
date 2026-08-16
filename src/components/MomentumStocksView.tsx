@@ -340,7 +340,9 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
           <MiniStat c={c} label="12ヶ月" value={pct(s.momentum?.ret?.m12)} strong />
           <MiniStat c={c} label="3ヶ月" value={pct(s.momentum?.ret?.m3)} />
           <MiniStat c={c} label="52週高値から" value={pct(s.momentum?.from_52w_high_pct)} />
-          <MiniStat c={c} label="25日線から" value={pct(s.dev25_pct)} />
+          {/* 🔵 購入時の2つ目の基準。±5%以内なら「200日線付近」として光らせる */}
+          <MiniStat c={c} label="200日線から" value={pct(s.dev200_pct)}
+            strong={s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5} />
         </div>
 
         {th && (

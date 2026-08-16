@@ -30,6 +30,8 @@ export type PoiroboStock = {
   dev25_pct: number | null
   ma75: number | null
   ma200: number | null
+  /** 200日線からの乖離率（%）。購入時の2つ目の基準 */
+  dev200_pct: number | null
   trend_up: boolean | null
   range20: { high: number | null; low: number | null; pos_pct: number | null }
   range52w: { high: number | null; low: number | null }
