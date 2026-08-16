@@ -74,6 +74,26 @@ export type WatchStock = {
   dev200_pct: number | null
   above_ma200: boolean | null
   ma200_up: boolean | null
+  /** 1年ぶんを間引いた線（終値＋200日線）。🔵 チャートしか見ない使い方に合わせて持たせる */
+  series?: { d: string; c: number | null; m200: number | null }[]
+}
+
+/**
+ * レンジ銘柄（歴史的サポート狙い）。
+ * 🔴 会社の中身は見ていない。**15年の週足と、その安値からの距離**だけで見る枠。
+ */
+export type RangeStock = {
+  code: string
+  name: string
+  from: string
+  to: string
+  close: number | null
+  change_pct: number | null
+  low15y: number
+  high15y: number
+  from_low_pct: number
+  from_high_pct: number
+  series: { d: string; c: number }[]
 }
 
 export type PoiroboStocksData = {
@@ -84,6 +104,7 @@ export type PoiroboStocksData = {
   stocks: PoiroboStock[]
   layers?: AiLayer[]
   watch?: WatchStock[]
+  ranges?: RangeStock[]
 }
 
 // 🔴 枠を入れ替えたらキーを上げる（2026-08-16 v2＝安川電機を外して3枠にした）。

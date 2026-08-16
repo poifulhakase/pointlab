@@ -333,15 +333,21 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
   const near200 = s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5
 
   return (
-    <div ref={ref} className={seen ? 'mom-rise' : undefined} style={{
-      opacity: seen ? undefined : 0, animationDelay: `${(order % 2) * 90}ms`,
+    <div ref={ref} style={{
+      // 🔵 見えるまでは透明、見えたら該当枠は 1・それ以外は少し沈める
+      opacity: seen ? (near200 ? 1 : 0.9) : 0,
+      animationDelay: `${(order % 2) * 90}ms`,
       position: 'relative', overflow: 'hidden',
-      border: `1px solid ${near200 ? c.BORDBR : c.BORDER}`,
+      // 🔴 200日線付近の枠は**はっきり浮かせる**（2026-08-16 ユーザー指示）＝
+      //    太い枠・脈打つ光・左の帯。該当しない枠は少し沈めて、差を作る。
+      border: near200 ? `2px solid ${c.GREEN}` : `1px solid ${c.BORDER}`,
+      borderLeft: near200 ? `6px solid ${c.GREEN}` : `1px solid ${c.BORDER}`,
       borderRadius: 18,
       background: near200 ? c.HDBG : c.TAREA,
-      boxShadow: near200 ? (dark ? `0 0 0 1px ${c.GREEN}33, 0 0 34px ${c.GREEN}22` : `0 0 0 1px ${c.GREEN}44`) : 'none',
       padding: isMobile ? '24px 20px' : 22,
-    }}>
+    }}
+      className={`${seen ? 'mom-rise ' : ''}${near200 ? 'mom-alive' : ''}`}
+    >
       {/* 200日線付近のときだけ上に光の帯を敷く */}
       {near200 && (
         <div aria-hidden className="mom-sweep" style={{
@@ -364,9 +370,10 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
           {th && <span style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.06em' }}>{th.laneLabel}</span>}
           {near200 && (
             <span className="mom-pulse" style={{
-              padding: '3px 10px', borderRadius: 999,
-              border: `1px solid ${c.GREEN}`, background: `${c.GREEN}22`,
-              fontSize: 10, fontWeight: 800, color: c.GREEN, letterSpacing: '0.06em',
+              padding: '4px 12px', borderRadius: 999,
+              border: `1px solid ${c.GREEN}`, background: `${c.GREEN}2e`,
+              fontSize: 11, fontWeight: 900, color: c.GREEN, letterSpacing: '0.08em',
+              boxShadow: `0 0 14px ${c.GREEN}66`,
             }}>200日線付近</span>
           )}
         </div>
@@ -550,6 +557,13 @@ function Keyframes() {
       @keyframes mom-pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.3); opacity:0.55; } }
       .mom-pulse { animation: mom-pulse 2.4s ease-in-out infinite; transform-origin: center; }
 
+      /* 200日線付近の枠が呼吸する */
+      @keyframes mom-alive {
+        0%,100% { box-shadow: 0 0 0 0 rgba(0,229,255,0.00), 0 0 26px rgba(0,229,255,0.16); }
+        50%     { box-shadow: 0 0 0 3px rgba(0,229,255,0.10), 0 0 44px rgba(0,229,255,0.30); }
+      }
+      .mom-alive { animation: mom-alive 3.2s ease-in-out infinite; }
+
       /* 200日線付近のカードの上を光が流れる */
       @keyframes mom-sweep { 0% { opacity: 0.15; transform: translateX(-40%); } 50% { opacity: 1; } 100% { opacity: 0.15; transform: translateX(40%); } }
       .mom-sweep { animation: mom-sweep 3.4s ease-in-out infinite; }
@@ -570,7 +584,7 @@ function Keyframes() {
 
       @media (prefers-reduced-motion: reduce) {
         .mom-rise, .mom-stamp, .mom-draw, .mom-pulse { animation: none !important; opacity:1 !important; transform:none !important; }
-        .rb-armL, .rb-armR, .rb-legL, .rb-legR, .rb-head, .rb-wire, .mom-sweep { animation: none !important; }
+        .rb-armL, .rb-armR, .rb-legL, .rb-legR, .rb-head, .rb-wire, .mom-sweep, .mom-alive { animation: none !important; }
       }
     `}</style>
   )

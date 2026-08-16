@@ -69,6 +69,41 @@ export const WATCH = [
   { code: '5802', name: '住友電工', layer: 'つなぐ' },
 ]
 
+/**
+ * レンジ銘柄（歴史的サポート狙い）。
+ * 🔴 **枠でも「見立て」銘柄でもない**。値動きが規則的なレンジに見えるものを集めただけで、
+ *    会社の中身は判断材料にしていない（2026-08-16 ユーザー指示）。
+ * 🔵 だから見るのは**15年の週足と、その安値からの距離**だけ。歴史的な下値に近づいたら検討する、という使い方。
+ */
+export const RANGE_WATCH = [
+  { code: '2432', name: 'ディー・エヌ・エー' },
+  { code: '3793', name: 'ドリコム' },
+  { code: '3825', name: 'リミックスポイント' },
+]
+
+/** Yahoo の週足（長期のレンジを見る用）。15年ぶんでも約780本に収まる */
+async function fetchWeekly(symbol, range = '15y') {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1wk&range=${range}`
+  const res = await fetch(url, { headers: UA, signal: AbortSignal.timeout(30000) })
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${symbol}`)
+  const j = await res.json()
+  const r = j?.chart?.result?.[0]
+  if (!r) throw new Error(`no result for ${symbol}`)
+  const ts = r.timestamp ?? []
+  const q = r.indicators?.quote?.[0] ?? {}
+  const rows = []
+  for (let i = 0; i < ts.length; i++) {
+    if (q.close?.[i] == null) continue
+    rows.push({
+      date: new Date(ts[i] * 1000).toISOString().slice(0, 10),
+      high: q.high?.[i] ?? q.close[i],
+      low: q.low?.[i] ?? q.close[i],
+      close: q.close[i],
+    })
+  }
+  return rows
+}
+
 /** Yahoo の日足（出来高つき）。roboData の fetchDaily は出来高を返さないので別に持つ */
 async function fetchDailyWithVolume(symbol, range = '2y') {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=${range}`
@@ -150,12 +185,44 @@ async function main() {
         from_52w_high_pct: sum.momentum.from_52w_high_pct,
         dev200_pct: sum.dev200_pct,
         above_ma200: sum.momentum.above_ma200, ma200_up: sum.momentum.ma200_up,
+        // 🔵 チャートしか見ない使い方なので、監視銘柄にも線を持たせる。
+        //    1年ぶんを3本に1本へ間引く（見た目は変わらず、容量は1/3）。
+        series: sum.series.slice(-250).filter((_, i) => i % 3 === 0).map(p => ({ d: p.d, c: p.c, m200: p.m200 })),
       })
     } catch (e) {
       console.log(`  ⚠ [監視] ${w.code} ${w.name} は取れなかった（${e.message}）`)
     }
   }
   console.log(`[3] その他の監視銘柄 ${watch.length}件`)
+
+  // ── レンジ銘柄（15年の週足）──
+  const ranges = []
+  for (const w of RANGE_WATCH) {
+    try {
+      const rows = await fetchWeekly(`${w.code}.T`)
+      if (rows.length < 50) throw new Error('本数不足')
+      const last = rows[rows.length - 1]
+      const prev = rows[rows.length - 2]
+      const low = Math.min(...rows.map(r => r.low))
+      const high = Math.max(...rows.map(r => r.high))
+      const r1 = (v) => Math.round(v * 10) / 10
+      ranges.push({
+        code: w.code, name: w.name,
+        from: rows[0].date, to: last.date,
+        close: r1(last.close),
+        change_pct: prev?.close ? Math.round(((last.close - prev.close) / prev.close) * 10000) / 100 : null,
+        low15y: r1(low), high15y: r1(high),
+        // 歴史的な下値からどれだけ上にいるか（0に近いほどサポート付近）
+        from_low_pct: Math.round(((last.close - low) / low) * 1000) / 10,
+        from_high_pct: Math.round(((last.close - high) / high) * 1000) / 10,
+        series: rows.map(r => ({ d: r.date, c: r1(r.close) })),
+      })
+      const x = ranges[ranges.length - 1]
+      console.log(`  [レンジ] ${w.code} ${w.name}: ${x.close}円 / 15年安値 ${x.low15y}（+${x.from_low_pct}%）`)
+    } catch (e) {
+      console.log(`  ⚠ [レンジ] ${w.code} ${w.name} は取れなかった（${e.message}）`)
+    }
+  }
 
   const nkLast = index[index.length - 1]
   const nkPrev = index[index.length - 2]
@@ -176,6 +243,7 @@ async function main() {
     stocks,
     layers,
     watch,
+    ranges,
   }
 
   if (DRY) { console.log('[2] --dry のため書いていない'); return }
