@@ -217,7 +217,7 @@ export function ChartSkeleton() {
   )
 }
 
-// ── エンジン（ShieldView・ポジション分析）スケルトン ───────────────────
+// ── ロボ口座（ShieldView）スケルトン ───────────────────
 
 export function ShieldSkeleton() {
   return (
@@ -225,7 +225,7 @@ export function ShieldSkeleton() {
       display: 'grid', gridTemplateColumns: '500px 1fr', gap: 14,
       padding: 14, height: '100%', boxSizing: 'border-box',
     }}>
-      {/* 左：エンジンパネル */}
+      {/* 左：ロボ口座パネル */}
       <Panel>
         <PanelHeader label="POIROBO ▸ ENGINE" />
         {/* AI起動セクション */}

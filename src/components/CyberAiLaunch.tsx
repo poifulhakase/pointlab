@@ -3,7 +3,7 @@
    HMR(Fast Refresh)専用の警告で実行時影響なし。分割すると関連コードが断片化するため許容 */
 import { cy } from '../utils/cyberTheme'
 
-// ── AI リンク定義（ぽいロボ エンジン / 周期 共通）─────────────────
+// ── AI リンク定義（ぽいロボ ブンセキ / 周期 共通）─────────────────
 export const SHIELD_AI_LINKS = [
   {
     name: 'ChatGPT', url: 'https://chatgpt.com/', hint: 'o3以上推奨',

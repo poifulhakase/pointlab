@@ -59,10 +59,21 @@ function LabIcon() {
   )
 }
 
-function ShieldIcon() {
+/**
+ * ブンセキ（需給分析）のアイコン。
+ * 🔴 2026-08-16 に「シールド（盾）」から差し替え。名前が分析になったので、
+ *    絵も**棒グラフを虫めがねで見る**＝調べている姿にする（ユーザー指示）。
+ */
+function AnalysisIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      {/* 棒グラフ */}
+      <line x1="4" y1="20" x2="4" y2="13" />
+      <line x1="8.5" y1="20" x2="8.5" y2="9" />
+      <line x1="13" y1="20" x2="13" y2="15" />
+      {/* 虫めがね */}
+      <circle cx="16.5" cy="8.5" r="4" />
+      <line x1="19.6" y1="11.6" x2="22" y2="14" />
     </svg>
   )
 }
@@ -70,11 +81,11 @@ function ShieldIcon() {
 // ── ナビ定義 ─────────────────────────────────────────
 const MAIN_VIEWS = [
   { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
-  // 🔴 2026-08-09 に名称を入れ替えた（需給分析=シールド／ポジション分析=エンジン）。
+  // 🔴 2026-08-16 に表示名を変えた（'quant'＝**ブンセキ**（旧シールド）／'shield'＝**ロボ口座**（旧エンジン））。
   //    内部識別子 'quant'/'shield' と localStorage キーは据え置き（保存レポートの中身が入れ替わるため）。
   { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
-  { label: 'シールド',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <ShieldIcon /> },
-  { label: 'エンジン',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon /> },
+  { label: 'ブンセキ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <AnalysisIcon /> },
+  { label: 'ロボ口座',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon /> },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 
@@ -83,7 +94,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, o
   const showMenu = isMobile
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
-  // 🔵 エンジン（内部識別子 'shield'）と周期（'sector'）も研究室と同じサイバー調にする
+  // 🔵 ロボ口座（内部識別子 'shield'）と周期（'sector'）も研究室と同じサイバー調にする
   //    （2026-08-11 ユーザー指示）。どちらも中身が機械寄りの画面なので、研究室と地続きに見せる。
   const isLab    = view === 'support' || view === 'manual' || view === 'backtest' || view === 'evals' || view === 'spec' || view === 'legal' || view === 'playbook' || view === 'original' || view === 'timemachine' || view === 'shield' || view === 'sector' || view === 'chartpattern' || view === 'daytrade' || view === 'swing'
   const useNeon  = (isLab || forceNeon) && theme === 'dark'

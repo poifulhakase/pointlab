@@ -20,9 +20,13 @@ export const QUANT_TABS = ['bunseki', 'kankyou', 'genbutsu', 'micro'] as const
 
 export type QuantTabKey = typeof QUANT_TABS[number]
 
-/** タブボタンに出す名前（QUANT_TABS と同じ並び・同じ本数）。 */
+/**
+ * タブボタンに出す名前（QUANT_TABS と同じ並び・同じ本数）。
+ * 🔴 2026-08-16: 画面名が「シールド」→**ブンセキ**になったので、先頭タブは
+ *    画面名と同じにならないよう**需給**にした（中身は需給データそのもの）。
+ */
 export const QUANT_LABELS: Record<QuantTabKey, string> = {
-  bunseki:  'シールド',
+  bunseki:  '需給',
   kankyou:  '環境',
   genbutsu: '現物',
   micro:    '先物',

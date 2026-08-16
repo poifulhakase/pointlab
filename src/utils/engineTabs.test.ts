@@ -4,16 +4,17 @@ import appSource from '../App.tsx?raw'
 import { ENGINE_TABS, ENGINE_LABELS } from './engineTabs'
 
 /**
- * エンジン画面（ロボ口座）のタブ。
+ * ロボ口座画面（旧「エンジン」）のタブ。
  *
- * 🔴 シールド画面と同じ壊れ方を繰り返さないための固定。
+ * 🔴 ブンセキ画面と同じ壊れ方を繰り返さないための固定。
  *    パネルを書く順とタブの並び順がズレると、内容は正しいのに
- *    **スライドが左右逆に動く**（2026-08-11 にシールドで実際に起きた）。
+ *    **スライドが左右逆に動く**（2026-08-11 に実際に起きた）。
  */
-describe('エンジン画面のタブ', () => {
-  it('タブは ロボ口座 / 成績 / 履歴 の3枚', () => {
+describe('ロボ口座画面のタブ', () => {
+  it('タブは 口座 / 成績 / 履歴 の3枚', () => {
     expect([...ENGINE_TABS]).toEqual(['account', 'perf', 'log'])
-    expect(ENGINE_TABS.map(t => ENGINE_LABELS[t])).toEqual(['ロボ口座', '成績', '履歴'])
+    // 🔴 先頭タブは画面名（ロボ口座）と同じにしない（2026-08-16）
+    expect(ENGINE_TABS.map(t => ENGINE_LABELS[t])).toEqual(['口座', '成績', '履歴'])
   })
 
   it('面を書いた順がタブの並び順と一致する', () => {

@@ -126,7 +126,7 @@ const ms: Record<string, React.CSSProperties> = {
 }
 
 // ── シールドパネル（インライン）──────────────────
-//    🔴 2026-08-09 に表示名を「エンジン」→「シールド」へ入れ替え。
+//    🔴 2026-08-09 に「エンジン」→「シールド」へ入れ替え、2026-08-16 に「ブンセキ」へ改称。
 //    ファイル名・識別子・CSS クラス（engine-dust 等）は据え置き。
 export function EnginePanel({
   onPromptCopy, copyStatus, isMobile, theme, logState,
@@ -214,12 +214,12 @@ export function EnginePanel({
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke={CYBER_MODE ? CY_GREEN : 'currentColor'}
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <line x1="4" y1="20" x2="4" y2="13"/><line x1="8.5" y1="20" x2="8.5" y2="9"/><line x1="13" y1="20" x2="13" y2="15"/><circle cx="16.5" cy="8.5" r="4"/><line x1="19.6" y1="11.6" x2="22" y2="14"/>
           </svg>
           <span style={CYBER_MODE
             ? { fontFamily: CY_FONT, fontSize: 11, fontWeight: 700, color: CY_GREEN, letterSpacing: '0.08em' }
             : {}
-          }>ぽいロボ シールド</span>
+          }>ぽいロボ ブンセキ</span>
         </div>
         {CYBER_MODE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -272,7 +272,7 @@ export function EnginePanel({
                   onClick={onPromptCopy}
                 >
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <line x1="4" y1="20" x2="4" y2="13"/><line x1="8.5" y1="20" x2="8.5" y2="9"/><line x1="13" y1="20" x2="13" y2="15"/><circle cx="16.5" cy="8.5" r="4"/><line x1="19.6" y1="11.6" x2="22" y2="14"/>
                   </svg>
                   <span style={{ fontFamily: CY_FONT, fontSize: 10, letterSpacing: '0.07em', lineHeight: 1 }}>
                     {copyStatus === 'prompt' ? 'DONE' : 'COPY'}

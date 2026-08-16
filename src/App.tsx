@@ -100,7 +100,7 @@ const PushErrorToast = memo(({ message }: { message: string }) => (
 
 
 // 🚧 一時的な全ページ公開フラグ。true の間は非メンバーでも会員限定ページ
-//   （カレンダー/シールド/エンジン）を「閲覧」できる（ロック画面・研究室への
+//   （カレンダー/ブンセキ/ロボ口座）を「閲覧」できる（ロック画面・研究室への
 //   自動リダイレクトをバイパス）。コネクト予約・プッシュ通知などのアクションは
 //   従来どおりメンバー限定のまま。元に戻すときは false にするだけ。
 const TEMP_PUBLIC_ALL_PAGES = false
@@ -150,7 +150,7 @@ export default function App() {
 
   const { isMobile, isTablet, isDesktop } = useBreakpoint()
   const isLegalNeon = cal.view === 'legal' && theme === 'dark'
-  // 🔵 エンジン（内部識別子 'shield'）も研究室と同じサイバー調にする（2026-08-11 ユーザー指示）。
+  // 🔵 ロボ口座（内部識別子 'shield'）も研究室と同じサイバー調にする（2026-08-11 ユーザー指示）。
   //    下の帯（フッター）は CalendarHeader 側の isLab に 'shield' を足して合わせてある。
   const isEngineNeon = cal.view === 'shield' && theme === 'dark'
   // 🔵 周期（セクターローテーション）も中身がサイバー調の画面なので、帯とタブを合わせる
@@ -696,19 +696,19 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             <ErrorBoundary label="チャート"><Suspense fallback={<ViewLoader />}><ChartView theme={theme} isMobile={isMobile} symbol={chartSymbol} onSymbolChange={setChartSymbol} settingsOpen={chartSettingsOpen} onCloseSettings={() => setChartSettingsOpen(false)} /></Suspense></ErrorBoundary>
           )}
 
-          {/* シールド（需給分析）＝ シールド + 環境 + 現物 + 先物 + 周期。内部識別子は 'quant' のまま */}
+          {/* ブンセキ（需給分析・旧「シールド」）＝ 需給 + 環境 + 現物 + 先物。内部識別子は 'quant' のまま */}
           {cal.view === 'quant' && (
             canViewMemberPages
-              ? <ErrorBoundary label="シールド"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} visibleTabs={SHIELD_VIEW_TABS} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="ブンセキ"><Suspense fallback={<ViewLoader />}><QuantView theme={theme} isMobile={isMobile} user={user} quantTab={quantTab} visibleTabs={SHIELD_VIEW_TABS} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
-          {/* エンジン＝ロボ口座（疑似トレード）1枚。内部識別子は 'shield' のまま。
+          {/* ロボ口座（疑似トレード・旧「エンジン」）1枚。内部識別子は 'shield' のまま。
               🔴 2026-08-09: 旧ポジション分析を削除したので、市場データ（環境/現物/先物）は
               シールド側へ戻した。この画面はタブを持たない。 */}
           {cal.view === 'shield' && (
             canViewMemberPages
-              ? <ErrorBoundary label="エンジン"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
+              ? <ErrorBoundary label="ロボ口座"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
@@ -842,7 +842,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       </Suspense>
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
-      {/* コミュニティ限定ビュー（カレンダー/シールド/エンジン）は非メンバー時に非表示。
+      {/* コミュニティ限定ビュー（カレンダー/ブンセキ/ロボ口座）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
       {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || (cal.view === 'sector' && isMobile)) && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
@@ -889,7 +889,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 ))}
               </>
             )}
-            {/* エンジン（ロボ口座）＝ ロボ口座 / 成績 / 履歴（2026-08-11 追加） */}
+            {/* ロボ口座＝ 口座 / 成績 / 履歴（2026-08-11 追加・2026-08-16 に画面名とタブ名を改称） */}
             {cal.view === 'shield' && (
               <>
                 {ENGINE_TABS.map((tab) => (

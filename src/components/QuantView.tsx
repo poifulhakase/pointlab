@@ -31,7 +31,7 @@ const ContribSectorPanel = lazy(() => import('./StocksView').then(m => ({ defaul
 import type { NtRatioPoint } from '../utils/ntRatioData'
 
 // 🔴 2026-08-09: タブを機能ごと2画面に振り分けた（ユーザー指示）。
-//    シールド画面（'quant'）= 分析 + 環境 + 現物 + 先物。周期は独立ページへ移した（2026-08-11）。
+//    ブンセキ画面（'quant'・旧「シールド」）= 需給 + 環境 + 現物 + 先物。周期は独立ページへ移した（2026-08-11）。
 //    QuantView は**両方の画面から使われる**ので、どのタブを並べるかは visibleTabs で受け取る。
 //    データ取得は分析タブの AI プロンプト（buildExportJson）が全項目を使うため、
 //    タブ集合に関わらず従来どおり全部読み込む（分割しない）。

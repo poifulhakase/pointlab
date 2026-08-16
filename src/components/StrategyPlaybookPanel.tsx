@@ -201,8 +201,8 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 14 }}>
           {[
             { icon: <CalIcon />,         nm: 'ぽいロボ レーダー',   ds: 'この先「何が起きるか」を知り、大事な日は前日に通知' },
-            { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ シールド',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
-            { icon: <EngineIcon />,       nm: 'ぽいロボ エンジン',   ds: 'AIの判断と成績を記録する（検証中・開発者のみ）' },
+            { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ ブンセキ',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
+            { icon: <EngineIcon />,       nm: 'ぽいロボ ロボ口座',   ds: 'AIの判断と成績を記録する（検証中・開発者のみ）' },
             { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「ぽいふる博士に相談」できる' },
           ].map(({ icon, nm, ds }) => (
             <div key={nm} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
@@ -221,9 +221,9 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     { id: 'week', node: slide('1週間の流れ', '土曜起点・ROUTINE', (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {([
-          ['1', '土曜（週の準備）', '金曜までの需給データが出そろう日。シールドで最新の地合いを確認し、カレンダーで来週の予定（イベント・季節）をチェック。レーダー通知をONに。'],
+          ['1', '土曜（週の準備）', '金曜までの需給データが出そろう日。ブンセキで最新の地合いを確認し、カレンダーで来週の予定（イベント・季節）をチェック。レーダー通知をONに。'],
           ['2', '平日（エントリー）', '重要イベントの前は控えめに。チャンスがルールに合えば買う。合わなければ何もしないのも仕事。'],
-          ['3', '持っている間（管理）', '決めた損切り値を動かさないことが仕事。エンジン（ロボ口座）ではAIが同じ相場をどう判断したかを並べて見られます（検証中・開発者のみ）。'],
+          ['3', '持っている間（管理）', '決めた損切り値を動かさないことが仕事。ロボ口座ではAIが同じ相場をどう判断したかを並べて見られます（検証中・開発者のみ）。'],
           ['4', '迷ったら（伴走）', 'コネクトでぽいふる博士に相談。ひとりで抱えない。'],
         ] as const).map(([n, h, d], i, arr) => (
           <div key={n}>
@@ -254,18 +254,18 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
       <>気になるイベント（FOMC・雇用統計・SQ など）を選んでおくと、<b style={{ color: c.TEXT }}>前日のお昼（12:30）にスマホへ通知</b>が届きます。受け取る種別は設定で選べるので、見たいイベントだけを逃さずキャッチできます。</>,
     ), <CalIcon />) },
 
-    // ════ 道具：ぽいロボ シールド（需給・旧エンジン）════
-    { id: 'engine', node: slide('ぽいロボ シールド', '地合いのエネルギーを見る・SHIELD', toolBody(
+    // ════ 道具：ぽいロボ ブンセキ（需給・内部識別子 'quant'）════
+    { id: 'engine', node: slide('ぽいロボ ブンセキ', '地合いのエネルギーを見る・ANALYSIS', toolBody(
       <>需給を物理にたとえて、相場のエネルギー（TEV）を診断します。「<b style={{ color: c.TEXT }}>需給×価格セル</b>」「<b style={{ color: c.TEXT }}>慣性持続性</b>」で、いまが<b style={{ color: c.TEXT }}>順行・売られすぎ・限界</b>のどれかがひと目で分かります。</>,
       '基本の使い方',
       <>ボタン一つでAI用プロンプトをコピーでき、AIに<b style={{ color: c.TEXT }}>確信度つきの状態診断</b>を出してもらえます。<b style={{ color: c.TEXT }}>“枯渇圏”のときは勢いが切れかけと読む</b>——これが基本です。最終的な判断はご自身で。</>,
     ), <ShieldGuardIcon />) },
 
-    // ════ 道具：ぽいロボ エンジン（ロボ口座＝疑似トレード）════
+    // ════ 道具：ぽいロボ ロボ口座（疑似トレード）════
     // 🔴 2026-08-11 全面書き換え。旧「ポジション分析（保有画面のスクショをAIへ）」は
-    //    2026-08-09 に削除済みで、いまのエンジンは**AIの疑似トレードの記録**。
+    //    2026-08-09 に削除済みで、いまのロボ口座は**AIの疑似トレードの記録**。
     //    資料が消えた機能を説明したままだと、使おうとして見つからない。
-    { id: 'shield-tool', node: slide('ぽいロボ エンジン', 'AIの判断を検証する・ENGINE', toolBody(
+    { id: 'shield-tool', node: slide('ぽいロボ ロボ口座', 'AIの判断を検証する・ROBO ACCOUNT', toolBody(
       <>AIが<b style={{ color: c.TEXT }}>毎営業日の朝に「買う／持つ／手放す」を判断</b>し、その結果を仮想の口座に記録しています。実際の売買はしません。<b style={{ color: c.TEXT }}>ロボ口座・成績・履歴</b>の3つのタブで、いまの建玉・資産推移・1件ごとの判断理由まで追えます。</>,
       '見るのは勝率ではありません',
       <>AIの成績を<b style={{ color: c.TEXT }}>決定論ルール（対照群）と並べて</b>表示します。勝率は34〜40%が正常なので、見るのは<b style={{ color: c.TEXT }}>期待値と最大ドローダウン</b>です。🔴 <b style={{ color: c.TEXT }}>いまは検証中で、開発者のみが閲覧できます。</b>使えるかどうかは30トレード貯まってから判断します。</>,
@@ -275,7 +275,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     { id: 'sector-tool', node: slide('セクターローテーション', '景気の循環と業種・CYCLE', toolBody(
       <>景気の循環（<b style={{ color: c.TEXT }}>金融相場 → 業績相場 → 逆金融相場 → 逆業績相場</b>）の<b style={{ color: c.TEXT }}>いまどこにいるか</b>と、その局面で動きやすいとされる業種を見る道具です。現在地は金利と期待インフレ率の動きから決めています。</>,
       'カレンダーの左から開けます',
-      <>サイドバー（メモの上）の<b style={{ color: c.TEXT }}>円形のバナー</b>から開きます。バナーは現在地の象限だけが光るので、開かなくても「いまどのあたりか」が分かります。🔵 これは<b style={{ color: c.TEXT }}>日経平均の話ではない</b>ので、シールドとは別のページにしてあります。</>,
+      <>サイドバー（メモの上）の<b style={{ color: c.TEXT }}>円形のバナー</b>から開きます。バナーは現在地の象限だけが光るので、開かなくても「いまどのあたりか」が分かります。🔵 これは<b style={{ color: c.TEXT }}>日経平均の話ではない</b>ので、ブンセキとは別のページにしてあります。</>,
     ), <CycleIcon />) },
 
     // ════ 道具：ぽいロボ コネクト ════
