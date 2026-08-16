@@ -146,7 +146,6 @@ function Intro({ c, isMobile, n }: { c: C; isMobile: boolean; n: number }) {
         }}>
           主軸は日経平均のまま。ここは<b style={{ color: c.TXTCLR }}>数ヶ月〜年単位で持つ前提</b>の銘柄を、
           仮説・チャート・日経との強さ比べで並べる場所です。
-          <br />🔴 ロボ口座（AIの疑似トレード）には<b style={{ color: c.TXTCLR }}>入れていません</b>。
         </p>
       </div>
     </div>
