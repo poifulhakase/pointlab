@@ -13,6 +13,7 @@
     "backtest-robo": "node scripts/backtest-robo.mjs",
     "robo-trade": "node scripts/robo-trade.mjs",
     "robo-outcome": "node scripts/robo-outcome.mjs",
+    "fetch-momentum": "node scripts/fetch-poirobo-stocks.mjs",
     "capture-chart": "node scripts/capture-tradingview.mjs",
     "add-participant": "node scripts/add-participants.mjs",
     "test": "vitest run",

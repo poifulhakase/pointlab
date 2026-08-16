@@ -33,6 +33,8 @@ type Props = {
   onOpenChartPattern?: () => void
   onOpenDaytrade?: () => void
   onOpenSwing?: () => void
+  /** 中長期モメンタム銘柄の画面へ（研究室メニュー・2026-08-16） */
+  onOpenMomentum?: () => void
   onNavigate?: (view: 'month' | 'chart' | 'quant') => void
   onOpenAccount?: () => void
   onToggleTheme?: () => void
@@ -101,12 +103,26 @@ function RobotMenuIcon() {
   )
 }
 
+/** 中長期モメンタム銘柄（右肩上がりの矢印＋足元の柱） */
+function MomentumMenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 17l5-5 4 3 6-7"/>
+      <polyline points="14 8 18 8 18 12"/>
+      <line x1="3" y1="21" x2="21" y2="21"/>
+    </svg>
+  )
+}
+
 // ── Menu data ──────────────────────────────────────────────────────────────
 type MenuView = 'month' | 'chart' | 'quant' | 'note' | null
 type MenuItem = { id: string; label: string; sub: string; accent: string; glow: string; view: MenuView; icon: React.ReactNode }
 
 const MENU_ITEMS: MenuItem[] = [
   { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボとは？', accent: '#34d399', glow: 'rgba(52,211,153,0.45)',  view: null, icon: <RobotMenuIcon /> },
+  // 🔴 2026-08-16 追加（ユーザー指示・DATA の上）＝中長期で持つ前提の銘柄を見る画面。
+  //    ロボ口座（日経225ETFの疑似トレード）とは別物なので、研究室の入口を分けている。
+  { id: 'momentum', label: 'Momentum', sub: '中長期銘柄',       accent: '#00e5ff', glow: 'rgba(0,229,255,0.45)',   view: null, icon: <MomentumMenuIcon /> },
   { id: 'data',     label: 'Data',     sub: '研究資料',         accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: null, icon: <DataIcon />      },
   { id: 'settings', label: 'Settings', sub: '設定',           accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null, icon: <GearIcon />      },
   { id: 'contact',  label: 'Contact',  sub: 'お問い合わせ',   accent: '#f472b6', glow: 'rgba(244,114,182,0.45)', view: null, icon: <MailIcon />      },
@@ -346,7 +362,7 @@ const LAB_PARTICLES: { left: string; top: string; size: number; dur: number; del
 ]
 
 // ── メインビュー ────────────────────────────────────────────────────────────
-export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
+export function SupportView({ theme, isMobile, user, authLoading = false, isMember = true, previewAsNonMember = false, onTogglePreviewAsNonMember, isConnected = false, onStartConnect, onOpenManual, onOpenLegal, onOpenBacktest, onOpenEvals, onOpenPlaybook, onOpenTimeMachine, onOpenChartPattern, onOpenDaytrade, onOpenSwing, onOpenMomentum, onOpenAccount, onToggleTheme, syncStatus = '', onOpenSpec, onOpenOriginal, onPoiroboChange, onRegisterBack, pushEnabled = false, pushBusy = false, onTogglePush, notifyRadar = true, maintenanceEnabled = false, onToggleMaintenance, onToggleNotifyRadar, notifyDataReady = false, onToggleNotifyDataReady }: Props) {
   const isAdmin     = isAdminEmail(user?.email)
 
   const [visible,       setVisible]       = useState(false)
@@ -888,6 +904,7 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                       if (item.id === 'settings') { openDrawer('settings'); return }
                       if (item.id === 'data')     { openDrawer('data');    return }
                       if (item.id === 'contact')  { openDrawer('contact'); return }
+                      if (item.id === 'momentum') { onOpenMomentum?.(); return }
                       if (item.id === 'poirobo')  { setShowPoirobo(true); onPoiroboChange?.(true); return }
                     }}
                   >

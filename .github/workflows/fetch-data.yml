@@ -61,6 +61,13 @@ jobs:
         run: npm run fetch-data
         continue-on-error: true
 
+      # 中長期モメンタム銘柄（6954/6506）の価格と要約。
+      # 🔵 観測用なので落ちても他を止めない。Vercel の Functions 枠が上限なので
+      #    API ではなく**ここで取って静的 JSON で配る**（2026-08-16）。
+      - name: 中長期モメンタム銘柄の取得
+        run: npm run fetch-momentum
+        continue-on-error: true
+
       - name: バックテスト再計算（土曜のみ）
         if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * 6')
         run: npm run backtest

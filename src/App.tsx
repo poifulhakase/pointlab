@@ -58,6 +58,7 @@ const ChartPatternPanel = lazy(() => import('./components/ChartPatternPanel').th
 // 🔴 地下室は1画面（デイ／スイングを左右スライドで行き来する）。2026-08-16 に
 //    ページ2枚 → 部屋2つに変えたので、view が daytrade / swing のどちらでも同じ画面を出す。
 const BasementRooms = lazy(() => import('./components/BasementRooms'))
+const MomentumStocksView = lazy(() => import('./components/MomentumStocksView'))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
 const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
@@ -472,7 +473,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       if (s.chartSettingsOpen)     { a.setChartSettingsOpen(false);           return }
       if (supportBackRef.current)  { supportBackRef.current();                return }   // 研究室内モーダル
       const v = s.view
-      if (v === 'spec' || v === 'legal' || v === 'manual' || v === 'backtest' || v === 'evals' || v === 'playbook' || v === 'original' || v === 'timemachine' || v === 'chartpattern' || v === 'daytrade' || v === 'swing') { a.setView('support'); return }
+      if (v === 'spec' || v === 'legal' || v === 'manual' || v === 'backtest' || v === 'evals' || v === 'playbook' || v === 'original' || v === 'timemachine' || v === 'chartpattern' || v === 'daytrade' || v === 'swing' || v === 'momentum') { a.setView('support'); return }
       // 🔵 セクターローテーションはカレンダーのサイドバーから開くので、戻り先はカレンダー（2026-08-11）
       if (v === 'support' || v === 'shield' || v === 'chart' || v === 'quant' || v === 'sector') { a.setView('month'); return }
       if (v === 'day')     { a.setView('week');  return }
@@ -664,6 +665,14 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             </ErrorBoundary>
           )}
 
+          {cal.view === 'momentum' && (
+            <ErrorBoundary label="中長期モメンタム銘柄">
+              <Suspense fallback={<ViewLoader />}>
+                <MomentumStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+
           {(cal.view === 'swing' || cal.view === 'daytrade') && (
             <ErrorBoundary label="地下室">
               <Suspense fallback={<ViewLoader />}>
@@ -685,7 +694,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'support' && (
             <ErrorBoundary label="研究室">
               <Suspense fallback={<ViewLoader />}>
-                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={(tab) => { setLegalTab(tab ?? 'privacy'); setViewWithTransition('legal') }} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onOpenPlaybook={() => setViewWithTransition('playbook')} onOpenTimeMachine={() => setViewWithTransition('timemachine')} onOpenChartPattern={() => setViewWithTransition('chartpattern')} onOpenDaytrade={() => setViewWithTransition('daytrade')} onOpenSwing={() => setViewWithTransition('swing')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} onRegisterBack={registerSupportBack} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
+                <SupportView theme={theme} isMobile={isMobile} user={user} authLoading={authLoading} isMember={isMember} previewAsNonMember={previewAsNonMember} onTogglePreviewAsNonMember={togglePreviewAsNonMember} maintenanceEnabled={maintenance.enabled} onToggleMaintenance={handleToggleMaintenance} isConnected={connectMode} onStartConnect={() => { setConnectMode(true); setConnectMinimized(false) }} onOpenManual={() => setViewWithTransition('manual')} onOpenLegal={(tab) => { setLegalTab(tab ?? 'privacy'); setViewWithTransition('legal') }} onOpenBacktest={() => setViewWithTransition('backtest')} onOpenEvals={() => setViewWithTransition('evals')} onOpenPlaybook={() => setViewWithTransition('playbook')} onOpenTimeMachine={() => setViewWithTransition('timemachine')} onOpenChartPattern={() => setViewWithTransition('chartpattern')} onOpenDaytrade={() => setViewWithTransition('daytrade')} onOpenSwing={() => setViewWithTransition('swing')} onOpenMomentum={() => setViewWithTransition('momentum')} onNavigate={(v) => setViewWithTransition(v)} onOpenAccount={() => setAuthModalOpen(true)} onToggleTheme={toggleTheme} syncStatus={syncStatus} onOpenSpec={() => setViewWithTransition('spec')} onOpenOriginal={() => setViewWithTransition('original')} onPoiroboChange={setPoiroboPageOpen} onRegisterBack={registerSupportBack} pushEnabled={pushEnabled} pushBusy={pushBusy} onTogglePush={handleTogglePush} notifyRadar={notifyRadar} onToggleNotifyRadar={handleToggleNotifyRadar} notifyDataReady={notifyDataReady} onToggleNotifyDataReady={handleToggleNotifyDataReady} />
               </Suspense>
             </ErrorBoundary>
           )}
