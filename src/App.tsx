@@ -55,8 +55,9 @@ const BacktestPanel     = lazy(() => import('./components/BacktestPanel').then(m
 const StrategyPlaybookPanel = lazy(() => import('./components/StrategyPlaybookPanel').then(m => ({ default: m.StrategyPlaybookPanel })))
 const TimeMachinePanel  = lazy(() => import('./components/TimeMachinePanel').then(m => ({ default: m.TimeMachinePanel })))
 const ChartPatternPanel = lazy(() => import('./components/ChartPatternPanel').then(m => ({ default: m.ChartPatternPanel })))
-const DaytradeResearchView = lazy(() => import('./components/DaytradeResearchView'))
-const SwingResearchView = lazy(() => import('./components/SwingResearchView'))
+// 🔴 地下室は1画面（デイ／スイングを左右スライドで行き来する）。2026-08-16 に
+//    ページ2枚 → 部屋2つに変えたので、view が daytrade / swing のどちらでも同じ画面を出す。
+const BasementRooms = lazy(() => import('./components/BasementRooms'))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
 const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
@@ -663,20 +664,11 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             </ErrorBoundary>
           )}
 
-          {cal.view === 'swing' && (
-            <ErrorBoundary label="地下室 スイングトレード">
+          {(cal.view === 'swing' || cal.view === 'daytrade') && (
+            <ErrorBoundary label="地下室">
               <Suspense fallback={<ViewLoader />}>
-                <SwingResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')}
-                  onSwitchRoom={(k) => setViewWithTransition(k)} />
-              </Suspense>
-            </ErrorBoundary>
-          )}
-
-          {cal.view === 'daytrade' && (
-            <ErrorBoundary label="地下室 デイトレード">
-              <Suspense fallback={<ViewLoader />}>
-                <DaytradeResearchView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')}
-                  onSwitchRoom={(k) => setViewWithTransition(k)} />
+                <BasementRooms theme={theme} isMobile={isMobile} initial={cal.view}
+                  onClose={() => setViewWithTransition('support')} />
               </Suspense>
             </ErrorBoundary>
           )}

@@ -7,18 +7,18 @@
 // 🔵 数字はすべて `scripts/analyze-intraday-bias.mjs` の実行結果。
 //    条件を変えて測り直したら、ここも書き換える（測っていないことは書かない）。
 
-import { basementColors, BASEMENT_MONO, basementVeil, type BasementRoomKey } from './basementTheme'
+import { BASEMENT_MONO, type basementColors, type BasementRoomKey } from './basementTheme'
 import {
-  BasementKeyframes, BasementBackdrop, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
-  BasementRoomSwitch, BasementNextRoom,
+  BasementHead, VerdictHero, BigStat, StatGrid, JudgeList, BasementNextRoom,
   type JudgeRow,
 } from './basementKit'
 
+// 🔴 ここは**部屋の中身だけ**（2026-08-16）。壁・電球・ヘッダー・左右スライドは
+//    `BasementRooms.tsx` が持つ。
 type Props = {
-  theme: 'dark' | 'light'
+  c: ReturnType<typeof basementColors>
   isMobile: boolean
-  onClose: () => void
-  /** 地下室の別の部屋へ移る（🔵 地下室はひと続きなので、DATA に戻らず行き来できる） */
+  /** 地下室の別の部屋へ移る */
   onSwitchRoom?: (key: BasementRoomKey) => void
 }
 
@@ -48,32 +48,12 @@ const NUMBERS = [
   { name: '5分足の保存（60日しか遡れないため）', value: '2026-08-13 から毎日・平日16:30' },
 ]
 
-export default function DaytradeResearchView({ theme, isMobile, onClose, onSwitchRoom }: Props) {
-  const c = basementColors(theme)
+export function DaytradeRoom({ c, isMobile, onSwitchRoom }: Props) {
   const pad = isMobile ? 14 : 24
   const mono = BASEMENT_MONO
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text, position: 'relative' }}>
-      <BasementKeyframes />
-      <BasementBackdrop c={c} />
-
-      <div style={{ position: 'sticky', top: 0, zIndex: 3, ...basementVeil(c.dark), borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: mono, fontSize: isMobile ? 10 : 11, letterSpacing: '0.14em', color: c.accent }}>
-          <span aria-hidden className="bsmt-glow" style={{
-            width: 8, height: 8, borderRadius: '50%', background: '#ffd79a',
-            boxShadow: '0 0 8px 3px rgba(255,205,130,0.5)', display: 'inline-block',
-          }} />
-          地下室{!isMobile && ' / デイトレード'}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {onSwitchRoom && <BasementRoomSwitch c={c} isMobile={isMobile} current="daytrade" onSwitch={onSwitchRoom} />}
-          <button type="button" onClick={onClose} aria-label="閉じる"
-            style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 940, margin: '0 auto', padding: pad, position: 'relative' }}>
+    <div style={{ maxWidth: 940, margin: '0 auto', padding: pad, position: 'relative' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: '4px 0 4px' }}>デイトレは成立するか</h1>
         <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginBottom: 14 }}>
           2026-08-13 計測 ／ 日経225・1321 の20年＋1時間足3年
@@ -141,7 +121,6 @@ export default function DaytradeResearchView({ theme, isMobile, onClose, onSwitc
         <div style={{ marginTop: 24, padding: pad, border: `1px dashed ${c.border}`, borderRadius: 10, fontSize: isMobile ? 11 : 12, lineHeight: 1.9, color: c.sub }}>
           🔴 このページは研究の記録であり、売買の推奨ではありません。数値は特定期間の過去データにもとづくもので、将来の成果を示すものではありません。
         </div>
-      </div>
     </div>
   )
 }

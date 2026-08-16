@@ -6,18 +6,19 @@
 // 🔵 数字の出どころ＝`scripts/backtest-robo.mjs`（対照群）／`scripts/backtest-tev.mjs`（需給シグナル）／
 //    20年R&D（`analyze-*.mjs`）。測り直したらここも書き換える。
 
-import { basementColors, BASEMENT_MONO, basementVeil, type BasementRoomKey } from './basementTheme'
+import { BASEMENT_MONO, type basementColors, type BasementRoomKey } from './basementTheme'
 import {
-  BasementKeyframes, BasementBackdrop, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
-  BasementRoomSwitch, BasementNextRoom,
+  BasementHead, VerdictHero, BigStat, StatGrid, JudgeList, BasementNextRoom,
   type JudgeRow,
 } from './basementKit'
 
+// 🔴 ここは**部屋の中身だけ**（2026-08-16）。壁・電球・ヘッダー・左右スライドは
+//    `BasementRooms.tsx` が持つ。地下室は1つの場所で、部屋はその中の並びなので、
+//    枠を部屋ごとに持つと切り替えのたびに壁が描き直されてしまう。
 type Props = {
-  theme: 'dark' | 'light'
+  c: ReturnType<typeof basementColors>
   isMobile: boolean
-  onClose: () => void
-  /** 地下室の別の部屋へ移る（🔵 地下室はひと続きなので、DATA に戻らず行き来できる） */
+  /** 地下室の別の部屋へ移る */
   onSwitchRoom?: (key: BasementRoomKey) => void
 }
 
@@ -39,29 +40,12 @@ const UNKNOWN: JudgeRow[] = [
   { verdict: 'trap', label: '運用者の保有を読ませる意味があるか', value: '2026-08-13 から' },
 ]
 
-export default function SwingResearchView({ theme, isMobile, onClose, onSwitchRoom }: Props) {
-  const c = basementColors(theme)
+export function SwingRoom({ c, isMobile, onSwitchRoom }: Props) {
   const pad = isMobile ? 14 : 24
   const mono = BASEMENT_MONO
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text, position: 'relative' }}>
-      <BasementKeyframes />
-      <BasementBackdrop c={c} />
-
-      <div style={{ position: 'sticky', top: 0, zIndex: 3, ...basementVeil(c.dark), borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: mono, fontSize: isMobile ? 10 : 11, letterSpacing: '0.14em', color: c.accent }}>
-          <span aria-hidden className="bsmt-glow" style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffd79a', boxShadow: '0 0 8px 3px rgba(255,205,130,0.5)', display: 'inline-block' }} />
-          地下室{!isMobile && ' / スイングトレード'}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {onSwitchRoom && <BasementRoomSwitch c={c} isMobile={isMobile} current="swing" onSwitch={onSwitchRoom} />}
-          <button type="button" onClick={onClose} aria-label="閉じる"
-            style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${c.border}`, background: 'transparent', color: c.text, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 940, margin: '0 auto', padding: pad, position: 'relative' }}>
+    <div style={{ maxWidth: 940, margin: '0 auto', padding: pad, position: 'relative' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: '4px 0 4px' }}>スイングは成立するか</h1>
         <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginBottom: 14 }}>
           2026-08-13 時点 ／ 対照群は約11年・需給シグナルは52週
@@ -102,7 +86,6 @@ export default function SwingResearchView({ theme, isMobile, onClose, onSwitchRo
         <div style={{ marginTop: 24, padding: pad, border: `1px dashed ${c.border}`, borderRadius: 10, fontSize: isMobile ? 11 : 12, lineHeight: 1.9, color: c.sub }}>
           🔴 このページは研究の記録であり、売買の推奨ではありません。数値は特定期間の過去データにもとづくもので、将来の成果を示すものではありません。
         </div>
-      </div>
     </div>
   )
 }

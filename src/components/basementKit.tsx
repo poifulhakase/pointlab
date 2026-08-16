@@ -21,7 +21,7 @@ type C = ReturnType<typeof basementColors>
  * 🔴 **読みやすさが先**。どの層も薄く、ライトテーマではさらに弱くする
  *    （明るい地下室＝窓のない資料室くらいの感じに留める）。
  */
-export function BasementBackdrop({ c }: { c: C }) {
+export function BasementBackdrop({ c, jolt = false }: { c: C; jolt?: boolean }) {
   const d = c.dark
   const layer: React.CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none' }
   // 粒子（コンクリートの粉っぽさ）。SVG フィルタをそのまま背景に敷く
@@ -82,7 +82,8 @@ export function BasementBackdrop({ c }: { c: C }) {
           background: `linear-gradient(180deg, rgba(255,205,130,${d ? 0.15 : 0.22}) 0%, rgba(255,205,130,0) 80%)`,
         }} />
         <svg width="150" height="200" viewBox="0 0 150 200" style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
-          <g className="bsmt-lamp">
+          {/* 🔵 部屋を移るときは、電球が大きく揺れる（歩いて通り過ぎた風） */}
+          <g className={jolt ? 'bsmt-jolt' : 'bsmt-lamp'}>
             {/* コード */}
             <line x1="75" y1="-40" x2="75" y2="72" stroke={d ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)'} strokeWidth="1.5" />
             {/* ソケット */}
@@ -130,47 +131,6 @@ export function BasementBackdrop({ c }: { c: C }) {
           : 'linear-gradient(180deg, transparent 0%, rgba(90,78,58,0.14) 100%)',
         borderBottom: `1px solid ${d ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
       }} />
-    </div>
-  )
-}
-
-/**
- * 部屋の切替（ヘッダーに置く）。
- * 🔵 地下室は**ひと続きの場所**なので、いま居る部屋と隣の部屋を常に出す。
- *    毎回 DATA まで戻らないと行き来できないと、2ページが別々のものに見える（2026-08-16 ユーザー指摘）。
- */
-export function BasementRoomSwitch({ c, isMobile, current, onSwitch }: {
-  c: C; isMobile: boolean
-  current: BasementRoomKey
-  onSwitch: (key: BasementRoomKey) => void
-}) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 2, padding: 2,
-      border: `1px solid ${c.border}`, borderRadius: 999,
-      background: c.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.5)',
-    }}>
-      {BASEMENT_ROOMS.map(r => {
-        const on = r.key === current
-        return (
-          <button
-            key={r.key}
-            type="button"
-            onClick={() => { if (!on) onSwitch(r.key) }}
-            aria-current={on ? 'page' : undefined}
-            style={{
-              cursor: on ? 'default' : 'pointer',
-              border: 'none', borderRadius: 999,
-              padding: isMobile ? '4px 10px' : '5px 14px',
-              fontFamily: BASEMENT_MONO, fontSize: isMobile ? 10 : 11, letterSpacing: '0.08em',
-              color: on ? (c.dark ? '#1b1610' : '#fff') : c.sub,
-              background: on ? c.accent : 'transparent',
-              boxShadow: on && c.dark ? `0 0 14px ${c.accent}55` : 'none',
-              transition: 'background 0.18s, color 0.18s',
-            }}
-          >{isMobile ? r.short : r.label}</button>
-        )
-      })}
     </div>
   )
 }
@@ -423,8 +383,27 @@ export function BasementKeyframes() {
 
       /* 🔵 裸電球のゆらぎ（.bsmt-glow / bsmt-flicker）は index.css にある。ここでは定義しない */
 
+      /* 部屋を移るとき＝電球が大きく揺れる */
+      @keyframes bsmt-jolt {
+        0%   { transform: rotate(-1.4deg); }
+        18%  { transform: rotate(7deg); }
+        42%  { transform: rotate(-5deg); }
+        64%  { transform: rotate(3deg); }
+        82%  { transform: rotate(-2deg); }
+        100% { transform: rotate(-1.4deg); }
+      }
+      .bsmt-jolt { transform-origin: 50% 0; animation: bsmt-jolt 1100ms cubic-bezier(0.3,0.9,0.4,1) both; }
+
+      /* 部屋を移るとき＝光が横に走る */
+      @keyframes bsmt-wipe {
+        from { transform: translateX(-100%); opacity: 0; }
+        35%  { opacity: 1; }
+        to   { transform: translateX(100%); opacity: 0; }
+      }
+      .bsmt-wipe { animation: bsmt-wipe 720ms cubic-bezier(0.22,1,0.36,1) both; }
+
       @media (prefers-reduced-motion: reduce) {
-        .bsmt-rise, .bsmt-stamp { animation: none !important; opacity: 1 !important; transform: none !important; }
+        .bsmt-rise, .bsmt-stamp, .bsmt-jolt, .bsmt-wipe { animation: none !important; opacity: 1 !important; transform: none !important; }
         .bsmt-ghost { animation: none !important; opacity: 0.13 !important; transform: translateY(-50%) !important; }
       }
     `}</style>
