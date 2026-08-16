@@ -666,7 +666,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           )}
 
           {cal.view === 'momentum' && (
-            <ErrorBoundary label="中長期モメンタム銘柄">
+            <ErrorBoundary label="Believe（第4次産業革命）">
               <Suspense fallback={<ViewLoader />}>
                 <MomentumStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
               </Suspense>

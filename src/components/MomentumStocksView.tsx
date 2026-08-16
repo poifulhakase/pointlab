@@ -77,7 +77,7 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
             boxShadow: `0 0 10px ${c.GREEN}`, flexShrink: 0,
           }} />
           <span style={{ fontSize: isMobile ? 10 : 11, letterSpacing: '0.2em', color: c.GREEN, whiteSpace: 'nowrap' }}>
-            MOMENTUM / 中長期銘柄
+            BELIEVE / 第4次産業革命
           </span>
           {data?.index?.close != null && (
             <span style={{ fontSize: isMobile ? 9.5 : 10.5, color: c.DIM, letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -89,7 +89,7 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
           style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 6, border: `1px solid ${c.BORDER}`, background: 'transparent', color: c.TXTCLR, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
       </div>
 
-      {loading && <div style={{ padding: 40 }}><PoiroboLoader label="MOMENTUM DATA" /></div>}
+      {loading && <div style={{ padding: 40 }}><PoiroboLoader label="BELIEVE" /></div>}
 
       {!loading && !data && (
         <div style={{ padding: pad, maxWidth: 900, margin: '0 auto', fontSize: 13, color: c.DESC, lineHeight: 1.9 }}>
@@ -131,21 +131,22 @@ function Intro({ c, isMobile, n }: { c: C; isMobile: boolean; n: number }) {
         color: c.GREEN, opacity: 0, letterSpacing: '-0.04em', pointerEvents: 'none', userSelect: 'none',
       }}>{n}</div>
       <div style={{ position: 'relative' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.3em', color: c.DIM, marginBottom: 12 }}>THESIS</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.3em', color: c.DIM, marginBottom: 12 }}>BELIEVE IN THE FUTURE</div>
         <h1 className={seen ? 'mom-stamp' : undefined} style={{
           opacity: seen ? undefined : 0,
           margin: 0, fontSize: isMobile ? 24 : 40, fontWeight: 900, lineHeight: 1.28,
           color: c.GREEN, textShadow: `0 0 40px ${c.GREEN}44`,
         }}>
-          ロボットを作る会社を、<br />中長期で持つ側から見る。
+          フィジカルAIが、<br />第4次産業革命を起こす。
         </h1>
         <p className={seen ? 'mom-rise' : undefined} style={{
           opacity: seen ? undefined : 0, animationDelay: '220ms',
           margin: '16px 0 0', fontSize: isMobile ? 12 : 13.5, color: c.DESC, lineHeight: 2,
           maxWidth: 720,
         }}>
-          主軸は日経平均のまま。ここは<b style={{ color: c.TXTCLR }}>数ヶ月〜年単位で持つ前提</b>の銘柄を、
-          仮説・チャート・日経との強さ比べで並べる場所です。
+          AIは<b style={{ color: c.TXTCLR }}>考える側</b>から<b style={{ color: c.TXTCLR }}>動く側</b>へ移る。
+          ここはその未来に賭けた銘柄を、<b style={{ color: c.TXTCLR }}>見立て・チャート・日経との強さ比べ</b>で並べる場所です。
+          <br />🔵 数ヶ月〜年単位で持つ前提。途中の上下は判定材料にしません。
         </p>
       </div>
     </div>
@@ -191,11 +192,24 @@ function StockPanel({ c, dark, isMobile, s, order }: {
           </h2>
         </div>
         {th && (
-          <p className={seen ? 'mom-rise' : undefined} style={{
-            opacity: seen ? undefined : 0, animationDelay: '120ms',
-            margin: '12px 0 0', fontSize: isMobile ? 14 : 20, fontWeight: 800, lineHeight: 1.6,
-            color: c.GREEN,
-          }}>{th.headline}</p>
+          <>
+            {/* 🔴 どちらの仮説に賭けている枠か（後から答え合わせするための札） */}
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{
+                padding: '3px 10px', borderRadius: 999,
+                border: `1px solid ${c.BORDBR}`, background: c.HDBG,
+                fontSize: isMobile ? 10 : 11, color: c.GREEN, letterSpacing: '0.06em',
+              }}>{th.laneLabel}</span>
+              <span style={{ fontSize: isMobile ? 9.5 : 10.5, color: c.DIM, letterSpacing: '0.06em' }}>
+                観測開始 {th.markedOn}
+              </span>
+            </div>
+            <p className={seen ? 'mom-rise' : undefined} style={{
+              opacity: seen ? undefined : 0, animationDelay: '120ms',
+              margin: '12px 0 0', fontSize: isMobile ? 14 : 20, fontWeight: 800, lineHeight: 1.6,
+              color: c.GREEN,
+            }}>{th.headline}</p>
+          </>
         )}
 
         {/* 株価と姿勢 */}
@@ -539,7 +553,7 @@ function ThesisBlock({ c, isMobile, th }: { c: C; isMobile: boolean; th: NonNull
         fontSize: isMobile ? 10.5 : 11.5, color: c.DIM, lineHeight: 1.9,
       }}>
         決算：{th.earnings}<br />
-        見立ての最終見直し：{th.reviewed}
+        観測開始：{th.markedOn} ／ 見立ての最終見直し：{th.reviewed}
       </div>
     </div>
   )

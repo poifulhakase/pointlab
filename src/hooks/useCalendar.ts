@@ -132,7 +132,7 @@ export function useCalendar() {
     if (view === 'chartpattern') return '波動の書'
     if (view === 'daytrade') return '地下室 デイトレード'
     if (view === 'swing') return '地下室 スイングトレード'
-    if (view === 'momentum') return '中長期モメンタム銘柄'
+    if (view === 'momentum') return 'Believe（第4次産業革命）'
 if (view === 'month') return `${y}年 ${m}`
     if (view === 'week') {
       const week = getWeekDays()

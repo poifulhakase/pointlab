@@ -24,6 +24,7 @@ const DRY = process.argv.includes('--dry')
 export const STOCKS = [
   { code: '6954', symbol: '6954.T', name: 'ファナック', kana: 'FANUC', note: '工作機械用CNCと産業用ロボット。受注と中国の設備投資に感応' },
   { code: '6506', symbol: '6506.T', name: '安川電機', kana: 'YASKAWA', note: 'サーボ・インバータと産業用ロボット。2月期決算で日本の決算シーズンの先陣' },
+  { code: '6324', symbol: '6324.T', name: 'ハーモニック・ドライブ・システムズ', kana: 'HARMONIC', note: '精密減速機（波動歯車装置）で世界シェア約50%。ロボットの関節そのもの' },
 ]
 
 /** Yahoo の日足（出来高つき）。roboData の fetchDaily は出来高を返さないので別に持つ */

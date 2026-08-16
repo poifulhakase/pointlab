@@ -122,7 +122,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボとは？', accent: '#34d399', glow: 'rgba(52,211,153,0.45)',  view: null, icon: <RobotMenuIcon /> },
   // 🔴 2026-08-16 追加（ユーザー指示・DATA の上）＝中長期で持つ前提の銘柄を見る画面。
   //    ロボ口座（日経225ETFの疑似トレード）とは別物なので、研究室の入口を分けている。
-  { id: 'momentum', label: 'Momentum', sub: '中長期銘柄',       accent: '#00e5ff', glow: 'rgba(0,229,255,0.45)',   view: null, icon: <MomentumMenuIcon /> },
+  { id: 'momentum', label: 'Believe',  sub: '第4次産業革命',     accent: '#00e5ff', glow: 'rgba(0,229,255,0.45)',   view: null, icon: <MomentumMenuIcon /> },
   { id: 'data',     label: 'Data',     sub: '研究資料',         accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: null, icon: <DataIcon />      },
   { id: 'settings', label: 'Settings', sub: '設定',           accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null, icon: <GearIcon />      },
   { id: 'contact',  label: 'Contact',  sub: 'お問い合わせ',   accent: '#f472b6', glow: 'rgba(244,114,182,0.45)', view: null, icon: <MailIcon />      },
