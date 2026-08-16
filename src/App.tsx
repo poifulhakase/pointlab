@@ -157,7 +157,9 @@ export default function App() {
   const isEngineNeon = cal.view === 'shield' && theme === 'dark'
   // 🔵 周期（セクターローテーション）も中身がサイバー調の画面なので、帯とタブを合わせる
   const isSectorNeon = cal.view === 'sector' && theme === 'dark'
-  const isNeonBar = isLegalNeon || isEngineNeon || isSectorNeon
+  // 🔵 Believe と監視銘柄も中身がサイバー調なので、帯とタブを合わせる
+  const isBelieveNeon = (cal.view === 'momentum' || cal.view === 'watch') && theme === 'dark'
+  const isNeonBar = isLegalNeon || isEngineNeon || isSectorNeon || isBelieveNeon
 
   // ── 日/週/月 スワイプ ─────────────────────────────────────────────────
   const calTouchStartXRef  = useRef(0)
@@ -667,29 +669,36 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             </ErrorBoundary>
           )}
 
+          {/* 🔴 Believe と監視銘柄は会員限定（2026-08-16 ユーザー指示）。
+              入口（研究室のメニュー）は全員に見せ、中身に鍵をかける＝地下室と同じ作法。 */}
           {cal.view === 'momentum' && (
-            <ErrorBoundary label="Believe（第4次産業革命）">
-              <Suspense fallback={<ViewLoader />}>
-                <MomentumStocksView theme={theme} isMobile={isMobile}
-                  onClose={() => setViewWithTransition('support')}
-                  onOpenWatch={() => setViewWithTransition('watch')} />
-              </Suspense>
-            </ErrorBoundary>
+            canViewMemberPages
+              ? <ErrorBoundary label="Believe（第4次産業革命）">
+                  <Suspense fallback={<ViewLoader />}>
+                    <MomentumStocksView theme={theme} isMobile={isMobile}
+                      onClose={() => setViewWithTransition('support')} />
+                  </Suspense>
+                </ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {cal.view === 'watch' && (
-            <ErrorBoundary label="その他の監視銘柄">
-              <Suspense fallback={<ViewLoader />}>
-                {/* 🔵 戻り先は Believe（ここから来るので） */}
-                <WatchStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('momentum')} />
-              </Suspense>
-            </ErrorBoundary>
+            canViewMemberPages
+              ? <ErrorBoundary label="その他の監視銘柄">
+                  <Suspense fallback={<ViewLoader />}>
+                    {/* 🔵 戻り先は Believe（ここから来るので） */}
+                    <WatchStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+                  </Suspense>
+                </ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {(cal.view === 'swing' || cal.view === 'daytrade') && (
             <ErrorBoundary label="地下室">
               <Suspense fallback={<ViewLoader />}>
-                <BasementRooms theme={theme} isMobile={isMobile} initial={cal.view}
+                <BasementRooms theme={theme} isMobile={isMobile}
+                  room={cal.view === 'swing' ? 'swing' : 'daytrade'}
+                  onRoomChange={(k) => setViewWithTransition(k)}
                   onClose={() => setViewWithTransition('support')} />
               </Suspense>
             </ErrorBoundary>
@@ -866,7 +875,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {/* コミュニティ限定ビュー（カレンダー/ブンセキ/ロボ口座）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
-      {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || (cal.view === 'sector' && isMobile)) && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
+      {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'daytrade' || cal.view === 'swing' || (cal.view === 'sector' && isMobile)) && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isNeonBar ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isNeonBar ? undefined : 'glass'}>
@@ -908,6 +917,38 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                     style={{ ...styles.floatTab, ...(quantTab === tab ? styles.floatTabActive : {}) }}
                     onClick={() => setQuantTab(tab)}
                   >{QUANT_LABELS[tab]}</button>
+                ))}
+              </>
+            )}
+            {/* Believe＝ 主力 / その他（2026-08-16 追加・別ページを1本のタブでつなぐ） */}
+            {(cal.view === 'momentum' || cal.view === 'watch') && (
+              <>
+                {([['momentum', '主力'], ['watch', 'その他']] as const).map(([view, label]) => (
+                  <button
+                    key={view}
+                    style={{
+                      ...styles.floatTab,
+                      color: theme === 'dark' ? (cal.view === view ? NEON_CLR : NEON_DIM) : undefined,
+                      ...(cal.view === view
+                        ? theme === 'dark'
+                          ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
+                          : styles.floatTabActive
+                        : {}),
+                    }}
+                    onClick={() => setViewWithTransition(view)}
+                  >{label}</button>
+                ))}
+              </>
+            )}
+            {/* 地下室＝ デイ / スイング（2026-08-16 に右下へ移した。左右スライドはそのまま動く） */}
+            {(cal.view === 'daytrade' || cal.view === 'swing') && (
+              <>
+                {([['daytrade', 'デイ'], ['swing', 'スイング']] as const).map(([view, label]) => (
+                  <button
+                    key={view}
+                    style={{ ...styles.floatTab, ...(cal.view === view ? styles.floatTabActive : {}) }}
+                    onClick={() => setViewWithTransition(view)}
+                  >{label}</button>
                 ))}
               </>
             )}

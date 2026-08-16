@@ -15,13 +15,7 @@ import {
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 
-type Props = {
-  theme: 'dark' | 'light'
-  isMobile: boolean
-  onClose: () => void
-  /** その他の監視銘柄（別ページ）へ */
-  onOpenWatch?: () => void
-}
+type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
 type C = ReturnType<typeof cy>
 
 const UP = (dark: boolean) => (dark ? '#ff6b6b' : '#dc2626')
@@ -37,7 +31,7 @@ function rich(text: string, color: string) {
   )
 }
 
-export default function MomentumStocksView({ theme, isMobile, onClose, onOpenWatch }: Props) {
+export default function MomentumStocksView({ theme, isMobile, onClose }: Props) {
   const c = cy(theme)
   const dark = theme === 'dark'
   const [data, setData] = useState<PoiroboStocksData | null>(null)
@@ -105,8 +99,6 @@ export default function MomentumStocksView({ theme, isMobile, onClose, onOpenWat
             {data.stocks.map((s, i) => (
               <StockCard key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} order={i} />
             ))}
-            {/* 🔵 枠の最後に「その他の監視銘柄」への入口を置く（別ページ） */}
-            {onOpenWatch && <WatchCard c={c} isMobile={isMobile} count={data.watch?.length ?? 0} onOpen={onOpenWatch} />}
           </div>
 
           <div style={{
@@ -285,33 +277,6 @@ function RobotFigure({ c, dark, layers, seen, size }: {
         </g>
       </g>
     </svg>
-  )
-}
-
-/** その他の監視銘柄への入口（枠の最後に置くカード） */
-function WatchCard({ c, isMobile, count, onOpen }: {
-  c: C; isMobile: boolean; count: number; onOpen: () => void
-}) {
-  const [ref, seen] = useInView<HTMLButtonElement>(0.1)
-  return (
-    <button ref={ref} type="button" onClick={onOpen}
-      className={seen ? 'mom-rise' : undefined}
-      style={{
-        opacity: seen ? undefined : 0,
-        border: `1px dashed ${c.BORDER}`, borderRadius: 18, background: 'transparent',
-        padding: isMobile ? '32px 20px' : 22, cursor: 'pointer', textAlign: 'left',
-        display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10,
-        minHeight: isMobile ? 160 : 220, fontFamily: c.FONT, color: c.TXTCLR,
-      }}>
-      <span style={{ fontSize: 9.5, letterSpacing: '0.24em', color: c.DIM }}>WATCH</span>
-      <span style={{ fontSize: isMobile ? 18 : 20, fontWeight: 900, color: c.GREEN, lineHeight: 1.5 }}>
-        その他の監視銘柄
-      </span>
-      <span style={{ fontSize: isMobile ? 11.5 : 12, color: c.DESC, lineHeight: 1.9 }}>
-        枠には入れていないが、同じ物差しで見ている{count > 0 ? ` ${count} 社` : '会社'}。
-      </span>
-      <span style={{ marginTop: 4, fontSize: 12, color: c.GREEN }}>開く →</span>
-    </button>
   )
 }
 

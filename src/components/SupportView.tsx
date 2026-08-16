@@ -904,7 +904,13 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                       if (item.id === 'settings') { openDrawer('settings'); return }
                       if (item.id === 'data')     { openDrawer('data');    return }
                       if (item.id === 'contact')  { openDrawer('contact'); return }
-                      if (item.id === 'momentum') { onOpenMomentum?.(); return }
+                      if (item.id === 'momentum') {
+                        // 🔴 Believe は会員限定（2026-08-16 ユーザー指示）。
+                        //    地下室と同じ作法＝**カードは出す。中身に鍵をかける**
+                        //    （存在すら見えないと入る動機にならないため）。
+                        if (!isMember && !isAdmin) { setMemberLockOpen(true); return }
+                        onOpenMomentum?.(); return
+                      }
                       if (item.id === 'poirobo')  { setShowPoirobo(true); onPoiroboChange?.(true); return }
                     }}
                   >
@@ -914,7 +920,13 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                     <span className="menu3d-divider" />
                     <span className="menu3d-labels">
                       <span className="menu3d-label" style={{ color: '#ffffff' }}>{item.label}</span>
-                      <span className="menu3d-sub" style={{ color: 'rgba(190,235,255,0.88)' }}>{item.sub}</span>
+                      <span className="menu3d-sub" style={{ color: 'rgba(190,235,255,0.88)' }}>
+                        {item.sub}
+                        {/* 🔵 会員限定は隠さず、鍵のしるしだけ添える */}
+                        {item.id === 'momentum' && !isMember && !isAdmin && (
+                          <span style={{ marginLeft: 8, fontSize: 10, color: '#fbbf24' }}>🔒 会員限定</span>
+                        )}
+                      </span>
                     </span>
                   </button>
                 </li>

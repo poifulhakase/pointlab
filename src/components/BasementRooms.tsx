@@ -22,8 +22,10 @@ import { SwingRoom } from './SwingResearchView'
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
-  /** 最初に見せる部屋（DATA のカードから来たほう） */
-  initial: BasementRoomKey
+  /** いま見せる部屋。🔴 単一情報源は App の ViewMode（2026-08-16 に内部stateから移した） */
+  room: BasementRoomKey
+  /** 部屋が変わったとき（スワイプ・矢印・隣の部屋カード・右下のタブ） */
+  onRoomChange: (key: BasementRoomKey) => void
   onClose: () => void
 }
 
@@ -38,11 +40,10 @@ const SWIPE_PX = 70
 /** 移動アニメーションの長さ。演出（電球の揺れ・光の走り）と合わせる */
 const SLIDE_MS = 620
 
-export default function BasementRooms({ theme, isMobile, initial, onClose }: Props) {
+export default function BasementRooms({ theme, isMobile, room: roomKey, onRoomChange, onClose }: Props) {
   const c = basementColors(theme)
   const n = BASEMENT_ROOMS.length
-  const startIdx = Math.max(0, BASEMENT_ROOMS.findIndex(r => r.key === initial))
-  const [idx, setIdx] = useState(startIdx)
+  const idx = Math.max(0, BASEMENT_ROOMS.findIndex(r => r.key === roomKey))
   /** ドラッグ中の追従量（px）。null＝ドラッグしていない */
   const [drag, setDrag] = useState<number | null>(null)
   /** 移動中フラグ（電球を揺らし、光を走らせる） */
@@ -54,11 +55,11 @@ export default function BasementRooms({ theme, isMobile, initial, onClose }: Pro
 
   const go = useCallback((next: number) => {
     const clamped = Math.max(0, Math.min(n - 1, next))
-    setIdx(prev => {
-      if (prev !== clamped) setMoving(m => m + 1)
-      return clamped
-    })
-  }, [n])
+    const key = BASEMENT_ROOMS[clamped]?.key
+    if (!key || key === roomKey) return
+    setMoving(m => m + 1)
+    onRoomChange(key)
+  }, [n, roomKey, onRoomChange])
 
   const goKey = useCallback((key: BasementRoomKey) => {
     go(BASEMENT_ROOMS.findIndex(r => r.key === key))
