@@ -16,7 +16,7 @@ import {
   fetchPoiroboStocks, sliceSeries, RANGES,
   type PoiroboStocksData, type PoiroboStock, type RangeKey, type StockSeriesPoint, type AiLayer,
 } from '../utils/poiroboStocks'
-import { thesisOf } from '../utils/poiroboStockThesis'
+import { thesisOf, DROPPED } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
@@ -110,6 +110,18 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
             maxWidth: 1080, margin: '0 auto', padding: `${pad}px ${pad}px ${isMobile ? 120 : 60}px`,
             fontSize: isMobile ? 10.5 : 11.5, color: c.DIM, lineHeight: 1.9,
           }}>
+            {DROPPED.length > 0 && (
+              <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${c.BORDER}` }}>
+                <div style={{ fontSize: 9.5, letterSpacing: '0.2em', color: c.DIM, marginBottom: 6 }}>
+                  DROPPED / 見送った枠
+                </div>
+                {DROPPED.map(d => (
+                  <div key={d.code} style={{ lineHeight: 1.9 }}>
+                    <b style={{ color: c.DESC }}>{d.code} {d.name}</b>（{d.date}）— {d.reason}
+                  </div>
+                ))}
+              </div>
+            )}
             {data.basis}。{data.caveat}<br />
             🔴 このページは研究の記録であり、売買の推奨ではありません。数値は過去データにもとづくもので、将来の成果を示すものではありません。<br />
             UPDATED: {new Date(data.updatedAt).toLocaleString('ja-JP')}
@@ -149,6 +161,8 @@ function Intro({ c, isMobile, n }: { c: C; isMobile: boolean; n: number }) {
         }}>
           AIは<b style={{ color: c.TXTCLR }}>考える側</b>から<b style={{ color: c.TXTCLR }}>動く側</b>へ移る。
           ここはその未来に賭けた銘柄を、<b style={{ color: c.TXTCLR }}>見立て・チャート・日経との強さ比べ</b>で並べる場所です。
+          <br />🔴 選ぶ基準はひとつ。<b style={{ color: c.GREEN }}>独占があるか</b>——独占が無ければ、
+          台数が増えても値下げ競争で終わるからです。
           <br />🔵 数ヶ月〜年単位で持つ前提。途中の上下は判定材料にしません。
         </p>
       </div>
@@ -607,6 +621,22 @@ function ThesisBlock({ c, isMobile, th }: { c: C; isMobile: boolean; th: NonNull
 
   return (
     <div ref={ref} style={{ marginTop: isMobile ? 18 : 26 }}>
+      {/* 🔴 選定基準の中核。ここが無い銘柄は枠に入れない（2026-08-16 の相談で確定） */}
+      <div style={{
+        border: `1px solid ${c.BORDBR}`, borderLeft: `3px solid ${c.GREEN}`, borderRadius: 12,
+        background: c.HDBG, padding: isMobile ? '14px 14px' : '18px 20px', marginBottom: 22,
+      }}>
+        <div style={{ fontSize: 9.5, letterSpacing: '0.24em', color: c.DIM, marginBottom: 8 }}>
+          MOAT / 独占はあるか
+        </div>
+        <div style={{ fontSize: isMobile ? 13 : 16, fontWeight: 800, color: c.GREEN, lineHeight: 1.6 }}>
+          {th.moat.label}
+        </div>
+        <div style={{ marginTop: 7, fontSize: isMobile ? 11.5 : 12.5, color: c.DESC, lineHeight: 1.95 }}>
+          {rich(th.moat.detail, c.TXTCLR)}
+        </div>
+      </div>
+
       <div style={{ fontSize: 9.5, letterSpacing: '0.24em', color: c.DIM, marginBottom: 12 }}>WHY / なぜ見ているか</div>
       <div style={{ display: 'grid', gap: 10, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
         {th.why.map((t, i) => (
