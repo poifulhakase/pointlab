@@ -4,14 +4,14 @@ import appSource from '../App.tsx?raw'
 import { SECTOR_TABS, SECTOR_LABELS } from './sectorTabs'
 
 describe('周期画面のタブ', () => {
-  it('並びは サイクル → 探す', () => {
+  it('並びは 局面 → 検索', () => {
     expect([...SECTOR_TABS]).toEqual(['sector', 'stock'])
-    // 🔴 2026-08-16 改称（Believe の 主力／その他 と横並びにするため）
-    expect(SECTOR_TABS.map(t => SECTOR_LABELS[t])).toEqual(['サイクル', '探す'])
+    // 🔴 2026-08-16 改称＝主力 / 候補 / 局面 / 検索 で2文字の名詞にそろえた
+    expect(SECTOR_TABS.map(t => SECTOR_LABELS[t])).toEqual(['局面', '検索'])
   })
 
   // 🔴 「探す」は**スマホだけ**。PC は3列とも並んでいるので、出すと押せないタブが増えるだけになる。
-  it('「探す」はスマホのときだけ出す', () => {
+  it('「検索」はスマホのときだけ出す', () => {
     expect(appSource).toContain("...(isMobile ? [{ key: 'find'")
   })
 

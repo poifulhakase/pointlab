@@ -914,14 +914,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               </>
             )}
             {/* Believe＝ 主力 / その他（2026-08-16 追加・別ページを1本のタブでつなぐ） */}
-            {/* Believe＝ 主力 / その他 / サイクル / 探す（2026-08-16）。
+            {/* Believe＝ 主力 / 候補 / 局面 / 検索（2026-08-16）。
+                🔵 4つとも**2文字の名詞**でそろえてある（品詞と字数がバラつくと並びが読みにくい）。
                 🔵 サイクルと探すは同じ画面（ViewMode 'sector'）の中のタブ。
                 🔴 「探す」はスマホだけ＝PCは3列とも見えているので出さない。 */}
             {(cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'sector') && (
               <>
                 {([
                   { key: 'momentum', label: '主力', on: cal.view === 'momentum', go: () => setViewWithTransition('momentum') },
-                  { key: 'watch', label: 'その他', on: cal.view === 'watch', go: () => setViewWithTransition('watch') },
+                  { key: 'watch', label: '候補', on: cal.view === 'watch', go: () => setViewWithTransition('watch') },
                   { key: 'cycle', label: SECTOR_LABELS.sector, on: cal.view === 'sector' && (!isMobile || sectorTab === 'sector'), go: () => { setSectorTab('sector'); setViewWithTransition('sector') } },
                   ...(isMobile ? [{ key: 'find', label: SECTOR_LABELS.stock, on: cal.view === 'sector' && sectorTab === 'stock', go: () => { setSectorTab('stock'); setViewWithTransition('sector') } }] : []),
                 ]).map(t => (

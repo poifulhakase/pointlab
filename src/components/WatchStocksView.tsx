@@ -81,7 +81,7 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
       }}>
         <span style={{ fontSize: isMobile ? 10 : 11, letterSpacing: '0.2em', color: c.GREEN, whiteSpace: 'nowrap' }}>
-          WATCH / その他の監視銘柄
+          WATCH / 候補
         </span>
         <button type="button" onClick={onClose} aria-label="戻る"
           style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 6, border: `1px solid ${c.BORDER}`, background: 'transparent', color: c.TXTCLR, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
