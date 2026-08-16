@@ -131,5 +131,85 @@
     },
     "service_tier": "standard",
     "inference_geo": "global"
+  },
+  "outcome": {
+    "main": {
+      "side": null,
+      "action": "hold",
+      "symbol": "none",
+      "confidence_pct": 58,
+      "entry_date": "2026-08-14",
+      "entry_close": 68713.796875,
+      "next_open": null,
+      "horizons": {
+        "1d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        },
+        "5d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        }
+      },
+      "complete": false
+    },
+    "chart_only": {
+      "side": "bull",
+      "action": "open",
+      "symbol": "1570",
+      "confidence_pct": 56,
+      "entry_date": "2026-08-14",
+      "entry_close": 68713.796875,
+      "next_open": null,
+      "horizons": {
+        "1d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        },
+        "5d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        }
+      },
+      "complete": false
+    },
+    "numbers_only": {
+      "side": null,
+      "action": "hold",
+      "symbol": "none",
+      "confidence_pct": 58,
+      "entry_date": "2026-08-14",
+      "entry_close": 68713.796875,
+      "next_open": null,
+      "horizons": {
+        "1d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        },
+        "5d": {
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
+        }
+      },
+      "complete": false
+    }
   }
 }

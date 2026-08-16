@@ -11,6 +11,10 @@ import {
   ROBO_SYMBOLS, type RoboAccount, type RoboTrade, type FollowStat,
 } from '../utils/roboAccount'
 import { demoMode, demoAccount } from '../utils/roboDemo'
+import {
+  fetchRoboCalibration, variantList, isProvisional, PROVISIONAL_MIN,
+  type RoboCalibration,
+} from '../utils/roboCalibration'
 import { ENGINE_TABS, type EngineTabKey } from '../utils/engineTabs'
 import { PoiroboPixel } from './PoiroboPixel'
 
@@ -26,6 +30,7 @@ const pct = (v: number | null | undefined, d = 1) => (v == null ? '—' : `${v >
 
 export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Props) {
   const [account, setAccount] = useState<RoboAccount | null>(null)
+  const [calib, setCalib] = useState<RoboCalibration | null>(null)
   const [loading, setLoading] = useState(true)
   const [openLog, setOpenLog] = useState(false)
   const c = cy(theme)
@@ -43,6 +48,11 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
     fetchRoboAccount()
       .then(a => { if (alive) { setAccount(a); setLoading(false) } })
       .catch(() => { if (alive) setLoading(false) })
+    // 🔵 判断の答え合わせ（robo_calibration.json）。**口座とは別のファイル**なので
+    //    無くても口座は出す（生成前の期間・プレビューでは null が返るだけ）。
+    fetchRoboCalibration()
+      .then(x => { if (alive) setCalib(x) })
+      .catch(() => { /* 出さないだけ */ })
     return () => { alive = false }
   }, [])
 
@@ -251,6 +261,13 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
         </div>
         <ProgressToJudgement c={c} n={closed.length} />
       </div>
+
+      {/* ── 判断の答え合わせ（⑤b-A/B・2026-08-16 表示）──
+          🔴 ロボ口座の成績（上の表）とは**別物**。上は建玉の損益、こちらは
+             「その日の判断が短期で当たったか」。同じ画面に置く以上、必ず書き分ける。 */}
+      {calib && <div className="robo-rise" style={panel(c, 175)}>
+        <CalibrationBlock c={c} cal={calib} isMobile={isMobile} />
+      </div>}
 
       {/* ── 🔴 あなたの介入は効いているか（第2カラムの残りを埋める）── */}
       <div className="robo-rise" style={{ ...panel(c, 210), flex: isMobile ? 'none' : 1, minHeight: 0, overflowY: 'auto' }}>
@@ -607,6 +624,157 @@ function ProgressToJudgement({ c, n }: { c: ReturnType<typeof cy>; n: number }) 
         勝率34〜40%が正常です。<span style={{ color: c.NOTICE }}>勝率ではなく期待値とドローダウン</span>で見てください。
       </div>
     </div>
+  )
+}
+
+/**
+ * 判断の答え合わせ（⑤b-A/B）。
+ *
+ * 🔴 **n が {@link PROVISIONAL_MIN} 件に満たないあいだは「暫定」と画面に書く**（2026-08-16 ユーザー判断）。
+ *    小さい標本の勝率を毎日見ていると、偶然のブレを実力と読み違える。
+ *    ぽいロボ本体では確信度の自信過剰を **52週貯めてから**見つけている。
+ * 🔴 上の PERFORMANCE（建玉の損益）とは**別の物差し**。混ぜて読まないよう見出しと注記で切る。
+ * 🔵 影の2通り（チャートのみ／数値のみ）も同じ物差しで並ぶが、**30件まで比較しない**。
+ */
+function CalibrationBlock({ c, cal, isMobile }: {
+  c: ReturnType<typeof cy>; cal: RoboCalibration; isMobile: boolean
+}) {
+  const variants = variantList(cal)
+  const main = variants.find(v => v.key === 'main')
+  if (!main) return null
+
+  const horizons = cal.horizons?.length ? cal.horizons : ['1d', '5d']
+  const hLabel = (h: string) => `${h.replace('d', '')}営業日後`
+  // 🔵 主に見るのは5営業日後。まだ1件も埋まっていない時期は、空表だけを見せても仕方ないので
+  //    先に埋まる1営業日後の帯を出す（**どちらを見ているかは必ず書く**）。
+  const binH = horizons.find(h => main.calibration?.[h]?.length) ?? null
+  const n5 = main.summary.by_horizon['5d']?.n ?? 0
+  const prov = isProvisional(n5)
+  const shadows = variants.filter(v => v.key !== 'main')
+
+  const th: React.CSSProperties = {
+    textAlign: 'right', padding: '5px 8px', fontSize: 10, color: c.DIM,
+    fontWeight: 400, letterSpacing: '0.08em', whiteSpace: 'nowrap',
+  }
+  const p = (v: number | null | undefined) => (v == null ? '—' : `${v}%`)
+
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: c.GREEN, letterSpacing: '0.12em' }}>
+          ▌ CALIBRATION / 判断の答え合わせ
+        </span>
+        {prov && (
+          <span style={{
+            fontSize: 9.5, letterSpacing: '0.08em', color: c.NOTICE,
+            border: `1px solid ${c.NOTICE}66`, borderRadius: 3, padding: '1px 6px',
+          }}>暫定 n={n5} / {PROVISIONAL_MIN}</span>
+        )}
+      </div>
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, fontFamily: c.FONT }}>
+          <thead>
+            <tr>
+              {['', '件数', '勝率', '平均確信度', '平均損益'].map(h => (
+                <th key={h} style={{ ...th, textAlign: h ? 'right' : 'left' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {horizons.map(h => {
+              const s = main.summary.by_horizon[h]
+              return (
+                <tr key={h}>
+                  <td style={{ ...tdBase(c), textAlign: 'left', color: h === '5d' ? c.GREEN : c.DIM, fontWeight: h === '5d' ? 700 : 400, fontSize: 11 }}>
+                    {hLabel(h)}
+                  </td>
+                  <td style={tdBase(c)}>{s?.n ?? 0}</td>
+                  <td style={tdBase(c)}>{p(s?.win_rate_pct)}</td>
+                  <td style={{ ...tdBase(c), color: c.DIM }}>{p(s?.avg_confidence)}</td>
+                  <td style={tdBase(c)}>{pct(s?.avg_edge_pct, 2)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 確信度の帯（言った確率 vs 実勝率）*/}
+      {binH && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${c.BORDER}` }}>
+          <div style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.1em', marginBottom: 8 }}>
+            CONFIDENCE / 言った確率 vs 実勝率（{hLabel(binH)}）
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, fontFamily: c.FONT }}>
+              <thead>
+                <tr>
+                  {['', '件数', '言った', '実際', '差'].map(h => (
+                    <th key={h} style={{ ...th, textAlign: h ? 'right' : 'left' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {main.calibration[binH].map(b => (
+                  <tr key={b.range}>
+                    <td style={{ ...tdBase(c), textAlign: 'left', color: c.DIM, fontSize: 11 }}>{b.range}</td>
+                    <td style={tdBase(c)}>{b.n}</td>
+                    <td style={{ ...tdBase(c), color: c.DIM }}>{p(b.avg_confidence)}</td>
+                    <td style={tdBase(c)}>{p(b.win_rate_pct)}</td>
+                    {/* 🔵 負＝自信過剰（言ったほど当たっていない） */}
+                    <td style={{ ...tdBase(c), color: b.gap == null ? c.DIM : b.gap < 0 ? c.NOTICE : c.GREEN }}>
+                      {b.gap == null ? '—' : `${b.gap > 0 ? '+' : ''}${b.gap}`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 影の判断（材料を減らすとどうなるか）*/}
+      {shadows.length > 0 && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${c.BORDER}` }}>
+          <div style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.1em', marginBottom: 8 }}>
+            SHADOW / 材料を減らした判断（記録のみ）
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : `repeat(${Math.min(shadows.length, 2)}, 1fr)`,
+            gap: 10,
+          }}>
+            {shadows.map(v => {
+              const s = v.summary.by_horizon['5d']
+              const s1 = v.summary.by_horizon['1d']
+              return (
+                <div key={v.key} style={{ borderLeft: `2px solid ${c.BORDER}`, paddingLeft: 9 }}>
+                  <div style={{ fontSize: 10.5, color: c.DESC }}>{v.label}</div>
+                  <div style={{ fontSize: 11, color: c.DIM, marginTop: 3, lineHeight: 1.7 }}>
+                    5営業日後 n={s?.n ?? 0} 勝率 {p(s?.win_rate_pct)}<br />
+                    1営業日後 n={s1?.n ?? 0} 勝率 {p(s1?.win_rate_pct)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop: 12, fontSize: 10, color: c.DIM, lineHeight: 1.8, letterSpacing: '0.04em' }}>
+        {prov && (
+          <>
+            <span style={{ color: c.NOTICE }}>暫定です</span>（{PROVISIONAL_MIN}件から判断・あと {PROVISIONAL_MIN - n5} 件）。
+            数件の勝率はほとんど偶然で動きます。<b>ここを見て設計を変えないでください</b>。<br />
+          </>
+        )}
+        {cal.basis}。<br />
+        🔴 これは<b>判断が短期で当たったか</b>の答え合わせで、上の成績（建玉の損益）とは別物です。
+        {shadows.length > 0 && <>影の2通りとの比較も {PROVISIONAL_MIN} 件からです。</>}
+        {cal.updatedAt && <><br />UPDATED: {new Date(cal.updatedAt).toLocaleString('ja-JP')}</>}
+      </div>
+    </>
   )
 }
 

@@ -77,9 +77,9 @@
       "horizons": {
         "1d": {
           "date": "2026-08-14",
-          "close": 68617.4375,
-          "ret_pct": 0.45,
-          "edge_pct": 0.45,
+          "close": 68713.796875,
+          "ret_pct": 0.59,
+          "edge_pct": 0.59,
           "hit": true
         },
         "5d": {
