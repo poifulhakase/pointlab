@@ -32,8 +32,15 @@ export default async function handler(req, res) {
   try {
     ({ db, auth } = getAdmin())
   } catch (e) {
+    // 🔵 内部の詳細は返さないが、「env が無い」のか「初期化に失敗した」のかだけは
+    //    切り分けられるようにしておく（2026-08-16。本番で 503 が出たとき原因が分からず困った）。
     console.error('[create-booking] admin init failed:', e)
-    return res.status(503).json({ error: 'Booking service unavailable (server misconfiguration)' })
+    const notSet = !process.env.FIREBASE_SERVICE_ACCOUNT
+    return res.status(503).json({
+      error: notSet
+        ? 'Booking service unavailable (credentials not set)'
+        : 'Booking service unavailable (credentials invalid)',
+    })
   }
 
   let body = req.body
