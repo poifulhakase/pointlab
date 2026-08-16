@@ -6,6 +6,8 @@
 //
 // 🔵 数字はすべて `scripts/analyze-intraday-bias.mjs` の実行結果。
 //    条件を変えて測り直したら、ここも書き換える（測っていないことは書かない）。
+// 🔴 **結果だけ置く。説明の文章は書かない**（2026-08-16 ユーザー指示）。
+//    数字を足すときも表に1行足すだけにして、地の文で解説しないこと。
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
 
@@ -28,15 +30,21 @@ const DAY_TYPES = [
   { name: '一本調子の下げ（安値引け）', share: '5.7%', mean: '−0.59%' },
 ]
 
-// 🔵 見出し・本文は**毎レンダーで作り直さない**（コンポーネントの中で定義すると
+/** その他の実測値（説明はしない。数字だけ置く） */
+const NUMBERS = [
+  { name: '1321 寄り→引け（20年）', value: '平均 −0.001%／勝率 47.7%' },
+  { name: 'オーバーナイト vs 日中（26年・1倍）', value: '+11.07% ／ −4.90%' },
+  { name: '大きく上に窓を開けた日の寄り天率', value: '20.7% → 8.1%（1321では取り分にならず）' },
+  { name: '指数の始値は約定できない価格', value: '日経平均 +0.257% → 1321 −0.010%' },
+  { name: '5分足の保存（60日しか遡れないため）', value: '2026-08-13 から毎日・平日16:30' },
+]
+
+// 🔵 見出しは**毎レンダーで作り直さない**（コンポーネントの中で定義すると
 //    描き直しのたびに別物になり、React が中身を捨てて作り直す）。
 type TextProps = { c: { accent: string; sub: string }; isMobile: boolean; children: React.ReactNode }
 
 const Head = ({ c, isMobile, children }: TextProps) => (
   <h3 style={{ fontSize: isMobile ? 13 : 15, fontWeight: 800, color: c.accent, letterSpacing: '0.06em', margin: '28px 0 10px' }}>{children}</h3>
-)
-const P = ({ c, isMobile, children }: TextProps) => (
-  <p style={{ fontSize: isMobile ? 12 : 13, lineHeight: 1.9, color: c.sub, margin: '0 0 10px' }}>{children}</p>
 )
 
 export default function DaytradeResearchView({ theme, isMobile, onClose }: Props) {
@@ -84,17 +92,12 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: pad, position: 'relative' }}>
         <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, margin: '4px 0 6px' }}>デイトレは成立するか</h1>
-        <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginBottom: 6 }}>2026-08-13 計測 ／ 日経225・1321 の20年＋1時間足3年</div>
-        <div style={{ fontSize: isMobile ? 11 : 12, color: c.sub, marginBottom: 16, lineHeight: 1.8 }}>
-          ここは<strong style={{ color: c.accent }}>地下室</strong>——まだ人に見せる形になっていない研究を置いておく場所。
-          効かなかったことも、効かなかったまま残す。
-        </div>
+        <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginBottom: 12 }}>2026-08-13 計測 ／ 日経225・1321 の20年＋1時間足3年</div>
 
         <div style={{ padding: pad, border: `1px solid ${c.border}`, borderRadius: 10, background: c.card, marginBottom: 8 }}>
           <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 700, lineHeight: 1.8 }}>
             結論：<span style={{ color: c.trap }}>いま手に入るデータの範囲では、日計りの根拠は見つからなかった。</span>
           </div>
-          <P c={c} isMobile={isMobile}>効きそうに見えたものは1つだけあったが、それは<strong>実際には買えない価格</strong>で計算していたための幻だった（下記）。</P>
         </div>
 
         <Head c={c} isMobile={isMobile}>測ったこと</Head>
@@ -110,25 +113,9 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
             </div>
           ))}
         </div>
-        <P c={c} isMobile={isMobile}>※ t は「偶然ではない度合い」。<strong>2未満は誤差の範囲</strong>として扱い、採用しない。</P>
-
-        <Head c={c} isMobile={isMobile}>いちばんの学び：指数で測ると勝てて、実物で測ると消える</Head>
-        <P c={c} isMobile={isMobile}>
-          寄りギャップの順張りは、日経平均で測ると <strong>+0.257%・勝率57.3%・t=8.12</strong> と強く出た。
-          5年ごとに区切っても4区間すべてプラスで、安定しているように見えた。
-        </P>
-        <P c={c} isMobile={isMobile}>
-          ところが同じ条件を <strong>1321（実際に売買するETF）</strong>で測ると <strong>−0.010%</strong> になり、消えた。
-          理由は、日経平均の「始値」が225銘柄の寄り値を合成した数字で、<strong>実際には誰も取引できない価格</strong>だから。
-          1321はひとつの銘柄として寄るので、寄り値にギャップが既に織り込まれている。
-        </P>
-        <P c={c} isMobile={isMobile}>
-          🔴 <strong>指数でバックテストして実物で負ける</strong>、という典型的な罠。
-          以後、日中の検証は必ず売買する銘柄そのもので測る。
-        </P>
+        <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, margin: '8px 0 0' }}>t&lt;2 は誤差として不採用</div>
 
         <Head c={c} isMobile={isMobile}>1日の「型」の内訳（20年）</Head>
-        <P c={c} isMobile={isMobile}>「いくつかの型に分かれるはず」という感覚は正しく、実際に分かれる。ただし<strong>これは終わってから分かる分類</strong>であって、予測ではない。</P>
         <div style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: 'hidden' }}>
           {DAY_TYPES.map((d, i) => (
             <div key={d.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 12px', background: i % 2 ? 'transparent' : c.card, borderTop: i ? `1px solid ${c.border}` : 'none', fontSize: isMobile ? 12 : 13 }}>
@@ -137,33 +124,16 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
             </div>
           ))}
         </div>
-        <P c={c} isMobile={isMobile}>
-          寄り天（20.7%）と寄り底（22.8%）は<strong>ほぼ同数</strong>。どちらかに偏っているわけではない。
-          寄りの時点の情報（ギャップ）で寄り天率は動く（大きく上に窓を開けた日は 20.7% → 8.1% に下がる）が、
-          この偏りも <strong>1321で測ると取り分にならなかった</strong>。
-        </P>
 
-        <Head c={c} isMobile={isMobile}>なぜ日中は伸びないのか</Head>
-        <P c={c} isMobile={isMobile}>
-          1321の寄り→引けは20年で <strong>平均 −0.001%・勝率47.7%</strong>。ほぼコイン投げで、わずかに負け越す。
-          これは日本株の既知の性質と整合する——<strong>上昇は夜間（前日の海外市場を受けた寄り付き）に集中し、日中はほぼゼロ</strong>。
-          「寄りで買って引けで売る」は、儲かる時間帯を避けて儲からない時間帯だけを取りに行く形になる。
-        </P>
-        <P c={c} isMobile={isMobile}>
-          🔵 ぽいロボが<strong>引け（15:00判断・引成執行）で建てる</strong>設計になっているのは、この性質と合っている。
-        </P>
-
-        <Head c={c} isMobile={isMobile}>これから（貯めているもの）</Head>
-        <P c={c} isMobile={isMobile}>
-          5分足は<strong>60日しか遡れない</strong>（過去に戻って買うこともできない）。
-          そこで <strong>2026-08-13 から毎日保存を開始</strong>した（平日16:30・日経225／1321／1571）。
-          15分・30分・1時間足は、この5分足から後で合成できる。
-        </P>
-        <P c={c} isMobile={isMobile}>
-          1年貯まれば「寄り天の形を見て途中で降りる」「損切りを置く」といった、
-          <strong>今日は測れなかった形</strong>を検証できる。それまでは根拠が無いので、
-          リアルタイムのデータ契約も自動発注の口座変更も<strong>先に進めない</strong>。
-        </P>
+        <Head c={c} isMobile={isMobile}>そのほかの実測</Head>
+        <div style={{ border: `1px solid ${c.border}`, borderRadius: 10, overflow: 'hidden' }}>
+          {NUMBERS.map((d, i) => (
+            <div key={d.name} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: isMobile ? 2 : 12, padding: '9px 12px', background: i % 2 ? 'transparent' : c.card, borderTop: i ? `1px solid ${c.border}` : 'none', fontSize: isMobile ? 12 : 13 }}>
+              <span>{d.name}</span>
+              <span style={{ fontFamily: mono, fontSize: 11, color: c.sub }}>{d.value}</span>
+            </div>
+          ))}
+        </div>
 
         <div style={{ marginTop: 24, padding: pad, border: `1px dashed ${c.border}`, borderRadius: 10, fontSize: isMobile ? 11 : 12, lineHeight: 1.9, color: c.sub }}>
           🔴 このページは研究の記録であり、売買の推奨ではありません。数値は特定期間の過去データにもとづくもので、将来の成果を示すものではありません。
