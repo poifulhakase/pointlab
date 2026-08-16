@@ -25,6 +25,8 @@ export const STOCKS = [
   { code: '6954', symbol: '6954.T', name: 'ファナック', kana: 'FANUC', note: '工作機械用CNCと産業用ロボット。受注と中国の設備投資に感応' },
   { code: '6324', symbol: '6324.T', name: 'ハーモニック・ドライブ・システムズ', kana: 'HARMONIC', note: '精密減速機（波動歯車装置）で世界シェア約50%。ロボットの関節そのもの' },
   { code: '285A', symbol: '285A.T', name: 'キオクシア', kana: 'KIOXIA', note: 'NANDフラッシュ。世界5〜6社の寡占。🔴 価格サイクル型で値動きが桁違いに荒い' },
+  { code: '6857', symbol: '6857.T', name: 'アドバンテスト', kana: 'ADVANTEST', note: '半導体テスタで実質2社寡占。AIチップが複雑になるほど検査需要が増える' },
+  { code: '5803', symbol: '5803.T', name: 'フジクラ', kana: 'FUJIKURA', note: 'データセンター向けの光ケーブルと融着接続。🔴 独占は5枠でいちばん薄い' },
 ]
 
 /**
