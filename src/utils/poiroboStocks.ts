@@ -61,6 +61,21 @@ export type AiLayer = {
   from_52w_high_pct: number | null
 }
 
+/** その他の監視銘柄（別ページ）。🔵 チャートは持たない＝数字だけ */
+export type WatchStock = {
+  code: string
+  name: string
+  layer: string
+  close: number | null
+  change_pct: number | null
+  ret12m: number | null
+  ret3m: number | null
+  from_52w_high_pct: number | null
+  dev200_pct: number | null
+  above_ma200: boolean | null
+  ma200_up: boolean | null
+}
+
 export type PoiroboStocksData = {
   updatedAt: string
   basis: string
@@ -68,6 +83,7 @@ export type PoiroboStocksData = {
   index: { code: string; name: string; date: string | null; close: number | null; change_pct: number | null; dev25_pct: number | null }
   stocks: PoiroboStock[]
   layers?: AiLayer[]
+  watch?: WatchStock[]
 }
 
 // 🔴 枠を入れ替えたらキーを上げる（2026-08-16 v2＝安川電機を外して3枠にした）。

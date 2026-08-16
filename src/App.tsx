@@ -59,6 +59,7 @@ const ChartPatternPanel = lazy(() => import('./components/ChartPatternPanel').th
 //    ページ2枚 → 部屋2つに変えたので、view が daytrade / swing のどちらでも同じ画面を出す。
 const BasementRooms = lazy(() => import('./components/BasementRooms'))
 const MomentumStocksView = lazy(() => import('./components/MomentumStocksView'))
+const WatchStocksView = lazy(() => import('./components/WatchStocksView'))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
 const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
@@ -474,6 +475,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       if (supportBackRef.current)  { supportBackRef.current();                return }   // 研究室内モーダル
       const v = s.view
       if (v === 'spec' || v === 'legal' || v === 'manual' || v === 'backtest' || v === 'evals' || v === 'playbook' || v === 'original' || v === 'timemachine' || v === 'chartpattern' || v === 'daytrade' || v === 'swing' || v === 'momentum') { a.setView('support'); return }
+      if (v === 'watch') { a.setView('momentum'); return }
       // 🔵 セクターローテーションはカレンダーのサイドバーから開くので、戻り先はカレンダー（2026-08-11）
       if (v === 'support' || v === 'shield' || v === 'chart' || v === 'quant' || v === 'sector') { a.setView('month'); return }
       if (v === 'day')     { a.setView('week');  return }
@@ -668,7 +670,18 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {cal.view === 'momentum' && (
             <ErrorBoundary label="Believe（第4次産業革命）">
               <Suspense fallback={<ViewLoader />}>
-                <MomentumStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+                <MomentumStocksView theme={theme} isMobile={isMobile}
+                  onClose={() => setViewWithTransition('support')}
+                  onOpenWatch={() => setViewWithTransition('watch')} />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+
+          {cal.view === 'watch' && (
+            <ErrorBoundary label="その他の監視銘柄">
+              <Suspense fallback={<ViewLoader />}>
+                {/* 🔵 戻り先は Believe（ここから来るので） */}
+                <WatchStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('momentum')} />
               </Suspense>
             </ErrorBoundary>
           )}

@@ -42,6 +42,33 @@ export const LAYERS = [
   { key: 'move', label: '動く', sub: 'ロボット', code: '6954', symbol: '6954.T', name: 'ファナック', ours: true },
 ]
 
+/**
+ * その他の監視銘柄（別ページ）。
+ * 🔵 枠には入れていないが、フィジカルAI／AIの4層に関わる会社を並べて置く。
+ * 🔴 **チャート用の系列は持たない**（数字だけ）＝1銘柄あたり数百バイトに収め、配信を軽くする。
+ */
+export const WATCH = [
+  { code: '6506', name: '安川電機', layer: '動く' },
+  { code: '6268', name: 'ナブテスコ', layer: '動く' },
+  { code: '6481', name: 'THK', layer: '動く' },
+  { code: '6479', name: 'ミネベアミツミ', layer: '動く' },
+  { code: '6471', name: '日本精工', layer: '動く' },
+  { code: '6472', name: 'NTN', layer: '動く' },
+  { code: '6861', name: 'キーエンス', layer: '感じる' },
+  { code: '6645', name: 'オムロン', layer: '感じる' },
+  { code: '7729', name: '東京精密', layer: '感じる' },
+  { code: '6273', name: 'SMC', layer: '動く' },
+  { code: '6383', name: 'ダイフク', layer: '運ぶ' },
+  { code: '6141', name: 'DMG森精機', layer: '動く' },
+  { code: '6301', name: 'コマツ', layer: '動く' },
+  { code: '6503', name: '三菱電機', layer: '動く' },
+  { code: '6594', name: 'ニデック', layer: '動く' },
+  { code: '8035', name: '東京エレクトロン', layer: '考える' },
+  { code: '6146', name: 'ディスコ', layer: '考える' },
+  { code: '5801', name: '古河電工', layer: 'つなぐ' },
+  { code: '5802', name: '住友電工', layer: 'つなぐ' },
+]
+
 /** Yahoo の日足（出来高つき）。roboData の fetchDaily は出来高を返さないので別に持つ */
 async function fetchDailyWithVolume(symbol, range = '2y') {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=${range}`
@@ -109,6 +136,27 @@ async function main() {
     }
   }
 
+  // ── その他の監視銘柄（数字だけ）──
+  const watch = []
+  for (const w of WATCH) {
+    try {
+      const rows = computeIndicators(await fetchDailyWithVolume(`${w.code}.T`, '2y'))
+      const sum = summarizeStock(rows, index)
+      if (!sum) throw new Error('要約できなかった')
+      watch.push({
+        code: w.code, name: w.name, layer: w.layer,
+        close: sum.close, change_pct: sum.change_pct,
+        ret12m: sum.momentum.ret.m12, ret3m: sum.momentum.ret.m3,
+        from_52w_high_pct: sum.momentum.from_52w_high_pct,
+        dev200_pct: sum.dev200_pct,
+        above_ma200: sum.momentum.above_ma200, ma200_up: sum.momentum.ma200_up,
+      })
+    } catch (e) {
+      console.log(`  ⚠ [監視] ${w.code} ${w.name} は取れなかった（${e.message}）`)
+    }
+  }
+  console.log(`[3] その他の監視銘柄 ${watch.length}件`)
+
   const nkLast = index[index.length - 1]
   const nkPrev = index[index.length - 2]
   const out = {
@@ -127,6 +175,7 @@ async function main() {
     },
     stocks,
     layers,
+    watch,
   }
 
   if (DRY) { console.log('[2] --dry のため書いていない'); return }

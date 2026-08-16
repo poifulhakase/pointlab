@@ -15,7 +15,13 @@ import {
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 
-type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
+type Props = {
+  theme: 'dark' | 'light'
+  isMobile: boolean
+  onClose: () => void
+  /** その他の監視銘柄（別ページ）へ */
+  onOpenWatch?: () => void
+}
 type C = ReturnType<typeof cy>
 
 const UP = (dark: boolean) => (dark ? '#ff6b6b' : '#dc2626')
@@ -31,7 +37,7 @@ function rich(text: string, color: string) {
   )
 }
 
-export default function MomentumStocksView({ theme, isMobile, onClose }: Props) {
+export default function MomentumStocksView({ theme, isMobile, onClose, onOpenWatch }: Props) {
   const c = cy(theme)
   const dark = theme === 'dark'
   const [data, setData] = useState<PoiroboStocksData | null>(null)
@@ -99,6 +105,8 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
             {data.stocks.map((s, i) => (
               <StockCard key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} order={i} />
             ))}
+            {/* 🔵 枠の最後に「その他の監視銘柄」への入口を置く（別ページ） */}
+            {onOpenWatch && <WatchCard c={c} isMobile={isMobile} count={data.watch?.length ?? 0} onOpen={onOpenWatch} />}
           </div>
 
           <div style={{
@@ -280,6 +288,33 @@ function RobotFigure({ c, dark, layers, seen, size }: {
   )
 }
 
+/** その他の監視銘柄への入口（枠の最後に置くカード） */
+function WatchCard({ c, isMobile, count, onOpen }: {
+  c: C; isMobile: boolean; count: number; onOpen: () => void
+}) {
+  const [ref, seen] = useInView<HTMLButtonElement>(0.1)
+  return (
+    <button ref={ref} type="button" onClick={onOpen}
+      className={seen ? 'mom-rise' : undefined}
+      style={{
+        opacity: seen ? undefined : 0,
+        border: `1px dashed ${c.BORDER}`, borderRadius: 18, background: 'transparent',
+        padding: isMobile ? '32px 20px' : 22, cursor: 'pointer', textAlign: 'left',
+        display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10,
+        minHeight: isMobile ? 160 : 220, fontFamily: c.FONT, color: c.TXTCLR,
+      }}>
+      <span style={{ fontSize: 9.5, letterSpacing: '0.24em', color: c.DIM }}>WATCH</span>
+      <span style={{ fontSize: isMobile ? 18 : 20, fontWeight: 900, color: c.GREEN, lineHeight: 1.5 }}>
+        その他の監視銘柄
+      </span>
+      <span style={{ fontSize: isMobile ? 11.5 : 12, color: c.DESC, lineHeight: 1.9 }}>
+        枠には入れていないが、同じ物差しで見ている{count > 0 ? ` ${count} 社` : '会社'}。
+      </span>
+      <span style={{ marginTop: 4, fontSize: 12, color: c.GREEN }}>開く →</span>
+    </button>
+  )
+}
+
 /** 関節（丸）。手足のグループと一緒に動く */
 function Joint({ c, color, x, y }: { c: C; color: string; x: number; y: number }) {
   return <circle cx={x} cy={y} r="3.4" fill={c.BG} stroke={color} strokeWidth="2" />
@@ -294,14 +329,26 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
   const price = useCountUp(s.close ?? 0, seen, 1100)
   const th = thesisOf(s.code)
   const accent = (s.change_pct ?? 0) >= 0 ? UP(dark) : DOWN(dark)
+  // 🔴 購入時の2つ目の基準＝200日線付近（±5%以内）。該当する枠だけカードを光らせる
+  const near200 = s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5
 
   return (
     <div ref={ref} className={seen ? 'mom-rise' : undefined} style={{
       opacity: seen ? undefined : 0, animationDelay: `${(order % 2) * 90}ms`,
       position: 'relative', overflow: 'hidden',
-      border: `1px solid ${c.BORDER}`, borderRadius: 18, background: c.TAREA,
+      border: `1px solid ${near200 ? c.BORDBR : c.BORDER}`,
+      borderRadius: 18,
+      background: near200 ? c.HDBG : c.TAREA,
+      boxShadow: near200 ? (dark ? `0 0 0 1px ${c.GREEN}33, 0 0 34px ${c.GREEN}22` : `0 0 0 1px ${c.GREEN}44`) : 'none',
       padding: isMobile ? '24px 20px' : 22,
     }}>
+      {/* 200日線付近のときだけ上に光の帯を敷く */}
+      {near200 && (
+        <div aria-hidden className="mom-sweep" style={{
+          position: 'absolute', left: 0, right: 0, top: 0, height: 3,
+          background: `linear-gradient(90deg, transparent, ${c.GREEN}, transparent)`,
+        }} />
+      )}
       <div aria-hidden style={{
         position: 'absolute', right: -8, top: -12, fontSize: isMobile ? 54 : 62, fontWeight: 900,
         letterSpacing: '-0.05em', color: c.GREEN, opacity: 0.07, pointerEvents: 'none', userSelect: 'none',
@@ -315,6 +362,13 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
           }}>{s.code}</span>
           <span style={{ fontSize: isMobile ? 18 : 19, fontWeight: 900 }}>{s.name}</span>
           {th && <span style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.06em' }}>{th.laneLabel}</span>}
+          {near200 && (
+            <span className="mom-pulse" style={{
+              padding: '3px 10px', borderRadius: 999,
+              border: `1px solid ${c.GREEN}`, background: `${c.GREEN}22`,
+              fontSize: 10, fontWeight: 800, color: c.GREEN, letterSpacing: '0.06em',
+            }}>200日線付近</span>
+          )}
         </div>
 
         {th && (
@@ -496,6 +550,10 @@ function Keyframes() {
       @keyframes mom-pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.3); opacity:0.55; } }
       .mom-pulse { animation: mom-pulse 2.4s ease-in-out infinite; transform-origin: center; }
 
+      /* 200日線付近のカードの上を光が流れる */
+      @keyframes mom-sweep { 0% { opacity: 0.15; transform: translateX(-40%); } 50% { opacity: 1; } 100% { opacity: 0.15; transform: translateX(40%); } }
+      .mom-sweep { animation: mom-sweep 3.4s ease-in-out infinite; }
+
       /* ── ロボットが動く（4層の図） ── */
       @keyframes rb-arm-l { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(7deg); } }
       @keyframes rb-arm-r { 0%,100% { transform: rotate(9deg); } 50% { transform: rotate(-7deg); } }
@@ -512,7 +570,7 @@ function Keyframes() {
 
       @media (prefers-reduced-motion: reduce) {
         .mom-rise, .mom-stamp, .mom-draw, .mom-pulse { animation: none !important; opacity:1 !important; transform:none !important; }
-        .rb-armL, .rb-armR, .rb-legL, .rb-legR, .rb-head, .rb-wire { animation: none !important; }
+        .rb-armL, .rb-armR, .rb-legL, .rb-legR, .rb-head, .rb-wire, .mom-sweep { animation: none !important; }
       }
     `}</style>
   )
