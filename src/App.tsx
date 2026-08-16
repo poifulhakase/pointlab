@@ -563,7 +563,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       )}
       <PWAUpdateBanner />
       <PWAInstallBanner />
-      <Suspense fallback={null}>
+      {/* 🔵 開くまで読み込まない（2026-08-16）。常にマウントしていると、
+          起動直後にこのチャンクを取りに行って初回の転送量が増える。 */}
+      {poiroboAlertModalOpen && <Suspense fallback={null}>
         <PoiroboAlertModal
           isOpen={poiroboAlertModalOpen}
           config={poiroboAlertConfig}
@@ -571,7 +573,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           onSave={handlePoiroboAlertSave}
           onClose={() => setPoiroboAlertModalOpen(false)}
         />
-      </Suspense>
+      </Suspense>}
       {/* 🔴 コンテンツをクリックしたらフッターを閉じる挙動は削除（ユーザー・2026-08-08）。
           開閉はつまみ（^）の手動操作だけにする。復活させないこと。 */}
       <div style={styles.body}>
@@ -856,14 +858,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
         />
       </Suspense>
 
-      <Suspense fallback={null}>
+      {/* 🔵 日付を選んで初めて読み込む（起動時の転送量を減らす・2026-08-16） */}
+      {noteDate && <Suspense fallback={null}>
         <DayNotePanel
           date={noteDate} prefillTime={notePrefillTime}
           onClose={closeNote} onSave={refreshNoteMap}
           onAfterSave={handleAfterSave} onSaved={showSaveToast}
           isMobile={isMobile}
         />
-      </Suspense>
+      </Suspense>}
 
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {/* コミュニティ限定ビュー（カレンダー/ブンセキ/ロボ口座）は非メンバー時に非表示。

@@ -12,6 +12,18 @@ import { blockedInPreview } from '../utils/previewMode'
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error'
 
+/**
+ * ブラウザが暇になってから走らせる（無ければ短いタイマー）。
+ * 🔴 起動直後は firestore SDK(約291KB)＋メモ本体＋購読チャンネルで **600KB超** を取りに行っていた。
+ *    画面はローカル保存のメモで先に出せるので、同期は**描画とデータ取得が落ち着いてから**でよい
+ *    （2026-08-16 計測。転送量の内訳＝firestore 291KB / notes 169KB / Listen 172KB）。
+ */
+function whenIdle(cb: () => void, timeout = 2500) {
+  const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }
+  if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(cb, { timeout })
+  else setTimeout(cb, timeout)
+}
+
 export function useFirebaseSync(refreshNoteMap: () => void) {
   const [user, setUser]               = useState<User | null>(null)
   const [syncStatus, setSyncStatus]   = useState<SyncStatus>('idle')
@@ -108,7 +120,21 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
           return
         }
 
-        await doSync(u)
+        // 🔵 同期は暇になってから（初回描画と当日データの取得を邪魔しない）。
+        //    🔴 隠れているタブでは走らせない＝復帰したときに同期する。
+        whenIdle(() => {
+          if (document.visibilityState === 'hidden') {
+            const onShow = () => {
+              document.removeEventListener('visibilitychange', onShow)
+              const cur = currentUserRef.current
+              if (cur) doSyncRef.current(cur)
+            }
+            document.addEventListener('visibilitychange', onShow)
+            return
+          }
+          const cur = currentUserRef.current
+          if (cur) doSyncRef.current(cur)
+        })
       })
     }
 
@@ -120,7 +146,7 @@ export function useFirebaseSync(refreshNoteMap: () => void) {
       unsubStickyRef.current?.()
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   /** エラー時に手動で再試行 */
   const retrySync = useCallback(() => {
