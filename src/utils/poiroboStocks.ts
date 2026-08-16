@@ -93,6 +93,12 @@ export type RangeStock = {
   high15y: number
   from_low_pct: number
   from_high_pct: number
+  /** 🔴 実際に効くレンジ下限（直近5年の安値の下位15%）。15年安値ではなくこちらで判定する */
+  floor: number | null
+  ceil: number | null
+  from_floor_pct: number | null
+  /** その帯（+5%以内）で止まった週の数＝サポートとしての信用度 */
+  floor_touches: number
   series: { d: string; c: number }[]
 }
 

@@ -206,19 +206,39 @@ async function main() {
       const low = Math.min(...rows.map(r => r.low))
       const high = Math.max(...rows.map(r => r.high))
       const r1 = (v) => Math.round(v * 10) / 10
+
+      // 🔴 **レンジ下限は「15年の絶対安値」ではなく、直近5年で何度も止まっている帯**で測る
+      //    （2026-08-16 ユーザーと確認）。何年も前に一度だけ付けた暴落安値は、
+      //    実際のレンジ取引では機能しないため。
+      const recent = rows.slice(-260)                 // 直近5年ぶんの週足
+      const quantile = (arr, q) => {
+        const a = [...arr].sort((x, y) => x - y)
+        if (!a.length) return null
+        const i = Math.min(a.length - 1, Math.max(0, Math.round((a.length - 1) * q)))
+        return a[i]
+      }
+      const floor = quantile(recent.map(r => r.low), 0.15)
+      const ceil = quantile(recent.map(r => r.high), 0.85)
+      // その帯（+5%以内）で何回止まったか＝サポートとしての信用度
+      const touches = floor ? recent.filter(r => r.low <= floor * 1.05).length : 0
       ranges.push({
         code: w.code, name: w.name,
         from: rows[0].date, to: last.date,
         close: r1(last.close),
         change_pct: prev?.close ? Math.round(((last.close - prev.close) / prev.close) * 10000) / 100 : null,
         low15y: r1(low), high15y: r1(high),
-        // 歴史的な下値からどれだけ上にいるか（0に近いほどサポート付近）
+        // 歴史的な下値からどれだけ上にいるか（参考。最終防衛ライン）
         from_low_pct: Math.round(((last.close - low) / low) * 1000) / 10,
         from_high_pct: Math.round(((last.close - high) / high) * 1000) / 10,
+        // 🔵 実際に効くレンジの上下（直近5年）と、下限からの距離・止まった回数
+        floor: floor ? r1(floor) : null,
+        ceil: ceil ? r1(ceil) : null,
+        from_floor_pct: floor ? Math.round(((last.close - floor) / floor) * 1000) / 10 : null,
+        floor_touches: touches,
         series: rows.map(r => ({ d: r.date, c: r1(r.close) })),
       })
       const x = ranges[ranges.length - 1]
-      console.log(`  [レンジ] ${w.code} ${w.name}: ${x.close}円 / 15年安値 ${x.low15y}（+${x.from_low_pct}%）`)
+      console.log(`  [レンジ] ${w.code} ${w.name}: ${x.close}円 / レンジ下限 ${x.floor}（+${x.from_floor_pct}%・5年で${x.floor_touches}回）/ 15年安値 ${x.low15y}`)
     } catch (e) {
       console.log(`  ⚠ [レンジ] ${w.code} ${w.name} は取れなかった（${e.message}）`)
     }

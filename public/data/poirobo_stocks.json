@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-16T07:08:51.720Z",
+  "updatedAt": "2026-08-16T07:34:42.314Z",
   "basis": "Yahoo Finance の日足。連動（β・相関）は日経225との直近60営業日の日次リターンで計算",
   "caveat": "🔴 観測用。ロボ口座の判断・売買対象には入っていない。",
   "index": {
@@ -23060,6 +23060,10 @@
       "high15y": 4330,
       "from_low_pct": 143.1,
       "from_high_pct": -41.4,
+      "floor": 1496,
+      "ceil": 2722,
+      "from_floor_pct": 69.5,
+      "floor_touches": 54,
       "series": [
         {
           "d": "2011-08-14",
@@ -26210,6 +26214,10 @@
       "high15y": 2492,
       "from_low_pct": 136.2,
       "from_high_pct": -81.4,
+      "floor": 413,
+      "ceil": 858,
+      "from_floor_pct": 12.1,
+      "floor_touches": 51,
       "series": [
         {
           "d": "2011-08-14",
@@ -29360,6 +29368,10 @@
       "high15y": 1843,
       "from_low_pct": 1417.2,
       "from_high_pct": -88.1,
+      "floor": 169,
+      "ceil": 500,
+      "from_floor_pct": 30.2,
+      "floor_touches": 50,
       "series": [
         {
           "d": "2011-08-14",

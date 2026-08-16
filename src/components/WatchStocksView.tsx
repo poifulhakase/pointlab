@@ -241,19 +241,21 @@ function RangeCard({ c, dark, isMobile, r }: { c: C; dark: boolean; isMobile: bo
   const area = `${line} L${W},${H} L0,${H} Z`
   const stroke = c.GREEN
   const id = `rng-${r.code}`
-  // 🔵 安値から30%以内なら「サポート圏」＝買いを検討する場所として強く出す
-  const nearLow = r.from_low_pct <= 30
-  // 🔵 15年高値から10%以内なら「天井圏」＝逆に近づいてほしくない場所
+  // 🔴 サポートは**15年安値ではなくレンジ下限**（直近5年で何度も止まっている帯）で見る。
+  //    何年も前に一度だけ付けた暴落安値は、実際のレンジ取引では機能しないため。
+  const floor = r.floor
+  const nearFloor = r.from_floor_pct != null && r.from_floor_pct <= 10
+  // 🔵 15年高値から10%以内なら「天井圏」
   const nearHigh = r.from_high_pct >= -10
 
   return (
-    <div className={nearLow ? 'mom-alive' : undefined} style={{
+    <div className={nearFloor ? 'mom-alive' : undefined} style={{
       // 🔴 サポート圏はカードごと浮かせる（2026-08-16 ユーザー指示）
-      border: nearLow ? `2px solid ${c.GREEN}` : `1px solid ${c.BORDER}`,
-      borderLeft: nearLow ? `6px solid ${c.GREEN}` : `1px solid ${c.BORDER}`,
+      border: nearFloor ? `2px solid ${c.GREEN}` : `1px solid ${c.BORDER}`,
+      borderLeft: nearFloor ? `6px solid ${c.GREEN}` : `1px solid ${c.BORDER}`,
       borderRadius: 14,
-      background: nearLow ? c.HDBG : c.TAREA,
-      opacity: nearLow ? 1 : 0.9,
+      background: nearFloor ? c.HDBG : c.TAREA,
+      opacity: nearFloor ? 1 : 0.9,
       padding: isMobile ? '18px 16px' : 18,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
@@ -264,7 +266,7 @@ function RangeCard({ c, dark, isMobile, r }: { c: C; dark: boolean; isMobile: bo
         <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 900, color: c.TXTCLR }}>
           {r.close?.toLocaleString()}
         </span>
-        {nearLow && (
+        {nearFloor && (
           <span className="mom-pulse" style={{
             padding: '4px 12px', borderRadius: 999, border: `1px solid ${c.GREEN}`,
             background: `${c.GREEN}2e`, fontSize: 11, fontWeight: 900, color: c.GREEN,
@@ -287,8 +289,16 @@ function RangeCard({ c, dark, isMobile, r }: { c: C; dark: boolean; isMobile: bo
               <stop offset="100%" stopColor={stroke} stopOpacity="0" />
             </linearGradient>
           </defs>
-          {/* 15年の安値＝歴史的サポート */}
-          <line x1="0" y1={y(lo)} x2={W} y2={y(lo)} stroke={c.GREEN} strokeWidth="1.4" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" />
+          {/* 🔵 レンジ下限の帯（±5%）＝何度も止まっている場所 */}
+          {floor != null && (
+            <rect x="0" y={y(floor * 1.05)} width={W} height={Math.max(2, y(floor * 0.95) - y(floor * 1.05))}
+              fill={c.GREEN} opacity={0.14} />
+          )}
+          {floor != null && (
+            <line x1="0" y1={y(floor)} x2={W} y2={y(floor)} stroke={c.GREEN} strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+          )}
+          {/* 15年の安値＝最終防衛ライン（参考） */}
+          <line x1="0" y1={y(lo)} x2={W} y2={y(lo)} stroke={c.DIM} strokeWidth="1" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" />
           <line x1="0" y1={y(hi)} x2={W} y2={y(hi)} stroke={c.DIM} strokeWidth="1" strokeDasharray="3 6" vectorEffect="non-scaling-stroke" />
           <path d={area} fill={`url(#${id}-fill)`} />
           <path d={line} fill="none" stroke={stroke} strokeWidth="1.6" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
@@ -297,12 +307,14 @@ function RangeCard({ c, dark, isMobile, r }: { c: C; dark: boolean; isMobile: bo
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: isMobile ? 12 : 10, marginTop: 14 }}>
-        <Cell c={c} label="15年安値" value={lo.toLocaleString()} />
-        <Cell c={c} label="安値から" value={`+${r.from_low_pct.toFixed(1)}%`} strong={nearLow} />
-        <Cell c={c} label="15年高値" value={hi.toLocaleString()} />
-        <Cell c={c} label="高値から" value={`${r.from_high_pct.toFixed(1)}%`} />
+        <Cell c={c} label="レンジ下限" value={floor != null ? floor.toLocaleString() : '—'} />
+        <Cell c={c} label="下限から" value={r.from_floor_pct != null ? `+${r.from_floor_pct.toFixed(1)}%` : '—'} strong={nearFloor} />
+        <Cell c={c} label="下限で止まった回数" value={`${r.floor_touches} 回`} />
+        <Cell c={c} label="15年高値から" value={`${r.from_high_pct.toFixed(1)}%`} />
       </div>
-      <div style={{ marginTop: 8, fontSize: 9.5, color: c.DIM }}>{r.from} 〜 {r.to}（週足）</div>
+      <div style={{ marginTop: 8, fontSize: 9.5, color: c.DIM }}>
+        {r.from} 〜 {r.to}（週足）／ 15年安値 {lo.toLocaleString()}・高値 {hi.toLocaleString()}
+      </div>
     </div>
   )
 }

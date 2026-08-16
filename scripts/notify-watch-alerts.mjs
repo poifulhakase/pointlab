@@ -8,7 +8,7 @@
 //
 // 見ているのは2つ。
 //   ① 200日線付近（±5%以内）… 購入時に考えることの2つ目
-//   ② サポート圏（15年安値から+30%以内）… レンジ銘柄の買い検討ライン
+//   ② サポート圏（レンジ下限から+10%以内）… レンジ銘柄の買い検討ライン
 //
 // 使い方:
 //   node scripts/notify-watch-alerts.mjs          … 変化があれば送る
@@ -28,8 +28,8 @@ const DRY = process.argv.includes('--dry')
 
 /** 200日線付近とみなす幅（%）。🔴 先に決めた値。当たるように後から動かさない */
 const NEAR_MA200 = 5
-/** レンジ銘柄のサポート圏（15年安値から何%以内か） */
-const NEAR_LOW = 30
+/** レンジ銘柄のサポート圏（レンジ下限から何%以内か）。🔴 15年安値ではなく実測の下限で見る */
+const NEAR_FLOOR = 10
 
 const readJson = (p) => (fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null)
 
@@ -51,14 +51,14 @@ function currentFlags(data) {
     }
   }
 
-  // レンジ銘柄＝15年安値からの距離
+  // レンジ銘柄＝レンジ下限（直近5年で何度も止まっている帯）からの距離
   for (const r of data.ranges ?? []) {
-    if (r.from_low_pct == null) continue
-    if (r.from_low_pct <= NEAR_LOW) {
-      on[`low15:${r.code}`] = {
+    if (r.from_floor_pct == null) continue
+    if (r.from_floor_pct <= NEAR_FLOOR) {
+      on[`floor:${r.code}`] = {
         name: `${r.code} ${r.name}`,
         kind: 'サポート圏',
-        note: `15年安値 ${r.low15y} から +${r.from_low_pct}%（株価 ${r.close}）`,
+        note: `レンジ下限 ${r.floor} から +${r.from_floor_pct}%（5年で${r.floor_touches}回止まった水準・株価 ${r.close}）`,
       }
     }
   }
