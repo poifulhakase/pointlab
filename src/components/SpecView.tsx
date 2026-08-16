@@ -864,7 +864,9 @@ const SPEC_SECTIONS = [
         type: 'list' as const,
         heading: '依存パッケージの脆弱性（★2026-08-16 時点 0件）',
         items: [
-          'npm audit（--omit=dev）で 13件 → 0件。firebase-admin 13.10.0 → 14.2.0',
+          'npm audit（--omit=dev＝本番に配られるもの）で 13件 → 0件。開発用（devDependencies）には13件残るが利用者には配られない（vite / jsdom の undici / @vercel/node の path-to-regexp / pdfjs-dist / sharp / adm-zip。消すには開発ツールのメジャー更新が必要）',
+          '🔴🔴 firebase-admin は 13 系のままにする（14 に上げて本番を落とした・★2026-08-16）: v14 は ESM の既定エクスポートが変わっており、api/*.js の書き方（import admin from \'firebase-admin\'）では admin.apps / admin.credential / admin.firestore / admin.auth がすべて undefined になる。予約作成・キャンセル・JaaSトークン・通知の全APIが 503 になった。上げるなら firebase-admin/app などの名前付きインポートへ書き換えるのが先。脆弱性は uuid の overrides だけで 0件になるため、上げる理由は現状ない',
+          'create-booking の 503 は「credentials not set」「credentials invalid」の2種類に分かれる（★2026-08-16）。invalid が出たら環境変数ではなくコード側を疑う',
           'uuid: firebase-admin の依存（gaxios / teeny-request）が古い uuid を掴んでおり moderate 6件の原因だった。package.json の overrides で 11 系に固定して解消',
           '🔴 xlsx: npm レジストリ版（0.18.5）は更新が止まっており Prototype Pollution / ReDoS が未修正。作者の公式配布（https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz）が修正版なので package.json から直接指している。取得元が npm ではないため、CI の npm ci が落ちたらまずここを疑う。利用箇所は scripts/fetch-jpx.mjs などサーバー側のみでブラウザには入らない',
           'ソースマップは本番に配信されない（.map は index.html にフォールバック）。Firebase の web apiKey はクライアントに露出する前提の値で、防御は firestore.rules 側',

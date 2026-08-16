@@ -125,8 +125,17 @@
 
 ## 🟢 現在の状態
 
-**ブランチ**: `main`。**第47 まで push 済み＝本番反映済み**（2026-08-16 / `3ac7a86`）。
+**ブランチ**: `main`。**第47 まで push 済み＝本番反映＋実挙動まで確認済み**（2026-08-16 / `940e0af` 以降）。
 未コミットなし・origin と一致。
+
+🔴 **本番の健康チェック（コピペ用）**。push のあと必ずこれで確かめる。
+```
+curl -s https://api.github.com/repos/poifulhakase/pointlab/commits/main/status   # state が success か
+curl -s -X POST https://pointlab.vercel.app/api/create-booking -H "Origin: https://pointlab.vercel.app" \
+  -H "Content-Type: application/json" -d "{}"                                    # → Missing fields（503 なら壊れている）
+curl -s -X POST https://pointlab.vercel.app/api/send-booking-email -H "Origin: https://pointlab.vercel.app" \
+  -H "Content-Type: application/json" -d "{\"type\":\"request\",\"booking\":{\"id\":\"x\"}}"   # → Unauthorized
+```
 
 ### 2026-08-16(47): アプリの点検 → 見つかった穴をふさぐ（通知APIの認証・脆弱性0件）
 
@@ -159,14 +168,27 @@ idToken 検証＋レート制限があり、**通知の2本だけが取り残さ
   拾わないと文面から消えてしまうため（送れるのは管理者だけなので安全）。
 - フロント（`bookingApi.ts`）は `sendBookingEmail` / `sendBookingPush` が **idToken を付けて送る**ように変更。
 
-#### 依存の脆弱性 13件 → **0件**
+#### 依存の脆弱性（本番）13件 → **0件**
 
 | | 前 | 後 |
 |---|---|---|
-| firebase-admin | 13.10.0 | **14.2.0** |
 | uuid（gaxios / teeny-request 経由） | 古いまま moderate 6件 | `overrides` で **11 系に固定** |
 | xlsx | 0.18.5（npm版・修正なし・high） | **作者の公式配布 CDN 0.20.3**（修正版） |
+| firebase-admin | 13.10.0 | **13.10.0 のまま**（下の 🔴 参照） |
 
+🔵 開発用（devDependencies）には 13件残っている（vite / jsdom の undici / @vercel/node の
+path-to-regexp / pdfjs-dist / sharp / adm-zip など）。**利用者に配られるものではない**うえ、
+消すには開発ツールのメジャー更新が要るので今回は見送り。`npm audit --omit=dev` が本番の数字。
+
+- 🔴🔴 **firebase-admin は 14 系に上げてはいけない**（今回いちど上げて**本番を落とした**）。
+  v14 は ESM の既定エクスポートが変わっており、`import admin from 'firebase-admin'` だと
+  **`admin.apps` / `admin.credential` / `admin.firestore` / `admin.auth` がすべて undefined**。
+  `api/*.js` は全部この書き方なので、**予約作成・キャンセル・JaaSトークン・通知の全APIが 503** になった。
+  上げるなら先に `firebase-admin/app` などの**名前付きインポートに書き換える**こと。
+  🔵 脆弱性は uuid の `overrides` だけで 0件になるので、**14 に上げる理由は今のところ無い**。
+- 🔵 このとき **503 の切り分けができず時間を使った**ので、`create-booking` の 503 を
+  「credentials not set」「credentials invalid」の2種類に分けてある（内部の詳細は返さない）。
+  本番で **invalid が出たら鍵ではなくコード側を疑う**（今回がまさにそれ）。
 - 🔴 **xlsx は npm レジストリ版が放置**されている（Prototype Pollution / ReDoS が未修正のまま）。
   作者は自分のCDNでしか新版を配っていないので、`package.json` が
   `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` を直接指している。
@@ -174,7 +196,13 @@ idToken 検証＋レート制限があり、**通知の2本だけが取り残さ
   使っているのは `scripts/fetch-jpx.mjs` など**サーバー側だけ**（ブラウザには入らない）。
 - 🔵 `overrides` と xlsx の理由は `package.json` の `//overrides` / `//xlsx` に書いてある。
 
-#### 🔴 この作業で本番デプロイを2回落とした（教訓）
+#### 🔴 この作業で本番を落とした（教訓・2件）
+
+**② firebase-admin 14 でAPIが全滅**（上の 🔴🔴）。
+🔵 **push しただけで「反映された」と思ってはいけない**。今回は本番のAPIを実際に叩いて
+（未認証で 401 が返るか、予約APIが 400 を返すか）**動いていることまで確認**してから完了とした。
+
+**① package.json のコメント位置**
 
 `package.json` の **`dependencies` の中にコメント行（`"//xlsx": "…"`）を書いた**ため、
 npm がこれを `//xlsx` というパッケージ名として読み、`EINVALIDPACKAGENAME` で
