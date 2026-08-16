@@ -875,7 +875,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {/* コミュニティ限定ビュー（カレンダー/ブンセキ/ロボ口座）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
-      {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'daytrade' || cal.view === 'swing' || (cal.view === 'sector' && isMobile)) && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
+      {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'daytrade' || cal.view === 'swing' || cal.view === 'sector') && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isNeonBar ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isNeonBar ? undefined : 'glass'}>
@@ -921,9 +921,10 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               </>
             )}
             {/* Believe＝ 主力 / その他（2026-08-16 追加・別ページを1本のタブでつなぐ） */}
-            {(cal.view === 'momentum' || cal.view === 'watch') && (
+            {(cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'sector') && (
               <>
-                {([['momentum', '主力'], ['watch', 'その他']] as const).map(([view, label]) => (
+                {/* 🔵 サイクル＝セクターローテーション（2026-08-16 にここへ入れた） */}
+                {([['momentum', '主力'], ['watch', 'その他'], ['sector', 'サイクル']] as const).map(([view, label]) => (
                   <button
                     key={view}
                     style={{
@@ -975,6 +976,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             {/* 周期＝セクター / 個別（🔴 スマホだけ。PC は3列とも見えている・2026-08-11 追加） */}
             {cal.view === 'sector' && isMobile && (
               <>
+                <span style={styles.floatDivider} />
                 {SECTOR_TABS.map((tab) => (
                   <button
                     key={tab}
