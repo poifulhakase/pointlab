@@ -45,7 +45,8 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
     return () => { alive = false }
   }, [])
 
-  const pad = isMobile ? 14 : 28
+  // 🔵 余白は広めに（2026-08-16 ユーザー指示・特にスマホ）
+  const pad = isMobile ? 20 : 28
 
   return (
     <div style={{
@@ -91,18 +92,18 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
 
           {/* 🔴 2列（PC）。銘柄が増えたので縦一列だと遠い（2026-08-16 ユーザー指示） */}
           <div style={{
-            maxWidth: 1180, margin: '0 auto', padding: `${isMobile ? 16 : 22}px ${pad}px`,
-            display: 'grid', gap: isMobile ? 14 : 18,
+            maxWidth: 1180, margin: '0 auto', padding: `${isMobile ? 34 : 30}px ${pad}px`,
+            display: 'grid', gap: isMobile ? 26 : 22,
             gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
           }}>
-            {data.stocks.map(s => (
-              <StockCard key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} />
+            {data.stocks.map((s, i) => (
+              <StockCard key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} order={i} />
             ))}
           </div>
 
           <div style={{
             maxWidth: 1180, margin: '0 auto',
-            padding: `0 ${pad}px ${isMobile ? 120 : 56}px`,
+            padding: `${isMobile ? 14 : 10}px ${pad}px ${isMobile ? 140 : 70}px`,
             fontSize: isMobile ? 10 : 10.5, color: c.DIM, lineHeight: 1.9,
           }}>
             {/* 🔴 免責は残す（個別銘柄を扱うページなので・投資助言を行わない方針） */}
@@ -120,19 +121,34 @@ function Intro({ c, isMobile }: { c: C; isMobile: boolean }) {
   const [ref, seen] = useInView<HTMLDivElement>(0.2)
   return (
     <div ref={ref} style={{
-      maxWidth: 1180, margin: '0 auto', padding: isMobile ? '26px 14px 4px' : '46px 28px 6px',
+      position: 'relative', overflow: 'hidden',
+      maxWidth: 1180, margin: '0 auto',
+      padding: isMobile ? '56px 20px 20px' : '76px 28px 16px',
     }}>
-      <div style={{ fontSize: 10, letterSpacing: '0.3em', color: c.DIM, marginBottom: 10 }}>BELIEVE IN THE FUTURE</div>
-      <h1 className={seen ? 'mom-stamp' : undefined} style={{
-        opacity: seen ? undefined : 0,
-        margin: 0, fontSize: isMobile ? 23 : 38, fontWeight: 900, lineHeight: 1.28,
-        color: c.GREEN, textShadow: `0 0 40px ${c.GREEN}44`,
-      }}>
-        フィジカルAIが、<br />第4次産業革命を起こす。
-      </h1>
-      <p style={{ margin: '14px 0 0', fontSize: isMobile ? 11.5 : 13, color: c.DESC, lineHeight: 1.9 }}>
-        選ぶ基準はひとつ。<b style={{ color: c.GREEN }}>独占があるか</b>。
-      </p>
+      {/* 巨大な透かし（スマホでも効くように大きく） */}
+      <div aria-hidden className={seen ? 'mom-ghost' : undefined} style={{
+        position: 'absolute', right: isMobile ? -24 : 0, top: isMobile ? 30 : 40,
+        fontSize: isMobile ? 130 : 210, fontWeight: 900, lineHeight: 0.8,
+        letterSpacing: '-0.06em', color: c.GREEN, opacity: 0,
+        pointerEvents: 'none', userSelect: 'none',
+      }}>4.0</div>
+
+      <div style={{ position: 'relative' }}>
+        <div style={{ fontSize: isMobile ? 9.5 : 10, letterSpacing: '0.34em', color: c.DIM, marginBottom: isMobile ? 18 : 16 }}>
+          BELIEVE IN THE FUTURE
+        </div>
+        <h1 className={seen ? 'mom-stamp' : undefined} style={{
+          opacity: seen ? undefined : 0,
+          margin: 0, fontSize: isMobile ? 30 : 44, fontWeight: 900, lineHeight: 1.34,
+          letterSpacing: '-0.01em',
+          color: c.GREEN, textShadow: `0 0 46px ${c.GREEN}55`,
+        }}>
+          フィジカルAIが、<br />第4次産業革命を<br />起こす。
+        </h1>
+        <p style={{ margin: isMobile ? '26px 0 0' : '22px 0 0', fontSize: isMobile ? 13 : 13.5, color: c.DESC, lineHeight: 2.1 }}>
+          選ぶ基準はひとつ。<b style={{ color: c.GREEN }}>独占があるか</b>。
+        </p>
+      </div>
     </div>
   )
 }
@@ -152,20 +168,20 @@ function LayerGap({ c, dark, isMobile, layers }: {
   const dim = dark ? 'rgba(255,255,255,0.34)' : 'rgba(3,105,161,0.32)'
 
   return (
-    <div ref={ref} style={{ maxWidth: 1180, margin: '0 auto', padding: isMobile ? '10px 14px 0' : '18px 28px 0' }}>
+    <div ref={ref} style={{ maxWidth: 1180, margin: '0 auto', padding: isMobile ? '22px 20px 0' : '26px 28px 0' }}>
       <div style={{
-        border: `1px solid ${c.BORDER}`, borderRadius: 14, background: c.TAREA,
-        padding: isMobile ? 16 : 22,
-        display: 'flex', gap: isMobile ? 12 : 26, alignItems: 'center',
+        border: `1px solid ${c.BORDER}`, borderRadius: 18, background: c.TAREA,
+        padding: isMobile ? '28px 20px' : 26,
+        display: 'flex', gap: isMobile ? 22 : 30, alignItems: 'center',
         flexDirection: isMobile ? 'column' : 'row',
       }}>
-        <RobotFigure c={c} dark={dark} layers={layers} seen={seen} size={isMobile ? 130 : 200} />
+        <RobotFigure c={c} dark={dark} layers={layers} seen={seen} size={isMobile ? 168 : 210} />
 
         <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
           <div style={{ fontSize: 9.5, letterSpacing: '0.22em', color: c.DIM, marginBottom: 12 }}>
             AIの4層と、付いた値段（12ヶ月）
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 13 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 15 }}>
             {layers.map((l, i) => {
               const v = l.ret12m ?? 0
               const ours = !!l.ours
@@ -194,7 +210,7 @@ function LayerGap({ c, dark, isMobile, layers }: {
               )
             })}
           </div>
-          <div style={{ marginTop: 14, fontSize: isMobile ? 12 : 14, fontWeight: 800, color: c.TXTCLR }}>
+          <div style={{ marginTop: isMobile ? 22 : 18, fontSize: isMobile ? 13.5 : 14.5, fontWeight: 800, color: c.TXTCLR, lineHeight: 1.8 }}>
             AIは来ている。<span style={{ color: c.GREEN }}>ロボットだけが、まだ来ていない。</span>
           </div>
         </div>
@@ -252,8 +268,8 @@ function RobotFigure({ c, dark, layers, seen, size }: {
 }
 
 /** 1銘柄ぶんのカード（2列に並ぶ） */
-function StockCard({ c, dark, isMobile, s }: {
-  c: C; dark: boolean; isMobile: boolean; s: PoiroboStock
+function StockCard({ c, dark, isMobile, s, order = 0 }: {
+  c: C; dark: boolean; isMobile: boolean; s: PoiroboStock; order?: number
 }) {
   const [ref, seen] = useInView<HTMLDivElement>(0.1)
   const [open, setOpen] = useState(false)
@@ -263,13 +279,13 @@ function StockCard({ c, dark, isMobile, s }: {
 
   return (
     <div ref={ref} className={seen ? 'mom-rise' : undefined} style={{
-      opacity: seen ? undefined : 0,
+      opacity: seen ? undefined : 0, animationDelay: `${(order % 2) * 90}ms`,
       position: 'relative', overflow: 'hidden',
-      border: `1px solid ${c.BORDER}`, borderRadius: 14, background: c.TAREA,
-      padding: isMobile ? 14 : 18,
+      border: `1px solid ${c.BORDER}`, borderRadius: 18, background: c.TAREA,
+      padding: isMobile ? '24px 20px' : 22,
     }}>
       <div aria-hidden style={{
-        position: 'absolute', right: -6, top: -8, fontSize: isMobile ? 38 : 54, fontWeight: 900,
+        position: 'absolute', right: -8, top: -12, fontSize: isMobile ? 54 : 62, fontWeight: 900,
         letterSpacing: '-0.05em', color: c.GREEN, opacity: 0.07, pointerEvents: 'none', userSelect: 'none',
       }}>{s.kana}</div>
 
@@ -279,22 +295,22 @@ function StockCard({ c, dark, isMobile, s }: {
             padding: '2px 8px', borderRadius: 999, border: `1px solid ${c.BORDBR}`,
             fontSize: 10, color: c.GREEN, letterSpacing: '0.08em',
           }}>{s.code}</span>
-          <span style={{ fontSize: isMobile ? 15 : 18, fontWeight: 900 }}>{s.name}</span>
+          <span style={{ fontSize: isMobile ? 18 : 19, fontWeight: 900 }}>{s.name}</span>
           {th && <span style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.06em' }}>{th.laneLabel}</span>}
         </div>
 
         {th && (
-          <div style={{ marginTop: 8, fontSize: isMobile ? 12 : 13.5, fontWeight: 800, color: c.GREEN, lineHeight: 1.6 }}>
+          <div style={{ marginTop: 12, fontSize: isMobile ? 13.5 : 13.5, fontWeight: 800, color: c.GREEN, lineHeight: 1.75 }}>
             {th.headline}
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginTop: 20, flexWrap: 'wrap' }}>
           <span style={{
-            fontSize: isMobile ? 26 : 32, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em', color: accent,
+            fontSize: isMobile ? 38 : 34, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em', color: accent,
             textShadow: dark ? `0 0 24px ${accent}44` : 'none',
           }}>{Math.round(price).toLocaleString()}</span>
-          <span style={{ fontSize: isMobile ? 12 : 14, fontWeight: 800, color: accent, paddingBottom: 2 }}>
+          <span style={{ fontSize: isMobile ? 15 : 14, fontWeight: 800, color: accent, paddingBottom: 3 }}>
             {pct(s.change_pct, 2)}
           </span>
           <span style={{ fontSize: 9.5, color: c.DIM, paddingBottom: 4 }}>{s.stance?.label ?? ''}</span>
@@ -302,7 +318,7 @@ function StockCard({ c, dark, isMobile, s }: {
 
         <PriceChart c={c} dark={dark} isMobile={isMobile} s={s} seen={seen} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? 16 : 12, marginTop: 18 }}>
           <MiniStat c={c} label="12ヶ月" value={pct(s.momentum?.ret?.m12)} strong />
           <MiniStat c={c} label="3ヶ月" value={pct(s.momentum?.ret?.m3)} />
           <MiniStat c={c} label="52週高値から" value={pct(s.momentum?.from_52w_high_pct)} />
@@ -311,7 +327,7 @@ function StockCard({ c, dark, isMobile, s }: {
 
         {th && (
           <div style={{
-            marginTop: 12, padding: isMobile ? '10px 12px' : '12px 14px',
+            marginTop: 18, padding: isMobile ? '16px 16px' : '14px 16px',
             border: `1px solid ${c.BORDBR}`, borderLeft: `3px solid ${c.GREEN}`,
             borderRadius: 10, background: c.HDBG,
           }}>
@@ -326,9 +342,9 @@ function StockCard({ c, dark, isMobile, s }: {
           <>
             <button type="button" onClick={() => setOpen(v => !v)}
               style={{
-                marginTop: 10, cursor: 'pointer', background: 'none', border: `1px solid ${c.BORDER}`,
-                borderRadius: 999, padding: '4px 12px', fontFamily: c.FONT,
-                fontSize: 10, color: c.DIM, letterSpacing: '0.08em',
+                marginTop: 16, cursor: 'pointer', background: 'none', border: `1px solid ${c.BORDER}`,
+                borderRadius: 999, padding: isMobile ? '7px 16px' : '5px 14px', fontFamily: c.FONT,
+                fontSize: isMobile ? 11 : 10, color: c.DIM, letterSpacing: '0.08em',
               }}>{open ? '閉じる' : '詳しく'}</button>
 
             {open && (
@@ -362,9 +378,9 @@ function Block({ c, title, items }: { c: C; title: string; items: string[] }) {
 
 function MiniStat({ c, label, value, strong }: { c: C; label: string; value: string; strong?: boolean }) {
   return (
-    <div style={{ borderTop: `1px solid ${c.BORDER}`, paddingTop: 7 }}>
-      <div style={{ fontSize: 9, color: c.DIM, letterSpacing: '0.08em' }}>{label}</div>
-      <div style={{ marginTop: 2, fontSize: strong ? 16 : 14, fontWeight: 800, color: strong ? c.GREEN : c.TXTCLR }}>
+    <div style={{ borderTop: `1px solid ${c.BORDER}`, paddingTop: 10 }}>
+      <div style={{ fontSize: 9.5, color: c.DIM, letterSpacing: '0.1em' }}>{label}</div>
+      <div style={{ marginTop: 5, fontSize: strong ? 19 : 16, fontWeight: 800, color: strong ? c.GREEN : c.TXTCLR }}>
         {value}
       </div>
     </div>
@@ -380,7 +396,7 @@ function PriceChart({ c, dark, isMobile, s, seen }: {
   if (!rows.length) return null
 
   const W = 1000
-  const H = isMobile ? 130 : 150
+  const H = isMobile ? 180 : 160
   const PADY = 10
   const closes = rows.map(p => p.c as number)
   const mas = rows.filter(p => p.m200 != null).map(p => p.m200 as number)
@@ -408,8 +424,8 @@ function PriceChart({ c, dark, isMobile, s, seen }: {
   const id = `mom-${s.code}-${range}`
 
   return (
-    <div style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', gap: 5, justifyContent: 'flex-end', marginBottom: 5 }}>
+    <div style={{ marginTop: 18 }}>
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginBottom: 8 }}>
         {RANGES.map(r => {
           const on = r.key === range
           return (
@@ -417,7 +433,7 @@ function PriceChart({ c, dark, isMobile, s, seen }: {
               style={{
                 cursor: on ? 'default' : 'pointer', border: `1px solid ${on ? c.BORDBR : c.BORDER}`,
                 background: on ? c.HDBG : 'transparent', color: on ? c.GREEN : c.DIM,
-                borderRadius: 999, padding: '2px 9px', fontFamily: c.FONT, fontSize: 9,
+                borderRadius: 999, padding: isMobile ? '4px 12px' : '3px 10px', fontFamily: c.FONT, fontSize: isMobile ? 10 : 9,
               }}>{r.label}</button>
           )
         })}
