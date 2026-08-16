@@ -146,7 +146,8 @@ function Intro({ c, isMobile }: { c: C; isMobile: boolean }) {
           ロボットが、<br />第4次産業革命を起こす。
         </h1>
         <p style={{ margin: isMobile ? '26px 0 0' : '22px 0 0', fontSize: isMobile ? 13 : 13.5, color: c.DESC, lineHeight: 2.1 }}>
-          選ぶ基準はひとつ。<b style={{ color: c.GREEN }}>世界で独占があるか</b>。
+          購入時に考えることはふたつ。<br />
+          <b style={{ color: c.GREEN }}>世界で独占があるか。200日線付近か。</b>
         </p>
       </div>
     </div>
