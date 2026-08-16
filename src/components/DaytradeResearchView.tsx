@@ -9,7 +9,7 @@
 
 import { BASEMENT_MONO, type basementColors, type BasementRoomKey } from './basementTheme'
 import {
-  BasementHead, VerdictHero, BigStat, StatGrid, JudgeList, BasementNextRoom,
+  BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
   type JudgeRow,
 } from './basementKit'
 
@@ -18,7 +18,7 @@ import {
 type Props = {
   c: ReturnType<typeof basementColors>
   isMobile: boolean
-  /** 地下室の別の部屋へ移る */
+  /** 🔵 部屋の切り替えは右下のサブメニューだけ（2026-08-16）。受け取りは残すが中身では使わない */
   onSwitchRoom?: (key: BasementRoomKey) => void
 }
 
@@ -48,7 +48,7 @@ const NUMBERS = [
   { name: '5分足の保存（60日しか遡れないため）', value: '2026-08-13 から毎日・平日16:30' },
 ]
 
-export function DaytradeRoom({ c, isMobile, onSwitchRoom }: Props) {
+export function DaytradeRoom({ c, isMobile }: Props) {
   const pad = isMobile ? 14 : 24
   const mono = BASEMENT_MONO
 
@@ -116,7 +116,6 @@ export function DaytradeRoom({ c, isMobile, onSwitchRoom }: Props) {
           ))}
         </div>
 
-        {onSwitchRoom && <BasementNextRoom c={c} isMobile={isMobile} current="daytrade" onSwitch={onSwitchRoom} />}
 
         <div style={{ marginTop: 24, padding: pad, border: `1px dashed ${c.border}`, borderRadius: 10, fontSize: isMobile ? 11 : 12, lineHeight: 1.9, color: c.sub }}>
           🔴 このページは研究の記録であり、売買の推奨ではありません。数値は特定期間の過去データにもとづくもので、将来の成果を示すものではありません。

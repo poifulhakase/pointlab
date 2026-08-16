@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ClockWidget } from './ClockWidget'
-import { SectorBanner } from './SectorBanner'
 import { StickyNoteModal } from './StickyNoteModal'
 import { newStickyNote, type StickyNote } from '../utils/stickyNotes'
 import { type MacroFilter } from '../utils/macroCalendar'
-import { blockedInPreview, isPreviewMode } from '../utils/previewMode'
+import { blockedInPreview } from '../utils/previewMode'
 
 const POIROBO_ALERT_COLOR = '#f87171'
 
@@ -32,9 +31,9 @@ type Props = {
   onPoiroboAlertOpen: () => void
   onGoToday?: () => void
   /** 画面の配色（バナーが局面の色を敷くのに使う） */
+  /** 🔵 セクターの入口を外したので今は使っていない（受け取りは残す＝呼び出し側を触らない） */
   theme?: 'dark' | 'light'
   /** セクターローテーションのページを開く（2026-08-11 追加） */
-  onOpenSector?: () => void
 }
 
 const FILTER_ITEMS: { key: keyof MacroFilter; label: string }[] = [
@@ -99,7 +98,7 @@ function FilterCheck({ checked, onToggle, label, color = 'rgba(96,165,250,0.85)'
   )
 }
 
-export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, showRoboJobs, onShowRoboJobsChange, canSeeSystem, onGoToday, theme = 'dark', onOpenSector }: Props) {
+export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilterChange, stickyNotes: notes, onStickyNotesSaved, showPrivate, onShowPrivateChange, showAnomaly, onShowAnomalyChange, showPoiroboAlert, onShowPoiroboAlertChange, onPoiroboAlertOpen, showRoboJobs, onShowRoboJobsChange, canSeeSystem, onGoToday }: Props) {
   const isFixed = isMobile
 
   // ── スティッキーメモ ──────────────────────────────
@@ -191,15 +190,8 @@ export function Sidebar({ isOpen, isMobile, isTablet, macroFilter, onMacroFilter
         {/* マーケットイベント・スティッキーメモ（下部固定） */}
         <div style={{ marginTop: 'auto' }}>
 
-        {/* ──── セクターローテーションの入口（2026-08-11 追加）────
-             🔵 メモの上に置く＝毎日通る場所なので、開かなくても現在地が目に入る。 */}
-        {/* 🔴 プレビューでは出さない（2026-08-12 ユーザー指示）。
-            セクターローテーションは実データそのもので、ダミーに置き換えられないため。 */}
-        {onOpenSector && !isPreviewMode() && (
-          <div style={{ padding: '12px 12px 0' }}>
-            <SectorBanner theme={theme} onOpen={onOpenSector} />
-          </div>
-        )}
+        {/* 🔴 セクターローテーションの入口（円形バナー）は 2026-08-16 に削除。
+             入口は Believe の右下タブ「サイクル」に一本化した（ユーザー指示）。 */}
 
         {/* ──── スティッキーメモ ──── */}
         <div style={styles.memoWrap}>

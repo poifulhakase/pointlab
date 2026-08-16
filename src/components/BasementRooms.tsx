@@ -3,8 +3,9 @@
 // 🔴 **地下室はひとつの場所**（2026-08-16 ユーザー指示）。デイ／スイングは
 //    別ページではなく**同じ部屋の並び**として、左右のスライドで行き来する。
 //    右上の切替ボタンは廃止＝画面の中で動かす。
-// 🔵 操作は4通り＝①スワイプ／ドラッグ（指でもマウスでも）②画面端の矢印
-//    ③キーボード ← →  ④ページ末尾の「隣の部屋」カード。
+// 🔵 **画面の中に切り替えは置かない**（2026-08-16 ユーザー指示＝切替口が多すぎた）。
+//    見える操作は**右下のサブメニューだけ**。ここが持つのは
+//    スワイプ／ドラッグとキーボード ← → の2つ（どちらも見た目を占領しない）。
 // 🔴 壁・電球・ヘッダーは**ここが持つ**。部屋ごとに持つと、移動のたびに壁まで描き直されて
 //    「同じ部屋の中を歩いている」感じが消える。
 // 🔴 動きは派手にするが `prefers-reduced-motion` では全部止める。
@@ -182,62 +183,6 @@ export default function BasementRooms({ theme, isMobile, room: roomKey, onRoomCh
             )
           })}
         </div>
-      </div>
-
-      {/* 端の矢印（PC）。🔵 行き先の部屋名を添える */}
-      {!isMobile && BASEMENT_ROOMS.map((r, i) => {
-        if (i === idx) return null
-        const left = i < idx
-        return (
-          <button
-            key={r.key}
-            type="button"
-            onClick={() => go(i)}
-            aria-label={`${r.label}へ`}
-            style={{
-              position: 'absolute', top: '50%', [left ? 'left' : 'right']: 14,
-              transform: 'translateY(-50%)', zIndex: 4,
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '12px 14px', borderRadius: 999,
-              border: `1px solid ${c.border}`, background: c.card, backdropFilter: 'blur(8px)',
-              color: c.accent, cursor: 'pointer', fontFamily: mono, fontSize: 11, letterSpacing: '0.08em',
-              boxShadow: c.dark ? '0 10px 26px rgba(0,0,0,0.45)' : '0 8px 20px rgba(90,78,58,0.10)',
-            }}
-          >
-            {left && <span aria-hidden style={{ fontSize: 15 }}>←</span>}
-            {r.short}
-            {!left && <span aria-hidden style={{ fontSize: 15 }}>→</span>}
-          </button>
-        )
-      })}
-
-      {/* 現在地（下・中央）。押しても移れる */}
-      <div style={{
-        position: 'absolute', left: '50%', bottom: isMobile ? 62 : 18, transform: 'translateX(-50%)',
-        zIndex: 4, display: 'flex', alignItems: 'center', gap: 10,
-        padding: '7px 12px', borderRadius: 999,
-        border: `1px solid ${c.border}`, ...basementVeil(c.dark),
-      }}>
-        {BASEMENT_ROOMS.map((r, i) => {
-          const on = i === idx
-          return (
-            <button key={r.key} type="button" onClick={() => go(i)} aria-current={on ? 'page' : undefined}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                border: 'none', background: 'transparent', cursor: on ? 'default' : 'pointer',
-                fontFamily: mono, fontSize: isMobile ? 9.5 : 10.5, letterSpacing: '0.08em',
-                color: on ? c.accent : c.sub, padding: 0,
-              }}>
-              <span aria-hidden style={{
-                width: on ? 18 : 6, height: 6, borderRadius: 999,
-                background: on ? c.accent : c.border,
-                boxShadow: on && c.dark ? `0 0 10px ${c.accent}88` : 'none',
-                transition: 'width 320ms ease, background 320ms ease',
-              }} />
-              {isMobile ? r.short : r.label}
-            </button>
-          )
-        })}
       </div>
 
       {/* 移動の演出＝光が横に走る（部屋を移るときだけ） */}

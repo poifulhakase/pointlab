@@ -420,12 +420,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   //    ここを無条件に閉じると、周期から戻ったときに PC でもサイドバーが消えたままになる
   //    （`sidebarOpen` を戻す唯一の経路が isDesktop の変化なので、画面幅を変えるまで直らない）。
   //    2026-08-11 に実際に踏んだ。
-  const handleOpenSector = useCallback(() => {
-    // 🔴 プレビューでは開かない（入口は隠してあるが、直接呼ばれても開かないようにする）
-    if (isPreviewMode()) return
-    if (!isDesktop) setSidebarOpen(false)
-    setViewWithTransition('sector')
-  }, [isDesktop, setViewWithTransition])
 
   // ── フローティングタブ: ページを離れるタイミングでリセット（戻った瞬間に正しい状態で表示）
   const prevViewRef2 = useRef(cal.view)
@@ -606,7 +600,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
             onPoiroboAlertOpen={handlePoiroboAlertOpen}
             onGoToday={() => cal.goToDate(cal.today)}
             theme={theme}
-            onOpenSector={handleOpenSector}
           />
         )}
 
