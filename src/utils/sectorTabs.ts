@@ -19,7 +19,9 @@ export const SECTOR_TABS = ['sector', 'stock'] as const
 
 export type SectorTabKey = typeof SECTOR_TABS[number]
 
+// 🔴 2026-08-16 改称（ユーザー指示）＝Believe のタブ（主力／その他）と横並びにするため、
+//    セクター→**サイクル**、個別→**探す** にした。識別子は据え置き。
 export const SECTOR_LABELS: Record<SectorTabKey, string> = {
-  sector: 'セクター',
-  stock:  '個別',
+  sector: 'サイクル',
+  stock:  '探す',
 }

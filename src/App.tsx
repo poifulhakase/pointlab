@@ -5,7 +5,7 @@ import { lazyWithReload as lazy } from './utils/lazyWithReload'
 // 🔴 シールド画面のタブの並び順は、ここ1か所だけで決める（QuantView のDOM順もこれに合わせる）
 import { QUANT_TABS, QUANT_LABELS, type QuantTabKey } from './utils/quantTabs'
 import { ENGINE_TABS, ENGINE_LABELS, type EngineTabKey } from './utils/engineTabs'
-import { SECTOR_TABS, SECTOR_LABELS, type SectorTabKey } from './utils/sectorTabs'
+import { SECTOR_LABELS, type SectorTabKey } from './utils/sectorTabs'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
@@ -914,23 +914,30 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               </>
             )}
             {/* Believe＝ 主力 / その他（2026-08-16 追加・別ページを1本のタブでつなぐ） */}
+            {/* Believe＝ 主力 / その他 / サイクル / 探す（2026-08-16）。
+                🔵 サイクルと探すは同じ画面（ViewMode 'sector'）の中のタブ。
+                🔴 「探す」はスマホだけ＝PCは3列とも見えているので出さない。 */}
             {(cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'sector') && (
               <>
-                {/* 🔵 サイクル＝セクターローテーション（2026-08-16 にここへ入れた） */}
-                {([['momentum', '主力'], ['watch', 'その他'], ['sector', 'サイクル']] as const).map(([view, label]) => (
+                {([
+                  { key: 'momentum', label: '主力', on: cal.view === 'momentum', go: () => setViewWithTransition('momentum') },
+                  { key: 'watch', label: 'その他', on: cal.view === 'watch', go: () => setViewWithTransition('watch') },
+                  { key: 'cycle', label: SECTOR_LABELS.sector, on: cal.view === 'sector' && (!isMobile || sectorTab === 'sector'), go: () => { setSectorTab('sector'); setViewWithTransition('sector') } },
+                  ...(isMobile ? [{ key: 'find', label: SECTOR_LABELS.stock, on: cal.view === 'sector' && sectorTab === 'stock', go: () => { setSectorTab('stock'); setViewWithTransition('sector') } }] : []),
+                ]).map(t => (
                   <button
-                    key={view}
+                    key={t.key}
                     style={{
                       ...styles.floatTab,
-                      color: theme === 'dark' ? (cal.view === view ? NEON_CLR : NEON_DIM) : undefined,
-                      ...(cal.view === view
+                      color: theme === 'dark' ? (t.on ? NEON_CLR : NEON_DIM) : undefined,
+                      ...(t.on
                         ? theme === 'dark'
                           ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
                           : styles.floatTabActive
                         : {}),
                     }}
-                    onClick={() => setViewWithTransition(view)}
-                  >{label}</button>
+                    onClick={t.go}
+                  >{t.label}</button>
                 ))}
               </>
             )}
@@ -967,26 +974,6 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               </>
             )}
             {/* 周期＝セクター / 個別（🔴 スマホだけ。PC は3列とも見えている・2026-08-11 追加） */}
-            {cal.view === 'sector' && isMobile && (
-              <>
-                <span style={styles.floatDivider} />
-                {SECTOR_TABS.map((tab) => (
-                  <button
-                    key={tab}
-                    style={{
-                      ...styles.floatTab,
-                      color: isSectorNeon ? (sectorTab === tab ? NEON_CLR : NEON_DIM) : undefined,
-                      ...(sectorTab === tab
-                        ? isSectorNeon
-                          ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
-                          : styles.floatTabActive
-                        : {}),
-                    }}
-                    onClick={() => setSectorTab(tab)}
-                  >{SECTOR_LABELS[tab]}</button>
-                ))}
-              </>
-            )}
             {cal.view === 'legal' && (
               <>
                 {LEGAL_TABS.map((tab, i) => (
