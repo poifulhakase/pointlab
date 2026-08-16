@@ -172,10 +172,6 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
               <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 22, fontWeight: 900, color: c.GREEN }}>
                 レンジ（歴史的サポート狙い）
               </h2>
-              <p style={{ margin: '12px 0 0', fontSize: isMobile ? 11.5 : 12.5, color: c.DESC, lineHeight: 2 }}>
-                🔴 会社の中身は見ていません。<b style={{ color: c.TXTCLR }}>値動きが規則的なレンジに見える</b>という理由だけで集めています。
-                15年の週足で、<b style={{ color: c.GREEN }}>歴史的な下値に近づいたら検討する</b>という使い方です。
-              </p>
               <div style={{ display: 'grid', gap: isMobile ? 18 : 16, marginTop: isMobile ? 22 : 20 }}>
                 {ranges.map(r => <RangeCard key={r.code} c={c} dark={dark} isMobile={isMobile} r={r} />)}
               </div>
