@@ -143,10 +143,10 @@ function Intro({ c, isMobile }: { c: C; isMobile: boolean }) {
           letterSpacing: '-0.01em',
           color: c.GREEN, textShadow: `0 0 46px ${c.GREEN}55`,
         }}>
-          フィジカルAIが、<br />第4次産業革命を<br />起こす。
+          ロボットが、<br />第4次産業革命を起こす。
         </h1>
         <p style={{ margin: isMobile ? '26px 0 0' : '22px 0 0', fontSize: isMobile ? 13 : 13.5, color: c.DESC, lineHeight: 2.1 }}>
-          選ぶ基準はひとつ。<b style={{ color: c.GREEN }}>独占があるか</b>。
+          選ぶ基準はひとつ。<b style={{ color: c.GREEN }}>世界で独占があるか</b>。
         </p>
       </div>
     </div>
@@ -178,9 +178,6 @@ function LayerGap({ c, dark, isMobile, layers }: {
         <RobotFigure c={c} dark={dark} layers={layers} seen={seen} size={isMobile ? 168 : 210} />
 
         <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
-          <div style={{ fontSize: 9.5, letterSpacing: '0.22em', color: c.DIM, marginBottom: 12 }}>
-            AIの4層と、付いた値段（12ヶ月）
-          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 15 }}>
             {layers.map((l, i) => {
               const v = l.ret12m ?? 0
@@ -234,14 +231,14 @@ function RobotFigure({ c, dark, layers, seen, size }: {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden
       style={{ flexShrink: 0, opacity: seen ? 1 : 0, transition: 'opacity 700ms ease' }}>
-      {/* つなぐ＝配線 */}
+      {/* つなぐ＝配線（信号が流れる） */}
       <g style={{ filter: glow('connect') }}>
-        <path d="M60 34 V44 M60 40 H40 M60 40 H80 M40 40 V52 M80 40 V52"
+        <path className="rb-wire" d="M60 34 V44 M60 40 H40 M60 40 H80 M40 40 V52 M80 40 V52"
           fill="none" stroke={lit('connect')} strokeWidth="1.6" strokeLinecap="round" strokeDasharray="3 3" />
       </g>
 
-      {/* 考える＝頭 */}
-      <g style={{ filter: glow('think') }}>
+      {/* 考える＝頭（ゆっくり上下に揺れる） */}
+      <g className="rb-head" style={{ filter: glow('think') }}>
         <rect x="44" y="10" width="32" height="24" rx="7" fill="none" stroke={lit('think')} strokeWidth="2.4" />
         <circle cx="53" cy="22" r="2.6" fill={lit('think')} />
         <circle cx="67" cy="22" r="2.6" fill={lit('think')} />
@@ -255,16 +252,36 @@ function RobotFigure({ c, dark, layers, seen, size }: {
         <path d="M52 52 H68 M52 58 H68 M52 64 H68" stroke={lit('memory')} strokeWidth="1.6" strokeLinecap="round" />
       </g>
 
-      {/* 動く＝手足と関節 */}
+      {/* 動く＝手足と関節。🔵 関節を軸に振る＝「動く側」がそのまま絵になる */}
       <g style={{ filter: glow('move') }}>
-        <path d="M46 50 H34 V72 M74 50 H86 V72" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M52 74 V96 M68 74 V96 M52 96 H44 M68 96 H76" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-        {[[34, 50], [86, 50], [34, 72], [86, 72], [52, 74], [68, 74], [52, 96], [68, 96]].map(([x, y]) => (
-          <circle key={`${x}-${y}`} cx={x} cy={y} r="3.4" fill={c.BG} stroke={lit('move')} strokeWidth="2" />
-        ))}
+        <g className="rb-armL" style={{ transformBox: 'view-box', transformOrigin: '46px 50px' }}>
+          <path d="M46 50 H34 V72" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <Joint c={c} color={lit('move')} x={34} y={50} />
+          <Joint c={c} color={lit('move')} x={34} y={72} />
+        </g>
+        <g className="rb-armR" style={{ transformBox: 'view-box', transformOrigin: '74px 50px' }}>
+          <path d="M74 50 H86 V72" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <Joint c={c} color={lit('move')} x={86} y={50} />
+          <Joint c={c} color={lit('move')} x={86} y={72} />
+        </g>
+        <g className="rb-legL" style={{ transformBox: 'view-box', transformOrigin: '52px 74px' }}>
+          <path d="M52 74 V96 H44" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <Joint c={c} color={lit('move')} x={52} y={74} />
+          <Joint c={c} color={lit('move')} x={52} y={96} />
+        </g>
+        <g className="rb-legR" style={{ transformBox: 'view-box', transformOrigin: '68px 74px' }}>
+          <path d="M68 74 V96 H76" fill="none" stroke={lit('move')} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <Joint c={c} color={lit('move')} x={68} y={74} />
+          <Joint c={c} color={lit('move')} x={68} y={96} />
+        </g>
       </g>
     </svg>
   )
+}
+
+/** 関節（丸）。手足のグループと一緒に動く */
+function Joint({ c, color, x, y }: { c: C; color: string; x: number; y: number }) {
+  return <circle cx={x} cy={y} r="3.4" fill={c.BG} stroke={color} strokeWidth="2" />
 }
 
 /** 1銘柄ぶんのカード（2列に並ぶ） */
@@ -476,8 +493,23 @@ function Keyframes() {
       @keyframes mom-pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.3); opacity:0.55; } }
       .mom-pulse { animation: mom-pulse 2.4s ease-in-out infinite; transform-origin: center; }
 
+      /* ── ロボットが動く（4層の図） ── */
+      @keyframes rb-arm-l { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(7deg); } }
+      @keyframes rb-arm-r { 0%,100% { transform: rotate(9deg); } 50% { transform: rotate(-7deg); } }
+      @keyframes rb-leg-l { 0%,100% { transform: rotate(-3.5deg); } 50% { transform: rotate(3.5deg); } }
+      @keyframes rb-leg-r { 0%,100% { transform: rotate(3.5deg); } 50% { transform: rotate(-3.5deg); } }
+      @keyframes rb-head  { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+      @keyframes rb-wire  { to { stroke-dashoffset: -24; } }
+      .rb-armL { animation: rb-arm-l 3.2s ease-in-out infinite; }
+      .rb-armR { animation: rb-arm-r 3.2s ease-in-out infinite; }
+      .rb-legL { animation: rb-leg-l 3.2s ease-in-out infinite; }
+      .rb-legR { animation: rb-leg-r 3.2s ease-in-out infinite; }
+      .rb-head { animation: rb-head 3.2s ease-in-out infinite; transform-box: view-box; }
+      .rb-wire { animation: rb-wire 1.8s linear infinite; }
+
       @media (prefers-reduced-motion: reduce) {
         .mom-rise, .mom-stamp, .mom-draw, .mom-pulse { animation: none !important; opacity:1 !important; transform:none !important; }
+        .rb-armL, .rb-armR, .rb-legL, .rb-legR, .rb-head, .rb-wire { animation: none !important; }
       }
     `}</style>
   )
