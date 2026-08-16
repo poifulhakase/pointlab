@@ -13,6 +13,128 @@ import { useInView, useCountUp } from './basementHooks'
 type C = ReturnType<typeof basementColors>
 
 /**
+ * 地下室の背景（壁・光・埃）。ページの最背面に1枚だけ敷く。
+ *
+ * 🔴 画像は使わない。CSS のグラデーションと SVG だけで作る（`prefers-reduced-motion` で揺れは止まる）。
+ * 🔵 重ねているもの＝①コンクリートの地色 ②粒子（feTurbulence の粉っぽさ）③打ち継ぎの目地
+ *    ④壁のシミ ⑤吊り下げた裸電球と光の筋 ⑥舞う埃 ⑦四隅を沈めるビネット。
+ * 🔴 **読みやすさが先**。どの層も薄く、ライトテーマではさらに弱くする
+ *    （明るい地下室＝窓のない資料室くらいの感じに留める）。
+ */
+export function BasementBackdrop({ c }: { c: C }) {
+  const d = c.dark
+  const layer: React.CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none' }
+  // 粒子（コンクリートの粉っぽさ）。SVG フィルタをそのまま背景に敷く
+  const grain = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E\")"
+  const joint = d ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.045)'
+
+  return (
+    <div aria-hidden style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+      {/* ① 地色（電球の下だけ暖かく、足元は沈む） */}
+      <div style={{
+        ...layer,
+        background: d
+          ? 'radial-gradient(120% 70% at 50% -8%, rgba(255,205,130,0.16) 0%, rgba(255,190,120,0.05) 38%, transparent 66%), linear-gradient(180deg, #101012 0%, #0b0c0e 46%, #08090a 100%)'
+          : 'radial-gradient(120% 70% at 50% -8%, rgba(255,205,130,0.30) 0%, rgba(255,205,130,0.10) 38%, transparent 66%), linear-gradient(180deg, #f3f0eb 0%, #efece7 52%, #e4dfd6 100%)',
+      }} />
+
+      {/* ② 粒子 */}
+      <div style={{
+        ...layer, backgroundImage: grain, backgroundSize: '180px 180px',
+        opacity: d ? 0.05 : 0.035, mixBlendMode: d ? 'overlay' : 'multiply',
+      }} />
+
+      {/* ③ 打ち継ぎの目地（コンクリートブロック） */}
+      <div style={{
+        ...layer,
+        backgroundImage: `linear-gradient(${joint} 1px, transparent 1px), linear-gradient(90deg, ${joint} 1px, transparent 1px)`,
+        backgroundSize: '112px 56px',
+      }} />
+      {/* 目地の凹みに落ちる影（1本だけずらして重ねる） */}
+      <div style={{
+        ...layer,
+        backgroundImage: `linear-gradient(${d ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.05)'} 1px, transparent 1px)`,
+        backgroundSize: '112px 56px', backgroundPosition: '0 1px',
+      }} />
+
+      {/* ④ 壁のシミ（にじみ。位置は固定＝毎回同じ地下室に見えるように） */}
+      {[
+        { top: '12%', left: '6%', w: 260, h: 150 },
+        { top: '58%', left: '72%', w: 300, h: 190 },
+        { top: '82%', left: '18%', w: 220, h: 120 },
+      ].map((s, i) => (
+        <div key={i} style={{
+          position: 'absolute', top: s.top, left: s.left, width: s.w, height: s.h,
+          borderRadius: '50%', filter: 'blur(38px)',
+          background: d ? 'rgba(0,0,0,0.5)' : 'rgba(120,100,70,0.10)',
+        }} />
+      ))}
+
+      {/* ⑤ 吊り下げた裸電球（右上）と、そこから落ちる光の筋 */}
+      <div style={{ position: 'absolute', top: 0, right: 'clamp(18px, 9vw, 190px)', width: 150, height: 320 }}>
+        {/* 光の筋（円錐） */}
+        <div className="bsmt-glow" style={{
+          position: 'absolute', top: 96, left: '50%', width: 560, height: '82vh',
+          transform: 'translateX(-50%)',
+          clipPath: 'polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%)',
+          // 🔵 縁をぼかす＝スポットライトではなく、埃を含んだ空気に光が散っている感じにする
+          filter: 'blur(14px)',
+          background: `linear-gradient(180deg, rgba(255,205,130,${d ? 0.15 : 0.22}) 0%, rgba(255,205,130,0) 80%)`,
+        }} />
+        <svg width="150" height="200" viewBox="0 0 150 200" style={{ position: 'absolute', top: 0, left: 0, overflow: 'visible' }}>
+          <g className="bsmt-lamp">
+            {/* コード */}
+            <line x1="75" y1="-40" x2="75" y2="72" stroke={d ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)'} strokeWidth="1.5" />
+            {/* ソケット */}
+            <rect x="69" y="70" width="12" height="16" rx="2" fill={d ? '#3a332a' : '#6b6052'} />
+            {/* 電球 */}
+            <circle cx="75" cy="99" r="12" fill={d ? 'rgba(255,214,150,0.92)' : 'rgba(255,222,168,0.95)'} />
+            <circle cx="75" cy="99" r="12" fill="none" stroke={d ? 'rgba(255,236,200,0.6)' : 'rgba(160,120,50,0.35)'} strokeWidth="1" />
+            {/* フィラメント */}
+            <path d="M71 100 l2.5 -5 l2 5 l2.5 -5" fill="none" stroke={d ? 'rgba(120,70,10,0.55)' : 'rgba(120,70,10,0.4)'} strokeWidth="1.2" strokeLinecap="round" />
+            {/* 電球まわりのにじみ */}
+            <circle className="bsmt-glow" cx="75" cy="99" r="34" fill={`rgba(255,205,130,${d ? 0.2 : 0.26})`} style={{ filter: 'blur(14px)' }} />
+          </g>
+        </svg>
+      </div>
+
+      {/* ⑥ 舞う埃（光の筋の中だけ・数は控えめ） */}
+      {[
+        { left: '62%', top: '34%', delay: '0s' },
+        { left: '70%', top: '52%', delay: '1.6s' },
+        { left: '78%', top: '41%', delay: '3.1s' },
+        { left: '66%', top: '68%', delay: '4.4s' },
+        { left: '84%', top: '60%', delay: '5.8s' },
+      ].map((p, i) => (
+        <span key={i} className="bsmt-dust" style={{
+          position: 'absolute', left: p.left, top: p.top, animationDelay: p.delay,
+          width: 2.5, height: 2.5, borderRadius: '50%',
+          background: d ? 'rgba(255,225,180,0.75)' : 'rgba(150,120,60,0.5)',
+          boxShadow: d ? '0 0 6px rgba(255,205,130,0.7)' : 'none',
+        }} />
+      ))}
+
+      {/* ⑦ ビネット（四隅を沈める＝窓のない部屋） */}
+      <div style={{
+        ...layer,
+        background: d
+          ? 'radial-gradient(125% 100% at 50% 14%, transparent 46%, rgba(0,0,0,0.5) 100%)'
+          : 'radial-gradient(125% 100% at 50% 14%, transparent 50%, rgba(60,50,35,0.14) 100%)',
+      }} />
+
+      {/* ⑧ 足元（床との境。うっすら線が入るだけ） */}
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0, height: '22vh',
+        background: d
+          ? 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.45) 100%)'
+          : 'linear-gradient(180deg, transparent 0%, rgba(90,78,58,0.14) 100%)',
+        borderBottom: `1px solid ${d ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'}`,
+      }} />
+    </div>
+  )
+}
+
+/**
  * 判定スタンプ（ページの頭に1枚）。
  * 🔴 いちばん上で**結論を言い切る**ための枠。説明は書かない。
  * 背景に巨大な一文字（× / ○）が流れ込み、判定文が打ち込まれる。
@@ -33,6 +155,8 @@ export function VerdictHero({ c, isMobile, mark, tone, verdict, note }: {
     <div ref={ref} style={{
       position: 'relative', overflow: 'hidden',
       border: `1px solid ${c.border}`, borderRadius: 14, background: c.card,
+      backdropFilter: 'blur(8px)',
+      boxShadow: c.dark ? '0 18px 40px rgba(0,0,0,0.45)' : '0 12px 30px rgba(90,78,58,0.10)',
       padding: isMobile ? '26px 18px' : '44px 34px', marginBottom: 14,
     }}>
       {/* 巨大な一文字（背景）*/}
@@ -86,6 +210,8 @@ export function BigStat({ c, isMobile, value, decimals = 2, prefix = '', suffix 
     <div ref={ref} className={seen ? 'bsmt-rise' : undefined} style={{
       opacity: seen ? undefined : 0, animationDelay: `${delay}ms`,
       border: `1px solid ${c.border}`, borderRadius: 12, background: c.card,
+      backdropFilter: 'blur(8px)',
+      boxShadow: c.dark ? '0 12px 26px rgba(0,0,0,0.4)' : '0 8px 20px rgba(90,78,58,0.08)',
       padding: isMobile ? '16px 14px' : '20px 18px',
       display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0,
     }}>
@@ -134,12 +260,16 @@ export function JudgeList({ c, isMobile, rows }: { c: C; isMobile: boolean; rows
   const mark = (v: JudgeRow['verdict']) => (v === 'ok' ? '●' : v === 'trap' ? '⚠' : '×')
   const color = (v: JudgeRow['verdict']) => (v === 'ok' ? c.ok : v === 'trap' ? c.trap : c.no)
   return (
-    <div ref={ref} style={{ border: `1px solid ${c.border}`, borderRadius: 12, overflow: 'hidden' }}>
+    <div ref={ref} style={{
+      border: `1px solid ${c.border}`, borderRadius: 12, overflow: 'hidden',
+      background: c.card, backdropFilter: 'blur(8px)',
+    }}>
       {rows.map((r, i) => (
         <div key={r.label} className={seen ? 'bsmt-rise' : undefined} style={{
           opacity: seen ? undefined : 0, animationDelay: `${i * 70}ms`,
           position: 'relative',
-          padding: '12px 14px', background: i % 2 ? 'transparent' : c.card,
+          padding: '12px 14px',
+          background: i % 2 ? 'transparent' : (c.dark ? 'rgba(255,255,255,0.028)' : 'rgba(0,0,0,0.022)'),
           borderTop: i ? `1px solid ${c.border}` : 'none',
           display: 'flex', flexDirection: isMobile ? 'column' : 'row',
           gap: isMobile ? 4 : 14, alignItems: isMobile ? 'flex-start' : 'center',

@@ -6,9 +6,9 @@
 // 🔵 数字の出どころ＝`scripts/backtest-robo.mjs`（対照群）／`scripts/backtest-tev.mjs`（需給シグナル）／
 //    20年R&D（`analyze-*.mjs`）。測り直したらここも書き換える。
 
-import { basementColors, BASEMENT_MONO, concreteStyle, BULB_GLOW } from './basementTheme'
+import { basementColors, BASEMENT_MONO, basementVeil } from './basementTheme'
 import {
-  BasementKeyframes, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
+  BasementKeyframes, BasementBackdrop, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
   type JudgeRow,
 } from './basementKit'
 
@@ -40,10 +40,9 @@ export default function SwingResearchView({ theme, isMobile, onClose }: Props) {
   return (
     <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text, position: 'relative' }}>
       <BasementKeyframes />
-      <div aria-hidden style={concreteStyle(c.dark)} />
-      <div aria-hidden className="bsmt-glow" style={BULB_GLOW} />
+      <BasementBackdrop c={c} />
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 3, background: c.bg, borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 3, ...basementVeil(c.dark), borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: mono, fontSize: isMobile ? 10 : 11, letterSpacing: '0.14em', color: c.accent }}>
           <span aria-hidden className="bsmt-glow" style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffd79a', boxShadow: '0 0 8px 3px rgba(255,205,130,0.5)', display: 'inline-block' }} />
           地下室 / スイングトレード

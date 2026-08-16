@@ -9,7 +9,9 @@ export function basementColors(theme: 'dark' | 'light') {
   return {
     dark,
     bg: dark ? '#0b0c0e' : '#efece7',
-    card: dark ? 'rgba(255,255,255,0.035)' : '#fff',
+    // 🔵 壁の質感（BasementBackdrop）の上に置くので、カードは**少し沈んだ半透明**にする。
+    //    透け過ぎると目地とシミが文字の裏を通り、読みにくくなる（2026-08-16）。
+    card: dark ? 'rgba(18,17,16,0.62)' : 'rgba(255,255,255,0.86)',
     border: dark ? 'rgba(255,205,130,0.16)' : '#ddd6c9',
     text: dark ? '#e6e0d5' : '#26221c',
     sub: dark ? '#9c9488' : '#5f584e',
@@ -22,19 +24,14 @@ export function basementColors(theme: 'dark' | 'light') {
 
 export const BASEMENT_MONO = "'Consolas','SF Mono',ui-monospace,monospace"
 
-/** コンクリートの目地（薄く敷くだけ。読みやすさを壊さない） */
-export function concreteStyle(dark: boolean): React.CSSProperties {
-  const line = dark ? 'rgba(255,255,255,0.028)' : 'rgba(0,0,0,0.035)'
+/**
+ * 上に浮かせる帯（ヘッダー）の地。
+ * 🔵 背景（`BasementBackdrop`）の壁が透けるように、不透明色ではなく半透明＋ぼかしにする
+ *    （2026-08-16。不透明だと壁の質感がヘッダーの所だけ切れて見える）。
+ */
+export function basementVeil(dark: boolean): React.CSSProperties {
   return {
-    position: 'fixed', inset: 0, pointerEvents: 'none', opacity: dark ? 1 : 0.6,
-    backgroundImage: `linear-gradient(${line} 1px, transparent 1px), linear-gradient(90deg, ${line} 1px, transparent 1px)`,
-    backgroundSize: '72px 34px',
+    background: dark ? 'rgba(11,12,14,0.78)' : 'rgba(239,236,231,0.82)',
+    backdropFilter: 'blur(10px)',
   }
-}
-
-/** 裸電球の光（上からぼんやり） */
-export const BULB_GLOW: React.CSSProperties = {
-  position: 'fixed', left: '50%', top: 0, width: '120%', height: '52%',
-  transform: 'translateX(-50%)', pointerEvents: 'none',
-  background: 'radial-gradient(46% 60% at 50% 0%, rgba(255,205,130,0.16) 0%, rgba(255,205,130,0.05) 45%, transparent 74%)',
 }

@@ -7,9 +7,9 @@
 // 🔵 数字はすべて `scripts/analyze-intraday-bias.mjs` の実行結果。
 //    条件を変えて測り直したら、ここも書き換える（測っていないことは書かない）。
 
-import { basementColors, BASEMENT_MONO, concreteStyle, BULB_GLOW } from './basementTheme'
+import { basementColors, BASEMENT_MONO, basementVeil } from './basementTheme'
 import {
-  BasementKeyframes, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
+  BasementKeyframes, BasementBackdrop, BasementHead, VerdictHero, BigStat, StatGrid, JudgeList,
   type JudgeRow,
 } from './basementKit'
 
@@ -49,10 +49,9 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
   return (
     <div style={{ flex: 1, overflow: 'auto', background: c.bg, color: c.text, position: 'relative' }}>
       <BasementKeyframes />
-      <div aria-hidden style={concreteStyle(c.dark)} />
-      <div aria-hidden className="bsmt-glow" style={BULB_GLOW} />
+      <BasementBackdrop c={c} />
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 3, background: c.bg, borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 3, ...basementVeil(c.dark), borderBottom: `1px solid ${c.border}`, padding: `${pad / 2}px ${pad}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: mono, fontSize: isMobile ? 10 : 11, letterSpacing: '0.14em', color: c.accent }}>
           <span aria-hidden className="bsmt-glow" style={{
             width: 8, height: 8, borderRadius: '50%', background: '#ffd79a',
@@ -90,11 +89,11 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
         <div style={{ fontFamily: mono, fontSize: 11, color: c.sub, marginTop: 8 }}>t&lt;2 は誤差として不採用</div>
 
         <BasementHead c={c} isMobile={isMobile}>1日の型（20年）</BasementHead>
-        <div style={{ border: `1px solid ${c.border}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ border: `1px solid ${c.border}`, borderRadius: 12, overflow: 'hidden', background: c.card, backdropFilter: 'blur(8px)' }}>
           {DAY_TYPES.map((d, i) => (
             <div key={d.name} style={{
               position: 'relative', padding: '11px 14px',
-              background: i % 2 ? 'transparent' : c.card,
+              background: i % 2 ? 'transparent' : (c.dark ? 'rgba(255,255,255,0.028)' : 'rgba(0,0,0,0.022)'),
               borderTop: i ? `1px solid ${c.border}` : 'none',
               display: 'flex', justifyContent: 'space-between', gap: 12,
               fontSize: isMobile ? 12 : 13,
@@ -113,12 +112,12 @@ export default function DaytradeResearchView({ theme, isMobile, onClose }: Props
         </div>
 
         <BasementHead c={c} isMobile={isMobile}>そのほかの実測</BasementHead>
-        <div style={{ border: `1px solid ${c.border}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ border: `1px solid ${c.border}`, borderRadius: 12, overflow: 'hidden', background: c.card, backdropFilter: 'blur(8px)' }}>
           {NUMBERS.map((d, i) => (
             <div key={d.name} style={{
               display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between',
               gap: isMobile ? 2 : 12, padding: '10px 14px',
-              background: i % 2 ? 'transparent' : c.card,
+              background: i % 2 ? 'transparent' : (c.dark ? 'rgba(255,255,255,0.028)' : 'rgba(0,0,0,0.022)'),
               borderTop: i ? `1px solid ${c.border}` : 'none', fontSize: isMobile ? 12 : 13,
             }}>
               <span>{d.name}</span>
