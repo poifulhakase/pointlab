@@ -79,6 +79,10 @@ export async function fetchPoiroboStocks(force = false): Promise<PoiroboStocksDa
       key: CACHE_KEY,
       ttl: TTL,
       force,
+      // 🔴 枠を入れ替えたら**すぐ反映**する（2026-08-16）。
+      //    ここは相談で銘柄が入れ替わるデータなので、30分待たされると「まだ古いのが出る」になる。
+      //    checkUpdatedAt=true なら、60秒を超えたアクセスでサーバーの updatedAt を見て差分だけ取り直す。
+      checkUpdatedAt: true,
       fetcher: async () => {
         const res = await fetch(`${import.meta.env.BASE_URL}data/poirobo_stocks.json`, { cache: 'no-store' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
