@@ -181,6 +181,8 @@ async function main() {
       watch.push({
         code: w.code, name: w.name, layer: w.layer,
         close: sum.close, change_pct: sum.change_pct,
+        // 🆕 2026-08-17：需給ゲージ（信用買残が何日分の商いか）を候補でも出すために持たせる
+        volume: sum.volume, vol20: sum.vol20,
         ret12m: sum.momentum.ret.m12, ret3m: sum.momentum.ret.m3,
         from_52w_high_pct: sum.momentum.from_52w_high_pct,
         dev200_pct: sum.dev200_pct,

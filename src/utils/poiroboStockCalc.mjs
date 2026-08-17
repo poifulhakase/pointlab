@@ -160,6 +160,9 @@ export function summarizeStock(rows, index) {
     volume: last.volume ?? null,
     // 出来高が平常の何倍か（20日中央値との比）。材料が出た日を拾うため
     volume_x: volMedian20 ? r2(last.volume / volMedian20) : null,
+    // 🆕 平常の出来高（20日中央値）。信用買残が「何日分の商いに相当するか」を出すのに使う。
+    //    🔴 その日の出来高で割ると、材料が出た日だけ軽く見える（2026-08-17）。
+    vol20: volMedian20 ? Math.round(volMedian20) : null,
     ma25: r2(last.sma25, 1),
     dev25_pct: r2(last.dev25),
     ma75: r2(last.sma75, 1),

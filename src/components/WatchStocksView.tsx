@@ -7,7 +7,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { cy } from '../utils/cyberTheme'
-import { fetchPoiroboStocks, type WatchStock, type RangeStock } from '../utils/poiroboStocks'
+import { fetchPoiroboStocks, fetchStockMargin, type WatchStock, type RangeStock, type StockMarginData } from '../utils/poiroboStocks'
+import { marginGauge } from '../utils/marginGauge'
+import { MarginGaugeBar } from './MarginGaugeBar'
 import { PoiroboLoader } from './PoiroboLoader'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
@@ -48,12 +50,17 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
   const [ranges, setRanges] = useState<RangeStock[]>([])
   const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<SortKey>('near')
+  // 🆕 2026-08-17：需給ゲージの材料（信用残・週次）。取れなくても一覧は出す
+  const [margin, setMargin] = useState<StockMarginData | null>(null)
 
   useEffect(() => {
     let alive = true
     fetchPoiroboStocks()
       .then(d => { if (alive) { setRows(d?.watch ?? []); setRanges(d?.ranges ?? []); setLoading(false) } })
       .catch(() => { if (alive) setLoading(false) })
+    fetchStockMargin()
+      .then(m => { if (alive) setMargin(m) })
+      .catch(() => {})
     return () => { alive = false }
   }, [])
 
@@ -152,6 +159,15 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                     <Cell c={c} label="12ヶ月" value={pct(w.ret12m)} />
                     <Cell c={c} label="52週高値から" value={pct(w.from_52w_high_pct)} />
                     <Cell c={c} label="200日線から" value={pct(w.dev200_pct)} strong={near} />
+                  </div>
+
+                  {/* 🆕 需給ゲージ（信用残から見た上値の重さ・軽くなってきたか） */}
+                  <div style={{ flexShrink: 0 }}>
+                    <MarginGaugeBar
+                      gauge={marginGauge(margin?.stocks?.[w.code]?.history, w.vol20)}
+                      theme={dark ? 'dark' : 'light'}
+                      compact
+                    />
                   </div>
 
                   {near && (

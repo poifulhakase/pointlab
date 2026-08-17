@@ -68,6 +68,15 @@ jobs:
         run: npm run fetch-momentum
         continue-on-error: true
 
+      # 主力・候補の需給ゲージ（信用残）。
+      # 🔴 出どころは JPX の週次PDF（銘柄別信用取引週末残高）＝**週1回しか更新されない**。
+      #    毎日取っても中身は変わらないうえ40MBのPDFを5本読むので、**土曜だけ**にする。
+      # 🔵 落ちても他は止めない（前回のJSONがそのまま残る）。
+      - name: 個別銘柄の信用残（土曜のみ）
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '0 0 * * 6')
+        run: npm run fetch-stock-margin
+        continue-on-error: true
+
       # 監視銘柄の「色が付いた・外れた」を Chatwork に知らせる。
       # 🔴 知らせるだけ（採否も入れ替えも自動ではやらない）。変化があった日だけ送る。
       - name: 監視銘柄のお知らせ

@@ -1,0 +1,186 @@
+// 個別銘柄の需給ゲージ（信用残から「重い／軽い」を出す）。2026-08-17 追加。
+//
+// 何のために（ユーザー要望）: 主力・候補の各銘柄に「軽くなってきた」「重い」程度のゲージを出したい。
+//
+// 🔴 **信用倍率だけで決めない**。ファナックは倍率19.8倍（＝買い一辺倒）だが、買残は1日の商いの
+//    0.56日分しかない。倍率だけ見ると「詰まっている」と読むが、実際は出来高で流せる量しかない。
+//    逆に商いの薄い銘柄は、倍率が低くても買残が何日分も積み上がっていることがある。
+//    → **水準（どれだけ重いか）＝倍率 と 日数 の合成**にする。
+//
+// 🔴 **向き（軽くなってきたか）を分ける**。同じ「重い」でも、買残が減っている最中と
+//    増えている最中では意味が逆。人が知りたいのは「いま重いか」より「軽くなってきたか」なので、
+//    ゲージ（水準）とは別に矢印（向き）を出す。
+//
+// 🔵 出すのは**状態の記述だけ**。売買の推奨はしない（アプリ全体の方針）。
+
+/** 週次の信用残（JPX「銘柄別信用取引週末残高」由来） */
+export type MarginWeek = {
+  /** 週末日 YYYY-MM-DD */
+  w: string
+  /** 買残（株） */
+  long: number
+  /** 前週比（株） */
+  longChg: number
+  /** 売残（株） */
+  short: number
+  shortChg: number
+}
+
+export type MarginGauge = {
+  /** 0=とても軽い 〜 100=とても重い（画面のゲージはこの値を使う） */
+  score: number
+  /** 重さの区分 */
+  level: 'light' | 'normal' | 'heavy' | 'very_heavy'
+  /** 人に見せる短い言葉 */
+  label: string
+  /** 向き（買残が増えているか減っているか） */
+  trend: 'lighter' | 'flat' | 'heavier'
+  /** 向きの言葉 */
+  trendLabel: string
+  /** 信用倍率（買残÷売残）。売残0なら null */
+  ratio: number | null
+  /** 買残が平常の何日分の商いに相当するか。出来高不明なら null */
+  days: number | null
+  /** 売残が平常の何日分の商いに相当するか。出来高不明なら null */
+  shortDays: number | null
+  /**
+   * 踏み上げの燃料（売り方がどれだけ残っているか）。
+   * 🔴 「軽い」には2種類ある＝①誰も信用で持っていない（閑散）②**売り方が積み上がっている**。
+   *    ②は上昇時に買い戻しが入るので、同じ「軽い」でも意味がまるで違う（2026-08-17 ユーザー指摘）。
+   */
+  squeeze: 'none' | 'some' | 'strong'
+  /** 踏み上げの言葉（none のときは空文字） */
+  squeezeLabel: string
+  /** 直近1週の買残の増減率（%） */
+  chgPct: number | null
+  /** 4週前と比べた買残の増減率（%）。履歴が足りなければ null */
+  chg4wPct: number | null
+  /** 画面のツールチップ用の一行 */
+  note: string
+}
+
+/**
+ * 需給 × 価格の位置（2026-08-17 ユーザー指摘で追加）。
+ *
+ * きっかけ＝「ファナックは株価的には200日線タッチがある」。
+ * このアプリの購入基準の2つ目は「200日線付近か」だが、**同じ200日線タッチでも需給で意味が変わる**。
+ *   ・押し目に買残が増えている … 同じ判断をした人が既に大量にいる（戻れば戻り売り、割れば投げ）
+ *   ・押し目でも買残が減っている … 同じ判断をした人は少ない
+ * 指数側では既に「需給×価格セル」を出しているので（`engineExport.ts`）、個別でも同じ見方を用意する。
+ *
+ * 🔵 出すのは**状態の記述だけ**。買え・売れは書かない。
+ */
+export function supplyPriceCell(g: MarginGauge | null, dev200: number | null | undefined): string | null {
+  if (!g || dev200 == null) return null
+
+  const near = Math.abs(dev200) <= 5
+  const above = dev200 > 5
+  const heavy = g.level === 'heavy' || g.level === 'very_heavy'
+
+  if (near && g.trend === 'heavier') return '200日線付近で買残が増えている（同じ判断が既に多い）'
+  if (near && g.trend === 'lighter') return '200日線付近で買残は減っている（同じ判断は少ない）'
+  if (near) return '200日線付近。買残は横ばい'
+
+  if (above && g.squeeze !== 'none') return '上昇中で、売り方がまだ残っている'
+  if (above && heavy) return '上昇中に買残が積み上がっている'
+  if (above && g.trend === 'heavier') return '上昇中に買残が増えている'
+
+  if (!above && heavy) return '200日線を下回ったまま買残が残っている'
+  return null
+}
+
+const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
+const r1 = (v: number) => Math.round(v * 10) / 10
+
+/**
+ * 「重さ」の点数（0〜100）。倍率と日数の合成。
+ *
+ * 🔵 倍率は 1倍（拮抗）〜25倍（買い一辺倒）を 0〜100 に写す。
+ * 🔵 日数は 0.1日（すぐ流せる）〜2日（積み上がっている）を 0〜100 に写す。
+ *    🔴 目盛りは**実データで決めた**（2026-08-17）。主力・候補24銘柄はどれも大型で、
+ *       買残は平常の商いの 0.13〜0.98日分に収まる。3日を上限にすると全員が下half に潰れて
+ *       見分けが付かなくなった。
+ * 🔴 日数が分からない銘柄（出来高が無い）は倍率だけで決める＝**足りない情報を勝手に補わない**。
+ */
+export function heaviness(ratio: number | null, days: number | null): number {
+  const byRatio = ratio == null ? null : clamp(((ratio - 1) / 24) * 100)
+  const byDays = days == null ? null : clamp(((days - 0.1) / 1.9) * 100)
+
+  if (byRatio == null && byDays == null) return 50
+  if (byDays == null) return Math.round(byRatio as number)
+  if (byRatio == null) return Math.round(byDays)
+
+  // 🔵 「実際に流せるか」の方が効くので日数を厚めに見る（6:4）。
+  return Math.round(byDays * 0.6 + byRatio * 0.4)
+}
+
+/** 信用残の履歴（古い順）から需給ゲージを作る。履歴が空なら null。 */
+export function marginGauge(history: MarginWeek[] | null | undefined, vol20: number | null | undefined): MarginGauge | null {
+  if (!history || history.length === 0) return null
+
+  const last = history[history.length - 1]
+  const ratio = last.short > 0 ? r1(last.long / last.short) : null
+  // 🔵 日数は小数第2位まで（0.56日分のように「1日に満たない」が意味を持つため）
+  const days = vol20 && vol20 > 0 ? Math.round((last.long / vol20) * 100) / 100 : null
+  const shortDays = vol20 && vol20 > 0 ? Math.round((last.short / vol20) * 100) / 100 : null
+
+  // 🔴 踏み上げの燃料＝**売り方がどれだけ残っているか**（2026-08-17 ユーザー指摘で追加）。
+  //    実データ：ハーモニック（売残0.31日分・倍率1.3）とアドバンテスト（0.13日分・1.4）は
+  //    上昇の最中に売り方が大量に残っている＝買い戻しが上値を押し上げる側に働く。
+  //    一方フジクラは同じく強いが倍率16.5・売残0.03日分＝買い方一辺倒で、上値は重くなりやすい。
+  //    🔵 「軽い」だけでは、この2つが同じ顔になってしまう。
+  const squeeze: MarginGauge['squeeze'] =
+    shortDays == null || ratio == null ? 'none'
+      : shortDays >= 0.25 && ratio <= 3 ? 'strong'
+        : shortDays >= 0.1 && ratio <= 5 ? 'some'
+          : 'none'
+  const squeezeLabel = squeeze === 'strong' ? '売り方が多い（踏み上げ余地）'
+    : squeeze === 'some' ? '売り方あり' : ''
+
+  const prevLong = last.long - last.longChg
+  const chgPct = prevLong > 0 ? r1((last.longChg / prevLong) * 100) : null
+
+  const base4w = history.length >= 5 ? history[history.length - 5].long : null
+  const chg4wPct = base4w && base4w > 0 ? r1(((last.long - base4w) / base4w) * 100) : null
+
+  const score = heaviness(ratio, days)
+
+  const level: MarginGauge['level'] =
+    score >= 75 ? 'very_heavy' : score >= 55 ? 'heavy' : score >= 30 ? 'normal' : 'light'
+  const label =
+    level === 'very_heavy' ? 'かなり重い' : level === 'heavy' ? '重い' : level === 'normal' ? 'ふつう' : '軽い'
+
+  // 🔵 向きは直近1週を主、4週を従で見る（1週だけだと週替わりでぶれる）。
+  const move = chgPct ?? 0
+  const move4 = chg4wPct ?? 0
+  const trend: MarginGauge['trend'] =
+    move <= -5 || (move <= 0 && move4 <= -10) ? 'lighter'
+      : move >= 5 || (move >= 0 && move4 >= 10) ? 'heavier'
+        : 'flat'
+  const trendLabel =
+    trend === 'lighter' ? '軽くなってきた' : trend === 'heavier' ? '重くなってきた' : '横ばい'
+
+  const parts: string[] = []
+  if (ratio != null) parts.push(`信用倍率 ${ratio}倍`)
+  if (days != null) parts.push(`買残は平常の商いの ${days}日分`)
+  if (shortDays != null) parts.push(`売残は ${shortDays}日分`)
+  if (chgPct != null) parts.push(`買残 前週比 ${chgPct > 0 ? '+' : ''}${chgPct}%`)
+  if (chg4wPct != null) parts.push(`4週で ${chg4wPct > 0 ? '+' : ''}${chg4wPct}%`)
+  if (squeezeLabel) parts.push(squeezeLabel)
+
+  return {
+    score,
+    level,
+    label,
+    trend,
+    trendLabel,
+    ratio,
+    days,
+    shortDays,
+    squeeze,
+    squeezeLabel,
+    chgPct,
+    chg4wPct,
+    note: `${last.w} 時点：` + (parts.join('／') || 'データ不足'),
+  }
+}

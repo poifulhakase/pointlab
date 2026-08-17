@@ -12,6 +12,9 @@ import {
   fetchPoiroboStocks, sliceSeries, RANGES,
   type PoiroboStocksData, type PoiroboStock, type RangeKey, type StockSeriesPoint, type AiLayer,
 } from '../utils/poiroboStocks'
+import { fetchStockMargin, type StockMarginData } from '../utils/poiroboStocks'
+import { marginGauge, supplyPriceCell } from '../utils/marginGauge'
+import { MarginGaugeBar } from './MarginGaugeBar'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 
@@ -36,12 +39,17 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
   const dark = theme === 'dark'
   const [data, setData] = useState<PoiroboStocksData | null>(null)
   const [loading, setLoading] = useState(true)
+  // 🆕 需給ゲージの材料（信用残・週次）。取れなくても他の表示は止めない
+  const [margin, setMargin] = useState<StockMarginData | null>(null)
 
   useEffect(() => {
     let alive = true
     fetchPoiroboStocks()
       .then(d => { if (alive) { setData(d); setLoading(false) } })
       .catch(() => { if (alive) setLoading(false) })
+    fetchStockMargin()
+      .then(m => { if (alive) setMargin(m) })
+      .catch(() => {})
     return () => { alive = false }
   }, [])
 
@@ -97,7 +105,7 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
             gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
           }}>
             {data.stocks.map((s, i) => (
-              <StockCard key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} order={i} />
+              <StockCard key={s.code} c={c} dark={dark} isMobile={isMobile} s={s} order={i} margin={margin} />
             ))}
           </div>
 
@@ -286,8 +294,8 @@ function Joint({ c, color, x, y }: { c: C; color: string; x: number; y: number }
 }
 
 /** 1銘柄ぶんのカード（2列に並ぶ） */
-function StockCard({ c, dark, isMobile, s, order = 0 }: {
-  c: C; dark: boolean; isMobile: boolean; s: PoiroboStock; order?: number
+function StockCard({ c, dark, isMobile, s, order = 0, margin = null }: {
+  c: C; dark: boolean; isMobile: boolean; s: PoiroboStock; order?: number; margin?: StockMarginData | null
 }) {
   const [ref, seen] = useInView<HTMLDivElement>(0.1)
   const [open, setOpen] = useState(false)
@@ -296,6 +304,9 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
   const accent = (s.change_pct ?? 0) >= 0 ? UP(dark) : DOWN(dark)
   // 🔴 購入時の2つ目の基準＝200日線付近（±5%以内）。該当する枠だけカードを光らせる
   const near200 = s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5
+  // 🆕 2026-08-17：需給ゲージと、需給×価格の位置（同じ200日線タッチでも需給で意味が変わる）
+  const gauge = marginGauge(margin?.stocks?.[s.code]?.history, s.vol20)
+  const cell = supplyPriceCell(gauge, s.dev200_pct)
 
   return (
     <div ref={ref} style={{
@@ -358,6 +369,10 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
             {pct(s.change_pct, 2)}
           </span>
           <span style={{ fontSize: 9.5, color: c.DIM, paddingBottom: 4 }}>{s.stance?.label ?? ''}</span>
+          {/* 🆕 2026-08-17：需給ゲージ（信用残から見た上値の重さ・軽くなってきたか） */}
+          <span style={{ paddingBottom: 4 }}>
+            <MarginGaugeBar gauge={gauge} theme={dark ? 'dark' : 'light'} />
+          </span>
         </div>
 
         <PriceChart c={c} dark={dark} isMobile={isMobile} s={s} seen={seen} />
@@ -370,6 +385,20 @@ function StockCard({ c, dark, isMobile, s, order = 0 }: {
           <MiniStat c={c} label="200日線から" value={pct(s.dev200_pct)}
             strong={s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5} />
         </div>
+
+        {/* 🆕 2026-08-17：需給 × 価格の位置。
+            🔴 同じ「200日線タッチ」でも、押し目に買残が増えているかどうかで意味が変わる
+            （ユーザー指摘）。状態の記述だけで、買え・売れは書かない。 */}
+        {cell && (
+          <div style={{
+            marginTop: 12, padding: '8px 12px', borderRadius: 10,
+            border: `1px solid ${c.BORDER}`, background: c.HDBG,
+            fontSize: isMobile ? 11.5 : 11, color: c.DESC, lineHeight: 1.7,
+          }}>
+            需給 × 価格：{cell}
+            {gauge?.note && <span style={{ display: 'block', color: c.DIM, fontSize: 10, marginTop: 3 }}>{gauge.note}</span>}
+          </div>
+        )}
 
         {th && (
           <div style={{
