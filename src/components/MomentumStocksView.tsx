@@ -14,7 +14,7 @@ import {
 } from '../utils/poiroboStocks'
 import { fetchStockMargin, type StockMarginData } from '../utils/poiroboStocks'
 import { marginGauge, supplyPriceCell } from '../utils/marginGauge'
-import { MarginGaugeBar, MarginGaugeStyles } from './MarginGaugeBar'
+import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 
@@ -115,6 +115,8 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
             padding: `${isMobile ? 14 : 10}px ${pad}px ${isMobile ? 140 : 70}px`,
             fontSize: isMobile ? 10 : 10.5, color: c.DIM, lineHeight: 1.9,
           }}>
+            {/* 🔵 需給ゲージの読み方（2026-08-17 追加） */}
+            <div style={{ marginBottom: 8 }}><MarginGaugeLegend theme={dark ? 'dark' : 'light'} /></div>
             {/* 🔴 免責は残す（個別銘柄を扱うページなので・投資助言を行わない方針） */}
             研究の記録であり、売買の推奨ではありません。<br />
             UPDATED: {new Date(data.updatedAt).toLocaleString('ja-JP')}

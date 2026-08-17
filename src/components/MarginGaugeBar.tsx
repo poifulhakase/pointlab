@@ -39,6 +39,28 @@ const TREND_MARK: Record<MarginGauge['trend'], string> = {
   heavier: '▶',
 }
 
+/** 省スペース版の言葉（矢印だけでは向きの意味が読めないため必ず添える） */
+const TREND_SHORT: Record<MarginGauge['trend'], string> = {
+  lighter: '軽く',
+  flat: '横ばい',
+  heavier: '重く',
+}
+
+/**
+ * 一覧の上に置く凡例。🔵 はじめて見る人が「22 軽い ▶」を読めるようにする。
+ */
+export function MarginGaugeLegend({ theme }: { theme: 'dark' | 'light' }) {
+  const c = cy(theme)
+  return (
+    <span style={{ fontSize: 10, color: c.DIM, lineHeight: 1.8 }}>
+      需給＝信用買残から見た上値の重さ（0 軽い 〜 100 重い）。
+      <b style={{ color: theme === 'dark' ? '#00e5ff' : '#0369a1' }}>◀ 軽く</b>＝買残が減っている／
+      <b style={{ color: theme === 'dark' ? '#ffa14a' : '#d97a1f' }}>▶ 重く</b>＝増えている。
+      <b style={{ color: SQUEEZE_COLOR(theme) }}>踏み上げ余地</b>＝売り方が残っている。
+    </span>
+  )
+}
+
 /**
  * ゲージの動き。**画面に1回だけ**置く（24行ぶん重ねない）。
  * 🔵 使う側（主力・候補の各ビュー）で1回レンダリングする。
@@ -168,9 +190,12 @@ export function MarginGaugeBar({ gauge, theme, compact = false }: Props) {
         <span style={{ fontSize: compact ? 9.5 : 10.5, color, fontWeight: 700 }}>{gauge.label}</span>
       </span>
 
-      {/* 向き（軽くなってきた／重くなってきた） */}
+      {/* 向き（軽くなってきた／重くなってきた）
+          🔴 省スペース版でも**言葉を必ず出す**（2026-08-17 ユーザー指摘）。
+             矢印だけだと「57 重い ◀」が「重いのに良い向き」なのか読めない。
+             実際「軽い ▶（＝軽いが悪化中）」と「重い ◀（＝重いが改善中）」は意味が逆。 */}
       <span style={{ fontSize: compact ? 9 : 10, color: trendColor, fontWeight: 700 }}>
-        {TREND_MARK[gauge.trend]}{compact ? '' : ` ${gauge.trendLabel}`}
+        {TREND_MARK[gauge.trend]} {compact ? TREND_SHORT[gauge.trend] : gauge.trendLabel}
       </span>
 
       {/* 🔴 「軽い」の中身を出し分ける（2026-08-17 ユーザー指摘）。

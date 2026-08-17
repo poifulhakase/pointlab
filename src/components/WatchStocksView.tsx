@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { cy } from '../utils/cyberTheme'
 import { fetchPoiroboStocks, fetchStockMargin, type WatchStock, type RangeStock, type StockMarginData } from '../utils/poiroboStocks'
 import { marginGauge } from '../utils/marginGauge'
-import { MarginGaugeBar, MarginGaugeStyles } from './MarginGaugeBar'
+import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
 import { PoiroboLoader } from './PoiroboLoader'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
@@ -106,6 +106,9 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
             枠には入れていないが、同じ物差しで見ている会社。
             <b style={{ color: c.GREEN }}>200日線付近</b>のものは色が変わります。
           </p>
+
+          {/* 🔵 需給ゲージの読み方（2026-08-17 追加）。矢印だけでは向きの意味が読めないため */}
+          <div style={{ marginTop: 10 }}><MarginGaugeLegend theme={dark ? 'dark' : 'light'} /></div>
 
           <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', margin: `${isMobile ? 22 : 24}px 0 16px` }}>
             {SORTS.map(o => {
