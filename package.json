@@ -16,6 +16,7 @@
     "fetch-momentum": "node scripts/fetch-poirobo-stocks.mjs",
     "fetch-stock-margin": "node scripts/fetch-stock-margin.mjs --json",
     "analyze-ma200-zone": "node scripts/analyze-ma200-zone.mjs",
+    "analyze-exit-fade": "node scripts/analyze-exit-fade.mjs",
     "notify-watch": "node scripts/notify-watch-alerts.mjs",
     "capture-chart": "node scripts/capture-tradingview.mjs",
     "add-participant": "node scripts/add-participants.mjs",
