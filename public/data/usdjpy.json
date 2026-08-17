@@ -1,6 +1,14 @@
 {
-  "updatedAt": "2026-08-15T00:44:59.693Z",
+  "updatedAt": "2026-08-17T04:29:27.290Z",
   "data": [
+    {
+      "time": "2026-08-17",
+      "close": 159.09,
+      "change": -0.21,
+      "changePct": -0.13,
+      "ma5": 159.28,
+      "ma5dev": -0.12
+    },
     {
       "time": "2026-08-14",
       "close": 159.3,
@@ -710,14 +718,6 @@
       "close": 159.55,
       "change": 0.19,
       "changePct": 0.12,
-      "ma5": null,
-      "ma5dev": null
-    },
-    {
-      "time": "2026-04-27",
-      "close": 159.36,
-      "change": null,
-      "changePct": null,
       "ma5": null,
       "ma5dev": null
     }
