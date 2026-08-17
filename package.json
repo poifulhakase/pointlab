@@ -15,6 +15,7 @@
     "robo-outcome": "node scripts/robo-outcome.mjs",
     "fetch-momentum": "node scripts/fetch-poirobo-stocks.mjs",
     "fetch-stock-margin": "node scripts/fetch-stock-margin.mjs --json",
+    "analyze-ma200-zone": "node scripts/analyze-ma200-zone.mjs",
     "notify-watch": "node scripts/notify-watch-alerts.mjs",
     "capture-chart": "node scripts/capture-tradingview.mjs",
     "add-participant": "node scripts/add-participants.mjs",
