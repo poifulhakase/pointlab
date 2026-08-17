@@ -29,6 +29,11 @@ export type MarginWeek = {
 export type MarginGauge = {
   /** 0=とても軽い 〜 100=とても重い（画面のゲージはこの値を使う） */
   score: number
+  /**
+   * 1週前の点数。画面では「どこから動いてきたか」の軌跡に使う。
+   * 🔵 数字だけだと「重い」しか伝わらない。動いた幅が見えると、同じ「重い」でも意味が違うと分かる。
+   */
+  prevScore: number | null
   /** 重さの区分 */
   level: 'light' | 'normal' | 'heavy' | 'very_heavy'
   /** 人に見せる短い言葉 */
@@ -145,6 +150,15 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
 
   const score = heaviness(ratio, days)
 
+  // 1週前の点数（同じ物差しで測る＝出来高は今の平常値を使う）。履歴が1週しか無ければ出さない。
+  const prev = history.length >= 2 ? history[history.length - 2] : null
+  const prevScore = prev
+    ? heaviness(
+      prev.short > 0 ? r1(prev.long / prev.short) : null,
+      vol20 && vol20 > 0 ? Math.round((prev.long / vol20) * 100) / 100 : null,
+    )
+    : null
+
   const level: MarginGauge['level'] =
     score >= 75 ? 'very_heavy' : score >= 55 ? 'heavy' : score >= 30 ? 'normal' : 'light'
   const label =
@@ -170,6 +184,7 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
 
   return {
     score,
+    prevScore,
     level,
     label,
     trend,

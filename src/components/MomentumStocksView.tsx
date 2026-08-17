@@ -14,7 +14,7 @@ import {
 } from '../utils/poiroboStocks'
 import { fetchStockMargin, type StockMarginData } from '../utils/poiroboStocks'
 import { marginGauge, supplyPriceCell } from '../utils/marginGauge'
-import { MarginGaugeBar } from './MarginGaugeBar'
+import { MarginGaugeBar, MarginGaugeStyles } from './MarginGaugeBar'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 
@@ -62,6 +62,7 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
       background: c.BG, backgroundImage: c.SCAN, color: c.TXTCLR, fontFamily: c.FONT,
     }}>
       <Keyframes />
+      <MarginGaugeStyles />
 
       <div style={{
         position: 'sticky', top: 0, zIndex: 6,

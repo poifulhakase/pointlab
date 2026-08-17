@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { cy } from '../utils/cyberTheme'
 import { fetchPoiroboStocks, fetchStockMargin, type WatchStock, type RangeStock, type StockMarginData } from '../utils/poiroboStocks'
 import { marginGauge } from '../utils/marginGauge'
-import { MarginGaugeBar } from './MarginGaugeBar'
+import { MarginGaugeBar, MarginGaugeStyles } from './MarginGaugeBar'
 import { PoiroboLoader } from './PoiroboLoader'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
@@ -80,6 +80,7 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
       background: c.BG, backgroundImage: c.SCAN, color: c.TXTCLR, fontFamily: c.FONT,
     }}>
       <WatchKeyframes />
+      <MarginGaugeStyles />
       <div style={{
         position: 'sticky', top: 0, zIndex: 6,
         background: dark ? 'rgba(5,14,26,0.82)' : 'rgba(240,247,255,0.86)',
