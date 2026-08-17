@@ -23,6 +23,77 @@ const yen = v => (v == null ? '不明' : Math.round(v).toLocaleString())
 // ── 価格を「特徴」に加工する（一次情報）────────────────────────────────────
 
 /**
+ * 上げ（下げ）の**勢いが落ちているか**を数値にする（2026-08-17 追加・ユーザー指摘）。
+ *
+ * きっかけ＝「上昇のローソク足が短くなっていっている＝売買圧が弱まっている」。
+ * 実際に測ると 7/29 の安値から +12.1% 上げる過程で、上昇日の実体は
+ * **3.88% → 2.69% → 1.62% → 0.79% → 0.40%** と一貫して縮んでいた。
+ *
+ * 🔴 それまで LLM に渡していたのは「下げてから」の材料だけ（ATR・損切り水準・乖離）で、
+ *    **上げの最中に勢いが枯れていく段階**は数値として渡していなかった
+ *    （チャート画像は見せているが、そこから言語化される保証はない）。
+ * 🔵 出すのは事実だけ。「だから売り」とは書かない（判断は LLM と人がする）。
+ *
+ * @param {Array} rows computeIndicators を通した日足
+ * @param {number} i   基準日
+ */
+export function buildMomentumFade(rows, i = rows.length - 1) {
+  const back = 20
+  const from = Math.max(0, i - back + 1)
+  const win = rows.slice(from, i + 1)
+  // 🔵 5本未満では「縮んでいる」と言えない（無いものを作らない）
+  if (win.length < 5) return null
+
+  const bodyPct = (r) => (r.open ? ((r.close - r.open) / r.open) * 100 : 0)
+  const ups = win.filter((r) => r.close > r.open)
+  const downs = win.filter((r) => r.close < r.open)
+
+  // 直近の上昇日の実体（古い順）。縮んでいるかは「後半の平均 < 前半の平均」で見る
+  const upBodies = ups.map((r) => ({ d: r.date, v: bodyPct(r) }))
+  const half = Math.floor(upBodies.length / 2)
+  const early = upBodies.slice(0, half).map((x) => x.v)
+  const late = upBodies.slice(half).map((x) => x.v)
+  const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null)
+  const earlyAvg = avg(early), lateAvg = avg(late)
+
+  // 何日連続で縮んでいるか（直近の上昇日をさかのぼる）
+  let shrinking = 0
+  for (let k = upBodies.length - 1; k > 0; k--) {
+    if (upBodies[k].v < upBodies[k - 1].v) shrinking++
+    else break
+  }
+
+  // 出来高が平常（20日中央値）に対してどうか
+  const vols = win.map((r) => r.volume ?? 0).filter((v) => v > 0)
+  const sorted = [...vols].sort((a, b) => a - b)
+  const medVol = sorted.length ? sorted[Math.floor(sorted.length / 2)] : null
+  const lastVol = rows[i].volume ?? null
+  const volRatio = medVol && lastVol ? lastVol / medVol : null
+
+  // 上ヒゲ（上値で押し返されているか）
+  const upperWick = (r) => {
+    const top = Math.max(r.open, r.close)
+    const range = (r.high ?? r.close) - (r.low ?? r.close)
+    return range > 0 ? (((r.high ?? r.close) - top) / range) * 100 : null
+  }
+  const wick3 = rows.slice(Math.max(0, i - 2), i + 1).map(upperWick).filter((v) => v != null)
+
+  return {
+    upDays: ups.length,
+    downDays: downs.length,
+    upBodyRecent: upBodies.slice(-6).map((x) => ({ date: x.d, pct: r2(x.v) })),
+    upBodyEarlyAvg: r2(earlyAvg),
+    upBodyLateAvg: r2(lateAvg),
+    // 🔵 「縮んでいる」＝後半の上昇日の実体が前半より小さい
+    fading: earlyAvg != null && lateAvg != null ? lateAvg < earlyAvg : null,
+    shrinkStreak: shrinking,
+    downBodyAvg: r2(avg(downs.map((r) => Math.abs(bodyPct(r))))),
+    volVsNormal: r2(volRatio),
+    upperWick3dAvg: r2(avg(wick3)),
+  }
+}
+
+/**
  * 指標つき日次配列の i 番目について、LLM が読める価格の特徴を作る。
  * rows は robotStrategy.computeIndicators を通したもの。
  */
@@ -73,6 +144,8 @@ export function buildPriceFeatures(rows, i = rows.length - 1) {
     trend: bear[i] ? '確定下落（ドンチャン50安値割れ）' : long[i] ? '上昇（ドンチャン50高値超え）' : '中立',
     atr20: r1(cur.atr20),
     atr20Pct: r2(cur.atr20 == null ? null : (cur.atr20 / cur.close) * 100),
+    // 🆕 2026-08-17：上げ（下げ）の勢いが落ちているか
+    fade: buildMomentumFade(rows, i),
   }
 }
 
@@ -94,7 +167,31 @@ export function formatPriceSection(f, label = '日経225') {
   高安構造: ${f.structure}
 
 トレンド: ${f.trend}
-ボラティリティ: ATR20 ${yen(f.atr20)}円（値幅にして ${pct(f.atr20Pct)}／日）`
+ボラティリティ: ATR20 ${yen(f.atr20)}円（値幅にして ${pct(f.atr20Pct)}／日）
+${formatFade(f.fade)}`
+}
+
+/**
+ * 勢いの衰えを文章にする（2026-08-17 追加）。
+ * 🔴 事実だけを書く。「だから売り」「だから買い」とは書かない。
+ */
+function formatFade(fade) {
+  if (!fade) return ''
+  const list = fade.upBodyRecent.map((x) => `${x.date.slice(5)} ${pct(x.pct)}`).join(' → ')
+  const lines = [
+    '',
+    '勢い（直近20日のローソクの実体）',
+    `  上昇${fade.upDays}日 / 下落${fade.downDays}日`,
+    `  上昇日の実体（古い順）: ${list || 'なし'}`,
+    `  上昇日の実体 前半平均 ${pct(fade.upBodyEarlyAvg)} → 後半平均 ${pct(fade.upBodyLateAvg)}`
+      + `${fade.fading === true ? '（**縮んでいる**）' : fade.fading === false ? '（縮んでいない）' : ''}`,
+  ]
+  if (fade.shrinkStreak >= 2) lines.push(`  🔴 上昇日の実体が**${fade.shrinkStreak}回連続で縮小**している`)
+  if (fade.downBodyAvg != null) lines.push(`  下落日の実体 平均 ${pct(fade.downBodyAvg)}（小さいほど売り圧力も無い＝保ち合い）`)
+  if (fade.volVsNormal != null) lines.push(`  当日の出来高: 平常（20日中央値）の ${fade.volVsNormal}倍`)
+  if (fade.upperWick3dAvg != null) lines.push(`  直近3日の上ヒゲ比率 平均 ${fade.upperWick3dAvg}%（高いほど上値で押し返されている）`)
+  lines.push('  🔵 これは「勢いの記述」であって、売買の指示ではない。方向の判断は他の材料と合わせて行うこと。')
+  return lines.join('\n')
 }
 
 /** 各ETFの現値とボラ（建てる器としての情報。判断の軸ではない） */
