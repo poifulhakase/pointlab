@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-08-19T04:24:29.193Z",
+  "updatedAt": "2026-08-19T10:55:20.214Z",
   "data": [
     {
       "date": "2026-08-19",
       "open": 66812,
       "high": 66834,
-      "low": 65327,
-      "close": 65541,
+      "low": 65134,
+      "close": 65326,
       "volume": 0,
       "prev_close": 67461,
-      "change": -1920,
-      "change_pct": -2.85,
-      "ma25_dev": -0.59
+      "change": -2135,
+      "change_pct": -3.16,
+      "ma25_dev": -0.91
     },
     {
       "date": "2026-08-18",
@@ -19,7 +19,7 @@
       "high": 69093,
       "low": 67369,
       "close": 67461,
-      "volume": 0,
+      "volume": 151200000,
       "prev_close": 69220,
       "change": -1759,
       "change_pct": -2.54,

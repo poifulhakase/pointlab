@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-08-19T04:24:29.381Z",
+  "updatedAt": "2026-08-19T10:55:20.635Z",
   "data": [
     {
-      "date": "2026/08/18",
+      "date": "2026/08/19",
       "label": "8月第4週",
-      "ratio": 42.6
+      "ratio": 39
     },
     {
       "date": "2026/08/14",
@@ -263,6 +263,12 @@
     }
   ],
   "daily": [
+    {
+      "date": "2026/08/19",
+      "ratio": 39,
+      "unrestricted": 29.8,
+      "restricted": 9.2
+    },
     {
       "date": "2026/08/18",
       "ratio": 42.6,
@@ -3256,12 +3262,6 @@
       "ratio": 41.1,
       "unrestricted": 33.3,
       "restricted": 7.8
-    },
-    {
-      "date": "2024/07/30",
-      "ratio": 46.3,
-      "unrestricted": 39.4,
-      "restricted": 6.9
     }
   ]
 }
