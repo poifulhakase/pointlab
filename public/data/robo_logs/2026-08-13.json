@@ -83,14 +83,14 @@
           "hit": true
         },
         "5d": {
-          "date": null,
-          "close": null,
-          "ret_pct": null,
-          "edge_pct": null,
-          "hit": null
+          "date": "2026-08-20",
+          "close": 66185.5703125,
+          "ret_pct": -3.11,
+          "edge_pct": -3.11,
+          "hit": false
         }
       },
-      "complete": false
+      "complete": true
     }
   }
 }
