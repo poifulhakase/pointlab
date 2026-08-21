@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-21T06:00:56.030Z",
+  "updatedAt": "2026-08-21T10:58:37.936Z",
   "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
   "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
   "horizons": [
@@ -81,7 +81,7 @@
             "wins": 1,
             "win_rate_pct": 25,
             "avg_confidence": 56.75,
-            "avg_edge_pct": -0.94,
+            "avg_edge_pct": -0.86,
             "bull": {
               "n": 3,
               "win_rate_pct": 33.33
@@ -96,7 +96,7 @@
             "wins": 0,
             "win_rate_pct": 0,
             "avg_confidence": 56,
-            "avg_edge_pct": -4.2,
+            "avg_edge_pct": -3.93,
             "bull": {
               "n": 1,
               "win_rate_pct": 0
@@ -226,7 +226,7 @@
       "confidence_pct": 58,
       "ret_1d": 0.74,
       "hit_1d": null,
-      "ret_5d": -4.2,
+      "ret_5d": -3.93,
       "hit_5d": null,
       "complete": true
     },
@@ -268,7 +268,7 @@
       "side": null,
       "symbol": "none",
       "confidence_pct": 40,
-      "ret_1d": -0.59,
+      "ret_1d": -0.3,
       "hit_1d": null,
       "ret_5d": null,
       "hit_5d": null,
