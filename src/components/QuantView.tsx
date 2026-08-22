@@ -7,6 +7,8 @@ import { themeVars } from '../utils/themeVars'
 import { PoiroboLoader } from './PoiroboLoader'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
+import { buildMarketStance } from '../utils/marketStance'
+import { StanceSummary } from './StanceSummary'
 import { fetchVixData, fetchVixDailyData, type VixWeekData, type VixDayData } from '../utils/vixData'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, fetchShortSellDaily, type ShortSellWeekData, type ShortSellDayData } from '../utils/shortSellData'
@@ -541,6 +543,13 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
   const tv = useMemo(() => themeVars(theme), [theme])
 
   // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
+  // 🔴 ブンセキの「結論」（2026-08-22 新設）。予測ではなく**いまの位置**を1行で言い切る。
+  //    詳しくは utils/marketStance.ts の頭を読むこと（何を書かないかが本体）。
+  const stance = useMemo(
+    () => buildMarketStance({ margin: marData, arbitrage: arbData, shortSell: ssData, advanceDecline: adData, price: nkFuturesPriceData }),
+    [marData, arbData, ssData, adData, nkFuturesPriceData]
+  )
+
   const [marLongQ1,  marLongQ3]  = useMemo(() => quartiles(marData.map(r => r.longBal)),  [marData])
   const [marShortQ1, marShortQ3] = useMemo(() => quartiles(marData.map(r => r.shortBal)), [marData])
   const [arbLongQ1,  arbLongQ3]  = useMemo(() => quartiles(arbData.map(r => r.longBal)),  [arbData])
@@ -591,12 +600,24 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
           width: paneWidth,
           flexShrink: 0,
           display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
+          flexDirection: 'column',
           height: '100%',
           overflowX: 'hidden',
           overflowY: isMobile ? 'auto' : 'hidden',
           paddingBottom: isMobile ? 130 : 0,
         }}>
+          {/* 🔴 結論を最上段に置く（2026-08-22・運用者の指示「結論が主軸」）。
+              それまでは数字の表が主役で、結論はどこにも書かれていなかった。 */}
+          {stance && (
+            <div style={{ flexShrink: 0, padding: isMobile ? '12px 12px 0' : '14px 18px 4px' }}>
+              <StanceSummary theme={theme} isMobile={isMobile} stance={stance} />
+            </div>
+          )}
+          <div style={{
+            flex: 1, minHeight: 0, display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            overflowX: 'hidden', overflowY: isMobile ? 'visible' : 'hidden',
+          }}>
           <EnginePanel onPromptCopy={handlePromptCopy} copyStatus={copyStatus} isMobile={isMobile} theme={theme} logState={engineLogState} />
           <div style={isMobile ? s.dividerH : s.divider} />
           <div style={isMobile ? { flexShrink: 0, display: 'flex', flexDirection: 'column' } : s.panel}>
@@ -604,6 +625,7 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
           </div>
           {/* ② スマホ: SYSTEM LOG は QuantMemoPanel の下に表示 */}
           {isMobile && <EngineSystemLog {...engineLogState} theme={theme} />}
+          </div>
         </div>}{/* /分析 */}
 
         {/* ━━ 環境 ━━ */}

@@ -17,6 +17,8 @@ import { marginGauge, supplyPriceCell } from '../utils/marginGauge'
 import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
+import { StanceSummary } from './StanceSummary'
+import { buildFutureStance } from '../utils/futureStance'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
 type C = ReturnType<typeof cy>
@@ -95,6 +97,16 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
       {data && (
         <>
           <Intro c={c} isMobile={isMobile} />
+          {/* 🔴 結論を先に置く（2026-08-22・運用者の指示「結論が主軸」）。
+              予測ではなく**いまの位置**だけを書く（utils/futureStance.ts）。 */}
+          {(() => {
+            const stance = buildFutureStance(data.stocks ?? [])
+            return stance ? (
+              <div style={{ padding: isMobile ? '0 16px' : '0 28px', maxWidth: 1180, margin: '0 auto', width: '100%' }}>
+                <StanceSummary theme={theme} isMobile={isMobile} stance={stance} />
+              </div>
+            ) : null
+          })()}
           {data.layers && data.layers.length > 0 && (
             <LayerGap c={c} dark={dark} isMobile={isMobile} layers={data.layers} />
           )}
