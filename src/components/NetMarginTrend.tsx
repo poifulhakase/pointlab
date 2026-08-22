@@ -40,8 +40,13 @@ export function NetMarginTrend({ gauge, theme, isMobile }: Props) {
 
   return (
     <div style={{ marginTop: 6 }}>
+      {/* 🔴 ラベルを言い換えた（2026-08-22・運用者の指摘「信用倍率とは違う？分かるような分からないような」）。
+          倍率＝買残÷売残の**比率**、ここ＝買残−売残の**量**。倍率は割合なので規模が消える
+          （買残1億・売残0.05億でも20倍）。「差引の買い越し」では何のことか伝わらないので、
+          **これから市場に出てくる売り物の正味の量**という中身の言葉にする。 */}
       <div style={{ fontSize: 10, color: dim, marginBottom: 4 }}>
-        差引の買い越しの推移（{unit}）
+        これから出てくる売り物の量（{unit}）
+        <span style={{ marginLeft: 6, opacity: 0.8 }}>＝ 信用の買残 − 売残</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: isMobile ? 6 : 10 }}>
         {rows.map((r, i) => {

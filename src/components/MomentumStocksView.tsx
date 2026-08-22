@@ -405,17 +405,22 @@ function StockCard({ c, dark, isMobile, s, order = 0, margin = null }: {
         {/* 🆕 2026-08-17：需給 × 価格の位置。
             🔴 同じ「200日線タッチ」でも、押し目に買残が増えているかどうかで意味が変わる
             （ユーザー指摘）。状態の記述だけで、買え・売れは書かない。 */}
-        {cell && (
+        {/* 🔴 2026-08-22 修正＝**枠の出し分けを `cell` から `gauge` に変えた**（運用者の指摘
+            「ファナックとか需給出てないけど？」）。`cell`（需給×価格の一文）は
+            200日線±5%か上方乖離のときしか作られないため、ファナック（−6.2%）のように
+            **どの型にも当てはまらない銘柄では、数字ごと丸ごと消えていた**。
+            一文は「あれば出す」に降ろし、**数字と推移は常に出す**。 */}
+        {gauge && (
           <div style={{
             marginTop: 12, padding: '8px 12px', borderRadius: 10,
             border: `1px solid ${c.BORDER}`, background: c.HDBG,
             fontSize: isMobile ? 11.5 : 11, color: c.DESC, lineHeight: 1.7,
           }}>
-            需給 × 価格：{cell}
-            {gauge?.note && <span style={{ display: 'block', color: c.DIM, fontSize: 10, marginTop: 3 }}>{gauge.note}</span>}
+            {cell && <>需給 × 価格：{cell}</>}
+            {gauge.note && <span style={{ display: 'block', color: c.DIM, fontSize: 10, marginTop: cell ? 3 : 0 }}>{gauge.note}</span>}
             {/* 🔴 差引の買い越しの推移（2026-08-22・運用者の要望「信用買い残の推移が見たい／グラフにできるか」）。
                 週ごとの残高そのものより、**買残−売残がどう動いたか**が上値の重さの変化を表す。 */}
-            {gauge && <NetMarginTrend gauge={gauge} theme={dark ? 'dark' : 'light'} isMobile={isMobile} />}
+            <NetMarginTrend gauge={gauge} theme={dark ? 'dark' : 'light'} isMobile={isMobile} />
           </div>
         )}
 

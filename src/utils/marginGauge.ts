@@ -206,7 +206,7 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
   // 🔴 ここが銘柄をまたいで比べられる唯一の数字（2026-08-22 追加）
   if (netOkuTxt || netDaysForNote(vol20, last) != null) {
     const nd = netDaysForNote(vol20, last)
-    parts.push(`差引の買い越し${netOkuTxt ? ' ' + netOkuTxt : ''}${nd != null ? `（${nd}日分）` : ''}`)
+    parts.push(`これから出てくる売り物${netOkuTxt ? ' ' + netOkuTxt : ''}${nd != null ? `（${nd}日分）` : ''}`)
   }
   if (chgPct != null) parts.push(`買残 前週比 ${chgPct > 0 ? '+' : ''}${chgPct}%`)
   if (chg4wPct != null) parts.push(`4週で ${chg4wPct > 0 ? '+' : ''}${chg4wPct}%`)
