@@ -61,6 +61,16 @@ export type MarginGauge = {
    *    **信用買残＝これから出てくる売り物**という中身の言葉で1文にする。
    */
   summary: string
+  /** 差引の買い越し（株数）。買残−売残 */
+  netShares: number
+  /** 差引の買い越しが平常の商いの何日分か。🔴 銘柄をまたいで比べられる唯一の数字 */
+  netDays: number | null
+  /** 金額（億円）。株価を渡したときだけ入る */
+  longOku: number | null
+  shortOku: number | null
+  netOku: number | null
+  /** 週ごとの推移（古い順）。運用者の要望＝「信用買い残の推移が見たい」（2026-08-22） */
+  series: { w: string; long: number; short: number; net: number; netDays: number | null; netOku: number | null }[]
   /** 踏み上げの言葉（none のときは空文字） */
   squeezeLabel: string
   /** 直近1週の買残の増減率（%） */
@@ -127,7 +137,13 @@ export function heaviness(ratio: number | null, days: number | null): number {
 }
 
 /** 信用残の履歴（古い順）から需給ゲージを作る。履歴が空なら null。 */
-export function marginGauge(history: MarginWeek[] | null | undefined, vol20: number | null | undefined): MarginGauge | null {
+/**
+ * @param price 直近の株価。渡すと金額（億円）も出す。
+ *   🔴 **倍率だけでは銘柄を比べられない**（2026-08-22 運用者の指摘）。
+ *      ファナックは倍率20.8倍・差引284億円、ハーモニックは倍率1.6倍・差引17億円で、
+ *      倍率で見ると印象が逆になる。**差引の買い越し**を出して初めて量の差が見える。
+ */
+export function marginGauge(history: MarginWeek[] | null | undefined, vol20: number | null | undefined, price?: number | null): MarginGauge | null {
   if (!history || history.length === 0) return null
 
   const last = history[history.length - 1]
@@ -183,8 +199,15 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
 
   const parts: string[] = []
   if (ratio != null) parts.push(`信用倍率 ${ratio}倍`)
-  if (days != null) parts.push(`買残は平常の商いの ${days}日分`)
-  if (shortDays != null) parts.push(`売残は ${shortDays}日分`)
+  const okuOf = (shares: number) => (price && price > 0 ? `${Math.round(shares * price / 1e8 * 10) / 10}億円` : null)
+  const longOkuTxt = okuOf(last.long), shortOkuTxt = okuOf(last.short), netOkuTxt = okuOf(last.long - last.short)
+  if (days != null) parts.push(`買残${longOkuTxt ? ' ' + longOkuTxt : 'は平常の商いの'} ${longOkuTxt ? `（${days}日分）` : `${days}日分`}`)
+  if (shortDays != null) parts.push(`売残${shortOkuTxt ? ' ' + shortOkuTxt : 'は'} ${shortOkuTxt ? `（${shortDays}日分）` : `${shortDays}日分`}`)
+  // 🔴 ここが銘柄をまたいで比べられる唯一の数字（2026-08-22 追加）
+  if (netOkuTxt || netDaysForNote(vol20, last) != null) {
+    const nd = netDaysForNote(vol20, last)
+    parts.push(`差引の買い越し${netOkuTxt ? ' ' + netOkuTxt : ''}${nd != null ? `（${nd}日分）` : ''}`)
+  }
   if (chgPct != null) parts.push(`買残 前週比 ${chgPct > 0 ? '+' : ''}${chgPct}%`)
   if (chg4wPct != null) parts.push(`4週で ${chg4wPct > 0 ? '+' : ''}${chg4wPct}%`)
   if (squeezeLabel) parts.push(squeezeLabel)
@@ -200,12 +223,28 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
   const trendWord = trend === 'heavier' ? '（4週で増加）' : trend === 'lighter' ? '（4週で減少）' : ''
   const summary = levelWord + trendWord + (squeeze === 'strong' ? '・売り方も多い' : '')
 
+  // 差引の買い越し（＝将来ほどける向きの正味）。日分にすると銘柄をまたいで比べられる。
+  const oku = (shares: number) => (price && price > 0 ? Math.round(shares * price / 1e8 * 10) / 10 : null)
+  const netShares = last.long - last.short
+  const netDays = vol20 && vol20 > 0 ? Math.round((netShares / vol20) * 100) / 100 : null
+  const series = history.map(h => ({
+    w: h.w, long: h.long, short: h.short, net: h.long - h.short,
+    netDays: vol20 && vol20 > 0 ? Math.round(((h.long - h.short) / vol20) * 100) / 100 : null,
+    netOku: oku(h.long - h.short),
+  }))
+
   return {
     score,
     prevScore,
     level,
     label,
     summary,
+    netShares,
+    netDays,
+    longOku: oku(last.long),
+    shortOku: oku(last.short),
+    netOku: oku(netShares),
+    series,
     trend,
     trendLabel,
     ratio,
@@ -217,4 +256,10 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
     chg4wPct,
     note: `${last.w} 時点：` + (parts.join('／') || 'データ不足'),
   }
+}
+
+/** 差引の買い越しが平常の商いの何日分か（note 用の小さな補助）。 */
+function netDaysForNote(vol20: number | null | undefined, last: MarginWeek): number | null {
+  if (!vol20 || vol20 <= 0) return null
+  return Math.round(((last.long - last.short) / vol20) * 100) / 100
 }

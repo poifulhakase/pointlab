@@ -123,4 +123,41 @@ describe('marginGauge', () => {
       expect(up.summary).not.toMatch(/良|悪|危険|買い時|売り時/)
     })
   })
+
+  /**
+   * 🔴 2026-08-22 運用者の指摘＝**倍率だけでは銘柄を比べられない**。
+   *    ファナック（倍率20.8倍・差引284億円）とハーモニック（倍率1.6倍・差引17億円）は、
+   *    倍率で見ると印象が逆になる。差引の買い越しと、その推移を出せることを固定する。
+   */
+  describe('差引の買い越しと推移', () => {
+    const hist = [
+      week('2026-07-31', 900_000, 0, 400_000),
+      week('2026-08-07', 800_000, -100_000, 500_000),
+      week('2026-08-14', 824_700, 24_700, 523_000),
+    ]
+
+    it('差引（買残−売残）と、平常の商いの何日分かを出す', () => {
+      const g = marginGauge(hist, 1_660_300)!
+      expect(g.netShares).toBe(824_700 - 523_000)
+      expect(g.netDays).toBeCloseTo(0.18, 2)
+    })
+
+    it('株価を渡すと金額（億円）も出す', () => {
+      const g = marginGauge(hist, 1_660_300, 5700)!
+      expect(g.netOku).toBeCloseTo(17.2, 1)
+      expect(g.longOku).toBeCloseTo(47.0, 1)
+      expect(g.note).toContain('差引の買い越し')
+    })
+
+    it('株価が無ければ金額は出さない（推測で埋めない）', () => {
+      const g = marginGauge(hist, 1_660_300)!
+      expect(g.netOku).toBeNull()
+    })
+
+    it('週ごとの推移を古い順で返す', () => {
+      const g = marginGauge(hist, 1_660_300, 5700)!
+      expect(g.series.map(x => x.w)).toEqual(['2026-07-31', '2026-08-07', '2026-08-14'])
+      expect(g.series[0].net).toBe(500_000)
+    })
+  })
 })

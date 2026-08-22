@@ -168,7 +168,7 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   {/* 🆕 需給ゲージ（信用残から見た上値の重さ・軽くなってきたか） */}
                   <div style={{ flexShrink: 0 }}>
                     <MarginGaugeBar
-                      gauge={marginGauge(margin?.stocks?.[w.code]?.history, w.vol20)}
+                      gauge={marginGauge(margin?.stocks?.[w.code]?.history, w.vol20, w.close)}
                       theme={dark ? 'dark' : 'light'}
                       compact
                     />
