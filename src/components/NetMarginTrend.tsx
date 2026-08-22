@@ -53,13 +53,14 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
       {/* 🔴 見出しは中立にする（2026-08-22・運用者の指摘）。
           「これから出てくる売り物」だと**マイナスのとき日本語が壊れる**
           （売り物がマイナス＝意味を成さない）。符号の意味は凡例で示す。 */}
-      {!compact && <div style={{ fontSize: 10, color: dim, marginBottom: 4, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'baseline' }}>
-        <span>将来的に売られる残（{unit}）</span>
-        <span style={{ opacity: 0.85 }}>
-          <span style={{ color: plus }}>＋ 売られる残</span>
-          <span style={{ margin: '0 4px' }}>／</span>
-          <span style={{ color: minus }}>− 買い戻される残</span>
-        </span>
+      {/* 🔵 見出しは置かず、**凡例だけ**にする（2026-08-22・運用者の指摘
+          「将来的に売られる残（億円）というテキストもいらないかも」）。
+          符号の意味が分かれば表題は要らない＝行数を1つ減らせる。 */}
+      {!compact && <div style={{ fontSize: 10, color: dim, marginBottom: 4 }}>
+        <span style={{ color: plus }}>＋ 将来的に売られる残</span>
+        <span style={{ margin: '0 4px' }}>／</span>
+        <span style={{ color: minus }}>− 将来的に買い戻される残</span>
+        <span style={{ marginLeft: 4 }}>（{unit}）</span>
       </div>}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: compact ? 3 : (isMobile ? 6 : 10) }}>
         {rows.map((r, i) => {
