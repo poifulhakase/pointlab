@@ -1,4 +1,4 @@
-export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'adp' | 'cpi' | 'pce' | 'ism' | 'tankan' | 'intervention'
+export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'adp' | 'cpi' | 'pce' | 'ism' | 'tankan' | 'intervention' | 'jacksonhole'
 
 export type MacroFilter = { us: boolean; jp: boolean }
 
@@ -38,6 +38,12 @@ export const MACRO_META: Record<MacroEventType, { short: string; label: string; 
     desc: 'ISM（全米供給管理協会）が毎月第1営業日に発表する製造業の景況感指数。50が好不況の分かれ目で、米景気の先行指標として重視される。' },
   tankan: { short: '短観',    label: '日銀短観',                 category: 'jp',
     desc: '日本銀行が四半期ごとに発表する企業短期経済観測調査。大企業・中小企業の景況感（DI）を数値化。日本経済の体温計として機関投資家が注目する。' },
+  jacksonhole: { short: 'ジャクソンホール', label: 'ジャクソンホール会議', category: 'us',
+    desc: 'カンザスシティ連銀が毎年8月下旬にワイオミング州ジャクソンホールで開く経済シンポジウム（木〜土の3日間）。'
+      + '各国の中央銀行総裁・学者が集まる。'
+      + '🔴 相場が動くのは主に**2日目のFRB議長の基調講演**（現地時間の金曜午前＝日本時間の金曜22〜23時ごろ）。'
+      + 'FOMCの前に方向感を示す場として使われることが多く、翌週の相場に尾を引く。'
+      + '🔵 3日間とも印を出しているが、日程だけが決まっていて内容（議題・講演者）は直前まで分からない。' },
   intervention: { short: '為替介入', label: '為替介入（実施実績）', category: 'jp',
     desc: '財務省が円相場の過度な変動に対処するため実施した外国為替平衡操作。'
       + '🔴 介入は事前に日程が公表されない。ここに載るのは**実施後に確認された実績**だけで、予定ではない。'
@@ -158,6 +164,17 @@ for (let yr = 2024; yr <= 2026; yr++) {
   for (let mo = 0; mo < 12; mo++) ISM_DATES.push(firstBusinessDay(yr, mo))
 }
 
+// ジャクソンホール会議（カンザスシティ連銀の経済政策シンポジウム・木〜土の3日間）
+// 🔴 **毎年の日程は連銀の発表待ちで、規則から計算できない**（「8月の第4木曜」等の固定則ではない。
+//    実際 2025年は8/21〜23、2026年は1週後ろの8/27〜29）。年次更新のたびに出典を見て足すこと
+//    （docs/maintenance/calendar-dates-check.md）。
+// 出典＝カンザスシティ連銀のニュースリリース（2024・2025）／2026は同連銀発表と大和総研レポート(2026-08-20)。
+const JACKSON_HOLE_DATES: [number, number, number][] = [
+  [2024, 7, 22], [2024, 7, 23], [2024, 7, 24],
+  [2025, 7, 21], [2025, 7, 22], [2025, 7, 23],
+  [2026, 7, 27], [2026, 7, 28], [2026, 7, 29],
+]
+
 
 // ── 実績として貯めるデータ ────────────────────────────────
 //
@@ -221,6 +238,7 @@ export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEve
     check(CPI_DATES, 'cpi')
     check(PCE_DATES, 'pce')
     check(ISM_DATES, 'ism')
+    check(JACKSON_HOLE_DATES, 'jacksonhole')
   }
   if (filter.jp) {
     check(BOJ_DATES, 'boj', BOJ_RESULTS)

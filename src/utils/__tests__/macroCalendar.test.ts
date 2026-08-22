@@ -121,4 +121,31 @@ describe('実績（介入・日銀の結果）', () => {
     expect(dates).toContain('2026-07-31')
     expect([...dates].sort()).toEqual(dates)
   })
+
+  // ── ジャクソンホール会議（2026-08-22 追加・ユーザー要望「大事なやつはカレンダーに入れたい」）──
+  //
+  // 🔴 日程は規則から計算できない（連銀の発表待ち）。2025年は8/21〜23、2026年は1週後ろの8/27〜29。
+  //    「毎年同じ週」だと思って計算式にすると年をまたいだ瞬間に外れるので、日付を直に持つ。
+  describe('ジャクソンホール会議', () => {
+    it('3日間とも印が出る（2026年＝8/27〜29）', () => {
+      for (const d of [27, 28, 29]) {
+        expect(getMacroEventsForDate(new Date(2026, 7, d), ALL).map(e => e.type)).toContain('jacksonhole')
+      }
+    })
+
+    it('前後の日には出ない', () => {
+      expect(getMacroEventsForDate(new Date(2026, 7, 26), ALL).map(e => e.type)).not.toContain('jacksonhole')
+      expect(getMacroEventsForDate(new Date(2026, 7, 30), ALL).map(e => e.type)).not.toContain('jacksonhole')
+    })
+
+    it('過去の回も引ける（2025＝8/21〜23／2024＝8/22〜24）', () => {
+      expect(getMacroEventsForDate(new Date(2025, 7, 22), ALL).map(e => e.type)).toContain('jacksonhole')
+      expect(getMacroEventsForDate(new Date(2024, 7, 23), ALL).map(e => e.type)).toContain('jacksonhole')
+    })
+
+    it('米国のイベントなので、日本だけの表示では出ない', () => {
+      const jpOnly = getMacroEventsForDate(new Date(2026, 7, 28), { us: false, jp: true })
+      expect(jpOnly.map(e => e.type)).not.toContain('jacksonhole')
+    })
+  })
 })
