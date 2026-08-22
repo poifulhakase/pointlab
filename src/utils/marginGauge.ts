@@ -54,6 +54,13 @@ export type MarginGauge = {
    *    ②は上昇時に買い戻しが入るので、同じ「軽い」でも意味がまるで違う（2026-08-17 ユーザー指摘）。
    */
   squeeze: 'none' | 'some' | 'strong'
+  /**
+   * 🔴 1行で言い切る要約（2026-08-22 追加・運用者の指摘）。
+   *    それまで画面には「14 軽い ▸ 重くなってきた （踏み上げ余地）」と**3つの判定が並んで**いて、
+   *    軽いのか重いのか読めなかった。専門語（軽い／重い／踏み上げ）を使わず、
+   *    **信用買残＝これから出てくる売り物**という中身の言葉で1文にする。
+   */
+  summary: string
   /** 踏み上げの言葉（none のときは空文字） */
   squeezeLabel: string
   /** 直近1週の買残の増減率（%） */
@@ -182,11 +189,23 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
   if (chg4wPct != null) parts.push(`4週で ${chg4wPct > 0 ? '+' : ''}${chg4wPct}%`)
   if (squeezeLabel) parts.push(squeezeLabel)
 
+  // 🔴 専門語を使わない1行（2026-08-22）。買残＝将来の売り物、売残＝将来の買い戻し。
+  //    🔵 向きも「増えている／減っている」と事実で書き、良し悪しは付けない
+  //       （買残の積み上がりが弱気材料かは指数では否定されている＝2026-08-22 の検証）。
+  const levelWord =
+    level === 'very_heavy' ? '上に控える売り物がかなり多い'
+      : level === 'heavy' ? '上に控える売り物が多め'
+        : level === 'normal' ? '上に控える売り物はふつう'
+          : '上に控える売り物は少なめ'
+  const trendWord = trend === 'heavier' ? '（4週で増加）' : trend === 'lighter' ? '（4週で減少）' : ''
+  const summary = levelWord + trendWord + (squeeze === 'strong' ? '・売り方も多い' : '')
+
   return {
     score,
     prevScore,
     level,
     label,
+    summary,
     trend,
     trendLabel,
     ratio,

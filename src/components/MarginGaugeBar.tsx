@@ -8,7 +8,6 @@
 //    ・踏み上げ余地（売り方が残っている）は、上向きに流れる光で「燃料がある」ことを示す
 // 🔴 動きは `prefers-reduced-motion` で必ず止める（アプリ全体の約束）。
 
-import { useEffect, useState } from 'react'
 import type { MarginGauge } from '../utils/marginGauge'
 import { cy } from '../utils/cyberTheme'
 
@@ -32,19 +31,6 @@ function colorOf(level: MarginGauge['level'], theme: 'dark' | 'light') {
 
 /** 踏み上げ余地の色。上げ方向に効く材料なので、重さ（オレンジ〜赤）とは別の色にする */
 const SQUEEZE_COLOR = (theme: 'dark' | 'light') => (theme === 'dark' ? '#7ee787' : '#1a7f37')
-
-const TREND_MARK: Record<MarginGauge['trend'], string> = {
-  lighter: '◀',
-  flat: '●',
-  heavier: '▶',
-}
-
-/** 省スペース版の言葉（矢印だけでは向きの意味が読めないため必ず添える） */
-const TREND_SHORT: Record<MarginGauge['trend'], string> = {
-  lighter: '軽く',
-  flat: '横ばい',
-  heavier: '重く',
-}
 
 /**
  * 一覧の上に置く凡例。🔵 はじめて見る人が「22 軽い ▶」を読めるようにする。
@@ -88,22 +74,8 @@ export function MarginGaugeBar({ gauge, theme, compact = false }: Props) {
   const c = cy(theme)
   const dark = theme === 'dark'
 
-  // 🔵 数字が伸びていく（計器らしさ）。動きを止める設定なら最初から最終値。
-  const [shown, setShown] = useState(0)
-  useEffect(() => {
-    if (!gauge) return
-    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduce) { setShown(gauge.score); return }
-    let raf = 0
-    const t0 = performance.now()
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / 900)
-      setShown(Math.round(gauge.score * (1 - Math.pow(1 - p, 3))))
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [gauge])
+  // 🔵 点数を数字で出すのはやめた（2026-08-22）。「14」だけ見ても意味が読めないため。
+  //    バーの指針は残してあるので、位置の感覚は目で取れる。内訳は説明文（note）にある。
 
   if (!gauge) {
     // 🔴 データが無いときに「ふつう」と出さない（無いことを黙って埋めない）
@@ -112,9 +84,6 @@ export function MarginGaugeBar({ gauge, theme, compact = false }: Props) {
 
   const color = colorOf(gauge.level, theme)
   const squeezeColor = SQUEEZE_COLOR(theme)
-  const trendColor = gauge.trend === 'lighter' ? (dark ? '#00e5ff' : '#0369a1')
-    : gauge.trend === 'heavier' ? (dark ? '#ffa14a' : '#d97a1f')
-      : c.DIM
 
   const W = compact ? 92 : 150          // 目盛りの幅
   const H = compact ? 8 : 12            // 目盛りの高さ
@@ -181,35 +150,12 @@ export function MarginGaugeBar({ gauge, theme, compact = false }: Props) {
         )}
       </span>
 
-      {/* 数値（伸びる）＋判定 */}
-      <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
-        <b style={{
-          fontSize: compact ? 12 : 15, fontWeight: 900, color, letterSpacing: '-0.02em',
-          textShadow: dark ? `0 0 14px ${color}66` : 'none',
-        }}>{shown}</b>
-        <span style={{ fontSize: compact ? 9.5 : 10.5, color, fontWeight: 700 }}>{gauge.label}</span>
+      {/* 🔴 1行で言い切る（2026-08-22・運用者の指摘）。
+          それまでは「14 軽い ▸ 重くなってきた （踏み上げ余地）」と判定が3つ並び、
+          軽いのか重いのか読めなかった。点数と内訳は説明文（note）に残してある。 */}
+      <span style={{ fontSize: compact ? 10 : 11.5, color, fontWeight: 700, letterSpacing: '0.01em' }}>
+        {gauge.summary}
       </span>
-
-      {/* 向き（軽くなってきた／重くなってきた）
-          🔴 省スペース版でも**言葉を必ず出す**（2026-08-17 ユーザー指摘）。
-             矢印だけだと「57 重い ◀」が「重いのに良い向き」なのか読めない。
-             実際「軽い ▶（＝軽いが悪化中）」と「重い ◀（＝重いが改善中）」は意味が逆。 */}
-      <span style={{ fontSize: compact ? 9 : 10, color: trendColor, fontWeight: 700 }}>
-        {TREND_MARK[gauge.trend]} {compact ? TREND_SHORT[gauge.trend] : gauge.trendLabel}
-      </span>
-
-      {/* 🔴 「軽い」の中身を出し分ける（2026-08-17 ユーザー指摘）。
-          売り方が残っている軽さ＝上昇時に買い戻しが入る側。閑散な軽さとは意味が違う。 */}
-      {gauge.squeeze !== 'none' && (
-        <span style={{
-          padding: compact ? '1px 6px' : '2px 9px', borderRadius: 999,
-          border: `1px solid ${squeezeColor}`, background: `${squeezeColor}1f`,
-          color: squeezeColor, fontSize: compact ? 8.5 : 9.5, fontWeight: 800, letterSpacing: '0.04em',
-          boxShadow: dark ? `0 0 12px ${squeezeColor}44` : 'none',
-        }}>
-          {gauge.squeeze === 'strong' ? '踏み上げ余地' : '売り方あり'}
-        </span>
-      )}
     </span>
   )
 }
