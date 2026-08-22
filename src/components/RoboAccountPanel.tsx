@@ -259,7 +259,7 @@ export function RoboAccountPanel({ theme, isMobile, engineTab = 'account' }: Pro
             </tbody>
           </table>
         </div>
-        <ProgressToJudgement c={c} n={closed.length} />
+        <StopConditions c={c} n={closed.length} />
       </div>
 
       {/* ── 判断の答え合わせ（⑤b-A/B・2026-08-16 表示）──
@@ -607,21 +607,36 @@ function EquityCurve({ c, points, initial, theme }: {
   )
 }
 
-/** 判定（30件）までの進み具合をバーで見せる */
-function ProgressToJudgement({ c, n }: { c: ReturnType<typeof cy>; n: number }) {
-  const goal = 30
-  const ratio = Math.min(1, n / goal)
+/**
+ * 止める条件（2026-08-22 に作り直し）。
+ *
+ * 🔴 **「30件貯めて良し悪しを判定する」をやめた**。判定できないため。
+ *    同日の検証で、勝率52.79%と50%の差を偶然と区別するのに **n=4,890** 必要だった。
+ *    30件で分かるのは勝率20%と80%の違い程度で、貯めても「判定できない」しか出ない。
+ *
+ * 🔴 そこで**片側だけ**にした＝「良ければ採用」は取り下げ、「**明確に悪ければ止める**」だけ残す。
+ *    効果が大きい失敗は小さい標本でも見えるので、この向きなら判定できる。
+ * 🔵 **続ける条件は無い**（何も起きなければ続く）。「良い成績が出たから本採用」の段階を作らない
+ *    ＝これは方針「統計は却下にだけ使う」（2026-08-22）と同じ考え方。
+ */
+function StopConditions({ c, n }: { c: ReturnType<typeof cy>; n: number }) {
+  const items = [
+    '10件以上で、累計損益が対照群を10ポイント以上下回る',
+    '20件以上で、最大ドローダウンが対照群の2倍を超える',
+    '規律を破った（損切りを置かない・同じ日に二度判断する等）＝成績と無関係に即停止',
+  ]
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ height: 3, background: c.FAINT, borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{
-          width: `${ratio * 100}%`, height: '100%', background: c.GREEN,
-          boxShadow: `0 0 8px ${c.GREEN}`, transition: 'width 0.6s ease',
-        }} />
+      <div style={{ fontSize: 10, color: c.NOTICE, letterSpacing: '0.06em', marginBottom: 6 }}>
+        ▌ 止める条件（{n}件目まで到達）
       </div>
-      <div style={{ marginTop: 7, fontSize: 10, color: c.DIM, lineHeight: 1.8, letterSpacing: '0.04em' }}>
-        判定は {goal} 件から{n < goal && `（あと ${goal - n} 件）`}。期待値がプラスで、かつ対照群を上回っていれば継続。<br />
-        勝率34〜40%が正常です。<span style={{ color: c.NOTICE }}>勝率ではなく期待値とドローダウン</span>で見てください。
+      <div style={{ fontSize: 10, color: c.DIM, lineHeight: 1.9, letterSpacing: '0.04em' }}>
+        {items.map((t, i) => <div key={i}>・{t}</div>)}
+        <div style={{ marginTop: 6 }}>
+          🔴 <span style={{ color: c.NOTICE }}>良し悪しの判定はしません</span>。
+          勝率の差を偶然と区別するには数千件が要るため、この件数では判定できないと分かっています（2026-08-22 の検証）。<br />
+          続ける条件はありません（何も起きなければ続きます）。勝率34〜40%が正常です。
+        </div>
       </div>
     </div>
   )

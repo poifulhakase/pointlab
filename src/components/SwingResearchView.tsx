@@ -34,7 +34,7 @@ const KNOWN: JudgeRow[] = [
 
 /** まだ分かっていないこと（＝判定できていないもの） */
 const UNKNOWN: JudgeRow[] = [
-  { verdict: 'trap', label: 'AIの判断が対照群を上回るか', value: '実トレード2 / 30件（約7ヶ月先）', strength: 0.07 },
+  { verdict: 'trap', label: 'AIの判断が対照群を上回るか', value: '🔴 判定できない（数千件必要）', strength: 0.07 },
   { verdict: 'trap', label: '確信度63%が実運用でも出るか', value: 'in-sample' },
   { verdict: 'trap', label: 'チャート画像が判断に効いているか', value: '未検証' },
   { verdict: 'trap', label: '運用者の保有を読ませる意味があるか', value: '2026-08-13 から' },
@@ -78,7 +78,7 @@ export function SwingRoom({ c, isMobile }: Props) {
           borderRadius: 12, background: c.card,
           fontSize: isMobile ? 14 : 17, fontWeight: 800, color: c.accent, letterSpacing: '0.01em',
         }}>
-          30トレード貯まるまで、設計は動かさない。
+          良し悪しは判定しない。明確に悪ければ止める。
         </div>
 
 

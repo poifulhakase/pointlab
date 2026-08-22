@@ -268,7 +268,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
     { id: 'shield-tool', node: slide('ぽいロボ ロボ口座', 'AIの判断を検証する・ROBO ACCOUNT', toolBody(
       <>AIが<b style={{ color: c.TEXT }}>毎営業日の朝に「買う／持つ／手放す」を判断</b>し、その結果を仮想の口座に記録しています。実際の売買はしません。<b style={{ color: c.TEXT }}>ロボ口座・成績・履歴</b>の3つのタブで、いまの建玉・資産推移・1件ごとの判断理由まで追えます。</>,
       '見るのは勝率ではありません',
-      <>AIの成績を<b style={{ color: c.TEXT }}>決定論ルール（対照群）と並べて</b>表示します。勝率は34〜40%が正常なので、見るのは<b style={{ color: c.TEXT }}>期待値と最大ドローダウン</b>です。🔴 <b style={{ color: c.TEXT }}>いまは検証中で、開発者のみが閲覧できます。</b>使えるかどうかは30トレード貯まってから判断します。</>,
+      <>AIの成績を<b style={{ color: c.TEXT }}>決定論ルール（対照群）と並べて</b>表示します。勝率は34〜40%が正常なので、見るのは<b style={{ color: c.TEXT }}>期待値と最大ドローダウン</b>です。🔴 <b style={{ color: c.TEXT }}>いまは検証中で、開発者のみが閲覧できます。</b>🔴 <b style={{ color: c.TEXT }}>良し悪しの判定はしません</b>（勝率の差を偶然と区別するには数千件が要ると分かったため）。明確に悪ければ止める、という片側だけを見ます。</>,
     ), <EngineIcon />) },
 
     // ════ 道具：セクターローテーション（周期）════
