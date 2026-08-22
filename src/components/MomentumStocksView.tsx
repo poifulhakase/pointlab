@@ -18,6 +18,7 @@ import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGa
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
 import { StanceSummary } from './StanceSummary'
+import { NetMarginTrend } from './NetMarginTrend'
 import { buildFutureStance } from '../utils/futureStance'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
@@ -412,18 +413,9 @@ function StockCard({ c, dark, isMobile, s, order = 0, margin = null }: {
           }}>
             需給 × 価格：{cell}
             {gauge?.note && <span style={{ display: 'block', color: c.DIM, fontSize: 10, marginTop: 3 }}>{gauge.note}</span>}
-            {/* 🔴 差引の買い越しの推移（2026-08-22・運用者の要望「信用買い残の推移が見たい」）。
+            {/* 🔴 差引の買い越しの推移（2026-08-22・運用者の要望「信用買い残の推移が見たい／グラフにできるか」）。
                 週ごとの残高そのものより、**買残−売残がどう動いたか**が上値の重さの変化を表す。 */}
-            {gauge && gauge.series.length >= 2 && (
-              <span style={{ display: 'block', color: c.DIM, fontSize: 10, marginTop: 3 }}>
-                差引の推移：{gauge.series.map((x, i) => (
-                  <span key={x.w} style={{ color: i === gauge.series.length - 1 ? c.GREEN : undefined, fontWeight: i === gauge.series.length - 1 ? 700 : undefined }}>
-                    {i > 0 && ' → '}
-                    {x.w.slice(5).replace('-', '/')} {x.netOku != null ? `${x.netOku}億` : `${Math.round(x.net / 1000) / 10}万株`}
-                  </span>
-                ))}
-              </span>
-            )}
+            {gauge && <NetMarginTrend gauge={gauge} theme={dark ? 'dark' : 'light'} isMobile={isMobile} />}
           </div>
         )}
 
