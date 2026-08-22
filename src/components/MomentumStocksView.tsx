@@ -17,9 +17,7 @@ import { marginGauge, supplyPriceCell } from '../utils/marginGauge'
 import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
-import { StanceSummary } from './StanceSummary'
 import { NetMarginTrend } from './NetMarginTrend'
-import { buildFutureStance } from '../utils/futureStance'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
 type C = ReturnType<typeof cy>
@@ -98,16 +96,7 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
       {data && (
         <>
           <Intro c={c} isMobile={isMobile} />
-          {/* 🔴 結論を先に置く（2026-08-22・運用者の指示「結論が主軸」）。
-              予測ではなく**いまの位置**だけを書く（utils/futureStance.ts）。 */}
-          {(() => {
-            const stance = buildFutureStance(data.stocks ?? [])
-            return stance ? (
-              <div style={{ padding: isMobile ? '0 16px' : '0 28px', maxWidth: 1180, margin: '0 auto', width: '100%' }}>
-                <StanceSummary theme={theme} isMobile={isMobile} stance={stance} />
-              </div>
-            ) : null
-          })()}
+
           {data.layers && data.layers.length > 0 && (
             <LayerGap c={c} dark={dark} isMobile={isMobile} layers={data.layers} />
           )}
@@ -417,7 +406,9 @@ function StockCard({ c, dark, isMobile, s, order = 0, margin = null }: {
             fontSize: isMobile ? 11.5 : 11, color: c.DESC, lineHeight: 1.7,
           }}>
             {cell && <>需給 × 価格：{cell}</>}
-            {gauge.note && <span style={{ display: 'block', color: c.DIM, fontSize: 10, marginTop: cell ? 3 : 0 }}>{gauge.note}</span>}
+            {/* 🔴 2026-08-22：長い内訳テキスト（gauge.note）はカードから外した（運用者の指摘
+                「ごちゃごちゃ書いてあって良く分からない。視覚的に見せるだけでいい」）。
+                内訳は需給ゲージのバーにカーソルを当てれば出る（title 属性に残してある）。 */}
             {/* 🔴 差引の買い越しの推移（2026-08-22・運用者の要望「信用買い残の推移が見たい／グラフにできるか」）。
                 週ごとの残高そのものより、**買残−売残がどう動いたか**が上値の重さの変化を表す。 */}
             <NetMarginTrend gauge={gauge} theme={dark ? 'dark' : 'light'} isMobile={isMobile} />

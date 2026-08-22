@@ -45,8 +45,7 @@ export function NetMarginTrend({ gauge, theme, isMobile }: Props) {
           （買残1億・売残0.05億でも20倍）。「差引の買い越し」では何のことか伝わらないので、
           **これから市場に出てくる売り物の正味の量**という中身の言葉にする。 */}
       <div style={{ fontSize: 10, color: dim, marginBottom: 4 }}>
-        これから出てくる売り物の量（{unit}）
-        <span style={{ marginLeft: 6, opacity: 0.8 }}>＝ 信用の買残 − 売残</span>
+        これから出てくる売り物（{unit}）
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: isMobile ? 6 : 10 }}>
         {rows.map((r, i) => {
