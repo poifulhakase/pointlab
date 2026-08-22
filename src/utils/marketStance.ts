@@ -165,3 +165,20 @@ export function buildMarketStance(input: StanceInput): MarketStance | null {
     asOf: dates.length ? dates.slice().sort()[dates.length - 1] : null,
   }
 }
+
+/**
+ * 結論を**そのままAIに渡せる文章**にする（2026-08-22 追加）。
+ *
+ * 🔴 運用者の指示＝画面に常設するのではなく、**エントリー分析用プロンプトに載せる**。
+ *    毎日見る画面では場所を取るが、AIに判断させるときには前提として要る。
+ * 🔵 **簡潔にする**（同日の追加指示）＝結論と3本の柱だけ。
+ *    「これは予測ではありません」等の断りは画面向けの文言なので、プロンプトには入れない
+ *    （プロンプト側の規則で既に縛っているため、二重に書くと長いだけになる）。
+ */
+export function stanceToText(stance: MarketStance): string {
+  return [
+    '# いまの位置（アプリが機械的に出した数字・予測ではない）',
+    `結論：${stance.headline}`,
+    ...stance.lines.map(l => `${l.label}：${l.text}`),
+  ].join('\n')
+}

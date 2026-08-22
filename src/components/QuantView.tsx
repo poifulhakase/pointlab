@@ -7,8 +7,7 @@ import { themeVars } from '../utils/themeVars'
 import { PoiroboLoader } from './PoiroboLoader'
 import { fetchInvestorData, type InvestorWeekData } from '../utils/jpxInvestorData'
 import { fetchMarginData, type MarginWeekData } from '../utils/jpxMarginData'
-import { buildMarketStance } from '../utils/marketStance'
-import { StanceSummary } from './StanceSummary'
+import { buildMarketStance, stanceToText } from '../utils/marketStance'
 import { fetchVixData, fetchVixDailyData, type VixWeekData, type VixDayData } from '../utils/vixData'
 import { fetchAdvanceDeclineData, type AdvanceDeclineWeekData } from '../utils/advanceDeclineData'
 import { fetchShortSellData, fetchShortSellDaily, type ShortSellWeekData, type ShortSellDayData } from '../utils/shortSellData'
@@ -529,20 +528,6 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
   useEffect(() => { if (!futuresDailyLoaded) loadFuturesDaily() }, [futuresDailyLoaded, loadFuturesDaily])
   useEffect(() => { if (!stocksDailyLoaded) loadStocksDaily() }, [stocksDailyLoaded, loadStocksDaily])
 
-  const handlePromptCopy = useCallback(async () => {
-    const json = JSON.stringify(
-      buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData, stocksDailyData),
-      null, 2
-    )
-    await copyText(AI_PROMPT_TEMPLATE + json)
-    setCopyStatus('prompt')
-    setTimeout(() => setCopyStatus(''), 2000)
-  }, [invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData, stocksDailyData])
-
-
-  const tv = useMemo(() => themeVars(theme), [theme])
-
-  // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
   // 🔴 ブンセキの「結論」（2026-08-22 新設）。予測ではなく**いまの位置**を1行で言い切る。
   //    詳しくは utils/marketStance.ts の頭を読むこと（何を書かないかが本体）。
   const stance = useMemo(
@@ -550,6 +535,23 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
     [marData, arbData, ssData, adData, nkFuturesPriceData]
   )
 
+  const handlePromptCopy = useCallback(async () => {
+    const json = JSON.stringify(
+      buildExportJson(invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData, stocksDailyData),
+      null, 2
+    )
+    // 🔴 「いまの位置」を先頭に付ける（2026-08-22）。AIが数字の山から自分で位置を読み違えないように、
+    //    こちらで機械的に出した現在地を前提として渡す。
+    const head = stance ? stanceToText(stance) + '\n\n' : ''
+    await copyText(AI_PROMPT_TEMPLATE + head + json)
+    setCopyStatus('prompt')
+    setTimeout(() => setCopyStatus(''), 2000)
+  }, [stance, invData, marData, vixWeekData, ntData, adData, ssData, arbData, cotData, arbDailyData, usdjpyData, futuresDailyData, nas100Data, vixDailyData, nkFuturesPriceData, stocksDailyData])
+
+
+  const tv = useMemo(() => themeVars(theme), [theme])
+
+  // モバイル向けテーブルスタイル（横スクロールなし・パディング縮小・ヘッダー折り返し許可）
   const [marLongQ1,  marLongQ3]  = useMemo(() => quartiles(marData.map(r => r.longBal)),  [marData])
   const [marShortQ1, marShortQ3] = useMemo(() => quartiles(marData.map(r => r.shortBal)), [marData])
   const [arbLongQ1,  arbLongQ3]  = useMemo(() => quartiles(arbData.map(r => r.longBal)),  [arbData])
@@ -606,13 +608,9 @@ export function QuantView({ theme, isMobile, user, quantTab, visibleTabs = ALL_Q
           overflowY: isMobile ? 'auto' : 'hidden',
           paddingBottom: isMobile ? 130 : 0,
         }}>
-          {/* 🔴 結論を最上段に置く（2026-08-22・運用者の指示「結論が主軸」）。
-              それまでは数字の表が主役で、結論はどこにも書かれていなかった。 */}
-          {stance && (
-            <div style={{ flexShrink: 0, padding: isMobile ? '12px 12px 0' : '14px 18px 4px' }}>
-              <StanceSummary theme={theme} isMobile={isMobile} stance={stance} />
-            </div>
-          )}
+          {/* 🔵 「いまの位置」は画面に常設せず、**エントリー分析用プロンプトに載せる**
+              （2026-08-22 運用者の指示）。毎日見る画面では場所を取るが、AIに渡す前提としては要る。
+              組み立ては utils/marketStance.ts、文章化は stanceToText()。 */}
           <div style={{
             flex: 1, minHeight: 0, display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
