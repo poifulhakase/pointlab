@@ -1,4 +1,5 @@
 export type MacroEventType = 'fomc' | 'boj' | 'nfp' | 'adp' | 'cpi' | 'pce' | 'ism' | 'tankan' | 'intervention' | 'jacksonhole'
+  | 'fomc_minutes' | 'testimony' | 'gdp'
 
 export type MacroFilter = { us: boolean; jp: boolean }
 
@@ -38,6 +39,20 @@ export const MACRO_META: Record<MacroEventType, { short: string; label: string; 
     desc: 'ISM（全米供給管理協会）が毎月第1営業日に発表する製造業の景況感指数。50が好不況の分かれ目で、米景気の先行指標として重視される。' },
   tankan: { short: '短観',    label: '日銀短観',                 category: 'jp',
     desc: '日本銀行が四半期ごとに発表する企業短期経済観測調査。大企業・中小企業の景況感（DI）を数値化。日本経済の体温計として機関投資家が注目する。' },
+  fomc_minutes: { short: 'FOMC議事要旨', label: 'FOMC議事要旨', category: 'us',
+    desc: '3週間前のFOMCで何が議論されたかの記録（米東部時間14:00＝日本時間の翌3時ごろ公表）。'
+      + '🔴 政策そのものは決まらないが、**票が割れていた／次の一手に含みがあった**ことが分かると、'
+      + '会合当日と逆向きに動くことがある。「終わった会合」の話なので油断されやすい。' },
+  testimony: { short: '議長証言', label: 'FRB議長の議会証言（半期）', category: 'us',
+    desc: 'FRB議長が法律に基づき年2回（2月ごろ・7月ごろ）、下院・上院で金融政策報告を行う。2日間にわたる。'
+      + '原稿より**質疑での言い回し**で相場が動くことが多い。'
+      + '🔴 日程は議会側が決めるため規則で計算できず、公表は概ね2〜3週間前。'
+      + 'このカレンダーには**日程が発表された回だけ**載る。' },
+  gdp:    { short: '米GDP', label: '米GDP（速報値）', category: 'us',
+    desc: '米商務省(BEA)が四半期ごとに出す国内総生産の速報値（米東部時間8:30＝日本時間の21:30〜22:30ごろ）。'
+      + '速報→改定→確定と3回出るうち、相場が動くのは**速報**。'
+      + '🔴 日程はBEAの公表カレンダーどおりで、月末木曜が基本だが**ずれる**'
+      + '（2025年秋の政府閉鎖で、10-12月期の速報は1/29→2/20へ後ろ倒しになった）。' },
   jacksonhole: { short: 'ジャクソンホール', label: 'ジャクソンホール会議', category: 'us',
     desc: 'カンザスシティ連銀が毎年8月下旬にワイオミング州ジャクソンホールで開く経済シンポジウム（木〜土の3日間）。'
       + '各国の中央銀行総裁・学者が集まる。'
@@ -164,6 +179,34 @@ for (let yr = 2024; yr <= 2026; yr++) {
   for (let mo = 0; mo < 12; mo++) ISM_DATES.push(firstBusinessDay(yr, mo))
 }
 
+// FOMC議事要旨の公表日＝**会合の3週間後**（FRBが公表方針として明示している規則）。
+// 🔵 会合最終日は水曜なので、要旨も水曜になる。FOMC_DATES から自動導出する（手で足さない）。
+const FOMC_MINUTES_DATES: [number, number, number][] = FOMC_DATES.map(([y, m, d]) => {
+  const dt = new Date(Date.UTC(y, m, d))
+  dt.setUTCDate(dt.getUTCDate() + 21)
+  return [dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()]
+})
+
+// FRB議長の議会証言（半期・金融政策報告）。下院と上院で2日続けて行う。
+// 🔴 **議会が決めるので規則で計算できない**。日程が発表された回だけ足すこと（年次更新の対象）。
+// 出典＝FRB「Testimony by Chairman Warsh on the semiannual Monetary Policy Report」(2026-07-14)
+//       ／上院銀行委員会の公聴会告知（2026-07-15）。
+const TESTIMONY_DATES: [number, number, number][] = [
+  [2026, 6, 14], [2026, 6, 15],
+]
+
+// 米GDP速報値（BEAの公表カレンダー）。
+// 🔴 「月末の木曜」が基本だが**その通りにならない年がある**ので、規則にせず日付を直に持つ。
+//    2025年10〜11月の政府閉鎖の影響で、10-12月期の速報は 1/29 → **2/20** に後ろ倒しされた。
+// 出典＝BEA のニュースリリースおよび公表スケジュール更新（2026-01-07）。
+// 🔵 2024・2025年ぶんは出典を確認していないので入れていない（推測で埋めない）。
+const GDP_DATES: [number, number, number][] = [
+  [2026, 1, 20],  // 2025年10-12月期（本来は1/29・政府閉鎖でずれた）
+  [2026, 3, 30],  // 2026年1-3月期
+  [2026, 6, 30],  // 2026年4-6月期
+  [2026, 9, 29],  // 2026年7-9月期
+]
+
 // ジャクソンホール会議（カンザスシティ連銀の経済政策シンポジウム・木〜土の3日間）
 // 🔴 **毎年の日程は連銀の発表待ちで、規則から計算できない**（「8月の第4木曜」等の固定則ではない。
 //    実際 2025年は8/21〜23、2026年は1週後ろの8/27〜29）。年次更新のたびに出典を見て足すこと
@@ -239,6 +282,9 @@ export function getMacroEventsForDate(date: Date, filter: MacroFilter): MacroEve
     check(PCE_DATES, 'pce')
     check(ISM_DATES, 'ism')
     check(JACKSON_HOLE_DATES, 'jacksonhole')
+    check(FOMC_MINUTES_DATES, 'fomc_minutes')
+    check(TESTIMONY_DATES, 'testimony')
+    check(GDP_DATES, 'gdp')
   }
   if (filter.jp) {
     check(BOJ_DATES, 'boj', BOJ_RESULTS)

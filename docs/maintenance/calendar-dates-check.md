@@ -25,8 +25,15 @@
 |---|---|---|
 | `src/utils/marketHolidays.ts` | `NYSE_HOLIDAYS` 配列 | 〜2026年末 |
 | `src/utils/macroCalendar.ts` | `FOMC_DATES` / `BOJ_DATES` / `NFP_DATES` / `CPI_DATES` / `PCE_DATES` / `GDP_DATES` / `TANKAN_DATES` | 〜2026年末 |
+| 〃 | `JACKSON_HOLE_DATES`（🆕 2026-08-22） | 〜2026年 |
+| 〃 | `TESTIMONY_DATES`（🆕 2026-08-22・FRB議長の議会証言） | 2026年7月ぶんのみ |
 
 > **注意:** SQ算出日・配当権利日は計算式で自動判定されるため更新不要。
+> `ADP_DATES`（NFPの2営業日前）・`ISM_DATES`（第1営業日）・`FOMC_MINUTES_DATES`（FOMCの3週間後）も
+> 自動導出なので手で足さない。
+>
+> 🔴 **`TESTIMONY_DATES` だけは年次更新では埋まらない**。FRB議長の議会証言は議会が日程を決め、
+> 公表は概ね2〜3週間前なので、**発表を見かけたときに足す**（2月ごろ・7月ごろの年2回）。
 
 ---
 
@@ -64,6 +71,19 @@
 ### 米GDP速報値（四半期・年4回）
 - 検索: `BEA GDP advance estimate release dates 2027`
 - 公式: https://www.bea.gov/news/schedule
+- 🔴 **「月末の木曜」で決め打ちしない**。2025年秋の政府閉鎖で 10-12月期の速報が 1/29 → **2/20** へ
+  後ろ倒しになった実例がある。BEAの公表スケジュール更新（`bea.gov/news/blog`）も見ること
+
+### ジャクソンホール会議（年1回・8月下旬の木〜土）
+- 検索: `Jackson Hole Economic Policy Symposium 2027 dates`
+- 公式: https://www.kansascityfed.org/research/jackson-hole-economic-symposium/
+- 🔴 **「8月の第◯木曜」という規則ではない**（2025年=8/21〜23／2026年=8/27〜29と1週ずれた）。
+  連銀のニュースリリースで実日程を確認する。3日ぶんを配列に足す
+
+### FRB議長の議会証言（半期・年2回×2日）
+- 検索: `Fed Chair semiannual monetary policy testimony Congress 2027 dates`
+- 公式: https://www.federalreserve.gov/newsevents/testimony/ ／ 上院銀行委員会・下院金融サービス委員会の公聴会告知
+- 🔴 **年次更新では先の日程が取れない**（議会が決め、公表は2〜3週間前）。分かった回だけ足す
 
 ### 日銀短観（四半期・年4回）
 - 検索: `日銀短観 発表日 2027`

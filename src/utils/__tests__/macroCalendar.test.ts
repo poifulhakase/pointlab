@@ -148,4 +148,53 @@ describe('実績（介入・日銀の結果）', () => {
       expect(jpOnly.map(e => e.type)).not.toContain('jacksonhole')
     })
   })
+
+  // ── 2026-08-22 追加（ユーザー要望）＝FOMC議事要旨・議長証言・米GDP ──
+  describe('FOMC議事要旨', () => {
+    it('FOMCのちょうど3週間後に出る（自動導出）', () => {
+      // 2026-01-28 のFOMC → 2026-02-18
+      expect(getMacroEventsForDate(new Date(2026, 1, 18), ALL).map(e => e.type)).toContain('fomc_minutes')
+      // 2026-06-17 のFOMC → 2026-07-08
+      expect(getMacroEventsForDate(new Date(2026, 6, 8), ALL).map(e => e.type)).toContain('fomc_minutes')
+    })
+
+    it('会合当日は議事要旨ではない', () => {
+      const day = getMacroEventsForDate(new Date(2026, 0, 28), ALL).map(e => e.type)
+      expect(day).toContain('fomc')
+      expect(day).not.toContain('fomc_minutes')
+    })
+  })
+
+  describe('FRB議長の議会証言', () => {
+    it('2026年7月の2日間に出る（下院14日・上院15日）', () => {
+      expect(getMacroEventsForDate(new Date(2026, 6, 14), ALL).map(e => e.type)).toContain('testimony')
+      expect(getMacroEventsForDate(new Date(2026, 6, 15), ALL).map(e => e.type)).toContain('testimony')
+    })
+
+    // 🔴 日程は議会が決めるので、発表されていない回は載せない（推測で埋めない）
+    it('日程が出ていない回は載せない', () => {
+      expect(getMacroEventsForDate(new Date(2026, 1, 11), ALL).map(e => e.type)).not.toContain('testimony')
+    })
+  })
+
+  describe('米GDP（速報値）', () => {
+    it('四半期ごとに出る', () => {
+      expect(getMacroEventsForDate(new Date(2026, 3, 30), ALL).map(e => e.type)).toContain('gdp')
+      expect(getMacroEventsForDate(new Date(2026, 6, 30), ALL).map(e => e.type)).toContain('gdp')
+      expect(getMacroEventsForDate(new Date(2026, 9, 29), ALL).map(e => e.type)).toContain('gdp')
+    })
+
+    // 🔴 「月末の木曜」と決め打ちすると外れる。政府閉鎖で 1/29 → 2/20 にずれた回がある
+    it('ずれた回は本来の日ではなく実際の日に出る', () => {
+      expect(getMacroEventsForDate(new Date(2026, 1, 20), ALL).map(e => e.type)).toContain('gdp')
+      expect(getMacroEventsForDate(new Date(2026, 0, 29), ALL).map(e => e.type)).not.toContain('gdp')
+    })
+  })
+
+  it('新しく足した3つは、日本だけの表示では出ない', () => {
+    const jp = { us: false, jp: true }
+    expect(getMacroEventsForDate(new Date(2026, 1, 18), jp).map(e => e.type)).not.toContain('fomc_minutes')
+    expect(getMacroEventsForDate(new Date(2026, 6, 14), jp).map(e => e.type)).not.toContain('testimony')
+    expect(getMacroEventsForDate(new Date(2026, 6, 30), jp).map(e => e.type)).not.toContain('gdp')
+  })
 })

@@ -75,6 +75,10 @@ const MACRO_TIMES: Partial<Record<string, [number, number]>> = {
   pce:    [22, 30],
   ism:    [23, 0],   // 23:00 JST（10:00 AM ET）
   tankan: [8,  50],  // 8:50 JST
+  fomc_minutes: [3, 0],   // 3:00 JST（2 PM ET 翌朝）＝FOMCと同じ
+  gdp:          [22, 30], // 22:30 JST（8:30 AM ET）
+  testimony:    [23, 0],  // 23:00 JST（10:00 AM ET 前後・議会の都合で前後する）
+  // 🔵 ジャクソンホールは3日間の会議で「発表時刻」が無いため、カウントダウンには出さない
 }
 
 function fmtCd(sec: number): string {
