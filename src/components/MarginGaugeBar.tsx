@@ -62,8 +62,11 @@ export function MarginGaugeStyles() {
       .mg-needle { animation: mg-needle 2.6s ease-in-out infinite; }
       .mg-scan   { animation: mg-scan 3.4s linear infinite; }
       .mg-fuel   { animation: mg-fuel .9s linear infinite; }
+      /* 🆕 2026-08-22：将来的に売られる残の棒が下から伸びる（運用者の要望「ダイナミックに」） */
+      @keyframes nmt-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+      .nmt-bar { transform-origin: bottom center; animation: nmt-grow 700ms cubic-bezier(.2,.9,.25,1) both; }
       @media (prefers-reduced-motion: reduce) {
-        .mg-fill, .mg-needle, .mg-scan, .mg-fuel { animation: none !important; }
+        .mg-fill, .mg-needle, .mg-scan, .mg-fuel, .nmt-bar { animation: none !important; }
         .mg-fill { transform: none !important; }
       }
     `}</style>
@@ -153,9 +156,14 @@ export function MarginGaugeBar({ gauge, theme, compact = false }: Props) {
       {/* 🔴 1行で言い切る（2026-08-22・運用者の指摘）。
           それまでは「14 軽い ▸ 重くなってきた （踏み上げ余地）」と判定が3つ並び、
           軽いのか重いのか読めなかった。点数と内訳は説明文（note）に残してある。 */}
-      <span style={{ fontSize: compact ? 10 : 11.5, color, fontWeight: 700, letterSpacing: '0.01em' }}>
-        {gauge.summary}
-      </span>
+      {/* 🔴 省スペース版（候補一覧）では**文字を出さない**（2026-08-22・運用者の指摘
+          「横にはみ出す／視覚的に見せる方向がいい」）。要約はバーの title に残るので
+          カーソルを当てれば読める。 */}
+      {!compact && (
+        <span style={{ fontSize: 11.5, color, fontWeight: 700, letterSpacing: '0.01em' }}>
+          {gauge.summary}
+        </span>
+      )}
     </span>
   )
 }

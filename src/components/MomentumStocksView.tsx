@@ -13,7 +13,7 @@ import {
   type PoiroboStocksData, type PoiroboStock, type RangeKey, type StockSeriesPoint, type AiLayer,
 } from '../utils/poiroboStocks'
 import { fetchStockMargin, type StockMarginData } from '../utils/poiroboStocks'
-import { marginGauge, supplyPriceCell } from '../utils/marginGauge'
+import { marginGauge } from '../utils/marginGauge'
 import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
 import { thesisOf } from '../utils/poiroboStockThesis'
 import { PoiroboLoader } from './PoiroboLoader'
@@ -311,7 +311,6 @@ function StockCard({ c, dark, isMobile, s, order = 0, margin = null }: {
   const near200 = s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5
   // 🆕 2026-08-17：需給ゲージと、需給×価格の位置（同じ200日線タッチでも需給で意味が変わる）
   const gauge = marginGauge(margin?.stocks?.[s.code]?.history, s.vol20, s.close)
-  const cell = supplyPriceCell(gauge, s.dev200_pct)
 
   return (
     <div ref={ref} style={{
@@ -391,21 +390,17 @@ function StockCard({ c, dark, isMobile, s, order = 0, margin = null }: {
             strong={s.dev200_pct != null && Math.abs(s.dev200_pct) <= 5} />
         </div>
 
-        {/* 🆕 2026-08-17：需給 × 価格の位置。
-            🔴 同じ「200日線タッチ」でも、押し目に買残が増えているかどうかで意味が変わる
-            （ユーザー指摘）。状態の記述だけで、買え・売れは書かない。 */}
-        {/* 🔴 2026-08-22 修正＝**枠の出し分けを `cell` から `gauge` に変えた**（運用者の指摘
-            「ファナックとか需給出てないけど？」）。`cell`（需給×価格の一文）は
-            200日線±5%か上方乖離のときしか作られないため、ファナック（−6.2%）のように
-            **どの型にも当てはまらない銘柄では、数字ごと丸ごと消えていた**。
-            一文は「あれば出す」に降ろし、**数字と推移は常に出す**。 */}
+        {/* 🔴 2026-08-22：**「需給 × 価格」の総評は削除**（運用者の指摘
+            「分かりづらい。というか要らない。上のほうで総評を出しているし」）。
+            上の需給ゲージが既に1行で状態を言っている（「上に控える売り物は少なめ（4週で増加）」）ので、
+            ここに別の言い方の総評を置くと**同じことを二度、別の言葉で言う**ことになっていた。
+            残すのは推移のグラフだけ。 */}
         {gauge && (
           <div style={{
             marginTop: 12, padding: '8px 12px', borderRadius: 10,
             border: `1px solid ${c.BORDER}`, background: c.HDBG,
             fontSize: isMobile ? 11.5 : 11, color: c.DESC, lineHeight: 1.7,
           }}>
-            {cell && <>需給 × 価格：{cell}</>}
             {/* 🔴 2026-08-22：長い内訳テキスト（gauge.note）はカードから外した（運用者の指摘
                 「ごちゃごちゃ書いてあって良く分からない。視覚的に見せるだけでいい」）。
                 内訳は需給ゲージのバーにカーソルを当てれば出る（title 属性に残してある）。 */}

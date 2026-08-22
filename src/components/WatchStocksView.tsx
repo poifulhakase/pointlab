@@ -138,10 +138,14 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   boxShadow: near && dark ? `0 0 26px ${c.GREEN}26` : 'none',
                   opacity: near ? 1 : 0.86,
                   padding: isMobile ? '16px 14px' : '14px 16px',
+                  // 🔴 2026-08-22：固定幅を積み上げていたため、需給の推移を足した時点で
+                  //    行が横にはみ出した（運用者の指摘）。**折り返せる指定**に変える。
                   display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+                  flexWrap: isMobile ? 'nowrap' : 'wrap',
                   gap: isMobile ? 8 : 14, alignItems: isMobile ? 'flex-start' : 'center',
+                  overflow: 'hidden',
                 }}>
-                  <div style={{ flex: isMobile ? undefined : '0 0 230px', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <div style={{ flex: isMobile ? undefined : '1 1 190px', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                     <span style={{
                       padding: '2px 7px', borderRadius: 999, border: `1px solid ${c.BORDER}`,
                       fontSize: 9.5, color: c.DIM,
@@ -151,14 +155,14 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   </div>
 
                   {/* 🔵 チャートしか見ない使い方なので、行にも線を出す（1年・200日線つき） */}
-                  <div style={{ flex: isMobile ? undefined : '0 0 190px', width: isMobile ? '100%' : undefined }}>
+                  <div style={{ flex: isMobile ? undefined : '0 1 170px', minWidth: 0, width: isMobile ? '100%' : undefined }}>
                     <MiniChart c={c} dark={dark} rows={w.series ?? []} height={isMobile ? 78 : 56} />
                   </div>
 
                   <div style={{
-                    flex: 1, display: 'grid',
+                    flex: isMobile ? undefined : '2 1 240px', minWidth: 0, display: 'grid',
                     gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-                    gap: isMobile ? 10 : 8, width: '100%',
+                    gap: isMobile ? 10 : 8, width: isMobile ? '100%' : undefined,
                   }}>
                     <Cell c={c} label="株価" value={w.close != null ? w.close.toLocaleString() : '—'} />
                     <Cell c={c} label="12ヶ月" value={pct(w.ret12m)} />
@@ -173,20 +177,16 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   {(() => {
                     const g = marginGauge(margin?.stocks?.[w.code]?.history, w.vol20, w.close)
                     return (
-                      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <MarginGaugeBar gauge={g} theme={dark ? 'dark' : 'light'} compact />
                         {g && <NetMarginTrend gauge={g} theme={dark ? 'dark' : 'light'} isMobile={isMobile} compact />}
                       </div>
                     )
                   })()}
 
-                  {near && (
-                    <span style={{
-                      flexShrink: 0, padding: '3px 10px', borderRadius: 999,
-                      border: `1px solid ${c.GREEN}`, background: `${c.GREEN}22`,
-                      fontSize: 9.5, fontWeight: 800, color: c.GREEN, whiteSpace: 'nowrap',
-                    }}>200日線付近</span>
-                  )}
+                  {/* 🔴 2026-08-22：「200日線付近」のバッジは削除（運用者の方針「視覚的に見せる」）。
+                      該当行は**枠が緑・左が太線・淡く光る**ので、文字で重ねて言う必要が無い。
+                      はみ出しの原因にもなっていた。 */}
                 </div>
               )
             })}

@@ -38,7 +38,7 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
 
   const vals = rows.map(val)
   const max = Math.max(...vals.map(Math.abs), 1)
-  const H = compact ? 20 : (isMobile ? 34 : 40)
+  const H = compact ? 26 : (isMobile ? 46 : 54)
 
   const plus = dark ? '#ff6b6b' : '#dc2626'   // 買い越し（＝これから出てくる売り物）
   const minus = dark ? '#4dabf7' : '#2563eb'  // 売り越し
@@ -56,13 +56,13 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
       {/* 🔵 見出しは置かず、**凡例だけ**にする（2026-08-22・運用者の指摘
           「将来的に売られる残（億円）というテキストもいらないかも」）。
           符号の意味が分かれば表題は要らない＝行数を1つ減らせる。 */}
-      {!compact && <div style={{ fontSize: 10, color: dim, marginBottom: 4 }}>
+      {!compact && <div style={{ fontSize: isMobile ? 11 : 11.5, color: dim, marginBottom: 6, letterSpacing: '0.02em' }}>
         <span style={{ color: plus }}>＋ 将来的に売られる残</span>
         <span style={{ margin: '0 4px' }}>／</span>
         <span style={{ color: minus }}>− 将来的に買い戻される残</span>
         <span style={{ marginLeft: 4 }}>（{unit}）</span>
       </div>}
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: compact ? 3 : (isMobile ? 6 : 10) }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: compact ? 4 : (isMobile ? 7 : 12) }}>
         {rows.map((r, i) => {
           const v = val(r)
           const h = Math.max(2, Math.round((Math.abs(v) / max) * H))
@@ -70,21 +70,30 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
           return (
             <div key={r.w} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
               {(!compact || last) && (
-                <span style={{ fontSize: compact ? 8.5 : 9.5, color: last ? (v >= 0 ? plus : minus) : dim, fontWeight: last ? 800 : 400 }}>
+                <span style={{
+                  fontSize: compact ? 10 : (isMobile ? 12 : 13),
+                  color: last ? (v >= 0 ? plus : minus) : dim,
+                  fontWeight: last ? 900 : 600,
+                  letterSpacing: '-0.02em',
+                  textShadow: dark && last ? `0 0 12px ${(v >= 0 ? plus : minus)}66` : 'none',
+                }}>
                   {v >= 0 ? '+' : ''}{Math.round(v * 10) / 10}
                 </span>
               )}
               <div style={{ height: H, display: 'flex', alignItems: 'flex-end', width: '100%' }}>
                 <div
+                  className="nmt-bar"
                   title={`${r.w}：${v >= 0 ? '将来的に売られる残' : '将来的に買い戻される残'} ${Math.abs(Math.round(v * 10) / 10)}${unit}${r.netDays != null ? `（${Math.abs(r.netDays)}日分）` : ''}`}
                   style={{
-                    width: '100%', height: h, borderRadius: 2,
+                    width: '100%', height: h, borderRadius: 3,
                     background: v >= 0 ? plus : minus,
-                    opacity: last ? 1 : 0.45,
+                    opacity: last ? 1 : 0.42,
+                    animationDelay: `${i * 70}ms`,
+                    boxShadow: dark && last ? `0 0 14px ${(v >= 0 ? plus : minus)}55` : 'none',
                   }}
                 />
               </div>
-              {!compact && <span style={{ fontSize: 9, color: dim }}>{r.w.slice(5).replace('-', '/')}</span>}
+              {!compact && <span style={{ fontSize: isMobile ? 10 : 10.5, color: dim, letterSpacing: '0.02em' }}>{r.w.slice(5).replace('-', '/')}</span>}
             </div>
           )
         })}
