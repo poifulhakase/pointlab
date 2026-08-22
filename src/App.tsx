@@ -6,6 +6,7 @@ import { lazyWithReload as lazy } from './utils/lazyWithReload'
 import { QUANT_TABS, QUANT_LABELS, type QuantTabKey } from './utils/quantTabs'
 import { ENGINE_TABS, ENGINE_LABELS, type EngineTabKey } from './utils/engineTabs'
 import { SECTOR_LABELS, type SectorTabKey } from './utils/sectorTabs'
+import { canOpenAdminPages, isAdminOnlyView } from './utils/pageAccess'
 import { useCalendar } from './hooks/useCalendar'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { useFirebaseSync } from './hooks/useFirebaseSync'
@@ -304,6 +305,11 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
   //    （utils/previewMode.ts）。
   const canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES || !!demoMode() || isPreviewMode()
 
+  // 🔴 **管理者限定ページ**（2026-08-22 ユーザー指示）＝ロボ口座（'shield'）と
+  //    地下室（'daytrade' / 'swing'）。それまでは会員も見られたが、**会員にも見せない**に変更。
+  //    判定は utils/pageAccess.ts に置いてある（フッター・描画・リダイレクトの3か所で使うため）。
+  const canViewAdminPages = canOpenAdminPages({ isAdminUser, previewAsNonMember })
+
   // ── プッシュ通知 ──────────────────────────────────────────────────────
   const {
     pushEnabled, pushBusy, pushToast, notifyRadar, notifyDataReady,
@@ -348,9 +354,17 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
     if (authLoading || !membershipResolved) return // 認証・会員判定の確定を待つ
     initialMemberRedirectDone.current = true
     if (!wasFreshLoad) return
-    const memberOnly = ['month', 'week', 'day', 'quant', 'shield'].includes(cal.view)
+    // 🔵 'shield'（ロボ口座）は 2026-08-22 に管理者限定へ移したので、ここでは見ない
+    const memberOnly = ['month', 'week', 'day', 'quant'].includes(cal.view)
     if (memberOnly && !canViewMemberPages) setViewWithTransition('support')
   }, [authLoading, membershipResolved, canViewMemberPages]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 🔴 管理者限定ページに非管理者が居たら研究室へ戻す。
+  //    保存された表示位置（sessionStorage）やURL直打ちで入れてしまうため、描画側のガードと二重にする。
+  useEffect(() => {
+    if (authLoading || !membershipResolved) return
+    if (isAdminOnlyView(cal.view) && !canViewAdminPages) setViewWithTransition('support')
+  }, [authLoading, membershipResolved, canViewAdminPages, cal.view]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!saveToast) return
@@ -688,7 +702,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
-          {(cal.view === 'swing' || cal.view === 'daytrade') && (
+          {/* 🔴 2026-08-22: **管理者限定**（ユーザー指示）。それまでゲートが無く誰でも開けた */}
+          {(cal.view === 'swing' || cal.view === 'daytrade') && canViewAdminPages && (
             <ErrorBoundary label="地下室">
               <Suspense fallback={<ViewLoader />}>
                 <BasementRooms theme={theme} isMobile={isMobile}
@@ -732,10 +747,11 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
           {/* ロボ口座（疑似トレード・旧「エンジン」）1枚。内部識別子は 'shield' のまま。
               🔴 2026-08-09: 旧ポジション分析を削除したので、市場データ（環境/現物/先物）は
               シールド側へ戻した。この画面はタブを持たない。 */}
-          {cal.view === 'shield' && (
-            canViewMemberPages
-              ? <ErrorBoundary label="ロボ口座"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
-              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
+          {/* 🔴 2026-08-22: 会員限定 → **管理者限定**（ユーザー指示）。
+              非管理者には鍵画面も出さない（上の useEffect が研究室へ戻す）＝
+              「会員になれば見られる」と読めてしまう案内を出さないため。 */}
+          {cal.view === 'shield' && canViewAdminPages && (
+            <ErrorBoundary label="ロボ口座"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
           )}
 
           {/* セクターローテーション（周期）＝独立ページ。入口はサイドバーのバナー。
@@ -871,7 +887,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* ── フローティングサブバー（CalendarHeader右上に浮かぶ） ── */}
       {/* コミュニティ限定ビュー（カレンダー/ブンセキ/ロボ口座）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
-      {(((isCalView || cal.view === 'quant' || cal.view === 'shield' || cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'daytrade' || cal.view === 'swing' || cal.view === 'sector') && canViewMemberPages) || cal.view === 'chart' || cal.view === 'legal') && (
+      {(((isCalView || cal.view === 'quant' || cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'sector') && canViewMemberPages)
+        || ((cal.view === 'shield' || cal.view === 'daytrade' || cal.view === 'swing') && canViewAdminPages)
+        || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isNeonBar ? undefined : 'glass'}>
           <div style={styles.floatPill} className={isNeonBar ? undefined : 'glass'}>
@@ -1038,6 +1056,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               sidebarOpen={sidebarOpen} onMenuClick={handleMenuClick}
               theme={theme}
               forceNeon={!canViewMemberPages && (isCalView || cal.view === 'quant' || cal.view === 'shield')}
+              isAdmin={canViewAdminPages}
             />
           </div>
       </div>

@@ -28,6 +28,11 @@ type Article = {
   internalAction?: 'manual' | 'legal' | 'backtest' | 'evals' | 'spec' | 'original' | 'community' | 'playbook' | 'timemachine' | 'chartpattern' | 'daytrade' | 'swing'
   /** 会員（またはメンバー）だけに見せるカード。研究途中の記録など */
   memberOnly?: boolean
+  /**
+   * 🔴 管理者だけに見せるカード（2026-08-22 ユーザー指示）。
+   *    memberOnly と違い**カードごと出さない**＝会員にも存在を見せない。
+   */
+  adminOnly?: boolean
 }
 
 const BASE = import.meta.env.BASE_URL + 'notes/'
@@ -38,9 +43,10 @@ const ARTICLES: Article[] = [
   { genre: 'ぽいロボ', title: '戦略プレイブック', url: null, thumb: BASE + 'poirobo_original_feature.png', internalAction: 'playbook' },
   { genre: 'ぽいロボ', title: '説明書',           url: null, thumb: BASE + 'manual.png', internalAction: 'manual' },
   // ── 地下室（研究記録）──────────────────────────────────────────
-  // 🔴 会員限定。検証途中の生の記録なので、外向けの説明としては読ませない。
-  { genre: '地下室', title: 'デイトレード', url: null, thumb: null, internalAction: 'daytrade', memberOnly: true },
-  { genre: '地下室', title: 'スイングトレード', url: null, thumb: null, internalAction: 'swing', memberOnly: true },
+  // 🔴 **管理者限定**（2026-08-22 ユーザー指示で会員限定から格上げ）。検証途中の生の記録で、
+  //    会員にも見せない。カードごと出さないので「地下室」の見出しごと消える。
+  { genre: '地下室', title: 'デイトレード', url: null, thumb: null, internalAction: 'daytrade', adminOnly: true },
+  { genre: '地下室', title: 'スイングトレード', url: null, thumb: null, internalAction: 'swing', adminOnly: true },
   // ── 基礎 ──────────────────────────────────────────────────────
   { genre: '基礎',           title: 'レジサポ・移動平均線', url: 'https://note.com/pointlab/n/n383409929e89', thumb: BASE + 'Stock_Trade_Lab_moving_average_line_register_support.webp' },
   { genre: '基礎',           title: '出来高',          url: 'https://note.com/pointlab/n/na22865f89238', thumb: BASE + 'Stock_Trade_Lab_Volume.webp' },
@@ -364,8 +370,9 @@ export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, o
   // 戦略プレイブックは誰でも閲覧可（公開）。
   const visibleArticles = ARTICLES.filter(a => {
     if ((a.internalAction === 'evals' || a.internalAction === 'spec' || a.internalAction === 'community' || a.internalAction === 'backtest') && !isAdmin) return false
-    // 🔵 地下室（研究記録）は**カードは全員に見せて、中身だけ会員限定**にする。
-    //    中身は検証途中の生の数字なので開けないが、「そこに何かある」ことは見せる（2026-08-13）。
+    // 🔴 管理者限定のカードは**存在ごと隠す**（2026-08-22）。地下室がこれに当たる。
+    //    ロックして見せる形（memberOnly）だと「開けないものが並ぶ」だけになるため。
+    if (a.adminOnly && !isAdmin) return false
     return true
   })
   const canOpenMemberOnly = isAdmin || isMember

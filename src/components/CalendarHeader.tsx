@@ -12,6 +12,8 @@ type Props = {
   theme?: 'dark' | 'light'
   /** ロック画面表示中など、研究室と同じサイバー調フッターを強制する */
   forceNeon?: boolean
+  /** 🔴 管理者限定タブ（ロボ口座）を出してよいか（2026-08-22・会員にも出さない） */
+  isAdmin?: boolean
 }
 
 const isCalendarView = (v: ViewMode) => v === 'day' || v === 'week' || v === 'month'
@@ -85,12 +87,13 @@ const MAIN_VIEWS = [
   //    内部識別子 'quant'/'shield' と localStorage キーは据え置き（保存レポートの中身が入れ替わるため）。
   { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: 'ブンセキ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <AnalysisIcon /> },
-  { label: 'ロボ口座',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon /> },
+  // 🔴 2026-08-22: ロボ口座は**管理者限定**。会員にもタブごと出さない（adminOnly）
+  { label: 'ロボ口座',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon />, adminOnly: true },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 
 // ── コンポーネント ────────────────────────────────────
-export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, onMenuClick, theme = 'dark', forceNeon = false }: Props) {
+export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, onMenuClick, theme = 'dark', forceNeon = false, isAdmin = false }: Props) {
   const showMenu = isMobile
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
@@ -120,7 +123,7 @@ export function CalendarHeader({ view, setView, isMobile, isTablet: _isTablet, o
         }}
         className={useNeon ? undefined : 'glass'}
       >
-        {MAIN_VIEWS.map(v => {
+        {MAIN_VIEWS.filter(v => !v.adminOnly || isAdmin).map(v => {
           const active = v.isActive(view)
           return (
             <button
