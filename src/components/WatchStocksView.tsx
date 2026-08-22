@@ -10,6 +10,7 @@ import { cy } from '../utils/cyberTheme'
 import { fetchPoiroboStocks, fetchStockMargin, type WatchStock, type RangeStock, type StockMarginData } from '../utils/poiroboStocks'
 import { marginGauge } from '../utils/marginGauge'
 import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
+import { NetMarginTrend } from './NetMarginTrend'
 import { PoiroboLoader } from './PoiroboLoader'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; onClose: () => void }
@@ -165,14 +166,19 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                     <Cell c={c} label="200日線から" value={pct(w.dev200_pct)} strong={near} />
                   </div>
 
-                  {/* 🆕 需給ゲージ（信用残から見た上値の重さ・軽くなってきたか） */}
-                  <div style={{ flexShrink: 0 }}>
-                    <MarginGaugeBar
-                      gauge={marginGauge(margin?.stocks?.[w.code]?.history, w.vol20, w.close)}
-                      theme={dark ? 'dark' : 'light'}
-                      compact
-                    />
-                  </div>
+                  {/* 🆕 需給ゲージ（信用残から見た上値の重さ・軽くなってきたか）
+                      ＋ 将来的に売られる残の推移（2026-08-22・運用者の要望「候補も推移が見たい」）。
+                      🔵 データは主力と同じ stock_margin.json（24銘柄ぶん）に既に入っているので
+                         **通信は増えない**。増えるのは棒19本×5の描画だけ。 */}
+                  {(() => {
+                    const g = marginGauge(margin?.stocks?.[w.code]?.history, w.vol20, w.close)
+                    return (
+                      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <MarginGaugeBar gauge={g} theme={dark ? 'dark' : 'light'} compact />
+                        {g && <NetMarginTrend gauge={g} theme={dark ? 'dark' : 'light'} isMobile={isMobile} compact />}
+                      </div>
+                    )
+                  })()}
 
                   {near && (
                     <span style={{
