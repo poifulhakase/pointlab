@@ -146,7 +146,7 @@ describe('marginGauge', () => {
       const g = marginGauge(hist, 1_660_300, 5700)!
       expect(g.netOku).toBeCloseTo(17.2, 1)
       expect(g.longOku).toBeCloseTo(47.0, 1)
-      expect(g.note).toContain('これから出てくる売り物')
+      expect(g.note).toContain('将来的に売られる残')
     })
 
     it('株価が無ければ金額は出さない（推測で埋めない）', () => {

@@ -44,8 +44,16 @@ export function NetMarginTrend({ gauge, theme, isMobile }: Props) {
           倍率＝買残÷売残の**比率**、ここ＝買残−売残の**量**。倍率は割合なので規模が消える
           （買残1億・売残0.05億でも20倍）。「差引の買い越し」では何のことか伝わらないので、
           **これから市場に出てくる売り物の正味の量**という中身の言葉にする。 */}
-      <div style={{ fontSize: 10, color: dim, marginBottom: 4 }}>
-        これから出てくる売り物（{unit}）
+      {/* 🔴 見出しは中立にする（2026-08-22・運用者の指摘）。
+          「これから出てくる売り物」だと**マイナスのとき日本語が壊れる**
+          （売り物がマイナス＝意味を成さない）。符号の意味は凡例で示す。 */}
+      <div style={{ fontSize: 10, color: dim, marginBottom: 4, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'baseline' }}>
+        <span>将来的に売られる残（{unit}）</span>
+        <span style={{ opacity: 0.85 }}>
+          <span style={{ color: plus }}>＋ 売られる残</span>
+          <span style={{ margin: '0 4px' }}>／</span>
+          <span style={{ color: minus }}>− 買い戻される残</span>
+        </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: isMobile ? 6 : 10 }}>
         {rows.map((r, i) => {
@@ -59,7 +67,7 @@ export function NetMarginTrend({ gauge, theme, isMobile }: Props) {
               </span>
               <div style={{ height: H, display: 'flex', alignItems: 'flex-end', width: '100%' }}>
                 <div
-                  title={`${r.w}：${v >= 0 ? '+' : ''}${Math.round(v * 10) / 10}${unit}${r.netDays != null ? `（${r.netDays}日分）` : ''}`}
+                  title={`${r.w}：${v >= 0 ? '将来的に売られる残' : '将来的に買い戻される残'} ${Math.abs(Math.round(v * 10) / 10)}${unit}${r.netDays != null ? `（${Math.abs(r.netDays)}日分）` : ''}`}
                   style={{
                     width: '100%', height: h, borderRadius: 2,
                     background: v >= 0 ? plus : minus,

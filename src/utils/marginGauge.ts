@@ -200,13 +200,21 @@ export function marginGauge(history: MarginWeek[] | null | undefined, vol20: num
   const parts: string[] = []
   if (ratio != null) parts.push(`信用倍率 ${ratio}倍`)
   const okuOf = (shares: number) => (price && price > 0 ? `${Math.round(shares * price / 1e8 * 10) / 10}億円` : null)
-  const longOkuTxt = okuOf(last.long), shortOkuTxt = okuOf(last.short), netOkuTxt = okuOf(last.long - last.short)
+  const longOkuTxt = okuOf(last.long), shortOkuTxt = okuOf(last.short)
   if (days != null) parts.push(`買残${longOkuTxt ? ' ' + longOkuTxt : 'は平常の商いの'} ${longOkuTxt ? `（${days}日分）` : `${days}日分`}`)
   if (shortDays != null) parts.push(`売残${shortOkuTxt ? ' ' + shortOkuTxt : 'は'} ${shortOkuTxt ? `（${shortDays}日分）` : `${shortDays}日分`}`)
   // 🔴 ここが銘柄をまたいで比べられる唯一の数字（2026-08-22 追加）
-  if (netOkuTxt || netDaysForNote(vol20, last) != null) {
+  // 🔴 符号で呼び名を変える（2026-08-22・運用者の指摘「売り物がマイナスになっている」）。
+  //    買残＞売残 なら**いずれ売られる**、売残＞買残 なら**いずれ買い戻される**。
+  //    片方の名前で符号だけ反転させると、日本語として意味を成さなくなる。
+  {
     const nd = netDaysForNote(vol20, last)
-    parts.push(`これから出てくる売り物${netOkuTxt ? ' ' + netOkuTxt : ''}${nd != null ? `（${nd}日分）` : ''}`)
+    const net = last.long - last.short
+    const okuAbs = price && price > 0 ? `${Math.round(Math.abs(net) * price / 1e8 * 10) / 10}億円` : null
+    if (okuAbs || nd != null) {
+      const name = net >= 0 ? '将来的に売られる残' : '将来的に買い戻される残'
+      parts.push(`${name}${okuAbs ? ' ' + okuAbs : ''}${nd != null ? `（${Math.abs(nd)}日分）` : ''}`)
+    }
   }
   if (chgPct != null) parts.push(`買残 前週比 ${chgPct > 0 ? '+' : ''}${chgPct}%`)
   if (chg4wPct != null) parts.push(`4週で ${chg4wPct > 0 ? '+' : ''}${chg4wPct}%`)
