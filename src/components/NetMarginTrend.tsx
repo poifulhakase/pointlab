@@ -46,7 +46,7 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
   const dim = dark ? 'rgba(0,229,255,0.55)' : 'rgba(3,105,161,0.75)'
 
   return (
-    <div style={{ marginTop: compact ? 0 : 6, minWidth: compact ? 160 : undefined }}>
+    <div style={{ marginTop: compact ? 0 : 6, minWidth: 0, width: compact ? '100%' : undefined }}>
       {/* 🔴 ラベルを言い換えた（2026-08-22・運用者の指摘「信用倍率とは違う？分かるような分からないような」）。
           倍率＝買残÷売残の**比率**、ここ＝買残−売残の**量**。倍率は割合なので規模が消える
           （買残1億・売残0.05億でも20倍）。「差引の買い越し」では何のことか伝わらないので、

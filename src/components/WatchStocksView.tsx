@@ -145,14 +145,19 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   boxShadow: near && dark ? `0 0 26px ${c.GREEN}26` : 'none',
                   opacity: near ? 1 : 0.86,
                   padding: isMobile ? '16px 14px' : '18px 22px',
-                  // 🔴 2026-08-22：固定幅を積み上げていたため、需給の推移を足した時点で
-                  //    行が横にはみ出した（運用者の指摘）。**折り返せる指定**に変える。
-                  display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-                  flexWrap: isMobile ? 'nowrap' : 'wrap',
-                  gap: isMobile ? 8 : 22, alignItems: isMobile ? 'flex-start' : 'center',
+                  // 🔴 2026-08-22：**行はグリッドで組む**（運用者の指摘「列を揃えたい」）。
+                  //    flex の比率指定だと、需給ブロックの幅が銘柄ごとに変わるぶん
+                  //    数値の列が行ごとにずれていた。列幅を全行で共通にする。
+                  //    🔵 それ以前は固定幅を積み上げて横にはみ出していた（flex-wrap で回避していた）。
+                  //       グリッドなら minmax で伸縮するのではみ出しも起きない。
+                  display: 'grid',
+                  gridTemplateColumns: isMobile
+                    ? '1fr'
+                    : 'minmax(200px, 1fr) minmax(220px, 1.4fr) minmax(340px, 1.8fr) 330px',
+                  gap: isMobile ? 8 : 20, alignItems: 'center',
                   overflow: 'hidden',
                 }}>
-                  <div style={{ flex: isMobile ? undefined : '1 1 260px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     <span style={{
                       padding: '2px 7px', borderRadius: 999, border: `1px solid ${c.BORDER}`,
                       fontSize: isMobile ? 10 : 11, color: c.DIM,
@@ -162,14 +167,14 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   </div>
 
                   {/* 🔵 チャートしか見ない使い方なので、行にも線を出す（1年・200日線つき） */}
-                  <div style={{ flex: isMobile ? undefined : '1 1 300px', minWidth: 0, width: isMobile ? '100%' : undefined }}>
+                  <div style={{ minWidth: 0, width: '100%' }}>
                     <MiniChart c={c} dark={dark} rows={w.series ?? []} height={isMobile ? 78 : 66} />
                   </div>
 
                   <div style={{
-                    flex: isMobile ? undefined : '2 1 420px', minWidth: 0, display: 'grid',
+                    minWidth: 0, display: 'grid',
                     gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-                    gap: isMobile ? 10 : 8, width: isMobile ? '100%' : undefined,
+                    gap: isMobile ? 10 : 8, width: '100%',
                   }}>
                     <Cell c={c} label="株価" value={w.close != null ? w.close.toLocaleString() : '—'} />
                     <Cell c={c} label="12ヶ月" value={pct(w.ret12m)} />
@@ -184,7 +189,10 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   {(() => {
                     const g = marginGauge(margin?.stocks?.[w.code]?.history, w.vol20, w.close)
                     return (
-                      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        display: 'grid', alignItems: 'center', gap: 10, minWidth: 0,
+                        gridTemplateColumns: isMobile ? '1fr' : '120px 1fr',
+                      }}>
                         <MarginGaugeBar gauge={g} theme={dark ? 'dark' : 'light'} compact />
                         {g && <NetMarginTrend gauge={g} theme={dark ? 'dark' : 'light'} isMobile={isMobile} compact />}
                       </div>
