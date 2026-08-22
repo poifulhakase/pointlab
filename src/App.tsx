@@ -668,7 +668,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               入口（研究室のメニュー）は全員に見せ、中身に鍵をかける＝地下室と同じ作法。 */}
           {cal.view === 'momentum' && (
             canViewMemberPages
-              ? <ErrorBoundary label="Believe（第4次産業革命）">
+              ? <ErrorBoundary label="Future（第4次産業革命）">
                   <Suspense fallback={<ViewLoader />}>
                     <MomentumStocksView theme={theme} isMobile={isMobile}
                       onClose={() => setViewWithTransition('support')} />

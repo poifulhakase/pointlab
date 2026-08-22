@@ -77,14 +77,14 @@ export default function MomentumStocksView({ theme, isMobile, onClose }: Props) 
             boxShadow: `0 0 10px ${c.GREEN}`, flexShrink: 0,
           }} />
           <span style={{ fontSize: isMobile ? 10 : 11, letterSpacing: '0.2em', color: c.GREEN, whiteSpace: 'nowrap' }}>
-            BELIEVE / 第4次産業革命
+            FUTURE / 第4次産業革命
           </span>
         </div>
         <button type="button" onClick={onClose} aria-label="閉じる"
           style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 6, border: `1px solid ${c.BORDER}`, background: 'transparent', color: c.TXTCLR, cursor: 'pointer', fontSize: 15, lineHeight: 1 }}>×</button>
       </div>
 
-      {loading && <div style={{ padding: 40 }}><PoiroboLoader label="BELIEVE" /></div>}
+      {loading && <div style={{ padding: 40 }}><PoiroboLoader label="FUTURE" /></div>}
 
       {!loading && !data && (
         <div style={{ padding: pad, maxWidth: 900, margin: '0 auto', fontSize: 13, color: c.DESC }}>
