@@ -32,25 +32,6 @@ function colorOf(level: MarginGauge['level'], theme: 'dark' | 'light') {
 /** 踏み上げ余地の色。上げ方向に効く材料なので、重さ（オレンジ〜赤）とは別の色にする */
 const SQUEEZE_COLOR = (theme: 'dark' | 'light') => (theme === 'dark' ? '#7ee787' : '#1a7f37')
 
-/**
- * 一覧の上に置く凡例。🔵 はじめて見る人が「22 軽い ▶」を読めるようにする。
- */
-export function MarginGaugeLegend({ theme }: { theme: 'dark' | 'light' }) {
-  const c = cy(theme)
-  return (
-    <span style={{ fontSize: 10, color: c.DIM, lineHeight: 1.8 }}>
-      需給＝信用買残から見た上値の重さ（0 軽い 〜 100 重い）。
-      <b style={{ color: theme === 'dark' ? '#00e5ff' : '#0369a1' }}>◀ 軽く</b>＝買残が減っている／
-      <b style={{ color: theme === 'dark' ? '#ffa14a' : '#d97a1f' }}>▶ 重く</b>＝増えている。
-      <b style={{ color: SQUEEZE_COLOR(theme) }}>踏み上げ余地</b>＝売り方が残っている。
-    </span>
-  )
-}
-
-/**
- * ゲージの動き。**画面に1回だけ**置く（24行ぶん重ねない）。
- * 🔵 使う側（主力・候補の各ビュー）で1回レンダリングする。
- */
 export function MarginGaugeStyles() {
   return (
     <style>{`

@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { cy } from '../utils/cyberTheme'
 import { fetchPoiroboStocks, fetchStockMargin, type WatchStock, type RangeStock, type StockMarginData } from '../utils/poiroboStocks'
 import { marginGauge } from '../utils/marginGauge'
-import { MarginGaugeBar, MarginGaugeStyles, MarginGaugeLegend } from './MarginGaugeBar'
+import { MarginGaugeBar, MarginGaugeStyles } from './MarginGaugeBar'
 import { NetMarginTrend } from './NetMarginTrend'
 import { PoiroboLoader } from './PoiroboLoader'
 
@@ -99,7 +99,7 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
       {loading && <div style={{ padding: 40 }}><PoiroboLoader label="WATCH" /></div>}
 
       {!loading && (
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: `${isMobile ? 26 : 34}px ${pad}px ${isMobile ? 140 : 70}px` }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto', padding: `${isMobile ? 26 : 34}px ${pad}px ${isMobile ? 140 : 70}px` }}>
           <h1 style={{ margin: 0, fontSize: isMobile ? 22 : 30, fontWeight: 900, color: c.GREEN, lineHeight: 1.4 }}>
             その他の監視銘柄
           </h1>
@@ -109,7 +109,6 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
           </p>
 
           {/* 🔵 需給ゲージの読み方（2026-08-17 追加）。矢印だけでは向きの意味が読めないため */}
-          <div style={{ marginTop: 10 }}><MarginGaugeLegend theme={dark ? 'dark' : 'light'} /></div>
 
           <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', margin: `${isMobile ? 22 : 24}px 0 16px` }}>
             {SORTS.map(o => {
@@ -120,7 +119,7 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                     cursor: on ? 'default' : 'pointer', border: `1px solid ${on ? c.BORDBR : c.BORDER}`,
                     background: on ? c.HDBG : 'transparent', color: on ? c.GREEN : c.DIM,
                     borderRadius: 999, padding: isMobile ? '6px 14px' : '5px 14px',
-                    fontFamily: c.FONT, fontSize: isMobile ? 10.5 : 10,
+                    fontFamily: c.FONT, fontSize: isMobile ? 10.5 : 11,
                   }}>{o.label}</button>
               )
             })}
@@ -148,19 +147,19 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   <div style={{ flex: isMobile ? undefined : '1 1 190px', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                     <span style={{
                       padding: '2px 7px', borderRadius: 999, border: `1px solid ${c.BORDER}`,
-                      fontSize: 9.5, color: c.DIM,
+                      fontSize: isMobile ? 10 : 11, color: c.DIM,
                     }}>{w.code}</span>
-                    <span style={{ fontSize: isMobile ? 14 : 14, fontWeight: 800 }}>{w.name}</span>
-                    <span style={{ fontSize: 9.5, color: c.DIM }}>{w.layer}</span>
+                    <span style={{ fontSize: isMobile ? 15 : 16, fontWeight: 800 }}>{w.name}</span>
+                    <span style={{ fontSize: isMobile ? 10 : 11, color: c.DIM }}>{w.layer}</span>
                   </div>
 
                   {/* 🔵 チャートしか見ない使い方なので、行にも線を出す（1年・200日線つき） */}
-                  <div style={{ flex: isMobile ? undefined : '0 1 170px', minWidth: 0, width: isMobile ? '100%' : undefined }}>
+                  <div style={{ flex: isMobile ? undefined : '0 1 210px', minWidth: 0, width: isMobile ? '100%' : undefined }}>
                     <MiniChart c={c} dark={dark} rows={w.series ?? []} height={isMobile ? 78 : 56} />
                   </div>
 
                   <div style={{
-                    flex: isMobile ? undefined : '2 1 240px', minWidth: 0, display: 'grid',
+                    flex: isMobile ? undefined : '2 1 300px', minWidth: 0, display: 'grid',
                     gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
                     gap: isMobile ? 10 : 8, width: isMobile ? '100%' : undefined,
                   }}>
@@ -348,8 +347,8 @@ function RangeCard({ c, dark, isMobile, r }: { c: C; dark: boolean; isMobile: bo
 function Cell({ c, label, value, strong }: { c: C; label: string; value: string; strong?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 9, color: c.DIM, letterSpacing: '0.08em' }}>{label}</div>
-      <div style={{ marginTop: 3, fontSize: 14, fontWeight: 800, color: strong ? c.GREEN : c.TXTCLR }}>{value}</div>
+      <div style={{ fontSize: 10, color: c.DIM, letterSpacing: '0.08em' }}>{label}</div>
+      <div style={{ marginTop: 3, fontSize: 16, fontWeight: 800, color: strong ? c.GREEN : c.TXTCLR }}>{value}</div>
     </div>
   )
 }
