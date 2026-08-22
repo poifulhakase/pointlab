@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { marginGauge, heaviness, type MarginWeek } from '../marginGauge'
+import { marginGauge, heaviness, supplyPriceCell, type MarginWeek } from '../marginGauge'
 
 /**
  * 需給ゲージ（信用残から「重い／軽い」を出す）。
@@ -158,6 +158,33 @@ describe('marginGauge', () => {
       const g = marginGauge(hist, 1_660_300, 5700)!
       expect(g.series.map(x => x.w)).toEqual(['2026-07-31', '2026-08-07', '2026-08-14'])
       expect(g.series[0].net).toBe(500_000)
+    })
+  })
+
+  /**
+   * 🔴 2026-08-22 運用者の指摘＝「需給 × 価格」の一文が
+   *    **書いてあったり書いてなかったり**した。型に当てはまらない銘柄で null を返し、
+   *    一文だけでなく枠ごと消えていた（ファナック 200日線 −6.2%）。**必ず出す**。
+   */
+  describe('需給 × 価格 の一文', () => {
+    const g = (long: number, short: number, vol: number) =>
+      marginGauge([week('2026-08-07', long, 0, short), week('2026-08-14', long, 0, short)], vol)!
+
+    it('どの位置でも必ず一文を返す（null を返さない）', () => {
+      for (const dev200 of [-40, -6.2, -5, 0, 5, 6.2, 40]) {
+        expect(supplyPriceCell(g(1_000_000, 200_000, 5_000_000), dev200)).toBeTruthy()
+      }
+    })
+
+    it('ゲージが無い／位置が分からないときだけ null', () => {
+      expect(supplyPriceCell(null, -6.2)).toBeNull()
+      expect(supplyPriceCell(g(1_000_000, 200_000, 5_000_000), null)).toBeNull()
+    })
+
+    it('型に当てはまらないときは位置と残高の向きを並べる', () => {
+      const cell = supplyPriceCell(g(1_000_000, 200_000, 5_000_000), -20)!
+      expect(cell).toContain('200日線の下')
+      expect(cell).toMatch(/増えている|減っている|横ばい/)
     })
   })
 })

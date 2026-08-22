@@ -108,7 +108,16 @@ export function supplyPriceCell(g: MarginGauge | null, dev200: number | null | u
   if (above && g.trend === 'heavier') return '上昇中に買残が増えている'
 
   if (!above && heavy) return '200日線を下回ったまま買残が残っている'
-  return null
+
+  // 🔴 どの型にも当てはまらない銘柄で **null を返さない**（2026-08-22・運用者の指摘
+  //    「書いてあったり書いてなかったり。どちらかにしたい」）。
+  //    以前はここで null を返し、一文だけでなく枠ごと消える銘柄があった。
+  //    型に当てはまらないときは、位置と残高の向きを素直に並べる。
+  const zone = above ? '200日線の上' : '200日線の下'
+  const level = g.level === 'light' ? '上に控える残は少ない'
+    : g.level === 'normal' ? '上に控える残はふつう' : '上に控える残が多い'
+  const move = g.trend === 'heavier' ? '増えている' : g.trend === 'lighter' ? '減っている' : '横ばい'
+  return `${zone}。${level}（${move}）`
 }
 
 const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v))
