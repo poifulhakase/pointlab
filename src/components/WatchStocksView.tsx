@@ -99,7 +99,7 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
       {loading && <div style={{ padding: 40 }}><PoiroboLoader label="WATCH" /></div>}
 
       {!loading && (
-        <div style={{ maxWidth: 1440, margin: '0 auto', padding: `${isMobile ? 26 : 34}px ${pad}px ${isMobile ? 140 : 70}px` }}>
+        <div style={{ width: '100%', padding: `${isMobile ? 26 : 34}px ${isMobile ? pad : 40}px ${isMobile ? 140 : 70}px` }}>
           <h1 style={{ margin: 0, fontSize: isMobile ? 22 : 30, fontWeight: 900, color: c.GREEN, lineHeight: 1.4 }}>
             その他の監視銘柄
           </h1>
@@ -125,7 +125,15 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
             })}
           </div>
 
-          <div style={{ display: 'grid', gap: isMobile ? 10 : 8 }}>
+          {/* 🔵 色の意味は**一覧の先頭に1回だけ**置く（行ごとに凡例を出すと19回繰り返される）。
+              2026-08-22：需給ゲージの古い凡例は表示と合わなくなったので削除し、これに置き換えた。 */}
+          <div style={{ margin: '18px 0 10px', fontSize: isMobile ? 10.5 : 11.5, color: c.DIM, letterSpacing: '0.02em' }}>
+            右の棒＝<span style={{ color: dark ? '#ff6b6b' : '#dc2626', fontWeight: 700 }}>赤：将来的に売られる残</span>
+            <span style={{ margin: '0 5px' }}>／</span>
+            <span style={{ color: dark ? '#4dabf7' : '#2563eb', fontWeight: 700 }}>青：将来的に買い戻される残</span>
+            <span style={{ marginLeft: 6 }}>（億円・直近5週）</span>
+          </div>
+          <div style={{ display: 'grid', gap: isMobile ? 10 : 12 }}>
             {sorted.map(w => {
               const near = w.dev200_pct != null && Math.abs(w.dev200_pct) <= 5
               return (
@@ -136,15 +144,15 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   background: near ? c.HDBG : c.TAREA,
                   boxShadow: near && dark ? `0 0 26px ${c.GREEN}26` : 'none',
                   opacity: near ? 1 : 0.86,
-                  padding: isMobile ? '16px 14px' : '14px 16px',
+                  padding: isMobile ? '16px 14px' : '18px 22px',
                   // 🔴 2026-08-22：固定幅を積み上げていたため、需給の推移を足した時点で
                   //    行が横にはみ出した（運用者の指摘）。**折り返せる指定**に変える。
                   display: 'flex', flexDirection: isMobile ? 'column' : 'row',
                   flexWrap: isMobile ? 'nowrap' : 'wrap',
-                  gap: isMobile ? 8 : 14, alignItems: isMobile ? 'flex-start' : 'center',
+                  gap: isMobile ? 8 : 22, alignItems: isMobile ? 'flex-start' : 'center',
                   overflow: 'hidden',
                 }}>
-                  <div style={{ flex: isMobile ? undefined : '1 1 190px', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <div style={{ flex: isMobile ? undefined : '1 1 260px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     <span style={{
                       padding: '2px 7px', borderRadius: 999, border: `1px solid ${c.BORDER}`,
                       fontSize: isMobile ? 10 : 11, color: c.DIM,
@@ -154,12 +162,12 @@ export default function WatchStocksView({ theme, isMobile, onClose }: Props) {
                   </div>
 
                   {/* 🔵 チャートしか見ない使い方なので、行にも線を出す（1年・200日線つき） */}
-                  <div style={{ flex: isMobile ? undefined : '0 1 210px', minWidth: 0, width: isMobile ? '100%' : undefined }}>
-                    <MiniChart c={c} dark={dark} rows={w.series ?? []} height={isMobile ? 78 : 56} />
+                  <div style={{ flex: isMobile ? undefined : '1 1 300px', minWidth: 0, width: isMobile ? '100%' : undefined }}>
+                    <MiniChart c={c} dark={dark} rows={w.series ?? []} height={isMobile ? 78 : 66} />
                   </div>
 
                   <div style={{
-                    flex: isMobile ? undefined : '2 1 300px', minWidth: 0, display: 'grid',
+                    flex: isMobile ? undefined : '2 1 420px', minWidth: 0, display: 'grid',
                     gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
                     gap: isMobile ? 10 : 8, width: isMobile ? '100%' : undefined,
                   }}>

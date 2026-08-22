@@ -38,14 +38,15 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
 
   const vals = rows.map(val)
   const max = Math.max(...vals.map(Math.abs), 1)
-  const H = compact ? 26 : (isMobile ? 46 : 54)
+  // 🔵 2026-08-22：候補一覧を全面幅にしたので、省スペース版も**読める大きさ**に上げた
+  const H = compact ? 44 : (isMobile ? 46 : 54)
 
   const plus = dark ? '#ff6b6b' : '#dc2626'   // 買い越し（＝これから出てくる売り物）
   const minus = dark ? '#4dabf7' : '#2563eb'  // 売り越し
   const dim = dark ? 'rgba(0,229,255,0.55)' : 'rgba(3,105,161,0.75)'
 
   return (
-    <div style={{ marginTop: compact ? 0 : 6, minWidth: compact ? 92 : undefined }}>
+    <div style={{ marginTop: compact ? 0 : 6, minWidth: compact ? 160 : undefined }}>
       {/* 🔴 ラベルを言い換えた（2026-08-22・運用者の指摘「信用倍率とは違う？分かるような分からないような」）。
           倍率＝買残÷売残の**比率**、ここ＝買残−売残の**量**。倍率は割合なので規模が消える
           （買残1億・売残0.05億でも20倍）。「差引の買い越し」では何のことか伝わらないので、
@@ -62,16 +63,16 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
         <span style={{ color: minus }}>− 将来的に買い戻される残</span>
         <span style={{ marginLeft: 4 }}>（{unit}）</span>
       </div>}
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: compact ? 4 : (isMobile ? 7 : 12) }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: compact ? 6 : (isMobile ? 7 : 12) }}>
         {rows.map((r, i) => {
           const v = val(r)
           const h = Math.max(2, Math.round((Math.abs(v) / max) * H))
           const last = i === rows.length - 1
           return (
             <div key={r.w} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-              {(!compact || last) && (
+              {(
                 <span style={{
-                  fontSize: compact ? 10 : (isMobile ? 12 : 13),
+                  fontSize: compact ? 10.5 : (isMobile ? 12 : 13),
                   color: last ? (v >= 0 ? plus : minus) : dim,
                   fontWeight: last ? 900 : 600,
                   letterSpacing: '-0.02em',
@@ -93,7 +94,7 @@ export function NetMarginTrend({ gauge, theme, isMobile, compact = false }: Prop
                   }}
                 />
               </div>
-              {!compact && <span style={{ fontSize: isMobile ? 10 : 10.5, color: dim, letterSpacing: '0.02em' }}>{r.w.slice(5).replace('-', '/')}</span>}
+              <span style={{ fontSize: compact ? 9 : (isMobile ? 10 : 10.5), color: dim, letterSpacing: '0.02em' }}>{r.w.slice(5).replace('-', '/')}</span>
             </div>
           )
         })}
