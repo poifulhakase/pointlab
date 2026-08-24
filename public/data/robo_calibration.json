@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-22T00:45:11.934Z",
+  "updatedAt": "2026-08-24T06:00:57.780Z",
   "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
   "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
   "horizons": [
@@ -10,9 +10,9 @@
     "main": {
       "label": "本番（需給＋価格＋チャート）",
       "summary": {
-        "logs": 9,
+        "logs": 10,
         "directional": 3,
-        "hold": 6,
+        "hold": 7,
         "by_horizon": {
           "1d": {
             "n": 3,
@@ -30,13 +30,13 @@
             }
           },
           "5d": {
-            "n": 2,
+            "n": 3,
             "wins": 0,
             "win_rate_pct": 0,
-            "avg_confidence": 57,
-            "avg_edge_pct": -3.15,
+            "avg_confidence": 57.33,
+            "avg_edge_pct": -3.84,
             "bull": {
-              "n": 2,
+              "n": 3,
               "win_rate_pct": 0
             },
             "bear": {
@@ -60,11 +60,11 @@
         "5d": [
           {
             "range": "50-59%",
-            "n": 2,
+            "n": 3,
             "wins": 0,
-            "avg_confidence": 57,
+            "avg_confidence": 57.33,
             "win_rate_pct": 0,
-            "gap": -57
+            "gap": -57.33
           }
         ]
       }
@@ -72,33 +72,33 @@
     "chart_only": {
       "label": "影：チャートのみ",
       "summary": {
-        "logs": 6,
-        "directional": 5,
+        "logs": 7,
+        "directional": 6,
         "hold": 1,
         "by_horizon": {
           "1d": {
-            "n": 4,
-            "wins": 1,
-            "win_rate_pct": 25,
-            "avg_confidence": 56.75,
-            "avg_edge_pct": -0.86,
+            "n": 5,
+            "wins": 2,
+            "win_rate_pct": 40,
+            "avg_confidence": 56.6,
+            "avg_edge_pct": -0.57,
             "bull": {
               "n": 3,
               "win_rate_pct": 33.33
             },
             "bear": {
-              "n": 1,
-              "win_rate_pct": 0
+              "n": 2,
+              "win_rate_pct": 50
             }
           },
           "5d": {
-            "n": 1,
+            "n": 2,
             "wins": 0,
             "win_rate_pct": 0,
-            "avg_confidence": 56,
-            "avg_edge_pct": -3.93,
+            "avg_confidence": 57,
+            "avg_edge_pct": -4.57,
             "bull": {
-              "n": 1,
+              "n": 2,
               "win_rate_pct": 0
             },
             "bear": {
@@ -112,21 +112,21 @@
         "1d": [
           {
             "range": "50-59%",
-            "n": 4,
-            "wins": 1,
-            "avg_confidence": 56.75,
-            "win_rate_pct": 25,
-            "gap": -31.75
+            "n": 5,
+            "wins": 2,
+            "avg_confidence": 56.6,
+            "win_rate_pct": 40,
+            "gap": -16.6
           }
         ],
         "5d": [
           {
             "range": "50-59%",
-            "n": 1,
+            "n": 2,
             "wins": 0,
-            "avg_confidence": 56,
+            "avg_confidence": 57,
             "win_rate_pct": 0,
-            "gap": -56
+            "gap": -57
           }
         ]
       }
@@ -134,9 +134,9 @@
     "numbers_only": {
       "label": "影：数値のみ",
       "summary": {
-        "logs": 6,
+        "logs": 7,
         "directional": 1,
-        "hold": 5,
+        "hold": 6,
         "by_horizon": {
           "1d": {
             "n": 1,
@@ -154,14 +154,14 @@
             }
           },
           "5d": {
-            "n": 0,
+            "n": 1,
             "wins": 0,
-            "win_rate_pct": null,
-            "avg_confidence": null,
-            "avg_edge_pct": null,
+            "win_rate_pct": 0,
+            "avg_confidence": 58,
+            "avg_edge_pct": -5.22,
             "bull": {
-              "n": 0,
-              "win_rate_pct": null
+              "n": 1,
+              "win_rate_pct": 0
             },
             "bear": {
               "n": 0,
@@ -181,7 +181,16 @@
             "gap": -58
           }
         ],
-        "5d": []
+        "5d": [
+          {
+            "range": "50-59%",
+            "n": 1,
+            "wins": 0,
+            "avg_confidence": 58,
+            "win_rate_pct": 0,
+            "gap": -58
+          }
+        ]
       }
     }
   },
@@ -237,9 +246,9 @@
       "confidence_pct": 58,
       "ret_1d": -2.54,
       "hit_1d": false,
-      "ret_5d": null,
-      "hit_5d": null,
-      "complete": false
+      "ret_5d": -5.22,
+      "hit_5d": false,
+      "complete": true
     },
     {
       "date": "2026-08-18",
@@ -279,6 +288,17 @@
       "side": null,
       "symbol": "none",
       "confidence_pct": 62,
+      "ret_1d": -0.63,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-08-24",
+      "side": null,
+      "symbol": "none",
+      "confidence_pct": 66,
       "ret_1d": null,
       "hit_1d": null,
       "ret_5d": null,
