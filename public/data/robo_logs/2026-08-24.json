@@ -139,8 +139,8 @@
       "horizons": {
         "1d": {
           "date": "2026-08-25",
-          "close": 65726.0625,
-          "ret_pct": 0.3,
+          "close": 65856.4296875,
+          "ret_pct": 0.5,
           "edge_pct": null,
           "hit": null
         },
@@ -165,9 +165,9 @@
       "horizons": {
         "1d": {
           "date": "2026-08-25",
-          "close": 65726.0625,
-          "ret_pct": 0.3,
-          "edge_pct": -0.3,
+          "close": 65856.4296875,
+          "ret_pct": 0.5,
+          "edge_pct": -0.5,
           "hit": false
         },
         "5d": {
@@ -191,8 +191,8 @@
       "horizons": {
         "1d": {
           "date": "2026-08-25",
-          "close": 65726.0625,
-          "ret_pct": 0.3,
+          "close": 65856.4296875,
+          "ret_pct": 0.5,
           "edge_pct": null,
           "hit": null
         },
