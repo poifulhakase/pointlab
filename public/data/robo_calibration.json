@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-25T13:30:23.352Z",
+  "updatedAt": "2026-08-26T06:00:51.624Z",
   "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
   "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
   "horizons": [
@@ -10,8 +10,8 @@
     "main": {
       "label": "本番（需給＋価格＋チャート）",
       "summary": {
-        "logs": 11,
-        "directional": 3,
+        "logs": 12,
+        "directional": 4,
         "hold": 8,
         "by_horizon": {
           "1d": {
@@ -72,8 +72,8 @@
     "chart_only": {
       "label": "影：チャートのみ",
       "summary": {
-        "logs": 8,
-        "directional": 6,
+        "logs": 9,
+        "directional": 7,
         "hold": 2,
         "by_horizon": {
           "1d": {
@@ -92,18 +92,18 @@
             }
           },
           "5d": {
-            "n": 2,
+            "n": 3,
             "wins": 0,
             "win_rate_pct": 0,
-            "avg_confidence": 57,
-            "avg_edge_pct": -4.63,
+            "avg_confidence": 56.33,
+            "avg_edge_pct": -3.6,
             "bull": {
               "n": 2,
               "win_rate_pct": 0
             },
             "bear": {
-              "n": 0,
-              "win_rate_pct": null
+              "n": 1,
+              "win_rate_pct": 0
             }
           }
         }
@@ -122,11 +122,11 @@
         "5d": [
           {
             "range": "50-59%",
-            "n": 2,
+            "n": 3,
             "wins": 0,
-            "avg_confidence": 57,
+            "avg_confidence": 56.33,
             "win_rate_pct": 0,
-            "gap": -57
+            "gap": -56.33
           }
         ]
       }
@@ -134,9 +134,9 @@
     "numbers_only": {
       "label": "影：数値のみ",
       "summary": {
-        "logs": 8,
+        "logs": 9,
         "directional": 1,
-        "hold": 7,
+        "hold": 8,
         "by_horizon": {
           "1d": {
             "n": 1,
@@ -268,9 +268,9 @@
       "confidence_pct": 62,
       "ret_1d": 1.36,
       "hit_1d": null,
-      "ret_5d": null,
+      "ret_5d": 1.54,
       "hit_5d": null,
-      "complete": false
+      "complete": true
     },
     {
       "date": "2026-08-20",
@@ -310,6 +310,17 @@
       "side": null,
       "symbol": "none",
       "confidence_pct": 62,
+      "ret_1d": 0.73,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-08-26",
+      "side": "bull",
+      "symbol": "1321",
+      "confidence_pct": 56,
       "ret_1d": null,
       "hit_1d": null,
       "ret_5d": null,
