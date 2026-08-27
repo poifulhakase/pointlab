@@ -1,11 +1,22 @@
 {
-  "captured_at": "2026-08-17T06:49:39.000Z",
-  "age_days": 0,
+  "captured_at": "2026-08-26T06:05:28.000Z",
+  "age_days": 1,
   "source": "chatwork",
-  "source_filename": "Screenshot_20260817-154916.png",
-  "positions": [],
+  "source_filename": "Screenshot_20260826-150515.png",
+  "positions": [
+    {
+      "symbol": "1321",
+      "name": "NF225",
+      "kind": "margin_long",
+      "qty": 14,
+      "avg_price": 68610,
+      "last_price": 68610,
+      "pnl": -81,
+      "pnl_pct": 0
+    }
+  ],
   "unreadable_fields": [],
   "confidence": "high",
-  "note": "取引履歴の画面。松井証券アプリの「約定詳細」画面（NF225 1321 の返済売14株、約定日2026/08/17）であり、保有一覧・建玉一覧ではないため positions は空にしました。",
-  "read_at": "2026-08-18T06:00:09.954Z"
+  "note": "松井証券の「建玉一覧」画面。信用買建（半年）の1321 NF225が1件のみ表示。建数量14、建単価68,610、評価単価68,610、評価損益-81円、評価損益率0.00%。前日比+390。対象4銘柄以外の明細はなし（other_holdings_count=0相当）。",
+  "read_at": "2026-08-27T14:50:25.267Z"
 }
