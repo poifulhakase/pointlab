@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-28T15:44:30.498Z",
+  "updatedAt": "2026-08-28T21:13:25.247Z",
   "proxy": "etf",
   "periods": {
     "chg1m": {
@@ -27,19 +27,19 @@
     "symbol": "^TNX",
     "label": "米10年債利回り",
     "time": "2026-08-28",
-    "last": 4.7,
-    "chg3m": 0.227,
+    "last": 4.72,
+    "chg3m": 0.245,
     "from": "2026-06-01",
     "to": "2026-08-28"
   },
   "infl": {
     "symbol": "T10YIE",
     "label": "期待インフレ率（10年BEI）",
-    "time": "2026-08-27",
-    "last": 2.33,
-    "chg3m": -0.05,
-    "from": "2026-05-29",
-    "to": "2026-08-27"
+    "time": "2026-08-28",
+    "last": 2.31,
+    "chg3m": -0.09,
+    "from": "2026-06-01",
+    "to": "2026-08-28"
   },
   "macro": {
     "lastAnchor": "reverseFinancial"
