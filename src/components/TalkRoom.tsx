@@ -1,0 +1,474 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import styles from './TalkRoom.module.css'
+import {
+  dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
+  randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
+  touchMember, watchMembers, watchMessages,
+  type TalkMember, type TalkMessage,
+} from '../utils/talkRoom'
+
+/**
+ * 一時トークルーム（LINE風）。
+ *
+ * 🔴 ぽいロボ本体とは無関係。秘密のハッシュを直接開いたときだけ `main.tsx` が描画する
+ *    （ナビ・リンクからは辿り着けない）。詳しくは `utils/talkRoom.ts` の頭に書いてある。
+ *
+ * 使い勝手で押さえたところ：
+ *   - 送った瞬間に自分の画面には出る（通信の返事を待たない）。失敗したら送り直せる
+ *   - 一番下にいるときだけ自動で追従。遡っている最中は勝手に飛ばず「新しいメッセージ↓」を出す
+ *   - iPhone のキーボードで入力欄が隠れない（visualViewport に追従）
+ *   - 画像は送る前にブラウザで縮小＋JPEG化（HEIC で相手に映らない事故を防ぐ）
+ *   - 相手が読んだら自分の吹き出しに「既読」
+ */
+
+/** 相手が「いま開いている」とみなす時間。 */
+const ONLINE_MS = 70_000
+/** 在席を知らせる間隔。 */
+const HEARTBEAT_MS = 25_000
+
+const EMOJIS = [
+  '😀', '😂', '🥹', '😊', '😍', '🤔', '😅', '😭', '😱', '😴',
+  '👍', '🙏', '👏', '🙌', '💪', '✋', '👌', '🤝', '🫡', '✌️',
+  '❤️', '💦', '✨', '🎉', '🔥', '⭐', '🌸', '☀️', '☔', '🌙',
+  '🍺', '🍚', '☕', '🍰', '🚗', '🚃', '🏠', '💰', '📷', '⏰',
+  '⭕', '❌', '❓', '❗', '💤', '🆗', '🈵', '🉐', '🐶', '🐱',
+]
+
+interface Pending {
+  id: string
+  msg: TalkMessage
+  image?: { data: string }
+  failed?: boolean
+}
+
+export function TalkRoom() {
+  const uid = useMemo(() => getUid(), [])
+  const [name, setNameState] = useState(() => getName())
+  const [nameInput, setNameInput] = useState('')
+  const [messages, setMessages] = useState<TalkMessage[]>([])
+  const [members, setMembers] = useState<TalkMember[]>([])
+  const [pending, setPending] = useState<Pending[]>([])
+  const [text, setText] = useState('')
+  const [picked, setPicked] = useState<{ id: string; data: string; w: number; h: number }[]>([])
+  const [sending, setSending] = useState(false)
+  const [emojiOpen, setEmojiOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [sound, setSound] = useState(() => getSoundOn())
+  const [viewer, setViewer] = useState<string | null>(null)
+  const [atBottom, setAtBottom] = useState(true)
+  const [unseen, setUnseen] = useState(0)
+  const [toast, setToast] = useState('')
+
+  const listRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const taRef = useRef<HTMLTextAreaElement>(null)
+  const firstLoad = useRef(true)
+  const lastCount = useRef(0)
+
+  // ── 購読 ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!name) return
+    let unsubM: (() => void) | undefined
+    let unsubP: (() => void) | undefined
+    watchMessages(rows => setMessages(rows)).then(u => { unsubM = u })
+    watchMembers(rows => setMembers(rows)).then(u => { unsubP = u })
+    return () => { unsubM?.(); unsubP?.() }
+  }, [name])
+
+  // 在席と既読を知らせる（開いている間だけ）
+  const lastAt = messages.length ? messages[messages.length - 1].at : 0
+  useEffect(() => {
+    if (!name) return
+    const ping = () => {
+      if (document.visibilityState === 'visible') {
+        touchMember(uid, name, lastAt).catch(() => { /* 失敗しても表示には影響しない */ })
+      }
+    }
+    ping()
+    const t = setInterval(ping, HEARTBEAT_MS)
+    document.addEventListener('visibilitychange', ping)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', ping) }
+  }, [uid, name, lastAt])
+
+  // ── 新着の扱い（自動追従・音・タイトル） ─────────────────────────
+  useEffect(() => {
+    const added = messages.length - lastCount.current
+    lastCount.current = messages.length
+    if (firstLoad.current) {
+      firstLoad.current = false
+      scrollToBottom('auto')
+      return
+    }
+    if (added <= 0) return
+
+    const last = messages[messages.length - 1]
+    const mine = last?.uid === uid
+    if (mine || atBottom) {
+      scrollToBottom('smooth')
+    } else {
+      setUnseen(n => n + added)
+    }
+    if (!mine && (document.visibilityState !== 'visible' || !atBottom) && sound) beep()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages])
+
+  useEffect(() => {
+    document.title = unseen > 0 ? `(${unseen}) トーク` : 'トーク'
+  }, [unseen])
+
+  // iPhone：キーボードが出ても入力欄が隠れないように、見えている高さに合わせる
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const fit = () => {
+      document.documentElement.style.setProperty('--talk-vh', `${vv.height}px`)
+      if (atBottom) scrollToBottom('auto')
+    }
+    fit()
+    vv.addEventListener('resize', fit)
+    vv.addEventListener('scroll', fit)
+    return () => { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit) }
+  }, [atBottom])
+
+  const scrollToBottom = (behavior: ScrollBehavior) => {
+    requestAnimationFrame(() => {
+      const el = listRef.current
+      if (!el) return
+      el.scrollTo({ top: el.scrollHeight, behavior })
+      setUnseen(0)
+    })
+  }
+
+  const onScroll = () => {
+    const el = listRef.current
+    if (!el) return
+    const bottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60
+    setAtBottom(bottom)
+    if (bottom) setUnseen(0)
+  }
+
+  // ── 送る ───────────────────────────────────────────────────────
+  const canSend = (text.trim() !== '' || picked.length > 0) && !sending
+
+  const doSend = useCallback(async () => {
+    const body = text.trim()
+    if (!body && picked.length === 0) return
+    setSending(true)
+    setText('')
+    const shots = picked
+    setPicked([])
+    if (taRef.current) taRef.current.style.height = 'auto'
+
+    // 画像がある場合は「1枚＝1通」。テキストは最後の1通に添える（LINEと同じ並び）
+    const jobs: { msg: TalkMessage; image?: { data: string } }[] = []
+    shots.forEach((s, i) => {
+      const withText = !body ? false : i === shots.length - 1
+      jobs.push({
+        msg: {
+          id: '', uid, name, at: Date.now() + i,
+          text: withText ? body : '', w: s.w, h: s.h, img: 'pending',
+        },
+        image: { data: s.data },
+      })
+    })
+    if (shots.length === 0) {
+      jobs.push({ msg: { id: '', uid, name, at: Date.now(), text: body } })
+    }
+
+    for (const job of jobs) {
+      const pid = randomId()
+      setPending(p => [...p, { id: pid, msg: { ...job.msg, id: pid }, image: job.image }])
+      try {
+        await sendMessage(job.msg, job.image)
+        setPending(p => p.filter(x => x.id !== pid))
+      } catch {
+        setPending(p => p.map(x => (x.id === pid ? { ...x, failed: true } : x)))
+      }
+    }
+    setSending(false)
+    scrollToBottom('smooth')
+  }, [text, picked, uid, name])
+
+  const retry = async (p: Pending) => {
+    setPending(list => list.map(x => (x.id === p.id ? { ...x, failed: false } : x)))
+    try {
+      await sendMessage(p.msg, p.image)
+      setPending(list => list.filter(x => x.id !== p.id))
+    } catch {
+      setPending(list => list.map(x => (x.id === p.id ? { ...x, failed: true } : x)))
+      show('送れませんでした。電波を確認してください')
+    }
+  }
+
+  // ── 画像を選ぶ ─────────────────────────────────────────────────
+  const onPick = async (files: FileList | null) => {
+    if (!files?.length) return
+    const list = Array.from(files).slice(0, 4)
+    for (const f of list) {
+      try {
+        const s = await shrinkImage(f)
+        setPicked(p => [...p, { id: randomId(), ...s }])
+      } catch (e) {
+        show(e instanceof Error ? e.message : '画像を読めませんでした')
+      }
+    }
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  const show = (m: string) => {
+    setToast(m)
+    setTimeout(() => setToast(''), 2600)
+  }
+
+  // ── 表示のための組み立て ───────────────────────────────────────
+  const peer = members.find(m => m.id !== uid)
+  const peerOnline = peer ? Date.now() - peer.at < ONLINE_MS : false
+  /** 相手がここまで読んだ、という時刻。自分の吹き出しの「既読」判定に使う */
+  const peerRead = peer?.read ?? 0
+
+  const rows = useMemo(() => {
+    const all: (TalkMessage & { pendingId?: string; failed?: boolean })[] = [
+      ...messages,
+      ...pending.map(p => ({ ...p.msg, pendingId: p.id, failed: p.failed })),
+    ]
+    return all.sort((a, b) => a.at - b.at)
+  }, [messages, pending])
+
+  // ── 名前を入れる画面 ───────────────────────────────────────────
+  if (!name) {
+    const start = () => {
+      const n = nameInput.trim().slice(0, 20)
+      if (!n) return
+      saveName(n)
+      setNameState(n)
+    }
+    return (
+      <div className={styles.gate}>
+        <div className={styles.gateBox}>
+          <div className={styles.gateIcon}>💬</div>
+          <h1 className={styles.gateTitle}>トーク</h1>
+          <p className={styles.gateLead}>表示する名前を入れてください。<br />あとから変えられます。</p>
+          <input
+            className={styles.gateInput}
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') start() }}
+            maxLength={20}
+            placeholder="なまえ"
+            enterKeyHint="go"
+            autoComplete="off"
+            autoFocus
+          />
+          <button className={styles.gateBtn} onClick={start} disabled={!nameInput.trim()}>はじめる</button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.wrap}>
+      <header className={styles.bar}>
+        <div className={styles.barTitle}>
+          <span className={styles.barName}>{peer?.name ?? 'トーク'}</span>
+          {peer && <span className={styles.barSub}>{peerOnline ? 'オンライン' : `最終 ${timeLabel(peer.at)}`}</span>}
+        </div>
+        <button className={styles.barBtn} onClick={() => setMenuOpen(v => !v)} aria-label="メニュー">⋯</button>
+      </header>
+
+      <div className={styles.list} ref={listRef} onScroll={onScroll}>
+        {rows.length === 0 && (
+          <p className={styles.empty}>まだメッセージはありません。<br />下の欄から送ってみてください。</p>
+        )}
+        {rows.map((m, i) => {
+          const prev = rows[i - 1]
+          const newDay = !prev || !isSameDay(prev.at, m.at)
+          const mine = m.uid === uid
+          // 同じ人が続けて送ったときは、時刻を最後の1つだけに出す（LINEと同じ）
+          const next = rows[i + 1]
+          const tail = !next || next.uid !== m.uid || !isSameDay(next.at, m.at)
+          return (
+            <div key={m.pendingId ?? m.id}>
+              {newDay && <div className={styles.day}><span>{dayLabel(m.at)}</span></div>}
+              <Row
+                m={m}
+                mine={mine}
+                tail={tail}
+                showName={!mine && (!prev || prev.uid !== m.uid || newDay)}
+                read={mine && !m.pendingId && peerRead >= m.at}
+                onImage={setViewer}
+                onRetry={m.failed ? () => { const p = pending.find(x => x.id === m.pendingId); if (p) retry(p) } : undefined}
+                onDelete={mine && !m.pendingId ? async () => {
+                  if (!confirm('この発言を取り消しますか？')) return
+                  try { await deleteMessage(m) } catch { show('取り消せませんでした') }
+                } : undefined}
+              />
+            </div>
+          )
+        })}
+      </div>
+
+      {!atBottom && unseen > 0 && (
+        <button className={styles.jump} onClick={() => scrollToBottom('smooth')}>
+          新しいメッセージ {unseen} ↓
+        </button>
+      )}
+
+      {picked.length > 0 && (
+        <div className={styles.picked}>
+          {picked.map(p => (
+            <div key={p.id} className={styles.pickedItem}>
+              <img src={p.data} alt="" />
+              <button onClick={() => setPicked(list => list.filter(x => x.id !== p.id))} aria-label="外す">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {emojiOpen && (
+        <div className={styles.emoji}>
+          {EMOJIS.map(e => (
+            <button key={e} onClick={() => { setText(t => t + e); taRef.current?.focus() }}>{e}</button>
+          ))}
+        </div>
+      )}
+
+      <footer className={styles.foot}>
+        <button className={styles.iconBtn} onClick={() => fileRef.current?.click()} aria-label="画像を送る">🖼️</button>
+        <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字">😀</button>
+        <textarea
+          ref={taRef}
+          className={styles.input}
+          value={text}
+          rows={1}
+          placeholder="メッセージ"
+          onChange={e => {
+            setText(e.target.value)
+            const el = e.target
+            el.style.height = 'auto'
+            el.style.height = `${Math.min(el.scrollHeight, 120)}px`
+          }}
+          onKeyDown={e => {
+            // PCは Enter で送信・Shift+Enter で改行。スマホは改行のまま（送信は➤）
+            if (e.key === 'Enter' && !e.shiftKey && !isTouch()) {
+              e.preventDefault()
+              void doSend()
+            }
+          }}
+        />
+        <button className={styles.sendBtn} onClick={() => void doSend()} disabled={!canSend} aria-label="送信">➤</button>
+        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => void onPick(e.target.files)} />
+      </footer>
+
+      {menuOpen && (
+        <>
+          <div className={styles.scrim} onClick={() => setMenuOpen(false)} />
+          <div className={styles.menu}>
+            <button onClick={() => {
+              const n = prompt('表示する名前', name)?.trim().slice(0, 20)
+              if (n) { saveName(n); setNameState(n); touchMember(uid, n, lastAt).catch(() => {}) }
+              setMenuOpen(false)
+            }}>名前を変える</button>
+            <button onClick={() => { const v = !sound; setSound(v); setSoundOn(v); setMenuOpen(false) }}>
+              新着の音：{sound ? 'オン' : 'オフ'}
+            </button>
+            <button className={styles.menuClose} onClick={() => setMenuOpen(false)}>閉じる</button>
+          </div>
+        </>
+      )}
+
+      {viewer && (
+        <div className={styles.viewer} onClick={() => setViewer(null)}>
+          <img src={viewer} alt="" />
+          <button className={styles.viewerClose} aria-label="閉じる">✕</button>
+        </div>
+      )}
+
+      {toast && <div className={styles.toast}>{toast}</div>}
+    </div>
+  )
+}
+
+/** 1行ぶんの吹き出し。 */
+function Row({ m, mine, tail, showName, read, onImage, onRetry, onDelete }: {
+  m: TalkMessage & { pendingId?: string; failed?: boolean }
+  mine: boolean
+  tail: boolean
+  showName: boolean
+  read: boolean
+  onImage: (src: string) => void
+  onRetry?: () => void
+  onDelete?: () => void
+}) {
+  const [src, setSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!m.img) return
+    // 送信中は手元のデータURLがそのまま入っている（pending）。確定後は取りに行く
+    if (m.img === 'pending') return
+    let alive = true
+    fetchImage(m.img).then(d => { if (alive) setSrc(d) })
+    return () => { alive = false }
+  }, [m.img])
+
+  const ratio = m.w && m.h ? m.h / m.w : undefined
+  const meta = (
+    <div className={styles.meta}>
+      {m.failed ? (
+        <button className={styles.retry} onClick={onRetry}>送れませんでした・再送</button>
+      ) : m.pendingId ? (
+        <span className={styles.sending}>送信中</span>
+      ) : (
+        <>
+          {read && <span className={styles.read}>既読</span>}
+          <span>{timeLabel(m.at)}</span>
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <div className={`${styles.row} ${mine ? styles.mine : styles.theirs}`}>
+      {showName && <div className={styles.who}>{m.name}</div>}
+      <div className={styles.line}>
+        {mine && tail && meta}
+        <div
+          className={styles.bubbleWrap}
+          onContextMenu={onDelete ? e => { e.preventDefault(); onDelete() } : undefined}
+        >
+          {m.img ? (
+            <div
+              className={styles.photo}
+              style={ratio ? { aspectRatio: `${m.w} / ${m.h}` } : undefined}
+              onClick={() => src && onImage(src)}
+            >
+              {src ? <img src={src} alt="" /> : <div className={styles.photoWait} />}
+            </div>
+          ) : null}
+          {m.text && <div className={styles.bubble}>{m.text}</div>}
+        </div>
+        {!mine && tail && meta}
+      </div>
+    </div>
+  )
+}
+
+function isTouch(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+}
+
+/** 新着の短い音（音声ファイルを持たずに鳴らす）。 */
+function beep() {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const ctx = new Ctx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.06, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.25)
+    setTimeout(() => ctx.close(), 600)
+  } catch { /* 音が鳴らせない環境でも本体は動く */ }
+}

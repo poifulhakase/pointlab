@@ -48,6 +48,25 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── 一時トークルーム（2026-08-29 追加・期間限定の間借り）───────────────
+    // 🔴 **ここだけログイン不要で読み書きできる**。守りは「部屋IDを知っていること」だけ。
+    //    LINEが使えない相手との一時的なやり取り用で、重要な内容は置かない前提の割り切り。
+    //    部屋IDは src/utils/talkRoom.ts の ROOM_ID と対。片方だけ変えると通じなくなる。
+    // 🔴 **期限つき**＝2026-10-08 を過ぎたら誰も読み書きできない（消し忘れの保険）。
+    //    片付けるときはこの match ブロックごと削除し、Firestore の talkRooms も消す。
+    function inTalkRoom(roomId) {
+      return roomId == 'd9a0bd2484b7b12af28ffa164f141507'
+        && request.time < timestamp.date(2026, 10, 8);
+    }
+
+    match /talkRooms/{roomId} {
+      allow read, write: if inTalkRoom(roomId);
+
+      match /messages/{msgId} { allow read, write: if inTalkRoom(roomId); }
+      match /images/{imgId}   { allow read, write: if inTalkRoom(roomId); }
+      match /members/{memId}  { allow read, write: if inTalkRoom(roomId); }
+    }
+
     match /bookings/{bookingId} {
       allow read: if isAdmin()
         || (request.auth != null && resource.data.userId == request.auth.uid);

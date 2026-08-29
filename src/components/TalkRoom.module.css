@@ -1,0 +1,512 @@
+/*
+ * 一時トークルーム（LINE風）。
+ * ぽいロボ本体とは独立した画面なので、配色もここで閉じている（トークンは使わない）。
+ * 変数は :root ではなく .wrap / .gate に置き、他の画面へ漏れないようにしている。
+ */
+
+.wrap,
+.gate {
+  --talk-bg: #8fa9c4;          /* 壁紙（LINEの青灰） */
+  --talk-bar: #ffffff;
+  --talk-line: #d8dde3;
+  --talk-mine: #8de055;        /* 自分の吹き出し */
+  --talk-theirs: #ffffff;
+  --talk-text: #1a1a1a;
+  --talk-meta: #ffffffcc;
+  --talk-accent: #06c755;      /* LINEグリーン */
+}
+
+/* ── 全体 ─────────────────────────────────────────────── */
+
+.wrap {
+  position: fixed;
+  inset: 0;
+  /* --talk-vh は visualViewport の高さ（iPhoneのキーボード対策）。無ければ dvh */
+  height: var(--talk-vh, 100dvh);
+  display: flex;
+  flex-direction: column;
+  background: var(--talk-bg);
+  color: var(--talk-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  overflow: hidden;
+}
+
+/* ── 名前を入れる画面 ─────────────────────────────────── */
+
+.gate {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--talk-bg);
+  padding: 24px;
+}
+
+.gateBox {
+  width: min(360px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 22px 24px;
+  text-align: center;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+.gateIcon { font-size: 40px; line-height: 1; }
+
+.gateTitle {
+  margin: 10px 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.gateLead {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #666;
+}
+
+.gateInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 16px; /* 16px未満だとiOSが勝手に拡大する */
+  border: 1px solid var(--talk-line);
+  border-radius: 10px;
+  outline: none;
+}
+
+.gateInput:focus { border-color: var(--talk-accent); }
+
+.gateBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--talk-accent);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.gateBtn:disabled { opacity: .4; cursor: default; }
+
+/* ── 上のバー ─────────────────────────────────────────── */
+
+.bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: var(--talk-bar);
+  border-bottom: 1px solid var(--talk-line);
+}
+
+.barTitle { flex: 1; min-width: 0; }
+
+.barName {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barSub {
+  display: block;
+  font-size: 11px;
+  color: #8a8f96;
+}
+
+.barBtn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  line-height: 1;
+  color: #555;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.barBtn:hover { background: #0000000d; }
+
+/* ── メッセージ一覧 ───────────────────────────────────── */
+
+.list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 10px 6px;
+}
+
+.empty {
+  margin: 40px auto;
+  max-width: 260px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #ffffffdd;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 15%);
+}
+
+.day {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 10px;
+}
+
+.day span {
+  padding: 3px 12px;
+  font-size: 11px;
+  color: #fff;
+  background: #00000026;
+  border-radius: 999px;
+}
+
+.row { margin-bottom: 4px; }
+
+.who {
+  margin: 6px 0 3px 6px;
+  font-size: 11px;
+  color: #ffffffe0;
+}
+
+.line {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.mine .line { justify-content: flex-end; }
+.theirs .line { justify-content: flex-start; }
+
+.bubbleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(74%, 460px);
+}
+
+.mine .bubbleWrap { align-items: flex-end; }
+
+.bubble {
+  padding: 8px 12px;
+  font-size: 15px;
+  line-height: 1.55;
+  border-radius: 16px;
+  /* 長文・改行・長いURLでも崩れないようにする */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 8%);
+}
+
+.mine .bubble {
+  background: var(--talk-mine);
+  border-bottom-right-radius: 4px;
+}
+
+.theirs .bubble {
+  background: var(--talk-theirs);
+  border-bottom-left-radius: 4px;
+}
+
+/* 画像 */
+.photo {
+  max-width: 100%;
+  min-width: 120px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #00000014;
+  cursor: pointer;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.photoWait {
+  width: 180px;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(100deg, #ffffff22 30%, #ffffff55 50%, #ffffff22 70%);
+  background-size: 200% 100%;
+  animation: talk-shimmer 1.2s linear infinite;
+}
+
+@keyframes talk-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* 時刻・既読 */
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding-bottom: 2px;
+  font-size: 10px;
+  color: var(--talk-meta);
+  white-space: nowrap;
+}
+
+.theirs .meta { align-items: flex-start; }
+
+.read { font-size: 10px; color: var(--talk-meta); }
+
+.sending { font-size: 10px; color: var(--talk-meta); }
+
+.retry {
+  font-size: 10px;
+  color: #fff;
+  background: #e2564a;
+  border: 0;
+  border-radius: 999px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+/* 新着へ飛ぶ */
+.jump {
+  position: absolute;
+  left: 50%;
+  bottom: 78px;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #333c48ee;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* ── 送る前の画像 ─────────────────────────────────────── */
+
+.picked {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  background: #ffffffee;
+  border-top: 1px solid var(--talk-line);
+}
+
+.pickedItem {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.pickedItem img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.pickedItem button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  background: #333c48;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* ── 絵文字 ───────────────────────────────────────────── */
+
+.emoji {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  max-height: 172px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #fff;
+  border-top: 1px solid var(--talk-line);
+}
+
+.emoji button {
+  font-size: 22px;
+  line-height: 1.5;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.emoji button:hover { background: #00000010; }
+
+@media (max-width: 420px) {
+  .emoji { grid-template-columns: repeat(7, 1fr); }
+}
+
+/* ── 下の入力欄 ───────────────────────────────────────── */
+
+.foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 8px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  background: var(--talk-bar);
+  border-top: 1px solid var(--talk-line);
+}
+
+.iconBtn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  font-size: 19px;
+  line-height: 1;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.iconBtn:hover { background: #0000000d; }
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 160px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 16px; /* iOSの自動拡大よけ */
+  line-height: 1.5;
+  color: var(--talk-text);
+  background: #f2f3f5;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+}
+
+.input:focus { border-color: #c9ced6; background: #fff; }
+
+.sendBtn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+  color: #fff;
+  background: var(--talk-accent);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sendBtn:disabled { background: #c8cdd4; cursor: default; }
+
+/* ── メニュー ─────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: #00000040;
+  z-index: 20;
+}
+
+.menu {
+  position: fixed;
+  right: 12px;
+  top: calc(52px + env(safe-area-inset-top));
+  min-width: 200px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 22%);
+  overflow: hidden;
+  z-index: 21;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 14px;
+  text-align: left;
+  color: var(--talk-text);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #eef0f3;
+  cursor: pointer;
+}
+
+.menu button:hover { background: #f5f6f8; }
+
+.menuClose { color: #8a8f96 !important; border-bottom: 0 !important; }
+
+/* ── 画像の拡大 ───────────────────────────────────────── */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #000000e8;
+  z-index: 30;
+}
+
+.viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.viewerClose {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  color: #fff;
+  background: #ffffff22;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* ── お知らせ ─────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 92px;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #fff;
+  background: #333c48f2;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 25%);
+  z-index: 40;
+}
