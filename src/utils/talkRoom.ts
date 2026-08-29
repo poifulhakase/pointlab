@@ -19,18 +19,31 @@
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`
 
-/** 部屋のID＝そのまま鍵。変えるときは firestore.rules の talkRooms ブロックも一緒に変える。 */
-export const ROOM_ID = 'd9a0bd2484b7b12af28ffa164f141507'
+/**
+ * 部屋のIDは**コードに書かない**。URL から読む。
+ *
+ * 🔴 ぽいロボは公開サイトなので、IDを定数で持つと**配信されるJSを読むだけで部屋に入れてしまう**
+ *    （最初そう作ってしまい、本番のバンドルに出ているのを確認して直した）。
+ *    Firestore のセキュリティルールはクライアントに配られないため、
+ *    **正しいIDを知っているのは「URL」と「ルール」だけ**という状態にできる。
+ *    ここが通すのは形（32桁の16進）だけで、合っているかどうかはルールが弾く。
+ */
+const HASH_RE = /^#\/t\/([0-9a-f]{32})$/
 
-/** この接頭辞で始まるハッシュのときだけトーク画面を出す。 */
-export const TALK_HASH = `#/t/${ROOM_ID}`
-
-/** いま開いているURLがトークルームか（main.tsx の分岐で使う）。 */
+/** いま開いているURLがトークルームの形か（main.tsx の分岐で使う）。 */
 export function isTalkRoute(): boolean {
-  return typeof window !== 'undefined' && window.location.hash === TALK_HASH
+  return typeof window !== 'undefined' && HASH_RE.test(window.location.hash)
 }
 
-const ROOM_PATH = `talkRooms/${ROOM_ID}`
+/** URLから部屋IDを取り出す（形が違えば空文字）。 */
+export function getRoomId(): string {
+  if (typeof window === 'undefined') return ''
+  return window.location.hash.match(HASH_RE)?.[1] ?? ''
+}
+
+function roomPath(): string {
+  return `talkRooms/${getRoomId()}`
+}
 
 // ── 型 ──────────────────────────────────────────────────────────────
 
@@ -143,9 +156,9 @@ export async function sendMessage(msg: Omit<TalkMessage, 'id'>, image?: { data: 
   let imgId: string | undefined
   if (image) {
     imgId = randomId()
-    await restWrite(`${ROOM_PATH}/images/${imgId}`, { d: image.data, at: msg.at })
+    await restWrite(`${roomPath()}/images/${imgId}`, { d: image.data, at: msg.at })
   }
-  await restWrite(`${ROOM_PATH}/messages/${id}`, {
+  await restWrite(`${roomPath()}/messages/${id}`, {
     uid: msg.uid, name: msg.name, text: msg.text, at: msg.at,
     ...(imgId ? { img: imgId, w: msg.w ?? 0, h: msg.h ?? 0 } : {}),
   })
@@ -155,14 +168,14 @@ export async function sendMessage(msg: Omit<TalkMessage, 'id'>, image?: { data: 
 /** 自分が送ったものを取り消す（画像も一緒に消す）。 */
 export async function deleteMessage(m: TalkMessage): Promise<void> {
   if (m.img) {
-    await restDelete(`${ROOM_PATH}/images/${m.img}`).catch(() => { /* 画像だけ消し損ねても本体は消す */ })
+    await restDelete(`${roomPath()}/images/${m.img}`).catch(() => { /* 画像だけ消し損ねても本体は消す */ })
   }
-  await restDelete(`${ROOM_PATH}/messages/${m.id}`)
+  await restDelete(`${roomPath()}/messages/${m.id}`)
 }
 
 /** 自分の在席と既読の位置を書き込む。 */
 export async function touchMember(uid: string, name: string, read: number): Promise<void> {
-  await restWrite(`${ROOM_PATH}/members/${uid}`, { name, at: Date.now(), read })
+  await restWrite(`${roomPath()}/members/${uid}`, { name, at: Date.now(), read })
 }
 
 // ── 読み取り（リアルタイム） ─────────────────────────────────────────
@@ -176,7 +189,7 @@ export async function watchMessages(cb: (rows: TalkMessage[]) => void): Promise<
     import('./firebase'),
   ])
   const db = await getDb()
-  const q = query(collection(db, ROOM_PATH, 'messages'), orderBy('at'), limitToLast(500))
+  const q = query(collection(db, roomPath(), 'messages'), orderBy('at'), limitToLast(500))
   return onSnapshot(q, snap => {
     cb(snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<TalkMessage, 'id'>) })))
   }, () => { /* 通信が切れても画面は保つ（再接続はSDKに任せる） */ })
@@ -189,7 +202,7 @@ export async function watchMembers(cb: (rows: TalkMember[]) => void): Promise<Un
     import('./firebase'),
   ])
   const db = await getDb()
-  return onSnapshot(collection(db, ROOM_PATH, 'members'), snap => {
+  return onSnapshot(collection(db, roomPath(), 'members'), snap => {
     cb(snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<TalkMember, 'id'>) })))
   }, () => { /* 同上 */ })
 }
@@ -199,7 +212,7 @@ export async function watchMembers(cb: (rows: TalkMember[]) => void): Promise<Un
  * メッセージ一覧に画像本体を混ぜると、遡るたびに全部読み直して重くなるため分けている。
  */
 export async function fetchImage(imgId: string): Promise<string | null> {
-  const res = await fetch(`${BASE}/${ROOM_PATH}/images/${imgId}`)
+  const res = await fetch(`${BASE}/${roomPath()}/images/${imgId}`)
   if (!res.ok) return null
   const json = await res.json() as { fields?: { d?: { stringValue?: string } } }
   return json.fields?.d?.stringValue ?? null

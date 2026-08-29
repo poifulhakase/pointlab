@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dayLabel, isSameDay, isTalkRoute, TALK_HASH } from '../talkRoom'
+import { dayLabel, getRoomId, isSameDay, isTalkRoute } from '../talkRoom'
 
 /**
  * 一時トークルームの表示まわり（純粋な部分だけ）。
@@ -42,25 +42,34 @@ describe('talkRoom', () => {
     })
   })
 
-  describe('isTalkRoute', () => {
+  describe('isTalkRoute / getRoomId', () => {
     // 🔴 ここが緩むと、ぽいロボ本体の代わりにトーク画面が出てしまう。
-    //    「完全一致のときだけ」を守る。
-    it('秘密のハッシュのときだけ true', () => {
-      window.location.hash = TALK_HASH
+    //    形（#/t/ ＋ 32桁の16進）が完全に一致したときだけ通す。
+    //    🔴 本物の部屋IDはコードにもテストにも書かない（合っているかはルールが弾く）。
+    const SAMPLE = '0123456789abcdef0123456789abcdef'
+
+    it('形が合っていれば true・IDを取り出せる', () => {
+      window.location.hash = `#/t/${SAMPLE}`
       expect(isTalkRoute()).toBe(true)
+      expect(getRoomId()).toBe(SAMPLE)
     })
 
     it('ハッシュが無ければ false', () => {
       window.location.hash = ''
       expect(isTalkRoute()).toBe(false)
+      expect(getRoomId()).toBe('')
     })
 
-    it('似ているだけのハッシュは false', () => {
-      window.location.hash = '#/t/'
-      expect(isTalkRoute()).toBe(false)
-      window.location.hash = `${TALK_HASH}x`
-      expect(isTalkRoute()).toBe(false)
-      window.location.hash = '#/talk'
+    it('形が違えば false', () => {
+      for (const h of ['#/t/', '#/talk', `#/t/${SAMPLE}x`, `#/t/${SAMPLE.slice(0, 31)}`, '#/t/ZZZZ']) {
+        window.location.hash = h
+        expect(isTalkRoute()).toBe(false)
+        expect(getRoomId()).toBe('')
+      }
+    })
+
+    it('大文字の16進は通さない（IDの表記ゆれで別の部屋になるのを防ぐ）', () => {
+      window.location.hash = `#/t/${SAMPLE.toUpperCase()}`
       expect(isTalkRoute()).toBe(false)
     })
   })
