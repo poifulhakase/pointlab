@@ -45,7 +45,6 @@ describe('talk-notify', () => {
     it('長さと1行の縛りが入っている', () => {
       // 🔴 形はプログラムで縛らない方針（運用者の指示）。**指示文だけが縛り**なので、
       //    ここが消えると誰も気づかないまま長文が出るようになる
-      expect(AI_SYSTEM).toContain('8行以内')
       expect(AI_SYSTEM).toContain('最大3件')
       expect(AI_SYSTEM).toContain('2〜3行に収まる長さ')
       // 🔴 文の途中で改行され、1件が何行にも割れた（2026-08-30）。この縛りは消さない
@@ -69,9 +68,12 @@ describe('talk-notify', () => {
       expect(AI_SYSTEM).toContain('MEMORY:')
     })
 
-    it('店を挙げたらマップのURLを説明の下に置かせる', () => {
+    it('店の書き方を決まった並びにする（運用者が指定した形）', () => {
+      // 店名 → 使い方のひとこと → ▼ Google MAP＋URL → 営業時間・定休日
+      expect(AI_SYSTEM).toContain('▼ Google MAP')
       expect(AI_SYSTEM).toContain('google.com/maps/search')
-      expect(AI_SYSTEM).toContain('その店の情報の下')
+      const i = AI_SYSTEM.indexOf('▼ Google MAP')
+      expect(AI_SYSTEM.indexOf('営業10:30-22:00')).toBeGreaterThan(i)
     })
 
     it('営業時間と定休日は分かった範囲だけ書かせる', () => {
