@@ -101,6 +101,13 @@
 
 .gateBtn:disabled { opacity: .4; cursor: default; }
 
+/* 合言葉が違ったとき */
+.gateError {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #d8483c;
+}
+
 /* ── 上のバー ─────────────────────────────────────────── */
 
 .bar {

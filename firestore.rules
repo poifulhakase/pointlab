@@ -76,35 +76,77 @@ service cloud.firestore {
     //       URLを知られた場合、見られる可能性は残る＝重要な内容は置かない、は変わらない。
     //    🔴 端末を替える／履歴を消すと新しいIDになり**本人が書けなくなる**。
     //       そのときはここに1行足して `firebase deploy --only firestore:rules`。
+    //    🔴🔴 2026-08-30 夕方＝**一時的に開けている**。nami の端末IDが変わって締め出され、
+    //       締め出されると本人が新しいIDを伝える手段が無い（このトークが唯一の連絡路のため）。
+    //       手順＝①ここを true にして開ける ②本人に開いてもらい members に新しい uid が入る
+    //       ③その uid を下の一覧に足す ④`OPEN_FOR_NEW_DEVICE` を false に戻して閉じる。
+    //       **③④を必ずやること**（開けたままにしない）。
     function talkerAllowed(uid) {
-      return uid in [
+      return OPEN_FOR_NEW_DEVICE() || uid in [
         'aed12a7e4fb0a2fb83ec5311',   // ひろ（8/29の端末）
         'da2f0c088d2bb34b024024fe',   // ひろ（いま使っている端末）
         '6a24426a3d6dd73786f3b085',   // nami（8/30朝までの端末）
-        '99c94419d5d91df91a6b8534',   // nami（いま使っている端末）
+        '99c94419d5d91df91a6b8534',   // nami（8/30昼までの端末）
         'ai-assistant'                // AIの発言
       ];
+    }
+
+    /**
+     * 新しい端末を迎え入れるための一時開放。閉じるときは false に戻す。
+     * 🔵 合言葉方式（下の keys）を入れたので、通常は false のままでよい。
+     */
+    function OPEN_FOR_NEW_DEVICE() {
+      return false;
+    }
+
+    /**
+     * 🔴 2026-08-30 夜＝**合言葉で自分を登録できる**ようにした。
+     *    端末IDだけの一覧にすると、ブラウザの設定ひとつでIDが変わって締め出され、
+     *    しかも**本人が新しいIDを伝える手段が無い**（このトークが唯一の連絡路）。
+     *    そこで「合言葉を知っていれば、その端末を自分で登録できる」形にする。
+     *
+     * 🔴 **`keys` は読み取り禁止**。合言葉が保存されても誰にも読めない
+     *    （部屋の読み取りは無認証で誰でもできるので、読める場所に置くと意味が無くなる）。
+     * 🔵 合言葉はここ（ルール）にだけ置く。クライアントのコードには書かない＝部屋IDと同じ扱い。
+     */
+    function talkPass() {
+      return 'かめさん';
+    }
+
+    function talkRegistered(roomId, uid) {
+      return uid == 'ai-assistant'
+        || exists(/databases/$(database)/documents/talkRooms/$(roomId)/keys/$(uid));
+    }
+
+    function canTalk(roomId, uid) {
+      return talkerAllowed(uid) || talkRegistered(roomId, uid);
     }
 
     match /talkRooms/{roomId} {
       allow read: if inTalkRoom(roomId);
       allow write: if false;   // 部屋そのものの書き換えは誰にも要らない
 
+      // 合言葉で自分の端末を登録する場所。**読めない・消せない**
+      match /keys/{uid} {
+        allow read, delete: if false;
+        allow create, update: if inTalkRoom(roomId) && request.resource.data.k == talkPass();
+      }
+
       match /messages/{msgId} {
         allow read: if inTalkRoom(roomId);
-        allow create, update: if inTalkRoom(roomId) && talkerAllowed(request.resource.data.uid);
-        allow delete: if inTalkRoom(roomId) && talkerAllowed(resource.data.uid);
+        allow create, update: if inTalkRoom(roomId) && canTalk(roomId, request.resource.data.uid);
+        allow delete: if inTalkRoom(roomId) && canTalk(roomId, resource.data.uid);
       }
       // 画像は本文とセットで作る。送り主を書かせて、同じ顔ぶれだけに絞る
       match /images/{imgId} {
         allow read: if inTalkRoom(roomId);
-        allow create, update: if inTalkRoom(roomId) && talkerAllowed(request.resource.data.uid);
-        allow delete: if inTalkRoom(roomId) && talkerAllowed(resource.data.uid);
+        allow create, update: if inTalkRoom(roomId) && canTalk(roomId, request.resource.data.uid);
+        allow delete: if inTalkRoom(roomId) && canTalk(roomId, resource.data.uid);
       }
       // 在席と既読。ドキュメントIDがそのまま端末ID
       match /members/{memId} {
         allow read: if inTalkRoom(roomId);
-        allow write: if inTalkRoom(roomId) && talkerAllowed(memId);
+        allow write: if inTalkRoom(roomId) && canTalk(roomId, memId);
       }
     }
 

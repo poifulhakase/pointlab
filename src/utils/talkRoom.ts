@@ -90,6 +90,8 @@ export interface TalkMember {
 const KEY_UID = 'talk.uid'
 const KEY_NAME = 'talk.name'
 const KEY_SOUND = 'talk.sound'
+/** 入室の合言葉。🔵 値はコードに書かない（本人が入れて、この端末に覚えさせるだけ） */
+const KEY_PASS = 'talk.pass'
 
 /** この端末のID。無ければ作って覚える。 */
 export function getUid(): string {
@@ -118,6 +120,14 @@ export function getSoundOn(): boolean {
 
 export function setSoundOn(on: boolean): void {
   try { localStorage.setItem(KEY_SOUND, on ? 'on' : 'off') } catch { /* 同上 */ }
+}
+
+export function getPass(): string {
+  try { return localStorage.getItem(KEY_PASS) ?? '' } catch { return '' }
+}
+
+export function setPass(pass: string): void {
+  try { localStorage.setItem(KEY_PASS, pass) } catch { /* 保存できなくても、その回は使える */ }
 }
 
 /** 衝突しない程度のランダムID。 */
@@ -260,6 +270,26 @@ export async function askAi(q: string): Promise<string> {
 /** AI の発言に使う識別子（吹き出しを相手側に出すため、自分のIDとは必ず別にする）。 */
 export const AI_UID = 'ai-assistant'
 export const AI_NAME = '🤖 AI'
+
+/**
+ * 合言葉でこの端末を登録する（`talkRooms/<部屋>/keys/<端末ID>`）。
+ *
+ * 🔴 端末IDはブラウザの設定ひとつで変わる。一覧に載せる方式だけだと、変わった本人が
+ *    締め出され、しかも**新しいIDを伝える手段が無い**（このトークが唯一の連絡路だったため）。
+ *    合言葉を知っていれば自分で登録し直せる、という逃げ道を用意する。
+ * 🔵 `keys` は**読み取り禁止**なので、合言葉が保存されても誰にも読めない。
+ * @returns 合言葉が合っていれば true
+ */
+export async function registerDevice(uid: string, pass: string): Promise<boolean> {
+  try {
+    await restWrite(`${roomPath()}/keys/${uid}`, { k: pass, at: Date.now() })
+    setPass(pass)
+    return true
+  } catch (e) {
+    if (errorStatus(e) === 403) return false   // 合言葉が違う
+    throw e
+  }
+}
 
 /** 自分の在席と既読の位置を書き込む。 */
 export async function touchMember(uid: string, name: string, read: number): Promise<void> {

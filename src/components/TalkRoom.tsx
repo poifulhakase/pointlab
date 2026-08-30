@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, errorStatus, linkify, notifyPeer, peerState, quoteText, randomId, sendMessage,
+  AI_NAME, AI_UID, askAi, errorStatus, getPass, linkify, notifyPeer, peerState, quoteText, randomId,
+  registerDevice, sendMessage,
   setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
@@ -68,6 +69,10 @@ export function TalkRoom() {
   const [aiWaiting, setAiWaiting] = useState(false)
   /** この端末は書き込みを許されていない（ルールの顔ぶれに入っていない） */
   const [blocked, setBlocked] = useState(false)
+  /** 締め出されたときに入れてもらう合言葉 */
+  const [passInput, setPassInput] = useState('')
+  const [passError, setPassError] = useState('')
+  const [passBusy, setPassBusy] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
@@ -94,9 +99,17 @@ export function TalkRoom() {
     if (!name) return
     const ping = () => {
       if (document.visibilityState !== 'visible') return
-      touchMember(uid, name, lastAt).catch(e => {
-        // 🔴 403＝この端末はルールの顔ぶれに入っていない。何度やっても通らないので締め出す
-        if (errorStatus(e) === 403) setBlocked(true)
+      touchMember(uid, name, lastAt).catch(async e => {
+        if (errorStatus(e) !== 403) return
+        // 🔵 403 でも、合言葉を覚えていれば**黙って登録し直す**（再入力を求めない）。
+        //    端末IDだけが変わった場合はこれで自動復帰する。
+        const saved = getPass()
+        if (saved && await registerDevice(uid, saved).catch(() => false)) {
+          touchMember(uid, name, lastAt).catch(() => { /* それでも駄目なら次のpingで拾う */ })
+          return
+        }
+        // 🔴 合言葉も無い＝入れてもらうしかない
+        setBlocked(true)
       })
     }
     ping()
@@ -364,15 +377,46 @@ export function TalkRoom() {
   //    身元は端末IDだけなので、許す一覧は Firestore のルール側に置いてある
   //    （クライアントに書くと公開JSに出てしまうため）。
   if (blocked) {
+    const unlock = async () => {
+      const p = passInput.trim()
+      if (!p || passBusy) return
+      setPassBusy(true)
+      setPassError('')
+      try {
+        if (await registerDevice(uid, p)) {
+          // 登録できた＝この端末は以後書ける。購読し直すため読み込み直す
+          location.reload()
+          return
+        }
+        setPassError('合言葉が違います')
+      } catch {
+        setPassError('通信できませんでした。電波を確認してください')
+      } finally {
+        setPassBusy(false)
+      }
+    }
     return (
       <div className={styles.gate}>
         <div className={styles.gateBox}>
-          <div className={styles.gateIcon}>🔒</div>
-          <h1 className={styles.gateTitle}>この端末では使えません</h1>
+          <div className={styles.gateIcon}>🔑</div>
+          <h1 className={styles.gateTitle}>合言葉を入れてください</h1>
           <p className={styles.gateLead}>
-            この部屋は決まった端末だけが書き込めます。<br />
-            いつも使っている端末から開いてください。
+            この端末はまだ登録されていません。<br />
+            合言葉を入れると、次からは入力なしで使えます。
           </p>
+          <input
+            className={styles.gateInput}
+            value={passInput}
+            onChange={e => setPassInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') void unlock() }}
+            placeholder="あいことば"
+            enterKeyHint="go"
+            autoComplete="off"
+          />
+          {passError && <p className={styles.gateError}>{passError}</p>}
+          <button className={styles.gateBtn} onClick={() => void unlock()} disabled={!passInput.trim() || passBusy}>
+            {passBusy ? '確認中…' : '入る'}
+          </button>
         </div>
       </div>
     )
