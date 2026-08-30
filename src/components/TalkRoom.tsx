@@ -152,6 +152,33 @@ export function TalkRoom() {
     setTimeout(() => setFlash(f => (f === id ? '' : f)), 1400)
   }
 
+  /**
+   * 🔴 開いた直後に一番下まで行かない問題（運用者の指摘）。
+   *    1回だけ `scrollTo` しても、そのあと**画像や折り返しで高さが伸びる**ので途中で止まる。
+   *    そこで開いてしばらくの間は、少し間隔をあけて下へ張り付け続ける。
+   *    自分でスクロールしたら（触った時点で）やめる＝勝手に引き戻されない。
+   */
+  useEffect(() => {
+    if (!name) return
+    const el = listRef.current
+    if (!el) return
+    let stop = false
+    const pin = () => { if (!stop) el.scrollTop = el.scrollHeight }
+    const timer = setInterval(pin, 120)
+    const done = () => { stop = true; clearInterval(timer) }
+    const end = setTimeout(done, 2500)
+    el.addEventListener('pointerdown', done)
+    el.addEventListener('wheel', done, { passive: true })
+    el.addEventListener('touchmove', done, { passive: true })
+    return () => {
+      done()
+      clearTimeout(end)
+      el.removeEventListener('pointerdown', done)
+      el.removeEventListener('wheel', done)
+      el.removeEventListener('touchmove', done)
+    }
+  }, [name])
+
   // iPhone：キーボードが出ても入力欄が隠れないように、見えている高さに合わせる
   useEffect(() => {
     const vv = window.visualViewport
@@ -396,6 +423,7 @@ export function TalkRoom() {
                 read={mine && !m.pendingId && peerRead >= m.at}
                 flash={flash === m.id}
                 isAi={m.uid === AI_UID}
+                onImageShown={() => { if (atBottom) scrollToBottom('auto') }}
                 onImage={setViewer}
                 onRetry={m.failed ? () => { const p = pending.find(x => x.id === m.pendingId); if (p) retry(p) } : undefined}
                 onHold={!m.pendingId ? () => setActing(m) : undefined}
@@ -571,7 +599,7 @@ const HOLD_MS = 450
 const HOLD_SLOP = 10
 
 /** 1行ぶんの吹き出し。 */
-function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onRetry, onHold, onJump }: {
+function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onImageShown, onRetry, onHold, onJump }: {
   m: TalkMessage & { pendingId?: string; failed?: boolean }
   mine: boolean
   tail: boolean
@@ -580,6 +608,8 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onRetry, onH
   flash: boolean
   /** AIの発言（人の発言と見分けが付くよう、色も名札も変える） */
   isAi: boolean
+  /** 画像が実際に表示されたとき（高さが増えるので、下にいるなら追いかける） */
+  onImageShown: () => void
   onImage: (src: string) => void
   onRetry?: () => void
   onHold?: () => void
@@ -673,7 +703,7 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onRetry, onH
                 style={ratio ? { aspectRatio: `${m.w} / ${m.h}` } : undefined}
                 onClick={() => { if (!afterHold() && src) onImage(src) }}
               >
-                {src ? <img src={src} alt="" /> : <div className={styles.photoWait} />}
+                {src ? <img src={src} alt="" onLoad={onImageShown} /> : <div className={styles.photoWait} />}
               </div>
             ) : null}
             {m.text && <div className={styles.bubble}>{m.text}</div>}

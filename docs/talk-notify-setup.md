@@ -61,7 +61,15 @@
 
 | 変数 | 中身 |
 |---|---|
-| `ANTHROPIC_API_KEY` | ぽいロボの疑似トレードと**同じキーでよい**（残高も共用） |
+| `ANTHROPIC_API_KEY` | ぽいロボの疑似トレードと**同じ残高**を使う。新しく発行してもよい |
+| `ANTHROPIC_WORKSPACE_ID` | 🔴 **いま Console で作る鍵（アカウント紐付け型）では必須**。`wrkspc_...` |
+
+🔴 **鍵を新しく作ると、ワークスペースIDのヘッダーが要る**。無いと全部これで落ちる:
+```
+400 anthropic-workspace-id is required when authenticating with an identity-linked API key
+```
+疑似トレードの古い鍵（「ワークスペース（レガシー）」型）は不要なので、この落とし穴は今回が初出。
+IDの調べ方＝Console → 組織の設定 → ワークスペース → 対象を開き、URL の `wrkspc_...` を取る。
 
 - 🔴 **未設定だと「AIはまだ使えません」と出るだけ**（他の機能には影響しない）
 - 質問も答えも**そのままトークに流れる**（2人とも読める）

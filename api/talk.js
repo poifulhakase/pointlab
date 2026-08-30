@@ -23,6 +23,8 @@
 //   TALK_NOTIFY_BODY          … 'off' なら本文を載せず「新着があります」だけにする
 //   TALK_NOTIFY_MIN_SEC       … 最短間隔の秒数（既定 90）
 //   TALK_NOTIFY_MAX_PER_DAY   … 1日の上限（既定 60）
+//   ANTHROPIC_API_KEY         … AI（?a=ai）用。ぽいロボの疑似トレードと同じ残高を使う
+//   ANTHROPIC_WORKSPACE_ID    … 🔴 アカウント紐付け型の鍵では必須（`wrkspc_...`）
 
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
@@ -148,7 +150,14 @@ async function ai(req, res) {
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: key })
+    // 🔴 いま Console で作る鍵は「アカウント紐付け型」で、**ワークスペースIDのヘッダーが必須**。
+    //    無いと 400 `anthropic-workspace-id is required...` で全部落ちる（2026-08-30 に踏んだ）。
+    //    疑似トレードの古い鍵（レガシーのワークスペース鍵）は不要なので、あれば付ける形にする。
+    const workspace = process.env.ANTHROPIC_WORKSPACE_ID
+    const anthropic = new Anthropic({
+      apiKey: key,
+      ...(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {}),
+    })
     const r = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 2000,
@@ -169,7 +178,7 @@ async function ai(req, res) {
     console.error('[talk/ai] error:', e?.status, e?.message)
     // 🔵 種類（HTTPの番号）だけは返す。中身は返さない代わりに、これで切り分けができる
     //    （400=リクエストの形／401=鍵／429=上限／5xx=向こう側）
-    return res.status(502).json({ error: 'AIに聞けませんでした', code: e?.status ?? 0, detail: String(e?.message ?? '').slice(0, 300) })
+    return res.status(502).json({ error: 'AIに聞けませんでした', code: e?.status ?? 0 })
   }
 }
 
