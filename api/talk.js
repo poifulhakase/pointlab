@@ -29,7 +29,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId } from './_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -136,6 +136,13 @@ async function ai(req, res) {
   const q = String(body.q || '').trim().slice(0, 500)
   if (!q) return res.status(400).json({ error: '質問が空です' })
 
+  /**
+   * 覚えていることの置き場。
+   * 🔵 サーバー（Admin SDK）から読み書きするのでルールは通らない＝
+   *    画面側から書き換えられない。編集画面は作らない（運用者の指示）。
+   */
+  let memRef = null
+  let memory = ''
   try {
     const db = getDb()
     const rk = `talk_${String(body.room).slice(0, 8)}`
@@ -145,8 +152,10 @@ async function ai(req, res) {
     if (!(await rateLimit(db, rk, 'ai_day', 40, 24 * 60 * 60 * 1000))) {
       return res.status(429).json({ error: '今日はここまで（1日40回）' })
     }
+    memRef = db.doc(`talkRooms/${body.room}`)
+    memory = (await memRef.get()).data()?.aiMemory ?? ''
   } catch {
-    // 回数を数えられない環境でも質問は通す
+    // 回数も記憶も扱えない環境でも、質問そのものは通す
   }
 
   try {
@@ -164,7 +173,7 @@ async function ai(req, res) {
       // 🔴 出力の形は縛らない。書き方は AI_SYSTEM（プロンプト）側で決める
       //    ＝運用者の方針「内容はプログラムで制御しすぎず、プロンプト制御にする」
       output_config: { effort: AI_EFFORT },
-      system: AI_SYSTEM,
+      system: withMemory(AI_SYSTEM, memory),
       tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: AI_MAX_SEARCHES }],
       messages: [{ role: 'user', content: q }],
     })
@@ -174,7 +183,14 @@ async function ai(req, res) {
       return res.status(200).json({ text: 'この質問には答えられませんでした。聞き方を変えてみてください。' })
     }
     // 中身はそのまま使う。表示が壊れる分（文字としての改行表記）だけ直す
-    const text = cleanAiText((r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n'))
+    const whole = cleanAiText((r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n'))
+    // 裏の記録（MEMORY: の行）を切り離す。画面には出さず、静かに覚え直す
+    const { text, memory: updated } = splitMemory(whole)
+    if (updated && memRef) {
+      // 🔵 覚え直しに失敗しても答えは返す（記憶は落ちてよい）
+      await memRef.set({ aiMemory: updated.slice(0, 1200), aiMemoryAt: Date.now() }, { merge: true })
+        .catch(e => console.error('[talk/ai] memory save failed:', e?.message))
+    }
     if (!text) return res.status(502).json({ error: 'AIの返事が空でした' })
     return res.status(200).json({ text })
   } catch (e) {

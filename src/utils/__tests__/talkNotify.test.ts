@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -59,6 +59,11 @@ describe('talk-notify', () => {
       expect(AI_SYSTEM).toContain('前置き')
     })
 
+    it('覚えたことを本文で報告させない（コマンド不要・通知不要の約束）', () => {
+      expect(AI_SYSTEM).toContain('覚えたことを本文で報告しない')
+      expect(AI_SYSTEM).toContain('MEMORY:')
+    })
+
     it('地名を似た別の場所に置き換えさせない（実際に出た事故の再発防止）', () => {
       // 「横浜のみなとみらい」に対して茨城の「みらい平」の店を返してきた（2026-08-30）
       expect(AI_SYSTEM).toContain('似た名前の別の場所に置き換えない')
@@ -89,6 +94,45 @@ describe('talk-notify', () => {
 
     it('空でも落ちない', () => {
       expect(cleanAiText(undefined)).toBe('')
+    })
+  })
+
+  describe('splitMemory', () => {
+    // 🔴 記憶は「コマンド不要・報告なし」（運用者の指示）。裏の記録が画面に出ると
+    //    その約束が崩れるので、切り離しはここで固定する。
+    it('MEMORY: の行を本文から切り離す', () => {
+      const { text, memory } = splitMemory('おすすめはA店です。\nMEMORY: ・辛いものが苦手 ・横浜在住')
+      expect(text).toBe('おすすめはA店です。')
+      expect(memory).toBe('・辛いものが苦手 ・横浜在住')
+    })
+
+    it('全角コロンでも切り離す', () => {
+      expect(splitMemory('本文\nMEMORY：・メモ').memory).toBe('・メモ')
+    })
+
+    it('MEMORY 行が無ければ本文だけ', () => {
+      const { text, memory } = splitMemory('ふつうの答え')
+      expect(text).toBe('ふつうの答え')
+      expect(memory).toBe('')
+    })
+
+    it('MEMORY 行が複数行に割れても全部拾う', () => {
+      expect(splitMemory('本文\nMEMORY: ・あ\n・い').memory).toBe('・あ ・い')
+    })
+
+    it('空でも落ちない', () => {
+      expect(splitMemory(undefined)).toEqual({ text: '', memory: '' })
+    })
+  })
+
+  describe('withMemory', () => {
+    it('覚えていることがあれば指示の後ろに足す', () => {
+      expect(withMemory('しじ', '・メモ')).toBe('しじ\n\n【いま覚えていること】\n・メモ')
+    })
+
+    it('無ければ何も足さない', () => {
+      expect(withMemory('しじ', '')).toBe('しじ')
+      expect(withMemory('しじ', undefined)).toBe('しじ')
     })
   })
 
