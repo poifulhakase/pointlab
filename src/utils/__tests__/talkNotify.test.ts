@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import {
-  AI_OUTPUT_SCHEMA, AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, joinAiAnswer,
-} from '../../../api/_talkNotify.js'
+import { AI_OUTPUT_SCHEMA, AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, joinAiAnswer } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
