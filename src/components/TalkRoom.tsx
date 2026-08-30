@@ -227,7 +227,7 @@ export function TalkRoom() {
     setText('')
     if (taRef.current) taRef.current.style.height = 'auto'
     try {
-      await sendMessage({ uid, name, text: q, at: Date.now() })
+      await sendMessage({ uid, name, text: q, at: Date.now(), toAi: true })
     } catch {
       show('送れませんでした')
       setSending(false)
@@ -695,7 +695,7 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onImageShown
   )
 
   return (
-    <div className={`${styles.row} ${mine ? styles.mine : styles.theirs} ${isAi ? styles.aiMsg : ''}`}>
+    <div className={`${styles.row} ${mine ? styles.mine : styles.theirs} ${isAi ? styles.aiMsg : ''} ${m.toAi ? styles.askRow : ''}`}>
       {showName && (
         <div className={styles.who}>
           {isAi ? <span className={styles.aiTag}>AI が調べました</span> : m.name}
@@ -714,6 +714,8 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onImageShown
           onPointerLeave={holdCancel}
         >
           {/* 🔵 引用は背景に溶けやすいので、引用と本文を1枚の枠で囲って「返信」だと分かるようにする */}
+          {/* 🔵 AIに聞いた発言は、相手への発言と見分けが付くように名札を出す */}
+          {m.toAi && <div className={styles.toAi}>AI に質問</div>}
           <div className={m.re ? styles.replied : styles.plain}>
             {m.re && (
               <button className={styles.quote} onClick={() => { if (!afterHold()) onJump(m.re!) }}>

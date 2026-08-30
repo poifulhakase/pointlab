@@ -598,6 +598,28 @@
 
 /* ── AIの発言（人の発言と混ざらないように、色も名札も変える） ── */
 
+/*
+  AIに向けた質問の目印。
+  🔴 相手に話しかけたのか AI に聞いたのか、吹き出しの色だけでは分からなかった
+     （運用者の指摘）。名札を上に出し、吹き出し自体もAIの色で縁取る。
+*/
+.toAi {
+  align-self: flex-end;
+  margin-bottom: 3px;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--talk-ai-ink);
+  background: var(--talk-ai-bg);
+  border: 1px solid var(--talk-ai-line);
+  border-radius: 999px;
+}
+
+.askRow .bubble {
+  border: 1px solid var(--talk-ai);
+  border-right: 3px solid var(--talk-ai);
+}
+
 /* 吹き出しの左に付く小さな丸。ここも絵ではなく文字にしてある */
 .aiFace {
   flex: 0 0 auto;

@@ -69,6 +69,11 @@ export interface TalkMessage {
    */
   reName?: string
   reText?: string
+  /**
+   * AI に向けた質問（左下のAIボタンで送ったもの）。
+   * 🔴 相手に話しかけたのか AI に聞いたのか、見た目で分からないと混乱する（運用者の指摘）。
+   */
+  toAi?: boolean
 }
 
 export interface TalkMember {
@@ -205,6 +210,7 @@ export async function sendMessage(msg: Omit<TalkMessage, 'id'>, image?: { data: 
     uid: msg.uid, name: msg.name, text: msg.text, at: msg.at,
     ...(imgId ? { img: imgId, w: msg.w ?? 0, h: msg.h ?? 0 } : {}),
     ...(msg.re ? { re: msg.re, reName: msg.reName ?? '', reText: msg.reText ?? '' } : {}),
+    ...(msg.toAi ? { toAi: true } : {}),
   })
   return id
 }
