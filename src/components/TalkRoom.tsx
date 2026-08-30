@@ -465,10 +465,7 @@ export function TalkRoom() {
           onClick={() => setAiMode(v => !v)}
           aria-label="AIに聞く"
           aria-pressed={aiMode}
-        >
-          <img src={`${import.meta.env.BASE_URL}poirobo.webp`} alt="" />
-          <span>AI</span>
-        </button>
+        >AI</button>
         <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る">🖼️</button>
         <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字">😀</button>
         <textarea
@@ -651,9 +648,7 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onRetry, onH
         </div>
       )}
       <div className={styles.line}>
-        {isAi && (
-          <img className={styles.aiFace} src={`${import.meta.env.BASE_URL}poirobo.webp`} alt="" />
-        )}
+        {isAi && <span className={styles.aiFace}>AI</span>}
         {mine && tail && meta}
         <div
           className={`${styles.bubbleWrap} ${flash ? styles.flash : ''}`}

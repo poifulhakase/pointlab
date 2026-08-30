@@ -568,58 +568,51 @@
 /* ── AIに聞く ─────────────────────────────────────────── */
 
 /*
-  左下のボタン。ロボの顔＋「AI」。
-  🔵 絵文字ではなくロボにしたのは、AIの発言に付く顔と同じ絵にして
-     「このボタンで出てくるのはこの子」と結びつけるため（運用者の指示）。
+  左下のボタン。**文字で「AI」**（ロボの絵はやめた＝小さくすると絵しか見えず、
+  何のボタンか分からなかった。運用者の指摘）。
+  入っているときは色が付くので、いまどちらのモードかが一目で分かる。
 */
 .aiBtn {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  width: 36px;
   height: 36px;
-  padding: 0 9px 0 5px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #4b545e;
   background: #eef1f4;
   border: 1px solid var(--talk-line);
-  border-radius: 999px;
+  border-radius: 50%;
   cursor: pointer;
 }
 
-.aiBtn img {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #fff;
-}
-
-.aiBtn span {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  color: #4b545e;
-}
-
 .aiOn {
-  background: var(--talk-ai-bg);
+  color: #fff;
+  background: var(--talk-ai);
   border-color: var(--talk-ai);
   box-shadow: 0 0 0 3px #00b3c833;
 }
 
-.aiOn span { color: var(--talk-ai-ink); }
-
 /* ── AIの発言（人の発言と混ざらないように、色も名札も変える） ── */
 
+/* 吹き出しの左に付く小さな丸。ここも絵ではなく文字にしてある */
 .aiFace {
   flex: 0 0 auto;
   align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 28px;
   height: 28px;
   margin-bottom: 2px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--talk-ai);
   border-radius: 50%;
-  object-fit: cover;
-  background: #fff;
-  border: 1px solid var(--talk-ai-line);
 }
 
 .aiTag {
