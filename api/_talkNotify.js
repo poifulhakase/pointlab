@@ -43,11 +43,10 @@ export const AI_SYSTEM = [
   '',
   '答え方（必ず守る）:',
   '- 日本語。結論から。前置き・あいさつ・言い訳は書かない。',
-  '- 全体で5行以内。候補を出すときは最大3件、1件1行。',
-  '- 1行の形＝「店名／エリア・最寄り｜ひとことの特徴（値段や雰囲気）」',
-  '- 最後に一行だけ、次の一手を書いてよい（例:「予約は早めが安全」）。',
-  '- 表や見出し、長い箇条書きは使わない。',
-  '- 改行はそのまま改行する。バックスラッシュ n のような文字を本文に書かない。',
+  '- lines に候補を最大3件。1件＝1つの文字列にまとめ、途中で改行しない。',
+  '- 1件の形＝「店名／エリア・最寄り｜ひとことの特徴（値段や雰囲気）」',
+  '- note は最後に添える一行（要確認や予約の目安）。要らなければ空文字。',
+  '- 1件はスマホの2〜3行に収まる長さ。表や見出しは使わない。',
   '',
   '場所の扱い（間違えやすいので必ず守る）:',
   '- 地名は書かれたとおりに扱う。似た名前の別の場所に置き換えない',
@@ -60,6 +59,43 @@ export const AI_SYSTEM = [
   '- 営業時間・定休日・料金は変わりやすいので、断定せず「要確認」と添える。',
   '- 分からないことは分からないと書く。作らない。',
 ].join('\n')
+
+/**
+ * AIの答えの形。
+ *
+ * 🔴 文章のままだと**1行に収まらない**（文の途中で改行が入り、候補1件が3行に割れた）。
+ *    行を配列で受け取り、**繋ぐのはこちら**にする＝「1件1行」を機械的に守れる。
+ */
+export const AI_OUTPUT_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['lines'],
+  properties: {
+    lines: {
+      type: 'array',
+      maxItems: 3,
+      items: { type: 'string' },
+      description: '候補を1件1行で最大3つ。分からず聞き返すときは1行だけ入れる。改行は入れない。',
+    },
+    note: {
+      type: 'string',
+      description: '最後に添える一行（要確認・予約の目安など）。無ければ空文字。',
+    },
+  },
+}
+
+/**
+ * 上の形 → 吹き出しに出す文章。
+ * 各行の中の改行は潰す（1件1行を保つため）。
+ */
+export function joinAiAnswer(out) {
+  const lines = Array.isArray(out?.lines) ? out.lines : []
+  const rows = lines
+    .map(l => String(l ?? '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+  const note = String(out?.note ?? '').replace(/\s+/g, ' ').trim()
+  return cleanAiText([...rows, note].filter(Boolean).join('\n'))
+}
 
 /**
  * AIの答えを表示できる形に整える。

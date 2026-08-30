@@ -65,12 +65,47 @@ service cloud.firestore {
         && request.time < timestamp.date(2026, 10, 8);
     }
 
-    match /talkRooms/{roomId} {
-      allow read, write: if inTalkRoom(roomId);
+    // 🔴 2026-08-30 追加＝**書き込めるのはいまやり取りしている端末だけ**（運用者の指示
+    //    「既にチャットしている2名以外のブラウザはブロックしてOK」）。
+    //    ログインしないので身元は端末ID（localStorage の talk.uid）しかない。それを
+    //    **ルール側に列挙**する＝クライアントのコードには出さない（公開JSに出ないため、
+    //    部屋IDと同じ扱いにできる）。
+    //    🔵 1人につき2つあるのは、途中でブラウザ/履歴が変わって別IDになったため。
+    //    🔵 'ai-assistant' は左下のAIボタンが投稿するときの送り主。
+    //    🔴 **読み取りは止められない**（無認証なので端末を見分ける材料が読み取り時に無い）。
+    //       URLを知られた場合、見られる可能性は残る＝重要な内容は置かない、は変わらない。
+    //    🔴 端末を替える／履歴を消すと新しいIDになり**本人が書けなくなる**。
+    //       そのときはここに1行足して `firebase deploy --only firestore:rules`。
+    function talkerAllowed(uid) {
+      return uid in [
+        'aed12a7e4fb0a2fb83ec5311',   // ひろ（8/29の端末）
+        'da2f0c088d2bb34b024024fe',   // ひろ（いま使っている端末）
+        '6a24426a3d6dd73786f3b085',   // nami（8/30朝までの端末）
+        '99c94419d5d91df91a6b8534',   // nami（いま使っている端末）
+        'ai-assistant'                // AIの発言
+      ];
+    }
 
-      match /messages/{msgId} { allow read, write: if inTalkRoom(roomId); }
-      match /images/{imgId}   { allow read, write: if inTalkRoom(roomId); }
-      match /members/{memId}  { allow read, write: if inTalkRoom(roomId); }
+    match /talkRooms/{roomId} {
+      allow read: if inTalkRoom(roomId);
+      allow write: if false;   // 部屋そのものの書き換えは誰にも要らない
+
+      match /messages/{msgId} {
+        allow read: if inTalkRoom(roomId);
+        allow create, update: if inTalkRoom(roomId) && talkerAllowed(request.resource.data.uid);
+        allow delete: if inTalkRoom(roomId) && talkerAllowed(resource.data.uid);
+      }
+      // 画像は本文とセットで作る。送り主を書かせて、同じ顔ぶれだけに絞る
+      match /images/{imgId} {
+        allow read: if inTalkRoom(roomId);
+        allow create, update: if inTalkRoom(roomId) && talkerAllowed(request.resource.data.uid);
+        allow delete: if inTalkRoom(roomId) && talkerAllowed(resource.data.uid);
+      }
+      // 在席と既読。ドキュメントIDがそのまま端末ID
+      match /members/{memId} {
+        allow read: if inTalkRoom(roomId);
+        allow write: if inTalkRoom(roomId) && talkerAllowed(memId);
+      }
     }
 
     match /bookings/{bookingId} {

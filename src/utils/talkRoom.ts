@@ -157,7 +157,7 @@ async function restWrite(path: string, data: Record<string, unknown>): Promise<v
       body: JSON.stringify({ fields: toFields(data) }),
       signal: ctrl.signal,
     })
-    if (!res.ok) throw new Error(`Firestore ${res.status}`)
+    if (!res.ok) throw statusError(res.status)
   } catch (e) {
     if (ctrl.signal.aborted) throw new Error('送信が時間内に終わりませんでした')
     throw e
@@ -168,7 +168,23 @@ async function restWrite(path: string, data: Record<string, unknown>): Promise<v
 
 async function restDelete(path: string): Promise<void> {
   const res = await fetch(`${BASE}/${path}`, { method: 'DELETE' })
-  if (!res.ok && res.status !== 404) throw new Error(`Firestore ${res.status}`)
+  if (!res.ok && res.status !== 404) throw statusError(res.status)
+}
+
+/**
+ * HTTPの番号を持たせた例外。
+ * 🔴 403（ルールに載っていない端末）と、ただの通信失敗を**呼び出し側で区別する**ため。
+ *    403 は送り直しても永久に通らないので、再送ではなく締め出しの画面を出す。
+ */
+function statusError(status: number): Error {
+  const e = new Error(status === 403 ? 'この端末からは書き込めません' : `Firestore ${status}`)
+  ;(e as Error & { status?: number }).status = status
+  return e
+}
+
+/** 例外からHTTPの番号を取り出す（無ければ0）。 */
+export function errorStatus(e: unknown): number {
+  return (e as { status?: number } | null)?.status ?? 0
 }
 
 // ── 書き込み ────────────────────────────────────────────────────────
@@ -182,7 +198,8 @@ export async function sendMessage(msg: Omit<TalkMessage, 'id'>, image?: { data: 
   let imgId: string | undefined
   if (image) {
     imgId = randomId()
-    await restWrite(`${roomPath()}/images/${imgId}`, { d: image.data, at: msg.at })
+    // 🔴 uid を入れるのはルールの照合用（画像だけ別の端末から作れる穴を塞ぐ）
+    await restWrite(`${roomPath()}/images/${imgId}`, { d: image.data, at: msg.at, uid: msg.uid })
   }
   await restWrite(`${roomPath()}/messages/${id}`, {
     uid: msg.uid, name: msg.name, text: msg.text, at: msg.at,

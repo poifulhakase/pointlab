@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, notifyPeer, peerState, quoteText, randomId, sendMessage,
+  AI_NAME, AI_UID, askAi, errorStatus, notifyPeer, peerState, quoteText, randomId, sendMessage,
   setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
@@ -66,6 +66,8 @@ export function TalkRoom() {
   const [aiMode, setAiMode] = useState(false)
   /** AIの返事を待っている間の表示 */
   const [aiWaiting, setAiWaiting] = useState(false)
+  /** この端末は書き込みを許されていない（ルールの顔ぶれに入っていない） */
+  const [blocked, setBlocked] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
@@ -91,9 +93,11 @@ export function TalkRoom() {
   useEffect(() => {
     if (!name) return
     const ping = () => {
-      if (document.visibilityState === 'visible') {
-        touchMember(uid, name, lastAt).catch(() => { /* 失敗しても表示には影響しない */ })
-      }
+      if (document.visibilityState !== 'visible') return
+      touchMember(uid, name, lastAt).catch(e => {
+        // 🔴 403＝この端末はルールの顔ぶれに入っていない。何度やっても通らないので締め出す
+        if (errorStatus(e) === 403) setBlocked(true)
+      })
     }
     ping()
     const t = setInterval(ping, HEARTBEAT_MS)
@@ -282,7 +286,8 @@ export function TalkRoom() {
       try {
         await sendMessage(job.msg, job.image)
         setPending(p => p.filter(x => x.id !== pid))
-      } catch {
+      } catch (e) {
+        if (errorStatus(e) === 403) setBlocked(true)
         setPending(p => p.map(x => (x.id === pid ? { ...x, failed: true } : x)))
       }
     }
@@ -353,6 +358,25 @@ export function TalkRoom() {
     ]
     return all.sort((a, b) => a.at - b.at)
   }, [messages, pending])
+
+  // ── この端末は使えません ───────────────────────────────────────
+  // 🔴 やり取りしている2人の端末以外はブロックする（運用者の指示・2026-08-30）。
+  //    身元は端末IDだけなので、許す一覧は Firestore のルール側に置いてある
+  //    （クライアントに書くと公開JSに出てしまうため）。
+  if (blocked) {
+    return (
+      <div className={styles.gate}>
+        <div className={styles.gateBox}>
+          <div className={styles.gateIcon}>🔒</div>
+          <h1 className={styles.gateTitle}>この端末では使えません</h1>
+          <p className={styles.gateLead}>
+            この部屋は決まった端末だけが書き込めます。<br />
+            いつも使っている端末から開いてください。
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // ── 名前を入れる画面 ───────────────────────────────────────────
   if (!name) {
