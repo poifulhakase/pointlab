@@ -29,7 +29,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_OUTPUT_SCHEMA, AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId, joinAiAnswer } from './_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -161,8 +161,9 @@ async function ai(req, res) {
     const r = await anthropic.messages.create({
       model: AI_MODEL,
       max_tokens: 2000,
-      // 🔴 形を固定する（文章のままだと文の途中で改行され、候補1件が3行に割れた）
-      output_config: { effort: AI_EFFORT, format: { type: 'json_schema', schema: AI_OUTPUT_SCHEMA } },
+      // 🔴 出力の形は縛らない。書き方は AI_SYSTEM（プロンプト）側で決める
+      //    ＝運用者の方針「内容はプログラムで制御しすぎず、プロンプト制御にする」
+      output_config: { effort: AI_EFFORT },
       system: AI_SYSTEM,
       tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: AI_MAX_SEARCHES }],
       messages: [{ role: 'user', content: q }],
@@ -172,14 +173,8 @@ async function ai(req, res) {
     if (r.stop_reason === 'refusal') {
       return res.status(200).json({ text: 'この質問には答えられませんでした。聞き方を変えてみてください。' })
     }
-    const raw = (r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n')
-    let text = ''
-    try {
-      text = joinAiAnswer(JSON.parse(raw))
-    } catch {
-      // 形が崩れて返ってきたら、文章としてそのまま出す（黙って落とさない）
-      text = cleanAiText(raw)
-    }
+    // 中身はそのまま使う。表示が壊れる分（文字としての改行表記）だけ直す
+    const text = cleanAiText((r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n'))
     if (!text) return res.status(502).json({ error: 'AIの返事が空でした' })
     return res.status(200).json({ text })
   } catch (e) {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_OUTPUT_SCHEMA, AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, joinAiAnswer } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -42,11 +42,12 @@ describe('talk-notify', () => {
   describe('AI_SYSTEM', () => {
     // 🔴 「だらだら書かない」は運用者の明示の指示。ここが緩むと画面が読めなくなるので、
     //    短く答えさせる縛りが**消えていないこと**をテストで固定する。
-    it('長さの縛りが入っている', () => {
-      // 件数は形（AI_OUTPUT_SCHEMA の maxItems）でも縛っているが、
-      // 指示側からも消えていないことを見る
+    it('長さと1行の縛りが入っている', () => {
+      // 🔴 形はプログラムで縛らない方針（運用者の指示）。**指示文だけが縛り**なので、
+      //    ここが消えると誰も気づかないまま長文が出るようになる
+      expect(AI_SYSTEM).toContain('5行以内')
       expect(AI_SYSTEM).toContain('最大3件')
-      expect(AI_SYSTEM).toContain('2〜3行に収まる長さ')
+      expect(AI_SYSTEM).toContain('1件の途中で改行しない')
     })
 
     it('分からないことを作らせない・変わる情報は断定させない', () => {
@@ -88,35 +89,6 @@ describe('talk-notify', () => {
 
     it('空でも落ちない', () => {
       expect(cleanAiText(undefined)).toBe('')
-    })
-  })
-
-  describe('AI_OUTPUT_SCHEMA', () => {
-    it('候補は3件までに形で縛る', () => {
-      expect(AI_OUTPUT_SCHEMA.properties.lines.maxItems).toBe(3)
-      expect(AI_OUTPUT_SCHEMA.required).toContain('lines')
-    })
-  })
-
-  describe('joinAiAnswer', () => {
-    // 🔴 「1件1行」を機械で守るための部分。文章のままモデルに書かせると
-    //    文の途中で改行され、候補1件が3行に割れた（2026-08-30）。
-    it('候補と一言を1行ずつ繋ぐ', () => {
-      const out = joinAiAnswer({ lines: ['A店／渋谷｜静か', 'B店／恵比寿｜安い'], note: '要確認' })
-      expect(out).toBe('A店／渋谷｜静か\nB店／恵比寿｜安い\n要確認')
-    })
-
-    it('1件の中の改行は潰す（行が割れないように）', () => {
-      expect(joinAiAnswer({ lines: ['途中で\n割れた行'] })).toBe('途中で 割れた行')
-    })
-
-    it('空の行や一言は落とす', () => {
-      expect(joinAiAnswer({ lines: ['A', '', '  '], note: '' })).toBe('A')
-    })
-
-    it('壊れた入力でも落ちない', () => {
-      expect(joinAiAnswer(null)).toBe('')
-      expect(joinAiAnswer({})).toBe('')
     })
   })
 
