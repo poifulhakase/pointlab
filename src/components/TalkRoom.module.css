@@ -14,6 +14,7 @@
   --talk-text: #1a1a1a;
   --talk-meta: #ffffffcc;
   --talk-accent: #06c755;      /* LINEグリーン */
+  --talk-ai: #00b3c8;          /* AI（ぽいロボのシアン。トークの緑と混ざらない色） */
 }
 
 /* ── 全体 ─────────────────────────────────────────────── */
@@ -555,6 +556,62 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── AIに聞く ─────────────────────────────────────────── */
+
+/* 左下の丸ボタン。押している間は色が付く（いまどちらのモードか一目で分かる） */
+.aiBtn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  line-height: 1;
+  background: #eef1f4;
+  border: 1px solid var(--talk-line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.aiOn {
+  background: var(--talk-ai);
+  border-color: var(--talk-ai);
+  box-shadow: 0 0 0 3px #00b3c833;
+}
+
+.aiBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 11px;
+  color: #0b6b78;
+  background: #e6f7fa;
+  border-top: 1px solid #b7e4ec;
+}
+
+.aiBar > span { flex: 1; min-width: 0; }
+
+.aiBar > button {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+  color: #0b6b78;
+  background: #ffffffcc;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.aiWait {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #0b6b78;
+  background: #e6f7fa;
+  border-top: 1px solid #b7e4ec;
 }
 
 /* ── 返信（引用） ─────────────────────────────────────── */

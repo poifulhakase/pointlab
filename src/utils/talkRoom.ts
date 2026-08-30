@@ -217,6 +217,27 @@ export async function notifyPeer(msg: { name: string; text: string; hasImage: bo
   } catch { /* 通知は落ちてよい */ }
 }
 
+/**
+ * トークの中で AI に聞く（`api/talk.js` の `a=ai`）。Web検索つきで、店や周辺情報を調べて答える。
+ *
+ * 🔴 質問も答えも**そのままトークに流す**（2人とも読める）ので、ここでは文章を返すだけ。
+ *    投稿は呼び出し側が `sendMessage` でやる。
+ */
+export async function askAi(q: string): Promise<string> {
+  const res = await fetch('/api/talk?a=ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ room: getRoomId(), q }),
+  })
+  const data = await res.json().catch(() => ({})) as { text?: string; error?: string }
+  if (!res.ok || !data.text) throw new Error(data.error || 'AIに聞けませんでした')
+  return data.text
+}
+
+/** AI の発言に使う識別子（吹き出しを相手側に出すため、自分のIDとは必ず別にする）。 */
+export const AI_UID = 'ai-assistant'
+export const AI_NAME = '🤖 AI'
+
 /** 自分の在席と既読の位置を書き込む。 */
 export async function touchMember(uid: string, name: string, read: number): Promise<void> {
   await restWrite(`${roomPath()}/members/${uid}`, { name, at: Date.now(), read })

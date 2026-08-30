@@ -1,4 +1,5 @@
 // POST /api/talk?a=notify   … 新着が出たことを LINE へ知らせる（相手のロック画面に出す）
+// POST /api/talk?a=ai       … トークの中で AI に聞く（Web検索つき・お店や周辺情報の提案）
 // POST /api/talk?a=webhook  … LINE の webhook。送り先ID（グループなら C…）を調べるためだけ
 //
 // 🔴 ぽいロボ本体とは無関係の間借り機能。使い終わったら消す（docs/talk-notify-setup.md）。
@@ -23,9 +24,10 @@
 //   TALK_NOTIFY_MIN_SEC       … 最短間隔の秒数（既定 90）
 //   TALK_NOTIFY_MAX_PER_DAY   … 1日の上限（既定 60）
 
+import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { buildNotifyText, isRoomId } from './_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, isRoomId } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -48,6 +50,7 @@ export default async function handler(req, res) {
   const action = String(req.query.a || 'notify')
   if (action === 'webhook') return webhook(req, res)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
+  if (action === 'ai') return ai(req, res)
   return notify(req, res)
 }
 
@@ -103,6 +106,69 @@ async function notify(req, res) {
   }
 
   return res.status(204).end()
+}
+
+// ── トークの中で AI に聞く ───────────────────────────────────────
+
+/** 判断ではなく提案なので、深く考えさせない（速さと安さを取る）。 */
+const AI_MODEL = 'claude-opus-5'
+const AI_EFFORT = 'low'
+/** 1回の質問で許す検索の回数。増やすほど詳しくなるが、時間もお金もかかる。 */
+const AI_MAX_SEARCHES = 4
+
+/**
+ * 🔴 使うのはぽいロボと同じ `ANTHROPIC_API_KEY`（残高も共用）。
+ *    未設定なら 503 を返して画面に理由を出す（黙って壊れないように）。
+ * 🔴 1回あたり十数円かかりうる（Web検索つき）。**部屋IDの照合＋回数制限**の両方を掛ける。
+ */
+async function ai(req, res) {
+  const room = process.env.TALK_ROOM_ID
+  const key = process.env.ANTHROPIC_API_KEY
+  const body = readBody(req)
+
+  if (!isRoomId(body.room) || (room && body.room !== room)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  if (!key) return res.status(503).json({ error: 'AIはまだ使えません（設定が要ります）' })
+
+  const q = String(body.q || '').trim().slice(0, 500)
+  if (!q) return res.status(400).json({ error: '質問が空です' })
+
+  try {
+    const db = getDb()
+    const rk = `talk_${String(body.room).slice(0, 8)}`
+    if (!(await rateLimit(db, rk, 'ai_min', 3, 60 * 1000))) {
+      return res.status(429).json({ error: '少し待ってからもう一度どうぞ' })
+    }
+    if (!(await rateLimit(db, rk, 'ai_day', 40, 24 * 60 * 60 * 1000))) {
+      return res.status(429).json({ error: '今日はここまで（1日40回）' })
+    }
+  } catch {
+    // 回数を数えられない環境でも質問は通す
+  }
+
+  try {
+    const anthropic = new Anthropic({ apiKey: key })
+    const r = await anthropic.messages.create({
+      model: AI_MODEL,
+      max_tokens: 2000,
+      output_config: { effort: AI_EFFORT },
+      system: AI_SYSTEM,
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: AI_MAX_SEARCHES }],
+      messages: [{ role: 'user', content: q }],
+    })
+
+    // 🔴 content を読む前に stop_reason を見る（Opus 5 は安全分類器で断ることがある）
+    if (r.stop_reason === 'refusal') {
+      return res.status(200).json({ text: 'この質問には答えられませんでした。聞き方を変えてみてください。' })
+    }
+    const text = (r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim()
+    if (!text) return res.status(502).json({ error: 'AIの返事が空でした' })
+    return res.status(200).json({ text })
+  } catch (e) {
+    console.error('[talk/ai] error:', e?.message)
+    return res.status(502).json({ error: 'AIに聞けませんでした' })
+  }
 }
 
 // ── 送り先IDを調べるための webhook ───────────────────────────────

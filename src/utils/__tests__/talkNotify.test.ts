@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { buildNotifyText, isLineTarget, isRoomId } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, isLineTarget, isRoomId } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）の、通信しない部分。
@@ -36,6 +36,24 @@ describe('talk-notify', () => {
 
     it('名前が空でも文章として成立させる', () => {
       expect(buildNotifyText({ ...base, name: '  ', text: 'やあ' })).toBe('だれか：やあ')
+    })
+  })
+
+  describe('AI_SYSTEM', () => {
+    // 🔴 「だらだら書かない」は運用者の明示の指示。ここが緩むと画面が読めなくなるので、
+    //    短く答えさせる縛りが**消えていないこと**をテストで固定する。
+    it('長さの縛りが入っている', () => {
+      expect(AI_SYSTEM).toContain('5行以内')
+      expect(AI_SYSTEM).toContain('最大3件')
+    })
+
+    it('分からないことを作らせない・変わる情報は断定させない', () => {
+      expect(AI_SYSTEM).toContain('要確認')
+      expect(AI_SYSTEM).toContain('作らない')
+    })
+
+    it('前置きを書かせない', () => {
+      expect(AI_SYSTEM).toContain('前置き')
     })
   })
 

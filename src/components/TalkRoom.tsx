@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  notifyPeer, peerState, quoteText, randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
+  AI_NAME, AI_UID, askAi, notifyPeer, peerState, quoteText, randomId, sendMessage,
+  setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
 } from '../utils/talkRoom'
@@ -61,6 +62,10 @@ export function TalkRoom() {
   const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null)
   /** 引用から飛んだ先を一瞬光らせる */
   const [flash, setFlash] = useState('')
+  /** AIに聞くモード（丸ボタンで入り切りする） */
+  const [aiMode, setAiMode] = useState(false)
+  /** AIの返事を待っている間の表示 */
+  const [aiWaiting, setAiWaiting] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
@@ -181,9 +186,40 @@ export function TalkRoom() {
   // ── 送る ───────────────────────────────────────────────────────
   const canSend = (text.trim() !== '' || picked.length > 0) && !sending
 
+  /**
+   * AIに聞く。
+   * 🔵 質問も答えも**そのままトークに流す**（運用者の指示）。相手にも見えるので、
+   *    後から読み返したときに「何を聞いて何が返ったか」が残る。
+   */
+  const askAndPost = useCallback(async (q: string) => {
+    setSending(true)
+    setText('')
+    if (taRef.current) taRef.current.style.height = 'auto'
+    try {
+      await sendMessage({ uid, name, text: q, at: Date.now() })
+    } catch {
+      show('送れませんでした')
+      setSending(false)
+      return
+    }
+    scrollToBottom('smooth')
+    setAiWaiting(true)
+    try {
+      const answer = await askAi(q)
+      await sendMessage({ uid: AI_UID, name: AI_NAME, text: answer, at: Date.now() })
+    } catch (e) {
+      show(e instanceof Error ? e.message : 'AIに聞けませんでした')
+    } finally {
+      setAiWaiting(false)
+      setSending(false)
+      scrollToBottom('smooth')
+    }
+  }, [uid, name])
+
   const doSend = useCallback(async () => {
     const body = text.trim()
     if (!body && picked.length === 0) return
+    if (aiMode && body && picked.length === 0) { void askAndPost(body); return }
     setSending(true)
     setText('')
     const shots = picked
@@ -231,7 +267,7 @@ export function TalkRoom() {
     const p = peerState(members, uid, name)
     const away = !p || Date.now() - p.at >= ONLINE_MS
     if (away) void notifyPeer({ name, text: body, hasImage: shots.length > 0 })
-  }, [text, picked, uid, name, replyTo, members])
+  }, [text, picked, uid, name, replyTo, members, aiMode, askAndPost])
 
   const retry = async (p: Pending) => {
     setPending(list => list.map(x => (x.id === p.id ? { ...x, failed: false } : x)))
@@ -369,6 +405,8 @@ export function TalkRoom() {
         })}
       </div>
 
+      {aiWaiting && <div className={styles.aiWait}>🤖 調べています…</div>}
+
       {!atBottom && unseen > 0 && (
         <button className={styles.jump} onClick={() => scrollToBottom('smooth')}>
           新しいメッセージ {unseen} ↓
@@ -402,6 +440,13 @@ export function TalkRoom() {
         </div>
       )}
 
+      {aiMode && (
+        <div className={styles.aiBar}>
+          <span>AIに聞く（Web検索つき）・やり取りは2人に見えます</span>
+          <button onClick={() => setAiMode(false)} aria-label="やめる">✕</button>
+        </div>
+      )}
+
       {replyTo && (
         <div className={styles.replyBar}>
           <div className={styles.replyBody}>
@@ -413,6 +458,13 @@ export function TalkRoom() {
       )}
 
       <footer className={styles.foot}>
+        {/* 🔵 左下のAIボタン。押すと「AIに聞くモード」に入る（もう一度押すと戻る） */}
+        <button
+          className={`${styles.aiBtn} ${aiMode ? styles.aiOn : ''}`}
+          onClick={() => setAiMode(v => !v)}
+          aria-label="AIに聞く"
+          aria-pressed={aiMode}
+        >🤖</button>
         <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る">🖼️</button>
         <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字">😀</button>
         <textarea
@@ -420,7 +472,7 @@ export function TalkRoom() {
           className={styles.input}
           value={text}
           rows={1}
-          placeholder="メッセージ"
+          placeholder={aiMode ? '例：渋谷 夜 静かめの居酒屋' : 'メッセージ'}
           onChange={e => {
             setText(e.target.value)
             const el = e.target
