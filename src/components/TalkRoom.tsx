@@ -395,6 +395,7 @@ export function TalkRoom() {
                 showName={!mine && (!prev || prev.uid !== m.uid || newDay)}
                 read={mine && !m.pendingId && peerRead >= m.at}
                 flash={flash === m.id}
+                isAi={m.uid === AI_UID}
                 onImage={setViewer}
                 onRetry={m.failed ? () => { const p = pending.find(x => x.id === m.pendingId); if (p) retry(p) } : undefined}
                 onHold={!m.pendingId ? () => setActing(m) : undefined}
@@ -464,7 +465,10 @@ export function TalkRoom() {
           onClick={() => setAiMode(v => !v)}
           aria-label="AIに聞く"
           aria-pressed={aiMode}
-        >🤖</button>
+        >
+          <img src={`${import.meta.env.BASE_URL}poirobo.webp`} alt="" />
+          <span>AI</span>
+        </button>
         <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る">🖼️</button>
         <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字">😀</button>
         <textarea
@@ -570,13 +574,15 @@ const HOLD_MS = 450
 const HOLD_SLOP = 10
 
 /** 1行ぶんの吹き出し。 */
-function Row({ m, mine, tail, showName, read, flash, onImage, onRetry, onHold, onJump }: {
+function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onRetry, onHold, onJump }: {
   m: TalkMessage & { pendingId?: string; failed?: boolean }
   mine: boolean
   tail: boolean
   showName: boolean
   read: boolean
   flash: boolean
+  /** AIの発言（人の発言と見分けが付くよう、色も名札も変える） */
+  isAi: boolean
   onImage: (src: string) => void
   onRetry?: () => void
   onHold?: () => void
@@ -638,9 +644,16 @@ function Row({ m, mine, tail, showName, read, flash, onImage, onRetry, onHold, o
   )
 
   return (
-    <div className={`${styles.row} ${mine ? styles.mine : styles.theirs}`}>
-      {showName && <div className={styles.who}>{m.name}</div>}
+    <div className={`${styles.row} ${mine ? styles.mine : styles.theirs} ${isAi ? styles.aiMsg : ''}`}>
+      {showName && (
+        <div className={styles.who}>
+          {isAi ? <span className={styles.aiTag}>AI が調べました</span> : m.name}
+        </div>
+      )}
       <div className={styles.line}>
+        {isAi && (
+          <img className={styles.aiFace} src={`${import.meta.env.BASE_URL}poirobo.webp`} alt="" />
+        )}
         {mine && tail && meta}
         <div
           className={`${styles.bubbleWrap} ${flash ? styles.flash : ''}`}
