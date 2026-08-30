@@ -115,8 +115,11 @@ async function notify(req, res) {
 /** 判断ではなく提案なので、深く考えさせない（速さと安さを取る）。 */
 const AI_MODEL = 'claude-opus-5'
 const AI_EFFORT = 'low'
-/** 1回の質問で許す検索の回数。増やすほど詳しくなるが、時間もお金もかかる。 */
-const AI_MAX_SEARCHES = 4
+/**
+ * 1回の質問で許す検索の回数。増やすほど詳しくなるが、時間もお金もかかる。
+ * 🔵 4→6 は営業時間・定休日まで調べさせるため（運用者の要望・2026-08-30）。
+ */
+const AI_MAX_SEARCHES = 6
 
 /**
  * 🔴 使うのはぽいロボと同じ `ANTHROPIC_API_KEY`（残高も共用）。

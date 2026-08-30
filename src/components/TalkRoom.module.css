@@ -225,6 +225,15 @@
   box-shadow: 0 1px 1px rgb(0 0 0 / 8%);
 }
 
+.bubble a {
+  color: #0b5f9e;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.mine .bubble a { color: #175c12; }
+.aiMsg .bubble a { color: #0a5866; }
+
 .mine .bubble {
   background: var(--talk-mine);
   border-bottom-right-radius: 4px;

@@ -45,14 +45,17 @@ describe('talk-notify', () => {
     it('長さと1行の縛りが入っている', () => {
       // 🔴 形はプログラムで縛らない方針（運用者の指示）。**指示文だけが縛り**なので、
       //    ここが消えると誰も気づかないまま長文が出るようになる
-      expect(AI_SYSTEM).toContain('5行以内')
+      expect(AI_SYSTEM).toContain('8行以内')
       expect(AI_SYSTEM).toContain('最大3件')
-      expect(AI_SYSTEM).toContain('1件の途中で改行しない')
+      expect(AI_SYSTEM).toContain('2〜3行に収まる長さ')
     })
 
-    it('分からないことを作らせない・変わる情報は断定させない', () => {
-      expect(AI_SYSTEM).toContain('要確認')
+    it('分からないことを作らせない', () => {
       expect(AI_SYSTEM).toContain('作らない')
+    })
+
+    it('「要確認」のような断り書きを書かせない（運用者の指示）', () => {
+      expect(AI_SYSTEM).toContain('断り書きは書かない')
     })
 
     it('前置きを書かせない', () => {
@@ -62,6 +65,16 @@ describe('talk-notify', () => {
     it('覚えたことを本文で報告させない（コマンド不要・通知不要の約束）', () => {
       expect(AI_SYSTEM).toContain('覚えたことを本文で報告しない')
       expect(AI_SYSTEM).toContain('MEMORY:')
+    })
+
+    it('店を挙げたらマップのURLを説明の下に置かせる', () => {
+      expect(AI_SYSTEM).toContain('google.com/maps/search')
+      expect(AI_SYSTEM).toContain('その店の情報の下')
+    })
+
+    it('営業時間と定休日は分かった範囲だけ書かせる', () => {
+      expect(AI_SYSTEM).toContain('営業時間と定休日は調べて')
+      expect(AI_SYSTEM).toContain('分からなければ書かない')
     })
 
     it('地名を似た別の場所に置き換えさせない（実際に出た事故の再発防止）', () => {

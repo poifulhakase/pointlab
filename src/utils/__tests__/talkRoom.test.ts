@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dayLabel, getRoomId, isSameDay, isTalkRoute, peerState, quoteText, scaledSize } from '../talkRoom'
+import { dayLabel, getRoomId, isSameDay, isTalkRoute, linkify, peerState, quoteText, scaledSize } from '../talkRoom'
 
 /**
  * 一時トークルームの表示まわり（純粋な部分だけ）。
@@ -123,6 +123,31 @@ describe('talkRoom', () => {
 
     it('文字も画像も無ければ空', () => {
       expect(quoteText({ text: '' })).toBe('')
+    })
+  })
+
+  describe('linkify', () => {
+    // 🔵 AIが店を挙げるとき、行末に Googleマップの検索URL が付く。押せるようにするための切り分け。
+    it('URLの部分だけ切り出す', () => {
+      const parts = linkify('A店 https://example.com/a です')
+      expect(parts.map(p => p.text)).toEqual(['A店 ', 'https://example.com/a', ' です'])
+      expect(parts[1].url).toBe('https://example.com/a')
+      expect(parts[0].url).toBeUndefined()
+    })
+
+    it('URLが無ければそのまま1つ', () => {
+      expect(linkify('ふつうの文')).toEqual([{ text: 'ふつうの文' }])
+    })
+
+    it('文末の句点はリンクに含めない', () => {
+      const parts = linkify('見て https://example.com/a。')
+      expect(parts[1].url).toBe('https://example.com/a')
+      expect(parts[2].text).toBe('。')
+    })
+
+    it('複数のURLを拾う', () => {
+      const parts = linkify('https://a.example/1 と https://b.example/2')
+      expect(parts.filter(p => p.url).length).toBe(2)
     })
   })
 

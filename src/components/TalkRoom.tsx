@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, errorStatus, notifyPeer, peerState, quoteText, randomId, sendMessage,
+  AI_NAME, AI_UID, askAi, errorStatus, linkify, notifyPeer, peerState, quoteText, randomId, sendMessage,
   setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
@@ -732,7 +732,16 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onImageShown
                 {src ? <img src={src} alt="" onLoad={onImageShown} /> : <div className={styles.photoWait} />}
               </div>
             ) : null}
-            {m.text && <div className={styles.bubble}>{m.text}</div>}
+            {m.text && (
+              <div className={styles.bubble}>
+                {/* URL のところだけ押せるようにする（AIが付けるGoogleマップのリンク用） */}
+                {linkify(m.text).map((part, i) => (
+                  part.url
+                    ? <a key={i} href={part.url} target="_blank" rel="noopener noreferrer">{part.text}</a>
+                    : <span key={i}>{part.text}</span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         {!mine && tail && meta}

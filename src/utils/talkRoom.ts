@@ -485,6 +485,28 @@ export function quoteText(m: Pick<TalkMessage, 'text' | 'img'>, max = 60): strin
   return m.img ? '写真' : ''
 }
 
+/**
+ * 本文をリンクと文字に切り分ける（吹き出しの描画で使う）。
+ *
+ * 🔵 AIが店を挙げるとき Googleマップの検索URLを行末に付ける。素の文字のままだと
+ *    押せないので、URLのところだけ `<a>` にする。**中身は変えない**（切り分けるだけ）。
+ */
+export function linkify(text: string): { url?: string; text: string }[] {
+  const out: { url?: string; text: string }[] = []
+  const re = /https?:\/\/[^\s<>"']+/g
+  let last = 0
+  for (const m of text.matchAll(re)) {
+    const i = m.index ?? 0
+    if (i > last) out.push({ text: text.slice(last, i) })
+    // 末尾の句読点はリンクに含めない（「…です。」の。を拾わないように）
+    const raw = m[0].replace(/[。、．，)）\]】]+$/, '')
+    out.push({ url: raw, text: raw })
+    last = i + raw.length
+  }
+  if (last < text.length) out.push({ text: text.slice(last) })
+  return out
+}
+
 /** 「9:05」形式。 */
 export function timeLabel(ms: number): string {
   const d = new Date(ms)
