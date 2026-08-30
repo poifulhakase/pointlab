@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dayLabel, getRoomId, isSameDay, isTalkRoute, peerState, scaledSize } from '../talkRoom'
+import { dayLabel, getRoomId, isSameDay, isTalkRoute, peerState, quoteText, scaledSize } from '../talkRoom'
 
 /**
  * 一時トークルームの表示まわり（純粋な部分だけ）。
@@ -100,6 +100,29 @@ describe('talkRoom', () => {
     it('表示名は最後に開いていた端末のものを採る', () => {
       const members = [M('aaa', '旧なまえ', 1000, 500), M('bbb', '新なまえ', 9000, 700)]
       expect(peerState(members, 'zzz', 'わたし')?.name).toBe('新なまえ')
+    })
+  })
+
+  describe('quoteText', () => {
+    it('改行や連続した空白は1行に詰める（引用は1行で出すため）', () => {
+      expect(quoteText({ text: 'あ\nい  う' })).toBe('あ い う')
+    })
+
+    it('長い本文は切って「…」を付ける', () => {
+      expect(quoteText({ text: 'あ'.repeat(80) }, 10)).toBe(`${'あ'.repeat(10)}…`)
+    })
+
+    it('ちょうどの長さでは「…」を付けない', () => {
+      expect(quoteText({ text: 'あ'.repeat(10) }, 10)).toBe('あ'.repeat(10))
+    })
+
+    it('文字が無く画像だけなら「写真」', () => {
+      expect(quoteText({ text: '', img: 'abc' })).toBe('写真')
+      expect(quoteText({ text: '   ', img: 'abc' })).toBe('写真')
+    })
+
+    it('文字も画像も無ければ空', () => {
+      expect(quoteText({ text: '' })).toBe('')
     })
   })
 

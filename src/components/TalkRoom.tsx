@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  peerState, randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
+  peerState, quoteText, randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
 } from '../utils/talkRoom'
@@ -55,6 +55,12 @@ export function TalkRoom() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [sound, setSound] = useState(() => getSoundOn())
   const [viewer, setViewer] = useState<string | null>(null)
+  /** 長押しで開く操作の一覧（返信・コピー・取り消し） */
+  const [acting, setActing] = useState<TalkMessage | null>(null)
+  /** 返信先。送るときに引用として持たせる */
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string; text: string } | null>(null)
+  /** 引用から飛んだ先を一瞬光らせる */
+  const [flash, setFlash] = useState('')
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
@@ -118,16 +124,28 @@ export function TalkRoom() {
 
   // Esc で開いているものを閉じる（PC）
   useEffect(() => {
-    if (!emojiOpen && !menuOpen && !viewer) return
+    if (!emojiOpen && !menuOpen && !viewer && !acting && !replyTo) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      setEmojiOpen(false)
-      setMenuOpen(false)
-      setViewer(null)
+      // 開いているものから順に1つずつ閉じる（返信の下書きは最後）
+      if (acting) { setActing(null); return }
+      if (viewer) { setViewer(null); return }
+      if (menuOpen) { setMenuOpen(false); return }
+      if (emojiOpen) { setEmojiOpen(false); return }
+      setReplyTo(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [emojiOpen, menuOpen, viewer])
+  }, [emojiOpen, menuOpen, viewer, acting, replyTo])
+
+  /** 引用をタップしたら、元の発言へ飛んで一瞬光らせる。 */
+  const jumpTo = (id: string) => {
+    const el = listRef.current?.querySelector(`[data-mid="${CSS.escape(id)}"]`)
+    if (!el) { show('元の発言はもう見つかりません'); return }
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setFlash(id)
+    setTimeout(() => setFlash(f => (f === id ? '' : f)), 1400)
+  }
 
   // iPhone：キーボードが出ても入力欄が隠れないように、見えている高さに合わせる
   useEffect(() => {
@@ -172,6 +190,11 @@ export function TalkRoom() {
     setPicked([])
     if (taRef.current) taRef.current.style.height = 'auto'
 
+    // 返信は1通にだけ付ける（写真を何枚も送っても、引用が並ばないように）
+    const quote = replyTo
+    setReplyTo(null)
+    const withQuote = quote ? { re: quote.id, reName: quote.name, reText: quote.text } : {}
+
     // 画像がある場合は「1枚＝1通」。テキストは最後の1通に添える（LINEと同じ並び）
     const jobs: { msg: TalkMessage; image?: { data: string } }[] = []
     shots.forEach((s, i) => {
@@ -180,12 +203,14 @@ export function TalkRoom() {
         msg: {
           id: '', uid, name, at: Date.now() + i,
           text: withText ? body : '', w: s.w, h: s.h, img: 'pending',
+          // 文字があればその1通に、写真だけなら1枚目に付ける
+          ...((withText || (!body && i === 0)) ? withQuote : {}),
         },
         image: { data: s.data },
       })
     })
     if (shots.length === 0) {
-      jobs.push({ msg: { id: '', uid, name, at: Date.now(), text: body } })
+      jobs.push({ msg: { id: '', uid, name, at: Date.now(), text: body, ...withQuote } })
     }
 
     for (const job of jobs) {
@@ -200,7 +225,7 @@ export function TalkRoom() {
     }
     setSending(false)
     scrollToBottom('smooth')
-  }, [text, picked, uid, name])
+  }, [text, picked, uid, name, replyTo])
 
   const retry = async (p: Pending) => {
     setPending(list => list.map(x => (x.id === p.id ? { ...x, failed: false } : x)))
@@ -319,7 +344,7 @@ export function TalkRoom() {
           const next = rows[i + 1]
           const tail = !next || next.uid !== m.uid || !isSameDay(next.at, m.at)
           return (
-            <div key={m.pendingId ?? m.id}>
+            <div key={m.pendingId ?? m.id} data-mid={m.id}>
               {newDay && <div className={styles.day}><span>{dayLabel(m.at)}</span></div>}
               <Row
                 m={m}
@@ -327,12 +352,11 @@ export function TalkRoom() {
                 tail={tail}
                 showName={!mine && (!prev || prev.uid !== m.uid || newDay)}
                 read={mine && !m.pendingId && peerRead >= m.at}
+                flash={flash === m.id}
                 onImage={setViewer}
                 onRetry={m.failed ? () => { const p = pending.find(x => x.id === m.pendingId); if (p) retry(p) } : undefined}
-                onDelete={mine && !m.pendingId ? async () => {
-                  if (!confirm('この発言を取り消しますか？')) return
-                  try { await deleteMessage(m) } catch { show('取り消せませんでした') }
-                } : undefined}
+                onHold={!m.pendingId ? () => setActing(m) : undefined}
+                onJump={jumpTo}
               />
             </div>
           )
@@ -369,6 +393,16 @@ export function TalkRoom() {
               <button key={e} onClick={() => { setText(t => t + e); taRef.current?.focus() }}>{e}</button>
             ))}
           </div>
+        </div>
+      )}
+
+      {replyTo && (
+        <div className={styles.replyBar}>
+          <div className={styles.replyBody}>
+            <span className={styles.replyName}>{replyTo.name} に返信</span>
+            <span className={styles.replyText}>{replyTo.text}</span>
+          </div>
+          <button onClick={() => setReplyTo(null)} aria-label="返信をやめる">✕</button>
         </div>
       )}
 
@@ -429,6 +463,37 @@ export function TalkRoom() {
         </>
       )}
 
+      {/* 長押し（PCは右クリック）で出る操作の一覧 */}
+      {acting && (
+        <>
+          <div className={styles.scrim} onClick={() => setActing(null)} />
+          <div className={styles.sheet}>
+            <div className={styles.actingQuote}>{quoteText(acting, 40) || '（写真）'}</div>
+            <button onClick={() => {
+              setReplyTo({ id: acting.id, name: acting.name, text: quoteText(acting, 60) })
+              setActing(null)
+              taRef.current?.focus()
+            }}>返信する</button>
+            {acting.text && (
+              <button onClick={() => {
+                navigator.clipboard?.writeText(acting.text)
+                  .then(() => show('コピーしました'))
+                  .catch(() => show('コピーできませんでした'))
+                setActing(null)
+              }}>文字をコピー</button>
+            )}
+            {acting.uid === uid && (
+              <button className={styles.menuDanger} onClick={async () => {
+                const target = acting
+                setActing(null)
+                try { await deleteMessage(target) } catch { show('取り消せませんでした') }
+              }}>取り消す</button>
+            )}
+            <button className={styles.menuClose} onClick={() => setActing(null)}>閉じる</button>
+          </div>
+        </>
+      )}
+
       {viewer && (
         <div className={styles.viewer} onClick={() => setViewer(null)}>
           <img src={viewer} alt="" />
@@ -441,18 +506,53 @@ export function TalkRoom() {
   )
 }
 
+/** 長押しとみなす時間。これより長く押していて、指がほとんど動いていなければ操作の一覧を出す。 */
+const HOLD_MS = 450
+/** 指が動いたらスクロールとみなす距離。 */
+const HOLD_SLOP = 10
+
 /** 1行ぶんの吹き出し。 */
-function Row({ m, mine, tail, showName, read, onImage, onRetry, onDelete }: {
+function Row({ m, mine, tail, showName, read, flash, onImage, onRetry, onHold, onJump }: {
   m: TalkMessage & { pendingId?: string; failed?: boolean }
   mine: boolean
   tail: boolean
   showName: boolean
   read: boolean
+  flash: boolean
   onImage: (src: string) => void
   onRetry?: () => void
-  onDelete?: () => void
+  onHold?: () => void
+  onJump: (id: string) => void
 }) {
   const [src, setSrc] = useState<string | null>(null)
+  const hold = useRef<{ timer: number; x: number; y: number } | null>(null)
+  /** 長押しで一覧を出した直後の指離しを、ふつうの押下として扱わないための印 */
+  const held = useRef(false)
+
+  const holdStart = (e: ReactPointerEvent) => {
+    if (!onHold) return
+    held.current = false
+    const timer = window.setTimeout(() => { hold.current = null; held.current = true; onHold() }, HOLD_MS)
+    hold.current = { timer, x: e.clientX, y: e.clientY }
+  }
+
+  /** 長押しの直後なら、写真の拡大や引用の移動は起こさない。 */
+  const afterHold = () => {
+    if (!held.current) return false
+    held.current = false
+    return true
+  }
+  const holdCancel = () => {
+    if (!hold.current) return
+    clearTimeout(hold.current.timer)
+    hold.current = null
+  }
+  const holdMove = (e: ReactPointerEvent) => {
+    const h = hold.current
+    if (!h) return
+    // スクロールしようとしただけで開かないように、少しでも動いたらやめる
+    if (Math.abs(e.clientX - h.x) > HOLD_SLOP || Math.abs(e.clientY - h.y) > HOLD_SLOP) holdCancel()
+  }
 
   useEffect(() => {
     if (!m.img) return
@@ -485,14 +585,25 @@ function Row({ m, mine, tail, showName, read, onImage, onRetry, onDelete }: {
       <div className={styles.line}>
         {mine && tail && meta}
         <div
-          className={styles.bubbleWrap}
-          onContextMenu={onDelete ? e => { e.preventDefault(); onDelete() } : undefined}
+          className={`${styles.bubbleWrap} ${flash ? styles.flash : ''}`}
+          onContextMenu={onHold ? e => { e.preventDefault(); holdCancel(); onHold() } : undefined}
+          onPointerDown={holdStart}
+          onPointerUp={holdCancel}
+          onPointerMove={holdMove}
+          onPointerCancel={holdCancel}
+          onPointerLeave={holdCancel}
         >
+          {m.re && (
+            <button className={styles.quote} onClick={() => { if (!afterHold()) onJump(m.re!) }}>
+              <span className={styles.quoteName}>{m.reName}</span>
+              <span className={styles.quoteText}>{m.reText}</span>
+            </button>
+          )}
           {m.img ? (
             <div
               className={styles.photo}
               style={ratio ? { aspectRatio: `${m.w} / ${m.h}` } : undefined}
-              onClick={() => src && onImage(src)}
+              onClick={() => { if (!afterHold() && src) onImage(src) }}
             >
               {src ? <img src={src} alt="" /> : <div className={styles.photoWait} />}
             </div>

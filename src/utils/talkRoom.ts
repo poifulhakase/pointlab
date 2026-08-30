@@ -60,6 +60,15 @@ export interface TalkMessage {
   /** 画像の縦横（読み込み前に場所を確保して、画面がガタつかないようにする） */
   w?: number
   h?: number
+  /** 返信先のメッセージID（引用をタップして元へ飛ぶのに使う） */
+  re?: string
+  /**
+   * 返信先の名前と本文の抜き書き。
+   * 🔴 ID だけにしない。相手が取り消したり、500件より前に流れると**引用が空になる**ため、
+   *    送った時点の内容を写して持たせる（引用は「その時こう言った」の記録でよい）。
+   */
+  reName?: string
+  reText?: string
 }
 
 export interface TalkMember {
@@ -178,6 +187,7 @@ export async function sendMessage(msg: Omit<TalkMessage, 'id'>, image?: { data: 
   await restWrite(`${roomPath()}/messages/${id}`, {
     uid: msg.uid, name: msg.name, text: msg.text, at: msg.at,
     ...(imgId ? { img: imgId, w: msg.w ?? 0, h: msg.h ?? 0 } : {}),
+    ...(msg.re ? { re: msg.re, reName: msg.reName ?? '', reText: msg.reText ?? '' } : {}),
   })
   return id
 }
@@ -403,6 +413,16 @@ export function peerState(members: TalkMember[], uid: string, myName: string):
 }
 
 // ── 表示の小物 ──────────────────────────────────────────────────────
+
+/**
+ * 引用に出す本文の抜き書き（改行は詰めて1行にする）。
+ * 画像だけの発言には出す文字が無いので「写真」と書く。
+ */
+export function quoteText(m: Pick<TalkMessage, 'text' | 'img'>, max = 60): string {
+  const t = (m.text ?? '').replace(/\s+/g, ' ').trim()
+  if (t) return t.length > max ? `${t.slice(0, max)}…` : t
+  return m.img ? '写真' : ''
+}
 
 /** 「9:05」形式。 */
 export function timeLabel(ms: number): string {

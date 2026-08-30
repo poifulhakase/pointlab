@@ -194,6 +194,13 @@
   flex-direction: column;
   gap: 4px;
   max-width: min(74%, 460px);
+  /*
+    🔴 長押しでの操作（返信・コピー）を効かせるため、iOS の「長押し＝文字を選択／
+       リンクのメニュー」を止める。文字のコピーは長押しの一覧に入れてある。
+  */
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mine .bubbleWrap { align-items: flex-end; }
@@ -503,6 +510,142 @@
 .menu button:hover { background: #f5f6f8; }
 
 .menuClose { color: #8a8f96 !important; border-bottom: 0 !important; }
+
+.menuDanger { color: #d8483c !important; }
+
+/* ── 長押しで出る操作（返信・コピー・取り消し） ─────────── */
+
+/*
+  メニュー（⋯）は右上から出すが、こちらは**指の届く下**から出す。
+  どの発言に対してかを見失わないよう、先頭に引用を1行だけ出す。
+*/
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(340px, calc(100% - 24px));
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 26%);
+  overflow: hidden;
+  z-index: 21;
+}
+
+.sheet button {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  text-align: center;
+  color: var(--talk-text);
+  background: none;
+  border: 0;
+  border-top: 1px solid #eef0f3;
+  cursor: pointer;
+}
+
+.sheet button:hover { background: #f5f6f8; }
+
+.actingQuote {
+  padding: 11px 16px;
+  font-size: 12px;
+  color: #8a8f96;
+  background: #fafbfc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 返信（引用） ─────────────────────────────────────── */
+
+/* 吹き出しの上に付く引用。押すと元の発言へ飛ぶ */
+.quote {
+  display: block;
+  max-width: 100%;
+  padding: 5px 10px;
+  text-align: left;
+  background: #00000012;
+  border: 0;
+  border-left: 3px solid #7b8894;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mine .quote { border-left-color: #4d8f2f; }
+
+.quote:hover { background: #0000001c; }
+
+.quoteName {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #3c4652;
+}
+
+.quoteText {
+  display: block;
+  font-size: 11px;
+  color: #5a6470;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 引用から飛んだ先を一瞬光らせる（どれを指しているか分かるように） */
+.flash .bubble,
+.flash .photo { animation: talk-flash 1.4s ease-out; }
+
+@keyframes talk-flash {
+  0%, 45% { box-shadow: 0 0 0 3px #ffd54f; }
+  100%    { box-shadow: 0 1px 1px rgb(0 0 0 / 8%); }
+}
+
+/* 入力欄の上に出る「〇〇 に返信」 */
+.replyBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffffee;
+  border-top: 1px solid var(--talk-line);
+}
+
+.replyBody {
+  flex: 1;
+  min-width: 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--talk-accent);
+}
+
+.replyName {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3c4652;
+}
+
+.replyText {
+  display: block;
+  font-size: 12px;
+  color: #7a828c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.replyBar > button {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  color: #555;
+  background: #00000010;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
 
 /* ── 画像の拡大 ───────────────────────────────────────── */
 
