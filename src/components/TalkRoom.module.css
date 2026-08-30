@@ -339,17 +339,46 @@
 
 .emoji {
   flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 2px;
-  max-height: 172px;
+  max-height: 208px;
   overflow-y: auto;
-  padding: 8px;
+  padding: 0 8px 8px;
   background: #fff;
   border-top: 1px solid var(--talk-line);
 }
 
-.emoji button {
+/* 「閉じる」を上に貼り付けておく（スクロールしても押せる） */
+.emojiHead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 2px 4px;
+  font-size: 11px;
+  color: #8a8f96;
+  background: #fff;
+}
+
+.emojiHead button {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #8a8f96;
+  background: #00000008;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.emojiHead button:hover { background: #00000014; }
+
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+
+.emojiGrid button {
   font-size: 22px;
   line-height: 1.5;
   background: none;
@@ -358,10 +387,10 @@
   cursor: pointer;
 }
 
-.emoji button:hover { background: #00000010; }
+.emojiGrid button:hover { background: #00000010; }
 
 @media (max-width: 420px) {
-  .emoji { grid-template-columns: repeat(7, 1fr); }
+  .emojiGrid { grid-template-columns: repeat(7, 1fr); }
 }
 
 /* ── 下の入力欄 ───────────────────────────────────────── */

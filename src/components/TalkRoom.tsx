@@ -116,6 +116,19 @@ export function TalkRoom() {
     document.title = unseen > 0 ? `(${unseen}) トーク` : 'トーク'
   }, [unseen])
 
+  // Esc で開いているものを閉じる（PC）
+  useEffect(() => {
+    if (!emojiOpen && !menuOpen && !viewer) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setEmojiOpen(false)
+      setMenuOpen(false)
+      setViewer(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [emojiOpen, menuOpen, viewer])
+
   // iPhone：キーボードが出ても入力欄が隠れないように、見えている高さに合わせる
   useEffect(() => {
     const vv = window.visualViewport
@@ -288,7 +301,13 @@ export function TalkRoom() {
         <button className={styles.barBtn} onClick={() => setMenuOpen(v => !v)} aria-label="メニュー">⋯</button>
       </header>
 
-      <div className={styles.list} ref={listRef} onScroll={onScroll}>
+      {/* 🔵 スタンプを開いたまま一覧を触ったら閉じる（入力欄は覆わないので、文字は続けて打てる） */}
+      <div
+        className={styles.list}
+        ref={listRef}
+        onScroll={onScroll}
+        onPointerDown={() => { if (emojiOpen) setEmojiOpen(false) }}
+      >
         {rows.length === 0 && (
           <p className={styles.empty}>まだメッセージはありません。<br />下の欄から送ってみてください。</p>
         )}
@@ -339,9 +358,17 @@ export function TalkRoom() {
 
       {emojiOpen && (
         <div className={styles.emoji}>
-          {EMOJIS.map(e => (
-            <button key={e} onClick={() => { setText(t => t + e); taRef.current?.focus() }}>{e}</button>
-          ))}
+          {/* 🔵 開きっぱなしで閉じ方が分からない、という声。閉じ方を3つ用意した：
+                 ①この「閉じる」 ②メッセージ一覧のどこかを触る ③Esc（PC） */}
+          <div className={styles.emojiHead}>
+            <span>スタンプ</span>
+            <button onClick={() => setEmojiOpen(false)} aria-label="スタンプを閉じる">閉じる ✕</button>
+          </div>
+          <div className={styles.emojiGrid}>
+            {EMOJIS.map(e => (
+              <button key={e} onClick={() => { setText(t => t + e); taRef.current?.focus() }}>{e}</button>
+            ))}
+          </div>
         </div>
       )}
 
