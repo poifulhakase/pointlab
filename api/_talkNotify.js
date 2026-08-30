@@ -119,6 +119,9 @@ export function splitMemory(text) {
 export function cleanAiText(text) {
   return String(text ?? '')
     .replace(/\\r\\n|\\n|\\r/g, '\n')  // 文字としての改行表記 → 本物の改行
+    // 🔵 句点や閉じ括弧の直前で改行してくることがある（「…です \n 。」）。
+    //    文が割れて読みにくいので、その改行だけ詰める。文そのものは触らない
+    .replace(/\n+(?=[。、．，）」』】])/g, '')
     .replace(/\n{3,}/g, '\n\n')        // 空行が続きすぎるのを詰める
     .replace(/[ \t]+\n/g, '\n')
     .trim()

@@ -99,6 +99,12 @@ describe('talk-notify', () => {
       expect(cleanAiText('A\nB')).toBe('A\nB')
     })
 
+    it('句点や閉じ括弧の直前の改行だけ詰める（文が割れて読みにくいため）', () => {
+      expect(cleanAiText('雰囲気が違います\n。')).toBe('雰囲気が違います。')
+      expect(cleanAiText('あります\n\n。次は')).toBe('あります。次は')
+      expect(cleanAiText('（メモ\n）')).toBe('（メモ）')
+    })
+
     it('空行が続きすぎるのを詰める', () => {
       expect(cleanAiText('x\n\n\n\ny')).toBe('x\n\ny')
     })
