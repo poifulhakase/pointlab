@@ -377,6 +377,31 @@ function readAsDataUrl(file: File): Promise<string> {
   })
 }
 
+// ── 相手の状態 ──────────────────────────────────────────────────────
+
+/**
+ * 相手（自分以外）の在席と既読の位置。
+ *
+ * 🔴 2026-08-30：**既読が付かない**の原因。ログインしないので `uid` は端末（localStorage）単位で、
+ *    ブラウザを変えたり履歴を消したりすると**同じ人の記録が増える**（実際 2人の部屋に4件あった）。
+ *    「自分以外の最初の1件」を採っていたため、**古い方を掴んで既読が止まっていた**。
+ *    → 自分以外のうち **一番進んでいる既読**・**一番新しい在席** を採る。
+ *
+ * 🔵 自分の別端末は表示名で除く（2人の部屋なので、同じ名前＝自分の別端末とみなす）。
+ *    ここを外すと、自分でPCとスマホから開いただけで「既読」が付いてしまう。
+ */
+export function peerState(members: TalkMember[], uid: string, myName: string):
+  { name: string; at: number; read: number } | null {
+  const others = members.filter(m => m.id !== uid && m.name !== myName)
+  if (others.length === 0) return null
+  const latest = others.reduce((a, b) => ((b.at ?? 0) > (a.at ?? 0) ? b : a))
+  return {
+    name: latest.name,
+    at: others.reduce((max, m) => Math.max(max, m.at ?? 0), 0),
+    read: others.reduce((max, m) => Math.max(max, m.read ?? 0), 0),
+  }
+}
+
 // ── 表示の小物 ──────────────────────────────────────────────────────
 
 /** 「9:05」形式。 */

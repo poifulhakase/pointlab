@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
+  peerState, randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
 } from '../utils/talkRoom'
@@ -233,7 +233,8 @@ export function TalkRoom() {
   }
 
   // ── 表示のための組み立て ───────────────────────────────────────
-  const peer = members.find(m => m.id !== uid)
+  // 🔴 同じ人の古い記録が混ざるので「最初の1件」ではなく一番進んだものを採る（peerState 参照）
+  const peer = useMemo(() => peerState(members, uid, name), [members, uid, name])
   const peerOnline = peer ? Date.now() - peer.at < ONLINE_MS : false
   /** 相手がここまで読んだ、という時刻。自分の吹き出しの「既読」判定に使う */
   const peerRead = peer?.read ?? 0

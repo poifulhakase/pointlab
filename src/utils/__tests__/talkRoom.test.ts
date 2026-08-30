@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dayLabel, getRoomId, isSameDay, isTalkRoute, scaledSize } from '../talkRoom'
+import { dayLabel, getRoomId, isSameDay, isTalkRoute, peerState, scaledSize } from '../talkRoom'
 
 /**
  * 一時トークルームの表示まわり（純粋な部分だけ）。
@@ -71,6 +71,35 @@ describe('talkRoom', () => {
     it('大文字の16進は通さない（IDの表記ゆれで別の部屋になるのを防ぐ）', () => {
       window.location.hash = `#/t/${SAMPLE.toUpperCase()}`
       expect(isTalkRoute()).toBe(false)
+    })
+  })
+
+  describe('peerState', () => {
+    // 🔴 端末やブラウザが変わると uid が増える＝同じ人の古い記録が残る。
+    //    「自分以外の最初の1件」を採ると古い方を掴んで既読が止まる（2026-08-30 の不具合）。
+    const M = (id: string, name: string, at: number, read: number) => ({ id, name, at, read })
+
+    it('同じ人の記録が複数あっても、一番進んだ既読を採る', () => {
+      const members = [
+        M('aaa', 'あいて', 1000, 500),   // 古い端末
+        M('bbb', 'あいて', 9000, 8000),  // いま使っている端末
+        M('zzz', 'わたし', 9500, 9400),  // 自分
+      ]
+      expect(peerState(members, 'zzz', 'わたし')).toEqual({ name: 'あいて', at: 9000, read: 8000 })
+    })
+
+    it('自分の別端末（同じ表示名）は相手に数えない', () => {
+      const members = [M('zzz', 'わたし', 9500, 9400), M('yyy', 'わたし', 9000, 9000)]
+      expect(peerState(members, 'zzz', 'わたし')).toBeNull()
+    })
+
+    it('相手がまだ来ていなければ null', () => {
+      expect(peerState([], 'zzz', 'わたし')).toBeNull()
+    })
+
+    it('表示名は最後に開いていた端末のものを採る', () => {
+      const members = [M('aaa', '旧なまえ', 1000, 500), M('bbb', '新なまえ', 9000, 700)]
+      expect(peerState(members, 'zzz', 'わたし')?.name).toBe('新なまえ')
     })
   })
 
