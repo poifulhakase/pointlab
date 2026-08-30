@@ -29,7 +29,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildNotifyText, isRoomId } from './_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -171,7 +171,7 @@ async function ai(req, res) {
     if (r.stop_reason === 'refusal') {
       return res.status(200).json({ text: 'この質問には答えられませんでした。聞き方を変えてみてください。' })
     }
-    const text = (r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim()
+    const text = cleanAiText((r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n'))
     if (!text) return res.status(502).json({ error: 'AIの返事が空でした' })
     return res.status(200).json({ text })
   } catch (e) {

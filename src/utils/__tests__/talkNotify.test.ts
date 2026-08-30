@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildNotifyText, isLineTarget, isRoomId } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId } from '../../../api/_talkNotify.js'
 
 /**
- * 一時トークルームの新着通知（LINE）の、通信しない部分。
+ * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
  * 🔴 ここが緩むと「通知に本文が出ない設定なのに本文が出る」事故になるので、
  *    本文を出す／出さないの分岐は必ず固定しておく。
  */
@@ -54,6 +54,38 @@ describe('talk-notify', () => {
 
     it('前置きを書かせない', () => {
       expect(AI_SYSTEM).toContain('前置き')
+    })
+
+    it('地名を似た別の場所に置き換えさせない（実際に出た事故の再発防止）', () => {
+      // 「横浜のみなとみらい」に対して茨城の「みらい平」の店を返してきた（2026-08-30）
+      expect(AI_SYSTEM).toContain('似た名前の別の場所に置き換えない')
+      expect(AI_SYSTEM).toContain('都道府県')
+    })
+  })
+
+  describe('cleanAiText', () => {
+    // 🔴 これも実際に出た事故。モデルが改行のつもりで「バックスラッシュ＋n」を
+    //    文字として書いてきて、吹き出しにそれが並んだ（2026-08-30）。
+    //    プロンプトでも止めているが、表示側でも必ず直す。
+    it('文字としての改行表記を本物の改行に直す', () => {
+      expect(cleanAiText(String.raw`A\nB\nC`)).toBe('A\nB\nC')
+      expect(cleanAiText(String.raw`A\r\nB`)).toBe('A\nB')
+    })
+
+    it('本物の改行はそのまま残す', () => {
+      expect(cleanAiText('A\nB')).toBe('A\nB')
+    })
+
+    it('空行が続きすぎるのを詰める', () => {
+      expect(cleanAiText('x\n\n\n\ny')).toBe('x\n\ny')
+    })
+
+    it('前後の空白と行末の空白を落とす', () => {
+      expect(cleanAiText('  あ  \nい  ')).toBe('あ\nい')
+    })
+
+    it('空でも落ちない', () => {
+      expect(cleanAiText(undefined)).toBe('')
     })
   })
 
