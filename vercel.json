@@ -97,8 +97,7 @@
     "api/booking-ics.js": { "memory": 128 },
     "api/cron-push-notifications.js": { "memory": 256 },
     "api/notify-data-ready.js": { "memory": 256 },
-    "api/talk-notify.js": { "memory": 128 },
-    "api/line-webhook.js": { "memory": 128 }
+    "api/talk.js": { "memory": 128 }
   },
   "crons": [
     {
@@ -108,6 +107,8 @@
   ],
   "rewrites": [
     { "source": "/__/auth/:path*", "destination": "https://pointlab-96310.firebaseapp.com/__/auth/:path*" },
+    { "source": "/api/youtube-rss", "destination": "/api/proxy?src=youtube" },
+    { "source": "/api/rainviewer-weather-maps", "destination": "/api/proxy?src=rainviewer" },
     { "source": "/calendar/:path*", "destination": "/calendar/index.html" },
     { "source": "/stock-calendar/(.*)", "destination": "/calendar/index.html" },
     { "source": "/stock-calendar", "destination": "/calendar/index.html" }

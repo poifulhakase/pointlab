@@ -201,7 +201,7 @@ export async function deleteMessage(m: TalkMessage): Promise<void> {
 }
 
 /**
- * 新着が出たことを相手のLINEへ知らせる（`api/talk-notify.js`）。
+ * 新着が出たことを相手のLINEへ知らせる（`api/talk.js`）。
  *
  * 🔵 Firestore にサーバー側のトリガーが無いので、**送った側のブラウザから叩く**。
  * 🔵 サーバー側が未設定のうちは何も起きない（204 が返る）。
@@ -209,7 +209,7 @@ export async function deleteMessage(m: TalkMessage): Promise<void> {
  */
 export async function notifyPeer(msg: { name: string; text: string; hasImage: boolean }): Promise<void> {
   try {
-    await fetch('/api/talk-notify', {
+    await fetch('/api/talk?a=notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room: getRoomId(), ...msg }),

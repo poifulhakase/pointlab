@@ -9,7 +9,7 @@
 相手のロック画面に出るので、**LINEが使えなくても通知だけで気づける**。
 
 ```
-新着 → 送った側のブラウザ → /api/talk-notify → LINE → 相手のロック画面
+新着 → 送った側のブラウザ → /api/talk?a=notify → LINE → 相手のロック画面
 ```
 
 - 🔵 **相手が画面を開いている間は送らない**（在席が分かるため。会話中に鳴りっぱなしにならない）
@@ -30,7 +30,7 @@
 ### ② 送り先ID（グループなら `C…`）を調べる
 
 1. LINE Developers の **Messaging API設定 → Webhook URL** に
-   `https://pointlab.vercel.app/api/line-webhook` を入れて「Webhookの利用」を ON
+   `https://pointlab.vercel.app/api/talk?a=webhook` を入れて「Webhookの利用」を ON
 2. Vercel に `LINE_CHANNEL_ACCESS_TOKEN` を入れて再デプロイ（ここまでで webhook が動く）
 3. **Botをグループに招待する**（1対1で使うなら、友だち追加して「id」とだけ送る）
 4. Bot が **「この場所のID（グループ） C…」** と返してくるので、その値を控える
@@ -70,7 +70,7 @@
 ## 片付け
 
 1. Vercel の環境変数4つを消す（これだけで通知は止まる）
-2. `api/talk-notify.js` / `api/line-webhook.js` / `api/_talkNotify.js` を削除
+2. `api/talk.js` / `api/_talkNotify.js` を削除
 3. `src/utils/talkRoom.ts` の `notifyPeer` と、`TalkRoom.tsx` の呼び出しを削除
-4. `vercel.json` の `functions` から2行を削除
+4. `vercel.json` の `functions` から `api/talk.js` の行を削除
 5. LINE公式アカウントを削除（残しても害はない）
