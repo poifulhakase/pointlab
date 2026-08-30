@@ -105,6 +105,15 @@ describe('talk-notify', () => {
       expect(cleanAiText('（メモ\n）')).toBe('（メモ）')
     })
 
+    it('区切りの「｜」の前後で割れたものも繋ぐ', () => {
+      expect(cleanAiText('店名／池袋｜\n特徴です')).toBe('店名／池袋｜特徴です')
+      expect(cleanAiText('特徴\n｜営業10:30-22:00')).toBe('特徴｜営業10:30-22:00')
+    })
+
+    it('候補の間の改行は残す（詰めすぎない）', () => {
+      expect(cleanAiText('A店｜静か\nhttps://example.com/a\n\nB店｜安い')).toBe('A店｜静か\nhttps://example.com/a\n\nB店｜安い')
+    })
+
     it('空行が続きすぎるのを詰める', () => {
       expect(cleanAiText('x\n\n\n\ny')).toBe('x\n\ny')
     })
