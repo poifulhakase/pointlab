@@ -48,6 +48,8 @@ describe('talk-notify', () => {
       expect(AI_SYSTEM).toContain('8行以内')
       expect(AI_SYSTEM).toContain('最大3件')
       expect(AI_SYSTEM).toContain('2〜3行に収まる長さ')
+      // 🔴 文の途中で改行され、1件が何行にも割れた（2026-08-30）。この縛りは消さない
+      expect(AI_SYSTEM).toContain('1行で書き切る')
     })
 
     it('分からないことを作らせない', () => {
