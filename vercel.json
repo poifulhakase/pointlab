@@ -30,7 +30,6 @@
       ]
     },
     {
-      "comment": "🔴 利用者が実際に開くのは /calendar/（index.html を書かない）。上の行だけだと \"/calendar/\" に効かず、古いHTMLが配られて「更新されない・チャンクが404」になる（2026-08-29 実機で確認）",
       "source": "/calendar",
       "headers": [
         {

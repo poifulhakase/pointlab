@@ -73,6 +73,11 @@ npx firebase-tools deploy --only firestore:rules --project pointlab-96310
 - 型チェックは **`tsconfig.app.json` 指定必須**。指定しないと `noUnusedLocals/noUnusedParameters` が効かず、Vercel ビルドでだけ型エラーが出る。
 - `npm install` は `.npmrc` の `legacy-peer-deps=true` 前提（vite-plugin-pwa の peer deps 対応）。
 - Vercel の env 追加は `echo` 禁止（末尾改行が付き CRON_SECRET 等で HTTP ヘッダーエラー）→ `node -e "process.stdout.write(...)"` を使う。
+- 🔴 **`vercel.json` に説明用のキー（`comment` 等）を足さない**。スキーマ外のキーがあると
+  **デプロイが丸ごと失敗する**（ビルドの前に弾かれるので、テストもビルドも通ったまま本番だけ古くなる）。
+  2026-08-29〜08-30 の全デプロイがこれで落ちていた。注釈は `handover.md` / この CLAUDE.md に書く。
+  🔵 反映されない時の確認: `curl -s https://api.github.com/repos/poifulhakase/pointlab/commits/<sha>/status`
+  （`state: failure` なら Vercel 側で落ちている。**push できた＝反映された、ではない**）
 
 ---
 
