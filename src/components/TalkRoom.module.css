@@ -559,22 +559,49 @@
 
 /* ── 返信（引用） ─────────────────────────────────────── */
 
-/* 吹き出しの上に付く引用。押すと元の発言へ飛ぶ */
+/*
+  返信は「引用＋本文」を1枚の枠で囲う。
+  🔴 引用だけを薄く敷くと壁紙に溶けて、返信だと気づけない（運用者の指摘）。
+     枠・内側の余白・引用カードの白地の3つで、ひとまとまりに見せている。
+*/
+.plain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.replied {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 100%;
+  padding: 5px;
+  background: #ffffff5c;
+  border: 1px solid #ffffffa8;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+}
+
+.mine .replied { align-items: flex-end; }
+
+/* 引用の中身。押すと元の発言へ飛ぶ */
 .quote {
   display: block;
-  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
   padding: 5px 10px;
   text-align: left;
-  background: #00000012;
+  background: #ffffffe8;
   border: 0;
-  border-left: 3px solid #7b8894;
-  border-radius: 8px;
+  border-left: 4px solid #7b8894;
+  border-radius: 9px;
   cursor: pointer;
 }
 
-.mine .quote { border-left-color: #4d8f2f; }
+.mine .quote { border-left-color: var(--talk-accent); }
 
-.quote:hover { background: #0000001c; }
+.quote:hover { background: #fff; }
 
 .quoteName {
   display: block;

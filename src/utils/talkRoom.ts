@@ -200,6 +200,23 @@ export async function deleteMessage(m: TalkMessage): Promise<void> {
   await restDelete(`${roomPath()}/messages/${m.id}`)
 }
 
+/**
+ * 新着が出たことを相手のLINEへ知らせる（`api/talk-notify.js`）。
+ *
+ * 🔵 Firestore にサーバー側のトリガーが無いので、**送った側のブラウザから叩く**。
+ * 🔵 サーバー側が未設定のうちは何も起きない（204 が返る）。
+ * 🔴 通知が落ちても本体は動かす。ここで例外を投げないこと。
+ */
+export async function notifyPeer(msg: { name: string; text: string; hasImage: boolean }): Promise<void> {
+  try {
+    await fetch('/api/talk-notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room: getRoomId(), ...msg }),
+    })
+  } catch { /* 通知は落ちてよい */ }
+}
+
 /** 自分の在席と既読の位置を書き込む。 */
 export async function touchMember(uid: string, name: string, read: number): Promise<void> {
   await restWrite(`${roomPath()}/members/${uid}`, { name, at: Date.now(), read })

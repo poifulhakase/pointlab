@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  peerState, quoteText, randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
+  notifyPeer, peerState, quoteText, randomId, sendMessage, setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage,
 } from '../utils/talkRoom'
@@ -225,7 +225,13 @@ export function TalkRoom() {
     }
     setSending(false)
     scrollToBottom('smooth')
-  }, [text, picked, uid, name, replyTo])
+
+    // 🔵 相手が画面を開いていないときだけ、LINEへ「新着があります」を送る
+    //    （開いている間に鳴らすと、会話中ずっと鳴りっぱなしになる）
+    const p = peerState(members, uid, name)
+    const away = !p || Date.now() - p.at >= ONLINE_MS
+    if (away) void notifyPeer({ name, text: body, hasImage: shots.length > 0 })
+  }, [text, picked, uid, name, replyTo, members])
 
   const retry = async (p: Pending) => {
     setPending(list => list.map(x => (x.id === p.id ? { ...x, failed: false } : x)))
@@ -593,22 +599,25 @@ function Row({ m, mine, tail, showName, read, flash, onImage, onRetry, onHold, o
           onPointerCancel={holdCancel}
           onPointerLeave={holdCancel}
         >
-          {m.re && (
-            <button className={styles.quote} onClick={() => { if (!afterHold()) onJump(m.re!) }}>
-              <span className={styles.quoteName}>{m.reName}</span>
-              <span className={styles.quoteText}>{m.reText}</span>
-            </button>
-          )}
-          {m.img ? (
-            <div
-              className={styles.photo}
-              style={ratio ? { aspectRatio: `${m.w} / ${m.h}` } : undefined}
-              onClick={() => { if (!afterHold() && src) onImage(src) }}
-            >
-              {src ? <img src={src} alt="" /> : <div className={styles.photoWait} />}
-            </div>
-          ) : null}
-          {m.text && <div className={styles.bubble}>{m.text}</div>}
+          {/* 🔵 引用は背景に溶けやすいので、引用と本文を1枚の枠で囲って「返信」だと分かるようにする */}
+          <div className={m.re ? styles.replied : styles.plain}>
+            {m.re && (
+              <button className={styles.quote} onClick={() => { if (!afterHold()) onJump(m.re!) }}>
+                <span className={styles.quoteName}>↩ {m.reName}</span>
+                <span className={styles.quoteText}>{m.reText}</span>
+              </button>
+            )}
+            {m.img ? (
+              <div
+                className={styles.photo}
+                style={ratio ? { aspectRatio: `${m.w} / ${m.h}` } : undefined}
+                onClick={() => { if (!afterHold() && src) onImage(src) }}
+              >
+                {src ? <img src={src} alt="" /> : <div className={styles.photoWait} />}
+              </div>
+            ) : null}
+            {m.text && <div className={styles.bubble}>{m.text}</div>}
+          </div>
         </div>
         {!mine && tail && meta}
       </div>

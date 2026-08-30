@@ -96,7 +96,9 @@
     "api/send-booking-push.js": { "memory": 128 },
     "api/booking-ics.js": { "memory": 128 },
     "api/cron-push-notifications.js": { "memory": 256 },
-    "api/notify-data-ready.js": { "memory": 256 }
+    "api/notify-data-ready.js": { "memory": 256 },
+    "api/talk-notify.js": { "memory": 128 },
+    "api/line-webhook.js": { "memory": 128 }
   },
   "crons": [
     {
