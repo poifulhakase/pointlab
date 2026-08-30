@@ -166,8 +166,10 @@ async function ai(req, res) {
     if (!text) return res.status(502).json({ error: 'AIの返事が空でした' })
     return res.status(200).json({ text })
   } catch (e) {
-    console.error('[talk/ai] error:', e?.message)
-    return res.status(502).json({ error: 'AIに聞けませんでした' })
+    console.error('[talk/ai] error:', e?.status, e?.message)
+    // 🔵 種類（HTTPの番号）だけは返す。中身は返さない代わりに、これで切り分けができる
+    //    （400=リクエストの形／401=鍵／429=上限／5xx=向こう側）
+    return res.status(502).json({ error: 'AIに聞けませんでした', code: e?.status ?? 0, detail: String(e?.message ?? '').slice(0, 300) })
   }
 }
 
