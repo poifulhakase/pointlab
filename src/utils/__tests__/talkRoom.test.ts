@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dayLabel, getRoomId, isSameDay, isTalkRoute } from '../talkRoom'
+import { dayLabel, getRoomId, isSameDay, isTalkRoute, scaledSize } from '../talkRoom'
 
 /**
  * 一時トークルームの表示まわり（純粋な部分だけ）。
@@ -71,6 +71,23 @@ describe('talkRoom', () => {
     it('大文字の16進は通さない（IDの表記ゆれで別の部屋になるのを防ぐ）', () => {
       window.location.hash = `#/t/${SAMPLE.toUpperCase()}`
       expect(isTalkRoute()).toBe(false)
+    })
+  })
+
+  describe('scaledSize', () => {
+    // 🔴 iPhone の写真（横向き・縦向き・Pro の 48MP）が、長辺の指定に収まること。
+    it('長辺を指定の大きさに収める（縦横比は保つ）', () => {
+      expect(scaledSize(4032, 3024, 1280)).toEqual({ w: 1280, h: 960 })
+      expect(scaledSize(3024, 4032, 1280)).toEqual({ w: 960, h: 1280 })
+      expect(scaledSize(8064, 6048, 1280)).toEqual({ w: 1280, h: 960 })
+    })
+
+    it('元が小さければ拡大しない', () => {
+      expect(scaledSize(400, 300, 1280)).toEqual({ w: 400, h: 300 })
+    })
+
+    it('極端に細長くても 0px にはしない（canvas が作れなくなるため）', () => {
+      expect(scaledSize(5000, 1, 1280)).toEqual({ w: 1280, h: 1 })
     })
   })
 })

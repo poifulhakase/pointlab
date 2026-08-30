@@ -201,15 +201,27 @@ export function TalkRoom() {
   }
 
   // ── 画像を選ぶ ─────────────────────────────────────────────────
+  /**
+   * 🔵 開く前に値を空にする。同じ写真を続けて選んだとき、値が同じだと
+   *    change が起きず「選んだのに何も出ない」になるため（iPhone で起きやすい）。
+   */
+  const openPicker = () => {
+    if (fileRef.current) fileRef.current.value = ''
+    fileRef.current?.click()
+  }
+
   const onPick = async (files: FileList | null) => {
     if (!files?.length) return
     const list = Array.from(files).slice(0, 4)
+    // 大きい写真は変換に時間がかかる。待たされている理由が分かるようにしておく
+    if (list.length > 0) show('写真を読み込んでいます…')
     for (const f of list) {
       try {
         const s = await shrinkImage(f)
         setPicked(p => [...p, { id: randomId(), ...s }])
+        setToast('')
       } catch (e) {
-        show(e instanceof Error ? e.message : '画像を読めませんでした')
+        show(e instanceof Error ? e.message : 'この写真は読めませんでした')
       }
     }
     if (fileRef.current) fileRef.current.value = ''
@@ -333,7 +345,7 @@ export function TalkRoom() {
       )}
 
       <footer className={styles.foot}>
-        <button className={styles.iconBtn} onClick={() => fileRef.current?.click()} aria-label="画像を送る">🖼️</button>
+        <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る">🖼️</button>
         <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字">😀</button>
         <textarea
           ref={taRef}
@@ -356,7 +368,20 @@ export function TalkRoom() {
           }}
         />
         <button className={styles.sendBtn} onClick={() => void doSend()} disabled={!canSend} aria-label="送信">➤</button>
-        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => void onPick(e.target.files)} />
+        {/*
+          🔴 `hidden`（display:none）にすると **iPhone(Safari) で写真の選択が開かないことがある**。
+             画面の外に置いて「存在はする」状態にしておく。accept も HEIC/HEIF を明示して、
+             ファイルアプリから選んだときに選択できない事故を防ぐ。
+        */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,image/heic,image/heif"
+          multiple
+          className={styles.fileInput}
+          tabIndex={-1}
+          onChange={e => void onPick(e.target.files)}
+        />
       </footer>
 
       {menuOpen && (

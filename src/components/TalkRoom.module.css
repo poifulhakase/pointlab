@@ -424,6 +424,19 @@
 
 .sendBtn:disabled { background: #c8cdd4; cursor: default; }
 
+/*
+  ファイル選択の input。
+  🔴 display:none / hidden にすると **iPhone(Safari) で選択画面が開かないことがある**ので、
+     消さずに画面の外へ逃がす（存在はしていて、目には入らない）。
+*/
+.fileInput {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 /* ── メニュー ─────────────────────────────────────────── */
 
 .scrim {

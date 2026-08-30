@@ -131,13 +131,30 @@ function toFields(obj: Record<string, unknown>): Record<string, unknown> {
   return out
 }
 
+/**
+ * 画像1枚で 700KB 前後を送るので、電波が細いと**返事が返らないまま止まる**ことがある。
+ * 待ち続けると「送信中」のままになって送り直しもできないため、時間を切って失敗にする
+ * （失敗にすれば吹き出しに「再送」が出る）。
+ */
+const WRITE_TIMEOUT_MS = 45_000
+
 async function restWrite(path: string, data: Record<string, unknown>): Promise<void> {
-  const res = await fetch(`${BASE}/${path}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fields: toFields(data) }),
-  })
-  if (!res.ok) throw new Error(`Firestore ${res.status}`)
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), WRITE_TIMEOUT_MS)
+  try {
+    const res = await fetch(`${BASE}/${path}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: toFields(data) }),
+      signal: ctrl.signal,
+    })
+    if (!res.ok) throw new Error(`Firestore ${res.status}`)
+  } catch (e) {
+    if (ctrl.signal.aborted) throw new Error('送信が時間内に終わりませんでした')
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 async function restDelete(path: string): Promise<void> {
@@ -222,7 +239,17 @@ export async function fetchImage(imgId: string): Promise<string | null> {
 
 /** Firestore の1ドキュメント上限は約1MB。データURLはここまでに収める。 */
 const MAX_DATA_URL = 700_000
-const MAX_EDGE = 1280
+/** 長辺の候補。上から試して、収まらなければ小さくする。 */
+const EDGES = [1280, 960, 720]
+const QUALITIES = [0.82, 0.7, 0.6, 0.5, 0.4]
+/** <img> の読み込みが返ってこないときに諦める時間。 */
+const DECODE_TIMEOUT_MS = 20_000
+
+/** 長辺を `edge` に収めたときの寸法。 */
+export function scaledSize(w: number, h: number, edge: number): { w: number; h: number } {
+  const scale = Math.min(1, edge / Math.max(w, h))
+  return { w: Math.max(1, Math.round(w * scale)), h: Math.max(1, Math.round(h * scale)) }
+}
 
 /**
  * 画像ファイルを「長辺1280px以内・JPEG」に落とす。
@@ -230,47 +257,124 @@ const MAX_EDGE = 1280
  * 🔴 iPhone の写真は HEIC のことがあり、そのまま送ると相手の Chrome で表示できない。
  *    Safari は HEIC を描画できるので、**送る側のブラウザで JPEG に変換**してしまうのが確実。
  *    ついでに軽くなるので、通信量と1MB制限の両方に効く。
+ *
+ * 🔴 2026-08-30：**iPhone(Safari) で写真が送れない**という report を受けて、
+ *    落ちどころを1つに絞らず「順に試して、どれかが通れば送れる」形に変えた。
+ *    ① createImageBitmap → ② `<img>`（HEIC や巨大写真の保険）→ ③ 変換せずそのまま
+ *    🔵 iOS は 48MP(Pro の写真)のような大きい画像で **canvas が真っ白になる**ことがあり、
+ *       例外は出ない＝「送れたのに白い」になる。描いたあと中身が空かどうかを見て次の手に回す。
  */
 export async function shrinkImage(file: File): Promise<{ data: string; w: number; h: number }> {
-  const bitmap = await loadImage(file)
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height))
-  const w = Math.max(1, Math.round(bitmap.width * scale))
-  const h = Math.max(1, Math.round(bitmap.height * scale))
+  let reason: unknown = null
 
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('画像を処理できませんでした')
-  ctx.drawImage(bitmap as CanvasImageSource, 0, 0, w, h)
-
-  // 上限に収まるまで画質を落とす（それでも大きい写真は稀にあるため）
-  for (const q of [0.82, 0.7, 0.6, 0.5, 0.4]) {
-    const data = canvas.toDataURL('image/jpeg', q)
-    if (data.length <= MAX_DATA_URL) return { data, w, h }
+  for (const via of ['bitmap', 'img'] as const) {
+    let src: ImageBitmap | HTMLImageElement | null = null
+    try {
+      src = via === 'bitmap' ? await loadBitmap(file) : await loadImgElement(file)
+      if (!src) continue
+      const out = renderToJpeg(src)
+      if (out) return out
+    } catch (e) {
+      reason ??= e
+    } finally {
+      if (src && 'close' in src) src.close()
+    }
   }
-  throw new Error('画像が大きすぎます')
+
+  // ③ 変換できなくても、元が小さくて相手も開ける形式ならそのまま送る
+  const raw = await readAsDataUrl(file).catch(() => null)
+  if (raw && raw.length <= MAX_DATA_URL && /^data:image\/(jpeg|png|gif|webp);/i.test(raw)) {
+    return { data: raw, w: 0, h: 0 }
+  }
+
+  if (raw && raw.length > MAX_DATA_URL) throw new Error('この写真は大きすぎて送れませんでした')
+  throw new Error(reason instanceof Error ? reason.message : 'この写真は読めませんでした')
 }
 
-/** File → 描画できる画像。createImageBitmap が使えない環境では <img> に落とす。 */
-async function loadImage(file: File): Promise<ImageBitmap | HTMLImageElement> {
-  if ('createImageBitmap' in window) {
-    try {
-      return await createImageBitmap(file)
-    } catch { /* HEIC 等でここが落ちることがあるので <img> にフォールバック */ }
+/** canvas に描いて JPEG のデータURLにする。描けなかった（真っ白）ときは null。 */
+function renderToJpeg(src: ImageBitmap | HTMLImageElement): { data: string; w: number; h: number } | null {
+  const sw = 'naturalWidth' in src ? src.naturalWidth : src.width
+  const sh = 'naturalHeight' in src ? src.naturalHeight : src.height
+  if (!sw || !sh) return null
+
+  for (const edge of EDGES) {
+    const { w, h } = scaledSize(sw, sh, edge)
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('この端末では画像を処理できませんでした')
+    // 透明の写真（PNG）を JPEG にすると黒くなるので、下地を白で塗っておく
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, w, h)
+    ctx.drawImage(src, 0, 0, w, h)
+    if (isBlank(ctx, w, h)) return null
+
+    for (const q of QUALITIES) {
+      const data = canvas.toDataURL('image/jpeg', q)
+      // 大きすぎて canvas を書き出せないと 'data:,' が返る端末がある
+      if (!data.startsWith('data:image/jpeg')) return null
+      if (data.length <= MAX_DATA_URL) return { data, w, h }
+    }
   }
+  return null
+}
+
+/**
+ * canvas の中身が空か（＝描けていないか）。
+ * 下地を白で塗ってあるので、**白のままなら描けていない**とみなせる。
+ */
+function isBlank(ctx: CanvasRenderingContext2D, w: number, h: number): boolean {
+  let px: Uint8ClampedArray
+  try {
+    px = ctx.getImageData(0, 0, w, h).data
+  } catch {
+    return false // 読めないなら判定しない（描けている前提で進む）
+  }
+  // 全画素は重いので、格子状に間引いて見る
+  const step = Math.max(1, Math.floor(Math.min(w, h) / 32)) * 4
+  for (let i = 0; i < px.length; i += step) {
+    if (px[i] !== 255 || px[i + 1] !== 255 || px[i + 2] !== 255) return false
+  }
+  return true
+}
+
+/** File → ImageBitmap（向きは EXIF に合わせる）。使えない環境では null。 */
+async function loadBitmap(file: File): Promise<ImageBitmap | null> {
+  if (!('createImageBitmap' in window)) return null
+  try {
+    // 🔵 imageOrientation を指定しないと、横向きで撮った写真が回ったまま送られる
+    return await createImageBitmap(file, { imageOrientation: 'from-image' })
+  } catch {
+    return null // HEIC 等で落ちることがある（<img> 側で拾う）
+  }
+}
+
+/** File → <img>。Safari はここで HEIC も読める。 */
+async function loadImgElement(file: File): Promise<HTMLImageElement> {
   const url = URL.createObjectURL(file)
   try {
     return await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image()
-      img.onload = () => resolve(img)
-      img.onerror = () => reject(new Error('この画像は読めませんでした'))
+      const timer = setTimeout(() => reject(new Error('この写真は読み込みに時間がかかりすぎました')), DECODE_TIMEOUT_MS)
+      img.onload = () => { clearTimeout(timer); resolve(img) }
+      img.onerror = () => { clearTimeout(timer); reject(new Error('この写真は読めませんでした')) }
       img.src = url
     })
   } finally {
     // 画像は canvas に描き終わっているので、ここで解放してよい
     setTimeout(() => URL.revokeObjectURL(url), 10_000)
   }
+}
+
+/** File → データURL（変換せず、そのまま）。 */
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result ?? ''))
+    r.onerror = () => reject(new Error('この写真は読めませんでした'))
+    r.readAsDataURL(file)
+  })
 }
 
 // ── 表示の小物 ──────────────────────────────────────────────────────
