@@ -85,7 +85,7 @@ export interface TalkMember {
   read: number
 }
 
-// ── 端末ID・表示名（localStorage） ───────────────────────────────────
+// ── 端末ID・表示名（localStorage → cookie の順に保存） ─────────────────
 
 const KEY_UID = 'talk.uid'
 const KEY_NAME = 'talk.name'
@@ -93,41 +93,97 @@ const KEY_SOUND = 'talk.sound'
 /** 入室の合言葉。🔵 値はコードに書かない（本人が入れて、この端末に覚えさせるだけ） */
 const KEY_PASS = 'talk.pass'
 
+/** cookie の保存期間（日）。localStorage が使えない環境でも、これだけ同じ端末で居続けられる。 */
+const COOKIE_DAYS = 400
+
+/**
+ * 🔴 2026-08-31：**localStorage が使えない端末で「合言葉を入れても入れない」無限ループ**が起きた。
+ *
+ *   端末ID（`talk.uid`）を localStorage にしか置いていなかったため、
+ *   保存できない設定（iOSのプライベートブラウズ・サイトデータのブロック・強いトラッキング防止）だと
+ *   **読み込みのたびに別の端末ID**になる。
+ *   → 合言葉で登録 → 画面を読み込み直す → **また別のID** → 「未登録です」 → 合言葉…の繰り返し。
+ *   本人は「かめさんで入ったのに、また聞かれる」としか見えない。
+ *
+ * 🔵 そこで **cookie を保険**にする。localStorage が駄目でも cookie が生きていれば同じIDで居られる。
+ * 🔵 どちらも駄目なときは {@link canRemember} が false になり、画面がその旨を出す（原因を人に見せる）。
+ */
+function readStore(key: string): string {
+  try {
+    const v = localStorage.getItem(key)
+    if (v) return v
+  } catch { /* 読めない設定のことがある */ }
+  return readCookie(key)
+}
+
+function writeStore(key: string, value: string): void {
+  try { localStorage.setItem(key, value) } catch { /* 次の cookie に賭ける */ }
+  writeCookie(key, value)
+}
+
+function readCookie(key: string): string {
+  if (typeof document === 'undefined') return ''
+  const hit = document.cookie.split('; ').find(c => c.startsWith(`${encodeURIComponent(key)}=`))
+  return hit ? decodeURIComponent(hit.slice(hit.indexOf('=') + 1)) : ''
+}
+
+function writeCookie(key: string, value: string): void {
+  if (typeof document === 'undefined') return
+  const exp = new Date(Date.now() + COOKIE_DAYS * 864e5).toUTCString()
+  try {
+    document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; expires=${exp}; path=/; SameSite=Lax`
+  } catch { /* cookie も駄目なら、その回だけ使える状態で続行する */ }
+}
+
+/**
+ * この端末を覚えていられるか（localStorage か cookie のどちらかが書ける）。
+ * 🔵 false のときは、合言葉を入れても次に開いたら忘れる＝画面で先に伝える。
+ */
+export function canRemember(): boolean {
+  const probe = 'talk.probe'
+  try {
+    localStorage.setItem(probe, '1')
+    localStorage.removeItem(probe)
+    return true
+  } catch { /* cookie を試す */ }
+  writeCookie(probe, '1')
+  const ok = readCookie(probe) === '1'
+  if (ok) writeCookie(probe, '')
+  return ok
+}
+
 /** この端末のID。無ければ作って覚える。 */
 export function getUid(): string {
-  let uid = ''
-  try {
-    uid = localStorage.getItem(KEY_UID) ?? ''
-  } catch { /* プライベートモード等で読めないことがある */ }
+  let uid = readStore(KEY_UID)
   if (!uid) {
     uid = randomId()
-    try { localStorage.setItem(KEY_UID, uid) } catch { /* 保存できなくても動く（毎回別人になるだけ） */ }
+    writeStore(KEY_UID, uid)
   }
   return uid
 }
 
 export function getName(): string {
-  try { return localStorage.getItem(KEY_NAME) ?? '' } catch { return '' }
+  return readStore(KEY_NAME)
 }
 
 export function setName(name: string): void {
-  try { localStorage.setItem(KEY_NAME, name) } catch { /* 保存できなくても続行 */ }
+  writeStore(KEY_NAME, name)
 }
 
 export function getSoundOn(): boolean {
-  try { return localStorage.getItem(KEY_SOUND) !== 'off' } catch { return true }
+  return readStore(KEY_SOUND) !== 'off'
 }
 
 export function setSoundOn(on: boolean): void {
-  try { localStorage.setItem(KEY_SOUND, on ? 'on' : 'off') } catch { /* 同上 */ }
+  writeStore(KEY_SOUND, on ? 'on' : 'off')
 }
 
 export function getPass(): string {
-  try { return localStorage.getItem(KEY_PASS) ?? '' } catch { return '' }
+  return readStore(KEY_PASS)
 }
 
 export function setPass(pass: string): void {
-  try { localStorage.setItem(KEY_PASS, pass) } catch { /* 保存できなくても、その回は使える */ }
+  writeStore(KEY_PASS, pass)
 }
 
 /** 衝突しない程度のランダムID。 */

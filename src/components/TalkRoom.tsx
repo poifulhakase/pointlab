@@ -6,8 +6,7 @@ import {
   registerDevice, sendMessage,
   setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
-  type TalkMember, type TalkMessage,
-} from '../utils/talkRoom'
+  type TalkMember, type TalkMessage,, canRemember } from '../utils/talkRoom'
 
 /**
  * 一時トークルーム（LINE風）。
@@ -414,6 +413,15 @@ export function TalkRoom() {
             autoComplete="off"
           />
           {passError && <p className={styles.gateError}>{passError}</p>}
+          {/* 🔴 保存できない端末は、合言葉を入れても次に開くとまた聞かれる（無限ループ）。
+              原因はブラウザの設定なので、ここで先に伝える（2026-08-31 に実際に起きた）。 */}
+          {!canRemember() && (
+            <p className={styles.gateError}>
+              このブラウザは<strong>この端末を覚えられない設定</strong>です（プライベートブラウズ、
+              またはサイトデータの保存がオフ）。そのままだと次に開いたとき、また合言葉を聞かれます。<br />
+              ふつうのタブ（プライベートでない）で開くか、設定でサイトデータの保存を許可してください。
+            </p>
+          )}
           <button className={styles.gateBtn} onClick={() => void unlock()} disabled={!passInput.trim() || passBusy}>
             {passBusy ? '確認中…' : '入る'}
           </button>

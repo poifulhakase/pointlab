@@ -113,6 +113,18 @@ service cloud.firestore {
       return 'かめさん';
     }
 
+    /**
+     * 🆕 2026-08-31：**書き方のゆれを許す**（nami が「かめさんでは入れない」と言ってきたため）。
+     *    合言葉は口頭・メッセージで伝わるので、変換で「カメさん」「亀さん」になるのが普通。
+     *    完全一致だけにすると、本人なのに入れない＝また詰む。
+     * 🔵 前後の空白は落とす（スマホは末尾に空白が入りやすい）。
+     * 🔴 それでも「知っている人だけ」であることは変わらない（総当たりで当たる語ではない）。
+     */
+    function talkPassOk(v) {
+      return v is string
+        && v.trim() in ['かめさん', 'カメさん', 'ｶﾒさん', '亀さん', 'かめサン', 'kamesan', 'Kamesan', 'KAMESAN'];
+    }
+
     function talkRegistered(roomId, uid) {
       return uid == 'ai-assistant'
         || exists(/databases/$(database)/documents/talkRooms/$(roomId)/keys/$(uid));
@@ -129,7 +141,7 @@ service cloud.firestore {
       // 合言葉で自分の端末を登録する場所。**読めない・消せない**
       match /keys/{uid} {
         allow read, delete: if false;
-        allow create, update: if inTalkRoom(roomId) && request.resource.data.k == talkPass();
+        allow create, update: if inTalkRoom(roomId) && talkPassOk(request.resource.data.k);
       }
 
       match /messages/{msgId} {
