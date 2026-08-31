@@ -148,3 +148,34 @@ export function isRoomId(v) {
 export function isLineTarget(v) {
   return typeof v === 'string' && /^[URC][0-9a-f]{32}$/.test(v)
 }
+
+/**
+ * 送った人によって宛先を振り分ける（2026-08-31 運用者の指示）。
+ *
+ * 🔴 **通知は「読ませたい相手のいる場所」へ送る**。
+ *    - 自分が送った → **相手のいるグループ**（相手のロック画面に出したい）
+ *    - 相手が送った → **自分とBotだけのグループ**（自分が気づきたい。相手に自分の発言の通知を見せない）
+ *
+ * 🔵 見分けは**表示名**。名前は端末ごとに自分で決める値なので、
+ *    `selfNames` に複数（旧名・別端末の書き方）をカンマ区切りで持たせられるようにしてある。
+ * 🔴 **知らない名前は「相手が送った」側に倒す**＝最悪でも自分に通知が来るだけで済む。
+ *    逆に倒すと、名前を変えた瞬間から相手へ通知が飛び続ける。
+ *
+ * @param {object} p
+ * @param {string} p.name        送った人の表示名
+ * @param {string} p.selfNames   自分の表示名（カンマ区切り可・空なら振り分けなし）
+ * @param {string} p.peerTarget  相手のいるグループのID
+ * @param {string} p.selfTarget  自分とBotだけのグループのID
+ * @returns {string} 送り先ID（空文字＝送らない）
+ */
+export function pickNotifyTarget({ name, selfNames, peerTarget, selfTarget }) {
+  const self = String(selfNames || '').split(',').map(s => s.trim()).filter(Boolean)
+  // 自分の名前を決めていない＝振り分けない（これまでどおり1か所へ送る）
+  if (!self.length) return peerTarget || ''
+
+  const who = String(name || '').trim()
+  const isMe = self.some(n => n === who)
+  // 自分が送った→相手のいる場所へ。相手が送った→自分だけの場所へ（無ければ送らない）
+  const target = isMe ? peerTarget : selfTarget
+  return target || ''
+}

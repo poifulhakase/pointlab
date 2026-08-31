@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -184,6 +184,42 @@ describe('talk-notify', () => {
       expect(isLineTarget(`U${'a'.repeat(32)}`)).toBe(true)
       expect(isLineTarget(`X${'0'.repeat(32)}`)).toBe(false)
       expect(isLineTarget('C123')).toBe(false)
+    })
+  })
+
+  // 🔴 通知は「読ませたい相手のいる場所」へ送る。ここが逆になると、
+  //    相手に自分あての通知が流れる（見せたくないものが相手の画面に出る）ので固定する。
+  describe('pickNotifyTarget', () => {
+    const peer = `C${'1'.repeat(32)}`   // 相手のいるグループ
+    const self = `C${'2'.repeat(32)}`   // 自分とBotだけのグループ
+    const base = { selfNames: 'ひろ', peerTarget: peer, selfTarget: self }
+
+    it('自分が送ったら、相手のいるグループへ', () => {
+      expect(pickNotifyTarget({ ...base, name: 'ひろ' })).toBe(peer)
+    })
+
+    it('相手が送ったら、自分だけのグループへ', () => {
+      expect(pickNotifyTarget({ ...base, name: 'なみ' })).toBe(self)
+    })
+
+    it('知らない名前は自分だけのグループへ倒す（相手へ誤送しない）', () => {
+      expect(pickNotifyTarget({ ...base, name: '' })).toBe(self)
+      expect(pickNotifyTarget({ ...base, name: 'ひろ2' })).toBe(self)
+    })
+
+    it('自分の名前は複数持てる（改名・別端末の書き方）', () => {
+      const p = { ...base, selfNames: 'ひろ, hiro ,ヒロ' }
+      expect(pickNotifyTarget({ ...p, name: 'hiro' })).toBe(peer)
+      expect(pickNotifyTarget({ ...p, name: 'ヒロ' })).toBe(peer)
+    })
+
+    it('自分だけのグループが無ければ、相手が送ったぶんは送らない', () => {
+      expect(pickNotifyTarget({ ...base, selfTarget: '', name: 'なみ' })).toBe('')
+    })
+
+    it('自分の名前を決めていなければ振り分けない（これまでどおり1か所へ）', () => {
+      expect(pickNotifyTarget({ ...base, selfNames: '', name: 'なみ' })).toBe(peer)
+      expect(pickNotifyTarget({ ...base, selfNames: undefined, name: 'ひろ' })).toBe(peer)
     })
   })
 })

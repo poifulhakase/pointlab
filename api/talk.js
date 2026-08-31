@@ -29,7 +29,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId, pickNotifyTarget, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -60,10 +60,10 @@ export default async function handler(req, res) {
 
 async function notify(req, res) {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
-  const target = process.env.LINE_TARGET_ID
+  const peerTarget = process.env.LINE_TARGET_ID
   const room = process.env.TALK_ROOM_ID
   // 未設定＝この機能はまだ使っていない。黙って何もしない（画面側はこれで正常）
-  if (!token || !target || !room) return res.status(204).end()
+  if (!token || !peerTarget || !room) return res.status(204).end()
 
   const body = readBody(req)
   if (!isRoomId(body.room) || body.room !== room) {
@@ -71,13 +71,24 @@ async function notify(req, res) {
     return res.status(403).json({ error: 'Forbidden' })
   }
 
+  // 送った人で宛先を振り分ける（自分が送った→相手のグループ／相手が送った→自分だけのグループ）
+  const target = pickNotifyTarget({
+    name: body.name,
+    selfNames: process.env.TALK_NOTIFY_SELF_NAMES,
+    peerTarget,
+    selfTarget: process.env.LINE_TARGET_SELF_ID,
+  })
+  // 送り先が決まらない＝この向きの通知は使っていない（自分だけのグループを作っていない等）
+  if (!target) return res.status(204).end()
+
   // 連投を1通にまとめる＋鳴らし過ぎを防ぐ。判定できないときは通す（通知は落ちてよいが、
   // 落とし方で本来の1通目まで消したくない）
   const minSec = Number(process.env.TALK_NOTIFY_MIN_SEC || 90)
   const maxPerDay = Number(process.env.TALK_NOTIFY_MAX_PER_DAY || 60)
   try {
     const db = getDb()
-    const key = `talk_${room.slice(0, 8)}`
+    // 🔵 宛先ごとに数える＝自分あての通知が、相手あての通知の90秒に巻き込まれないように
+    const key = `talk_${room.slice(0, 8)}_${target.slice(1, 7)}`
     if (!(await rateLimit(db, key, 'notify_min', 1, minSec * 1000))) return res.status(204).end()
     if (!(await rateLimit(db, key, 'notify_day', maxPerDay, 24 * 60 * 60 * 1000))) return res.status(204).end()
   } catch {
