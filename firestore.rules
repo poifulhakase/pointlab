@@ -65,100 +65,41 @@ service cloud.firestore {
         && request.time < timestamp.date(2026, 10, 8);
     }
 
-    // 🔴 2026-08-30 追加＝**書き込めるのはいまやり取りしている端末だけ**（運用者の指示
-    //    「既にチャットしている2名以外のブラウザはブロックしてOK」）。
-    //    ログインしないので身元は端末ID（localStorage の talk.uid）しかない。それを
-    //    **ルール側に列挙**する＝クライアントのコードには出さない（公開JSに出ないため、
-    //    部屋IDと同じ扱いにできる）。
-    //    🔵 1人につき2つあるのは、途中でブラウザ/履歴が変わって別IDになったため。
-    //    🔵 'ai-assistant' は左下のAIボタンが投稿するときの送り主。
-    //    🔴 **読み取りは止められない**（無認証なので端末を見分ける材料が読み取り時に無い）。
-    //       URLを知られた場合、見られる可能性は残る＝重要な内容は置かない、は変わらない。
-    //    🔴 端末を替える／履歴を消すと新しいIDになり**本人が書けなくなる**。
-    //       そのときはここに1行足して `firebase deploy --only firestore:rules`。
-    //    🔴🔴 2026-08-30 夕方＝**一時的に開けている**。nami の端末IDが変わって締め出され、
-    //       締め出されると本人が新しいIDを伝える手段が無い（このトークが唯一の連絡路のため）。
-    //       手順＝①ここを true にして開ける ②本人に開いてもらい members に新しい uid が入る
-    //       ③その uid を下の一覧に足す ④`OPEN_FOR_NEW_DEVICE` を false に戻して閉じる。
-    //       **③④を必ずやること**（開けたままにしない）。
-    function talkerAllowed(uid) {
-      return OPEN_FOR_NEW_DEVICE() || uid in [
-        'aed12a7e4fb0a2fb83ec5311',   // ひろ（8/29の端末）
-        'da2f0c088d2bb34b024024fe',   // ひろ（いま使っている端末）
-        '6a24426a3d6dd73786f3b085',   // nami（8/30朝までの端末）
-        '99c94419d5d91df91a6b8534',   // nami（8/30昼までの端末）
-        'ai-assistant'                // AIの発言
-      ];
-    }
-
-    /**
-     * 新しい端末を迎え入れるための一時開放。閉じるときは false に戻す。
-     * 🔵 合言葉方式（下の keys）を入れたので、通常は false のままでよい。
-     */
-    function OPEN_FOR_NEW_DEVICE() {
-      return false;
-    }
-
-    /**
-     * 🔴 2026-08-30 夜＝**合言葉で自分を登録できる**ようにした。
-     *    端末IDだけの一覧にすると、ブラウザの設定ひとつでIDが変わって締め出され、
-     *    しかも**本人が新しいIDを伝える手段が無い**（このトークが唯一の連絡路）。
-     *    そこで「合言葉を知っていれば、その端末を自分で登録できる」形にする。
-     *
-     * 🔴 **`keys` は読み取り禁止**。合言葉が保存されても誰にも読めない
-     *    （部屋の読み取りは無認証で誰でもできるので、読める場所に置くと意味が無くなる）。
-     * 🔵 合言葉はここ（ルール）にだけ置く。クライアントのコードには書かない＝部屋IDと同じ扱い。
-     */
-    function talkPass() {
-      return 'かめさん';
-    }
-
-    /**
-     * 🆕 2026-08-31：**書き方のゆれを許す**（nami が「かめさんでは入れない」と言ってきたため）。
-     *    合言葉は口頭・メッセージで伝わるので、変換で「カメさん」「亀さん」になるのが普通。
-     *    完全一致だけにすると、本人なのに入れない＝また詰む。
-     * 🔵 前後の空白は落とす（スマホは末尾に空白が入りやすい）。
-     * 🔴 それでも「知っている人だけ」であることは変わらない（総当たりで当たる語ではない）。
-     */
-    function talkPassOk(v) {
-      return v is string
-        && v.trim() in ['かめさん', 'カメさん', 'ｶﾒさん', '亀さん', 'かめサン', 'kamesan', 'Kamesan', 'KAMESAN'];
-    }
-
-    function talkRegistered(roomId, uid) {
-      return uid == 'ai-assistant'
-        || exists(/databases/$(database)/documents/talkRooms/$(roomId)/keys/$(uid));
-    }
-
-    function canTalk(roomId, uid) {
-      return talkerAllowed(uid) || talkRegistered(roomId, uid);
-    }
+    // 🔴 2026-08-31：**端末の制限も合言葉もやめた**（運用者の判断）。
+    //    「検索から来ることはまず無いし、万が一見られても機密は置いていない」ため、
+    //    URLを知っている人＝書ける、にする。**部屋ID（32桁）と期限が唯一の守り**。
+    //
+    //    やめた理由（実際に2回踏んだ）＝端末IDはブラウザの設定ひとつで変わる。
+    //    ①一覧方式：変わった本人が締め出され、**新しいIDを伝える手段が無い**（このトークが唯一の連絡路）。
+    //    ②合言葉方式：localStorage を保存できない端末だと**IDが毎回変わり**、
+    //      合言葉を入れても入れ直しの無限ループになる。
+    //    守るものの重さに対して、締め出しの事故のほうが高くついた。
+    //
+    //    🔵 締めたくなったら、この下の3つ（messages / images / members）の書き込み条件に
+    //       身元の判定を戻す。**そのときは必ず「入れなくなった人の逃げ道」も一緒に用意すること**。
 
     match /talkRooms/{roomId} {
       allow read: if inTalkRoom(roomId);
       allow write: if false;   // 部屋そのものの書き換えは誰にも要らない
 
-      // 合言葉で自分の端末を登録する場所。**読めない・消せない**
+      // 🔵 合言葉の登録場所（keys）は役目を終えたので閉じた。残っている中身は誰にも読めない。
       match /keys/{uid} {
-        allow read, delete: if false;
-        allow create, update: if inTalkRoom(roomId) && talkPassOk(request.resource.data.k);
+        allow read, write: if false;
       }
 
       match /messages/{msgId} {
         allow read: if inTalkRoom(roomId);
-        allow create, update: if inTalkRoom(roomId) && canTalk(roomId, request.resource.data.uid);
-        allow delete: if inTalkRoom(roomId) && canTalk(roomId, resource.data.uid);
+        allow create, update, delete: if inTalkRoom(roomId);
       }
       // 画像は本文とセットで作る。送り主を書かせて、同じ顔ぶれだけに絞る
       match /images/{imgId} {
         allow read: if inTalkRoom(roomId);
-        allow create, update: if inTalkRoom(roomId) && canTalk(roomId, request.resource.data.uid);
-        allow delete: if inTalkRoom(roomId) && canTalk(roomId, resource.data.uid);
+        allow create, update, delete: if inTalkRoom(roomId);
       }
       // 在席と既読。ドキュメントIDがそのまま端末ID
       match /members/{memId} {
         allow read: if inTalkRoom(roomId);
-        allow write: if inTalkRoom(roomId) && canTalk(roomId, memId);
+        allow write: if inTalkRoom(roomId);
       }
     }
 

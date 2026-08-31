@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, errorStatus, getPass, linkify, notifyPeer, peerState, quoteText, randomId,
-  registerDevice, sendMessage,
+  AI_NAME, AI_UID, askAi, linkify, notifyPeer, peerState, quoteText, randomId,
+  sendMessage,
   setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
-  canRemember,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
 
 /**
@@ -67,12 +66,6 @@ export function TalkRoom() {
   const [aiMode, setAiMode] = useState(false)
   /** AIの返事を待っている間の表示 */
   const [aiWaiting, setAiWaiting] = useState(false)
-  /** この端末は書き込みを許されていない（ルールの顔ぶれに入っていない） */
-  const [blocked, setBlocked] = useState(false)
-  /** 締め出されたときに入れてもらう合言葉 */
-  const [passInput, setPassInput] = useState('')
-  const [passError, setPassError] = useState('')
-  const [passBusy, setPassBusy] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
@@ -99,18 +92,9 @@ export function TalkRoom() {
     if (!name) return
     const ping = () => {
       if (document.visibilityState !== 'visible') return
-      touchMember(uid, name, lastAt).catch(async e => {
-        if (errorStatus(e) !== 403) return
-        // 🔵 403 でも、合言葉を覚えていれば**黙って登録し直す**（再入力を求めない）。
-        //    端末IDだけが変わった場合はこれで自動復帰する。
-        const saved = getPass()
-        if (saved && await registerDevice(uid, saved).catch(() => false)) {
-          touchMember(uid, name, lastAt).catch(() => { /* それでも駄目なら次のpingで拾う */ })
-          return
-        }
-        // 🔴 合言葉も無い＝入れてもらうしかない
-        setBlocked(true)
-      })
+      // 🔵 2026-08-31：端末の制限をやめたので、失敗しても次のpingで拾えばよい
+      //    （電波が切れているだけのことが多い）。
+      touchMember(uid, name, lastAt).catch(() => { /* 次のpingで拾う */ })
     }
     ping()
     const t = setInterval(ping, HEARTBEAT_MS)
@@ -299,8 +283,7 @@ export function TalkRoom() {
       try {
         await sendMessage(job.msg, job.image)
         setPending(p => p.filter(x => x.id !== pid))
-      } catch (e) {
-        if (errorStatus(e) === 403) setBlocked(true)
+      } catch {
         setPending(p => p.map(x => (x.id === pid ? { ...x, failed: true } : x)))
       }
     }
@@ -371,65 +354,6 @@ export function TalkRoom() {
     ]
     return all.sort((a, b) => a.at - b.at)
   }, [messages, pending])
-
-  // ── この端末は使えません ───────────────────────────────────────
-  // 🔴 やり取りしている2人の端末以外はブロックする（運用者の指示・2026-08-30）。
-  //    身元は端末IDだけなので、許す一覧は Firestore のルール側に置いてある
-  //    （クライアントに書くと公開JSに出てしまうため）。
-  if (blocked) {
-    const unlock = async () => {
-      const p = passInput.trim()
-      if (!p || passBusy) return
-      setPassBusy(true)
-      setPassError('')
-      try {
-        if (await registerDevice(uid, p)) {
-          // 登録できた＝この端末は以後書ける。購読し直すため読み込み直す
-          location.reload()
-          return
-        }
-        setPassError('合言葉が違います')
-      } catch {
-        setPassError('通信できませんでした。電波を確認してください')
-      } finally {
-        setPassBusy(false)
-      }
-    }
-    return (
-      <div className={styles.gate}>
-        <div className={styles.gateBox}>
-          <div className={styles.gateIcon}>🔑</div>
-          <h1 className={styles.gateTitle}>合言葉を入れてください</h1>
-          <p className={styles.gateLead}>
-            この端末はまだ登録されていません。<br />
-            合言葉を入れると、次からは入力なしで使えます。
-          </p>
-          <input
-            className={styles.gateInput}
-            value={passInput}
-            onChange={e => setPassInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') void unlock() }}
-            placeholder="あいことば"
-            enterKeyHint="go"
-            autoComplete="off"
-          />
-          {passError && <p className={styles.gateError}>{passError}</p>}
-          {/* 🔴 保存できない端末は、合言葉を入れても次に開くとまた聞かれる（無限ループ）。
-              原因はブラウザの設定なので、ここで先に伝える（2026-08-31 に実際に起きた）。 */}
-          {!canRemember() && (
-            <p className={styles.gateError}>
-              このブラウザは<strong>この端末を覚えられない設定</strong>です（プライベートブラウズ、
-              またはサイトデータの保存がオフ）。そのままだと次に開いたとき、また合言葉を聞かれます。<br />
-              ふつうのタブ（プライベートでない）で開くか、設定でサイトデータの保存を許可してください。
-            </p>
-          )}
-          <button className={styles.gateBtn} onClick={() => void unlock()} disabled={!passInput.trim() || passBusy}>
-            {passBusy ? '確認中…' : '入る'}
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   // ── 名前を入れる画面 ───────────────────────────────────────────
   if (!name) {
