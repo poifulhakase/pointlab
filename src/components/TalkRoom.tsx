@@ -6,7 +6,8 @@ import {
   registerDevice, sendMessage,
   setName as saveName, setSoundOn, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
-  type TalkMember, type TalkMessage,, canRemember } from '../utils/talkRoom'
+  canRemember,
+  type TalkMember, type TalkMessage } from '../utils/talkRoom'
 
 /**
  * 一時トークルーム（LINE風）。
