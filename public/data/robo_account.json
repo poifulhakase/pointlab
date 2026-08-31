@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-27T14:51:21.346Z",
+  "generated_at": "2026-08-31T10:10:34.752Z",
   "logic_version": "robo-v1-llm",
   "decider": {
     "type": "llm",
@@ -142,6 +142,10 @@
     {
       "date": "2026-08-27",
       "equity": 983699
+    },
+    {
+      "date": "2026-08-31",
+      "equity": 986779
     }
   ],
   "stats": {
