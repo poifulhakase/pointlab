@@ -70,12 +70,18 @@ export async function upcomingEventsText(date = todayJst(), n = 5) {
  *
  * 🔴 ATR は過去の値幅なので、イベント前は**まだ広がっていない**。
  *    その狭い幅のまま損切りを置くと、当日の窓であっさり飛び越される。
- * 🔴 対象は「その日に値が飛ぶ」ものだけに絞る（FOMC・日銀・米CPI・雇用統計・SQ）。
+ * 🔴 対象は「その日に値が飛ぶ」ものだけに絞る（FOMC・日銀・米CPI・雇用統計・ジャクソンホール・SQ）。
  *    何でも拾うとほぼ毎日 true になり、ただ損切りが広いだけの設定になる。
+ *
+ * 🆕 2026-08-24：**ジャクソンホールを追加**。相場が動くのは2日目のFRB議長の基調講演で、
+ *    それは**金曜の夜（日本時間22〜23時ごろ）＝東京の引け後**。反応が出るのは**週明けの寄り**になり、
+ *    しかも週末をまたぐぶん窓が開きやすい。ATRの狭いままの損切りだと寄りで飛び越される。
+ *    🔵 会議は木〜土の3日間だが、`getMacroEventsForDate` は3日とも `jacksonhole` を返すので、
+ *       木曜の時点から広めに構えることになる（年1回・3日なので「毎日true」にはならない）。
  *
  * @returns {Promise<boolean>} 判定できないときは false（＝広げない・従来どおり）
  */
-const WIDEN_EVENTS = ['fomc', 'boj', 'cpi', 'nfp']
+const WIDEN_EVENTS = ['fomc', 'boj', 'cpi', 'nfp', 'jacksonhole']
 
 export async function eventNear(date = todayJst(), n = 2) {
   let macro, sq
