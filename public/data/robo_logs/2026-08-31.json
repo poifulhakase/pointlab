@@ -141,12 +141,12 @@
       "confidence_pct": 52,
       "entry_date": "2026-08-31",
       "entry_close": 66311.9296875,
-      "next_open": 65885.46875,
+      "next_open": null,
       "horizons": {
         "1d": {
-          "date": "2026-09-01",
-          "close": 66215.34375,
-          "ret_pct": -0.15,
+          "date": null,
+          "close": null,
+          "ret_pct": null,
           "edge_pct": null,
           "hit": null
         },
@@ -167,14 +167,14 @@
       "confidence_pct": 56,
       "entry_date": "2026-08-31",
       "entry_close": 66311.9296875,
-      "next_open": 65885.46875,
+      "next_open": null,
       "horizons": {
         "1d": {
-          "date": "2026-09-01",
-          "close": 66215.34375,
-          "ret_pct": -0.15,
-          "edge_pct": -0.15,
-          "hit": false
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
         },
         "5d": {
           "date": null,
@@ -193,12 +193,12 @@
       "confidence_pct": 48,
       "entry_date": "2026-08-31",
       "entry_close": 66311.9296875,
-      "next_open": 65885.46875,
+      "next_open": null,
       "horizons": {
         "1d": {
-          "date": "2026-09-01",
-          "close": 66215.34375,
-          "ret_pct": -0.15,
+          "date": null,
+          "close": null,
+          "ret_pct": null,
           "edge_pct": null,
           "hit": null
         },
