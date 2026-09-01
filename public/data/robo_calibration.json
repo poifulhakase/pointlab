@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-01T15:05:35.408Z",
+  "updatedAt": "2026-09-01T16:51:58.596Z",
   "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
   "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
   "horizons": [
@@ -92,17 +92,17 @@
             }
           },
           "5d": {
-            "n": 5,
+            "n": 6,
             "wins": 0,
             "win_rate_pct": 0,
-            "avg_confidence": 56.6,
-            "avg_edge_pct": -2.25,
+            "avg_confidence": 56.33,
+            "avg_edge_pct": -2.1,
             "bull": {
               "n": 3,
               "win_rate_pct": 0
             },
             "bear": {
-              "n": 2,
+              "n": 3,
               "win_rate_pct": 0
             }
           }
@@ -122,11 +122,11 @@
         "5d": [
           {
             "range": "50-59%",
-            "n": 5,
+            "n": 6,
             "wins": 0,
-            "avg_confidence": 56.6,
+            "avg_confidence": 56.33,
             "win_rate_pct": 0,
-            "gap": -56.6
+            "gap": -56.33
           }
         ]
       }
@@ -290,7 +290,7 @@
       "confidence_pct": 62,
       "ret_1d": -0.74,
       "hit_1d": null,
-      "ret_5d": 0.45,
+      "ret_5d": 0.59,
       "hit_5d": null,
       "complete": true
     },
@@ -301,9 +301,9 @@
       "confidence_pct": 66,
       "ret_1d": 0.5,
       "hit_1d": null,
-      "ret_5d": null,
+      "ret_5d": 1.2,
       "hit_5d": null,
-      "complete": false
+      "complete": true
     },
     {
       "date": "2026-08-25",
@@ -332,7 +332,7 @@
       "side": null,
       "symbol": "none",
       "confidence_pct": 52,
-      "ret_1d": 0.27,
+      "ret_1d": 0.41,
       "hit_1d": null,
       "ret_5d": null,
       "hit_5d": null,
