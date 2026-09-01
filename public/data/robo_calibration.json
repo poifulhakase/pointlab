@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-31T19:13:36.534Z",
+  "updatedAt": "2026-09-01T08:58:38.507Z",
   "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
   "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
   "horizons": [
@@ -10,9 +10,9 @@
     "main": {
       "label": "本番（需給＋価格＋チャート）",
       "summary": {
-        "logs": 13,
+        "logs": 15,
         "directional": 4,
-        "hold": 9,
+        "hold": 11,
         "by_horizon": {
           "1d": {
             "n": 4,
@@ -72,19 +72,19 @@
     "chart_only": {
       "label": "影：チャートのみ",
       "summary": {
-        "logs": 10,
-        "directional": 7,
-        "hold": 3,
+        "logs": 12,
+        "directional": 8,
+        "hold": 4,
         "by_horizon": {
           "1d": {
-            "n": 7,
+            "n": 8,
             "wins": 2,
-            "win_rate_pct": 28.57,
-            "avg_confidence": 56.43,
-            "avg_edge_pct": -0.49,
+            "win_rate_pct": 25,
+            "avg_confidence": 56.38,
+            "avg_edge_pct": -0.45,
             "bull": {
-              "n": 4,
-              "win_rate_pct": 25
+              "n": 5,
+              "win_rate_pct": 20
             },
             "bear": {
               "n": 3,
@@ -92,17 +92,17 @@
             }
           },
           "5d": {
-            "n": 5,
+            "n": 6,
             "wins": 0,
             "win_rate_pct": 0,
-            "avg_confidence": 56.6,
-            "avg_edge_pct": -2.28,
+            "avg_confidence": 56.33,
+            "avg_edge_pct": -2.05,
             "bull": {
               "n": 3,
               "win_rate_pct": 0
             },
             "bear": {
-              "n": 2,
+              "n": 3,
               "win_rate_pct": 0
             }
           }
@@ -112,21 +112,21 @@
         "1d": [
           {
             "range": "50-59%",
-            "n": 7,
+            "n": 8,
             "wins": 2,
-            "avg_confidence": 56.43,
-            "win_rate_pct": 28.57,
-            "gap": -27.86
+            "avg_confidence": 56.38,
+            "win_rate_pct": 25,
+            "gap": -31.37
           }
         ],
         "5d": [
           {
             "range": "50-59%",
-            "n": 5,
+            "n": 6,
             "wins": 0,
-            "avg_confidence": 56.6,
+            "avg_confidence": 56.33,
             "win_rate_pct": 0,
-            "gap": -56.6
+            "gap": -56.33
           }
         ]
       }
@@ -134,9 +134,9 @@
     "numbers_only": {
       "label": "影：数値のみ",
       "summary": {
-        "logs": 10,
+        "logs": 12,
         "directional": 1,
-        "hold": 9,
+        "hold": 11,
         "by_horizon": {
           "1d": {
             "n": 1,
@@ -290,7 +290,7 @@
       "confidence_pct": 62,
       "ret_1d": -0.74,
       "hit_1d": null,
-      "ret_5d": 0.59,
+      "ret_5d": 0.45,
       "hit_5d": null,
       "complete": true
     },
@@ -301,9 +301,9 @@
       "confidence_pct": 66,
       "ret_1d": 0.5,
       "hit_1d": null,
-      "ret_5d": null,
+      "ret_5d": 1.05,
       "hit_5d": null,
-      "complete": false
+      "complete": true
     },
     {
       "date": "2026-08-25",
@@ -332,7 +332,29 @@
       "side": null,
       "symbol": "none",
       "confidence_pct": 52,
-      "ret_1d": 0.41,
+      "ret_1d": 0.27,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-08-31",
+      "side": null,
+      "symbol": "none",
+      "confidence_pct": 52,
+      "ret_1d": -0.15,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-09-01",
+      "side": null,
+      "symbol": "none",
+      "confidence_pct": 52,
+      "ret_1d": null,
       "hit_1d": null,
       "ret_5d": null,
       "hit_5d": null,
