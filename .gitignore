@@ -33,3 +33,4 @@ dist-ssr
 #    セッションは認証情報そのもの。画像は実口座の残高が写るので、どちらもコミットしない。
 .tradingview-session/
 .captures/
+.cache/
