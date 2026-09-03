@@ -145,9 +145,9 @@
           "hit": null
         },
         "5d": {
-          "date": "2026-08-31",
-          "close": 66311.9296875,
-          "ret_pct": 1.2,
+          "date": "2026-09-01",
+          "close": 66215.34375,
+          "ret_pct": 1.05,
           "edge_pct": null,
           "hit": null
         }
@@ -171,10 +171,10 @@
           "hit": false
         },
         "5d": {
-          "date": "2026-08-31",
-          "close": 66311.9296875,
-          "ret_pct": 1.2,
-          "edge_pct": -1.2,
+          "date": "2026-09-01",
+          "close": 66215.34375,
+          "ret_pct": 1.05,
+          "edge_pct": -1.05,
           "hit": false
         }
       },
@@ -197,9 +197,9 @@
           "hit": null
         },
         "5d": {
-          "date": "2026-08-31",
-          "close": 66311.9296875,
-          "ret_pct": 1.2,
+          "date": "2026-09-01",
+          "close": 66215.34375,
+          "ret_pct": 1.05,
           "edge_pct": null,
           "hit": null
         }
