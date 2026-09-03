@@ -145,14 +145,14 @@
           "hit": false
         },
         "5d": {
-          "date": "2026-09-03",
-          "close": 64214.48046875,
-          "ret_pct": -3.09,
-          "edge_pct": -3.09,
-          "hit": false
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
         }
       },
-      "complete": true
+      "complete": false
     },
     "chart_only": {
       "side": "bull",
@@ -171,14 +171,14 @@
           "hit": false
         },
         "5d": {
-          "date": "2026-09-03",
-          "close": 64214.48046875,
-          "ret_pct": -3.09,
-          "edge_pct": -3.09,
-          "hit": false
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
         }
       },
-      "complete": true
+      "complete": false
     },
     "numbers_only": {
       "side": null,
@@ -197,14 +197,14 @@
           "hit": null
         },
         "5d": {
-          "date": "2026-09-03",
-          "close": 64214.48046875,
-          "ret_pct": -3.09,
+          "date": null,
+          "close": null,
+          "ret_pct": null,
           "edge_pct": null,
           "hit": null
         }
       },
-      "complete": true
+      "complete": false
     }
   }
 }
