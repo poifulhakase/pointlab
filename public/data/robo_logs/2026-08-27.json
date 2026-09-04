@@ -141,24 +141,24 @@
       "confidence_pct": 52,
       "entry_date": "2026-08-27",
       "entry_close": 66131.9765625,
-      "next_open": 65668.5078125,
+      "next_open": 66104.4921875,
       "horizons": {
         "1d": {
-          "date": "2026-08-31",
-          "close": 66311.9296875,
-          "ret_pct": 0.27,
+          "date": "2026-08-28",
+          "close": 66405.5625,
+          "ret_pct": 0.41,
           "edge_pct": null,
           "hit": null
         },
         "5d": {
-          "date": null,
-          "close": null,
-          "ret_pct": null,
+          "date": "2026-09-03",
+          "close": 64214.48046875,
+          "ret_pct": -2.9,
           "edge_pct": null,
           "hit": null
         }
       },
-      "complete": false
+      "complete": true
     },
     "chart_only": {
       "side": null,
@@ -167,24 +167,24 @@
       "confidence_pct": 40,
       "entry_date": "2026-08-27",
       "entry_close": 66131.9765625,
-      "next_open": 65668.5078125,
+      "next_open": 66104.4921875,
       "horizons": {
         "1d": {
-          "date": "2026-08-31",
-          "close": 66311.9296875,
-          "ret_pct": 0.27,
+          "date": "2026-08-28",
+          "close": 66405.5625,
+          "ret_pct": 0.41,
           "edge_pct": null,
           "hit": null
         },
         "5d": {
-          "date": null,
-          "close": null,
-          "ret_pct": null,
+          "date": "2026-09-03",
+          "close": 64214.48046875,
+          "ret_pct": -2.9,
           "edge_pct": null,
           "hit": null
         }
       },
-      "complete": false
+      "complete": true
     },
     "numbers_only": {
       "side": null,
@@ -193,24 +193,24 @@
       "confidence_pct": 52,
       "entry_date": "2026-08-27",
       "entry_close": 66131.9765625,
-      "next_open": 65668.5078125,
+      "next_open": 66104.4921875,
       "horizons": {
         "1d": {
-          "date": "2026-08-31",
-          "close": 66311.9296875,
-          "ret_pct": 0.27,
+          "date": "2026-08-28",
+          "close": 66405.5625,
+          "ret_pct": 0.41,
           "edge_pct": null,
           "hit": null
         },
         "5d": {
-          "date": null,
-          "close": null,
-          "ret_pct": null,
+          "date": "2026-09-03",
+          "close": 64214.48046875,
+          "ret_pct": -2.9,
           "edge_pct": null,
           "hit": null
         }
       },
-      "complete": false
+      "complete": true
     }
   }
 }
