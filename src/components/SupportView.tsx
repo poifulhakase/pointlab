@@ -4,7 +4,7 @@ import type { ConnectUser }  from './JitsiPanel'
 import { isAdminEmail } from '../utils/admin'
 import { NotificationSettings } from './NotificationSettings'
 import { forceAppUpdate } from '../utils/forceUpdate'
-import { blockedInPreview } from '../utils/previewMode'
+import { blockedInPreview, isPreviewMode } from '../utils/previewMode'
 
 const NoteView                = lazy(() => import('./NoteView').then(m => ({ default: m.NoteView })))
 const PoiroboAboutPanel       = lazy(() => import('./PoiroboAboutPanel').then(m => ({ default: m.PoiroboAboutPanel })))
@@ -122,7 +122,9 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'poirobo',  label: 'Poirobo',  sub: 'ぽいロボとは？', accent: '#34d399', glow: 'rgba(52,211,153,0.45)',  view: null, icon: <RobotMenuIcon /> },
   // 🔴 2026-08-16 追加（ユーザー指示・DATA の上）＝中長期で持つ前提の銘柄を見る画面。
   //    ロボ口座（日経225ETFの疑似トレード）とは別物なので、研究室の入口を分けている。
-  { id: 'momentum', label: 'Future',   sub: '第4次産業革命',     accent: '#00e5ff', glow: 'rgba(0,229,255,0.45)',   view: null, icon: <MomentumMenuIcon /> },
+  // 🔴 2026-09-05: Future（第4次産業革命）を畳んで TARGET（歴史的サポート）に入れ替えた。
+  //    識別子 'momentum' は据え置き（localStorage と遷移先が全部これで書かれているため）。
+  { id: 'momentum', label: 'TARGET',   sub: '歴史的サポート',     accent: '#00e5ff', glow: 'rgba(0,229,255,0.45)',   view: null, icon: <MomentumMenuIcon /> },
   { id: 'data',     label: 'Data',     sub: '研究資料',         accent: '#a78bfa', glow: 'rgba(167,139,250,0.45)', view: null, icon: <DataIcon />      },
   { id: 'settings', label: 'Settings', sub: '設定',           accent: '#fbbf24', glow: 'rgba(251,191,36,0.45)',  view: null, icon: <GearIcon />      },
   { id: 'contact',  label: 'Contact',  sub: 'お問い合わせ',   accent: '#f472b6', glow: 'rgba(244,114,182,0.45)', view: null, icon: <MailIcon />      },
@@ -905,10 +907,12 @@ export function SupportView({ theme, isMobile, user, authLoading = false, isMemb
                       if (item.id === 'data')     { openDrawer('data');    return }
                       if (item.id === 'contact')  { openDrawer('contact'); return }
                       if (item.id === 'momentum') {
-                        // 🔴 Believe は会員限定（2026-08-16 ユーザー指示）。
+                        // 🔴 TARGET は会員限定（2026-08-16 ユーザー指示・当時は Believe）。
                         //    地下室と同じ作法＝**カードは出す。中身に鍵をかける**
                         //    （存在すら見えないと入る動機にならないため）。
-                        if (!isMember && !isAdmin) { setMemberLockOpen(true); return }
+                        // 🔴 プレビュー（合言葉リンク）は通す。App 側の canViewMemberPages は
+                        //    プレビューを通しているのに、ここだけ止めていて**リンクを配っても開けなかった**。
+                        if (!isMember && !isAdmin && !isPreviewMode()) { setMemberLockOpen(true); return }
                         onOpenMomentum?.(); return
                       }
                       if (item.id === 'poirobo')  { setShowPoirobo(true); onPoiroboChange?.(true); return }

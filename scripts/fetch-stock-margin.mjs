@@ -39,7 +39,8 @@ const BASE = 'https://www.jpx.co.jp'
 const INDEX = '/markets/statistics-equities/margin/05.html'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const STOCKS_PATH = path.join(ROOT, 'public/data/poirobo_stocks.json')
+// 🔵 2026-09-05: ロボット銘柄（Future）を畳んだので、取る銘柄は TARGET の主力に付いていく。
+const STOCKS_PATH = path.join(ROOT, 'public/data/target_support.json')
 const OUT_PATH = path.join(ROOT, 'public/data/stock_margin.json')
 
 /** 何週ぶん取るか（JPXの公開ページに並ぶPDFの数が上限）。 */
@@ -49,12 +50,12 @@ const args = process.argv.slice(2)
 const JSON_MODE = args.includes('--json')
 const codes = args.filter((a) => !a.startsWith('--'))
 
-/** 主力＋候補の銘柄コード（--json のとき）。 */
+/** TARGET の主力の銘柄コード（--json のとき）。 */
 function targetCodesFromStocks() {
   const d = JSON.parse(fs.readFileSync(STOCKS_PATH, 'utf8'))
-  const list = [...(d.stocks ?? []), ...(d.watch ?? [])]
-  // 🔵 新形式のコード（285A 等）は信用取引の対象外のことがあるが、除外はしない
-  //    （PDFに無ければ「データなし」として素直に落ちる）。
+  // 🔴 候補（スキャン結果）は日ごとに100件前後で入れ替わる。信用残まで取ると PDF の突き合わせが
+  //    重くなるうえ、翌日には居ない銘柄の残高が残る。**指名した主力だけ**にする。
+  const list = d.core ?? []
   return list.map((s) => ({ code: String(s.code), name: String(s.name ?? '') }))
 }
 

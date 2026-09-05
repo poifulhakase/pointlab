@@ -38,8 +38,13 @@ const RECORD_PATHS = [
 const log = (s = '') => console.log(s)
 
 /** コマンドを1本流す。戻りは終了コードと標準出力（git の判定に使う）。 */
+// 🔴 Windows で shell:true にすると、引数がクォートされずに繋がれる＝**空白で割れる**。
+//    コミットメッセージ（空白入り）が pathspec 扱いになり、2026-09-02〜04 の記録が
+//    3日ぶんコミットされず、Actions 側から「未判断」に見えて二重判断になった。
+//    shell が要るのは npm（npm.cmd の解決）だけなので、git は shell 無しで回す。
 function run(cmd, args, { quiet = false } = {}) {
-  const r = spawnSync(cmd, args, { cwd: ROOT, encoding: 'utf8', shell: process.platform === 'win32' })
+  const shell = process.platform === 'win32' && cmd !== 'git'
+  const r = spawnSync(cmd, args, { cwd: ROOT, encoding: 'utf8', shell })
   const out = `${r.stdout ?? ''}${r.stderr ?? ''}`.trimEnd()
   if (!quiet && out) log(out)
   return { code: r.status ?? 1, out }
@@ -63,9 +68,18 @@ if (staged.code === 0) {
   log('記録の変更なし（--dry か、すでに判断済み）')
 } else {
   const commit = run('git', ['commit', '-m', 'chore(robo): 判断を記録（ローカル15:00）'])
-  if (commit.code === 0) {
-    const push = run('git', ['push', 'origin', 'main'])
-    if (push.code !== 0) log('[warn] push に失敗。次回の pull 後にまとめて載ります')
+  if (commit.code !== 0) {
+    log('[warn] commit に失敗。記録は手元に残っている（次回の実行で載る）')
+  } else {
+    let push = run('git', ['push', 'origin', 'main'])
+    if (push.code !== 0) {
+      // 先に CI のデータ更新が入っていると push は弾かれる。記録だけを上に載せ直して再送する。
+      // 🔴 ここで諦めると、記録が手元に取り残されたまま Actions が二度目の判断をする。
+      log('[warn] push が弾かれた → rebase して再送する')
+      const rebase = run('git', ['pull', '--rebase', 'origin', 'main'])
+      if (rebase.code === 0) push = run('git', ['push', 'origin', 'main'])
+    }
+    if (push.code !== 0) log('[warn] push に失敗。🔴 記録が本番に載っていない＝Actions が二重判断する')
   }
 }
 

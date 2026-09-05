@@ -31,11 +31,17 @@
 //   node scripts/analyze-support-bounce.mjs --sweep            … 定義を総当たりで振って崩れないか見る
 //   node scripts/analyze-support-bounce.mjs --json
 //
-// 🔵 取得した日足は .cache/support/ に置く（再取得しない）。定義を振るときに効く。
+// 🔵 取得した日足は .cache/support-v2/ に置く（再取得しない）。定義を振るときに効く。
+// 🔵 2026-09-05: キャッシュの中身は **15年 → 取れるだけ（上場日 or 1999年〜）** に伸びた
+//    （build-target-support.mjs が period1 指定で取り直したため）。ここは `--years` を渡しても
+//    キャッシュがあればそれを使うので、期間を絞りたいならキャッシュを消してから走らせること。
 // ──────────────────────────────────────────────────────────────────────────
 
 import fs from 'node:fs'
 import path from 'node:path'
+// 🔴 帯の判定は src/utils/supportBands.mjs が単一情報源。ここで書き直さない
+//    （画面用の scripts/build-target-support.mjs も同じ関数を呼んでいる）。
+import { pivotLows, buildBands } from '../src/utils/supportBands.mjs'
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)' }
 const args = process.argv.slice(2)
@@ -117,54 +123,6 @@ async function pool(items, n, fn) {
 }
 
 // ── サポート帯 ──────────────────────────────────────────
-/**
- * 局所安値の位置を返す（`i` は bars の添字）。
- * 🔴 前後 W 本ぶん必要なので、いちばん新しい安値でも W 本前までしか確定しない。
- */
-function pivotLows(bars, W) {
-  const out = []
-  for (let i = W; i < bars.length - W; i++) {
-    const v = bars[i].low
-    let ok = true
-    for (let k = i - W; k <= i + W; k++) {
-      if (bars[k].low < v) { ok = false; break }
-    }
-    if (ok) out.push(i)
-  }
-  return out
-}
-
-/**
- * 安値を帯にまとめ、条件を満たす帯だけ返す。
- * @param pivots 使ってよい安値の添字（呼び出し側で「その日より前」に絞る）
- */
-function buildBands(bars, pivots, { BAND, MIN_TOUCH, SEP }) {
-  const sorted = [...pivots].sort((a, b) => bars[a].low - bars[b].low)
-  const bands = []
-  let cur = []
-  for (const idx of sorted) {
-    if (cur.length === 0) { cur = [idx]; continue }
-    const base = bars[cur[0]].low
-    if (bars[idx].low <= base * (1 + BAND * 2)) cur.push(idx)
-    else { bands.push(cur); cur = [idx] }
-  }
-  if (cur.length) bands.push(cur)
-
-  const out = []
-  for (const group of bands) {
-    // 🔴 同じ下落局面での連続タッチを1回に畳む（近すぎる安値は別物として数えない）
-    const byTime = [...group].sort((a, b) => a - b)
-    const kept = []
-    for (const idx of byTime) {
-      if (kept.length === 0 || idx - kept[kept.length - 1] >= SEP) kept.push(idx)
-    }
-    if (kept.length < MIN_TOUCH) continue
-    const price = kept.reduce((s, i) => s + bars[i].low, 0) / kept.length
-    out.push({ price, touches: kept.length, lastIdx: kept[kept.length - 1] })
-  }
-  return out
-}
-
 // ── 1銘柄ぶんの事象を集める ──────────────────────────────
 function eventsFor(bars, def) {
   const { W, BAND, WARMUP } = def

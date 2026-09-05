@@ -59,8 +59,9 @@ const ChartPatternPanel = lazy(() => import('./components/ChartPatternPanel').th
 // 🔴 地下室は1画面（デイ／スイングを左右スライドで行き来する）。2026-08-16 に
 //    ページ2枚 → 部屋2つに変えたので、view が daytrade / swing のどちらでも同じ画面を出す。
 const BasementRooms = lazy(() => import('./components/BasementRooms'))
-const MomentumStocksView = lazy(() => import('./components/MomentumStocksView'))
-const WatchStocksView = lazy(() => import('./components/WatchStocksView'))
+// 🔴 2026-09-05: Future（第4次産業革命のロボット関連銘柄）を畳んで TARGET に入れ替えた。
+//    主力＝指名した銘柄 / 候補＝歴史的サポート帯のスキャン結果。どちらも同じ画面（mode で切り替え）。
+const TargetView = lazy(() => import('./components/TargetView'))
 const EvalsPanel        = lazy(() => import('./components/EvalsPanel').then(m => ({ default: m.EvalsPanel })))
 const OriginalFeatureView = lazy(() => import('./components/OriginalFeatureView').then(m => ({ default: m.OriginalFeatureView })))
 // ── 初期レンダリング不要なモーダル（オンデマンドロード）───────────────
@@ -682,9 +683,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               入口（研究室のメニュー）は全員に見せ、中身に鍵をかける＝地下室と同じ作法。 */}
           {cal.view === 'momentum' && (
             canViewMemberPages
-              ? <ErrorBoundary label="Future（第4次産業革命）">
+              ? <ErrorBoundary label="TARGET（主力）">
                   <Suspense fallback={<ViewLoader />}>
-                    <MomentumStocksView theme={theme} isMobile={isMobile}
+                    <TargetView theme={theme} isMobile={isMobile} mode="core"
                       onClose={() => setViewWithTransition('support')} />
                   </Suspense>
                 </ErrorBoundary>
@@ -693,10 +694,10 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
           {cal.view === 'watch' && (
             canViewMemberPages
-              ? <ErrorBoundary label="その他の監視銘柄">
+              ? <ErrorBoundary label="TARGET（候補）">
                   <Suspense fallback={<ViewLoader />}>
-                    {/* 🔵 戻り先は Believe（ここから来るので） */}
-                    <WatchStocksView theme={theme} isMobile={isMobile} onClose={() => setViewWithTransition('support')} />
+                    {/* 🔵 戻り先は研究室（ここから来るので） */}
+                    <TargetView theme={theme} isMobile={isMobile} mode="scan" onClose={() => setViewWithTransition('support')} />
                   </Suspense>
                 </ErrorBoundary>
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
@@ -934,8 +935,8 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 ))}
               </>
             )}
-            {/* Believe＝ 主力 / その他（2026-08-16 追加・別ページを1本のタブでつなぐ） */}
-            {/* Believe＝ 主力 / 候補 / 局面 / 検索（2026-08-16）。
+            {/* TARGET＝ 主力 / 候補 / 局面 / 探す（2026-09-05 に Future から差し替え）。
+                🔵 主力＝指名した銘柄／候補＝サポート帯のスキャン結果。局面と探すは据え置き。
                 🔵 4つとも**2文字の名詞**でそろえてある（品詞と字数がバラつくと並びが読みにくい）。
                 🔵 サイクルと探すは同じ画面（ViewMode 'sector'）の中のタブ。
                 🔴 「探す」はスマホだけ＝PCは3列とも見えているので出さない。 */}

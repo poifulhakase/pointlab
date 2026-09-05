@@ -61,29 +61,23 @@ jobs:
         run: npm run fetch-data
         continue-on-error: true
 
-      # 中長期モメンタム銘柄（6954/6506）の価格と要約。
+      # TARGET（歴史的サポート）の主力＋候補スキャン。
       # 🔵 観測用なので落ちても他を止めない。Vercel の Functions 枠が上限なので
       #    API ではなく**ここで取って静的 JSON で配る**（2026-08-16）。
-      - name: 中長期モメンタム銘柄の取得
-        run: npm run fetch-momentum
+      # 🔴 2026-09-05: Future（ロボット関連銘柄）を畳んで差し替えた。
+      #    🔵 全銘柄ぶんの日足は runner に残らないので、毎回取り直しになる（15〜25分）。
+      #      重い日は主力だけでも埋まるように、主力は必ず先に取りに行く作りにしてある。
+      - name: TARGET（歴史的サポート）の生成
+        run: npm run build-target
         continue-on-error: true
 
-      # 主力・候補の需給ゲージ（信用残）。
+      # 主力の需給ゲージ（信用残）。🔵 2026-09-05 から対象は TARGET の主力。
       # 🔴 出どころは JPX の週次PDF（銘柄別信用取引週末残高）＝**週1回しか更新されない**。
       #    毎日取っても中身は変わらないうえ40MBのPDFを5本読むので、**土曜だけ**にする。
       # 🔵 落ちても他は止めない（前回のJSONがそのまま残る）。
       - name: 個別銘柄の信用残（土曜のみ）
         if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '0 0 * * 6')
         run: npm run fetch-stock-margin
-        continue-on-error: true
-
-      # 監視銘柄の「色が付いた・外れた」を Chatwork に知らせる。
-      # 🔴 知らせるだけ（採否も入れ替えも自動ではやらない）。変化があった日だけ送る。
-      - name: 監視銘柄のお知らせ
-        run: npm run notify-watch
-        env:
-          CHATWORK_API_TOKEN: ${{ secrets.CHATWORK_API_TOKEN }}
-          CHATWORK_ROOM_ID: ${{ secrets.CHATWORK_ROOM_ID }}
         continue-on-error: true
 
       - name: バックテスト再計算（土曜のみ）
