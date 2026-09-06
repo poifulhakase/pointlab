@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import styles from './TalkRoom.module.css'
 import {
-  dayLabel, deleteMessage, fetchImage, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, linkify, notifyPeer, peerState, quoteText, randomId,
-  sendMessage,
-  setName as saveName, setSoundOn, shrinkImage, timeLabel,
+  dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getName, getSoundOn, getUid, isSameDay,
+  AI_NAME, AI_UID, askAi, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
+  sameSender, sendMessage,
+  setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
 
@@ -43,7 +43,11 @@ interface Pending {
 }
 
 export function TalkRoom() {
-  const uid = useMemo(() => getUid(), [])
+  /**
+   * 端末ID。🔴 **変わることがある**（ブラウザの設定次第）。左右と既読の判定は
+   * `isMine`（表示名を正とする）に任せ、ここは在席・既読を書く行のIDとしてだけ使う。
+   */
+  const [uid, setUidState] = useState(() => getUid())
   const [name, setNameState] = useState(() => getName())
   const [nameInput, setNameInput] = useState('')
   const [messages, setMessages] = useState<TalkMessage[]>([])
@@ -66,6 +70,8 @@ export function TalkRoom() {
   const [aiMode, setAiMode] = useState(false)
   /** AIの返事を待っている間の表示 */
   const [aiWaiting, setAiWaiting] = useState(false)
+  /** 端末IDの引き継ぎ判定が済んだか（済むまで member に書かない） */
+  const [idReady, setIdReady] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
@@ -86,10 +92,28 @@ export function TalkRoom() {
     return () => { unsubM?.(); unsubP?.() }
   }, [name])
 
+  // 🔴 端末IDが変わっていたら、同じ表示名の一番新しい行を自分の行として引き継ぐ
+  //    （引き継がないと開くたびに member の行が増える。実測で10行になっていた）。
+  //    ping を始める前に一度だけ決める＝新しい行を作ってしまう前に確定させる。
+  useEffect(() => {
+    if (!name || idReady) return
+    let alive = true
+    fetchMembersOnce()
+      .then(rows => {
+        if (!alive) return
+        const adopt = pickMyMemberId(rows, uid, name)
+        if (adopt) { setUid(adopt); setUidState(adopt) }
+      })
+      .catch(() => { /* 取れなければ新しい行のまま続ける（左右と既読は名前で判定するので困らない） */ })
+      .finally(() => { if (alive) setIdReady(true) })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name])
+
   // 在席と既読を知らせる（開いている間だけ）
   const lastAt = messages.length ? messages[messages.length - 1].at : 0
   useEffect(() => {
-    if (!name) return
+    if (!name || !idReady) return
     const ping = () => {
       if (document.visibilityState !== 'visible') return
       // 🔵 2026-08-31：端末の制限をやめたので、失敗しても次のpingで拾えばよい
@@ -100,7 +124,7 @@ export function TalkRoom() {
     const t = setInterval(ping, HEARTBEAT_MS)
     document.addEventListener('visibilitychange', ping)
     return () => { clearInterval(t); document.removeEventListener('visibilitychange', ping) }
-  }, [uid, name, lastAt])
+  }, [uid, name, lastAt, idReady])
 
   // ── 新着の扱い（自動追従・音・タイトル） ─────────────────────────
   useEffect(() => {
@@ -114,7 +138,7 @@ export function TalkRoom() {
     if (added <= 0) return
 
     const last = messages[messages.length - 1]
-    const mine = last?.uid === uid
+    const mine = last ? isMine(last, uid, name) : false
     if (mine || atBottom) {
       scrollToBottom('smooth')
     } else {
@@ -409,10 +433,12 @@ export function TalkRoom() {
         {rows.map((m, i) => {
           const prev = rows[i - 1]
           const newDay = !prev || !isSameDay(prev.at, m.at)
-          const mine = m.uid === uid
+          // 🔴 IDではなく `isMine`（表示名を正とする）で見る。端末IDは変わることがあり、
+          //    変わった瞬間に自分の過去の発言が左へ移り、既読も消えていた（2026-09-06 の報告）。
+          const mine = isMine(m, uid, name)
           // 同じ人が続けて送ったときは、時刻を最後の1つだけに出す（LINEと同じ）
           const next = rows[i + 1]
-          const tail = !next || next.uid !== m.uid || !isSameDay(next.at, m.at)
+          const tail = !next || !sameSender(m, next) || !isSameDay(next.at, m.at)
           return (
             <div key={m.pendingId ?? m.id} data-mid={m.id}>
               {newDay && <div className={styles.day}><span>{dayLabel(m.at)}</span></div>}
@@ -420,7 +446,7 @@ export function TalkRoom() {
                 m={m}
                 mine={mine}
                 tail={tail}
-                showName={!mine && (!prev || prev.uid !== m.uid || newDay)}
+                showName={!mine && (!prev || !sameSender(prev, m) || newDay)}
                 read={mine && !m.pendingId && peerRead >= m.at}
                 flash={flash === m.id}
                 isAi={m.uid === AI_UID}
@@ -570,7 +596,7 @@ export function TalkRoom() {
                 setActing(null)
               }}>文字をコピー</button>
             )}
-            {acting.uid === uid && (
+            {isMine(acting, uid, name) && (
               <button className={styles.menuDanger} onClick={async () => {
                 const target = acting
                 setActing(null)

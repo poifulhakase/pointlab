@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { dayLabel, getRoomId, isSameDay, isTalkRoute, linkify, peerState, quoteText, scaledSize } from '../talkRoom'
+import {
+  AI_NAME, AI_UID, dayLabel, getRoomId, isMine, isSameDay, isTalkRoute, linkify,
+  peerState, pickMyMemberId, quoteText, sameSender, scaledSize } from '../talkRoom'
 
 /**
  * 一時トークルームの表示まわり（純粋な部分だけ）。
@@ -100,6 +102,67 @@ describe('talkRoom', () => {
     it('表示名は最後に開いていた端末のものを採る', () => {
       const members = [M('aaa', '旧なまえ', 1000, 500), M('bbb', '新なまえ', 9000, 700)]
       expect(peerState(members, 'zzz', 'わたし')?.name).toBe('新なまえ')
+    })
+  })
+
+  describe('isMine / sameSender（左右と既読の判定）', () => {
+    // 🔴 2026-09-06 の報告（左右が入れ替わる／既読が付かない）の再現。
+    //    相手の端末は8日で6個の talk.uid を作っていた（実測）。
+    //    ID で判定していると、IDが変わった瞬間に自分の過去の発言が相手側へ移り、
+    //    既読は自分の吹き出しにしか出さないので一緒に消える。
+    const msg = (uid: string, name: string) => ({ uid, name })
+
+    it('端末IDが変わっても、表示名が自分なら自分の発言のまま', () => {
+      expect(isMine(msg('古いID', 'nami'), '新しいID', 'nami')).toBe(true)
+    })
+
+    it('表示名が違えば相手の発言（IDが一致しない限り）', () => {
+      expect(isMine(msg('相手のID', 'ひろ'), '新しいID', 'nami')).toBe(false)
+    })
+
+    it('名前を変えた直後でも、IDが一致すれば自分の発言', () => {
+      expect(isMine(msg('わたしのID', '旧なまえ'), 'わたしのID', '新なまえ')).toBe(true)
+    })
+
+    it('AIの発言は自分にしない（名前を🤖 AIにしても相手側に出す）', () => {
+      expect(isMine(msg(AI_UID, AI_NAME), AI_UID, AI_NAME)).toBe(false)
+    })
+
+    it('名前を決める前（空）は、IDが一致するものだけ自分', () => {
+      expect(isMine(msg('別のID', ''), 'わたしのID', '')).toBe(false)
+      expect(isMine(msg('わたしのID', ''), 'わたしのID', '')).toBe(true)
+    })
+
+    it('sameSender は名前で見る（IDが変わっても続けて送った扱い）', () => {
+      expect(sameSender(msg('ID1', 'nami'), msg('ID2', 'nami'))).toBe(true)
+      expect(sameSender(msg('ID1', 'nami'), msg('ID1', 'ひろ'))).toBe(false)
+      expect(sameSender(undefined, msg('ID1', 'nami'))).toBe(false)
+    })
+
+    it('sameSender は AI とふつうの発言をまとめない', () => {
+      expect(sameSender(msg(AI_UID, AI_NAME), msg('ID1', AI_NAME))).toBe(false)
+    })
+  })
+
+  describe('pickMyMemberId（在席・既読の行の引き継ぎ）', () => {
+    const M = (id: string, name: string, at: number, read: number) => ({ id, name, at, read })
+
+    it('自分の行がまだ無ければ、同じ表示名の一番新しい行を引き継ぐ', () => {
+      const rows = [M('古1', 'nami', 1000, 900), M('古2', 'nami', 9000, 8000), M('h', 'ひろ', 9900, 9900)]
+      expect(pickMyMemberId(rows, '新しいID', 'nami')).toBe('古2')
+    })
+
+    it('自分の行が既にあれば引き継がない（IDが保てている端末）', () => {
+      const rows = [M('わたし', 'nami', 9000, 8000), M('古1', 'nami', 1000, 900)]
+      expect(pickMyMemberId(rows, 'わたし', 'nami')).toBeNull()
+    })
+
+    it('同じ表示名の行が無ければ引き継がない（初参加）', () => {
+      expect(pickMyMemberId([M('h', 'ひろ', 9000, 9000)], '新しいID', 'nami')).toBeNull()
+    })
+
+    it('名前を決める前は引き継がない', () => {
+      expect(pickMyMemberId([M('古1', '', 9000, 9000)], '新しいID', '')).toBeNull()
     })
   })
 

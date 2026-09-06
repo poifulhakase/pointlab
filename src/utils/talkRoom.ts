@@ -144,6 +144,11 @@ export function getUid(): string {
   return uid
 }
 
+/** 端末IDを差し替える（`pickMyMemberId` で前の行を引き継いだとき）。 */
+export function setUid(uid: string): void {
+  writeStore(KEY_UID, uid)
+}
+
 export function getName(): string {
   return readStore(KEY_NAME)
 }
@@ -304,6 +309,65 @@ export const AI_NAME = '🤖 AI'
 /** 自分の在席と既読の位置を書き込む。 */
 export async function touchMember(uid: string, name: string, read: number): Promise<void> {
   await restWrite(`${roomPath()}/members/${uid}`, { name, at: Date.now(), read })
+}
+
+/**
+ * この発言は自分のものか。
+ *
+ * 🔴 2026-09-06：**端末IDだけで見ていたのが、報告2件（左右が入れ替わる／既読が付かない）の共通の原因**。
+ *    `talk.uid` はブラウザの設定ひとつで変わる。実測では相手の端末が8日で **6個のID** を作っていた
+ *    （メッセージ43件が6つのIDに散っていた）。IDが変わると、
+ *      ① それまで自分が送った発言が **相手側（左）へ並び替わる**
+ *      ② 既読は自分の吹き出しにしか出さないので、同時に **「既読」も消える**
+ *    → 2人の部屋なので **表示名を身元の正** とし、IDが変わっても自分の発言は自分のままにする。
+ *
+ * 🔵 AI（`ai-assistant`）は名前で拾わない（必ず相手側に出す）。
+ * 🔴 2人が**同じ表示名**を名乗ると左右が壊れる。名前は別々にすること。
+ */
+export function isMine(m: Pick<TalkMessage, 'uid' | 'name'>, uid: string, myName: string): boolean {
+  if (m.uid === AI_UID) return false
+  return m.uid === uid || (!!myName && m.name === myName)
+}
+
+/** 同じ人が続けて送ったか（名前と時刻をまとめて出すのに使う）。上と同じ理由でIDではなく名前で見る。 */
+export function sameSender(
+  a: Pick<TalkMessage, 'uid' | 'name'> | undefined,
+  b: Pick<TalkMessage, 'uid' | 'name'>,
+): boolean {
+  if (!a) return false
+  if (a.uid === AI_UID || b.uid === AI_UID) return a.uid === b.uid
+  return a.name === b.name
+}
+
+/**
+ * 自分の在席・既読の行（member）を引き継ぐ先を選ぶ。
+ *
+ * 🔴 IDが変わった端末は開くたびに新しい行を作る（実測で10行まで増えていた）。
+ *    表示は上の `isMine` で直るが、行が増えること自体は止めておく。
+ * 🔵 **自分の行がまだ無いときだけ**、同じ表示名で一番新しい行を引き継ぐ。
+ *    ID が保てている端末では何も起きない（既に自分の行がある）。
+ */
+export function pickMyMemberId(rows: TalkMember[], uid: string, myName: string): string | null {
+  if (!myName) return null
+  if (rows.some(m => m.id === uid)) return null
+  const same = rows.filter(m => m.name === myName && m.id !== uid)
+  if (same.length === 0) return null
+  return same.reduce((a, b) => ((b.at ?? 0) > (a.at ?? 0) ? b : a)).id
+}
+
+/** メンバーを1回だけ取りに行く（購読の前に、引き継ぎ先を決めるため）。 */
+export async function fetchMembersOnce(): Promise<TalkMember[]> {
+  const res = await fetch(`${BASE}/${roomPath()}/members?pageSize=100`)
+  if (!res.ok) return []
+  const json = await res.json() as {
+    documents?: { name: string; fields?: Record<string, { stringValue?: string; integerValue?: string }> }[]
+  }
+  return (json.documents ?? []).map(d => ({
+    id: d.name.split('/').pop() ?? '',
+    name: d.fields?.name?.stringValue ?? '',
+    at: Number(d.fields?.at?.integerValue ?? 0),
+    read: Number(d.fields?.read?.integerValue ?? 0),
+  }))
 }
 
 // ── 読み取り（リアルタイム） ─────────────────────────────────────────
