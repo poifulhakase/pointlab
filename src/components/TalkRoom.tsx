@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
+  AI_NAME, AI_UID, askAi, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
   sameSender, sendMessage,
   setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
@@ -278,6 +278,11 @@ export function TalkRoom() {
     setPicked([])
     if (taRef.current) taRef.current.style.height = 'auto'
 
+    // 🆕 2026-09-06：**同じ人の連投は1通目だけ通知**（日を跨いだらまた1通目・運用者の指示）。
+    //    🔴 判定は**送る前**にやる＝送ったあとだと、購読（onSnapshot）が先に自分の発言を
+    //       一覧へ入れてしまう回があり、「直前も自分」と読んで1通目まで消えてしまう。
+    const firstOfStreak = isFirstOfStreak(messages, name)
+
     // 返信は1通にだけ付ける（写真を何枚も送っても、引用が並ばないように）
     const quote = replyTo
     setReplyTo(null)
@@ -318,8 +323,8 @@ export function TalkRoom() {
     //    （開いている間に鳴らすと、会話中ずっと鳴りっぱなしになる）
     const p = peerState(members, uid, name)
     const away = !p || Date.now() - p.at >= ONLINE_MS
-    if (away) void notifyPeer({ name, text: body, hasImage: shots.length > 0 })
-  }, [text, picked, uid, name, replyTo, members, aiMode, askAndPost])
+    if (away) void notifyPeer({ name, text: body, hasImage: shots.length > 0, first: firstOfStreak })
+  }, [text, picked, uid, name, replyTo, members, messages, aiMode, askAndPost])
 
   const retry = async (p: Pending) => {
     setPending(list => list.map(x => (x.id === p.id ? { ...x, failed: false } : x)))

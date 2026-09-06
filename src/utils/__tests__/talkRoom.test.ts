@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  AI_NAME, AI_UID, dayLabel, getRoomId, isMine, isSameDay, isTalkRoute, linkify,
+  AI_NAME, AI_UID, dayLabel, getRoomId, isFirstOfStreak, isMine, isSameDay, isTalkRoute, linkify,
   peerState, pickMyMemberId, quoteText, sameSender, scaledSize } from '../talkRoom'
 
 /**
@@ -141,6 +141,42 @@ describe('talkRoom', () => {
 
     it('sameSender は AI とふつうの発言をまとめない', () => {
       expect(sameSender(msg(AI_UID, AI_NAME), msg('ID1', AI_NAME))).toBe(false)
+    })
+  })
+
+  describe('isFirstOfStreak（連投は1通目だけ通知）', () => {
+    // 🔴 2026-09-06 の指示＝同じ人が続けて投稿したら通知は初回だけ。日を跨いだらリセット。
+    const D = (day: number, hour = 12) => new Date(2026, 8, day, hour).getTime()
+    const M = (name: string, at: number, uid = 'u') => ({ uid, name, at })
+
+    it('まだ1件も無い部屋は初回', () => {
+      expect(isFirstOfStreak([], 'nami', D(6))).toBe(true)
+    })
+
+    it('直前が相手なら初回（そこで途切れている）', () => {
+      expect(isFirstOfStreak([M('nami', D(6, 9)), M('ひろ', D(6, 10))], 'nami', D(6, 11))).toBe(true)
+    })
+
+    it('直前も自分で同じ日なら初回ではない＝通知しない', () => {
+      expect(isFirstOfStreak([M('ひろ', D(6, 9)), M('nami', D(6, 10))], 'nami', D(6, 11))).toBe(false)
+    })
+
+    it('🔴 日を跨いだら初回に戻す（連投が続いていても）', () => {
+      expect(isFirstOfStreak([M('nami', D(5, 23))], 'nami', D(6, 0))).toBe(true)
+    })
+
+    it('AIの発言は人ではないので、間に挟まっても連投は途切れない', () => {
+      const rows = [M('nami', D(6, 10)), M('🤖 AI', D(6, 10), AI_UID)]
+      expect(isFirstOfStreak(rows, 'nami', D(6, 11))).toBe(false)
+    })
+
+    it('AIしか居ない部屋は初回', () => {
+      expect(isFirstOfStreak([M('🤖 AI', D(6, 10), AI_UID)], 'nami', D(6, 11))).toBe(true)
+    })
+
+    it('端末IDが変わっていても表示名で見るので連投と分かる', () => {
+      // 🔴 ID で見ると「別人が送った」と読めてしまい、連投のたびに通知が飛ぶ
+      expect(isFirstOfStreak([M('nami', D(6, 10), '古いID')], 'nami', D(6, 11))).toBe(false)
     })
   })
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -36,6 +36,21 @@ describe('talk-notify', () => {
 
     it('名前が空でも文章として成立させる', () => {
       expect(buildNotifyText({ ...base, name: '  ', text: 'やあ' })).toBe('だれか：やあ')
+    })
+  })
+
+  describe('isStreakSuppressed（連投は1通目だけ）', () => {
+    it('画面が「1通目ではない」と言ったときだけ止める', () => {
+      expect(isStreakSuppressed(false)).toBe(true)
+      expect(isStreakSuppressed(true)).toBe(false)
+    })
+
+    it('🔴 first が付いていない古い画面は通す（フェイルオープン）', () => {
+      // 落とし方で本来の1通目まで消えるほうが害が大きい
+      expect(isStreakSuppressed(undefined)).toBe(false)
+      expect(isStreakSuppressed(null)).toBe(false)
+      expect(isStreakSuppressed('false')).toBe(false)
+      expect(isStreakSuppressed(0)).toBe(false)
     })
   })
 

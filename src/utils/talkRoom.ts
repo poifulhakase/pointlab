@@ -275,7 +275,7 @@ export async function deleteMessage(m: TalkMessage): Promise<void> {
  * 🔵 サーバー側が未設定のうちは何も起きない（204 が返る）。
  * 🔴 通知が落ちても本体は動かす。ここで例外を投げないこと。
  */
-export async function notifyPeer(msg: { name: string; text: string; hasImage: boolean }): Promise<void> {
+export async function notifyPeer(msg: { name: string; text: string; hasImage: boolean; first?: boolean }): Promise<void> {
   try {
     await fetch('/api/talk?a=notify', {
       method: 'POST',
@@ -283,6 +283,39 @@ export async function notifyPeer(msg: { name: string; text: string; hasImage: bo
       body: JSON.stringify({ room: getRoomId(), ...msg }),
     })
   } catch { /* 通知は落ちてよい */ }
+}
+
+/**
+ * この発言が「ひと続きの投稿の1通目」か（2026-09-06・運用者の指示）。
+ *
+ * 指示＝**同じ人が続けて投稿したときは、LINEへの通知は初回だけ**。
+ *      ただし**日を跨いだらリセット**して、また初回として通知する。
+ *
+ * 🔴 判定は**送る側の画面**でやる（サーバーは受け取った値で止めるだけ）。
+ *    サーバーからは「相手が何時に何を送ったか」が分からない場面がある＝
+ *    通知APIは**相手が画面を開いていないときだけ**呼ばれるので、
+ *    相手の発言が通知を経由せずに挟まると、サーバー側の記録では連投に見えてしまう。
+ *    画面はメッセージの一覧をそのまま持っているので、ここが一番正確。
+ *
+ * 🔵 AIの発言（`ai-assistant`）は**人ではない**ので、間に挟まっても連投は途切れない。
+ * 🔵 まだ1件も無い部屋は初回。
+ *
+ * @param messages 送る**前**の一覧（自分のこの発言は含めない）
+ * @param myName   自分の表示名
+ * @param now      いまの時刻（ミリ秒）
+ */
+export function isFirstOfStreak(
+  messages: Pick<TalkMessage, 'uid' | 'name' | 'at'>[],
+  myName: string,
+  now: number = Date.now(),
+): boolean {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.uid === AI_UID) continue
+    if (m.name !== myName) return true        // 直前が相手＝ここで途切れている
+    return !isSameDay(m.at, now)              // 直前も自分＝日を跨いでいれば初回に戻す
+  }
+  return true
 }
 
 /**
