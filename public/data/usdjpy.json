@@ -1,13 +1,29 @@
 {
-  "updatedAt": "2026-09-07T17:52:30.081Z",
+  "updatedAt": "2026-09-08T08:22:45.616Z",
   "data": [
+    {
+      "time": "2026-09-08",
+      "close": 153.92,
+      "change": -0.46,
+      "changePct": -0.3,
+      "ma5": 155.28,
+      "ma5dev": -0.88
+    },
     {
       "time": "2026-09-07",
       "close": 154.38,
-      "change": -1.84,
-      "changePct": -1.18,
-      "ma5": 157.08,
-      "ma5dev": -1.72
+      "change": -1.82,
+      "changePct": -1.17,
+      "ma5": 156.28,
+      "ma5dev": -1.22
+    },
+    {
+      "time": "2026-09-06",
+      "close": 156.2,
+      "change": -0.02,
+      "changePct": -0.01,
+      "ma5": 157.44,
+      "ma5dev": -0.79
     },
     {
       "time": "2026-09-04",
@@ -702,22 +718,6 @@
       "close": 159.24,
       "change": 0.29,
       "changePct": 0.18,
-      "ma5": null,
-      "ma5dev": null
-    },
-    {
-      "time": "2026-05-25",
-      "close": 158.95,
-      "change": 0,
-      "changePct": 0,
-      "ma5": null,
-      "ma5dev": null
-    },
-    {
-      "time": "2026-05-24",
-      "close": 158.95,
-      "change": null,
-      "changePct": null,
       "ma5": null,
       "ma5dev": null
     }
