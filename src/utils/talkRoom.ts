@@ -90,6 +90,7 @@ export interface TalkMember {
 const KEY_UID = 'talk.uid'
 const KEY_NAME = 'talk.name'
 const KEY_SOUND = 'talk.sound'
+const KEY_DARK = 'talk.dark'
 
 /** cookie の保存期間（日）。localStorage が使えない環境でも、これだけ同じ端末で居続けられる。 */
 const COOKIE_DAYS = 400
@@ -163,6 +164,19 @@ export function getSoundOn(): boolean {
 
 export function setSoundOn(on: boolean): void {
   writeStore(KEY_SOUND, on ? 'on' : 'off')
+}
+
+/**
+ * 暗い配色にするか。
+ * 🔵 既定は**明るいまま**（端末の設定は見ない）。⋯メニューで切り替えたぶんだけ覚える。
+ * 🔵 端末ごとの設定なので、相手の見え方は変わらない。
+ */
+export function getDark(): boolean {
+  return readStore(KEY_DARK) === 'on'
+}
+
+export function setDark(on: boolean): void {
+  writeStore(KEY_DARK, on ? 'on' : 'off')
 }
 
 /** 衝突しない程度のランダムID。 */

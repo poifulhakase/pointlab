@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import styles from './TalkRoom.module.css'
 import {
-  dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getName, getSoundOn, getUid, isSameDay,
+  dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getDark, getName, getSoundOn, getUid, isSameDay,
   AI_NAME, AI_UID, askAi, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
   sameSender, sendMessage,
-  setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
+  setDark as saveDark, setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
 
@@ -59,6 +59,8 @@ export function TalkRoom() {
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [sound, setSound] = useState(() => getSoundOn())
+  // 🔵 暗い配色。⋯メニューで切り替え、端末ごとに覚える（既定は明るいまま）
+  const [dark, setDark] = useState(() => getDark())
   const [viewer, setViewer] = useState<string | null>(null)
   /** 長押しで開く操作の一覧（返信・コピー・取り消し） */
   const [acting, setActing] = useState<TalkMessage | null>(null)
@@ -425,7 +427,7 @@ export function TalkRoom() {
       setNameState(n)
     }
     return (
-      <div className={styles.gate}>
+      <div className={`${styles.gate} ${dark ? styles.dark : ''}`}>
         <div className={styles.gateBox}>
           <div className={styles.gateIcon}>💬</div>
           <h1 className={styles.gateTitle}>トーク</h1>
@@ -448,7 +450,7 @@ export function TalkRoom() {
   }
 
   return (
-    <div className={styles.wrap}>
+    <div className={`${styles.wrap} ${dark ? styles.dark : ''}`}>
       <header className={styles.bar}>
         <div className={styles.barTitle}>
           <span className={styles.barName}>{peer?.name ?? 'トーク'}</span>
@@ -624,6 +626,10 @@ export function TalkRoom() {
             }}>名前を変える</button>
             <button onClick={() => { const v = !sound; setSound(v); setSoundOn(v); setMenuOpen(false) }}>
               新着の音：{sound ? 'オン' : 'オフ'}
+            </button>
+            {/* 🔵 見た目だけの切り替え。相手の画面は変わらない（端末ごとに覚える） */}
+            <button onClick={() => { const v = !dark; setDark(v); saveDark(v); setMenuOpen(false) }}>
+              画面の色：{dark ? '暗い' : '明るい'}
             </button>
             <button className={styles.menuClose} onClick={() => setMenuOpen(false)}>閉じる</button>
           </div>
