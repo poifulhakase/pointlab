@@ -75,6 +75,14 @@ export function TalkRoom() {
   const [atBottom, setAtBottom] = useState(true)
   const [unseen, setUnseen] = useState(0)
   const [toast, setToast] = useState('')
+  /*
+    🔵 入力欄にカーソルが入っている間は、左の3つ（AI・画像・絵文字）を畳んで
+       書く場所を広げる（LINEと同じ挙動）。カーソルが外れれば元に戻る。
+       畳んでいる間は代わりに「‹」が出て、押せば**入力したまま**3つを出し直せる。
+  */
+  const [typing, setTyping] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)
+  const slim = typing && !toolsOpen
 
   const listRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -204,18 +212,42 @@ export function TalkRoom() {
     }
   }, [name])
 
+  /*
+    🔴 Android：キーボードが出ても**画面の作りは縮まない**のが既定（見えている範囲だけが縮む）。
+       そのため fixed の枠が上に浮いて、入力欄とキーボードの間に黒い帯が出る（運用者の報告・実機）。
+       この画面にいる間だけ viewport に `interactive-widget=resizes-content` を足し、
+       キーボードのぶんだけ**画面そのものを縮める**（iPhone は元から縮むので影響なし）。
+    🔵 ぽいロボ本体へ漏らさないよう、離れるときに元へ戻す。
+  */
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]')
+    if (!meta) return
+    const before = meta.getAttribute('content') ?? ''
+    if (before.includes('interactive-widget')) return
+    meta.setAttribute('content', `${before}, interactive-widget=resizes-content`)
+    return () => { meta.setAttribute('content', before) }
+  }, [])
+
   // iPhone：キーボードが出ても入力欄が隠れないように、見えている高さに合わせる
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
     const fit = () => {
       document.documentElement.style.setProperty('--talk-vh', `${vv.height}px`)
+      // 🔴 ずれた（画面ごと押し上げられた）ぶんを足す。0 のままだと枠が画面外へ出る
+      document.documentElement.style.setProperty('--talk-top', `${vv.offsetTop}px`)
       if (atBottom) scrollToBottom('auto')
     }
     fit()
+    // 🔵 キーボードは滑って出るので、動き終わってからもう一度測る（途中の高さで固まるのを防ぐ）
+    const settle = window.setTimeout(fit, 350)
     vv.addEventListener('resize', fit)
     vv.addEventListener('scroll', fit)
-    return () => { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit) }
+    return () => {
+      clearTimeout(settle)
+      vv.removeEventListener('resize', fit)
+      vv.removeEventListener('scroll', fit)
+    }
   }, [atBottom])
 
   const scrollToBottom = (behavior: ScrollBehavior) => {
@@ -518,22 +550,38 @@ export function TalkRoom() {
         </div>
       )}
 
-      <footer className={styles.foot}>
-        {/* 🔵 左下のAIボタン。押すと「AIに聞くモード」に入る（もう一度押すと戻る） */}
+      <footer className={`${styles.foot} ${slim ? styles.footSlim : ''}`}>
+        {/*
+          🔴 押した瞬間に入力欄から**カーソルが外れない**よう mousedown を止める。
+             止めないと、開く前に blur → 3つが自前で戻ってしまい、二度手間になる。
+        */}
         <button
-          className={`${styles.aiBtn} ${aiMode ? styles.aiOn : ''}`}
-          onClick={() => setAiMode(v => !v)}
-          aria-label="AIに聞く"
-          aria-pressed={aiMode}
-        >AI</button>
-        <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る">🖼️</button>
-        <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字">😀</button>
+          className={styles.toolsBtn}
+          aria-label="ボタンを出す"
+          tabIndex={slim ? 0 : -1}
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => { setToolsOpen(true); taRef.current?.focus() }}
+        >‹</button>
+        <div className={styles.tools} aria-hidden={slim}>
+          {/* 🔵 左下のAIボタン。押すと「AIに聞くモード」に入る（もう一度押すと戻る） */}
+          <button
+            className={`${styles.aiBtn} ${aiMode ? styles.aiOn : ''}`}
+            onClick={() => setAiMode(v => !v)}
+            aria-label="AIに聞く"
+            aria-pressed={aiMode}
+            tabIndex={slim ? -1 : 0}
+          >AI</button>
+          <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る" tabIndex={slim ? -1 : 0}>🖼️</button>
+          <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字" tabIndex={slim ? -1 : 0}>😀</button>
+        </div>
         <textarea
           ref={taRef}
           className={styles.input}
           value={text}
           rows={1}
           placeholder={aiMode ? '例：渋谷 夜 静かめの居酒屋' : 'メッセージ'}
+          onFocus={() => { setTyping(true); setToolsOpen(false) }}
+          onBlur={() => setTyping(false)}
           onChange={e => {
             setText(e.target.value)
             const el = e.target

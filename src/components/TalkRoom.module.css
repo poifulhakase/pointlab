@@ -31,6 +31,8 @@
   inset: 0;
   /* --talk-vh は visualViewport の高さ（iPhoneのキーボード対策）。無ければ dvh */
   height: var(--talk-vh, 100dvh);
+  /* 🔴 Android でキーボードに押し上げられたぶん（visualViewport.offsetTop）を足す */
+  top: var(--talk-top, 0px);
   display: flex;
   flex-direction: column;
   background: var(--talk-bg);
@@ -437,6 +439,52 @@
   border-top: 1px solid var(--talk-line);
 }
 
+/*
+  左の3つ（AI・画像・絵文字）。入力欄にカーソルが入ると横に畳んで、書く場所を広げる。
+  🔴 幅は max-width で動かす（display:none だと一瞬で消えて動きが出ない）。
+  🔵 .foot の gap 6px は畳んだ幅に残るので、負の margin で打ち消す。
+*/
+.tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 200px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-width .22s ease, opacity .14s ease, margin-right .22s ease;
+}
+
+.footSlim .tools {
+  max-width: 0;
+  margin-right: -6px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 畳んでいる間だけ出る「‹」。押すと3つが戻る（入力は続けられる） */
+.toolsBtn {
+  flex: 0 0 auto;
+  width: 0;
+  height: 36px;
+  padding: 0;
+  margin-right: -6px;
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1;
+  color: #7a838d;
+  background: none;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+  transition: width .22s ease, opacity .14s ease, margin-right .22s ease;
+}
+
+.footSlim .toolsBtn {
+  width: 24px;
+  margin-right: 0;
+  opacity: 1;
+}
+
 .iconBtn {
   flex: 0 0 auto;
   width: 36px;
@@ -450,6 +498,11 @@
 }
 
 .iconBtn:hover { background: #0000000d; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tools,
+  .toolsBtn { transition: none; }
+}
 
 .input {
   flex: 1 1 auto;
