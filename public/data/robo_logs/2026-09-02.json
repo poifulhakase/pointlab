@@ -149,14 +149,14 @@
           "hit": null
         },
         "5d": {
-          "date": "2026-09-09",
-          "close": 65142.78125,
-          "ret_pct": 1.27,
+          "date": null,
+          "close": null,
+          "ret_pct": null,
           "edge_pct": null,
           "hit": null
         }
       },
-      "complete": true
+      "complete": false
     },
     "chart_only": {
       "side": "bear",
@@ -175,14 +175,14 @@
           "hit": true
         },
         "5d": {
-          "date": "2026-09-09",
-          "close": 65142.78125,
-          "ret_pct": 1.27,
-          "edge_pct": -1.27,
-          "hit": false
+          "date": null,
+          "close": null,
+          "ret_pct": null,
+          "edge_pct": null,
+          "hit": null
         }
       },
-      "complete": true
+      "complete": false
     },
     "numbers_only": {
       "side": null,
@@ -201,14 +201,14 @@
           "hit": null
         },
         "5d": {
-          "date": "2026-09-09",
-          "close": 65142.78125,
-          "ret_pct": 1.27,
+          "date": null,
+          "close": null,
+          "ret_pct": null,
           "edge_pct": null,
           "hit": null
         }
       },
-      "complete": true
+      "complete": false
     }
   }
 }
