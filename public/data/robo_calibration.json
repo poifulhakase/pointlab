@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-10T16:40:00.129Z",
+  "updatedAt": "2026-09-11T08:24:23.664Z",
   "basis": "判断した日の終値（引成の約定基準）を起点に、日経225の終値で1営業日後・5営業日後を測る",
   "caveat": "🔴 これは判断が短期で当たったかの答え合わせであって、建玉の損益ではない（実際は損切り・トレーリングで手仕舞うまで持つ）。30トレード貯まるまで比較しない。",
   "horizons": [
@@ -10,9 +10,9 @@
     "main": {
       "label": "本番（需給＋価格＋チャート）",
       "summary": {
-        "logs": 21,
+        "logs": 23,
         "directional": 4,
-        "hold": 17,
+        "hold": 19,
         "by_horizon": {
           "1d": {
             "n": 4,
@@ -72,37 +72,37 @@
     "chart_only": {
       "label": "影：チャートのみ",
       "summary": {
-        "logs": 18,
-        "directional": 13,
+        "logs": 20,
+        "directional": 15,
         "hold": 5,
         "by_horizon": {
           "1d": {
-            "n": 13,
-            "wins": 4,
-            "win_rate_pct": 30.77,
-            "avg_confidence": 56.15,
-            "avg_edge_pct": -0.34,
+            "n": 14,
+            "wins": 5,
+            "win_rate_pct": 35.71,
+            "avg_confidence": 56.07,
+            "avg_edge_pct": -0.18,
             "bull": {
               "n": 8,
               "win_rate_pct": 25
             },
             "bear": {
-              "n": 5,
-              "win_rate_pct": 40
+              "n": 6,
+              "win_rate_pct": 50
             }
           },
           "5d": {
-            "n": 9,
+            "n": 11,
             "wins": 1,
-            "win_rate_pct": 11.11,
-            "avg_confidence": 56.33,
-            "avg_edge_pct": -1.85,
+            "win_rate_pct": 9.09,
+            "avg_confidence": 56.09,
+            "avg_edge_pct": -1.81,
             "bull": {
-              "n": 5,
-              "win_rate_pct": 20
+              "n": 6,
+              "win_rate_pct": 16.67
             },
             "bear": {
-              "n": 4,
+              "n": 5,
               "win_rate_pct": 0
             }
           }
@@ -112,21 +112,21 @@
         "1d": [
           {
             "range": "50-59%",
-            "n": 13,
-            "wins": 4,
-            "avg_confidence": 56.15,
-            "win_rate_pct": 30.77,
-            "gap": -25.38
+            "n": 14,
+            "wins": 5,
+            "avg_confidence": 56.07,
+            "win_rate_pct": 35.71,
+            "gap": -20.36
           }
         ],
         "5d": [
           {
             "range": "50-59%",
-            "n": 9,
+            "n": 11,
             "wins": 1,
-            "avg_confidence": 56.33,
-            "win_rate_pct": 11.11,
-            "gap": -45.22
+            "avg_confidence": 56.09,
+            "win_rate_pct": 9.09,
+            "gap": -47
           }
         ]
       }
@@ -134,9 +134,9 @@
     "numbers_only": {
       "label": "影：数値のみ",
       "summary": {
-        "logs": 18,
+        "logs": 20,
         "directional": 1,
-        "hold": 17,
+        "hold": 19,
         "by_horizon": {
           "1d": {
             "n": 1,
@@ -378,9 +378,9 @@
       "confidence_pct": 66,
       "ret_1d": 1.26,
       "hit_1d": null,
-      "ret_5d": null,
+      "ret_5d": 1.65,
       "hit_5d": null,
-      "complete": false
+      "complete": true
     },
     {
       "date": "2026-09-04",
@@ -389,9 +389,9 @@
       "confidence_pct": 45,
       "ret_1d": 2.12,
       "hit_1d": null,
-      "ret_5d": null,
+      "ret_5d": -1.55,
       "hit_5d": null,
-      "complete": false
+      "complete": true
     },
     {
       "date": "2026-09-07",
@@ -420,6 +420,28 @@
       "side": null,
       "symbol": "none",
       "confidence_pct": 45,
+      "ret_1d": 0.2,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-09-10",
+      "side": null,
+      "symbol": "none",
+      "confidence_pct": 45,
+      "ret_1d": -1.93,
+      "hit_1d": null,
+      "ret_5d": null,
+      "hit_5d": null,
+      "complete": false
+    },
+    {
+      "date": "2026-09-11",
+      "side": null,
+      "symbol": "1321",
+      "confidence_pct": 66,
       "ret_1d": null,
       "hit_1d": null,
       "ret_5d": null,
