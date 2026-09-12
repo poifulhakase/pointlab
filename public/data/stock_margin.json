@@ -1,26 +1,19 @@
 {
-  "updatedAt": "2026-09-05T02:15:08.111Z",
+  "updatedAt": "2026-09-12T02:23:55.540Z",
   "source": "JPX「銘柄別信用取引週末残高」（週次・全上場銘柄）",
   "note": "🔴 週末時点の残高。日々の増減は分からない。信用取引の対象外銘柄はここに載らない。",
   "weeks": [
-    "2026-07-31",
     "2026-08-07",
     "2026-08-14",
     "2026-08-21",
-    "2026-08-28"
+    "2026-08-28",
+    "2026-09-04"
   ],
   "missing": [],
   "stocks": {
     "1379": {
       "name": "ホクト",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 26900,
-          "longChg": -1000,
-          "short": 3500,
-          "shortChg": -3600
-        },
         {
           "w": "2026-08-07",
           "long": 24000,
@@ -48,27 +41,27 @@
           "longChg": -900,
           "short": 6400,
           "shortChg": -6300
+        },
+        {
+          "w": "2026-09-04",
+          "long": 24800,
+          "longChg": 3500,
+          "short": 12500,
+          "shortChg": 6100
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 21300,
-        "short": 6400,
-        "ratio": 3.3,
-        "longChg": -900,
-        "longChgPct": -4.1
+        "w": "2026-09-04",
+        "long": 24800,
+        "short": 12500,
+        "ratio": 2,
+        "longChg": 3500,
+        "longChgPct": 16.4
       }
     },
     "2432": {
       "name": "ディー・エヌ・エー",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 2074000,
-          "longChg": -221800,
-          "short": 45200,
-          "shortChg": -1000
-        },
         {
           "w": "2026-08-07",
           "long": 2062300,
@@ -96,27 +89,27 @@
           "longChg": -116100,
           "short": 51900,
           "shortChg": -4700
+        },
+        {
+          "w": "2026-09-04",
+          "long": 1744100,
+          "longChg": -98400,
+          "short": 120300,
+          "shortChg": 68400
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 1842500,
-        "short": 51900,
-        "ratio": 35.5,
-        "longChg": -116100,
-        "longChgPct": -5.9
+        "w": "2026-09-04",
+        "long": 1744100,
+        "short": 120300,
+        "ratio": 14.5,
+        "longChg": -98400,
+        "longChgPct": -5.3
       }
     },
     "2437": {
       "name": "Ｈｏｌｄｉｎｇｓ",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 3243300,
-          "longChg": 40000,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 3291000,
@@ -144,27 +137,27 @@
           "longChg": -78000,
           "short": 0,
           "shortChg": 0
+        },
+        {
+          "w": "2026-09-04",
+          "long": 3059700,
+          "longChg": -107400,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 3167100,
+        "w": "2026-09-04",
+        "long": 3059700,
         "short": 0,
         "ratio": null,
-        "longChg": -78000,
-        "longChgPct": -2.4
+        "longChg": -107400,
+        "longChgPct": -3.4
       }
     },
     "2667": {
       "name": "ワン",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 1993100,
-          "longChg": -52700,
-          "short": 633000,
-          "shortChg": -95900
-        },
         {
           "w": "2026-08-07",
           "long": 1924400,
@@ -192,27 +185,27 @@
           "longChg": -22600,
           "short": 429400,
           "shortChg": -60700
+        },
+        {
+          "w": "2026-09-04",
+          "long": 1768000,
+          "longChg": -241000,
+          "short": 390400,
+          "shortChg": -39000
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 2009000,
-        "short": 429400,
-        "ratio": 4.7,
-        "longChg": -22600,
-        "longChgPct": -1.1
+        "w": "2026-09-04",
+        "long": 1768000,
+        "short": 390400,
+        "ratio": 4.5,
+        "longChg": -241000,
+        "longChgPct": -12
       }
     },
     "3083": {
       "name": "スターシーズ",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 2939800,
-          "longChg": 77000,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 2926600,
@@ -240,27 +233,27 @@
           "longChg": 25400,
           "short": 0,
           "shortChg": 0
+        },
+        {
+          "w": "2026-09-04",
+          "long": 3071300,
+          "longChg": 125700,
+          "short": 700,
+          "shortChg": 700
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 2945600,
-        "short": 0,
-        "ratio": null,
-        "longChg": 25400,
-        "longChgPct": 0.9
+        "w": "2026-09-04",
+        "long": 3071300,
+        "short": 700,
+        "ratio": 4387.6,
+        "longChg": 125700,
+        "longChgPct": 4.3
       }
     },
     "3444": {
       "name": "菊池製作所",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 528100,
-          "longChg": -26900,
-          "short": 350900,
-          "shortChg": 28000
-        },
         {
           "w": "2026-08-07",
           "long": 513200,
@@ -288,27 +281,27 @@
           "longChg": -400,
           "short": 308100,
           "shortChg": -24000
+        },
+        {
+          "w": "2026-09-04",
+          "long": 622700,
+          "longChg": 75600,
+          "short": 298300,
+          "shortChg": -9800
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 547100,
-        "short": 308100,
-        "ratio": 1.8,
-        "longChg": -400,
-        "longChgPct": -0.1
+        "w": "2026-09-04",
+        "long": 622700,
+        "short": 298300,
+        "ratio": 2.1,
+        "longChg": 75600,
+        "longChgPct": 13.8
       }
     },
     "3776": {
       "name": "ブロードバンドタワー",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 2424700,
-          "longChg": -73700,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 2510500,
@@ -336,27 +329,27 @@
           "longChg": -9200,
           "short": 0,
           "shortChg": 0
+        },
+        {
+          "w": "2026-09-04",
+          "long": 2467600,
+          "longChg": -39600,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 2507200,
+        "w": "2026-09-04",
+        "long": 2467600,
         "short": 0,
         "ratio": null,
-        "longChg": -9200,
-        "longChgPct": -0.4
+        "longChg": -39600,
+        "longChgPct": -1.6
       }
     },
     "3793": {
       "name": "ドリコム",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 1711700,
-          "longChg": 12700,
-          "short": 130300,
-          "shortChg": 17700
-        },
         {
           "w": "2026-08-07",
           "long": 1668200,
@@ -384,27 +377,27 @@
           "longChg": 13600,
           "short": 167600,
           "shortChg": 21400
+        },
+        {
+          "w": "2026-09-04",
+          "long": 1592000,
+          "longChg": -11400,
+          "short": 104700,
+          "shortChg": -62900
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 1603400,
-        "short": 167600,
-        "ratio": 9.6,
-        "longChg": 13600,
-        "longChgPct": 0.9
+        "w": "2026-09-04",
+        "long": 1592000,
+        "short": 104700,
+        "ratio": 15.2,
+        "longChg": -11400,
+        "longChgPct": -0.7
       }
     },
     "3810": {
       "name": "サイバーステップホールディングス",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 10997900,
-          "longChg": -159000,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 11214800,
@@ -432,27 +425,27 @@
           "longChg": 536600,
           "short": 0,
           "shortChg": -20000
+        },
+        {
+          "w": "2026-09-04",
+          "long": 12644400,
+          "longChg": -243500,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 12887900,
+        "w": "2026-09-04",
+        "long": 12644400,
         "short": 0,
         "ratio": null,
-        "longChg": 536600,
-        "longChgPct": 4.3
+        "longChg": -243500,
+        "longChgPct": -1.9
       }
     },
     "3825": {
       "name": "リミックスポイント",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 3596700,
-          "longChg": 238900,
-          "short": 25700,
-          "shortChg": 25700
-        },
         {
           "w": "2026-08-07",
           "long": 3719700,
@@ -480,27 +473,27 @@
           "longChg": 722500,
           "short": 26700,
           "shortChg": 26700
+        },
+        {
+          "w": "2026-09-04",
+          "long": 4091000,
+          "longChg": -61000,
+          "short": 0,
+          "shortChg": -26700
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 4152000,
-        "short": 26700,
-        "ratio": 155.5,
-        "longChg": 722500,
-        "longChgPct": 21.1
+        "w": "2026-09-04",
+        "long": 4091000,
+        "short": 0,
+        "ratio": null,
+        "longChg": -61000,
+        "longChgPct": -1.5
       }
     },
     "4575": {
       "name": "キャンバス",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 1054800,
-          "longChg": -32700,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 1024600,
@@ -528,27 +521,27 @@
           "longChg": -31000,
           "short": 0,
           "shortChg": 0
+        },
+        {
+          "w": "2026-09-04",
+          "long": 1166900,
+          "longChg": 1100,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 1165800,
+        "w": "2026-09-04",
+        "long": 1166900,
         "short": 0,
         "ratio": null,
-        "longChg": -31000,
-        "longChgPct": -2.6
+        "longChg": 1100,
+        "longChgPct": 0.1
       }
     },
     "4588": {
       "name": "オンコリスバイオファーマ",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 4671600,
-          "longChg": -194200,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 4444500,
@@ -576,27 +569,27 @@
           "longChg": -756600,
           "short": 10200,
           "shortChg": 10000
+        },
+        {
+          "w": "2026-09-04",
+          "long": 3274500,
+          "longChg": 193900,
+          "short": 1800,
+          "shortChg": -8400
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 3080600,
-        "short": 10200,
-        "ratio": 302,
-        "longChg": -756600,
-        "longChgPct": -19.7
+        "w": "2026-09-04",
+        "long": 3274500,
+        "short": 1800,
+        "ratio": 1819.2,
+        "longChg": 193900,
+        "longChgPct": 6.3
       }
     },
     "5216": {
       "name": "倉元製作所",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 1630700,
-          "longChg": -144900,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 1547000,
@@ -624,27 +617,27 @@
           "longChg": 79700,
           "short": 0,
           "shortChg": -4500
+        },
+        {
+          "w": "2026-09-04",
+          "long": 1535000,
+          "longChg": -11200,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 1546200,
+        "w": "2026-09-04",
+        "long": 1535000,
         "short": 0,
         "ratio": null,
-        "longChg": 79700,
-        "longChgPct": 5.4
+        "longChg": -11200,
+        "longChgPct": -0.7
       }
     },
     "7719": {
       "name": "東京衡機",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 789700,
-          "longChg": -96100,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 772800,
@@ -672,27 +665,27 @@
           "longChg": -167600,
           "short": 0,
           "shortChg": 0
+        },
+        {
+          "w": "2026-09-04",
+          "long": 658500,
+          "longChg": -48800,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 707300,
+        "w": "2026-09-04",
+        "long": 658500,
         "short": 0,
         "ratio": null,
-        "longChg": -167600,
-        "longChgPct": -19.2
+        "longChg": -48800,
+        "longChgPct": -6.9
       }
     },
     "9337": {
       "name": "トリドリ",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 294900,
-          "longChg": 3100,
-          "short": 0,
-          "shortChg": 0
-        },
         {
           "w": "2026-08-07",
           "long": 309100,
@@ -720,27 +713,27 @@
           "longChg": -17700,
           "short": 0,
           "shortChg": 0
+        },
+        {
+          "w": "2026-09-04",
+          "long": 371200,
+          "longChg": 52300,
+          "short": 0,
+          "shortChg": 0
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 318900,
+        "w": "2026-09-04",
+        "long": 371200,
         "short": 0,
         "ratio": null,
-        "longChg": -17700,
-        "longChgPct": -5.3
+        "longChg": 52300,
+        "longChgPct": 16.4
       }
     },
     "9513": {
       "name": "電源開発",
       "history": [
-        {
-          "w": "2026-07-31",
-          "long": 822400,
-          "longChg": -9600,
-          "short": 50100,
-          "shortChg": 7600
-        },
         {
           "w": "2026-08-07",
           "long": 727300,
@@ -768,15 +761,22 @@
           "longChg": 28200,
           "short": 36000,
           "shortChg": 900
+        },
+        {
+          "w": "2026-09-04",
+          "long": 757600,
+          "longChg": 20200,
+          "short": 33700,
+          "shortChg": -2300
         }
       ],
       "latest": {
-        "w": "2026-08-28",
-        "long": 737400,
-        "short": 36000,
-        "ratio": 20.5,
-        "longChg": 28200,
-        "longChgPct": 4
+        "w": "2026-09-04",
+        "long": 757600,
+        "short": 33700,
+        "ratio": 22.5,
+        "longChg": 20200,
+        "longChgPct": 2.7
       }
     }
   }
