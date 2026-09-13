@@ -34,6 +34,11 @@ export type Weather = {
  *    細かく分かれているが、壁紙で描き分けられるのは5つまで。
  * 🔴 **霧（45・48）はくもり扱い**。白くかすませる絵を別に作っても、
  *    小さい画面では「くもり」との区別がつかない。
+ * 🔴 **1（おおむね晴れ）・2（一部くもり）は晴れ扱い**（2026-09-13 修正）。
+ *    気象庁の「晴れ」は雲量2〜8割まで含む。くもりに寄せると、雲量34%の青空の日に
+ *    くもりの壁紙が出て外の見た目と合わない。くもりは 3（全天くもり）だけ。
+ * 🔴 取得先 api.open-meteo.com は vercel.json の CSP（connect-src）に載せること。
+ *    載っていないと本番だけ通信が止められ、壁紙がずっと単色のままになる（9/13 に実際に起きた）。
  */
 export function kindOf(code: number): WeatherKind {
   if (code >= 95) return 'storm'                 // 95-99 雷雨
@@ -42,8 +47,8 @@ export function kindOf(code: number): WeatherKind {
   if (code >= 80 && code <= 82) return 'rain'    // 80-82 にわか雨
   if (code >= 51 && code <= 67) return 'rain'    // 51-67 霧雨・雨・着氷性の雨
   if (code >= 45 && code <= 48) return 'cloudy'  // 45-48 霧
-  if (code >= 1 && code <= 3) return 'cloudy'    // 1-3 晴れ時々くもり〜くもり
-  return 'sunny'                                 // 0 快晴（範囲外もここへ落とす）
+  if (code === 3) return 'cloudy'                // 3 くもり
+  return 'sunny'                                 // 0-2 快晴〜晴れ（範囲外もここへ落とす）
 }
 
 /**

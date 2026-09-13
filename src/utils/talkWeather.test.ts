@@ -7,12 +7,13 @@ import { kindOf, strengthOf, wallpaperOf } from './talkWeather'
  * 🔴 ここを間違えると「雨なのに青空」が出る。表は WMO weather_code。
  */
 describe('kindOf — WMO の天気コードを5種類に寄せる', () => {
-  it('快晴は晴れ', () => {
+  it('0〜2（快晴・おおむね晴れ・一部くもり）は晴れ＝気象庁の「晴れ」と揃える', () => {
     expect(kindOf(0)).toBe('sunny')
+    expect(kindOf(1)).toBe('sunny')
+    expect(kindOf(2)).toBe('sunny')
   })
 
-  it('1〜3（晴れ時々くもり〜くもり）と霧はくもり', () => {
-    expect(kindOf(1)).toBe('cloudy')
+  it('3（くもり）と霧はくもり', () => {
     expect(kindOf(3)).toBe('cloudy')
     expect(kindOf(45)).toBe('cloudy')
     expect(kindOf(48)).toBe('cloudy')
