@@ -4,9 +4,12 @@ import {
   dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getDark, getName, getSoundOn, getUid, isSameDay,
   AI_NAME, AI_UID, askAi, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
   sameSender, sendMessage,
+  getWeatherWall, setWeatherWall as saveWeatherWall,
   setDark as saveDark, setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
+import { TalkWeather } from './TalkWeather'
+import { REFRESH_MS, fetchWeather, strengthOf, wallpaperOf, type Wallpaper } from '../utils/talkWeather'
 
 /**
  * 一時トークルーム（LINE風）。
@@ -61,6 +64,37 @@ export function TalkRoom() {
   const [sound, setSound] = useState(() => getSoundOn())
   // 🔵 暗い配色。⋯メニューで切り替え、端末ごとに覚える（既定は明るいまま）
   const [dark, setDark] = useState(() => getDark())
+  /*
+   * 🆕 2026-09-13：壁紙を「いまの天気」に合わせる（運用者の採用＝晴れ・くもり・雨）。
+   * 🔵 地点は東京で決め打ち。位置情報の許可は求めない（`utils/talkWeather.ts`）。
+   * 🔴 取れなかったら `sky` は null のまま＝**単色の壁紙のまま**。壁紙のために会話を止めない。
+   */
+  const [weatherWall, setWeatherWall] = useState(() => getWeatherWall())
+  const [sky, setSky] = useState<{ wall: Wallpaper, day: boolean, power: 'weak' | 'normal' | 'heavy' } | null>(null)
+
+  useEffect(() => {
+    if (!weatherWall) { setSky(null); return }
+    let alive = true
+    const ctrl = new AbortController()
+
+    const load = async () => {
+      const w = await fetchWeather(ctrl.signal)
+      if (!alive || !w) return   // 🔴 取れなかったら前のまま（既定へ戻すと行ったり来たりする）
+      setSky({ wall: wallpaperOf(w.kind), day: w.day, power: strengthOf(w.code) })
+    }
+
+    void load()
+    const timer = setInterval(() => { if (!document.hidden) void load() }, REFRESH_MS)
+    const onShow = () => { if (!document.hidden) void load() }
+    document.addEventListener('visibilitychange', onShow)
+
+    return () => {
+      alive = false
+      ctrl.abort()
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onShow)
+    }
+  }, [weatherWall])
   const [viewer, setViewer] = useState<string | null>(null)
   /** 長押しで開く操作の一覧（返信・コピー・取り消し） */
   const [acting, setActing] = useState<TalkMessage | null>(null)
@@ -450,7 +484,11 @@ export function TalkRoom() {
   }
 
   return (
-    <div className={`${styles.wrap} ${dark ? styles.dark : ''}`}>
+    <div className={`${styles.wrap} ${dark ? styles.dark : ''} ${weatherWall && sky ? styles.wx : ''}`}>
+      {/* 🔵 会話の下に敷くだけの飾り。天気が取れていないときは何も描かない */}
+      {weatherWall && sky && (
+        <TalkWeather wallpaper={sky.wall} day={sky.day} strength={sky.power} dark={dark} />
+      )}
       <header className={styles.bar}>
         <div className={styles.barTitle}>
           <span className={styles.barName}>{peer?.name ?? 'トーク'}</span>
@@ -628,6 +666,9 @@ export function TalkRoom() {
               新着の音：{sound ? 'オン' : 'オフ'}
             </button>
             {/* 🔵 見た目だけの切り替え。相手の画面は変わらない（端末ごとに覚える） */}
+            <button onClick={() => { const v = !weatherWall; setWeatherWall(v); saveWeatherWall(v); setMenuOpen(false) }}>
+              壁紙：{weatherWall ? '天気' : '単色'}
+            </button>
             <button onClick={() => { const v = !dark; setDark(v); saveDark(v); setMenuOpen(false) }}>
               画面の色：{dark ? '暗い' : '明るい'}
             </button>

@@ -1,0 +1,17 @@
+/*
+  トークの壁紙（天気連動）。canvas 1枚に空・雲・水滴をまとめて描く。
+  🔵 会話（ヘッダー・一覧・入力欄）より下に敷くだけなので、変数も色もここには置かない。
+*/
+
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.layer canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

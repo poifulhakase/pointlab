@@ -194,7 +194,14 @@
 
 /* ── 上のバー ─────────────────────────────────────────── */
 
+/*
+  🔴 2026-09-13：天気の壁紙（canvas）を .wrap の中に敷いたので、
+     会話の3段（ヘッダー・一覧・入力欄）を**必ず上に**置く。
+     position を付けないと、壁紙が後から来て会話を覆う。
+*/
 .bar {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -240,6 +247,8 @@
 /* ── メッセージ一覧 ───────────────────────────────────── */
 
 .list {
+  position: relative;
+  z-index: 1;
   flex: 1 1 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -334,6 +343,13 @@
   background: var(--talk-theirs);
   border-bottom-left-radius: 4px;
 }
+
+/*
+  🔴 2026-09-13：空を背にすると**白い吹き出しの輪郭が消える**ので、
+     天気の壁紙のときだけ影を濃くする（単色のときは今までどおり薄いまま）。
+*/
+.wx .bubble { box-shadow: 0 1px 3px rgb(0 0 0 / 18%); }
+.wx.dark .bubble { box-shadow: 0 1px 3px rgb(0 0 0 / 35%); }
 
 /* 画像 */
 .photo {
@@ -511,6 +527,8 @@
 /* ── 下の入力欄 ───────────────────────────────────────── */
 
 .foot {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
   display: flex;
   align-items: flex-end;

@@ -91,6 +91,7 @@ const KEY_UID = 'talk.uid'
 const KEY_NAME = 'talk.name'
 const KEY_SOUND = 'talk.sound'
 const KEY_DARK = 'talk.dark'
+const KEY_WEATHER = 'talk.weather'
 
 /** cookie の保存期間（日）。localStorage が使えない環境でも、これだけ同じ端末で居続けられる。 */
 const COOKIE_DAYS = 400
@@ -177,6 +178,20 @@ export function getDark(): boolean {
 
 export function setDark(on: boolean): void {
   writeStore(KEY_DARK, on ? 'on' : 'off')
+}
+
+/**
+ * 壁紙を天気に合わせるか（2026-09-13 新設）。
+ *
+ * 🔵 端末ごとの設定。暗い配色と同じ作りで、相手の見え方は変わらない。
+ * 🔵 **既定は天気**（運用者が採用したもの）。合わなければ ⋯ メニューで単色に戻せる。
+ */
+export function getWeatherWall(): boolean {
+  return readStore(KEY_WEATHER) !== 'off'
+}
+
+export function setWeatherWall(on: boolean): void {
+  writeStore(KEY_WEATHER, on ? 'on' : 'off')
 }
 
 /** 衝突しない程度のランダムID。 */
