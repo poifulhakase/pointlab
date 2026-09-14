@@ -1,6 +1,11 @@
 {
-  "updatedAt": "2026-09-12T02:22:01.377Z",
+  "updatedAt": "2026-09-14T09:18:37.826Z",
   "data": [
+    {
+      "date": "2026/09/14",
+      "label": "9月第3週",
+      "ratio": 38.1
+    },
     {
       "date": "2026/09/11",
       "label": "9月第2週",
@@ -255,14 +260,15 @@
       "date": "2025/09/26",
       "label": "9月第4週",
       "ratio": 40.8
-    },
-    {
-      "date": "2025/09/19",
-      "label": "9月第3週",
-      "ratio": 39.3
     }
   ],
   "daily": [
+    {
+      "date": "2026/09/14",
+      "ratio": 38.1,
+      "unrestricted": 31.4,
+      "restricted": 6.7
+    },
     {
       "date": "2026/09/11",
       "ratio": 44.9,
@@ -3256,12 +3262,6 @@
       "ratio": 39.5,
       "unrestricted": 31.5,
       "restricted": 8
-    },
-    {
-      "date": "2024/08/26",
-      "ratio": 44.7,
-      "unrestricted": 35.4,
-      "restricted": 9.3
     }
   ]
 }
