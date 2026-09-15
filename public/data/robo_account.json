@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T09:21:23.892Z",
+  "generated_at": "2026-09-15T09:03:07.287Z",
   "logic_version": "robo-v1-llm",
   "decider": {
     "type": "llm",
@@ -186,13 +186,17 @@
     {
       "date": "2026-09-14",
       "equity": 947999
+    },
+    {
+      "date": "2026-09-15",
+      "equity": 947719
     }
   ],
   "stats": {
     "closed_trades": 0,
     "win_rate": null,
     "expectancy": null,
-    "max_drawdown_pct": -6.06,
+    "max_drawdown_pct": -6.08,
     "stop_then_reversed": 0
   },
   "baseline": null,
