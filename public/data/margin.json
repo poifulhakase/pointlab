@@ -1,6 +1,14 @@
 {
-  "updatedAt": "2026-09-15T17:13:45.575Z",
+  "updatedAt": "2026-09-16T08:53:08.150Z",
   "data": [
+    {
+      "date": "2026/09/11",
+      "label": "9月第2週",
+      "longBal": 6645605,
+      "shortBal": 795907,
+      "ratio": 8.35,
+      "evalRatio": -6.5
+    },
     {
       "date": "2026/09/04",
       "label": "9月第1週",
@@ -408,14 +416,6 @@
       "shortBal": 956644,
       "ratio": 4.42,
       "evalRatio": -5.96
-    },
-    {
-      "date": "2025/08/29",
-      "label": "8月第5週",
-      "longBal": 4147587,
-      "shortBal": 939527,
-      "ratio": 4.41,
-      "evalRatio": -5.9
     }
   ]
 }
