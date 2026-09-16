@@ -10,13 +10,13 @@ type Props = {
   c: CyColors
   theme: 'dark' | 'light'
   today?: string
+  /** 描く大きさ（px）。🔵 2026-09-16：表示領域の高さいっぱいに描くため、比率ではなく実寸で受け取る */
+  width: number
+  height: number
 }
 
-const W = 960
-const PAD = { l: 8, r: 56, b: 22 }
-const PRICE_H = 230
+const PAD = { l: 8, r: 60, b: 24 }
 const GAP = 14
-const MARGIN_H = 82
 /** 上の注記帯（悪化期間 → 期日）1段の高さ。ローソク足に重ねないため、図の外に段を取る。 */
 const NOTE_ROW = 22
 const DAY = 86400000
@@ -25,14 +25,18 @@ const t = (s: string) => {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d).getTime()
 }
-/** 11px の文字の幅の見積もり（半角≒0.6em・全角≒1em）。注記の重なりを避けるのに使う。 */
-const textW = (s: string) => [...s].reduce((w, ch) => w + (ch.charCodeAt(0) < 256 ? 6.8 : 11), 0)
+/** 12px の文字の幅の見積もり（半角≒0.6em・全角≒1em）。注記の重なりを避けるのに使う。 */
+const textW = (s: string) => [...s].reduce((w, ch) => w + (ch.charCodeAt(0) < 256 ? 7.4 : 12), 0)
 const md = (s: string) => `${Number(s.slice(5, 7))}/${Number(s.slice(8, 10))}`
 
-export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Props) {
+export function MarginKijitsuChart({ bars, margin, runs, c, theme, today, width, height }: Props) {
   const L = theme === 'light'
   const TOP = 10 + runs.length * NOTE_ROW
-  const H = TOP + PRICE_H + GAP + MARGIN_H + PAD.b
+  const W = Math.max(320, width)
+  const H = Math.max(240, height)
+  // 下段（買残）は全体の2割強。株価の段が残りを使う
+  const MARGIN_H = Math.max(60, Math.round(H * 0.22))
+  const PRICE_H = Math.max(120, H - TOP - GAP - MARGIN_H - PAD.b)
   const PAD_T = TOP
   const UP = L ? '#0f9d8a' : '#26a69a'
   const DN = L ? '#d93b3b' : '#ef5350'
@@ -59,7 +63,7 @@ export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Prop
   const mMax = Math.max(1, ...margin.map((m) => m.sysLong + m.genLong)) * 1.15
   const MY = (v: number) => mTop + MARGIN_H - (v / mMax) * MARGIN_H
 
-  const ticks = niceTicks(lo, hi, 5)
+  const ticks = niceTicks(lo, hi, Math.max(4, Math.round(PRICE_H / 70)))
   const months: number[] = []
   {
     const d = new Date(x0)
@@ -82,12 +86,12 @@ export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Prop
   }
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="信用期日のチャート" style={{ display: 'block', fontFamily: c.FONT }}>
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="信用期日のチャート" width={W} height={H} style={{ display: 'block', fontFamily: c.FONT }}>
       {/* 格子 */}
       {ticks.map((v) => (
         <g key={`y${v}`}>
           <line x1={PAD.l} x2={W - PAD.r} y1={Y(v)} y2={Y(v)} stroke={c.BORDER} strokeWidth={0.6} />
-          <text x={W - PAD.r + 6} y={Y(v) + 3} fontSize={10} fill={c.DIM}>{fmt(v)}</text>
+          <text x={W - PAD.r + 6} y={Y(v) + 3} fontSize={11} fill={c.DIM}>{fmt(v)}</text>
         </g>
       ))}
       {months.map((m) => {
@@ -95,7 +99,7 @@ export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Prop
         return (
           <g key={`m${m}`}>
             <line x1={X(m)} x2={X(m)} y1={PAD_T} y2={mTop + MARGIN_H} stroke={c.BORDER} strokeWidth={0.5} />
-            <text x={X(m) + 3} y={H - 6} fontSize={10} fill={c.DIM}>
+            <text x={X(m) + 3} y={H - 6} fontSize={11} fill={c.DIM}>
               {d.getMonth() === 0 ? `${String(d.getFullYear()).slice(2)}/1` : `${d.getMonth() + 1}月`}
             </text>
           </g>
@@ -122,14 +126,14 @@ export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Prop
 
       {/* 今日 */}
       <line x1={X(t(todayStr))} x2={X(t(todayStr))} y1={PAD_T} y2={mTop + MARGIN_H} stroke={c.DIM} strokeDasharray="2 3" />
-      <text x={X(t(todayStr)) + 3} y={PAD_T + PRICE_H - 4} fontSize={10} fill={c.DIM}>今日</text>
+      <text x={X(t(todayStr)) + 3} y={PAD_T + PRICE_H - 4} fontSize={11} fill={c.DIM}>今日</text>
 
       {/* 最新値 */}
       {last && (
         <g>
           <line x1={PAD.l} x2={W - PAD.r} y1={Y(last.close)} y2={Y(last.close)} stroke={UP} strokeWidth={0.6} strokeDasharray="1 3" />
           <rect x={W - PAD.r + 2} y={Y(last.close) - 8} width={PAD.r - 4} height={16} rx={2} fill={UP} />
-          <text x={W - PAD.r + 5} y={Y(last.close) + 4} fontSize={10} fill={L ? '#fff' : '#050e1a'} fontWeight={700}>{fmt(last.close)}</text>
+          <text x={W - PAD.r + 5} y={Y(last.close) + 4} fontSize={11} fill={L ? '#fff' : '#050e1a'} fontWeight={700}>{fmt(last.close)}</text>
         </g>
       )}
 
@@ -146,7 +150,7 @@ export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Prop
         const kijRight = kf + textW(kijText) > W - PAD.r
         const kijStart = kijRight ? kt - textW(kijText) : kf
         return (
-          <g key={`note${i}`} fontSize={11} fontWeight={700}>
+          <g key={`note${i}`} fontSize={12} fontWeight={700}>
             <text x={a} y={y} fill={BAD}>{badText}</text>
             <line x1={Math.max(endBad, a + textW(badText)) + 6} x2={kijStart - 6} y1={y - 4} y2={y - 4} stroke={c.DIM} strokeDasharray="4 3" />
             <text x={kijRight ? kt : kf} y={y} textAnchor={kijRight ? 'end' : 'start'} fill={KIJ_TXT}>{kijText}</text>
@@ -165,8 +169,8 @@ export function MarginKijitsuChart({ bars, margin, runs, c, theme, today }: Prop
           </g>
         )
       })}
-      <text x={PAD.l + 2} y={mTop + 10} fontSize={10} fill={SYS}>買残（濃＝制度・薄＝一般）</text>
-      <text x={W - PAD.r + 6} y={mTop + 10} fontSize={10} fill={c.DIM}>{(mMax / 1.15 / 1e6).toFixed(1)}M</text>
+      <text x={PAD.l + 2} y={mTop + 10} fontSize={11} fill={SYS}>買残（濃＝制度・薄＝一般）</text>
+      <text x={W - PAD.r + 6} y={mTop + 10} fontSize={11} fill={c.DIM}>{(mMax / 1.15 / 1e6).toFixed(1)}M</text>
     </svg>
   )
 }

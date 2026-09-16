@@ -5,7 +5,7 @@
 // 🔴 表示は管理者のみ（ShieldView 側で出し分ける）。
 // 🔵 登録するのは**銘柄コードだけ**（Firestore `users/{uid}/data/marginKijitsu`）。
 //    チャートは開くたびに最新のデータで描く＝「更新」は株価と信用残を取り直すだけ。
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type React from 'react'
 import type { User } from 'firebase/auth'
 import { cy } from '../utils/cyberTheme'
@@ -31,6 +31,23 @@ export const MAX_ENTRIES = 20
 /** 同時に読み込むカードの数。20件を一度に取りに行くと株価APIが詰まるので絞る。 */
 const CONCURRENCY = 4
 
+/** 要素の実寸（px）。ResizeObserver で追う。 */
+function useElementSize<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null)
+  const [size, setSize] = useState({ width: 0, height: 0 })
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => {
+      const { width, height } = e.contentRect
+      setSize((s) => (Math.abs(s.width - width) < 1 && Math.abs(s.height - height) < 1 ? s : { width, height }))
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, size] as const
+}
+
 const docPath = (uid: string) => `users/${uid}/data/marginKijitsu`
 const nowIso = () => new Date().toISOString()
 const fmtTime = (iso: string) => {
@@ -47,6 +64,8 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
   const [stock, setStock] = useState<{ weeks: string[] } | null>(null)
+  // 🔵 2026-09-16：カード1枚＝右の表示領域の高さいっぱい（ユーザー指示「高さはフルで使ってよい」）
+  const [listRef, listSize] = useElementSize<HTMLDivElement>()
 
   const save = useCallback(async (next: Entry[]) => {
     setEntries(next)
@@ -205,9 +224,9 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
       background: c.BG, backgroundImage: c.SCAN, fontFamily: c.FONT, overflow: isMobile ? 'auto' : 'hidden',
     }}>
       {left}
-      <div style={{
+      <div ref={listRef} style={{
         flex: 1, minWidth: 0, minHeight: 0, overflowY: isMobile ? 'visible' : 'auto',
-        padding: isMobile ? 14 : 16, paddingBottom: isMobile ? 130 : 70,
+        padding: isMobile ? 14 : 16, paddingBottom: isMobile ? 130 : 16,
         display: 'flex', flexDirection: 'column', gap: 14,
       }}>
         {entries === null ? (
@@ -221,6 +240,7 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
           </div>
         ) : entries.map((e) => (
           <Card key={e.code} entry={e} state={cards[e.code]} c={c} theme={theme} btn={btn}
+            height={isMobile ? undefined : Math.max(420, listSize.height)}
             onRefresh={() => refresh(e.code)} onRemove={() => remove(e.code)} />
         ))}
       </div>
@@ -228,7 +248,9 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   )
 }
 
-function Card({ entry, state, c, theme, btn, onRefresh, onRemove }: {
+function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height }: {
+  /** PCはカードの高さ（px）＝表示領域いっぱい。スマホは指定なし（チャートは固定の高さ） */
+  height?: number
   entry: Entry
   state: CardState | undefined
   c: ReturnType<typeof cy>
@@ -238,12 +260,14 @@ function Card({ entry, state, c, theme, btn, onRefresh, onRemove }: {
   onRemove: () => void
 }) {
   const [confirm, setConfirm] = useState(false)
+  const [chartRef, chartSize] = useElementSize<HTMLDivElement>()
   const loading = !state || state.status === 'loading'
   const ready = state?.status === 'ready' ? state : null
 
   return (
     <section style={{
       flexShrink: 0, border: `1px solid ${c.BORDER}`, borderRadius: 6, background: c.HDBG, padding: 12,
+      boxSizing: 'border-box', height, display: 'flex', flexDirection: 'column',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: c.GREEN, letterSpacing: '0.08em' }}>
@@ -264,14 +288,19 @@ function Card({ entry, state, c, theme, btn, onRefresh, onRemove }: {
         )}
       </div>
 
-      {state?.status === 'error' && <div style={{ fontSize: 12, color: '#ff8a80' }}>{state.message}</div>}
-      {loading && <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: c.DIM }}>チャートを作っています…</div>}
-      {ready && (
-        <>
-          <MarginKijitsuChart bars={ready.bars} margin={ready.margin} runs={ready.runs} c={c} theme={theme} />
-          <Summary ready={ready} c={c} />
-        </>
-      )}
+      {/* 🔴 この枠は常に置く（大きさを測るため。読み込み後にだけ作ると ResizeObserver が付かない） */}
+      <div ref={chartRef} style={{
+        flex: height ? 1 : undefined, minHeight: 0, height: height ? undefined : 380, overflow: 'hidden',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {state?.status === 'error' && <div style={{ fontSize: 12, color: '#ff8a80' }}>{state.message}</div>}
+        {loading && <div style={{ fontSize: 11, color: c.DIM }}>チャートを作っています…</div>}
+        {ready && chartSize.width > 0 && chartSize.height > 0 && (
+          <MarginKijitsuChart bars={ready.bars} margin={ready.margin} runs={ready.runs} c={c} theme={theme}
+            width={Math.floor(chartSize.width)} height={Math.floor(chartSize.height)} />
+        )}
+      </div>
+      {ready && <Summary ready={ready} c={c} />}
     </section>
   )
 }
