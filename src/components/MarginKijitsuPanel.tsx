@@ -13,8 +13,8 @@ import { PoiroboPixel } from './PoiroboPixel'
 import { MarginKijitsuChart } from './MarginKijitsuChart'
 import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import {
-  findRuns, loadMarginIndex, loadMarginNames, loadMarginSeries, loadWeeklyBars, normalizeCode, MIN_WEEKS,
-  type MarginRun, type MarginWeek, type WeeklyBar,
+  findRuns, loadMarginIndex, loadMarginNames, loadMarginSeries, loadWeeklyBars, normalizeCode, badgeOf, MIN_WEEKS,
+  type MarginBadge, type MarginRun, type MarginWeek, type WeeklyBar,
 } from '../utils/marginKijitsu'
 
 type Props = { theme: 'dark' | 'light'; isMobile: boolean; user: User | null }
@@ -48,6 +48,11 @@ function useElementSize<T extends HTMLElement>() {
   return [ref, size] as const
 }
 
+const todayYmd = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const docPath = (uid: string) => `users/${uid}/data/marginKijitsu`
 const nowIso = () => new Date().toISOString()
 const fmtTime = (iso: string) => {
@@ -66,6 +71,31 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   const [stock, setStock] = useState<{ weeks: string[] } | null>(null)
   // 🔵 2026-09-16：カード1枚＝右の表示領域の高さいっぱい（ユーザー指示「高さはフルで使ってよい」）
   const [listRef, listSize] = useElementSize<HTMLDivElement>()
+  // 🔵 2026-09-16：左の一覧から押すとそのカードへスクロール。いま見えているカードを一覧で光らせる
+  const cardEls = useRef(new Map<string, HTMLElement>())
+  const [activeCode, setActiveCode] = useState<string | null>(null)
+  const entryKey = entries?.map((e) => e.code).join(',') ?? ''
+
+  useEffect(() => {
+    if (!entryKey) return
+    const io = new IntersectionObserver((items) => {
+      const shown = items.filter((i) => i.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+      const code = (shown[0]?.target as HTMLElement | undefined)?.dataset.code
+      if (code) setActiveCode(code)
+    }, { root: isMobile ? null : listRef.current, threshold: [0.5, 0.8] })
+    cardEls.current.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [entryKey, isMobile, listRef])
+
+  const jumpTo = (code: string) => {
+    setActiveCode(code)
+    cardEls.current.get(code)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  const today = todayYmd()
+  const badgeFor = (code: string): MarginBadge => {
+    const st = cards[code]
+    return st?.status === 'ready' ? badgeOf(st.runs, st.margin[st.margin.length - 1]?.w ?? null, today) : null
+  }
 
   const save = useCallback(async (next: Entry[]) => {
     setEntries(next)
@@ -184,17 +214,78 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
     </form>
   )
 
+  const hasEntries = !!entries && entries.length > 0
+
+  const badge = (b: MarginBadge) => b && (
+    <span style={{
+      flexShrink: 0, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+      color: b === 'kijitsu' ? '#82b1ff' : '#ff8a80',
+    }}>● {b === 'kijitsu' ? '期日' : '悪化'}</span>
+  )
+
+  /** 登録銘柄の一覧（PC＝縦のリスト／スマホ＝横に並ぶチップ）。 */
+  const nav = hasEntries && (
+    isMobile ? (
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 2, background: c.BG,
+        display: 'flex', gap: 6, overflowX: 'auto', padding: '8px 14px',
+        borderBottom: `1px solid ${c.BORDER}`,
+      }}>
+        {entries.map((e) => {
+          const on = e.code === activeCode
+          return (
+            <button key={e.code} type="button" onClick={() => jumpTo(e.code)} style={{
+              flexShrink: 0, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: c.FONT, fontSize: 11,
+              padding: '5px 10px', borderRadius: 999, display: 'flex', gap: 6, alignItems: 'center',
+              border: `1px solid ${on ? c.GREEN : c.BORDER}`, background: on ? c.HDBG : 'none',
+              color: on ? c.GREEN : c.DESC,
+            }}>
+              {e.code} {e.name}{badge(badgeFor(e.code))}
+            </button>
+          )
+        })}
+      </div>
+    ) : (
+      <div style={{
+        width: '100%', maxWidth: 380, flex: '1 1 auto', minHeight: 0, overflowY: 'auto',
+        borderTop: `1px solid ${c.BORDER}`, paddingTop: 8,
+        display: 'flex', flexDirection: 'column', gap: 2,
+      }}>
+        {entries.map((e) => {
+          const on = e.code === activeCode
+          return (
+            <button key={e.code} type="button" onClick={() => jumpTo(e.code)} style={{
+              cursor: 'pointer', textAlign: 'left', fontFamily: c.FONT, fontSize: 12,
+              padding: '7px 10px', borderRadius: 4, border: 'none',
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: on ? c.HDBG : 'none', color: on ? c.GREEN : c.DESC,
+              boxShadow: on ? `inset 2px 0 0 ${c.GREEN}` : 'none',
+            }}>
+              <span style={{ width: 10, flexShrink: 0, color: c.GREEN }}>{on ? '▶' : ''}</span>
+              <span style={{ flexShrink: 0, letterSpacing: '0.06em' }}>{e.code}</span>
+              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+              {badge(badgeFor(e.code))}
+            </button>
+          )
+        })}
+      </div>
+    )
+  )
+
   const left = (
     <div style={{
       width: isMobile ? '100%' : 500, flexShrink: 0, minHeight: 0,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: isMobile ? 12 : 22, padding: isMobile ? '16px 14px 10px' : 24,
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      // 一覧があるときは上から詰める（一覧が残りの高さを使う）
+      justifyContent: hasEntries && !isMobile ? 'flex-start' : 'center',
+      gap: isMobile ? 12 : 18, padding: isMobile ? '16px 14px 10px' : 24,
       borderRight: isMobile ? 'none' : `1px solid ${c.BORDER}`,
       borderBottom: isMobile ? `1px solid ${c.BORDER}` : 'none',
     }}>
-      {/* 🔴 サイズは24の倍数にする。端数だと1ドットが割り切れず、行ごとに継ぎ目が出る（2026-08-11 に踏んだ） */}
-      <PoiroboPixel size={isMobile ? 96 : 216} animate alt="" />
-      <div style={{ textAlign: 'center' }}>
+      {/* 🔴 サイズは24の倍数にする。端数だと1ドットが割り切れず、行ごとに継ぎ目が出る（2026-08-11 に踏んだ）
+          🔵 登録が増えたら小さくして、一覧に高さを譲る */}
+      <PoiroboPixel size={isMobile ? 96 : (entries?.length ?? 0) > 4 ? 120 : 216} animate alt="" />
+      <div style={{ textAlign: 'center', flexShrink: 0 }}>
         <div style={{
           fontSize: 11, fontWeight: 700, letterSpacing: '0.24em', color: c.GREEN,
           textShadow: theme === 'dark' ? `0 0 10px ${c.GREEN}55` : 'none',
@@ -210,11 +301,12 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
           {message.text}
         </div>
       )}
-      <div style={{ fontSize: 10, color: c.DIM, lineHeight: 1.8, textAlign: 'center' }}>
+      <div style={{ fontSize: 10, color: c.DIM, lineHeight: 1.8, textAlign: 'center', flexShrink: 0 }}>
         登録 {entries?.length ?? 0} / {MAX_ENTRIES} 件{full && '（上限です）'}<br />
         信用残（JPX 週次）の蓄積 {weeksText}<br />
         毎週たまっていき、それ以前の期間は判定できません
       </div>
+      {!isMobile && nav}
     </div>
   )
 
@@ -224,10 +316,14 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
       background: c.BG, backgroundImage: c.SCAN, fontFamily: c.FONT, overflow: isMobile ? 'auto' : 'hidden',
     }}>
       {left}
+      {isMobile && nav}
       <div ref={listRef} style={{
         flex: 1, minWidth: 0, minHeight: 0, overflowY: isMobile ? 'visible' : 'auto',
         padding: isMobile ? 14 : 16, paddingBottom: isMobile ? 130 : 16,
         display: 'flex', flexDirection: 'column', gap: 14,
+        // PC はカード1枚ずつ吸い付いて止まる
+        scrollSnapType: isMobile ? undefined : 'y mandatory',
+        scrollPaddingTop: isMobile ? 60 : 16,
       }}>
         {entries === null ? (
           <div style={{ fontSize: 12, color: c.DIM }}>読み込み中…</div>
@@ -241,6 +337,7 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
         ) : entries.map((e) => (
           <Card key={e.code} entry={e} state={cards[e.code]} c={c} theme={theme} btn={btn}
             height={isMobile ? undefined : Math.max(420, listSize.height)}
+            innerRef={(el) => { if (el) cardEls.current.set(e.code, el); else cardEls.current.delete(e.code) }}
             onRefresh={() => refresh(e.code)} onRemove={() => remove(e.code)} />
         ))}
       </div>
@@ -248,7 +345,9 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   )
 }
 
-function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height }: {
+function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerRef }: {
+  /** 一覧から飛ぶための要素の登録 */
+  innerRef: (el: HTMLElement | null) => void
   /** PCはカードの高さ（px）＝表示領域いっぱい。スマホは指定なし（チャートは固定の高さ） */
   height?: number
   entry: Entry
@@ -265,8 +364,8 @@ function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height }: {
   const ready = state?.status === 'ready' ? state : null
 
   return (
-    <section style={{
-      flexShrink: 0, border: `1px solid ${c.BORDER}`, borderRadius: 6, background: c.HDBG, padding: 12,
+    <section ref={innerRef} data-code={entry.code} style={{
+      flexShrink: 0, scrollSnapAlign: 'start', border: `1px solid ${c.BORDER}`, borderRadius: 6, background: c.HDBG, padding: 12,
       boxSizing: 'border-box', height, display: 'flex', flexDirection: 'column',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>

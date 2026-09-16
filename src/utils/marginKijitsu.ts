@@ -1,4 +1,4 @@
-// 信用期日（ロボ口座画面・2026-09-16 新設）
+// 信用期日（ぽいロボ画面＝旧ロボ口座・2026-09-16 新設）
 //
 // 考え方（ユーザーの見立て）＝**株価が下げる中で信用買いが積み上がった期間は、その半年後に
 // 制度信用の期日が来て売りが出尽くし、需給が良くなる**。次の買い場を見極めるための目安。
@@ -201,4 +201,25 @@ export function normalizeCode(input: string): string | null {
     .trim()
     .toUpperCase()
   return /^[0-9][0-9A-Z]{3}$/.test(s) ? s : null
+}
+
+// ── 一覧の印 ─────────────────────────────────────────
+
+export type MarginBadge = 'kijitsu' | 'bad' | null
+
+/** 期日の目安の前後に何日広げて「期日」の印を付けるか。 */
+export const BADGE_MARGIN_DAYS = 14
+
+/**
+ * 一覧に付ける印（純粋関数）。
+ * - 'kijitsu'＝期日の目安の期間中、またはその前後2週間（BADGE_MARGIN_DAYS）
+ * - 'bad'＝悪化期間が**最新の週まで続いている**（まだ積み上がっている最中）
+ * 両方に当たるときは期日を優先する（近い将来の出来事のほうが見落とせないため）。
+ */
+export function badgeOf(runs: MarginRun[], latestWeek: string | null, today: string): MarginBadge {
+  const inKijitsu = runs.some((r) =>
+    addDays(r.kijitsuFrom, -BADGE_MARGIN_DAYS) <= today && today <= addDays(r.kijitsuTo, BADGE_MARGIN_DAYS))
+  if (inKijitsu) return 'kijitsu'
+  if (latestWeek && runs.some((r) => r.to === latestWeek)) return 'bad'
+  return null
 }

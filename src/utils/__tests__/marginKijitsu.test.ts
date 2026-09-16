@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  addMonths, toBusinessDayBack, closeOfWeek, findRuns, normalizeCode,
+  addMonths, toBusinessDayBack, closeOfWeek, findRuns, normalizeCode, badgeOf,
   type MarginWeek, type WeeklyBar,
 } from '../marginKijitsu'
 
@@ -97,5 +97,26 @@ describe('normalizeCode', () => {
     expect(normalizeCode('７０１３')).toBe('7013')
     expect(normalizeCode('701')).toBeNull()
     expect(normalizeCode('70130')).toBeNull()
+  })
+})
+
+describe('badgeOf', () => {
+  const run = {
+    from: '2026-03-30', to: '2026-05-15', weeks: 6,
+    sysLongFrom: 1, sysLongTo: 2, closeFrom: 2, closeTo: 1,
+    kijitsuFrom: '2026-09-30', kijitsuTo: '2026-11-13',
+  }
+  it('期日の目安の前後2週間は「期日」', () => {
+    expect(badgeOf([run], '2026-09-11', '2026-09-16')).toBe('kijitsu')   // 14日前
+    expect(badgeOf([run], '2026-09-11', '2026-09-15')).toBeNull()        // 15日前
+    expect(badgeOf([run], '2026-09-11', '2026-11-27')).toBe('kijitsu')   // 14日後
+    expect(badgeOf([run], '2026-09-11', '2026-11-28')).toBeNull()
+  })
+  it('悪化が最新の週まで続いていれば「悪化」', () => {
+    expect(badgeOf([run], '2026-05-15', '2026-05-18')).toBe('bad')
+    expect(badgeOf([run], '2026-05-22', '2026-05-25')).toBeNull()
+  })
+  it('悪化が無ければ印なし', () => {
+    expect(badgeOf([], '2026-09-11', '2026-09-16')).toBeNull()
   })
 })
