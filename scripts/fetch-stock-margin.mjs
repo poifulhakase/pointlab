@@ -4,6 +4,7 @@
 // 使い方:
 //   node scripts/fetch-stock-margin.mjs 3793          # ドリコム（画面に出すだけ）
 //   node scripts/fetch-stock-margin.mjs 9843 7974     # 複数指定可
+//   node scripts/fetch-stock-margin.mjs 7013 --raw    # 🆕 指定銘柄を週ごとのJSONで標準出力へ（制度買残つき・期日の見立て用）
 //   node scripts/fetch-stock-margin.mjs --json        # 🆕 主力＋候補を public/data/stock_margin.json へ書き出す
 //
 // 出どころ: JPX「銘柄別信用取引週末残高」（全上場銘柄・毎週公表・PDF）
@@ -48,6 +49,7 @@ const WEEKS = 5
 
 const args = process.argv.slice(2)
 const JSON_MODE = args.includes('--json')
+const RAW_MODE = args.includes('--raw')
 const codes = args.filter((a) => !a.startsWith('--'))
 
 /** TARGET の主力の銘柄コード（--json のとき）。 */
@@ -105,13 +107,14 @@ function rowFromAnchor(items, anchor, secCode) {
 
   if (nums.length < 12 || nums.some(v => v === null)) return null
 
-  const [, systemLong, , negotiableLong, , systemShort, , negotiableShort,
+  const [systemLongChg, systemLong, , negotiableLong, , systemShort, , negotiableShort,
          longChg, longBal, shortChg, shortBal] = nums
 
   // 検算：合計 = 制度 + 一般
   const consistent = systemLong + negotiableLong === longBal && systemShort + negotiableShort === shortBal
 
-  return { name, longBal, longChg, shortBal, shortChg, consistent }
+  // 🆕 2026-09-16：制度買残も返す＝制度信用は6か月が期日なので、買いが積み上がった週の半年後が売りの出尽くしの目安になる
+  return { name, longBal, longChg, shortBal, shortChg, systemLong, systemLongChg, consistent }
 }
 
 /**
@@ -175,6 +178,15 @@ for (const p of pdfs) {
 }
 
 const weeks = Object.keys(perWeek).sort()          // 古い順
+
+if (RAW_MODE) {
+  const raw = {}
+  for (const t of targets) {
+    raw[t.code] = weeks.map((w) => ({ w, ...perWeek[w][secOf(t.code)] })).filter((r) => r.longBal != null)
+  }
+  console.log('@@RAW@@' + JSON.stringify(raw))
+  process.exit(0)
+}
 
 if (!JSON_MODE) {
   for (const t of targets) {
