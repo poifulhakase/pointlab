@@ -7,15 +7,14 @@ describe('getRoboJobsForDate', () => {
   const sat = new Date(2026, 7, 15)   // 土曜
   const sun = new Date(2026, 7, 16)   // 日曜
 
-  it('平日は判断・撮影・保存・データ更新2回が出る', () => {
+  // 🔴 2026-09-16：ロボ口座の廃止で「判断」「撮影」を外した
+  it('平日は保存・データ更新2回が出る（判断・撮影は無い）', () => {
     const jobs = getRoboJobsForDate(wed)
-    expect(jobs.map(j => j.id)).toEqual(['judge', 'capture', 'archive', 'data1', 'data2'])
-    expect(jobs.find(j => j.id === 'judge')?.startTime).toBe('15:00')
+    expect(jobs.map(j => j.id)).toEqual(['archive', 'data1', 'data2'])
   })
 
-  it('PCが要るのは撮影だけ', () => {
-    const jobs = getRoboJobsForDate(wed)
-    expect(jobs.filter(j => j.needsPc).map(j => j.id)).toEqual(['capture'])
+  it('PCを開けておく予定は無い', () => {
+    expect(getRoboJobsForDate(wed).filter(j => j.needsPc)).toEqual([])
   })
 
   it('土曜は週次だけ、日曜は何も無い', () => {

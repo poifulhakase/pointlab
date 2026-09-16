@@ -1,19 +1,15 @@
 // ぽいロボが自動で動く時刻（2026-08-13）
 //
-// 🔵 なぜカレンダーに出すか＝**PCを開けておく必要がある時間**があるため（ユーザー要望）。
-//    チャート撮影だけはローカルPCのタスクスケジューラで動くので、PCが落ちていると撮れない。
-//    それ以外は GitHub Actions なので、PCの状態に関係なく動く。
+// 🔵 なぜカレンダーに出すか＝自動処理がいつ動くかを見えるようにするため（ユーザー要望）。
+//    当初は「PCを開けておく時間（チャート撮影）」を知らせるのが主目的だった。
 //
 // 🔴 ここは**実際の設定の写し**。時刻を書き換えるときは必ず両方を直すこと。
-//    - `.github/workflows/fetch-data.yml`（判断・データ更新・週次）
+//    - `.github/workflows/fetch-data.yml`（データ更新・週次）
 //    - `.github/workflows/archive-intraday.yml`（5分足アーカイブ）
-//    - Windows タスクスケジューラ `poirobo-capture-chart`（チャート撮影）
 //
-// 🔴 judge（判断）の 15:00 は **13:00 に起動してジョブの中で待っている**。
-//    GitHub の schedule は時刻を保証せず、実測で1時間41分ずれたことがあるため
-//    （詳細は fetch-data.yml のコメント）。カレンダーには**判断が出る時刻**を書く。
-
-export type RoboJobKind = 'judge' | 'capture' | 'archive' | 'data' | 'weekly'
+// 🔴 2026-09-16：ロボ口座を廃止したので「AI判断（15:00）」と「チャート撮影（16:00・PC要）」を外した。
+//    いま PC を開けておく必要がある予定は無い（needsPc は将来のために残してある）。
+export type RoboJobKind = 'archive' | 'data' | 'weekly'
 
 export type RoboJob = {
   id: string
@@ -31,17 +27,6 @@ export type RoboJob = {
 }
 
 const WEEKDAY_JOBS: RoboJob[] = [
-  {
-    id: 'judge', kind: 'judge', title: 'AI判断（ロボ口座）', startTime: '15:00', minutes: 25, needsPc: false,
-    desc: '需給データと日足・週足のチャートを見て、翌営業日の建玉を決めて Chatwork に通知する。'
-      + '🔴 執行は引成なので、通知を見て 15:25 までに発注する。',
-  },
-  {
-    id: 'capture', kind: 'capture', title: 'チャート撮影', startTime: '16:00', minutes: 10, needsPc: true,
-    desc: '🔴 **PCを開けておく必要がある**（ローカルのタスクスケジューラで動く）。'
-      + 'TradingView から日経225先物の日足・週足を撮って Chatwork に送る。'
-      + 'この画像は**翌営業日の判断**で読まれる。落ちていた場合は次に起動したときに撮る。',
-  },
   {
     id: 'archive', kind: 'archive', title: '5分足アーカイブ', startTime: '16:30', minutes: 10, needsPc: false,
     desc: '5分足は60日しか遡れないので、消える前に貯めておく。数日止まっても後から自動で埋まる。',
@@ -64,8 +49,6 @@ const SATURDAY_JOBS: RoboJob[] = [
 ]
 
 export const ROBO_JOB_META: Record<RoboJobKind, { icon: string; label: string }> = {
-  judge:   { icon: '🤖', label: '判断' },
-  capture: { icon: '📷', label: '撮影' },
   archive: { icon: '🗄', label: '保存' },
   data:    { icon: '⚙️', label: 'データ' },
   weekly:  { icon: '📊', label: '週次' },

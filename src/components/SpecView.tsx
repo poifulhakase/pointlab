@@ -31,7 +31,7 @@ const SPEC_SECTIONS = [
           'カレンダー（ホーム）：月/週/日ビュー＋ メモ・スケジュール管理',
           'チャート：TradingView チャート（日経225・ドル円・米国債）',
           '**ブンセキ**（需給分析・ViewMode \'quant\'・旧「シールド」★2026-08-16 改称）：需給 / 環境 / 現物 / 先物 の4タブ ＋ AI分析プロンプト自動生成',
-          '**ロボ口座**（ViewMode \'shield\'・旧「エンジン」★2026-08-16 改称）：口座 / 成績 / 履歴 の3タブ＝疑似トレード。🔴 表示は管理者のみ',
+          '**ロボ口座**（ViewMode \'shield\'・旧「エンジン」★2026-08-16 改称）：🔴 **2026-09-16 に疑似トレードを廃止**し、中身は「信用期日」（銘柄コードを入れると信用買いの積み上がりと6か月後の期日の目安をチャートにする）。タブは無い。🔴 表示は管理者のみ',
           '周期（セクターローテーション・ViewMode \'sector\'）：独立ページ。🔴 **入口は Believe の右下タブ「サイクル」に一本化**（★2026-08-16。カレンダー左サイドバーの円形バナーは削除した）',
           '研究室：資料閲覧 / 設定（テーマ切替・アカウント）/ お問い合わせ / ぽいロボ コネクト（予約通話システム）',
           'Firebase Auth（Googleログイン）によるメモ・設定のクロスデバイス同期',
@@ -635,6 +635,10 @@ const SPEC_SECTIONS = [
     icon: '🤖',
     title: 'ロボ口座ビュー（ShieldView）',
     content: [
+      {
+        type: 'para' as const,
+        text: '🔴 **2026-09-16：疑似トレード「ロボ口座」を廃止しました**（ユーザー指示「すべて空にしたい・機能も削除」）。消したもの＝口座 / 成績 / 履歴 のタブ、平日の AI 判断（Actions の 13:00 起動）と答え合わせ、チャート撮影（タスクスケジューラ `poirobo-capture-chart`・`poirobo-robo-trade` は登録解除）、Chatwork 通知、`robo_account.json` / `robo_calibration.json` / `robo_logs/`、関連スクリプト（robo-trade / robo-local / robo-outcome / roboAccount / roboData / roboPrompt / llmDecide / shadowDecide / readPosition / capture-tradingview / chatwork / market-open / roboCalendar）。🔵 キャラ（PoiroboPixel）だけ残し、中身を**信用期日**（`MarginKijitsuPanel`）に置き換えた：銘柄コードを入れて「作成」→右に週足＋買残（制度/一般）のチャートを登録。赤＝制度買残が増え株価が下がった週が3週以上続いた期間、青＝その6か月後（休場日は前の営業日）。登録は銘柄コードだけ（Firestore `users/{uid}/data/marginKijitsu`）で、開くたびに最新で描く。「更新」は取り直し・「削除」は登録から外す。データ＝`scripts/archive-margin-weekly.mjs` が JPX の週次PDF（全銘柄）を毎回の fetch-data で `public/data/margin_weekly/` に貯める（公開は直近5週だけで、消えた週は取り直せない）。株価の週足は `/api/stocks-daily?only=weekly&code=`（関数の枠が満杯なので相乗り）。🔵 株探の週次信用残は有料（プレミアム限定）なので使わない（ユーザー判断）。以下は廃止前の記録。',
+      },
       {
         type: 'para' as const,
         text: 'フッターナビの「エンジン」タブからアクセスできるビューです。🔴 2026-08-09 に中身が入れ替わりました＝旧「保有中ポジションの管理・出口戦略」（AIに保有画面の画像を渡して出口を判断させる道具）は機能ごと削除され、いまは疑似トレード「ロボ口座」の表示画面です（ロボ口座 / 成績 / 履歴 の3タブ・表示は管理者のみ）。詳細は下の「疑似トレード『ロボ口座』の新設」を参照。★2026-08-14 に、この節が旧仕様のまま残っていたのを是正しました。',

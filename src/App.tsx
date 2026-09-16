@@ -4,7 +4,6 @@ import { flushSync } from 'react-dom'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
 // 🔴 シールド画面のタブの並び順は、ここ1か所だけで決める（QuantView のDOM順もこれに合わせる）
 import { QUANT_TABS, QUANT_LABELS, type QuantTabKey } from './utils/quantTabs'
-import { ENGINE_TABS, ENGINE_LABELS, type EngineTabKey } from './utils/engineTabs'
 import { SECTOR_LABELS, type SectorTabKey } from './utils/sectorTabs'
 import { canOpenAdminPages, isAdminOnlyView } from './utils/pageAccess'
 import { useCalendar } from './hooks/useCalendar'
@@ -34,7 +33,6 @@ import { useCommunityAccess } from './hooks/useCommunityAccess'
 import { usePushNotifications } from './hooks/usePushNotifications'
 import { useMaintenance } from './hooks/useMaintenance'
 import { useBooking } from './hooks/useBooking'
-import { demoMode } from './utils/roboDemo'
 import { isPreviewMode } from './utils/previewMode'
 
 // ── コード分割: 重いビューは初回アクセス時にのみロード ─────────────────
@@ -272,8 +270,6 @@ export default function App() {
   //    シールド画面（'quant'）= 分析 + 周期 ／ エンジン画面（'shield'）= エンジン + 環境 + 現物 + 先物。
   //    環境/現物/先物 の中身は QuantView のままなので、エンジン画面からも QuantView を使う。
   const [quantTab,          setQuantTab]          = useState<QuantTabKey>('bunseki')
-  // エンジン画面（ロボ口座）のタブ（2026-08-11 追加・ロボ口座／成績／履歴）
-  const [engineTab,         setEngineTab]         = useState<EngineTabKey>('account')
   const [sectorTab,         setSectorTab]         = useState<SectorTabKey>('sector')
   const [legalTab,          setLegalTab]          = useState<'privacy' | 'disclaimer' | 'terms'>('privacy')
 const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
@@ -301,10 +297,9 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
 
   // 🚧 ページ「閲覧」用のゲート。一時公開フラグが立っている間は非メンバー
   //   （管理者の「非メンバーとして確認」中も含む）でも会員限定ページを閲覧可。
-  // 🔵 開発時の ?demo=... はデザイン確認用。demoMode() は本番ビルドでは常に null。
   // 🔵 プレビュー（?preview=合言葉）は本番でも有効。中身はダミー・書き込みは全部止めてある
   //    （utils/previewMode.ts）。
-  const canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES || !!demoMode() || isPreviewMode()
+  const canViewMemberPages = isMember || TEMP_PUBLIC_ALL_PAGES || isPreviewMode()
 
   // 🔴 **管理者限定ページ**（2026-08-22 ユーザー指示）＝ロボ口座（'shield'）と
   //    地下室（'daytrade' / 'swing'）。それまでは会員も見られたが、**会員にも見せない**に変更。
@@ -745,14 +740,15 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="quant" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
-          {/* ロボ口座（疑似トレード・旧「エンジン」）1枚。内部識別子は 'shield' のまま。
+          {/* ロボ口座（旧「エンジン」）1枚。内部識別子は 'shield' のまま。
+              🔴 2026-09-16: 疑似トレードを廃止し、中身は信用期日（MarginKijitsuPanel）。
               🔴 2026-08-09: 旧ポジション分析を削除したので、市場データ（環境/現物/先物）は
               シールド側へ戻した。この画面はタブを持たない。 */}
           {/* 🔴 2026-08-22: 会員限定 → **管理者限定**（ユーザー指示）。
               非管理者には鍵画面も出さない（上の useEffect が研究室へ戻す）＝
               「会員になれば見られる」と読めてしまう案内を出さないため。 */}
           {cal.view === 'shield' && canViewAdminPages && (
-            <ErrorBoundary label="ロボ口座"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} engineTab={engineTab} /></Suspense></ErrorBoundary>
+            <ErrorBoundary label="ロボ口座"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
           )}
 
           {/* セクターローテーション（周期）＝独立ページ。入口はサイドバーのバナー。
@@ -889,7 +885,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
       {/* コミュニティ限定ビュー（カレンダー/ブンセキ/ロボ口座）は非メンバー時に非表示。
           chart（TradingView 無料公開）と legal は全員公開のため isMember 条件の外に出す。 */}
       {(((isCalView || cal.view === 'quant' || cal.view === 'momentum' || cal.view === 'watch' || cal.view === 'sector') && canViewMemberPages)
-        || ((cal.view === 'shield' || cal.view === 'daytrade' || cal.view === 'swing') && canViewAdminPages)
+        || ((cal.view === 'daytrade' || cal.view === 'swing') && canViewAdminPages)
         || cal.view === 'chart' || cal.view === 'legal') && (
         <div style={{ ...styles.floatSubBarBase, bottom: footerCollapsed ? 34 : 'calc(var(--header-height) + env(safe-area-inset-bottom, 0px) + 10px)', ...(isNeonBar ? { background: NEON_BG, border: `1px solid ${NEON_BRDR}`, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } : {}) }}>
           <div style={styles.floatSubBar} className={isNeonBar ? undefined : 'glass'}>
@@ -976,26 +972,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
                 ))}
               </>
             )}
-            {/* ロボ口座＝ 口座 / 成績 / 履歴（2026-08-11 追加・2026-08-16 に画面名とタブ名を改称） */}
-            {cal.view === 'shield' && (
-              <>
-                {ENGINE_TABS.map((tab) => (
-                  <button
-                    key={tab}
-                    style={{
-                      ...styles.floatTab,
-                      color: isEngineNeon ? (engineTab === tab ? NEON_CLR : NEON_DIM) : undefined,
-                      ...(engineTab === tab
-                        ? isEngineNeon
-                          ? { background: NEON_ACT, boxShadow: `0 0 14px ${NEON_CLR}30` }
-                          : styles.floatTabActive
-                        : {}),
-                    }}
-                    onClick={() => setEngineTab(tab)}
-                  >{ENGINE_LABELS[tab]}</button>
-                ))}
-              </>
-            )}
+            {/* 🔴 2026-09-16：ロボ口座の廃止で 口座 / 成績 / 履歴 のタブを削除（'shield' はタブを持たない） */}
             {/* 周期＝セクター / 個別（🔴 スマホだけ。PC は3列とも見えている・2026-08-11 追加） */}
             {cal.view === 'legal' && (
               <>

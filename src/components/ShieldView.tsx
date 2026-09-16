@@ -3,49 +3,36 @@ import type { User } from 'firebase/auth'
 import { themeVars } from '../utils/themeVars'
 import { cy } from '../utils/cyberTheme'
 import { isAdminEmail } from '../utils/admin'
-import { RoboAccountPanel } from './RoboAccountPanel'
-import { demoMode } from '../utils/roboDemo'
-import type { EngineTabKey } from '../utils/engineTabs'
+import { MarginKijitsuPanel } from './MarginKijitsuPanel'
 
 // ──────────────────────────────────────────────────────────────────────────
 // ロボ口座ビュー（内部識別子 'shield'・旧「エンジン」）
 //
-// 🔴 2026-08-09: 旧「ポジション分析」機能（AIにプロンプトを渡して出口を判断させる道具）を
-//    削除し、疑似トレード（ロボ口座）で置き換えた（ユーザー指示・仕様書 §3 の削除タスク）。
-//    削除したもの: ShieldPanel / MemoPanel / SHIELD_PROMPT_TEMPLATE / buildShieldData /
-//                  SHIELD_STATUS_LINES と、それらを呼ぶ配線。
-//    🔴 localStorage `poical-shield-memo` と Firestore `users/{uid}/data/shieldMemo` は
-//       **消していない**（過去のレポートを失わせないため。読み出し口を落としただけ）。
+// 🔴 2026-09-16: **疑似トレード（ロボ口座）を廃止**（ユーザー指示「すべて空にしたい・機能も削除」）。
+//    口座・成績・履歴のタブ、判断（Actions）、チャート撮影（タスクスケジューラ）、
+//    Chatwork 通知、robo_account.json / robo_logs を消した。**キャラだけ残し**、
+//    中身は「信用期日」（MarginKijitsuPanel）に置き換えた。
+// 🔴 2026-08-09: 旧「ポジション分析」機能を削除（localStorage `poical-shield-memo` と
+//    Firestore `users/{uid}/data/shieldMemo` は消していない）。
 //
 // 🔴 内部識別子 'shield' と このファイル名は据え置き（CLAUDE.md の不変ルール）。
-// 🔴 ロボ口座の表示は管理者のみ（robo_account.json は公開データのため。設計書 §10.2）。
+// 🔴 表示は管理者のみ。
 // ──────────────────────────────────────────────────────────────────────────
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
   user: User | null
-  /** 表示するタブ（ロボ口座／成績／履歴）。並び順は engineTabs.ts が単一情報源。 */
-  engineTab?: EngineTabKey
 }
 
-export function ShieldView({ theme, isMobile, user, engineTab }: Props) {
+export function ShieldView({ theme, isMobile, user }: Props) {
   const tv = themeVars(theme)
   const c = cy(theme)
 
   return (
     <div style={{ ...s.wrap, ...tv }}>
-      <div style={{
-        flex: 1, minHeight: 0, overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        // 🔴 2026-08-11: ここで下に余白を空けるのをやめた（ユーザー指摘）。
-        //    パネルの背景がその手前で切れるため、**下に色の違う板が出て見えていた**。
-        //    浮いているタブに末尾が隠れないための逃げは、
-        //    スクロールする面の側（RoboAccountPanel の paddingBottom）で確保している。
-      }}>
-        {/* 🔵 デザイン確認時（開発時の ?demo=...）は未ログインでも中身を出す。
-            demoMode() は本番ビルドでは常に null なので、この枝は落ちる。 */}
-        {isAdminEmail(user?.email) || demoMode() ? (
-          <RoboAccountPanel theme={theme} isMobile={isMobile} engineTab={engineTab} />
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {isAdminEmail(user?.email) ? (
+          <MarginKijitsuPanel theme={theme} isMobile={isMobile} user={user} />
         ) : (
           <div style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -56,10 +43,6 @@ export function ShieldView({ theme, isMobile, user, engineTab }: Props) {
               fontFamily: c.FONT, color: c.DESC, fontSize: 13, lineHeight: 2,
               border: `1px solid ${c.BORDER}`, borderRadius: 6, background: c.HDBG, padding: 20,
             }}>
-              <div style={{ color: c.GREEN, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', marginBottom: 10 }}>
-                ▌ ROBO ACCOUNT
-              </div>
-              日経平均ブル／ベアの疑似トレードを記録している画面です。<br />
               現在は開発者のみが閲覧できます。
             </div>
           </div>

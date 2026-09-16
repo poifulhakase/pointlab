@@ -202,6 +202,29 @@ async function fetchStockSector(code) {
 
 // ── 日経先物（Yahoo Finance NK=F） ────────────────────────────
 
+/**
+ * 週足（個別銘柄）。🔴 日付は**JSTの日付**にする（Yahoo の週足の時刻は JST 0時＝UTC では前日になる）。
+ * 最後の1本は今週の途中の足（終値は最新値）。
+ */
+function parseYahooWeekly(json) {
+  const r = json?.chart?.result?.[0]
+  if (!r) return []
+  const q = r.indicators?.quote?.[0] ?? {}
+  const out = []
+  ;(r.timestamp ?? []).forEach((t, i) => {
+    const c = q.close?.[i]
+    if (c == null) return
+    out.push({
+      date:  new Date((t + 9 * 3600) * 1000).toISOString().slice(0, 10),
+      open:  Math.round((q.open?.[i] ?? c) * 10) / 10,
+      high:  Math.round((q.high?.[i] ?? c) * 10) / 10,
+      low:   Math.round((q.low?.[i] ?? c) * 10) / 10,
+      close: Math.round(c * 10) / 10,
+    })
+  })
+  return out
+}
+
 function parseYahooOhlcv(json) {
   const r = json?.chart?.result?.[0]
   if (!r) return []
@@ -278,6 +301,26 @@ export default async function handler(req, res) {
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // 🆕 2026-09-16：個別銘柄の週足（ロボ口座画面の「信用期日」用）。重いスクレイプ前に短絡。
+  //    🔴 関数の枠（12個）が満杯なので専用ルートは作らず、ここに相乗りさせる。
+  if (req.query?.only === 'weekly') {
+    const code = String(req.query.code || '').toUpperCase()
+    if (!/^[0-9][0-9A-Z]{3}$/.test(code)) return res.status(400).json({ error: '銘柄コードは4桁で指定してください' })
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}.T?interval=1wk&range=2y`
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' }, signal: AbortSignal.timeout(10000) })
+      if (r.status === 404) return res.status(404).json({ error: '銘柄が見つかりません' })
+      if (!r.ok) return res.status(502).json({ error: `株価を取得できませんでした（${r.status}）` })
+      const data = parseYahooWeekly(await r.json())
+      if (data.length === 0) return res.status(404).json({ error: '株価がありません' })
+      res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400')
+      return res.status(200).json({ code, updatedAt: new Date().toISOString(), data })
+    } catch (e) {
+      console.error('[stocks-daily?only=weekly]', e)
+      return res.status(500).json({ error: '株価の取得に失敗しました' })
+    }
   }
 
   // NT倍率用 TOPIX のみ（軽量・独立）。重いスクレイプ前に短絡。

@@ -51,12 +51,12 @@ Set-Location 'C:\Project\PointLab\stock-calendar'; npm test
 # データ取得（JPX Excel + nikkei225jp.com → public/data/*.json）
 Set-Location 'C:\Project\PointLab\stock-calendar'; npm run fetch-data
 
-# ロボ口座（疑似トレード）
-npm run backtest-robo                          # 対照群の期待成績を測る
-node scripts/robo-trade.mjs --dry --no-llm     # 配線確認（LLM を呼ばない・書き込まない）
-npm run robo-trade                             # 本番（ANTHROPIC_API_KEY / CHATWORK_* が要る）
-npm run capture-chart -- --login               # 🔴 ローカル専用。初回だけ TradingView に手動ログイン
-npm run capture-chart                          # 🔴 ローカル専用。チャートを撮って Chatwork へ投稿
+# 信用残の週次蓄積（全銘柄 → public/data/margin_weekly/。未取得の週だけ・数秒）
+npm run archive-margin
+node scripts/fetch-stock-margin.mjs 7013       # 1銘柄の直近5週を画面に出す（--raw で JSON）
+
+# 研究用（ロボ口座の廃止後も残している決定論戦略のバックテスト）
+npm run backtest-robo
 
 # バックテスト再計算（→ public/data/backtest_results.json）
 Set-Location 'C:\Project\PointLab\stock-calendar'; npm run backtest
@@ -98,23 +98,15 @@ npx firebase-tools deploy --only firestore:rules --project pointlab-96310
   **エンジン＝ポジション分析＝`'shield'`（ShieldView / shieldPrompt.ts）**。
   識別子・localStorage キー・ファイル名は**据え置き**（保存レポートの中身が入れ替わるため）。改名しないこと。
 - **`vercel --prod` 後は必ず commit & push**（本番=リポジトリを保つ）。
-- 🔴 **ロボ口座（疑似トレード）の不変ルール**
-  - 決定論ロジック（対照群シグナル・損切り）は **`src/utils/robotStrategy.mjs` が単一情報源**。式を二重定義しない。
-  - **損切りは LLM に決めさせない**（ATR20×VIX連動の純関数）。建てた瞬間に確定させ、後から動かさない。
-  - **`robo_account.json`（AIの口座）は実保有に同期する**（2026-08-09 ユーザー決定で方針変更）。
-    ただし🔴 **同期由来の約定（`exit_reason === 'sync'`）は成績の集計から必ず除外する**。
-    ここを混ぜると AI の成績と人の介入が分離できず、Go/No-Go も対照群比較も無意味になる。
-    二重同期は `last_synced_file_id` で防ぎ、読み取り結果は実価格と突き合わせて桁誤りを弾く。
-  - **判断が取れない日は hold で記録する**。決定論の結果で埋めない（判断器を混ぜない）。
-  - **判断は1日1回**（**平日08:30 JST のみ**＝寄り付き前。2026-08-10 に 19:30 から移動）。
-    19:30 / 21:30 はデータ取得の回なので判断させない（同じ材料で2回判断しないため）。
-    🔴 移動で**記録される日付が1日ずれた**（材料も執行タイミングも同じ）。日付で成績を追うときの境目。
-  - 🔴 **東証の休場日は判断も通知もしない**。休場日に hold を記録すると、判断した日と
-    何もしなかった日が混ざって成績の分母が壊れる。
-  - 🔴 **休場判定は `src/utils/marketCalendar.mjs` が単一情報源**。アプリ（`marketHolidays.ts`）は
-    これを re-export するだけ。二箇所に書くと片方だけ直して祝日に発注する事故になる。
-    イベントは `src/utils/macroCalendar.ts` を Node の型ストリップで直接読む（表を二重管理しない）。
-  - **`.tradingview-session/` と `.captures/` はコミットしない**（認証情報と実口座の残高）。
+- 🔴 **ロボ口座（疑似トレード）は 2026-09-16 に廃止**（ユーザー指示）。判断・撮影・通知・口座データ・関連スクリプトは削除済み。
+  タスクスケジューラ `poirobo-capture-chart` / `poirobo-robo-trade` も登録解除した。**戻すなら git の履歴から**（`robo-trade.mjs` など）。
+  - 画面（`'shield'`・名前は「ロボ口座」のまま）の中身は**信用期日**（`MarginKijitsuPanel`・管理者のみ）。
+  - 🔴 **信用期日のデータは貯めたぶんしか無い**＝`scripts/archive-margin-weekly.mjs` が JPX の週次PDFを週ごとのファイルで貯める。
+    JPX は**直近5週しか公開しない**ので、蓄積を止めると**その週は二度と取れない**（鮮度チェックに入れてある）。
+  - 🔴 **週のファイルは書き換えない**（銘柄ごとのファイルにしない＝毎週4,000ファイルを書き換えて Git が膨らむため）。
+  - 🔴 判定は**制度信用の買残**（一般信用は期日が6か月ではない）。株探の週次信用残は**有料**なので使わない（ユーザー判断）。
+  - 決定論ロジック `src/utils/robotStrategy.mjs` と休場判定 `src/utils/marketCalendar.mjs` は研究・カレンダーで使うので残してある（単一情報源のルールはそのまま）。
+  - **`.tradingview-session/` と `.captures/` はコミットしない**（手元のものは 2026-09-16 に削除済み）。
 
 ---
 
