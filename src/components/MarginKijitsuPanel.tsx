@@ -174,6 +174,18 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
     setCards((m) => { const n = { ...m }; delete n[code]; return n })
   }
 
+  /** 上下の入れ替え（2026-09-16 ユーザー指示）。dir=-1 で上へ、+1 で下へ。 */
+  const move = async (code: string, dir: -1 | 1) => {
+    if (!entries) return
+    const i = entries.findIndex((x) => x.code === code)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= entries.length) return
+    const next = [...entries]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    await save(next)
+    requestAnimationFrame(() => cardEls.current.get(code)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
   const refresh = async (code: string) => {
     if (!entries) return
     await loadCard(code, true)
@@ -251,10 +263,11 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
         borderTop: `1px solid ${c.BORDER}`, paddingTop: 8,
         display: 'flex', flexDirection: 'column', gap: 2,
       }}>
-        {entries.map((e) => {
+        {entries.map((e, idx) => {
           const on = e.code === activeCode
           return (
-            <button key={e.code} type="button" onClick={() => jumpTo(e.code)} style={{
+            <div key={e.code} role="button" tabIndex={0} onClick={() => jumpTo(e.code)}
+              onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); jumpTo(e.code) } }} style={{
               cursor: 'pointer', textAlign: 'left', fontFamily: c.FONT, fontSize: 12,
               padding: '7px 10px', borderRadius: 4, border: 'none',
               display: 'flex', alignItems: 'center', gap: 8,
@@ -265,7 +278,8 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
               <span style={{ flexShrink: 0, letterSpacing: '0.06em' }}>{e.code}</span>
               <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
               {badge(badgeFor(e.code))}
-            </button>
+              <MoveButtons c={c} first={idx === 0} last={idx === entries.length - 1} onMove={(d) => move(e.code, d)} />
+            </div>
           )
         })}
       </div>
@@ -305,6 +319,7 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
         登録 {entries?.length ?? 0} / {MAX_ENTRIES} 件{full && '（上限です）'}<br />
         信用残（JPX 週次）の蓄積 {weeksText}<br />
         毎週たまっていき、それ以前の期間は判定できません
+        {!uid && <><br /><span style={{ color: '#ff8a80' }}>ログインしていないため、登録は保存されません</span></>}
       </div>
       {!isMobile && nav}
     </div>
@@ -334,8 +349,9 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
           }}>
             まだ登録した銘柄はありません。<br />左の欄に銘柄コードを入れて「作成」を押してください。
           </div>
-        ) : entries.map((e) => (
+        ) : entries.map((e, i) => (
           <Card key={e.code} entry={e} state={cards[e.code]} c={c} theme={theme} btn={btn}
+            moveButtons={<MoveButtons c={c} first={i === 0} last={i === entries.length - 1} onMove={(d) => move(e.code, d)} />}
             height={isMobile ? undefined : Math.max(420, listSize.height)}
             innerRef={(el) => { if (el) cardEls.current.set(e.code, el); else cardEls.current.delete(e.code) }}
             onRefresh={() => refresh(e.code)} onRemove={() => remove(e.code)} />
@@ -345,7 +361,8 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   )
 }
 
-function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerRef }: {
+function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerRef, moveButtons }: {
+  moveButtons: React.ReactNode
   /** 一覧から飛ぶための要素の登録 */
   innerRef: (el: HTMLElement | null) => void
   /** PCはカードの高さ（px）＝表示領域いっぱい。スマホは指定なし（チャートは固定の高さ） */
@@ -374,6 +391,7 @@ function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerR
         </span>
         <span style={{ fontSize: 10, color: c.DIM }}>更新 {fmtTime(entry.updatedAt)}</span>
         <span style={{ flex: 1 }} />
+        {moveButtons}
         <button type="button" onClick={onRefresh} disabled={loading} style={{ ...btn, opacity: loading ? 0.5 : 1 }}>
           {loading ? '読み込み中…' : '更新'}
         </button>
@@ -437,5 +455,30 @@ function Summary({ ready, c }: { ready: Extract<CardState, { status: 'ready' }>;
         赤＝制度買残が増え株価が下がった週が{MIN_WEEKS}週以上続いた期間 ／ 青＝その6か月後（休場日は前の営業日）。状態の記述で、売買の推奨ではありません。
       </div>
     </div>
+  )
+}
+
+/** 上下の入れ替えボタン。親の行（一覧・カード）のクリックに伝えない。 */
+function MoveButtons({ c, first, last, onMove }: {
+  c: ReturnType<typeof cy>
+  first: boolean
+  last: boolean
+  onMove: (dir: -1 | 1) => void
+}) {
+  const b = (label: string, dir: -1 | 1, disabled: boolean) => (
+    <button type="button" aria-label={dir < 0 ? '上へ' : '下へ'} disabled={disabled}
+      onClick={(ev) => { ev.stopPropagation(); onMove(dir) }}
+      onKeyDown={(ev) => ev.stopPropagation()}
+      style={{
+        cursor: disabled ? 'default' : 'pointer', background: 'none', border: `1px solid ${c.BORDER}`,
+        borderRadius: 3, width: 22, height: 20, padding: 0, fontSize: 10, lineHeight: 1,
+        color: c.DESC, opacity: disabled ? 0.3 : 1, fontFamily: c.FONT,
+      }}>{label}</button>
+  )
+  return (
+    <span style={{ display: 'inline-flex', gap: 3, flexShrink: 0 }}>
+      {b('▲', -1, first)}
+      {b('▼', 1, last)}
+    </span>
   )
 }

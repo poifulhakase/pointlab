@@ -7,8 +7,9 @@ import { ADMIN_ONLY_VIEWS, isAdminOnlyView, canOpenAdminPages } from '../pageAcc
  *    （それまでロボ口座は会員限定・地下室はゲートすら無かった）。
  */
 describe('管理者限定ページ', () => {
-  it('対象は ロボ口座・デイトレード・スイングトレード の3つ', () => {
-    expect([...ADMIN_ONLY_VIEWS].sort()).toEqual(['daytrade', 'shield', 'swing'])
+  // 🔵 2026-09-16: ぽいロボ（shield）は会員限定へ移した
+  it('対象は デイトレード・スイングトレード の2つ', () => {
+    expect([...ADMIN_ONLY_VIEWS].sort()).toEqual(['daytrade', 'swing'])
   })
 
   it('管理者は開ける', () => {
@@ -26,13 +27,14 @@ describe('管理者限定ページ', () => {
   })
 
   it('会員限定ページ（カレンダー・ブンセキ等）は管理者限定に含めない', () => {
-    for (const v of ['month', 'week', 'day', 'quant', 'momentum', 'watch', 'sector', 'support', 'chart']) {
+    for (const v of ['month', 'week', 'day', 'quant', 'shield', 'momentum', 'watch', 'sector', 'support', 'chart']) {
       expect(isAdminOnlyView(v)).toBe(false)
     }
   })
 
   it('管理者限定のビュー名を判定できる', () => {
-    expect(isAdminOnlyView('shield')).toBe(true)
+    // 🔵 2026-09-16: ぽいロボ（shield）は会員限定へ移した
+    expect(isAdminOnlyView('shield')).toBe(false)
     expect(isAdminOnlyView('daytrade')).toBe(true)
     expect(isAdminOnlyView('swing')).toBe(true)
   })

@@ -81,15 +81,19 @@ function AnalysisIcon() {
 }
 
 // ── ナビ定義 ─────────────────────────────────────────
-const MAIN_VIEWS = [
+type MainView = { label: string; targetView: ViewMode; isActive: (v: ViewMode) => boolean; icon: React.ReactNode; adminOnly?: boolean }
+
+// 🔵 adminOnly＝管理者にだけタブを出す（2026-09-16 時点で該当なし。ぽいロボは会員限定へ移した）
+const MAIN_VIEWS: MainView[] = [
   { label: 'カレンダー', targetView: 'month'   as ViewMode, isActive: isCalendarView,                    icon: <CalendarIcon /> },
   // 🔴 2026-08-16 に表示名を変えた（'quant'＝**ブンセキ**（旧シールド）／'shield'＝**ロボ口座**（旧エンジン））。
   //    内部識別子 'quant'/'shield' と localStorage キーは据え置き（保存レポートの中身が入れ替わるため）。
   { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: 'ブンセキ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <AnalysisIcon /> },
-  // 🔴 2026-08-22: ロボ口座は**管理者限定**。会員にもタブごと出さない（adminOnly）
+  // 🔵 2026-09-16: ぽいロボ（旧ロボ口座）は**会員限定**に戻した（ユーザー指示）。ほかの会員限定画面と同じく
+  //    タブは全員に見せ、会員でなければ鍵の画面を出す（2026-08-22〜09-16 は管理者限定＝adminOnly だった）
   // 🔴 2026-09-16: 表示名を「ロボ口座」→**ぽいロボ**に変更（疑似トレードを廃止し、中身は信用期日。ユーザー指示）
-  { label: 'ぽいロボ',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon />, adminOnly: true },
+  { label: 'ぽいロボ',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon /> },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 

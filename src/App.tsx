@@ -744,11 +744,12 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               🔴 2026-09-16: 疑似トレードを廃止し、中身は信用期日（MarginKijitsuPanel）。
               🔴 2026-08-09: 旧ポジション分析を削除したので、市場データ（環境/現物/先物）は
               シールド側へ戻した。この画面はタブを持たない。 */}
-          {/* 🔴 2026-08-22: 会員限定 → **管理者限定**（ユーザー指示）。
-              非管理者には鍵画面も出さない（上の useEffect が研究室へ戻す）＝
-              「会員になれば見られる」と読めてしまう案内を出さないため。 */}
-          {cal.view === 'shield' && canViewAdminPages && (
-            <ErrorBoundary label="ぽいロボ"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
+          {/* 🔵 2026-09-16: 管理者限定 → **会員限定**（ユーザー指示）。ブンセキと同じく、会員でなければ鍵の画面。
+              （2026-08-22〜09-16 は管理者限定で、非管理者には鍵画面も出さなかった） */}
+          {cal.view === 'shield' && (
+            canViewMemberPages
+              ? <ErrorBoundary label="ぽいロボ"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
+              : <CommunityLockScreen user={user} authLoading={authLoading} memberLoading={memberLoading} view="shield" onGoToConnect={() => setViewWithTransition('support')} />
           )}
 
           {/* セクターローテーション（周期）＝独立ページ。入口はサイドバーのバナー。

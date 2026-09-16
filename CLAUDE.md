@@ -100,7 +100,7 @@ npx firebase-tools deploy --only firestore:rules --project pointlab-96310
 - **`vercel --prod` 後は必ず commit & push**（本番=リポジトリを保つ）。
 - 🔴 **ロボ口座（疑似トレード）は 2026-09-16 に廃止**（ユーザー指示）。判断・撮影・通知・口座データ・関連スクリプトは削除済み。
   タスクスケジューラ `poirobo-capture-chart` / `poirobo-robo-trade` も登録解除した。**戻すなら git の履歴から**（`robo-trade.mjs` など）。
-  - 画面（`'shield'`・名前は「ロボ口座」のまま）の中身は**信用期日**（`MarginKijitsuPanel`・管理者のみ）。
+  - 画面（`'shield'`・表示名は「**ぽいロボ**」）の中身は**信用期日**（`MarginKijitsuPanel`・**会員限定**＝2026-09-16 に管理者限定から変更）。
   - 🔴 **信用期日のデータは貯めたぶんしか無い**＝`scripts/archive-margin-weekly.mjs` が JPX の週次PDFを週ごとのファイルで貯める。
     JPX は**直近5週しか公開しない**ので、蓄積を止めると**その週は二度と取れない**（鮮度チェックに入れてある）。
   - 🔴 **週のファイルは書き換えない**（銘柄ごとのファイルにしない＝毎週4,000ファイルを書き換えて Git が膨らむため）。

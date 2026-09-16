@@ -217,7 +217,8 @@ export function ChartSkeleton() {
   )
 }
 
-// ── ロボ口座（ShieldView）スケルトン ───────────────────
+// ── ぽいロボ（ShieldView＝信用期日）スケルトン ───────────────────
+// 🔵 2026-09-16: 疑似トレード廃止に合わせて描き直した＝左にキャラ・入力欄・登録一覧、右にチャートのカード
 
 export function ShieldSkeleton() {
   return (
@@ -225,46 +226,51 @@ export function ShieldSkeleton() {
       display: 'grid', gridTemplateColumns: '500px 1fr', gap: 14,
       padding: 14, height: '100%', boxSizing: 'border-box',
     }}>
-      {/* 左：ロボ口座パネル */}
-      <Panel>
-        <PanelHeader label="POIROBO ▸ ENGINE" />
-        {/* AI起動セクション */}
-        <div style={{ fontFamily: MONO, fontSize: 9, color: CY_DIM, letterSpacing: '0.1em', marginTop: 8 }}>
-          ▌ AI起動
+      {/* 左：キャラ・入力欄・登録一覧 */}
+      <Panel style={{ alignItems: 'center' }}>
+        <div style={{
+          width: 120, height: 120, marginTop: 16, borderRadius: 16,
+          background: 'rgba(0,229,255,0.08)', border: `1px solid ${CY_BORDER}`,
+        }} />
+        <div style={{ fontFamily: MONO, fontSize: 10, color: CY_ACCENT, letterSpacing: '0.2em', marginTop: 10 }}>
+          MARGIN CYCLE / 信用期日
         </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'space-evenly', marginTop: 6 }}>
-          {['CG', 'GE', 'CL', 'DS'].map(label => (
-            <div key={label} style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'rgba(0,229,255,0.1)', border: `1px solid ${CY_BORDER}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: MONO, fontSize: 10, color: CY_DIM,
-            }}>{label}</div>
+        <div style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 320, marginTop: 8 }}>
+          <div style={{ flex: 1, height: 32, borderRadius: 4, border: `1px solid ${CY_BORDER}`, background: CY_PANEL }} />
+          <div style={{
+            width: 56, height: 32, borderRadius: 4, border: `1px solid ${CY_ACCENT}`,
+            fontFamily: MONO, fontSize: 10, color: CY_ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>作成</div>
+        </div>
+        <div style={{ width: '100%', maxWidth: 380, marginTop: 12, borderTop: `1px solid ${CY_BORDER}`, paddingTop: 8 }}>
+          {[...Array(5)].map((_, i) => (
+            <FakeRow key={i} cols={[12, 58, 16]} />
           ))}
         </div>
-        {/* プロンプトボタン */}
-        <div style={{
-          marginTop: 8, padding: '8px 0', borderRadius: 6,
-          background: 'rgba(0,229,255,0.12)', border: `1px solid ${CY_BORDER}`,
-          color: CY_ACCENT, fontFamily: MONO, fontSize: 10, fontWeight: 700,
-          textAlign: 'center', letterSpacing: '0.1em',
-        }}>
-          [ AIプロンプトをコピー ]
-        </div>
-        {/* SYSTEM LOG */}
-        <div style={{ fontFamily: MONO, fontSize: 9, color: CY_DIM, letterSpacing: '0.1em', marginTop: 8 }}>
-          ▸ SYSTEM LOG
-        </div>
-        {[...Array(6)].map((_, i) => (
-          <FakeRow key={i} cols={[8, 50, 30]} />
-        ))}
       </Panel>
 
-      {/* 右：ポジション分析レポート */}
+      {/* 右：チャートのカード */}
       <Panel>
-        <PanelHeader label="POSITION REPORT" dim />
-        {[...Array(14)].map((_, i) => (
-          <FakeRow key={i} cols={i === 3 || i === 7 ? [30, 20, 50] : [45, 25, 30]} variant={i % 4 === 0 ? 'mixed' : 'cyan'} />
+        <PanelHeader label="7013 ▸ MARGIN CYCLE" />
+        <div style={{ flex: 1, position: 'relative', minHeight: 200 }}>
+          <svg viewBox="0 0 600 200" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+            {/* 悪化期間（赤）と期日の目安（青） */}
+            <rect x={150} y={0} width={70} height={200} fill="rgba(255,120,100,0.14)" />
+            <rect x={470} y={0} width={70} height={200} fill="rgba(80,120,255,0.18)" />
+            {CHART_SKELETON_CANDLES.map((c, i) => (
+              <g key={i}>
+                <line x1={c.x} y1={c.high} x2={c.x} y2={c.low} stroke={c.col} strokeWidth="1.5" />
+                <rect x={c.x - 5} y={c.top} width={10} height={c.height} fill={c.col} stroke={c.col} />
+              </g>
+            ))}
+            {/* 下段：買残 */}
+            {[...Array(24)].map((_, i) => (
+              <rect key={`m${i}`} x={i * 22 + 4} y={180 - (10 + (i * 7) % 18)} width={10} height={10 + (i * 7) % 18} fill="rgba(247,166,0,0.4)" />
+            ))}
+          </svg>
+        </div>
+        {[...Array(2)].map((_, i) => (
+          <FakeRow key={i} cols={[40, 30, 30]} />
         ))}
       </Panel>
     </div>

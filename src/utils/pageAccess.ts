@@ -10,12 +10,12 @@
 /**
  * 🔴 **管理者だけが開けるページ**（2026-08-22 ユーザー指示）。
  *
- * - `shield`（ロボ口座）＝信用期日（2026-09-16 に疑似トレードから置き換え）。開発者の道具
  * - `daytrade` / `swing`（地下室）＝検証途中の生の記録
  *
  * 🔴 **会員にも見せない**。それまでは会員限定だったが、ユーザー判断で一段上げた。
  */
-export const ADMIN_ONLY_VIEWS: readonly string[] = ['shield', 'daytrade', 'swing']
+// 🔵 2026-09-16: `shield`（ぽいロボ＝信用期日）は会員限定へ移したので外した（ユーザー指示）
+export const ADMIN_ONLY_VIEWS: readonly string[] = ['daytrade', 'swing']
 
 export function isAdminOnlyView(view: string): boolean {
   return ADMIN_ONLY_VIEWS.includes(view)
