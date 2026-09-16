@@ -1,4 +1,5 @@
-// ロボ口座画面の中身＝信用期日（2026-09-16 新設・ロボ口座の疑似トレードは廃止）。
+// 「ぽいロボ」画面（旧ロボ口座・内部識別子 'shield'）の中身＝信用期日（2026-09-16 新設・疑似トレードは廃止）。
+// 🔵 登録は20件まで（MAX_ENTRIES）。開いたときは4件ずつ読む（CONCURRENCY）。
 //
 // 左：ぽいロボ（キャラ）＋ 銘柄コードの入力 ／ 右：登録した銘柄のチャート（削除・更新できる）。
 // 🔴 表示は管理者のみ（ShieldView 側で出し分ける）。
@@ -24,6 +25,11 @@ type CardState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; bars: WeeklyBar[]; margin: MarginWeek[]; runs: MarginRun[]; weeks: number }
+
+/** 登録できる銘柄の上限（2026-09-16 ユーザー指示）。 */
+export const MAX_ENTRIES = 20
+/** 同時に読み込むカードの数。20件を一度に取りに行くと株価APIが詰まるので絞る。 */
+const CONCURRENCY = 4
 
 const docPath = (uid: string) => `users/${uid}/data/marginKijitsu`
 const nowIso = () => new Date().toISOString()
@@ -67,7 +73,11 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
         if (!alive) return
         const list = (snap.exists() ? (snap.data().entries as Entry[] | undefined) : undefined) ?? []
         setEntries(list)
-        list.forEach((e) => loadCard(e.code))
+        // 🔵 4件ずつ順番に読む（読み込み中の表示は全カードに先に出しておく）
+        setCards(Object.fromEntries(list.map((e) => [e.code, { status: 'loading' } as CardState])))
+        const queue = list.map((e) => e.code)
+        const worker = async () => { for (let code = queue.shift(); code && alive; code = queue.shift()) await loadCard(code) }
+        Array.from({ length: CONCURRENCY }, worker)
       })
       .catch(() => { if (alive) { setEntries([]); setMessage({ text: '登録済みの銘柄を読み込めませんでした', error: true }) } })
     return () => { alive = false }
@@ -78,6 +88,10 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
     if (!entries || busy) return
     const code = normalizeCode(input)
     if (!code) { setMessage({ text: '銘柄コードは4桁で入れてください（例 7013）', error: true }); return }
+    if (entries.length >= MAX_ENTRIES) {
+      setMessage({ text: `登録は${MAX_ENTRIES}件までです。不要な銘柄を削除してから追加してください`, error: true })
+      return
+    }
     if (entries.some((x) => x.code === code)) {
       setMessage({ text: `${code} は登録済みです。最新にするなら「更新」を押してください`, error: true })
       return
@@ -127,6 +141,8 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
     padding: '4px 10px', fontFamily: c.FONT, fontSize: 11, color: c.DESC, letterSpacing: '0.06em',
   }
 
+  const full = (entries?.length ?? 0) >= MAX_ENTRIES
+
   const form = (
     <form onSubmit={add} style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 320 }}>
       <input
@@ -142,9 +158,9 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
           fontFamily: c.FONT, fontSize: 14, letterSpacing: '0.1em', outline: 'none',
         }}
       />
-      <button type="submit" disabled={busy || !entries} style={{
+      <button type="submit" disabled={busy || !entries || full} style={{
         ...btn, border: `1px solid ${c.GREEN}`, color: c.GREEN, fontWeight: 700,
-        padding: '8px 14px', opacity: busy ? 0.5 : 1,
+        padding: '8px 14px', opacity: busy || full ? 0.5 : 1,
       }}>{busy ? '作成中…' : '作成'}</button>
     </form>
   )
@@ -176,6 +192,7 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
         </div>
       )}
       <div style={{ fontSize: 10, color: c.DIM, lineHeight: 1.8, textAlign: 'center' }}>
+        登録 {entries?.length ?? 0} / {MAX_ENTRIES} 件{full && '（上限です）'}<br />
         信用残（JPX 週次）の蓄積 {weeksText}<br />
         毎週たまっていき、それ以前の期間は判定できません
       </div>

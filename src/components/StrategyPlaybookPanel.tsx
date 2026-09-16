@@ -202,7 +202,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
           {[
             { icon: <CalIcon />,         nm: 'ぽいロボ レーダー',   ds: 'この先「何が起きるか」を知り、大事な日は前日に通知' },
             { icon: <ShieldGuardIcon />,  nm: 'ぽいロボ ブンセキ',   ds: 'いま「買っていい地合いか」を需給で確かめる' },
-            { icon: <EngineIcon />,       nm: 'ぽいロボ ロボ口座',   ds: '信用買いの積み上がりと期日の目安を見る（開発者のみ）' },
+            { icon: <EngineIcon />,       nm: 'ぽいロボ',            ds: '信用買いの積み上がりと期日の目安を見る（開発者のみ）' },
             { icon: <img src={`${import.meta.env.BASE_URL}hakase.webp`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />, nm: 'ぽいロボ コネクト', ds: '迷ったら「ぽいふる博士に相談」できる' },
           ].map(({ icon, nm, ds }) => (
             <div key={nm} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: isMobile ? '13px 14px' : '16px 18px', borderRadius: 12, border: `1px solid ${c.TAGBDR}`, background: c.TAGBG }}>
@@ -263,7 +263,7 @@ export function StrategyPlaybookPanel({ theme, isMobile, onClose }: Props) {
 
     // ════ 道具：ぽいロボ ロボ口座（信用期日）════
     // 🔴 2026-09-16：疑似トレードを廃止して中身を「信用期日」に置き換えた（画面名はそのまま）。
-    { id: 'shield-tool', node: slide('ぽいロボ ロボ口座', '信用買いの期日を見る・MARGIN CYCLE', toolBody(
+    { id: 'shield-tool', node: slide('ぽいロボ', '信用買いの期日を見る・MARGIN CYCLE', toolBody(
       <>銘柄コードを入れると、<b style={{ color: c.TEXT }}>下げの中で信用買いが積み上がった期間</b>と、その<b style={{ color: c.TEXT }}>6か月後（制度信用の期日の目安）</b>をチャートにします。</>,
       '見るのは「売りが出尽くす時期」',
       <>積み上がった信用買いは期日に決済されやすく、そこを過ぎると需給が軽くなる、という見立てです。🔴 <b style={{ color: c.TEXT }}>信用残は2026年8月から貯めているので、それより前は判定できません。</b>🔴 <b style={{ color: c.TEXT }}>いまは開発者のみが閲覧できます。</b>状態の記述で、売買の推奨ではありません。</>,

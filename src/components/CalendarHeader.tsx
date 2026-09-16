@@ -88,7 +88,8 @@ const MAIN_VIEWS = [
   { label: 'チャート',   targetView: 'chart'   as ViewMode, isActive: (v: ViewMode) => v === 'chart',    icon: <ChartWaveIcon /> },
   { label: 'ブンセキ',   targetView: 'quant'   as ViewMode, isActive: (v: ViewMode) => v === 'quant',    icon: <AnalysisIcon /> },
   // 🔴 2026-08-22: ロボ口座は**管理者限定**。会員にもタブごと出さない（adminOnly）
-  { label: 'ロボ口座',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon />, adminOnly: true },
+  // 🔴 2026-09-16: 表示名を「ロボ口座」→**ぽいロボ**に変更（疑似トレードを廃止し、中身は信用期日。ユーザー指示）
+  { label: 'ぽいロボ',   targetView: 'shield'  as ViewMode, isActive: (v: ViewMode) => v === 'shield',   icon: <RobotIcon />, adminOnly: true },
   { label: '研究室',     targetView: 'support' as ViewMode, isActive: (v: ViewMode) => v === 'support',  icon: <LabIcon /> },
 ]
 

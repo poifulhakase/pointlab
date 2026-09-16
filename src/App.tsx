@@ -748,7 +748,7 @@ const [chartSettingsOpen, setChartSettingsOpen] = useState(false)
               非管理者には鍵画面も出さない（上の useEffect が研究室へ戻す）＝
               「会員になれば見られる」と読めてしまう案内を出さないため。 */}
           {cal.view === 'shield' && canViewAdminPages && (
-            <ErrorBoundary label="ロボ口座"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
+            <ErrorBoundary label="ぽいロボ"><Suspense fallback={<ViewLoader />}><ShieldView theme={theme} isMobile={isMobile} user={user} /></Suspense></ErrorBoundary>
           )}
 
           {/* セクターローテーション（周期）＝独立ページ。入口はサイドバーのバナー。
