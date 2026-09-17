@@ -1,13 +1,13 @@
 {
-  "updatedAt": "2026-09-17T15:11:29.277Z",
+  "updatedAt": "2026-09-17T17:13:18.786Z",
   "data": [
     {
       "time": "2026-09-17",
-      "close": 155.76,
-      "change": 0.63,
-      "changePct": 0.41,
-      "ma5": 154.79,
-      "ma5dev": 0.63
+      "close": 156.1,
+      "change": 0.97,
+      "changePct": 0.63,
+      "ma5": 154.86,
+      "ma5dev": 0.8
     },
     {
       "time": "2026-09-16",
@@ -694,8 +694,8 @@
       "close": 160.38,
       "change": 0.21,
       "changePct": 0.13,
-      "ma5": 160.23,
-      "ma5dev": 0.09
+      "ma5": null,
+      "ma5dev": null
     },
     {
       "time": "2026-06-08",
@@ -716,8 +716,8 @@
     {
       "time": "2026-06-05",
       "close": 160.29,
-      "change": 0.3,
-      "changePct": 0.19,
+      "change": null,
+      "changePct": null,
       "ma5": null,
       "ma5dev": null
     }
