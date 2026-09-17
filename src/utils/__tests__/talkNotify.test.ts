@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildChatworkBody, buildNotifyText, cleanAiText, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyRoute, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -204,6 +204,39 @@ describe('talk-notify', () => {
 
   // 🔴 通知は「読ませたい相手のいる場所」へ送る。ここが逆になると、
   //    相手に自分あての通知が流れる（見せたくないものが相手の画面に出る）ので固定する。
+  // 🆕 2026-09-17：LINEの月200通を使い切った → 自分あては Chatwork へ（相手あては LINE のまま）
+  describe('pickNotifyRoute', () => {
+    const peer = `C${'1'.repeat(32)}`
+    const self = `C${'2'.repeat(32)}`
+    const base = { selfNames: 'ひろ', peerTarget: peer, selfTarget: self, selfChatworkRoom: '123456' }
+
+    it('相手が送ったら、自分あては Chatwork', () => {
+      expect(pickNotifyRoute({ ...base, name: 'なみ' })).toEqual({ via: 'chatwork', to: '123456' })
+    })
+
+    it('自分が送ったら、相手あては LINE のまま（Chatwork にしない）', () => {
+      expect(pickNotifyRoute({ ...base, name: 'ひろ' })).toEqual({ via: 'line', to: peer })
+    })
+
+    it('知らない名前も自分あて＝Chatwork へ倒す（相手へ誤送しない）', () => {
+      expect(pickNotifyRoute({ ...base, name: '' })).toEqual({ via: 'chatwork', to: '123456' })
+    })
+
+    it('部屋が無ければ、これまでどおり自分だけのグループへ', () => {
+      expect(pickNotifyRoute({ ...base, selfChatworkRoom: '', name: 'なみ' })).toEqual({ via: 'line', to: self })
+    })
+  })
+
+  describe('buildChatworkBody', () => {
+    it('自分にメンションを付けて通知を鳴らす', () => {
+      expect(buildChatworkBody('なみ から新着があります', '999')).toBe('[To:999]\nなみ から新着があります')
+    })
+
+    it('メンション先が無ければ本文だけ', () => {
+      expect(buildChatworkBody('なみ から新着があります', '')).toBe('なみ から新着があります')
+    })
+  })
+
   describe('pickNotifyTarget', () => {
     const peer = `C${'1'.repeat(32)}`   // 相手のいるグループ
     const self = `C${'2'.repeat(32)}`   // 自分とBotだけのグループ

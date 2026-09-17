@@ -187,13 +187,42 @@ export function isLineTarget(v) {
  * @returns {string} 送り先ID（空文字＝送らない）
  */
 export function pickNotifyTarget({ name, selfNames, peerTarget, selfTarget }) {
+  return pickNotifyRoute({ name, selfNames, peerTarget, selfTarget }).to
+}
+
+/**
+ * 送り先と**送り方**を決める（2026-09-17）。
+ *
+ * 🔴 LINE の無料枠（月200通）を使い切った（2026-09-17）。自分あての通知を LINE から外し、
+ *    **Chatwork の本人限定の部屋**へ送る＝LINE の枠は相手あてだけに使う（運用者の指示）。
+ *    `selfChatworkRoom` があれば自分あては Chatwork、無ければこれまでどおり自分だけのグループへ。
+ * 🔵 投稿は**自分のアカウント**の鍵（運用者の判断＝通知が鳴らなくてもよい・記録として見る）。
+ *    自分の発言扱いなのでスマホ通知は鳴らない。鳴らしたくなったら通知専用の別アカウントの鍵に替え、
+ *    `TALK_NOTIFY_CW_TO` に自分のIDを入れる（メンションが付く）。
+ *
+ * @param {object} p  pickNotifyTarget と同じ ＋ selfChatworkRoom（自分あての Chatwork の部屋ID）
+ * @returns {{ via: 'line' | 'chatwork' | '', to: string }} to が空＝送らない
+ */
+export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfChatworkRoom }) {
   const self = String(selfNames || '').split(',').map(s => s.trim()).filter(Boolean)
   // 自分の名前を決めていない＝振り分けない（これまでどおり1か所へ送る）
-  if (!self.length) return peerTarget || ''
+  if (!self.length) return peerTarget ? { via: 'line', to: peerTarget } : { via: '', to: '' }
 
   const who = String(name || '').trim()
-  const isMe = self.some(n => n === who)
-  // 自分が送った→相手のいる場所へ。相手が送った→自分だけの場所へ（無ければ送らない）
-  const target = isMe ? peerTarget : selfTarget
-  return target || ''
+  if (self.some(n => n === who)) {
+    return peerTarget ? { via: 'line', to: peerTarget } : { via: '', to: '' }
+  }
+  const room = String(selfChatworkRoom || '').trim()
+  if (/^\d+$/.test(room)) return { via: 'chatwork', to: room }
+  return selfTarget ? { via: 'line', to: selfTarget } : { via: '', to: '' }
+}
+
+/**
+ * Chatwork に投稿する本文。宛先メンションを付けて、自分のスマホに通知を鳴らす。
+ * @param {string} text     通知の文面（buildNotifyText の結果）
+ * @param {string} toId     メンション先のアカウントID（空ならメンションなし）
+ */
+export function buildChatworkBody(text, toId) {
+  const id = String(toId || '').trim()
+  return /^\d+$/.test(id) ? `[To:${id}]\n${text}` : text
 }

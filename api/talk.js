@@ -23,13 +23,16 @@
 //   TALK_NOTIFY_BODY          … 'off' なら本文を載せず「新着があります」だけにする
 //   TALK_NOTIFY_MIN_SEC       … 最短間隔の秒数（既定 90）
 //   TALK_NOTIFY_MAX_PER_DAY   … 1日の上限（既定 60）
+//   TALK_NOTIFY_CW_ROOM       … 自分あての通知を送る Chatwork の部屋ID（2026-09-17・LINEの月200通を相手あてに回す）
+//   TALK_NOTIFY_CW_TOKEN      … その部屋に投稿する API トークン（いまは自分の鍵＝スマホ通知は鳴らない・運用者の判断）
+//   TALK_NOTIFY_CW_TO         … メンション先のアカウントID（別アカウントの鍵に替えたときだけ意味がある）
 //   ANTHROPIC_API_KEY         … AI（?a=ai）用。ぽいロボの疑似トレードと同じ残高を使う
 //   ANTHROPIC_WORKSPACE_ID    … 🔴 アカウント紐付け型の鍵では必須（`wrkspc_...`）
 
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildNotifyText, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyTarget, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, buildChatworkBody, buildNotifyText, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyRoute, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -72,12 +75,15 @@ async function notify(req, res) {
   }
 
   // 送った人で宛先を振り分ける（自分が送った→相手のグループ／相手が送った→自分だけのグループ）
-  const target = pickNotifyTarget({
+  // 🆕 2026-09-17：自分あては TALK_NOTIFY_CW_ROOM があれば Chatwork（LINEの月200通を相手あてに回す）
+  const route = pickNotifyRoute({
     name: body.name,
     selfNames: process.env.TALK_NOTIFY_SELF_NAMES,
     peerTarget,
     selfTarget: process.env.LINE_TARGET_SELF_ID,
+    selfChatworkRoom: process.env.TALK_NOTIFY_CW_TOKEN ? process.env.TALK_NOTIFY_CW_ROOM : '',
   })
+  const target = route.to
   // 送り先が決まらない＝この向きの通知は使っていない（自分だけのグループを作っていない等）
   if (!target) return res.status(204).end()
 
@@ -92,7 +98,7 @@ async function notify(req, res) {
   try {
     const db = getDb()
     // 🔵 宛先ごとに数える＝自分あての通知が、相手あての通知の90秒に巻き込まれないように
-    const key = `talk_${room.slice(0, 8)}_${target.slice(1, 7)}`
+    const key = `talk_${room.slice(0, 8)}_${route.via === 'chatwork' ? 'cw' : target.slice(1, 7)}`
     if (!(await rateLimit(db, key, 'notify_min', 1, minSec * 1000))) return res.status(204).end()
     if (!(await rateLimit(db, key, 'notify_day', maxPerDay, 24 * 60 * 60 * 1000))) return res.status(204).end()
   } catch {
@@ -105,6 +111,8 @@ async function notify(req, res) {
     hasImage: Boolean(body.hasImage),
     showBody: process.env.TALK_NOTIFY_BODY !== 'off',
   })
+
+  if (route.via === 'chatwork') return postSelfChatwork(res, target, text)
 
   try {
     const r = await fetch(LINE_PUSH, {
@@ -122,6 +130,30 @@ async function notify(req, res) {
     return res.status(502).json({ error: 'Notify failed' })
   }
 
+  return res.status(204).end()
+}
+
+/**
+ * 自分あての通知を Chatwork の本人限定の部屋へ。
+ * 🔵 部屋IDと鍵は環境変数だけに置く（コードと資料には書かない）。
+ */
+async function postSelfChatwork(res, room, text) {
+  const token = process.env.TALK_NOTIFY_CW_TOKEN
+  if (!token) return res.status(204).end()
+  try {
+    const r = await fetch(`https://api.chatwork.com/v2/rooms/${room}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-ChatWorkToken': token },
+      body: new URLSearchParams({ body: buildChatworkBody(text, process.env.TALK_NOTIFY_CW_TO) }).toString(),
+    })
+    if (!r.ok) {
+      console.error('[talk] chatwork failed:', r.status)
+      return res.status(502).json({ error: 'Notify failed' })
+    }
+  } catch (e) {
+    console.error('[talk] chatwork error:', e?.message)
+    return res.status(502).json({ error: 'Notify failed' })
+  }
   return res.status(204).end()
 }
 
