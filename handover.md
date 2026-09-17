@@ -3,11 +3,13 @@
 > セッションをまたぐ「直近状態」の正。作業完了時に**先頭の「現在の状態」を更新**し、古い分は「履歴」に1〜2行で畳む。
 > 背景・経緯の深掘りは `~/.claude` メモリ（第1〜25セッションの詳細ログ）。
 
-最終更新: 2026-09-16
+最終更新: 2026-09-17
 
 ---
 
 ## 🔵 ユーザーの残作業
+
+- [ ] **Resend の鍵が無効**（2026-09-17 判明）：予約確認メールが送れていない可能性。https://resend.com/api-keys で作り直し → Vercel の `RESEND_API_KEY` を差し替え
 
 - [ ] **GitHub Secrets の片付け（任意）**：ロボ口座の廃止で `ANTHROPIC_API_KEY`（ぽいロボ専用に発行した鍵）・`CHATWORK_API_TOKEN`・`CHATWORK_ROOM_ID` は Actions から使われなくなった。
   不要なら GitHub の Settings → Secrets から消し、Anthropic の鍵も https://console.anthropic.com/settings/keys で失効させる。
@@ -17,6 +19,17 @@
 ---
 
 ## 🟢 現在の状態
+
+### 2026-09-17(68): 🔴 トークのLINE通知が止まった＝**LINEの無料枠（月200通）を使い切った** → 自分あてを Chatwork へ
+
+- 症状＝通知が来ない。Vercel ログ `[talk] LINE push failed: 429`。LINE API `message/quota` = limited 200 / `quota/consumption` = 200。**10/1 に枠が戻る**
+- 数え方＝**送った回数×グループの人数（Bot除く）**。相手のいるグループは2人（ひろ・なみ）で1回2通だった
+- 対策（運用者の指示）:
+  1. **自分あて（相手が送ったぶん）を Chatwork の本人限定の部屋へ**＝`pickNotifyRoute()`（`api/_talkNotify.js`・テスト6件）。`TALK_NOTIFY_CW_ROOM` / `TALK_NOTIFY_CW_TOKEN`（Vercel Production に追加済み）。🔵 鍵は**運用者本人のもの**＝自分の発言扱いでスマホ通知は鳴らない（運用者了承「通知来ないかもだけど」）。鳴らすなら別アカウントの鍵＋`TALK_NOTIFY_CW_TO`
+  2. **相手のいるLINEグループから運用者が抜けた**（ユーザー作業・完了）＝1回1通・月200回まで
+- ✅ 本番確認（`592b843`）：`/api/talk?a=notify` に名前「テスト」で送る→ 204 → 部屋に「テスト から新着があります」。🔵 Git Bash の curl で日本語を `-d` に直接書くと文字化けする（`--data-binary @UTF-8ファイル` で送る）
+- 🔵 見送った案：Zapier（中身は同じ Messaging API＝同じ枠）／SMS（日本宛て1通十数円＋送信元登録）／メール（Resend の鍵が**無効**＝`API key is invalid`。予約確認メール `send-booking-email` も送れていない可能性）／個人LINEや管理画面のブラウザ自動操作（規約違反・アカウント停止のおそれ）
+
 
 ### 2026-09-16(67): 🔴 **ロボ口座（疑似トレード）を廃止** → 中身を**信用期日**に置き換えた
 
