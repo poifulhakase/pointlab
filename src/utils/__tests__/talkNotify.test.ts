@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildChatworkBody, buildNotifyText, cleanAiText, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyRoute, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildChatworkBody, buildNotifyText, buildRoomUrl, cleanAiText, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyRoute, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -234,6 +234,48 @@ describe('talk-notify', () => {
 
     it('メンション先が無ければ本文だけ', () => {
       expect(buildChatworkBody('なみ から新着があります', '')).toBe('なみ から新着があります')
+    })
+
+    it('部屋のURLがあれば最後の行に足す', () => {
+      expect(buildChatworkBody('なみ から新着があります', '999', 'https://example.com/calendar/#/t/abc'))
+        .toBe('[To:999]\nなみ から新着があります\nhttps://example.com/calendar/#/t/abc')
+    })
+
+    it('URLが無ければこれまでどおり', () => {
+      expect(buildChatworkBody('なみ から新着があります', '999', '')).toBe('[To:999]\nなみ から新着があります')
+    })
+  })
+
+  describe('buildRoomUrl', () => {
+    const room = 'a'.repeat(32)
+
+    it('Referer の画面から部屋のURLを作る', () => {
+      expect(buildRoomUrl({ referer: 'https://pointlab.vercel.app/calendar/', host: 'x', room }))
+        .toBe(`https://pointlab.vercel.app/calendar/#/t/${room}`)
+    })
+
+    it('Referer に検索文字が付いていても落とす', () => {
+      expect(buildRoomUrl({ referer: 'https://pointlab.vercel.app/calendar/?v=2', host: 'x', room }))
+        .toBe(`https://pointlab.vercel.app/calendar/#/t/${room}`)
+    })
+
+    it('Referer がファイル名で終わるならディレクトリまで戻す', () => {
+      expect(buildRoomUrl({ referer: 'https://pointlab.vercel.app/calendar/index.html', host: 'x', room }))
+        .toBe(`https://pointlab.vercel.app/calendar/#/t/${room}`)
+    })
+
+    it('Referer が無ければ Host から組み立てる（トークは /calendar/ の下）', () => {
+      expect(buildRoomUrl({ referer: '', host: 'pointlab.vercel.app', room }))
+        .toBe(`https://pointlab.vercel.app/calendar/#/t/${room}`)
+    })
+
+    // 🔴 形が違う部屋IDでリンクを作らない（間違ったURLを通知に載せない）
+    it('部屋IDの形が違えば空', () => {
+      expect(buildRoomUrl({ referer: 'https://pointlab.vercel.app/calendar/', host: 'x', room: 'zz' })).toBe('')
+    })
+
+    it('土台が何も取れなければ空', () => {
+      expect(buildRoomUrl({ referer: 'javascript:alert(1)', host: '', room })).toBe('')
     })
   })
 

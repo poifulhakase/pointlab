@@ -32,7 +32,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildChatworkBody, buildNotifyText, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyRoute, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, buildChatworkBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyRoute, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -112,7 +112,12 @@ async function notify(req, res) {
     showBody: process.env.TALK_NOTIFY_BODY !== 'off',
   })
 
-  if (route.via === 'chatwork') return postSelfChatwork(res, target, text)
+  // 🆕 2026-09-18：自分あてには**部屋を開くURL**も付ける（運用者の指示）。
+  //    🔴 相手あて（LINE）には付けない＝部屋IDは合言葉そのもので、グループの他の人に見えてしまう。
+  if (route.via === 'chatwork') {
+    const url = buildRoomUrl({ referer: req.headers.referer, host: req.headers.host, room })
+    return postSelfChatwork(res, target, text, url)
+  }
 
   try {
     const r = await fetch(LINE_PUSH, {
@@ -137,14 +142,14 @@ async function notify(req, res) {
  * 自分あての通知を Chatwork の本人限定の部屋へ。
  * 🔵 部屋IDと鍵は環境変数だけに置く（コードと資料には書かない）。
  */
-async function postSelfChatwork(res, room, text) {
+async function postSelfChatwork(res, room, text, url) {
   const token = process.env.TALK_NOTIFY_CW_TOKEN
   if (!token) return res.status(204).end()
   try {
     const r = await fetch(`https://api.chatwork.com/v2/rooms/${room}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-ChatWorkToken': token },
-      body: new URLSearchParams({ body: buildChatworkBody(text, process.env.TALK_NOTIFY_CW_TO) }).toString(),
+      body: new URLSearchParams({ body: buildChatworkBody(text, process.env.TALK_NOTIFY_CW_TO, url) }).toString(),
     })
     if (!r.ok) {
       console.error('[talk] chatwork failed:', r.status)

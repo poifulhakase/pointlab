@@ -219,11 +219,55 @@ export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfC
 }
 
 /**
+ * 部屋を開くURLを組み立てる（2026-09-18・運用者の指示「部屋のリンクも送ってほしい」）。
+ *
+ * 🔴 URLの形は `<サイト>/calendar/#/t/<部屋ID>`（`src/utils/talkRoom.ts` の HASH_RE と対）。
+ *    土台は**通知を叩いた画面のURL（Referer）から採る**＝ドメインやパスをここに書き写さないため。
+ *    ハッシュは Referer に載らないので、部屋IDはサーバーが持っているものを付け直す。
+ * 🔵 Referer が無いとき（curl での確認など）のために Host からの組み立ても持つ。
+ * 🔴 **リンクを載せるのは自分あて（Chatwork・本人だけの部屋）だけ**。部屋IDは合言葉そのもので、
+ *    知っている人は誰でも入れる。相手あての LINE には載せない（グループの他の人に見える）。
+ *
+ * @param {object} p
+ * @param {string} p.referer 通知を叩いた画面のURL（`req.headers.referer`）
+ * @param {string} p.host    リクエストのホスト（`req.headers.host`）
+ * @param {string} p.room    部屋ID（32桁の16進）
+ * @returns {string} URL（組み立てられなければ空文字）
+ */
+export function buildRoomUrl({ referer, host, room }) {
+  if (!isRoomId(room)) return ''
+  const base = baseFromReferer(referer) || baseFromHost(host)
+  return base ? `${base}#/t/${room}` : ''
+}
+
+/** Referer から「検索文字とハッシュを落とした、/ で終わるURL」を作る。 */
+function baseFromReferer(referer) {
+  try {
+    const u = new URL(String(referer || ''))
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return ''
+    const path = u.pathname.endsWith('/') ? u.pathname : u.pathname.replace(/[^/]*$/, '')
+    return `${u.origin}${path}`
+  } catch {
+    return ''
+  }
+}
+
+/** Referer が無いときの土台。トークは `/calendar/` の下にいる。 */
+function baseFromHost(host) {
+  const h = String(host || '').trim()
+  return /^[a-z0-9.-]+(:\d+)?$/i.test(h) ? `https://${h}/calendar/` : ''
+}
+
+/**
  * Chatwork に投稿する本文。宛先メンションを付けて、自分のスマホに通知を鳴らす。
+ * 🆕 2026-09-18：部屋を開くURLを最後の行に足す（運用者の指示）。Chatwork は素のURLをリンクにする。
  * @param {string} text     通知の文面（buildNotifyText の結果）
  * @param {string} toId     メンション先のアカウントID（空ならメンションなし）
+ * @param {string} url      部屋を開くURL（空なら付けない）
  */
-export function buildChatworkBody(text, toId) {
+export function buildChatworkBody(text, toId, url) {
   const id = String(toId || '').trim()
-  return /^\d+$/.test(id) ? `[To:${id}]\n${text}` : text
+  const head = /^\d+$/.test(id) ? `[To:${id}]\n${text}` : text
+  const link = String(url || '').trim()
+  return link ? `${head}\n${link}` : head
 }
