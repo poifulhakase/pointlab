@@ -24,8 +24,8 @@
 //   TALK_NOTIFY_MIN_SEC       … 最短間隔の秒数（既定 90）
 //   TALK_NOTIFY_MAX_PER_DAY   … 1日の上限（既定 60）
 //   TALK_NOTIFY_CW_ROOM       … 自分あての通知を送る Chatwork の部屋ID（2026-09-17・LINEの月200通を相手あてに回す）
-//   TALK_NOTIFY_CW_TOKEN      … その部屋に投稿する API トークン（いまは自分の鍵＝スマホ通知は鳴らない・運用者の判断）
-//   TALK_NOTIFY_CW_TO         … メンション先のアカウントID（別アカウントの鍵に替えたときだけ意味がある）
+//   TALK_NOTIFY_CW_TOKEN      … その部屋に投稿する API トークン（2026-09-18からハカセAIの鍵＝別アカウント名義なのでスマホ通知が鳴る）
+//   TALK_NOTIFY_CW_TO         … メンション先のアカウントID（緒方さん 5972360。ハカセAIの鍵と組で効く）
 //   ANTHROPIC_API_KEY         … AI（?a=ai）用。ぽいロボの疑似トレードと同じ残高を使う
 //   ANTHROPIC_WORKSPACE_ID    … 🔴 アカウント紐付け型の鍵では必須（`wrkspc_...`）
 

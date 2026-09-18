@@ -196,9 +196,10 @@ export function pickNotifyTarget({ name, selfNames, peerTarget, selfTarget }) {
  * 🔴 LINE の無料枠（月200通）を使い切った（2026-09-17）。自分あての通知を LINE から外し、
  *    **Chatwork の本人限定の部屋**へ送る＝LINE の枠は相手あてだけに使う（運用者の指示）。
  *    `selfChatworkRoom` があれば自分あては Chatwork、無ければこれまでどおり自分だけのグループへ。
- * 🔵 投稿は**自分のアカウント**の鍵（運用者の判断＝通知が鳴らなくてもよい・記録として見る）。
- *    自分の発言扱いなのでスマホ通知は鳴らない。鳴らしたくなったら通知専用の別アカウントの鍵に替え、
- *    `TALK_NOTIFY_CW_TO` に自分のIDを入れる（メンションが付く）。
+ * 🆕 2026-09-18：投稿名義を**ハカセAI**（在庫作業担当・account 4094718）の鍵に替えた。
+ *    自分の発言ではなくなるうえ `TALK_NOTIFY_CW_TO=5972360` のメンションが付くので、スマホ通知が鳴る。
+ *    🔴 鍵は AutoFBA 本番の `AI_EMP_INVENTORY_TOKEN` と同じもの＝**あちらを再発行したらここも入れ替える**。
+ *    ハカセAIが投稿先の部屋（331007558）のメンバーであることが前提。
  *
  * @param {object} p  pickNotifyTarget と同じ ＋ selfChatworkRoom（自分あての Chatwork の部屋ID）
  * @returns {{ via: 'line' | 'chatwork' | '', to: string }} to が空＝送らない
