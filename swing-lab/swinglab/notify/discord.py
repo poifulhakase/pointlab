@@ -381,6 +381,22 @@ class DiscordRouter:
     def send_test_all(self) -> dict[str, bool]:
         return {name: n.send_test() for name, n in self.channels.items()}
 
+    def _deleter_for(self, channel: str) -> DiscordNotifier | None:
+        """削除に使う Notifier を引く。
+
+        🔴 note新着（NOTE_FEED.md）のように**router に登録していないチャンネル**でも
+           後片付けはできなければならない。送信の経路は分けたまま（トレードの通知が
+           note に流れないように）、削除だけは .env の Webhook から組み立てて届かせる。
+           （分離を優先した結果、投稿できるのに消せないという状態を実際に作ってしまった）
+        """
+        known = self.channels.get(channel)
+        if known is not None and known.enabled:
+            return known
+        url = self.cfg.secrets.webhooks.get(channel)
+        if not url:
+            return None
+        return DiscordNotifier(url, label=channel, channel=channel, enabled=self.enabled)
+
     # -------------------------------------------------- まとめて削除
 
     def purge(self, *, kinds: set[str] | None = None, run_date: str | None = None,
@@ -411,7 +427,7 @@ class DiscordRouter:
                 kept.append(row)
                 deleted += 1
                 continue
-            notifier = self.channels.get(row["channel"])
+            notifier = self._deleter_for(row["channel"])
             if notifier is None or not notifier.enabled:
                 kept.append(row)
                 failed += 1

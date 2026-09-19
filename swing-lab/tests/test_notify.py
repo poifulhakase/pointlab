@@ -550,3 +550,27 @@ def test_purge_keeps_record_when_delete_fails(cfg, tmp_path, monkeypatch):
     result = router.purge(kinds={"test"})
     assert result["deleted"] == 0 and result["failed"] == 1
     assert len(sent.rows()) == 1
+
+
+def test_purge_reaches_channels_outside_the_router(cfg, tmp_path, monkeypatch):
+    """🔴 回帰テスト（2026-09-19）。
+
+    note新着は「トレードの通知と混ぜない」ために router に登録していない。
+    その結果、投稿はできるのに purge で消せないという状態を実際に作ってしまった。
+    送信の経路は分けたまま、削除だけは .env の Webhook から届くようにしてある。
+    """
+    sent = dmod.SentLog(tmp_path / "sent.jsonl")
+    sent.record(channel="note", message_id="1", kind="note")
+
+    deleted = []
+    monkeypatch.setattr(dmod.requests, "delete",
+                        lambda url, **k: (deleted.append(url), FakeResponse(204))[1])
+
+    router = dmod.DiscordRouter(cfg, sent_log=sent)
+    assert "note" not in router.channels          # ルーターには載っていない
+    if "note" not in cfg.secrets.webhooks:
+        pytest.skip("note の Webhook が未設定")
+
+    result = router.purge(kinds={"note"})
+    assert result["deleted"] == 1 and result["failed"] == 0
+    assert deleted[0].endswith("/messages/1")

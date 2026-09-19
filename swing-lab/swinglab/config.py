@@ -192,6 +192,17 @@ def validate(cfg: Config) -> list[str]:
             "（該当チャンネルには通知が飛ばない。.env に入れる）"
         )
 
+    # note新着（NOTE_FEED.md）
+    if cfg.get("note_feed.enabled", False):
+        if not cfg.get("note_feed.rss_url", ""):
+            raise ConfigError("note_feed.enabled なのに rss_url が空")
+        if int(cfg.get("note_feed.max_per_run", 10)) < 1:
+            raise ConfigError("note_feed.max_per_run は 1 以上")
+        if "note" not in cfg.secrets.webhooks:
+            warnings.append(
+                f"note新着の Webhook が未設定（{cfg.get('note_feed.env')}）＝投稿されない"
+            )
+
     if not any(cfg.get(f"agents.{name}") for name in ("selector", "chart", "supply_demand", "news")):
         warnings.append("agents: 分析AIが全部オフ＝売買判断AIに渡す材料が無い")
 
@@ -219,6 +230,11 @@ def load(config_path: str | Path | None = None, *, root: Path | None = None) -> 
         value = os.environ.get(str(spec.get("env", "")), "").strip()
         if value:
             webhooks[name] = value
+    # note新着は**別系統のおまけ**（NOTE_FEED.md）。discord.channels とは分けてある。
+    note_env = str((raw.get("note_feed") or {}).get("env", ""))
+    note_url = os.environ.get(note_env, "").strip() if note_env else ""
+    if note_url:
+        webhooks["note"] = note_url
 
     secrets = Secrets(
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,

@@ -194,3 +194,15 @@ discord:
     color: 0xAECBEB
   performance_weekday: 4            # 成績を出す曜日（0=月 … 4=金）。--weekly で強制も可
   milestone_trades: [10, 30, 50, 100]   # ぽよん君が出てくるトレード件数の節目
+
+note_feed:
+  # NOTE_FEED.md。トレードマシンとは**別系統のおまけ**。4チャンネルには混ぜない。
+  # 🔴 構造的に混ざらないよう、discord.channels とは別のセクションに置いてある。
+  enabled: true
+  rss_url: "https://note.com/pointlab/m/m7be629812c81/rss"
+  env: DISCORD_WEBHOOK_NOTE
+  username: "ぽいロボ｜note"
+  avatar: "poirobo-avatar.png"
+  state_path: "note_feed_state.json"   # 通知済み guid の記録（冪等性）
+  max_per_run: 10                      # 1回の実行で投稿する上限（溜まっていても一気に流さない）
+  only_creators: []                    # 空＝全員。絞るなら note_creatorname をそのまま並べる

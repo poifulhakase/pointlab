@@ -6,6 +6,7 @@
     .venv/Scripts/python.exe main.py --force         # 実行済みの日をやり直す
     .venv/Scripts/python.exe main.py --weekly        # 成績も出す（既定は金曜だけ）
     .venv/Scripts/python.exe main.py --notify-test   # Discord 4チャンネルの疎通確認
+    .venv/Scripts/python.exe main.py --note-only     # note新着のチェックだけ
 
 🔴 起動 → パイプライン実行 → 通知 → 終了 の一発完結型。常駐しない（SPEC 13）。
 🔴 通知は DISCORD.md 1章のとおり**チャンネルごとに振り分ける**。
@@ -25,6 +26,7 @@ from swinglab.learning import outcomes as outcomes_mod
 from swinglab.logs import setup_logging
 from swinglab.notify import chart as chart_mod
 from swinglab.notify import discord as discord_mod
+from swinglab.notify import note_feed as note_mod
 from swinglab.notify import summary as summary_mod
 from swinglab.orchestrator import Orchestrator, SkipRun, resolve_run_date
 from swinglab.portfolio.store import Store
@@ -114,6 +116,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="記録してある投稿をすべて Discord から消す")
     parser.add_argument("--purge-dry-run", action="store_true",
                         help="消さずに、消える件数だけ出す")
+    parser.add_argument("--no-note", action="store_true",
+                        help="note新着のチェックをしない")
+    parser.add_argument("--note-only", action="store_true",
+                        help="note新着のチェックだけして終了（トレードは走らせない）")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -151,6 +157,21 @@ def main(argv: list[str] | None = None) -> int:
         if router.missing:
             log.warning("未設定のチャンネル: %s（.env に Webhook URL を入れる）", router.missing)
         return 0 if any(results.values()) else 1
+
+    # --- note新着（NOTE_FEED.md・おまけ機能） ---
+    # 🔴 トレードのスキップ判定より**前**に走らせる。
+    #    トレードは休場日・データが古い日に早期 return するので、末尾に置くと
+    #    連休のあいだ新着が溜まったまま流れない（9/19〜23 は5日連続の休場）。
+    if not (args.no_note or args.no_notify):
+        feed = note_mod.NoteFeed(cfg, sent_log=router.sent_log)
+        outcome = feed.run(dry_run=args.dry_run)
+        log.info("note新着: %s", outcome.summary())
+        for article in outcome.posted:
+            log.info("  📝 %s", article.title[:70])
+        if outcome.error:
+            log.warning("note新着: %s", outcome.error)
+    if args.note_only:
+        return 0
 
     if not cfg.secrets.anthropic_api_key:
         log.error("🔴 ANTHROPIC_API_KEY が無い（.env を確認する）")
