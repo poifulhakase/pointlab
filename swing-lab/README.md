@@ -58,7 +58,10 @@ Set-Location 'C:\Project\PointLab\stock-calendar\swing-lab'
 | `main.py --purge-all` | 記録してある投稿をすべて消す（`--purge-dry-run` で件数だけ） |
 | `main.py --feeds-only` | お知らせフィードのチェックだけ（`--no-feeds` で逆に飛ばす） |
 | `eda/run_eda.py [--limit N]` | 探索的データ分析（分布・相関・ファネル） |
-| `-m pytest` | テスト（193件） |
+| `-m streamlit run dashboard.py` | ダッシュボード（http://localhost:8501・**閲覧専用**） |
+| `scripts\register_task.ps1` | 日次実行をタスクスケジューラに登録（`-Show` / `-Remove`） |
+| `scripts\run_daily.ps1` | 日次実行そのもの（git pull → main.py） |
+| `-m pytest` | テスト（213件） |
 
 ---
 
@@ -121,14 +124,46 @@ LLM が暴走しても資金とリスクの一線はコードが守る。
 | tool スキーマの数値範囲 | `strict` では `minimum`/`maximum` が **400** | 範囲は `validate()` で弾いてリトライ |
 | — | `output_config.effort` は Sonnet 5 のみ。Haiku 4.5 は 400 | `models.*_effort` で出し分け |
 
-### 6. 通知は4チャンネルに振り分ける
+### 6. ダッシュボードは読み取り専用で開く
+
+`Store(path, readonly=True)` で開くので、画面から書く経路が**構造的に無い**（SPEC 12）。
+あわせて `check_same_thread=False` が要る。Streamlit は再描画のたびに**別スレッド**で
+走るため、既定の接続だと `SQLite objects created in a thread can only be used in that
+same thread` で落ちる。
+
+🔵 テーマの切替ボタンは**置いていない**。`st.set_option("theme.base", ...)` は実行時に
+効かず（1.64 で実測）、押せるのに変わらないUIになる。Streamlit 標準の右上 ⋮ に
+System / Light / Dark があり、`.streamlit/config.toml` の `[theme.light]` /
+`[theme.dark]` がそのまま効く（既定は OS 追従）。
+
+### 7. 日次実行は Windows タスクスケジューラ
+
+🔴 クラウド（GitHub Actions 等）では動かない。手元の `.env` とローカルに clone した
+ぽいロボのデータを読むため。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1            # 平日17:00で登録
+powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -Show      # 状態を見る
+powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -Remove    # 解除
+```
+
+🔴 **PowerShell の落とし穴を3つ踏んだ**（どれも手で動かすだけでは気づけない）:
+1. **`.ps1` は UTF-8 に BOM が要る**。無いと PowerShell 5.1 が ANSI として読み、
+   日本語コメントが壊れてスクリプトごと誤動作する。
+2. **native コマンドに `2>&1` を付けない**。stderr の各行が ErrorRecord に包まれ、
+   **成功しても終了コードが 1 になる**（タスクが「失敗」と記録される）。
+   あわせて Python 側のログは **stdout** に出すようにした。
+3. **`[Console]::OutputEncoding` を UTF-8 にする**。既定では cp932 として読むので、
+   Python の日本語出力がログで化ける。**タスク経由でだけ**起きる。
+
+### 8. 通知は4チャンネルに振り分ける
 
 `#判断サマリ` / `#約定・保有` / `#成績`（週次）/ `#エラー・異常`。詳細は `DISCORD.md`。
 🔴 **異常を日次の一目に混ぜない**。ノイズにすると見なくなる。
 🔴 **総資産の増減率は週次の #成績 だけ**に出す（日々のP&Lを煽らない）。
 　 ただし**含み損は毎日出す**（見たくないものから目を背けさせない・SPEC 12.1）。
 
-### 7. LLM は稀にプレースホルダーを返す
+### 9. LLM は稀にプレースホルダーを返す
 
 強いモデルでも `market_view: "dummy"` / `ticker: "dummy"` を返すことが**実際にあった**
 （同じ入力で再試行すると正常に返る＝非決定性）。`validate()` で弾いて再試行させている。
@@ -155,10 +190,17 @@ swing-lab/
 ├── SPEC.md                 仕様の正
 ├── config.yaml             閾値はすべてここ。コード・プロンプトにハードコードしない
 ├── main.py                 エントリポイント
-├── scripts/export_calendar.mjs   ぽいロボのカレンダーを JSON に書き出す
+├── dashboard.py            ダッシュボード（Streamlit・閲覧専用）
+├── .streamlit/config.toml  ライト/ダークの2テーマ
+├── scripts/
+│   ├── export_calendar.mjs  ぽいロボのカレンダーを JSON に書き出す
+│   ├── make_avatars.py      Discord アバターの生成
+│   ├── run_daily.ps1        日次実行（git pull → main.py）
+│   └── register_task.ps1    タスクスケジューラへの登録
 ├── eda/run_eda.py          Phase 0 の探索的データ分析
 └── swinglab/
     ├── config.py           起動時バリデーション（矛盾は落とす）
+    ├── dashboard_data.py   ダッシュボードが読むデータ（UIと分離）
     ├── money.py            銭(int)の金額型
     ├── logs.py             判断ログ（生のLLM入出力を残す）
     ├── orchestrator.py     日次パイプライン
@@ -191,14 +233,14 @@ swing-lab/
 | 3 | プレフィルタ＋選定AI | ✅ |
 | 4 | チャート・需給・ニュース分析AI | ✅ |
 | 5 | オーケストレーター結合 | ✅ |
-| 6 | 疑似執行・コスト・ラベリング・単体テスト | ✅ 193件 全green |
+| 6 | 疑似執行・コスト・ラベリング・単体テスト | ✅ 213件 全green |
 | 7 | 通知の作り込み（4チャンネル振り分け・embed・グラフ） | ✅ `DISCORD.md` |
-| 8 | Streamlit ダッシュボード | ⬜ 未 |
+| 8 | Streamlit ダッシュボード | ✅ 6画面・閲覧専用 |
 | 9 | リスク管理の拡充 | ✅（サイジング・相関/集中・DDスロットル・ストップガード） |
 | 10 | 学習ループ(1) フィードバック | ⬜ 未（成績サマリは判断AIに渡している） |
 | 11 | point-in-time ユニバース＋バックテスト | ⬜ 未（J-Quants 登録が要る） |
 | 12 | 予測MLモデル | ⬜ 未（`ml_prob` は常に null で動く） |
-| 13 | スケジュール化 | ⬜ 未 |
+| 13 | スケジュール化 | ✅ タスクスケジューラ（平日17:00） |
 
 ### 未実装のために「データなし」で回しているもの
 

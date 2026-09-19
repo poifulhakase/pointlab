@@ -49,7 +49,15 @@ MARKET_CLOSE = dtime(15, 30)
 
 
 class SkipRun(Exception):
-    """この日は走らせない（休場・データ不足・実行済み）。異常ではない。"""
+    """この日は走らせない（休場・データ不足）。異常ではない。"""
+
+
+class AlreadyRan(SkipRun):
+    """その営業日はもう走っている（冪等性・SPEC 9.1）。
+
+    🔴 これは**通知しない**。タスクスケジューラが二重に起動した、手で1回流した、
+       といった正常な場合に出るもので、毎回 #エラー・異常 が鳴ると狼少年になる。
+    """
 
 
 @dataclass
@@ -120,7 +128,7 @@ class Orchestrator:
         if not self.calendar.is_business_day(run_date):
             raise SkipRun(f"{run_date} は休場（{self.calendar.closed_reason(run_date)}）")
         if not self.store.start_run(run_date, force=self.force):
-            raise SkipRun(f"{run_date} はすでに実行済み（--force で再実行）")
+            raise AlreadyRan(f"{run_date} はすでに実行済み（--force で再実行）")
 
         self.run_logger = RunLogger(self.cfg.path("ops.log_dir"), run_date)
         result = RunResult(run_date=run_date, status="running")

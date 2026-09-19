@@ -134,10 +134,31 @@ CREATE INDEX IF NOT EXISTS idx_analyses_run ON analyses(run_date);
 
 
 class Store:
-    def __init__(self, db_path: Path | str):
+    """SQLite への入口。
+
+    🔴 `readonly=True` は**ダッシュボード用**（SPEC 12「閲覧専用」）。
+       書き込めない接続で開くので、画面側から誤って書く経路が構造的に塞がる。
+    🔴 `check_same_thread=False` が要る。Streamlit は再描画のたびに**別スレッド**で走るため、
+       既定のままだと「作ったスレッド以外からは使えない」で落ちる。
+       この接続を同時に書くのは日次バッチ（別プロセス）だけなので、共有しても競合しない。
+    """
+
+    def __init__(self, db_path: Path | str, *, readonly: bool = False):
         self.path = Path(db_path)
+        self.readonly = readonly
+
+        if readonly:
+            if not self.path.exists():
+                raise FileNotFoundError(f"DB がまだ無い: {self.path}")
+            uri = f"file:{self.path.as_posix()}?mode=ro"
+            self.conn = sqlite3.connect(uri, uri=True, isolation_level=None,
+                                        check_same_thread=False)
+            self.conn.row_factory = sqlite3.Row
+            return
+
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(self.path, isolation_level=None)
+        self.conn = sqlite3.connect(self.path, isolation_level=None,
+                                    check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA foreign_keys=ON")

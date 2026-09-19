@@ -11,7 +11,10 @@ __pycache__/
 # 🔴 リポジトリ直下の .gitignore に `logs` があるため swing-lab/logs も元々追跡されない。
 #    判断ログと成績DBは「ローカルだけの資産」＝バックアップは手動。
 logs/
+*.log
 *.db
+*.db-wal
+*.db-shm
 *.sqlite3
 data_cache/
 eda_out/

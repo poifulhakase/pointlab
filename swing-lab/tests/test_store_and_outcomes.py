@@ -223,3 +223,16 @@ def test_order_decided_today_is_not_filled_today():
     assert order_is_due("2026-09-18", run_day) is True    # 前営業日の判断 → 今日約定
     assert order_is_due("2026-09-24", run_day) is False   # 同じ日の判断 → 約定させない
     assert order_is_due("2026-09-25", run_day) is False   # 未来（あり得ないが念のため）
+
+
+def test_already_ran_is_a_skip_but_not_an_error():
+    """🔴 「すでに実行済み」で #エラー・異常 を鳴らさない（二重起動は正常）。"""
+    from swinglab.orchestrator import AlreadyRan, SkipRun
+
+    assert issubclass(AlreadyRan, SkipRun)
+    # main.py は AlreadyRan を先に捕まえて通知せずに終える
+    import inspect
+
+    import main as main_mod
+    src = inspect.getsource(main_mod.main)
+    assert src.index("except AlreadyRan") < src.index("except SkipRun as exc")

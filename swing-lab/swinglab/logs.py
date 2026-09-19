@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -58,10 +59,17 @@ class RunLogger:
 
 
 def setup_logging(level: int = logging.INFO) -> None:
+    """🔴 ログは **stdout** に出す。
+
+    logging の既定は stderr だが、PowerShell から呼ぶと native コマンドの stderr は
+    1行ずつ ErrorRecord に包まれ、**成功しても終了コードが 1 になる**
+    （タスクスケジューラが「失敗」と記録してしまう）。
+    """
     logging.basicConfig(
         level=level,
         format="%(asctime)s %(levelname)-7s %(message)s",
         datefmt="%H:%M:%S",
+        stream=sys.stdout,
     )
     # yfinance / httpx の通信ログは煩いので落とす
     for noisy in ("httpx", "httpx2", "httpcore", "anthropic", "yfinance", "peewee", "urllib3"):

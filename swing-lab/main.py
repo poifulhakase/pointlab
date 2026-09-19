@@ -28,7 +28,7 @@ from swinglab.notify import chart as chart_mod
 from swinglab.notify import discord as discord_mod
 from swinglab.notify import feeds as feeds_mod
 from swinglab.notify import summary as summary_mod
-from swinglab.orchestrator import Orchestrator, SkipRun, resolve_run_date
+from swinglab.orchestrator import AlreadyRan, Orchestrator, SkipRun, resolve_run_date
 from swinglab.portfolio.store import Store
 
 log = logging.getLogger("swing-lab")
@@ -182,6 +182,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         result = orchestrator.run(run_date)
+    except AlreadyRan as exc:
+        # 🔴 通知しない。二重起動や手動実行のあとに毎回鳴ると狼少年になる。
+        log.info("実行せず: %s", exc)
+        return 0
     except SkipRun as exc:
         target = run_date or resolve_run_date(orchestrator.calendar)
         log.info("実行せず: %s", exc)
