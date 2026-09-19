@@ -440,3 +440,113 @@ def test_every_channel_carries_the_disclaimer(cfg, builder):
     else:
         embeds = smod.build_error(title="t", detail="d", cfg=cfg)
     assert any(dmod.DISCLAIMER in (e.footer or "") for e in embeds)
+
+
+# ------------------------------------------------------------------ 送信記録と削除
+
+
+class FakeResponse:
+    def __init__(self, status=200, body=None):
+        self.status_code = status
+        self._body = body or {}
+        self.text = ""
+
+    def json(self):
+        return self._body
+
+
+def test_message_id_is_recorded_on_send(tmp_path, monkeypatch):
+    """🔴 Webhook は自分の投稿を一覧できない。送った瞬間に id を残さないと消せない。"""
+    sent = dmod.SentLog(tmp_path / "sent.jsonl")
+    posted = {}
+
+    def fake_post(url, json=None, data=None, files=None, timeout=None):
+        posted["url"] = url
+        return FakeResponse(200, {"id": "999"})
+
+    monkeypatch.setattr(dmod.requests, "post", fake_post)
+    n = dmod.DiscordNotifier("https://example.test/hook", sent_log=sent, channel="errors")
+    assert n.send(content="x", kind="test", run_date="2026-09-18") is True
+
+    # ?wait=true が付いていないと message_id は返ってこない
+    assert "wait=true" in posted["url"]
+    rows = sent.rows()
+    assert len(rows) == 1
+    assert rows[0]["message_id"] == "999"
+    assert rows[0]["channel"] == "errors"
+    assert rows[0]["kind"] == "test"
+
+
+def test_wait_param_is_appended_safely(monkeypatch):
+    """URL にすでにクエリがある場合でも壊さない。"""
+    n = dmod.DiscordNotifier("https://example.test/hook?x=1")
+    assert n._wait_url().endswith("?x=1&wait=true")
+
+
+def test_missing_message_id_is_warned(tmp_path, monkeypatch, caplog):
+    sent = dmod.SentLog(tmp_path / "sent.jsonl")
+    monkeypatch.setattr(dmod.requests, "post",
+                        lambda *a, **k: FakeResponse(204, None))
+    n = dmod.DiscordNotifier("https://example.test/hook", sent_log=sent)
+    with caplog.at_level("WARNING"):
+        n.send(content="x")
+    assert sent.rows() == []
+    assert "消せない" in caplog.text
+
+
+def test_delete_message_treats_404_as_success(monkeypatch):
+    """すでに消えているものを消そうとしても失敗扱いにしない。"""
+    monkeypatch.setattr(dmod.requests, "delete",
+                        lambda *a, **k: FakeResponse(404))
+    n = dmod.DiscordNotifier("https://example.test/hook")
+    assert n.delete_message("1") is True
+
+
+def test_purge_only_removes_matching_kind(cfg, tmp_path, monkeypatch):
+    sent = dmod.SentLog(tmp_path / "sent.jsonl")
+    sent.record(channel="errors", message_id="1", kind="test")
+    sent.record(channel="errors", message_id="2", kind="error", run_date="2026-09-18")
+
+    deleted = []
+    monkeypatch.setattr(dmod.requests, "delete",
+                        lambda url, **k: (deleted.append(url), FakeResponse(204))[1])
+
+    router = dmod.DiscordRouter(cfg, sent_log=sent)
+    router.channels["errors"].webhook_url = "https://example.test/hook"
+    router.channels["errors"].enabled = True
+
+    result = router.purge(kinds={"test"})
+    assert result["deleted"] == 1 and result["kept"] == 1
+    assert deleted[0].endswith("/messages/1")
+    # 記録は「消していないぶん」だけ残る
+    assert [r["message_id"] for r in sent.rows()] == ["2"]
+
+
+def test_purge_dry_run_changes_nothing(cfg, tmp_path, monkeypatch):
+    sent = dmod.SentLog(tmp_path / "sent.jsonl")
+    sent.record(channel="errors", message_id="1", kind="test")
+    monkeypatch.setattr(dmod.requests, "delete",
+                        lambda *a, **k: pytest.fail("dry-run で削除してはいけない"))
+
+    router = dmod.DiscordRouter(cfg, sent_log=sent)
+    router.channels["errors"].webhook_url = "https://example.test/hook"
+    router.channels["errors"].enabled = True
+
+    result = router.purge(kinds={"test"}, dry_run=True)
+    assert result["deleted"] == 1
+    assert len(sent.rows()) == 1          # 記録は消えていない
+
+
+def test_purge_keeps_record_when_delete_fails(cfg, tmp_path, monkeypatch):
+    """🔴 消せなかったものは記録に残す（取りこぼしを見失わない）。"""
+    sent = dmod.SentLog(tmp_path / "sent.jsonl")
+    sent.record(channel="errors", message_id="1", kind="test")
+    monkeypatch.setattr(dmod.requests, "delete", lambda *a, **k: FakeResponse(403))
+
+    router = dmod.DiscordRouter(cfg, sent_log=sent)
+    router.channels["errors"].webhook_url = "https://example.test/hook"
+    router.channels["errors"].enabled = True
+
+    result = router.purge(kinds={"test"})
+    assert result["deleted"] == 0 and result["failed"] == 1
+    assert len(sent.rows()) == 1

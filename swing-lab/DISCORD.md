@@ -32,6 +32,13 @@ Webhook URL: `.env`（チャンネルごとに別々）。テスト: `tests/test
   `config.yaml` は env 変数名だけを持ち、値は `.env` から引く。
 - 🔴 **異常を日次の一目に混ぜない**。`errors` が未設定でも他チャンネルに寄せず、ログに残すだけ。
 - 疎通確認: `main.py --notify-test`（4チャンネルに1通ずつ）。
+- 🔴 **送信したら message_id を必ず記録する**（`logs/sent_messages.jsonl`）。
+  Webhook は**自分の投稿を一覧できない**（読み取り権限が無い）ので、
+  削除に要る message_id は**送った瞬間に残しておくしかない**。
+  そのため送信は `?wait=true` で行い、返ってきた id を記録している。
+  記録が無い投稿は Discord の画面から手で消すしかない。
+- 後片付け: `main.py --purge-test`（疎通確認だけ）／`--purge-all`（記録してある全部）／
+  `--purge-dry-run`（消さずに件数だけ）。消せなかったものは記録に残す（取りこぼしを見失わない）。
 
 ---
 

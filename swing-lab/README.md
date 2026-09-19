@@ -53,6 +53,8 @@ Set-Location 'C:\Project\PointLab\stock-calendar\swing-lab'
 | `main.py --no-notify` | Discord に送らない |
 | `main.py --weekly` | 曜日に関係なく #成績 も出す（既定は金曜だけ） |
 | `main.py --notify-test` | Discord 4チャンネルの疎通確認だけ |
+| `main.py --purge-test` | 記録してある疎通確認の投稿を Discord から消す |
+| `main.py --purge-all` | 記録してある投稿をすべて消す（`--purge-dry-run` で件数だけ） |
 | `eda/run_eda.py [--limit N]` | 探索的データ分析（分布・相関・ファネル） |
 | `-m pytest` | テスト（132件） |
 

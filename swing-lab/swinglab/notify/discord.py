@@ -11,10 +11,15 @@ Bot 常駐は不要。チャンネル設定で発行した URL に POST する�
 
 送信者は **ぽいロボ**（機械の正確さで事実を報告する）。
 **ぽよん君**は節目だけ別送信者として一言添える（やりすぎない・DISCORD.md 2章）。
+
+🔴 送信したら **message_id を必ず記録する**（SentLog）。
+   Webhook は自分の投稿を**一覧できない**（読み取り権限が無い）ので、
+   記録しそこねたメッセージは、あとから Discord の画面で手で消すしかなくなる。
 """
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import logging
 from dataclasses import dataclass, field
@@ -59,6 +64,56 @@ def truncate(text: Any, limit: int) -> str:
     return text[: limit - 1] + "…"
 
 
+# ---------------------------------------------------------------- 送信記録
+
+
+class SentLog:
+    """送った message_id を追記で残す（あとで消せるようにするため）。
+
+    🔴 Webhook は**自分が投稿したメッセージを一覧できない**（読み取り権限が無い）。
+       削除には message_id が要るので、**送った瞬間に記録しておくしかない**。
+    """
+
+    def __init__(self, path: Path | str | None):
+        self.path = Path(path) if path else None
+        if self.path:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def record(self, *, channel: str, message_id: str, kind: str, run_date: str = "") -> None:
+        if not self.path:
+            return
+        row = {
+            "sent_at": dt.datetime.now().isoformat(timespec="seconds"),
+            "channel": channel,
+            "message_id": message_id,
+            "kind": kind,
+            "run_date": run_date,
+        }
+        with self.path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    def rows(self) -> list[dict[str, Any]]:
+        if not self.path or not self.path.exists():
+            return []
+        out: list[dict[str, Any]] = []
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                out.append(json.loads(line))
+        return out
+
+    def rewrite(self, rows: list[dict[str, Any]]) -> None:
+        """消せたぶんを取り除いて書き戻す。"""
+        if not self.path:
+            return
+        with self.path.open("w", encoding="utf-8") as f:
+            for row in rows:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+# ---------------------------------------------------------------- Embed
+
+
 @dataclass
 class Embed:
     title: str = ""
@@ -100,6 +155,9 @@ class Embed:
         return len(json.dumps(self.to_payload(), ensure_ascii=False))
 
 
+# ---------------------------------------------------------------- 1チャンネル
+
+
 class DiscordNotifier:
     """1チャンネルぶんの Webhook。
 
@@ -109,16 +167,21 @@ class DiscordNotifier:
 
     def __init__(self, webhook_url: str | None, *, username: str = "ぽいロボ",
                  avatar_url: str | None = None, color: int = COLOR_INFO,
-                 label: str = "", enabled: bool = True, timeout: float = 15.0):
+                 label: str = "", enabled: bool = True, timeout: float = 15.0,
+                 sent_log: SentLog | None = None, channel: str = ""):
         self.webhook_url = webhook_url
         self.username = username
         self.avatar_url = avatar_url
         self.color = color
         self.label = label or username
+        self.channel = channel or self.label
+        self.sent_log = sent_log
         self.enabled = enabled and bool(webhook_url)
         self.timeout = timeout
         if enabled and not webhook_url:
             log.warning("Discord[%s]: Webhook URL が未設定なので通知は飛ばさない", self.label)
+
+    # -------------------------------------------------- 送信
 
     def _identity(self) -> dict[str, Any]:
         payload: dict[str, Any] = {"username": self.username}
@@ -126,8 +189,17 @@ class DiscordNotifier:
             payload["avatar_url"] = self.avatar_url
         return payload
 
+    def _wait_url(self) -> str:
+        """🔴 ?wait=true にすると投稿されたメッセージが JSON で返り message_id が取れる。
+
+        これを記録しないと、あとから消せなくなる（Webhook は一覧を取れない）。
+        """
+        sep = "&" if "?" in (self.webhook_url or "") else "?"
+        return f"{self.webhook_url}{sep}wait=true"
+
     def send(self, content: str = "", embeds: list[Embed] | None = None,
-             files: list[Path] | None = None) -> bool:
+             files: list[Path] | None = None, *, kind: str = "",
+             run_date: str = "") -> bool:
         if not self.enabled:
             log.info("Discord[%s]: 無効のため送信せず（%s）", self.label,
                      truncate(content or (embeds[0].title if embeds else ""), 60))
@@ -141,16 +213,17 @@ class DiscordNotifier:
         if "content" not in payload and "embeds" not in payload and not files:
             raise ValueError("content も embeds も files も空では送れない")
 
+        url = self._wait_url()
         try:
             if files:
                 # 画像添付は multipart。payload_json に本体を入れる（Discord の作法）。
                 handles = [
-                    ("files[%d]" % i, (p.name, p.open("rb"), "image/png"))
+                    (f"files[{i}]", (p.name, p.open("rb"), "image/png"))
                     for i, p in enumerate(files) if p.exists()
                 ]
                 try:
                     res = requests.post(
-                        self.webhook_url,
+                        url,
                         data={"payload_json": json.dumps(payload, ensure_ascii=False)},
                         files=handles, timeout=self.timeout,
                     )
@@ -158,7 +231,7 @@ class DiscordNotifier:
                     for _, (_, fh, _) in handles:
                         fh.close()
             else:
-                res = requests.post(self.webhook_url, json=payload, timeout=self.timeout)
+                res = requests.post(url, json=payload, timeout=self.timeout)
         except requests.RequestException as exc:
             log.error("Discord[%s]: 送信に失敗 %s", self.label, exc)
             return False
@@ -166,13 +239,31 @@ class DiscordNotifier:
         if res.status_code >= 300:
             log.error("Discord[%s]: %s %s", self.label, res.status_code, truncate(res.text, 300))
             return False
+
+        self._record(res, kind=kind, run_date=run_date)
         return True
 
+    def _record(self, res: Any, *, kind: str, run_date: str) -> None:
+        if self.sent_log is None:
+            return
+        try:
+            message_id = (res.json() or {}).get("id")
+        except (ValueError, AttributeError):
+            message_id = None
+        if message_id:
+            self.sent_log.record(channel=self.channel, message_id=str(message_id),
+                                 kind=kind or self.label, run_date=run_date)
+        else:
+            log.warning("Discord[%s]: message_id が取れなかった（後から消せない）", self.label)
+
     def send_batched(self, embeds: list[Embed], content: str = "",
-                     files: list[Path] | None = None) -> bool:
+                     files: list[Path] | None = None, *, kind: str = "",
+                     run_date: str = "") -> bool:
         """embeds が10個 / 6000文字を超える場合に分割して送る（DISCORD.md 4章）。"""
         if not embeds:
-            return self.send(content=content, files=files) if (content or files) else False
+            if content or files:
+                return self.send(content=content, files=files, kind=kind, run_date=run_date)
+            return False
 
         ok = True
         chunk: list[Embed] = []
@@ -181,18 +272,20 @@ class DiscordNotifier:
         for e in embeds:
             length = e.size()
             if chunk and (len(chunk) >= MAX_EMBEDS or size + length > MAX_EMBED_TOTAL):
-                ok = self.send(content if first else "", chunk) and ok
+                ok = self.send(content if first else "", chunk, kind=kind,
+                               run_date=run_date) and ok
                 first = False
                 chunk, size = [], 0
             chunk.append(e)
             size += length
         if chunk:
             # 添付は最後のメッセージに付ける
-            ok = self.send(content if first else "", chunk, files=files) and ok
+            ok = self.send(content if first else "", chunk, files=files, kind=kind,
+                           run_date=run_date) and ok
         return ok
 
     def send_test(self) -> bool:
-        """疎通確認（SPEC 14 Phase 1）。"""
+        """疎通確認（SPEC 14 Phase 1）。`--purge-test` で後からまとめて消せる。"""
         embed = Embed(
             title=f"疎通確認 — {self.label}",
             description="このチャンネルに通知が届きます。",
@@ -200,7 +293,31 @@ class DiscordNotifier:
             footer=DISCLAIMER,
         )
         embed.add_field("チャートリンクの例", f"[7203 トヨタ]({tradingview_url('7203.T')})")
-        return self.send(embeds=[embed])
+        return self.send(embeds=[embed], kind="test")
+
+    # -------------------------------------------------- 削除
+
+    def delete_message(self, message_id: str) -> bool:
+        """自分が投稿したメッセージを消す。
+
+        すでに無い場合（404）も成功扱いにする（結果として「消えている」ため）。
+        """
+        if not self.webhook_url:
+            return False
+        try:
+            res = requests.delete(f"{self.webhook_url}/messages/{message_id}",
+                                  timeout=self.timeout)
+        except requests.RequestException as exc:
+            log.error("Discord[%s]: 削除に失敗 %s", self.label, exc)
+            return False
+        if res.status_code in (204, 404):
+            return True
+        log.error("Discord[%s]: 削除できない %s %s", self.label, res.status_code,
+                  truncate(res.text, 200))
+        return False
+
+
+# ---------------------------------------------------------------- ルーター
 
 
 class DiscordRouter:
@@ -211,10 +328,11 @@ class DiscordRouter:
        未設定ならログに残すだけにする。
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, sent_log: SentLog | None = None):
         self.cfg = cfg
         self.enabled = bool(cfg.get("discord.enabled", True))
         base = str(cfg.get("discord.avatar_base", "")).rstrip("/")
+        self.sent_log = sent_log
         self.channels: dict[str, DiscordNotifier] = {}
 
         for name, spec in (cfg.get("discord.channels", {}) or {}).items():
@@ -226,7 +344,9 @@ class DiscordRouter:
                 avatar_url=f"{base}/{avatar}" if (base and avatar) else None,
                 color=int(spec.get("color", COLOR_INFO)),
                 label=name,
+                channel=name,
                 enabled=self.enabled,
+                sent_log=sent_log,
             )
 
         poyon = cfg.get("discord.poyon", {}) or {}
@@ -254,12 +374,61 @@ class DiscordRouter:
         base = self[channel]
         return DiscordNotifier(
             base.webhook_url, username=self.poyon_username, avatar_url=self.poyon_avatar,
-            color=self.poyon_color, label=f"{channel}/poyon", enabled=self.enabled,
+            color=self.poyon_color, label=f"{channel}/poyon", channel=channel,
+            enabled=self.enabled, sent_log=self.sent_log,
         )
 
     def send_test_all(self) -> dict[str, bool]:
         return {name: n.send_test() for name, n in self.channels.items()}
 
+    # -------------------------------------------------- まとめて削除
 
-def from_config(cfg) -> DiscordRouter:
-    return DiscordRouter(cfg)
+    def purge(self, *, kinds: set[str] | None = None, run_date: str | None = None,
+              dry_run: bool = False) -> dict[str, Any]:
+        """記録してある投稿を消す。
+
+        `kinds` を指定するとその種別だけ（例: {"test"} で疎通確認だけ）。
+        🔴 記録に無いメッセージは消せない（Webhook は一覧を取れない）。
+        """
+        if self.sent_log is None:
+            return {"deleted": 0, "failed": 0, "kept": 0,
+                    "note": "送信記録が無い（SentLog 未設定）"}
+
+        rows = self.sent_log.rows()
+        deleted = failed = 0
+        kept: list[dict[str, Any]] = []
+        detail: dict[str, int] = {}
+
+        for row in rows:
+            match = (kinds is None or row.get("kind") in kinds) and (
+                run_date is None or row.get("run_date") == run_date
+            )
+            if not match:
+                kept.append(row)
+                continue
+            if dry_run:
+                detail[row["channel"]] = detail.get(row["channel"], 0) + 1
+                kept.append(row)
+                deleted += 1
+                continue
+            notifier = self.channels.get(row["channel"])
+            if notifier is None or not notifier.enabled:
+                kept.append(row)
+                failed += 1
+                continue
+            if notifier.delete_message(row["message_id"]):
+                deleted += 1
+                detail[row["channel"]] = detail.get(row["channel"], 0) + 1
+            else:
+                kept.append(row)
+                failed += 1
+
+        if not dry_run:
+            self.sent_log.rewrite(kept)
+        return {"deleted": deleted, "failed": failed, "kept": len(kept), "by_channel": detail}
+
+
+def from_config(cfg, sent_log: SentLog | None = None) -> DiscordRouter:
+    if sent_log is None:
+        sent_log = SentLog(cfg.path("ops.log_dir") / "sent_messages.jsonl")
+    return DiscordRouter(cfg, sent_log=sent_log)
