@@ -76,6 +76,8 @@
 
 **✅ 本番確認（2026-09-18 を対象に実行）**: プレフィルタ12件 → 選定AI5件 → 分析AI → 売買判断 →
 買い3件を発注待ちに積む（翌営業日 9/24 の寄りで約定予定）→ Discord 通知到達。
+✅ 反映済み（`50caf9a`・Vercel success）。tsc 0 / lint 0 / vitest 553件 / build OK / pytest 95件 全green。
+🔵 swing-lab はローカル実行のみなので、**Vercel のデプロイ内容には影響しない**（api関数は12個のまま）。
 
 **残り（未実装）**: Phase 8 Streamlitダッシュボード / Phase 10 学習ループ(1) / Phase 11 J-Quants＋バックテスト /
 Phase 12 予測MLモデル / Phase 13 スケジュール化。
