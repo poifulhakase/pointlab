@@ -201,10 +201,17 @@ export function pickNotifyTarget({ name, selfNames, peerTarget, selfTarget }) {
  *    🔴 鍵は AutoFBA 本番の `AI_EMP_INVENTORY_TOKEN` と同じもの＝**あちらを再発行したらここも入れ替える**。
  *    ハカセAIが投稿先の部屋（331007558）のメンバーであることが前提。
  *
- * @param {object} p  pickNotifyTarget と同じ ＋ selfChatworkRoom（自分あての Chatwork の部屋ID）
- * @returns {{ via: 'line' | 'chatwork' | '', to: string }} to が空＝送らない
+ * 🆕 2026-09-19：自分あてを **Discord の本人だけのチャンネル**（#自作line）へ移せるようにした。
+ *    Webhook は自分以外の送信者として投稿されるのでスマホ通知が鳴る（Chatwork でハカセAI名義に
+ *    したのと同じ理屈）。メンションは要らない。
+ *    🔴 これで **Chatwork の鍵（AutoFBA 本番の AI_EMP_INVENTORY_TOKEN と同じもの）への依存が消える**
+ *       ＝あちらを再発行してもこちらは何もしなくてよくなる。
+ *    優先順位は discord > chatwork > 自分だけのLINEグループ。設定してあるものが使われる。
+ *
+ * @param {object} p  pickNotifyTarget と同じ ＋ selfChatworkRoom / selfDiscordWebhook
+ * @returns {{ via: 'line' | 'chatwork' | 'discord' | '', to: string }} to が空＝送らない
  */
-export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfChatworkRoom }) {
+export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfChatworkRoom, selfDiscordWebhook }) {
   const self = String(selfNames || '').split(',').map(s => s.trim()).filter(Boolean)
   // 自分の名前を決めていない＝振り分けない（これまでどおり1か所へ送る）
   if (!self.length) return peerTarget ? { via: 'line', to: peerTarget } : { via: '', to: '' }
@@ -213,9 +220,20 @@ export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfC
   if (self.some(n => n === who)) {
     return peerTarget ? { via: 'line', to: peerTarget } : { via: '', to: '' }
   }
+  const hook = String(selfDiscordWebhook || '').trim()
+  if (isDiscordWebhook(hook)) return { via: 'discord', to: hook }
   const room = String(selfChatworkRoom || '').trim()
   if (/^\d+$/.test(room)) return { via: 'chatwork', to: room }
   return selfTarget ? { via: 'line', to: selfTarget } : { via: '', to: '' }
+}
+
+/**
+ * Discord の Webhook URL の形。
+ * 🔴 設定ミスに早く気づくために形だけ見る。**URLは実質パスワード**なのでログに出さない。
+ */
+export function isDiscordWebhook(v) {
+  return typeof v === 'string'
+    && /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(v)
 }
 
 /**
@@ -265,6 +283,14 @@ function baseFromHost(host) {
  * @param {string} toId     メンション先のアカウントID（空ならメンションなし）
  * @param {string} url      部屋を開くURL（空なら付けない）
  */
+export function buildDiscordBody(text, url) {
+  const link = String(url || '').trim()
+  const body = link ? `${text}
+${link}` : String(text ?? '')
+  // 🔴 Discord は1メッセージ2000字まで。通知の文面は短いが、念のため切る。
+  return body.length > 1900 ? `${body.slice(0, 1900)}…` : body
+}
+
 export function buildChatworkBody(text, toId, url) {
   const id = String(toId || '').trim()
   const head = /^\d+$/.test(id) ? `[To:${id}]\n${text}` : text

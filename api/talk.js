@@ -26,13 +26,15 @@
 //   TALK_NOTIFY_CW_ROOM       … 自分あての通知を送る Chatwork の部屋ID（2026-09-17・LINEの月200通を相手あてに回す）
 //   TALK_NOTIFY_CW_TOKEN      … その部屋に投稿する API トークン（2026-09-18からハカセAIの鍵＝別アカウント名義なのでスマホ通知が鳴る）
 //   TALK_NOTIFY_CW_TO         … メンション先のアカウントID（緒方さん 5972360。ハカセAIの鍵と組で効く）
+//   TALK_NOTIFY_DISCORD_URL   … 自分あての通知を送る Discord Webhook（2026-09-19・#自作line）
+//                               🔴 これがあると Chatwork より優先される＝ハカセAIの鍵が不要になる
 //   ANTHROPIC_API_KEY         … AI（?a=ai）用。ぽいロボの疑似トレードと同じ残高を使う
 //   ANTHROPIC_WORKSPACE_ID    … 🔴 アカウント紐付け型の鍵では必須（`wrkspc_...`）
 
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildChatworkBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyRoute, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, buildChatworkBody, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyRoute, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -82,6 +84,7 @@ async function notify(req, res) {
     peerTarget,
     selfTarget: process.env.LINE_TARGET_SELF_ID,
     selfChatworkRoom: process.env.TALK_NOTIFY_CW_TOKEN ? process.env.TALK_NOTIFY_CW_ROOM : '',
+    selfDiscordWebhook: process.env.TALK_NOTIFY_DISCORD_URL,
   })
   const target = route.to
   // 送り先が決まらない＝この向きの通知は使っていない（自分だけのグループを作っていない等）
@@ -98,7 +101,7 @@ async function notify(req, res) {
   try {
     const db = getDb()
     // 🔵 宛先ごとに数える＝自分あての通知が、相手あての通知の90秒に巻き込まれないように
-    const key = `talk_${room.slice(0, 8)}_${route.via === 'chatwork' ? 'cw' : target.slice(1, 7)}`
+    const key = `talk_${room.slice(0, 8)}_${route.via === 'line' ? target.slice(1, 7) : route.via}`
     if (!(await rateLimit(db, key, 'notify_min', 1, minSec * 1000))) return res.status(204).end()
     if (!(await rateLimit(db, key, 'notify_day', maxPerDay, 24 * 60 * 60 * 1000))) return res.status(204).end()
   } catch {
@@ -114,9 +117,11 @@ async function notify(req, res) {
 
   // 🆕 2026-09-18：自分あてには**部屋を開くURL**も付ける（運用者の指示）。
   //    🔴 相手あて（LINE）には付けない＝部屋IDは合言葉そのもので、グループの他の人に見えてしまう。
-  if (route.via === 'chatwork') {
+  if (route.via === 'discord' || route.via === 'chatwork') {
     const url = buildRoomUrl({ referer: req.headers.referer, host: req.headers.host, room })
-    return postSelfChatwork(res, target, text, url)
+    return route.via === 'discord'
+      ? postSelfDiscord(res, target, text, url)
+      : postSelfChatwork(res, target, text, url)
   }
 
   try {
@@ -142,6 +147,29 @@ async function notify(req, res) {
  * 自分あての通知を Chatwork の本人限定の部屋へ。
  * 🔵 部屋IDと鍵は環境変数だけに置く（コードと資料には書かない）。
  */
+/**
+ * 自分あての通知を Discord（本人だけのチャンネル）へ送る（2026-09-19）。
+ *
+ * 🔴 Webhook URL は実質パスワード。**ログにも画面にも出さない**（失敗時も status だけ）。
+ * 🔵 Webhook は自分以外の送信者として投稿されるので、メンションを付けなくてもスマホが鳴る。
+ * 🔵 送れなくても 204 を返す。通知が落ちてもトーク自体は使えるようにしておく。
+ */
+async function postSelfDiscord(res, webhook, text, url) {
+  try {
+    const r = await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'トーク', content: buildDiscordBody(text, url) }),
+    })
+    if (!r.ok) {
+      console.error('[talk] discord failed:', r.status)
+    }
+  } catch (e) {
+    console.error('[talk] discord error:', e?.message)
+  }
+  return res.status(204).end()
+}
+
 async function postSelfChatwork(res, room, text, url) {
   const token = process.env.TALK_NOTIFY_CW_TOKEN
   if (!token) return res.status(204).end()

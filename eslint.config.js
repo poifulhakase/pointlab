@@ -7,7 +7,9 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   // dist=ビルド成果物 / hakaseAI=別プロジェクト（ハカセAIチャット・このアプリと無関係）
-  globalIgnores(['dist', 'hakaseAI']),
+  // 🔵 robotrade/.venv は Python の仮想環境。matplotlib や pydeck が JS を同梱していて
+  //    lint の対象になってしまうので外す（ロボトレードの中身は pytest 側で見ている）。
+  globalIgnores(['dist', 'hakaseAI', 'robotrade/.venv']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

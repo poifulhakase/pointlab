@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildChatworkBody, buildNotifyText, buildRoomUrl, cleanAiText, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyRoute, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildChatworkBody, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyRoute, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -310,6 +310,77 @@ describe('talk-notify', () => {
     it('自分の名前を決めていなければ振り分けない（これまでどおり1か所へ）', () => {
       expect(pickNotifyTarget({ ...base, selfNames: '', name: 'なみ' })).toBe(peer)
       expect(pickNotifyTarget({ ...base, selfNames: undefined, name: 'ひろ' })).toBe(peer)
+    })
+  })
+})
+
+// ── 自分あてを Discord へ（2026-09-19）──────────────────────────────
+// 🔴 ねらい: Chatwork の鍵（AutoFBA 本番の AI_EMP_INVENTORY_TOKEN と同じもの）への
+//    依存を切る。あちらを再発行してもこちらは何もしなくてよくなる。
+describe('自分あての Discord 通知', () => {
+  const hook = 'https://discord.com/api/webhooks/1550711521024151625/alvZF7jGNqpB7ugZhjURXVfc7'
+  const base = {
+    selfNames: 'ひろ',
+    peerTarget: 'C00000000000000000000000000000001',
+    selfTarget: 'C00000000000000000000000000000002',
+    selfChatworkRoom: '331007558',
+    selfDiscordWebhook: hook,
+  }
+
+  describe('isDiscordWebhook', () => {
+    it('Webhook の形を見分ける', () => {
+      expect(isDiscordWebhook(hook)).toBe(true)
+      expect(isDiscordWebhook('https://discordapp.com/api/webhooks/123/abc-DEF_1')).toBe(true)
+    })
+
+    it('別物は弾く（設定ミスに早く気づくため）', () => {
+      expect(isDiscordWebhook('https://example.com/api/webhooks/1/x')).toBe(false)
+      expect(isDiscordWebhook('https://discord.com/api/webhooks/abc/xyz')).toBe(false)
+      expect(isDiscordWebhook('')).toBe(false)
+      expect(isDiscordWebhook(undefined)).toBe(false)
+    })
+  })
+
+  describe('pickNotifyRoute', () => {
+    it('相手が送ったぶんは Discord（Chatwork より優先）', () => {
+      expect(pickNotifyRoute({ ...base, name: 'なみ' })).toEqual({ via: 'discord', to: hook })
+    })
+
+    it('自分が送ったぶんは これまでどおり相手のいる LINE グループ', () => {
+      expect(pickNotifyRoute({ ...base, name: 'ひろ' }))
+        .toEqual({ via: 'line', to: base.peerTarget })
+    })
+
+    it('Webhook の形が壊れていたら Chatwork に落ちる（無言で止まらない）', () => {
+      expect(pickNotifyRoute({ ...base, selfDiscordWebhook: 'https://example.com/x', name: 'なみ' }))
+        .toEqual({ via: 'chatwork', to: '331007558' })
+    })
+
+    it('Discord も Chatwork も無ければ 自分だけの LINE グループ', () => {
+      expect(pickNotifyRoute({
+        ...base, selfDiscordWebhook: '', selfChatworkRoom: '', name: 'なみ',
+      })).toEqual({ via: 'line', to: base.selfTarget })
+    })
+
+    it('知らない名前は「相手が送った」側に倒す（最悪でも自分に届くだけ）', () => {
+      expect(pickNotifyRoute({ ...base, name: 'だれか' })).toEqual({ via: 'discord', to: hook })
+    })
+  })
+
+  describe('buildDiscordBody', () => {
+    it('部屋を開くURLを次の行に足す', () => {
+      expect(buildDiscordBody('なみ から新着があります', 'https://example.com/calendar/#/t/abc'))
+        .toBe('なみ から新着があります\nhttps://example.com/calendar/#/t/abc')
+    })
+
+    it('URLが無ければ本文だけ', () => {
+      expect(buildDiscordBody('なみ から新着があります', '')).toBe('なみ から新着があります')
+    })
+
+    it('2000字の上限で切る', () => {
+      const body = buildDiscordBody('あ'.repeat(3000), '')
+      expect(body.length).toBeLessThanOrEqual(1901)
+      expect(body.endsWith('…')).toBe(true)
     })
   })
 })
