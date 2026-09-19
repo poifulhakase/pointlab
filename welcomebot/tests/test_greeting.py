@@ -87,16 +87,30 @@ def test_greeting_is_in_the_doctors_voice():
 
 
 def test_greeting_asks_for_a_self_introduction():
-    for i in range(len(g.GREETINGS)):
-        text = g.GREETINGS[i].format(name="X")
+    for template in g.GREETINGS:
+        text = template.format(name="X")
         assert "ニックネーム" in text
         assert "興味のある分野" in text
+        assert "やぁ諸君！" in text          # 自己紹介するチャンネルを名指しする
 
 
-def test_greeting_varies():
-    """毎回同じにしない（設計書「より生きた感じに」）。"""
-    seen = {g.build_greeting("X", rng=random.Random(seed)) for seed in range(20)}
-    assert len(seen) > 1
+def test_greeting_is_the_one_the_operator_wrote():
+    """🔴 文面は運用者が決めたもの。勝手に言い回しを足さない。"""
+    text = g.build_greeting("ムサシ")
+    assert text.startswith("やあ、ムサシ 君。ぽいふる博士だ。")
+    assert "まずは「やぁ諸君！」で自己紹介から始めてくれたまえ。" in text
+    assert text.endswith("ムサシ 君を歓迎するぞ。\nさらばじゃ！")
+
+
+def test_name_appears_in_both_places():
+    """名前は冒頭と結びの2か所に入る。"""
+    assert g.build_greeting("ノラ").count("ノラ 君") == 2
+
+
+def test_the_same_text_every_time_for_now():
+    """いまは1種類なので毎回同じ（増やしたくなったら GREETINGS に足すだけ）。"""
+    seen = {g.build_greeting("X", rng=random.Random(seed)) for seed in range(10)}
+    assert len(seen) == 1
 
 
 def test_mention_goes_first():
