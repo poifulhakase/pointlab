@@ -8,7 +8,7 @@
 
 - 仕様の正 … [`SPEC.md`](SPEC.md)
 - Discord の設計 … [`DISCORD.md`](DISCORD.md)（チャンネル・通知フォーマット・運用）
-- note新着のおまけ … [`NOTE_FEED.md`](NOTE_FEED.md)（トレードとは別系統）
+- お知らせフィード … [`NOTE_FEED.md`](NOTE_FEED.md)（note・ポイ活。トレードとは別系統）
 - ローカル完結。Vercel にはデプロイしない。ぽいロボ本体のビルドとは無関係。
 
 ---
@@ -56,9 +56,9 @@ Set-Location 'C:\Project\PointLab\stock-calendar\swing-lab'
 | `main.py --notify-test` | Discord 4チャンネルの疎通確認だけ |
 | `main.py --purge-test` | 記録してある疎通確認の投稿を Discord から消す |
 | `main.py --purge-all` | 記録してある投稿をすべて消す（`--purge-dry-run` で件数だけ） |
-| `main.py --note-only` | note新着のチェックだけ（`--no-note` で逆に飛ばす） |
+| `main.py --feeds-only` | お知らせフィードのチェックだけ（`--no-feeds` で逆に飛ばす） |
 | `eda/run_eda.py [--limit N]` | 探索的データ分析（分布・相関・ファネル） |
-| `-m pytest` | テスト（158件） |
+| `-m pytest` | テスト（193件） |
 
 ---
 
@@ -174,7 +174,7 @@ swing-lab/
         ├── discord.py      Webhook（4チャンネルのルーター・添付対応）
         ├── summary.py      チャンネル別の embed 組み立て
         ├── chart.py        #成績 の推移グラフ（起点100の指数・二軸にしない）
-        └── note_feed.py    note新着のお知らせ（おまけ・トレードとは別系統）
+        └── feeds.py        note・ポイ活のお知らせ（おまけ・トレードとは別系統）
 ```
 
 ---
@@ -191,7 +191,7 @@ swing-lab/
 | 3 | プレフィルタ＋選定AI | ✅ |
 | 4 | チャート・需給・ニュース分析AI | ✅ |
 | 5 | オーケストレーター結合 | ✅ |
-| 6 | 疑似執行・コスト・ラベリング・単体テスト | ✅ 158件 全green |
+| 6 | 疑似執行・コスト・ラベリング・単体テスト | ✅ 193件 全green |
 | 7 | 通知の作り込み（4チャンネル振り分け・embed・グラフ） | ✅ `DISCORD.md` |
 | 8 | Streamlit ダッシュボード | ⬜ 未 |
 | 9 | リスク管理の拡充 | ✅（サイジング・相関/集中・DDスロットル・ストップガード） |

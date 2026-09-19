@@ -17,3 +17,4 @@ data_cache/
 eda_out/
 scratch/
 note_feed_state.json
+feed_state.json

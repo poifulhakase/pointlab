@@ -192,15 +192,57 @@ def validate(cfg: Config) -> list[str]:
             "（該当チャンネルには通知が飛ばない。.env に入れる）"
         )
 
-    # note新着（NOTE_FEED.md）
-    if cfg.get("note_feed.enabled", False):
-        if not cfg.get("note_feed.rss_url", ""):
-            raise ConfigError("note_feed.enabled なのに rss_url が空")
-        if int(cfg.get("note_feed.max_per_run", 10)) < 1:
-            raise ConfigError("note_feed.max_per_run は 1 以上")
-        if "note" not in cfg.secrets.webhooks:
+    # お知らせフィード（NOTE_FEED.md）
+    if cfg.get("feeds.enabled", False):
+        sources = cfg.get("feeds.sources", []) or []
+        if not sources:
+            raise ConfigError("feeds.enabled なのに sources が空")
+        keys = [src.get("key") for src in sources]
+        if len(keys) != len(set(keys)):
+            raise ConfigError(f"feeds.sources の key が重複している: {keys}")
+        for src in sources:
+            name = src.get("key", "(key無し)")
+            for required in ("key", "url", "channel"):
+                if not src.get(required):
+                    raise ConfigError(f"feeds.sources の {name} に {required} が無い")
+            if src.get("style", "per_item") not in ("per_item", "cards", "digest"):
+                raise ConfigError(
+                    f"feeds.sources.{name}.style は per_item / cards / digest のどれか"
+                )
+            if int(src.get("card_limit", 5)) < 0:
+                raise ConfigError(f"feeds.sources.{name}.card_limit は 0 以上")
+            if int(src.get("max_per_run", 10)) < 1:
+                raise ConfigError(f"feeds.sources.{name}.max_per_run は 1 以上")
+
+        # 🔴 同じチャンネルで style を混ぜない（まとめ方が決まらない）
+        by_channel: dict[str, set] = {}
+        for src in sources:
+            by_channel.setdefault(src["channel"], set()).add(src.get("style", "per_item"))
+        for channel, styles in by_channel.items():
+            if len(styles) > 1:
+                raise ConfigError(
+                    f"チャンネル {channel} で style が混在している（{sorted(styles)}）。揃える"
+                )
+        # 🔴 同じチャンネルで drop_rest / card_limit がバラバラだと、
+        #    どのソースの設定でまとめるかが決まらない（先頭ソース任せになる）
+        for field_name in ("drop_rest", "card_limit"):
+            per_channel: dict[str, set] = {}
+            for src in sources:
+                if src.get("style") in ("cards", "digest"):
+                    default = False if field_name == "drop_rest" else 5
+                    per_channel.setdefault(src["channel"], set()).add(
+                        src.get(field_name, default))
+            for channel, values in per_channel.items():
+                if len(values) > 1:
+                    raise ConfigError(
+                        f"チャンネル {channel} で {field_name} が揃っていない（{sorted(values)}）"
+                    )
+
+        unset = sorted({src["channel"] for src in sources} - set(cfg.secrets.webhooks))
+        if unset:
             warnings.append(
-                f"note新着の Webhook が未設定（{cfg.get('note_feed.env')}）＝投稿されない"
+                f"お知らせフィードの Webhook が未設定: {unset}"
+                f"（DISCORD_WEBHOOK_{unset[0].upper()} 等）＝そのチャンネルには投稿されない"
             )
 
     if not any(cfg.get(f"agents.{name}") for name in ("selector", "chart", "supply_demand", "news")):
@@ -230,11 +272,15 @@ def load(config_path: str | Path | None = None, *, root: Path | None = None) -> 
         value = os.environ.get(str(spec.get("env", "")), "").strip()
         if value:
             webhooks[name] = value
-    # note新着は**別系統のおまけ**（NOTE_FEED.md）。discord.channels とは分けてある。
-    note_env = str((raw.get("note_feed") or {}).get("env", ""))
-    note_url = os.environ.get(note_env, "").strip() if note_env else ""
-    if note_url:
-        webhooks["note"] = note_url
+    # お知らせフィードは**別系統のおまけ**（NOTE_FEED.md）。discord.channels とは分けてある。
+    # チャンネル名 → env 変数名は規約で決める（DISCORD_WEBHOOK_<大文字>）。
+    for source in (raw.get("feeds") or {}).get("sources", []) or []:
+        channel = str(source.get("channel", "")).strip()
+        if not channel or channel in webhooks:
+            continue
+        value = os.environ.get(f"DISCORD_WEBHOOK_{channel.upper()}", "").strip()
+        if value:
+            webhooks[channel] = value
 
     secrets = Secrets(
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,

@@ -117,6 +117,7 @@ class SentLog:
 @dataclass
 class Embed:
     title: str = ""
+    url: str = ""                 # 見出しをクリックできるようにする
     description: str = ""
     color: int = COLOR_INFO
     fields: list[dict[str, Any]] = field(default_factory=list)
@@ -138,6 +139,8 @@ class Embed:
         payload: dict[str, Any] = {"color": self.color}
         if self.title:
             payload["title"] = truncate(self.title, 256)
+        if self.url:
+            payload["url"] = self.url
         if self.description:
             payload["description"] = truncate(self.description, 4096)
         if self.fields:

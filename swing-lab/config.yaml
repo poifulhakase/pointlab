@@ -195,14 +195,58 @@ discord:
   performance_weekday: 4            # 成績を出す曜日（0=月 … 4=金）。--weekly で強制も可
   milestone_trades: [10, 30, 50, 100]   # ぽよん君が出てくるトレード件数の節目
 
-note_feed:
+feeds:
   # NOTE_FEED.md。トレードマシンとは**別系統のおまけ**。4チャンネルには混ぜない。
   # 🔴 構造的に混ざらないよう、discord.channels とは別のセクションに置いてある。
+  # キャラは**ぽよん君**（お得情報を一緒に探す助手）。ぽいロボはトレード側の顔。
   enabled: true
-  rss_url: "https://note.com/pointlab/m/m7be629812c81/rss"
-  env: DISCORD_WEBHOOK_NOTE
-  username: "ぽいロボ｜note"
-  avatar: "poirobo-avatar.png"
-  state_path: "note_feed_state.json"   # 通知済み guid の記録（冪等性）
-  max_per_run: 10                      # 1回の実行で投稿する上限（溜まっていても一気に流さない）
-  only_creators: []                    # 空＝全員。絞るなら note_creatorname をそのまま並べる
+  state_path: "feed_state.json"    # 情報源ごとの通知済み guid（冪等性）
+
+  # 🔴 情報源はここに追記して育てる（＝ポイ活AI botの情報源データベース）。
+  #    新しいRSSは /feed か /rss で取得確認してから足す。
+  #    style: per_item = 1件1メッセージ
+  #          cards     = 上位 card_limit 件をカード（サムネ付き）。1メッセージ
+  #          digest    = 一覧行だけでまとめる
+  #    drop_rest: カードに載らなかったぶんを既読にして捨てるか
+  #    🔴 流量で使い分ける。ポイ探は実測1日10件。1件1メッセージだと毎日10通になる。
+  sources:
+    - key: note_pointlab
+      name: "副業図鑑（共同マガジン）"
+      url: "https://note.com/pointlab/m/m7be629812c81/rss"
+      channel: note                # .env: DISCORD_WEBHOOK_NOTE
+      username: "ぽよん君｜note"
+      avatar: "poyonkun-avatar.png"
+      style: per_item              # 低頻度なので1件ずつ
+      emoji: "📝"
+      label: "新着"
+      max_per_run: 50              # 🔴 note は**全件通知**（運用者の指示・2026-09-19）
+      only_creators: []            # 空＝全員。絞るなら note_creatorname をそのまま並べる
+
+    - key: poitan
+      name: "ポイ探ニュース"
+      url: "https://www.poitan.jp/feed"
+      channel: deals               # .env: DISCORD_WEBHOOK_DEALS
+      username: "ぽよん君｜お得"
+      avatar: "poyonkun-avatar.png"
+      style: cards
+      # 🔴 1日1記事だけ（運用者の指示・2026-09-19）。実測で1日10件あるので絞る。
+      card_limit: 1                # 公開時刻がいちばん新しい1件をカードに
+      drop_rest: true              # 残りは既読にして捨てる（持ち越すと毎日積み上がる）
+      emoji: "🎁"
+      label: "今日のお得"
+      max_per_run: 30              # 候補として拾う上限（この中から card_limit 件を出す）
+      only_categories: []          # 例: ["楽天ポイント", "キャンペーン"] で絞れる
+
+    - key: kochalog
+      name: "こちゃログ"
+      url: "https://kochalog.com/feed/"
+      channel: deals               # ポイ探と同じチャンネル＝ダイジェストに合流する
+      username: "ぽよん君｜お得"
+      avatar: "poyonkun-avatar.png"
+      style: cards                 # ポイ探と同じチャンネルなので揃える
+      card_limit: 1
+      drop_rest: true
+      emoji: "🎁"
+      label: "今日のお得"
+      max_per_run: 30
+      only_categories: []
