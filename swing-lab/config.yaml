@@ -1,0 +1,165 @@
+# swing-lab 設定（SPEC 3章）
+# 🔴 閾値はすべてここに置く。コードやプロンプトにハードコードしない。
+
+holding:
+  min_days: 2              # 最短保有日数
+  max_days: 14             # 最長保有日数（時間手仕舞いの上限。コード側でも強制）
+
+indicators:                # 指標パラメータ（SPEC 5.1・一元計算）
+  sma: [5, 25, 75]
+  slope_window: 5          # SMA25傾きの算出日数
+  disparity_sma: 25        # 乖離率の基準SMA
+  rsi: 14
+  macd: [12, 26, 9]
+  atr: 14
+  bb_period: 20
+  bb_sigma: 2
+  weekly_context: true     # 週足トレンドを上位足の文脈に使う
+  candlestick: true        # ローソク足パターン検出
+  breakout_vol_ratio: 1.5  # ブレイクを本物とみなす出来高倍率
+  swing_lookback: 60       # 直近スイング高安/サポレジを探す日数
+  history_days: 400        # 取得する日足の本数（週足75本ぶんを確保）
+  min_bars: 120            # これ未満の銘柄は分析対象外（データ健全性）
+
+screen:                    # 数値プレフィルタ（SPEC 6章）
+  min_turnover: 300000000  # 第1層: 最低売買代金（円・20日平均）
+  min_price: 300           # 第1層: 最低株価
+  # 🔴 1銘柄の投資上限（capital.initial_cash × risk.max_position_pct）と揃える。
+  #    ここが上限より大きいと「プレフィルタは通るがサイジングで必ず0株」の銘柄が混ざり、
+  #    候補は出るのに約定が貯まらない（一番気づきにくい壊れ方）。起動時に検査している。
+  max_unit_cost: 1000000   # 第1層: 1単元の上限コスト（円）
+  atr_min: 0.02            # 第2層: ATR%下限
+  atr_max: 0.08            # 第2層: ATR%上限
+  vol_spike_ratio: 1.5     # 第2層: 出来高が平均の何倍で注目とみなすか
+  top_n: 15                # 第2層: スコア上位何件を選定AIに渡すか
+  exclude_event_within_days: 3   # 第3層: N日内に決算/権利日がある銘柄の扱い
+  penny_stock_policy: exclude    # 低位株・ボロ株: exclude / allow
+  recent_move_days: 5      # 第3層: 直近の急騰急落を見る日数
+  recent_move_pct: 0.15    # 第3層: この%以上動いていたら除外（動き切った後）
+  weights:                 # 第2層スコアの重み（合計1.0でなくてよい）
+    atr_fit: 1.0           # ボラがレンジ内か
+    vol_spike: 1.0         # 出来高の変化
+    trend: 1.0             # 移動平均との位置関係
+    clarity: 1.2           # 地合いの明確さ（曖昧を上位に残さない＝やや重め）
+
+macro:
+  fx_symbol: "JPY=X"       # ドル円（為替入力）
+  us_symbols: ["^GSPC", "^IXIC", "^SOX", "^VIX", "^TNX"]  # 前夜の米株・半導体・VIX・米金利
+  jp_symbols: ["^N225", "1306.T"]   # 日経平均・TOPIX連動ETF（地合い）
+  avoid_new_before_event: true      # 高インパクト経済イベント前日は新規を抑制
+  # 🔴 イベントカレンダーは ぽいロボの src/utils/{macroCalendar.ts,sqCalendar.ts,marketCalendar.mjs}
+  #    が単一情報源。`npx tsx swing-lab/scripts/export_calendar.mjs` で JSON に書き出して読む。
+  #    Python 側に休場判定を書き写さない（CLAUDE.md の不変ルール）。
+  high_impact_types: [fomc, boj, nfp, cpi, pce, gdp, jacksonhole, testimony]
+  high_impact_sq: [major]           # メジャーSQは市場全体のボラ要因
+
+risk:
+  max_position_pct: 0.2    # 1銘柄あたり最大投資比率
+  max_positions: 5         # 同時保有の最大数
+  max_total_exposure_pct: 0.8   # 総投資比率の上限
+  max_bucket_pct: 0.4      # 同一為替感応度/セクターの合計上限（相関対策）
+  risk_per_trade_pct: 0.01 # 1トレードの想定損失（口座比・リスク%固定＋上限キャップ）
+  drawdown_throttle: 0.1   # DDがこの水準を超えたら新規を絞る
+  market_drop_pct: 0.03    # 日経/TOPIXの日次急落がこの%超でリスクオフ
+  fx_move_pct: 0.02        # ドル円の日次急変がこの%超でリスクオフ
+  vix_spike: 30.0          # VIXがこの水準超でリスクオフ
+  risk_off_action: halt_new     # リスクオフ時: halt_new（新規停止）/ lighten（縮小）
+  allow_pyramiding: false  # 保有中銘柄の買い増しを許すか（既定オフ）
+  stop_atr_min: 0.5        # ストップ妥当性ガード: stop距離の下限（ATR倍数）
+  stop_atr_max: 4.0        # 同 上限
+
+exec:                      # 疑似執行のリアリズム（SPEC 10.2 / 10.5）
+  cost_bps: 10             # 往復取引コスト（bps）
+  slippage_bps: 5          # スリッページ（bps）
+  fill_rule: next_open     # 新規の約定基準（翌寄り）
+  max_volume_pct: 0.05     # 想定数量の上限（当該銘柄1日出来高比）
+  max_entry_gap_pct: 0.02  # 翌寄りが想定エントリーからこれ以上乖離したら見送り
+  lot_size: 100            # 単元株数
+
+weights:                   # LLMへの強調ヒント（掛け算ではない。SPEC 7.5）
+  supply_demand: 1.3       # 2〜14日では需給をやや重めに（1.0が基準）
+  news: 1.0
+  ml_prob: 1.0
+
+feedback:
+  recent_n: 20             # 売買判断AIに渡す直近トレード件数
+
+learning:
+  exploration_rate: 0      # 実トレードでの探索枠（既定オフ。シャドウ追跡は常時）
+
+ml:                        # 🔵 Phase 12。この第1弾では未使用（ml_prob は常に null）
+  enabled: false
+  label_type: barrier
+  label_days: 14
+  label_target_pct: 3.0
+  label_stop_pct: 2.0
+  retrain_every_days: 30
+
+ops:
+  daily_cost_alert_usd: 3.0     # 1日のAPIコスト上限アラート（USD）
+  log_dir: "logs"
+  db_path: "swing_lab.db"
+  cache_dir: "data_cache"
+  cache_ttl_hours: 6
+
+backtest:                  # 🔵 Phase 11。この第1弾では未使用
+  enabled: false
+  start: "2021-01-01"
+  end: "2024-12-31"
+  universe_source: jquants
+  include_delisted: true
+  llm_replay: false
+
+profile:                   # 銘柄プロファイル（SPEC 5.3）の株価水準クラス
+  price_class_low: 500     # これ未満 = low（低位株）
+  price_class_high: 5000   # これ以上 = high（値がさ）
+
+poirobo:
+  # ぽいロボ（stock-calendar）のデータを参照する。fetch-data.yml が毎日更新してコミットする。
+  # 🔴 ローカルは **git pull した時点の鮮度**。古ければ止める（SPEC 13「欠損を捏造しない」）。
+  data_dir: "../public/data"
+  calendar_json: "data_cache/calendar.json"
+  max_stale_days: 7            # この日数より古いデータがあれば実行を止める
+  margin_weekly_dir: "../public/data/margin_weekly"
+
+capital:
+  # 疑似トレードなので額は自由。500万にすると 1銘柄上限100万円＝株価1万円まで買え、
+  # 日本株の大半が対象になる（2026-09-19 にユーザー決定）。
+  initial_cash: 5000000
+
+universe:
+  # 🔴 ぽいロボの stock_master.json（全上場3,707銘柄・code/name/sector33）を正とする。
+  #    自前の銘柄リストを持つと、片方だけ古くなる。
+  source: poirobo              # poirobo / csv
+  csv_path: "data/universe.csv"  # source: csv のときだけ使う
+  max_symbols: 0               # 0 = 全件。動作確認で絞りたいときに使う
+  exclude_etf: true            # 1000番台などのETF/REITを外す（個別株のスイングが対象）
+
+models:
+  # 🔴 2026-09-19 に /v1/models と公式料金表で確認。
+  #    cheap = Haiku 4.5（$1/$5 per 1M）… 銘柄数ぶん呼ぶ工程
+  #    strong = Sonnet 5（$2/$10 per 1M）… 売買判断（1日1回）
+  cheap: "claude-haiku-4-5"
+  strong: "claude-sonnet-5"
+  cheap_max_tokens: 4096
+  strong_max_tokens: 8192
+  # 🔴 temperature は書けない。Anthropic Python SDK 1.7 の messages.create() から
+  #    **引数ごと削除**されている（4.6世代以降のモデルが受け付けないため）。
+  #    SPEC 7.6 の「再現性のため temperature を低めに」は現行APIでは実現できないので、
+  #    代わりに**判断ログに使用モデル・プロンプト版・入力ハッシュを残す**ことで
+  #    「同じ入力だったか」を後から照合できるようにしている（base.py の AgentCall）。
+  # 🔴 output_config.effort は Sonnet 5 でのみ有効。Haiku 4.5 は送ると 400。
+  strong_effort: "high"
+  max_retries: 3                # JSONパース失敗時の再試行回数（SPEC 7.6）
+  parallel_workers: 4           # 銘柄ごとの分析AIを並列で呼ぶ数
+
+agents:                    # アブレーション（SPEC 9.1）: 個別にオフにして効果を切り分ける
+  selector: true
+  chart: true
+  supply_demand: true
+  news: true
+
+discord:
+  enabled: true
+  username: "point-lab"
+  # webhook_url は .env の DISCORD_WEBHOOK_URL から読む（URLは実質パスワードのため）

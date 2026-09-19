@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 秘密（Discord Webhook URL は実質パスワード・Anthropic API キー）
+.env
+
+# ローカル実行の産物（判断ログ・DB・価格キャッシュ）
+# 🔴 リポジトリ直下の .gitignore に `logs` があるため swing-lab/logs も元々追跡されない。
+#    判断ログと成績DBは「ローカルだけの資産」＝バックアップは手動。
+logs/
+*.db
+*.sqlite3
+data_cache/
+eda_out/
