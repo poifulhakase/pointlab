@@ -7,6 +7,7 @@
 成績そのものより、各エージェントがどう考えて判断したかのログを残すことを重視する。
 
 - 仕様の正 … [`SPEC.md`](SPEC.md)
+- Discord の設計 … [`DISCORD.md`](DISCORD.md)（チャンネル・通知フォーマット・運用）
 - ローカル完結。Vercel にはデプロイしない。ぽいロボ本体のビルドとは無関係。
 
 ---
@@ -20,7 +21,11 @@ py -3 -m venv .venv
 
 # .env を作る（.env.example をコピー）
 #   ANTHROPIC_API_KEY=...
-#   DISCORD_WEBHOOK_URL=...   🔴 URLは実質パスワード。知っている人は誰でも投稿できる
+#   DISCORD_WEBHOOK_DECISIONS / _FILLS / _PERFORMANCE / _ERRORS
+#   🔴 Webhook URLは実質パスワード。知っている人は誰でも投稿できる
+
+# Discord のアバター画像を作り直したいとき（通常は不要）
+.\.venv\Scripts\python.exe scripts/make_avatars.py
 ```
 
 ---
@@ -46,9 +51,10 @@ Set-Location 'C:\Project\PointLab\stock-calendar\swing-lab'
 | `main.py --dry-run` | DBに書き込まない（判断だけ見る） |
 | `main.py --force` | 実行済みの日をやり直す |
 | `main.py --no-notify` | Discord に送らない |
-| `main.py --notify-test` | Discord 疎通確認だけ |
+| `main.py --weekly` | 曜日に関係なく #成績 も出す（既定は金曜だけ） |
+| `main.py --notify-test` | Discord 4チャンネルの疎通確認だけ |
 | `eda/run_eda.py [--limit N]` | 探索的データ分析（分布・相関・ファネル） |
-| `-m pytest` | テスト（95件） |
+| `-m pytest` | テスト（132件） |
 
 ---
 
@@ -111,7 +117,14 @@ LLM が暴走しても資金とリスクの一線はコードが守る。
 | tool スキーマの数値範囲 | `strict` では `minimum`/`maximum` が **400** | 範囲は `validate()` で弾いてリトライ |
 | — | `output_config.effort` は Sonnet 5 のみ。Haiku 4.5 は 400 | `models.*_effort` で出し分け |
 
-### 6. LLM は稀にプレースホルダーを返す
+### 6. 通知は4チャンネルに振り分ける
+
+`#判断サマリ` / `#約定・保有` / `#成績`（週次）/ `#エラー・異常`。詳細は `DISCORD.md`。
+🔴 **異常を日次の一目に混ぜない**。ノイズにすると見なくなる。
+🔴 **総資産の増減率は週次の #成績 だけ**に出す（日々のP&Lを煽らない）。
+　 ただし**含み損は毎日出す**（見たくないものから目を背けさせない・SPEC 12.1）。
+
+### 7. LLM は稀にプレースホルダーを返す
 
 強いモデルでも `market_view: "dummy"` / `ticker: "dummy"` を返すことが**実際にあった**
 （同じ入力で再試行すると正常に返る＝非決定性）。`validate()` で弾いて再試行させている。
@@ -153,7 +166,10 @@ swing-lab/
     ├── agents/             base / selector / chart / supply_demand / news / decider
     ├── portfolio/          portfolio（FSM）/ execution（執行・サイジング）/ store（SQLite）
     ├── learning/outcomes.py  ラベリング・期待値分解・信頼区間
-    └── notify/             discord / summary
+    └── notify/
+        ├── discord.py      Webhook（4チャンネルのルーター・添付対応）
+        ├── summary.py      チャンネル別の embed 組み立て
+        └── chart.py        #成績 の推移グラフ（起点100の指数・二軸にしない）
 ```
 
 ---
@@ -170,8 +186,8 @@ swing-lab/
 | 3 | プレフィルタ＋選定AI | ✅ |
 | 4 | チャート・需給・ニュース分析AI | ✅ |
 | 5 | オーケストレーター結合 | ✅ |
-| 6 | 疑似執行・コスト・ラベリング・単体テスト | ✅ 95件 全green |
-| 7 | 通知の作り込み（embed・TradingViewリンク） | ✅ |
+| 6 | 疑似執行・コスト・ラベリング・単体テスト | ✅ 132件 全green |
+| 7 | 通知の作り込み（4チャンネル振り分け・embed・グラフ） | ✅ `DISCORD.md` |
 | 8 | Streamlit ダッシュボード | ⬜ 未 |
 | 9 | リスク管理の拡充 | ✅（サイジング・相関/集中・DDスロットル・ストップガード） |
 | 10 | 学習ループ(1) フィードバック | ⬜ 未（成績サマリは判断AIに渡している） |

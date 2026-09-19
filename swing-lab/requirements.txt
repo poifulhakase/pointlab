@@ -9,3 +9,8 @@ requests>=2.32
 PyYAML>=6.0
 python-dotenv>=1.0
 pytest>=8.0
+
+# 通知まわり（DISCORD.md）
+matplotlib>=3.9       # #成績 の推移グラフ
+pillow>=10.0          # Webhook アバターの生成（scripts/make_avatars.py）
+pyarrow>=17.0         # 価格キャッシュ（parquet）

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,8 @@ class ConfigError(Exception):
 @dataclass
 class Secrets:
     anthropic_api_key: str | None
-    discord_webhook_url: str | None
+    # チャンネル名 → Webhook URL（DISCORD.md 1章）。未設定のチャンネルは入らない。
+    webhooks: dict[str, str] = dataclass_field(default_factory=dict)
 
 
 class Config:
@@ -171,6 +172,26 @@ def validate(cfg: Config) -> list[str]:
     if cfg.get("models.max_retries") < 1:
         raise ConfigError("models.max_retries は 1 以上")
 
+    # Discord のチャンネル定義（DISCORD.md 1章）。4つ揃っているか。
+    channels = cfg.get("discord.channels", {}) or {}
+    required = {"decisions", "fills", "performance", "errors"}
+    missing = required - set(channels)
+    if missing:
+        raise ConfigError(f"discord.channels に {sorted(missing)} が無い")
+    for name, spec in channels.items():
+        for key in ("env", "username", "color"):
+            if key not in spec:
+                raise ConfigError(f"discord.channels.{name} に {key} が無い")
+    if not (0 <= int(cfg.get("discord.performance_weekday", 4)) <= 6):
+        raise ConfigError("discord.performance_weekday は 0〜6（0=月）")
+
+    unset = [n for n in required if n not in cfg.secrets.webhooks]
+    if cfg.get("discord.enabled", True) and unset:
+        warnings.append(
+            f"Discord の Webhook が未設定: {sorted(unset)}"
+            "（該当チャンネルには通知が飛ばない。.env に入れる）"
+        )
+
     if not any(cfg.get(f"agents.{name}") for name in ("selector", "chart", "supply_demand", "news")):
         warnings.append("agents: 分析AIが全部オフ＝売買判断AIに渡す材料が無い")
 
@@ -190,9 +211,18 @@ def load(config_path: str | Path | None = None, *, root: Path | None = None) -> 
         raise ConfigError(f"config の中身が辞書でない: {config_path}")
 
     load_dotenv(root / ".env")
+
+    # 🔴 Webhook URL は config.yaml に書かない（実質パスワード）。
+    #    config が env 変数名を持ち、値は .env から引く。
+    webhooks: dict[str, str] = {}
+    for name, spec in (raw.get("discord", {}).get("channels", {}) or {}).items():
+        value = os.environ.get(str(spec.get("env", "")), "").strip()
+        if value:
+            webhooks[name] = value
+
     secrets = Secrets(
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,
-        discord_webhook_url=os.environ.get("DISCORD_WEBHOOK_URL") or None,
+        webhooks=webhooks,
     )
 
     cfg = Config(raw, secrets, root)

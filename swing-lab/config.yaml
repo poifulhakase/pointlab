@@ -160,6 +160,37 @@ agents:                    # アブレーション（SPEC 9.1）: 個別にオ�
   news: true
 
 discord:
+  # DISCORD.md 1〜2章。チャンネルごとに**別々のWebhook**で振り分ける。
+  # 🔴 Webhook URL は .env（実質パスワード＝知っていれば誰でも投稿できる）。
+  #    ここにはチャンネルごとの「見た目」だけ置く。
   enabled: true
-  username: "point-lab"
-  # webhook_url は .env の DISCORD_WEBHOOK_URL から読む（URLは実質パスワードのため）
+  avatar_base: "https://pointlab.vercel.app/calendar/discord"
+  # 🔵 静的ファイルのURLは /calendar/… （/stock-calendar/… は SPA の HTML が返る）
+  channels:
+    decisions:                      # #判断サマリ（日次・引け後）＝メインの一目
+      env: DISCORD_WEBHOOK_DECISIONS
+      username: "ぽいロボ｜判断"
+      avatar: "poirobo-avatar.png"
+      color: 0x3498DB               # 青
+    fills:                          # #約定・保有（日次・引け後）＝何が動いたか
+      env: DISCORD_WEBHOOK_FILLS
+      username: "ぽいロボ｜約定"
+      avatar: "poirobo-avatar.png"
+      color: 0x2ECC71               # 緑
+    performance:                    # #成績（週次）＝どっしり振り返る
+      env: DISCORD_WEBHOOK_PERFORMANCE
+      username: "ぽいロボ｜成績"
+      avatar: "poirobo-avatar.png"
+      color: 0x9B59B6               # 紫
+    errors:                         # #エラー・異常（イベント時のみ）
+      env: DISCORD_WEBHOOK_ERRORS
+      username: "ぽいロボ｜異常"
+      avatar: "poirobo-avatar.png"
+      color: 0xE74C3C               # 赤
+  poyon:
+    # ぽよん君＝助手・読者の代弁者。**節目だけ**に一言添える（やりすぎない）。
+    username: "ぽよん君"
+    avatar: "poyonkun-avatar.png"
+    color: 0xAECBEB
+  performance_weekday: 4            # 成績を出す曜日（0=月 … 4=金）。--weekly で強制も可
+  milestone_trades: [10, 30, 50, 100]   # ぽよん君が出てくるトレード件数の節目
