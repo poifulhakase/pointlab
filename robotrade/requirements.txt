@@ -1,0 +1,18 @@
+# ロボトレード（Python 3.14 で動作確認済み・2026-09-19）
+# 🔴 pandas-ta は使わない（numpy 2.x で壊れる＋SPEC 5.1「一元計算の原則」と噛み合わないため
+#    指標は robotrade/data/indicators.py に自前実装する）
+pandas>=3.0
+numpy>=2.0
+yfinance>=1.7
+anthropic>=1.7
+requests>=2.32
+PyYAML>=6.0
+python-dotenv>=1.0
+pytest>=8.0
+
+# 通知まわり（DISCORD.md）
+matplotlib>=3.9       # #成績 の推移グラフ
+pillow>=10.0          # Webhook アバターの生成（scripts/make_avatars.py）
+pyarrow>=17.0         # 価格キャッシュ（parquet）
+feedparser>=6.0       # お知らせフィードのRSS（NOTE_FEED.md）
+streamlit>=1.60       # ダッシュボード（SPEC 12）

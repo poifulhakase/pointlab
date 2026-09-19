@@ -13,7 +13,7 @@
 
 - [ ] **GitHub Secrets の片付け（任意）**：ロボ口座の廃止で `ANTHROPIC_API_KEY`（ぽいロボ専用に発行した鍵）・`CHATWORK_API_TOKEN`・`CHATWORK_ROOM_ID` は Actions から使われなくなった。
   不要なら GitHub の Settings → Secrets から消す。
-  🔴 **ただし Anthropic の鍵は失効させない**（2026-09-19 から swing-lab が使っている）。Chatwork 系だけ消してよい。
+  🔴 **ただし Anthropic の鍵は失効させない**（2026-09-19 から ロボトレード が使っている）。Chatwork 系だけ消してよい。
   🔵 手元の `.env.local` にも同じ鍵が残っている（コミットはされない）。
 - 🔵 旧「ロボ口座（疑似トレード）」の残作業（Go/No-Go・読み取り精度の実測など）は、機能ごと廃止したので**すべて不要**になった（2026-09-16）。
 
@@ -21,15 +21,15 @@
 
 ## 🟢 現在の状態
 
-### 2026-09-19(70): 🆕 **swing-lab**（LLMスイングトレード疑似トレードマシン）を `swing-lab/` に新設
+### 2026-09-19(70): 🆕 **ロボトレード**（LLMスイングトレード疑似トレードマシン）を `robotrade/` に新設
 
-運用者から仕様書（`swing-lab/SPEC.md`・866行）を受領。**Phase 0〜6＋7＋9 を実装**（SPEC 14 の作業順序）。
+運用者から仕様書（`robotrade/SPEC.md`・866行）を受領。**Phase 0〜6＋7＋9 を実装**（SPEC 14 の作業順序）。
 ローカル完結の Python プロジェクト。**Vercel にはデプロイしない・ぽいロボ本体のビルドとは無関係**。
-詳細は `swing-lab/README.md`（触る前にこれを読む）。
+詳細は `robotrade/README.md`（触る前にこれを読む）。
 
 - 中身＝日本株スイング（保有2〜14日・**買いのみ**）を、複数のLLMが日次で判断する疑似トレード。
   実弾なし。狙いは「勝つbot」ではなく**LLMの判断ロジックを観察する装置**。
-- Python 3.14 / venv は `swing-lab/.venv`。**pandas-ta は使わない**（numpy 2.x で壊れている）ので
+- Python 3.14 / venv は `robotrade/.venv`。**pandas-ta は使わない**（numpy 2.x で壊れている）ので
   指標は `swinglab/data/indicators.py` に自前実装＝**単一情報源**。
 - テスト **95件 全green**（pytest）。コード 6,320行。
 
@@ -46,7 +46,7 @@
 | `src/utils/{marketCalendar.mjs,macroCalendar.ts,sqCalendar.ts}` | 休場・FOMC/日銀/SQ |
 
 - 🔴 **カレンダーは Python に書き写さない**。CLAUDE.md の不変ルール（休場判定を二箇所に書くと
-  片方だけ直して祝日に発注する事故）に従い、`npx tsx swing-lab/scripts/export_calendar.mjs 2024 2027`
+  片方だけ直して祝日に発注する事故）に従い、`npx tsx robotrade/scripts/export_calendar.mjs 2024 2027`
   で **JS を実行して JSON に書き出したもの**を読む。年1回流せばよい。
 - 🔴 ローカルは **git pull した時点の鮮度**。7日以上古いと実行を止める（欠損を捏造しない）。
 
@@ -77,11 +77,11 @@
 **✅ 本番確認（2026-09-18 を対象に実行）**: プレフィルタ12件 → 選定AI5件 → 分析AI → 売買判断 →
 買い3件を発注待ちに積む（翌営業日 9/24 の寄りで約定予定）→ Discord 通知到達。
 ✅ 反映済み（`50caf9a`・Vercel success）。tsc 0 / lint 0 / vitest 553件 / build OK / pytest 95件 全green。
-🔵 swing-lab はローカル実行のみなので、**Vercel のデプロイ内容には影響しない**（api関数は12個のまま）。
+🔵 ロボトレード はローカル実行のみなので、**Vercel のデプロイ内容には影響しない**（api関数は12個のまま）。
 
 **🆕 同日追加: Discord を4チャンネルに振り分け**（`61c684c` / `f7968b1`）
 運用者から Discord 設計書を受領（骨組み）。1・2・5章を実装し、「未定」だった
-3章（通知フォーマット）・4章（運用ルール）はこちらで設計して `swing-lab/DISCORD.md` に確定。
+3章（通知フォーマット）・4章（運用ルール）はこちらで設計して `robotrade/DISCORD.md` に確定。
 
 | チャンネル | 頻度 | 中身 |
 |---|---|---|
@@ -112,7 +112,7 @@
 消せなかったものは記録に残す（取りこぼしを見失わない）。404は成功扱い。
 🔵 **この変更より前に送ったぶんは id が無いので消せない**（Discordの画面で手で消す）。
 
-**🆕 同日追加: note新着のお知らせ**（`62d4e52`・`swing-lab/NOTE_FEED.md`）
+**🆕 同日追加: note新着のお知らせ**（`62d4e52`・`robotrade/NOTE_FEED.md`）
 運用者のメモを実装。トレードとは**別系統のおまけ**で、判断/約定/成績/エラーの
 4チャンネルには構造的に流れない（送信経路を `discord.channels` と分けてある）。
 RSS `https://note.com/pointlab/m/m7be629812c81/rss`（実測200/25件）→
@@ -156,7 +156,7 @@ NOTE_FEED.md の追記を実装。単一ソースだった `note_feed` を複数
 Phase 12 予測MLモデル / Phase 13 スケジュール化。
 決算日・権利日・空売り残高・ニュースは**取得元が無いので「データなし」で回している**（推測で埋めない）。
 
-🔵 Anthropic の鍵は `stock-calendar/.env.local` のものを swing-lab でも使う
+🔵 Anthropic の鍵は `stock-calendar/.env.local` のものを ロボトレード でも使う
 ＝下の「GitHub Secrets の片付け」で**失効させないこと**。
 
 ### 2026-09-18(69): 自分あて（nami の投稿）の Chatwork 通知を**ハカセAI名義**にした＝スマホが鳴るようになった
