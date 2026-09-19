@@ -15,6 +15,9 @@
   不要なら GitHub の Settings → Secrets から消す。
   🔴 **ただし Anthropic の鍵は失効させない**（2026-09-19 から ロボトレード が使っている）。Chatwork 系だけ消してよい。
   🔵 手元の `.env.local` にも同じ鍵が残っている（コミットはされない）。
+- [ ] **J-Quants の登録（着手したくなったら）**：無料枠あり。登録するとロボトレードの Phase 11
+  （point-in-time ユニバース＋バックテスト）に着手でき、いま「データなし」で回している
+  決算日・権利確定日・空売り残高も取れるようになる。
 - 🔵 旧「ロボ口座（疑似トレード）」の残作業（Go/No-Go・読み取り精度の実測など）は、機能ごと廃止したので**すべて不要**になった（2026-09-16）。
 
 ---
@@ -236,6 +239,89 @@ Phase 12 予測MLモデル / Phase 13 スケジュール化。
 - ✅ 本番確認（`98dbdf1`）：Vercel success／`?only=weekly&code=7013` 200／`/calendar/data/margin_weekly/*` 配信／robo_account.json は消えた／ログインした画面で 7013 を登録してチャート表示（運用者のアカウントに 7013 が登録済み）。🔵 静的データのURLは `/calendar/data/…`（`/stock-calendar/data/…` は SPA の HTML が返る）。
 - 🔵 手元の分析画像はデスクトップ `TradingViewIHI_信用期日.png`（一時スクリプト・株探データ）。
 
+
+**🆕 同日追加: ダッシュボード（Phase 8）と日次実行のスケジュール化（Phase 13）**（`3810c81`）
+- Streamlit の6画面（意思決定／保有／成績／履歴／ドリルダウン／運用）。
+  `robotrade/.venv/Scripts/python.exe -m streamlit run dashboard.py` → localhost:8501
+- 🔴 **読み取り専用で開く**（`Store(path, readonly=True)`）。画面から書く経路を構造的に無くす。
+- 🔴 `check_same_thread=False` が要る。Streamlit は再描画のたびに**別スレッド**で走るので、
+  既定の接続だと `SQLite objects created in a thread...` で落ちる（実際に踏んだ）。
+- 🔵 テーマ切替ボタンは**置かない**。`st.set_option("theme.base")` は実行時に効かず、
+  押せるのに変わらないUIになる。標準の右上 ⋮ の System/Light/Dark を使う
+  （`.streamlit/config.toml` の `[theme.light]`/`[theme.dark]` がそのまま効く）。
+- 日次実行は **Windows タスクスケジューラ**（平日17:00・`robotrade-daily`）。
+  クラウドでは動かない（手元の `.env` とローカルのぽいロボのデータを読むため）。
+- 🔴 **PowerShell の落とし穴を3つ踏んだ**（手で動かすだけでは気づけない）:
+  1. `.ps1` は **UTF-8 に BOM が要る**。無いと 5.1 が ANSI として読み、日本語が壊れて
+     スクリプトごと誤動作する（15:30 の判定まで狂った）
+  2. native コマンドに **`2>&1` を付けない**。stderr の各行が ErrorRecord に包まれ、
+     成功しても終了コードが 1 になる → Python のログを **stdout** に変更
+  3. **`[Console]::OutputEncoding` を UTF-8 に**。既定は cp932 でログが化ける。
+     **タスク経由でだけ**起きる
+- 🔴 「すでに実行済み」を #エラー・異常 に流さないようにした（`AlreadyRan`）。二重起動で鳴ると狼少年。
+
+**🆕 同日追加: swing-lab → ロボトレード に改名**（`4d24cd4`）
+表示名は**ロボトレード**、ディレクトリと Python パッケージは **`robotrade`**（ハイフン無し）。
+🔴 ハイフン無しの理由＝廃止済みの「ロボ口座」が git 履歴に `scripts/robo-trade.mjs` を残しており、
+`robo-trade` だと履歴検索が混ざる。`robotrade` は履歴に一度も出てこない。
+`swing_lab.db` → `robotrade.db`、タスクも `robotrade-daily` に再登録。
+
+---
+
+### 2026-09-19(71): トークの自分あて通知を **Chatwork → Discord `#自作line`** へ
+
+`dea9de0`・Vercel success。運用者の指示。ひろ／nami の投稿の通知先を移した。
+
+🔴 **これで Chatwork の鍵への依存が切れた**。その鍵は AutoFBA 本番の
+`AI_EMP_INVENTORY_TOKEN`（ハカセAI名義）と同じもので、(69) に「あちらを再発行したら
+こちらも入れ替える」と書いた**他案件との結合**だった。Discord Webhook はこの案件で完結する。
+
+- `pickNotifyRoute` の優先順位は **discord > chatwork > 自分だけのLINEグループ**。
+  Chatwork の経路は残してあるので、**戻すのは環境変数だけ**。
+- Webhook URL は形を検証してから使う（`isDiscordWebhook`）。壊れていたら Chatwork に落ちる。
+- 🔴 URL は実質パスワードなので**ログにも画面にも出さない**（失敗時も status だけ）。
+- 相手あて（自分が送ったぶん）は**これまでどおり LINE**。月200通の枠はそちらに使う。
+- Vercel Production に `TALK_NOTIFY_DISCORD_URL` を追加済み。vitest 563件（+12）。
+- 🔵 ついでに eslint の対象から `robotrade/.venv` と `welcomebot/.venv` を外した
+  （matplotlib 等が JS を同梱していて lint に引っかかっていた）。
+
+---
+
+### 2026-09-19(72): 🆕 **入場歓迎Bot**（welcomebot）を新設・稼働開始
+
+`21e82ed` / `deb547f` / `99c871c`。運用者から設計書（`welcomebot/WELCOME_BOT.md`）を受領。
+新メンバーが `#やぁ諸君！` に入ってきたら**ぽいふる博士の口上**で自動歓迎する。
+詳細は `welcomebot/README.md`。
+
+✅ **稼働中**。Bot `ぽいふる博士#7987`・常駐タスク `welcomebot`（ログオン時に起動）。
+既存メンバーはシード済みなので、**次に入ってきた人から**歓迎が飛ぶ。テスト24件 全green。
+
+🔴 **Webhook だけでは作れない**。参加イベントの検知には Gateway 接続（＝常駐Bot）が要る。
+→ Bot が検知し、**歓迎文は Webhook で投げる**。
+🔵 **その形だと Bot に投稿権限が要らない**。必要なのは「サーバーにいること」と
+SERVER MEMBERS INTENT だけで、BOT PERMISSIONS **なし**で招待できる＝
+トークンが漏れても被害が小さい。
+
+**依頼文に無かった判断（3つ）**
+1. **初回起動では誰も歓迎しない**。入れた瞬間に既存メンバー全員へ口上が飛ぶのを防ぐ。
+2. **落ちていた間の参加を拾い直す**（直近14日）。PCは寝るし再起動もする。
+   14日で切るのは、記録を消したときに古参まで歓迎しないため。
+3. **表示名をそのまま文面に埋めない**。`@everyone` を入れられると**全員に通知が飛ぶ**。
+   全角に潰し、Markdown も落とし、`allowed_mentions` でも本人だけに絞る（二重の防御）。
+
+**立ち上げで踏んだ3つ**
+1. 🔴 **`--dry-run` が初回シードを書いていた**＝「試しに動かしただけ」が本番の初期化に
+   なっていた。並びを回帰テストで固定した。
+2. 🔴 **`-AtLogOn` に利用者を指定しないと登録に管理者権限が要る**（Access is denied）。
+   `-User "$env:USERDOMAIN\$env:USERNAME"` で自分のログオン時だけにする。
+3. 🔵 PyNaCl の警告は **import 時ではなく Client を作るとき**に出る。
+   ロガーごと黙らせず、その2行だけ落とすフィルタにした。
+
+🔵 venv の `python.exe` はランチャで実体は子プロセス。プロセスが2つ見えても Bot は1つ。
+
+**まだやっていない**（設計書の「将来拡張」）: 退場時のメッセージ／ロール自動付与。
+
+---
 
 ### 2026-09-13(66): 🔴 天気の壁紙が**本番で一度も出ていなかった**＝CSP で取得が止められていた
 
