@@ -1,0 +1,5 @@
+# 入場歓迎Bot（Python 3.14 で動作確認済み・2026-09-19）
+discord.py>=2.4       # 常駐Bot（Gateway 接続）。Webhook だけでは参加を検知できない
+requests>=2.32        # 歓迎文の投稿（Webhook）
+python-dotenv>=1.0
+pytest>=8.0

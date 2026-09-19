@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 🔴 Bot トークンと Webhook URL（どちらも実質パスワード）
+.env
+
+# 誰を歓迎したかの記録（ローカルだけの状態）
+welcomed.json
+*.log
