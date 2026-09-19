@@ -194,3 +194,23 @@ def test_catch_up_skips_members_without_join_time(store):
     """🔵 参加日時が取れない人は対象にしない（推測で歓迎しない）。"""
     members = [FakeMember(1, "不明", joined_at=None)]
     assert g.catch_up_targets(members, store) == []
+
+
+# ------------------------------------------------------------------ dry-run
+
+
+def test_dry_run_must_not_write_state():
+    """🔴 回帰テスト（2026-09-19）。
+
+    `--dry-run` のつもりで動かしたら初回シードが書き込まれ、**本番の初期化になっていた**。
+    「試しに動かしただけ」が状態を変えてはいけない。
+    bot.py の on_ready がシードの前に dry_run を見ることを、コードの並びで固定する。
+    """
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parent.parent / "bot.py"
+    text = source.read_text(encoding="utf-8")
+    body = text[text.index("if self.store.is_new:"):text.index("targets = catch_up_targets")]
+    assert "if self.dry_run:" in body
+    # dry_run の判定が seed の呼び出しより前にある
+    assert body.index("if self.dry_run:") < body.index("self.store.seed(")

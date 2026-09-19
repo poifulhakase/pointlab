@@ -78,7 +78,10 @@ $action = New-ScheduledTaskAction `
     -Argument ("-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$runner`"") `
     -WorkingDirectory $root
 
-$trigger = New-ScheduledTaskTrigger -AtLogOn
+# 🔴 -AtLogOn に利用者を指定しないと「全ユーザーのログオン時」になり、
+#    登録に管理者権限が要る（Access is denied）。自分のログオン時だけにする。
+$me = "$env:USERDOMAIN\$env:USERNAME"
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $me
 
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
@@ -90,9 +93,10 @@ $settings = New-ScheduledTaskSettingsSet `
     -MultipleInstances IgnoreNew
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
-    -Settings $settings -Description "入場歓迎Bot（ぽいふる博士の口上）" -Force | Out-Null
+    -Settings $settings -Description "入場歓迎Bot（ぽいふる博士の口上）" `
+    -User $me -RunLevel Limited -Force | Out-Null
 
-Write-Output "登録した: $TaskName（ログオン時に起動・常駐）"
+Write-Output "登録した: $TaskName（$me のログオン時に起動・常駐）"
 Write-Output "  実行するもの: $runner"
 Write-Output ""
 Write-Output "🔵 実行時間の上限は無し（常駐なので時間で切らない）。"

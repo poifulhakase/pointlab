@@ -57,6 +57,13 @@ def setup_logging(verbose: bool = False) -> None:
     for noisy in ("discord", "discord.client", "discord.gateway", "urllib3"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
+    # 🔵 このBotは音声を使わないので、PyNaCl / davey 未導入の警告は要らない。
+    #    🔴 ロガーごと黙らせない（本当に知りたい警告まで消える）。この2行だけ落とす。
+    #    出どころは discord/client.py で、**Client を作るとき**に出る（import 時ではない）。
+    logging.getLogger("discord.client").addFilter(
+        lambda record: "voice will NOT be supported" not in record.getMessage()
+    )
+
 
 class WelcomeBot(discord.Client):
     def __init__(self, *, webhook_url: str, guild_id: int, store: WelcomedStore,
@@ -89,6 +96,12 @@ class WelcomeBot(discord.Client):
 
         if self.store.is_new:
             # 🔴 初回は歓迎しない。今いる人を「歓迎済み」にするだけ。
+            if self.dry_run:
+                # 🔴 dry-run は**何も書かない**。ここを書いてしまうと
+                #    「試しに動かしただけ」のつもりが本番の初期化になる（実際に踏んだ）。
+                log.info("dry-run: 本番なら既存メンバー %d人を歓迎済みとして記録する（口上は送らない）",
+                         len(members))
+                return
             added = self.store.seed([m.id for m in members])
             log.info("初回起動: 既存メンバー %d人を歓迎済みとして記録した（口上は送らない）", added)
             return
