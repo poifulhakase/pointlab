@@ -7,6 +7,7 @@
     .venv/Scripts/python.exe main.py --weekly        # 成績も出す（既定は金曜だけ）
     .venv/Scripts/python.exe main.py --notify-test   # Discord 4チャンネルの疎通確認
     .venv/Scripts/python.exe main.py --feeds-only    # お知らせフィードのチェックだけ
+    .venv/Scripts/python.exe main.py --calendar-only # 今週の予定だけ #相場観測 に出す
 
 🔴 起動 → パイプライン実行 → 通知 → 終了 の一発完結型。常駐しない（SPEC 13）。
 🔴 通知は DISCORD.md 1章のとおり**チャンネルごとに振り分ける**。
@@ -22,6 +23,9 @@ from datetime import date, datetime
 from pathlib import Path
 
 from robotrade import config as config_mod
+from robotrade.data import earnings as earnings_mod
+from robotrade.data import week_ahead as week_mod
+from robotrade.data.poirobo import MarketCalendar, PoiroboData
 from robotrade.learning import outcomes as outcomes_mod
 from robotrade.logs import setup_logging
 from robotrade.notify import chart as chart_mod
@@ -101,6 +105,36 @@ def notify_run(result, cfg, router, *, weekly_forced: bool = False) -> None:
         router.poyon_on("performance").send(content=word, kind="poyon", run_date=run_day)
 
 
+
+def notify_week_ahead(cfg, router, *, forced: bool = False) -> None:
+    """今週の予定を #相場観測 へ（週次・既定は月曜）。
+
+    🔴 ここで落ちてもトレードは止めない。カレンダーの書き出しが古い・Webhook 未設定
+       といった理由で週次の連絡が出せないだけ、という扱いにする。
+    """
+    today = date.today()
+    if not summary_mod.should_send_calendar(today, cfg, forced=forced):
+        log.info("#相場観測: 今日は出さない（週次・既定は月曜。--calendar で強制）")
+        return
+    try:
+        poirobo = PoiroboData(cfg)
+        calendar = MarketCalendar(poirobo.calendar(), cfg)
+        store = Store(cfg.path("ops.db_path"))
+        portfolio = store.load_portfolio(float(cfg.get("capital.initial_cash")))
+        week = week_mod.collect(
+            today=today,
+            calendar=calendar,
+            earnings=earnings_mod.from_config(cfg),
+            holdings=sorted(portfolio.positions),
+        )
+        router["calendar"].send_batched(
+            summary_mod.build_week_ahead(week, cfg),
+            kind="calendar", run_date=week.start.isoformat())
+        log.info("#相場観測: 今週の予定を送った（%s〜%s）", week.start, week.end)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("#相場観測: 今週の予定を出せなかった: %s", exc)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="LLMスイングトレード 疑似トレードマシン")
     parser.add_argument("--date", help="対象の営業日（YYYY-MM-DD）。既定は直近の営業日")
@@ -120,6 +154,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="お知らせフィード（note・ポイ活）のチェックをしない")
     parser.add_argument("--feeds-only", action="store_true",
                         help="お知らせフィードのチェックだけして終了（トレードは走らせない）")
+    parser.add_argument("--calendar", action="store_true",
+                        help="曜日に関係なく「今週の予定」を #相場観測 に出す")
+    parser.add_argument("--calendar-only", action="store_true",
+                        help="「今週の予定」だけ出して終了（トレードは走らせない）")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -157,6 +195,14 @@ def main(argv: list[str] | None = None) -> int:
         if router.missing:
             log.warning("未設定のチャンネル: %s（.env に Webhook URL を入れる）", router.missing)
         return 0 if any(results.values()) else 1
+
+    # --- 今週の予定（#相場観測・週次） ---
+    # 🔴 トレードより**前**に置く。月曜の朝に出す想定＝まだ引け前なので、
+    #    トレードのパイプラインは走らせない（--calendar-only で抜ける）。
+    if not args.no_notify:
+        notify_week_ahead(cfg, router, forced=args.calendar or args.calendar_only)
+    if args.calendar_only:
+        return 0
 
     # --- お知らせフィード（NOTE_FEED.md・おまけ機能） ---
     # 🔴 トレードのスキップ判定より**前**に走らせる。

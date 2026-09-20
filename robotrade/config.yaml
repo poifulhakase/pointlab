@@ -208,12 +208,20 @@ discord:
       username: "ぽいロボ｜異常"
       avatar: "poirobo-avatar.png"
       color: 0xE74C3C               # 赤
+    calendar:                       # #相場観測（週次・月曜の朝）＝今週の予定
+      # 🔵 ぽいロボの4チャンネル（この機械が何をしたか）とは性質が違う。
+      #    相場カレンダーは**売買してもしなくても効く前提情報**なので別カテゴリに置く。
+      env: DISCORD_WEBHOOK_CALENDAR
+      username: "ぽいロボ｜相場観測"
+      avatar: "poirobo-avatar.png"
+      color: 0x1ABC9C               # 青緑（ぽいロボ系のシアン寄り）
   poyon:
     # ぽよん君＝助手・読者の代弁者。**節目だけ**に一言添える（やりすぎない）。
     username: "ぽよん君"
     avatar: "poyonkun-avatar.png"
     color: 0xAECBEB
   performance_weekday: 4            # 成績を出す曜日（0=月 … 4=金）。--weekly で強制も可
+  calendar_weekday: 0               # 今週の予定を出す曜日（0=月）。--calendar で強制も可
   milestone_trades: [10, 30, 50, 100]   # ぽよん君が出てくるトレード件数の節目
 
 feeds:

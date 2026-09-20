@@ -407,3 +407,81 @@ def should_send_performance(run_date: date, cfg, *, forced: bool = False) -> boo
     if forced:
         return True
     return run_date.weekday() == int(cfg.get("discord.performance_weekday", 4))
+
+
+def should_send_calendar(run_date: date, cfg, *, forced: bool = False) -> bool:
+    """今週の予定は週次（既定は月曜）。毎日出すと壁紙になって読まれない。"""
+    if forced:
+        return True
+    return run_date.weekday() == int(cfg.get("discord.calendar_weekday", 0))
+
+
+# ================================================================ 3.5 #相場観測
+
+
+WEEKDAY_JP = ["月", "火", "水", "木", "金", "土", "日"]
+# 国旗は「どちらの国の予定か」を一目で分けるためだけに使う（MACRO_META の category）。
+CATEGORY_MARK = {"us": "🇺🇸", "jp": "🇯🇵"}
+
+
+def build_week_ahead(week: Any, cfg) -> list[Embed]:
+    """今週の予定（#相場観測・月曜の朝）。
+
+    🔴 **売買の示唆を書かない**。「いつ何があるか」だけを並べる（客観的状態記述型）。
+    🔴 決算は**保有銘柄ぶんだけ**（予定表には毎週何百件もある・DISCORD.md 4章「要点だけ」）。
+    """
+    color = int(cfg.get("discord.channels.calendar.color"))
+    # 🔵 免責は付けない（運用者の指示・2026-09-20）。ここは公表済みの日程を並べるだけで、
+    #    売買の示唆を含まない＝「疑似トレードの実験」という断りが要る中身ではない。
+    head = Embed(
+        title=f"今週の予定　{_md(week.start)}〜{_md(week.end)}",
+        color=color,
+    )
+
+    lines = _week_lines(week.days)
+    head.description = "\n".join(lines) if lines else "今週は目立った予定なし。"
+
+    # 🔴 決算の行が出ていない理由だけ書き足す（黙って消さない）。
+    #    保有があって予定も取れているときは日付の行に出るので、**注記そのものを出さない**。
+    if not week.earnings_available:
+        head.add_field("📊 決算", "🔴 決算の予定が取れていない（この週の決算は不明）", inline=False)
+    elif not week.holdings:
+        head.add_field("📊 決算", "保有している銘柄の決算だけ上に出る。いまは保有なし。",
+                       inline=False)
+    return [head]
+
+
+def _week_lines(days: list[Any]) -> list[str]:
+    """**1日1行・5日ぶんすべて**を並べる（2026-09-20・運用者の指示「日付ごとにリストで。短縮なしで」）。
+
+    🔴 連続した休場をまとめたり、予定の無い日を飛ばしたりしない。
+       行が抜けると「その日を見落としたのか、予定が無いのか」が読み手に分からない。
+    """
+    return [_day_line(plan) for plan in days]
+
+
+def _day_line(plan: Any) -> str:
+    """1日ぶんを1行に。予定が無い日も「予定なし」と書いて必ず出す。"""
+    parts: list[str] = []
+    if plan.closed_reason:
+        parts.append(f"休場（{plan.closed_reason}）")
+
+    for event in plan.events:
+        mark = CATEGORY_MARK.get(str(event.get("category", "")), "")
+        label = str(event.get("label") or event.get("short") or event.get("type") or "")
+        strong = str(event.get("type", "")) in plan.high_impact
+        parts.append(f"{mark} **{label}**" if strong else f"{mark} {label}")
+
+    if plan.dividend:
+        parts.append(f"{plan.dividend.get('label', '権利日')}（{plan.dividend.get('month')}月期）")
+
+    for row in plan.earnings:
+        kind = f"・{row['kind']}" if row.get("kind") else ""
+        parts.append(f"📊 保有 {row['ticker']} の決算{kind}")
+
+    body = " ／ ".join(parts) if parts else "予定なし"
+    return f"`{_md(plan.day)}({WEEKDAY_JP[plan.day.weekday()]})` {body}"
+
+
+def _md(day: date) -> str:
+    return f"{day.month}/{day.day}"

@@ -113,8 +113,9 @@ def a_position(ticker="6986.T", pnl=-1200.0, days=3):
 
 def test_router_reports_missing_channels(cfg):
     router = dmod.from_config(cfg)
-    # .env の埋まり方に関わらず、4チャンネルとも定義されている
-    assert set(router.channels) == {"decisions", "fills", "performance", "errors"}
+    # .env の埋まり方に関わらず、定義したチャンネルがすべて揃っている
+    # （ぽいロボの4本＋#相場観測＝今週の予定・2026-09-20）
+    assert set(router.channels) == {"decisions", "fills", "performance", "errors", "calendar"}
     assert set(router.configured) | set(router.missing) == set(router.channels)
 
 

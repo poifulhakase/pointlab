@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url'
 import { isMarketClosed, getClosedReason, toYmd } from '../../src/utils/marketCalendar.mjs'
 import { getMacroEventsForDate, MACRO_META } from '../../src/utils/macroCalendar.ts'
 import { getSqDates } from '../../src/utils/sqCalendar.ts'
+import { getDividendDates, MARKER_META } from '../../src/utils/dividendCalendar.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const outPath = resolve(here, '..', 'data_cache', 'calendar.json')
@@ -28,10 +29,17 @@ const endYear = Number(process.argv[3] ?? new Date().getFullYear() + 1)
 const closed = {}
 const macro = {}
 const sq = {}
+// 権利付最終日・権利落ち日・権利確定日（3・6・9・12月）
+const dividend = {}
 
 for (let year = startYear; year <= endYear; year += 1) {
   for (const s of getSqDates(year)) {
     sq[toYmd(s.date)] = s.type
+  }
+  for (const set of getDividendDates(year)) {
+    for (const kind of ['saishu', 'ochi', 'kakutei']) {
+      dividend[toYmd(set[kind])] = { kind, label: MARKER_META[kind].label, month: set.month }
+    }
   }
 }
 
@@ -61,12 +69,13 @@ while (cursor <= end) {
 
 const payload = {
   generatedAt: new Date().toISOString(),
-  source: 'stock-calendar: src/utils/{marketCalendar.mjs,macroCalendar.ts,sqCalendar.ts}',
+  source: 'stock-calendar: src/utils/{marketCalendar.mjs,macroCalendar.ts,sqCalendar.ts,dividendCalendar.ts}',
   from: `${startYear}-01-01`,
   to: `${endYear}-12-31`,
   closed,
   macro,
   sq,
+  dividend,
 }
 
 mkdirSync(dirname(outPath), { recursive: true })
@@ -74,5 +83,6 @@ writeFileSync(outPath, JSON.stringify(payload, null, 1), 'utf-8')
 
 console.log(
   `calendar.json: 休場${Object.keys(closed).length}日 / マクロ${Object.keys(macro).length}日 / SQ${Object.keys(sq).length}日` +
+    ` / 権利日${Object.keys(dividend).length}日` +
     ` (${startYear}-${endYear}) -> ${outPath}`,
 )

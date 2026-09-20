@@ -13,10 +13,15 @@
 # 手で動かすとき:
 #   powershell -ExecutionPolicy Bypass -File scripts\run_daily.ps1
 # 引数はそのまま main.py へ渡る:
-#   powershell -ExecutionPolicy Bypass -File scripts\run_daily.ps1 -Args "--weekly"
+#   powershell -ExecutionPolicy Bypass -File scripts\run_daily.ps1 -ExtraArgs "--weekly"
+#
+# 🔴 パラメータ名に `$Args` を使わない（2026-09-20 に踏んだ）。
+#    `$Args` は PowerShell の**自動変数**なので、`param([string]$Args)` と書いても
+#    `-Args "--weekly"` は**束縛されず黙って捨てられる**。エラーも出ないので
+#    「渡したつもりで渡っていない」まま動く。タスクスケジューラ経由だと特に気づけない。
 
 param(
-    [string]$Args = ""
+    [string]$ExtraArgs = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -77,7 +82,7 @@ Push-Location $root
 try {
     $env:PYTHONIOENCODING = "utf-8"
     $argList = @("main.py")
-    if ($Args) { $argList += $Args.Split(" ") }
+    if ($ExtraArgs) { $argList += $ExtraArgs.Split(" ") }
 
     Write-Log ("実行: python " + ($argList -join " "))
     # 🔴 native コマンドに 2>&1 を付けない。PowerShell 5.1 は stderr の各行を

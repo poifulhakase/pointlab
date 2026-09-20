@@ -298,6 +298,8 @@ class MarketCalendar:
         self.closed: dict[str, str] = payload.get("closed", {})
         self.macro: dict[str, list[dict[str, Any]]] = payload.get("macro", {})
         self.sq: dict[str, str] = payload.get("sq", {})
+        # 権利付最終日・権利落ち日・権利確定日（export_calendar.mjs が書き出す）
+        self.dividend: dict[str, dict[str, Any]] = payload.get("dividend", {})
         self.range = (payload.get("from"), payload.get("to"))
         self.high_impact_types = set(cfg.get("macro.high_impact_types", []))
         self.high_impact_sq = set(cfg.get("macro.high_impact_sq", []))
@@ -352,6 +354,10 @@ class MarketCalendar:
                            "label": "メジャーSQ" if sq_type == "major" else "ミニSQ",
                            "category": "jp", "headline": None})
         return events
+
+    def dividend_on(self, day: date) -> dict[str, Any] | None:
+        """その日の権利日（権利付最終日・権利落ち日・権利確定日）。無ければ None。"""
+        return self.dividend.get(self._key(day))
 
     def high_impact_on(self, day: date) -> list[dict[str, Any]]:
         """市場全体を揺らす高インパクトイベントだけ（SPEC 5.4）。"""
