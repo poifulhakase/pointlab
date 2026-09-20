@@ -34,6 +34,26 @@ REGIME_LABEL = {
 }
 TREND_LABEL = {"up": "上", "down": "下", "range": "横"}
 
+# プレフィルタのファネル（prefilter.run の funnel キー）を通知用の短い名前にする。
+# 🔴 第2層のキーは `第2層上位{top_n}` と件数が入る＝config で変わるので前方一致で拾う。
+FUNNEL_LABEL = {"入力": "対象", "第1層通過": "1次", "第3層通過": "候補"}
+
+
+def _funnel_steps(funnel: dict[str, Any]) -> list[str]:
+    """「対象 3,678件 → 1次 1,014件 → 上位 15件 → 候補 12件」を組み立てる。
+
+    🔴 ファネルの段は prefilter 側の持ち物（SPEC 9.1）。ここで段を数え直さず、
+       渡された順番のまま出す（段を足したときに通知だけ古いままにならないように）。
+    """
+    steps: list[str] = []
+    for key, count in funnel.items():
+        if key.startswith("第2層上位"):
+            label = "上位"
+        else:
+            label = FUNNEL_LABEL.get(key, key)
+        steps.append(f"{label} **{count:,}件**")
+    return steps
+
 
 # ================================================================ 3.1 #判断サマリ
 
@@ -57,10 +77,11 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
     )
     funnel = result.funnel or {}
     analyzed = len(result.analyses or [])
+    steps = _funnel_steps(funnel) or [f"候補 **{len(result.analyses or [])}件**"]
     head.add_field(
         "しぼり込み",
-        f"候補 **{funnel.get('第3層通過', 0)}件** → 分析 **{analyzed}件** "
-        f"→ 新規 **{len(staged)}件** / 見送り **{len(passed)}件**",
+        " → ".join(steps) + "\n"
+        f"→ 分析 **{analyzed}件** → 新規 **{len(staged)}件** / 見送り **{len(passed)}件**",
         inline=True,
     )
     if result.risk_off:
