@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildChatworkBody, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, pickNotifyRoute, pickNotifyTarget, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, MAX_BODY_SELF, pickNotifyRoute, pickNotifyTarget, shouldShowBody, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -36,6 +36,23 @@ describe('talk-notify', () => {
 
     it('名前が空でも文章として成立させる', () => {
       expect(buildNotifyText({ ...base, name: '  ', text: 'やあ' })).toBe('だれか：やあ')
+    })
+
+    it('自分あては長めに載せられる（チャンネルを開いて読むので）', () => {
+      const long = 'あ'.repeat(400)
+      const out = buildNotifyText({ ...base, text: long, maxBody: MAX_BODY_SELF })
+      expect(out).toBe(`なみ：${'あ'.repeat(MAX_BODY_SELF)}…`)
+    })
+  })
+
+  describe('shouldShowBody（本文を出すかは送り先で決める）', () => {
+    it('🔴 自分あて（Discord＝本人だけのチャンネル）は設定が off でも本文を出す', () => {
+      expect(shouldShowBody('discord', 'off')).toBe(true)
+    })
+
+    it('🔴 相手あて（LINE）は設定に従う＝グループの他の人に本文を見せない', () => {
+      expect(shouldShowBody('line', 'off')).toBe(false)
+      expect(shouldShowBody('line', undefined)).toBe(true)
     })
   })
 
@@ -204,47 +221,25 @@ describe('talk-notify', () => {
 
   // 🔴 通知は「読ませたい相手のいる場所」へ送る。ここが逆になると、
   //    相手に自分あての通知が流れる（見せたくないものが相手の画面に出る）ので固定する。
-  // 🆕 2026-09-17：LINEの月200通を使い切った → 自分あては Chatwork へ（相手あては LINE のまま）
+  // 🆕 2026-09-19：自分あては Discord（#自作line）。2026-09-20 に Chatwork 経路は廃止
   describe('pickNotifyRoute', () => {
     const peer = `C${'1'.repeat(32)}`
     const self = `C${'2'.repeat(32)}`
-    const base = { selfNames: 'ひろ', peerTarget: peer, selfTarget: self, selfChatworkRoom: '123456' }
+    const base = { selfNames: 'ひろ', peerTarget: peer, selfTarget: self }
 
-    it('相手が送ったら、自分あては Chatwork', () => {
-      expect(pickNotifyRoute({ ...base, name: 'なみ' })).toEqual({ via: 'chatwork', to: '123456' })
+    it('相手が送ったら、自分あて（Webhookが無ければ自分だけのグループ）', () => {
+      expect(pickNotifyRoute({ ...base, name: 'なみ' })).toEqual({ via: 'line', to: self })
     })
 
-    it('自分が送ったら、相手あては LINE のまま（Chatwork にしない）', () => {
+    it('自分が送ったら、相手のいるグループへ', () => {
       expect(pickNotifyRoute({ ...base, name: 'ひろ' })).toEqual({ via: 'line', to: peer })
     })
 
-    it('知らない名前も自分あて＝Chatwork へ倒す（相手へ誤送しない）', () => {
-      expect(pickNotifyRoute({ ...base, name: '' })).toEqual({ via: 'chatwork', to: '123456' })
-    })
-
-    it('部屋が無ければ、これまでどおり自分だけのグループへ', () => {
-      expect(pickNotifyRoute({ ...base, selfChatworkRoom: '', name: 'なみ' })).toEqual({ via: 'line', to: self })
+    it('知らない名前も自分あてへ倒す（相手へ誤送しない）', () => {
+      expect(pickNotifyRoute({ ...base, name: '' })).toEqual({ via: 'line', to: self })
     })
   })
 
-  describe('buildChatworkBody', () => {
-    it('自分にメンションを付けて通知を鳴らす', () => {
-      expect(buildChatworkBody('なみ から新着があります', '999')).toBe('[To:999]\nなみ から新着があります')
-    })
-
-    it('メンション先が無ければ本文だけ', () => {
-      expect(buildChatworkBody('なみ から新着があります', '')).toBe('なみ から新着があります')
-    })
-
-    it('部屋のURLがあれば最後の行に足す', () => {
-      expect(buildChatworkBody('なみ から新着があります', '999', 'https://example.com/calendar/#/t/abc'))
-        .toBe('[To:999]\nなみ から新着があります\nhttps://example.com/calendar/#/t/abc')
-    })
-
-    it('URLが無ければこれまでどおり', () => {
-      expect(buildChatworkBody('なみ から新着があります', '999', '')).toBe('[To:999]\nなみ から新着があります')
-    })
-  })
 
   describe('buildRoomUrl', () => {
     const room = 'a'.repeat(32)
@@ -316,14 +311,13 @@ describe('talk-notify', () => {
 
 // ── 自分あてを Discord へ（2026-09-19）──────────────────────────────
 // 🔴 ねらい: Chatwork の鍵（AutoFBA 本番の AI_EMP_INVENTORY_TOKEN と同じもの）への
-//    依存を切る。あちらを再発行してもこちらは何もしなくてよくなる。
+//    依存を切る。2026-09-20 に Chatwork 経路そのものを廃止した（運用者の指示）。
 describe('自分あての Discord 通知', () => {
   const hook = 'https://discord.com/api/webhooks/1550711521024151625/alvZF7jGNqpB7ugZhjURXVfc7'
   const base = {
     selfNames: 'ひろ',
     peerTarget: 'C00000000000000000000000000000001',
     selfTarget: 'C00000000000000000000000000000002',
-    selfChatworkRoom: '331007558',
     selfDiscordWebhook: hook,
   }
 
@@ -342,7 +336,7 @@ describe('自分あての Discord 通知', () => {
   })
 
   describe('pickNotifyRoute', () => {
-    it('相手が送ったぶんは Discord（Chatwork より優先）', () => {
+    it('相手が送ったぶんは Discord', () => {
       expect(pickNotifyRoute({ ...base, name: 'なみ' })).toEqual({ via: 'discord', to: hook })
     })
 
@@ -351,14 +345,14 @@ describe('自分あての Discord 通知', () => {
         .toEqual({ via: 'line', to: base.peerTarget })
     })
 
-    it('Webhook の形が壊れていたら Chatwork に落ちる（無言で止まらない）', () => {
+    it('Webhook の形が壊れていたら自分だけの LINE グループに落ちる（無言で止まらない）', () => {
       expect(pickNotifyRoute({ ...base, selfDiscordWebhook: 'https://example.com/x', name: 'なみ' }))
-        .toEqual({ via: 'chatwork', to: '331007558' })
+        .toEqual({ via: 'line', to: base.selfTarget })
     })
 
-    it('Discord も Chatwork も無ければ 自分だけの LINE グループ', () => {
+    it('Webhook が無ければ 自分だけの LINE グループ', () => {
       expect(pickNotifyRoute({
-        ...base, selfDiscordWebhook: '', selfChatworkRoom: '', name: 'なみ',
+        ...base, selfDiscordWebhook: '', name: 'なみ',
       })).toEqual({ via: 'line', to: base.selfTarget })
     })
 

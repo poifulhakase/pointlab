@@ -75,6 +75,29 @@
   囲われていることも実物で確認。
 - テスト **249件 全green**（ラベル4件・TDnet8件・決算13件・通知3件などを追加）。
 
+**🆕 同日追加: トークの通知に本文を載せる＋Chatwork 経路を廃止**
+
+運用者の指示＝「なみさんから送られてきた内容も Discord に通知してほしい」
+「なみさん側への通知には送らなくていい」「Chatwork は通知なくしていい」。
+
+- 原因＝Vercel の `TALK_NOTIFY_BODY=off`。これが**両方向に効いていた**ので本文が出ていなかった。
+- 🔴 **本文を出すかは送り先で決める**ようにした（`shouldShowBody`）。
+  **自分あて（Discord＝本人だけのチャンネル）は常に本文を出す**（読むのは自分だけ）。
+  **相手あて（LINEグループ）はこれまでどおり `TALK_NOTIFY_BODY` に従う**＝本文なしのまま。
+  ここを一緒くたにすると、設定ひとつで相手側の本文まで晒すことになる。
+- 自分あては1通の上限を **60字 → 300字**（`MAX_BODY_SELF`）。ロック画面ではなく
+  チャンネルを開いて読むので長くてよい。
+- 🔴 **Chatwork 経路を廃止**（コード・テスト・Vercelの `TALK_NOTIFY_CW_TOKEN`/`_ROOM`/`_TO` を削除）。
+  これで **AutoFBA 本番の `AI_EMP_INVENTORY_TOKEN` への依存が完全に消えた**
+  （あちらを再発行してもこちらは無関係。9/18 に書いた申し送りはもう不要）。
+  自分あては Discord、Webhook が未設定なら自分だけのLINEグループへ落ちる。
+- ✅ 本番確認：tsc 0 / lint 0 / テスト561件 / build OK →
+  `vercel --prod`（`pointlab.vercel.app` にエイリアス済み）→
+  9/20 14:30 の なみ の発言を Firestore REST（部屋IDで読める）から取り出して
+  `/api/talk?a=notify` に流し直し → 204。
+  🔵 過去ぶんの流し直しは `TALK_ROOM_ID` と `VITE_FIREBASE_API_KEY` があればできる
+  （`firestore.rules` の `inTalkRoom` が部屋IDだけで read を許しているため）。
+
 **🆕 同日追加: 決算発表予定日を導入**（`robotrade/data/earnings.py`）
 
 「次の決算発表**予定日**が取れない」を解消。**JPX公開サイトの Excel**（登録もAPIキーも不要）。

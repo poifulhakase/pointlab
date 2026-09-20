@@ -21,20 +21,19 @@
 //   LINE_TARGET_ID            … 送り先。グループなら C…（a=webhook が教えてくれる）
 //   TALK_ROOM_ID              … 通知を許す部屋ID（32桁の16進）
 //   TALK_NOTIFY_BODY          … 'off' なら本文を載せず「新着があります」だけにする
+//                               🔴 効くのは**相手あて（LINEグループ）だけ**。自分あて
+//                               （Discord＝本人だけのチャンネル）は常に本文を載せる（2026-09-20）
 //   TALK_NOTIFY_MIN_SEC       … 最短間隔の秒数（既定 90）
 //   TALK_NOTIFY_MAX_PER_DAY   … 1日の上限（既定 60）
-//   TALK_NOTIFY_CW_ROOM       … 自分あての通知を送る Chatwork の部屋ID（2026-09-17・LINEの月200通を相手あてに回す）
-//   TALK_NOTIFY_CW_TOKEN      … その部屋に投稿する API トークン（2026-09-18からハカセAIの鍵＝別アカウント名義なのでスマホ通知が鳴る）
-//   TALK_NOTIFY_CW_TO         … メンション先のアカウントID（緒方さん 5972360。ハカセAIの鍵と組で効く）
 //   TALK_NOTIFY_DISCORD_URL   … 自分あての通知を送る Discord Webhook（2026-09-19・#自作line）
-//                               🔴 これがあると Chatwork より優先される＝ハカセAIの鍵が不要になる
+//                               🔴 2026-09-20 に Chatwork 経路を廃止（運用者の指示）。自分あてはここだけ
 //   ANTHROPIC_API_KEY         … AI（?a=ai）用。ぽいロボの疑似トレードと同じ残高を使う
 //   ANTHROPIC_WORKSPACE_ID    … 🔴 アカウント紐付け型の鍵では必須（`wrkspc_...`）
 
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildChatworkBody, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, isStreakSuppressed, pickNotifyRoute, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, isStreakSuppressed, MAX_BODY, MAX_BODY_SELF, pickNotifyRoute, shouldShowBody, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -77,13 +76,12 @@ async function notify(req, res) {
   }
 
   // 送った人で宛先を振り分ける（自分が送った→相手のグループ／相手が送った→自分だけのグループ）
-  // 🆕 2026-09-17：自分あては TALK_NOTIFY_CW_ROOM があれば Chatwork（LINEの月200通を相手あてに回す）
+  // 🆕 2026-09-19：自分あては Discord（本人だけのチャンネル）。2026-09-20 に Chatwork は廃止
   const route = pickNotifyRoute({
     name: body.name,
     selfNames: process.env.TALK_NOTIFY_SELF_NAMES,
     peerTarget,
     selfTarget: process.env.LINE_TARGET_SELF_ID,
-    selfChatworkRoom: process.env.TALK_NOTIFY_CW_TOKEN ? process.env.TALK_NOTIFY_CW_ROOM : '',
     selfDiscordWebhook: process.env.TALK_NOTIFY_DISCORD_URL,
   })
   const target = route.to
@@ -108,20 +106,21 @@ async function notify(req, res) {
     // Firestore が使えない環境でも通知そのものは動かす
   }
 
+  // 🔴 本文を出すかは**送り先で決める**（自分あては常に出す・相手あては設定に従う）
+  const toSelf = route.via === 'discord'
   const text = buildNotifyText({
     name: String(body.name || '').slice(0, 20),
     text: String(body.text || ''),
     hasImage: Boolean(body.hasImage),
-    showBody: process.env.TALK_NOTIFY_BODY !== 'off',
+    showBody: shouldShowBody(route.via, process.env.TALK_NOTIFY_BODY),
+    maxBody: toSelf ? MAX_BODY_SELF : MAX_BODY,
   })
 
   // 🆕 2026-09-18：自分あてには**部屋を開くURL**も付ける（運用者の指示）。
   //    🔴 相手あて（LINE）には付けない＝部屋IDは合言葉そのもので、グループの他の人に見えてしまう。
-  if (route.via === 'discord' || route.via === 'chatwork') {
+  if (route.via === 'discord') {
     const url = buildRoomUrl({ referer: req.headers.referer, host: req.headers.host, room })
-    return route.via === 'discord'
-      ? postSelfDiscord(res, target, text, url)
-      : postSelfChatwork(res, target, text, url)
+    return postSelfDiscord(res, target, text, url)
   }
 
   try {
@@ -144,10 +143,6 @@ async function notify(req, res) {
 }
 
 /**
- * 自分あての通知を Chatwork の本人限定の部屋へ。
- * 🔵 部屋IDと鍵は環境変数だけに置く（コードと資料には書かない）。
- */
-/**
  * 自分あての通知を Discord（本人だけのチャンネル）へ送る（2026-09-19）。
  *
  * 🔴 Webhook URL は実質パスワード。**ログにも画面にも出さない**（失敗時も status だけ）。
@@ -166,26 +161,6 @@ async function postSelfDiscord(res, webhook, text, url) {
     }
   } catch (e) {
     console.error('[talk] discord error:', e?.message)
-  }
-  return res.status(204).end()
-}
-
-async function postSelfChatwork(res, room, text, url) {
-  const token = process.env.TALK_NOTIFY_CW_TOKEN
-  if (!token) return res.status(204).end()
-  try {
-    const r = await fetch(`https://api.chatwork.com/v2/rooms/${room}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-ChatWorkToken': token },
-      body: new URLSearchParams({ body: buildChatworkBody(text, process.env.TALK_NOTIFY_CW_TO, url) }).toString(),
-    })
-    if (!r.ok) {
-      console.error('[talk] chatwork failed:', r.status)
-      return res.status(502).json({ error: 'Notify failed' })
-    }
-  } catch (e) {
-    console.error('[talk] chatwork error:', e?.message)
-    return res.status(502).json({ error: 'Notify failed' })
   }
   return res.status(204).end()
 }

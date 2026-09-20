@@ -8,6 +8,12 @@
 export const MAX_BODY = 60
 
 /**
+ * 自分あて（本人だけの場所）に載せる本文の最大文字数。
+ * 🔵 ロック画面ではなくチャンネルを開いて読むので、LINE より長くてよい。
+ */
+export const MAX_BODY_SELF = 300
+
+/**
  * 通知の文面を作る。
  *
  * @param {object} p
@@ -15,18 +21,38 @@ export const MAX_BODY = 60
  * @param {string} p.text     本文（空なら写真だけ）
  * @param {boolean} p.hasImage 写真が付いているか
  * @param {boolean} p.showBody 本文を載せるか（載せないと「新着1件」だけになる）
+ * @param {number} [p.maxBody] 本文の最大文字数（既定 MAX_BODY）
  * @returns {string}
  */
-export function buildNotifyText({ name, text, hasImage, showBody }) {
+export function buildNotifyText({ name, text, hasImage, showBody, maxBody }) {
   const who = (name || '').trim() || 'だれか'
   if (!showBody) return `${who} から新着があります`
 
+  const limit = Number(maxBody) > 0 ? Number(maxBody) : MAX_BODY
   const body = (text || '').replace(/\s+/g, ' ').trim()
   if (body) {
-    const cut = body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}…` : body
+    const cut = body.length > limit ? `${body.slice(0, limit)}…` : body
     return `${who}：${cut}`
   }
   return hasImage ? `${who} から写真が届きました` : `${who} から新着があります`
+}
+
+/**
+ * その送り先で本文を出してよいか（2026-09-20・運用者の指示「なみの本文も通知してほしい」）。
+ *
+ * 🔴 **自分あて（Discord＝本人だけのチャンネル）は常に本文を出す**。
+ *    読むのは自分だけなので隠す理由がない。部屋のリンクを自分あてにだけ付けるのと同じ考え。
+ * 🔴 **相手あて（LINEグループ）はこれまでどおり `TALK_NOTIFY_BODY` に従う**。
+ *    グループには他の人が入りうる＝ロック画面に本文が出ると読まれてしまう。
+ *    ここを一緒くたにすると、設定ひとつで相手側の本文まで晒すことになる。
+ *
+ * @param {'line'|'discord'|''} via 送り方（pickNotifyRoute の結果）
+ * @param {string|undefined} envFlag `TALK_NOTIFY_BODY`（'off' で本文を載せない）
+ * @returns {boolean}
+ */
+export function shouldShowBody(via, envFlag) {
+  if (via === 'discord') return true
+  return envFlag !== 'off'
 }
 
 /**
@@ -193,25 +219,18 @@ export function pickNotifyTarget({ name, selfNames, peerTarget, selfTarget }) {
 /**
  * 送り先と**送り方**を決める（2026-09-17）。
  *
- * 🔴 LINE の無料枠（月200通）を使い切った（2026-09-17）。自分あての通知を LINE から外し、
- *    **Chatwork の本人限定の部屋**へ送る＝LINE の枠は相手あてだけに使う（運用者の指示）。
- *    `selfChatworkRoom` があれば自分あては Chatwork、無ければこれまでどおり自分だけのグループへ。
- * 🆕 2026-09-18：投稿名義を**ハカセAI**（在庫作業担当・account 4094718）の鍵に替えた。
- *    自分の発言ではなくなるうえ `TALK_NOTIFY_CW_TO=5972360` のメンションが付くので、スマホ通知が鳴る。
- *    🔴 鍵は AutoFBA 本番の `AI_EMP_INVENTORY_TOKEN` と同じもの＝**あちらを再発行したらここも入れ替える**。
- *    ハカセAIが投稿先の部屋（331007558）のメンバーであることが前提。
+ * 🔴 LINE の無料枠（月200通）を使い切った（2026-09-17）。自分あての通知を LINE から外した
+ *    ＝LINE の枠は相手あてだけに使う（運用者の指示）。
+ * 🆕 2026-09-19：自分あては **Discord の本人だけのチャンネル**（#自作line）。
+ *    Webhook は自分以外の送信者として投稿されるのでスマホ通知が鳴る。メンションは要らない。
+ * 🆕 2026-09-20：**Chatwork 経路を廃止**（運用者の指示）。これで AutoFBA 本番の
+ *    `AI_EMP_INVENTORY_TOKEN` への依存が完全に消えた（あちらを再発行してもこちらは無関係）。
+ *    自分あては discord、Webhook が未設定なら自分だけのLINEグループへ落ちる。
  *
- * 🆕 2026-09-19：自分あてを **Discord の本人だけのチャンネル**（#自作line）へ移せるようにした。
- *    Webhook は自分以外の送信者として投稿されるのでスマホ通知が鳴る（Chatwork でハカセAI名義に
- *    したのと同じ理屈）。メンションは要らない。
- *    🔴 これで **Chatwork の鍵（AutoFBA 本番の AI_EMP_INVENTORY_TOKEN と同じもの）への依存が消える**
- *       ＝あちらを再発行してもこちらは何もしなくてよくなる。
- *    優先順位は discord > chatwork > 自分だけのLINEグループ。設定してあるものが使われる。
- *
- * @param {object} p  pickNotifyTarget と同じ ＋ selfChatworkRoom / selfDiscordWebhook
- * @returns {{ via: 'line' | 'chatwork' | 'discord' | '', to: string }} to が空＝送らない
+ * @param {object} p  pickNotifyTarget と同じ ＋ selfDiscordWebhook
+ * @returns {{ via: 'line' | 'discord' | '', to: string }} to が空＝送らない
  */
-export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfChatworkRoom, selfDiscordWebhook }) {
+export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfDiscordWebhook }) {
   const self = String(selfNames || '').split(',').map(s => s.trim()).filter(Boolean)
   // 自分の名前を決めていない＝振り分けない（これまでどおり1か所へ送る）
   if (!self.length) return peerTarget ? { via: 'line', to: peerTarget } : { via: '', to: '' }
@@ -222,8 +241,6 @@ export function pickNotifyRoute({ name, selfNames, peerTarget, selfTarget, selfC
   }
   const hook = String(selfDiscordWebhook || '').trim()
   if (isDiscordWebhook(hook)) return { via: 'discord', to: hook }
-  const room = String(selfChatworkRoom || '').trim()
-  if (/^\d+$/.test(room)) return { via: 'chatwork', to: room }
   return selfTarget ? { via: 'line', to: selfTarget } : { via: '', to: '' }
 }
 
@@ -243,7 +260,7 @@ export function isDiscordWebhook(v) {
  *    土台は**通知を叩いた画面のURL（Referer）から採る**＝ドメインやパスをここに書き写さないため。
  *    ハッシュは Referer に載らないので、部屋IDはサーバーが持っているものを付け直す。
  * 🔵 Referer が無いとき（curl での確認など）のために Host からの組み立ても持つ。
- * 🔴 **リンクを載せるのは自分あて（Chatwork・本人だけの部屋）だけ**。部屋IDは合言葉そのもので、
+ * 🔴 **リンクを載せるのは自分あて（Discord・本人だけのチャンネル）だけ**。部屋IDは合言葉そのもので、
  *    知っている人は誰でも入れる。相手あての LINE には載せない（グループの他の人に見える）。
  *
  * @param {object} p
@@ -277,11 +294,10 @@ function baseFromHost(host) {
 }
 
 /**
- * Chatwork に投稿する本文。宛先メンションを付けて、自分のスマホに通知を鳴らす。
- * 🆕 2026-09-18：部屋を開くURLを最後の行に足す（運用者の指示）。Chatwork は素のURLをリンクにする。
- * @param {string} text     通知の文面（buildNotifyText の結果）
- * @param {string} toId     メンション先のアカウントID（空ならメンションなし）
- * @param {string} url      部屋を開くURL（空なら付けない）
+ * Discord（本人だけのチャンネル）に投稿する本文。
+ * 🔵 部屋を開くURLを2行目に足す。Discord は素のURLをリンクにする。
+ * @param {string} text 通知の文面（buildNotifyText の結果）
+ * @param {string} url  部屋を開くURL（空なら付けない）
  */
 export function buildDiscordBody(text, url) {
   const link = String(url || '').trim()
@@ -289,11 +305,4 @@ export function buildDiscordBody(text, url) {
 ${link}` : String(text ?? '')
   // 🔴 Discord は1メッセージ2000字まで。通知の文面は短いが、念のため切る。
   return body.length > 1900 ? `${body.slice(0, 1900)}…` : body
-}
-
-export function buildChatworkBody(text, toId, url) {
-  const id = String(toId || '').trim()
-  const head = /^\d+$/.test(id) ? `[To:${id}]\n${text}` : text
-  const link = String(url || '').trim()
-  return link ? `${head}\n${link}` : head
 }
