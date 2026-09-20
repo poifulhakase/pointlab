@@ -231,6 +231,38 @@ def test_decisions_funnel_survives_missing_steps(cfg):
     assert value.startswith("候補 **1件**")
 
 
+def test_decisions_card_has_no_english_enums(cfg):
+    """🔴 通知に英語を出さない（strong / overbought などをそのまま載せない）。"""
+    result = FakeResult(decisions=[a_decision()], analyses=[an_analysis()])
+    card = smod.build_decisions(result, cfg)[1]
+    reading = next(f["value"] for f in card.fields if f["name"] == "各AIの読み")
+    for raw in ("strong", "overbought", "confirmed", "good", "uptrend", "mid", "low"):
+        assert raw not in reading
+    assert "勢い強い" in reading and "位置買われすぎ" in reading
+    assert "ブレイクの出来高 伴った" in reading and "スイング適性 向く" in reading
+    assert "売り圧力中" in reading and "踏み上げ低" in reading
+
+
+def test_decisions_card_drops_confidence_and_link_heading(cfg):
+    """確信度は出さない／リンクは見出しそのものに持たせる（2026-09-20）。"""
+    card = smod.build_decisions(FakeResult(decisions=[a_decision()],
+                                           analyses=[an_analysis()]), cfg)[1]
+    names = [f["name"] for f in card.fields]
+    assert "確信度" not in names
+    assert "確認" not in names
+    assert card.url == dmod.tradingview_url("6986.T")
+
+
+def test_exit_label_is_japanese(cfg):
+    """DBの win/loss/time_exit をそのまま出さない。"""
+    trade = FakeTrade(side="sell", realized_sen=-12000, holding_days=5, label="time_exit")
+    result = FakeResult(exits=[{"trade": trade}])
+    text = "".join(f["name"] + f["value"]
+                   for e in smod.build_fills(result, cfg) for f in e.fields)
+    assert "時間切れ" in text
+    assert "time_exit" not in text
+
+
 def test_decisions_do_not_show_quantity(cfg):
     """🔴 数量は翌寄りにコードが決めるので、この時点では出さない。"""
     result = FakeResult(decisions=[a_decision()], analyses=[an_analysis()])

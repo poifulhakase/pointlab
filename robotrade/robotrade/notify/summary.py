@@ -16,23 +16,25 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from ..labels import (
+    ACTION_LABEL, BREAKOUT_LABEL, CATALYST_LABEL, LEVEL_LABEL, POSITION_LABEL,
+    REGIME_LABEL, SOURCE_TIER_LABEL, STRENGTH_LABEL, SWING_FIT_LABEL, TRADE_LABEL,
+    TREND_LABEL, ja as _ja,
+)
 from .discord import (
     ACTION_COLOR, COLOR_BUY, COLOR_HOLD, COLOR_INFO, COLOR_SELL, COLOR_WARN,
     DISCLAIMER, Embed, tradingview_url, truncate,
 )
 
-ACTION_LABEL = {"buy": "買い", "sell": "売り", "hold": "様子見"}
+# 🔴 訳語は `robotrade/labels.py` が単一情報源（通知とダッシュボードで言葉を揃える）。
+#    ここに置くのは「通知だけの言い回し」に限る。
 OUTCOME_LABEL = {
     "staged": "翌寄りで発注",
     "rejected": "却下",
     "hold": "様子見",
     "skipped": "見送り",
 }
-REGIME_LABEL = {
-    "uptrend": "上昇トレンド", "downtrend": "下降トレンド",
-    "range": "レンジ", "unclear": "どっちつかず",
-}
-TREND_LABEL = {"up": "上", "down": "下", "range": "横"}
+
 
 def _funnel_steps(funnel: dict[str, Any], analyzed: int) -> list[str]:
     """「対象銘柄 3,678件 → 候補 12件」を組み立てる。
@@ -89,9 +91,12 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
         name = analysis.get("name", "") if analysis else ""
         outcome = OUTCOME_LABEL.get(item["outcome"], item["outcome"])
 
+        # 🔴 見出しそのものを TradingView へのリンクにする。
+        #    「確認」という見出しの下にリンクを1本置くより、行が1つ減って読みやすい。
         card = Embed(
-            title=f"{ACTION_LABEL.get(d['action'], d['action'])} {d['ticker']} {name}"
+            title=f"{_ja(ACTION_LABEL, d['action'])} {d['ticker']} {name}"
                   f"【{outcome}】",
+            url=tradingview_url(d["ticker"]),
             color=ACTION_COLOR.get(d["action"], COLOR_HOLD),
         )
 
@@ -103,16 +108,15 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
                 f"（数量は翌寄りの値から算出）",
                 inline=True,
             )
-        card.add_field("確信度", f"{d.get('confidence', 0):.2f}", inline=True)
-
+        # 🔵 確信度（0〜1）は**通知に出さない**（運用者の指示・2026-09-20）。
+        #    読み手が意味を取りづらい生の数字で、行動も変わらない。
+        #    値は DB とダッシュボードに残してある（あとで確信度と勝率の関係を見るため）。
         if analysis:
             card.add_field("各AIの読み", _analysis_line(analysis), inline=False)
 
         card.add_field("判断の理由", truncate(d.get("reason", ""), 500), inline=False)
         if item.get("note") and item["outcome"] != "staged":
             card.add_field("こちらの処理", truncate(item["note"], 300), inline=False)
-        card.add_field("確認", f"[TradingViewで見る]({tradingview_url(d['ticker'])})",
-                       inline=False)
         embeds.append(card)
 
     if not decisions:
@@ -138,13 +142,14 @@ def _analysis_line(analysis: dict[str, Any]) -> str:
 
     chart = analysis.get("chart") or {}
     if chart:
-        regime = REGIME_LABEL.get(chart.get("regime", ""), chart.get("regime", "?"))
-        higher = TREND_LABEL.get(chart.get("higher_tf_trend", ""), "?")
+        regime = _ja(REGIME_LABEL, chart.get("regime"))
+        higher = _ja(TREND_LABEL, chart.get("higher_tf_trend"))
         lines.append(
-            f"📈 {regime}（週足{higher}）・勢い{chart.get('trend_strength', '?')}"
-            f"・位置{chart.get('position', '?')}\n"
-            f"　ブレイク出来高 {chart.get('breakout_volume', '?')}"
-            f"・スイング適性 {chart.get('swing_fit', '?')}"
+            f"📈 {regime}（週足{higher}）"
+            f"・勢い{_ja(STRENGTH_LABEL, chart.get('trend_strength'))}"
+            f"・位置{_ja(POSITION_LABEL, chart.get('position'))}\n"
+            f"　ブレイクの出来高 {_ja(BREAKOUT_LABEL, chart.get('breakout_volume'))}"
+            f"・スイング適性 {_ja(SWING_FIT_LABEL, chart.get('swing_fit'))}"
         )
 
     sd = analysis.get("supply_demand") or {}
@@ -155,8 +160,8 @@ def _analysis_line(analysis: dict[str, Any]) -> str:
             note = f"・保有期間内に {event.get('event')}（{event.get('days_until')}日後）"
         lines.append(
             f"⚖️ 需給 {sd.get('supply_demand_score', 0):+.2f}"
-            f"・売り圧力{sd.get('selling_pressure', '?')}"
-            f"・踏み上げ{sd.get('short_squeeze_potential', '?')}{note}"
+            f"・売り圧力{_ja(LEVEL_LABEL, sd.get('selling_pressure'))}"
+            f"・踏み上げ{_ja(LEVEL_LABEL, sd.get('short_squeeze_potential'))}{note}"
         )
 
     news = analysis.get("news") or {}
@@ -164,8 +169,9 @@ def _analysis_line(analysis: dict[str, Any]) -> str:
         lines.append("📰 ニュース: 取得元が未導入（データなし）")
     elif news:
         lines.append(
-            f"📰 材料 {news.get('catalyst', '?')}／強さ {news.get('strength', '?')}"
-            f"（出所 {news.get('source_tier', '?')}）"
+            f"📰 材料 {_ja(CATALYST_LABEL, news.get('catalyst'))}"
+            f"／強さ {_ja(LEVEL_LABEL, news.get('strength'))}"
+            f"（出所 {_ja(SOURCE_TIER_LABEL, news.get('source_tier'))}）"
         )
 
     ml = analysis.get("ml_prob")
@@ -191,7 +197,7 @@ def build_fills(result: Any, cfg) -> list[Embed]:
         for item in result.fills:
             t = item["trade"]
             e.add_field(
-                f"{ACTION_LABEL.get(t.side, t.side)} {t.ticker}",
+                f"{_ja(ACTION_LABEL, t.side)} {t.ticker}",
                 f"{t.quantity:,}株 @ {_yen(t.price_sen)}円\n"
                 f"[チャート]({tradingview_url(t.ticker)})",
                 inline=True,
@@ -206,7 +212,7 @@ def build_fills(result: Any, cfg) -> list[Embed]:
             pnl = _yen_value(t.realized_sen or 0)
             mark = "🟢" if pnl > 0 else "🔴"
             e.add_field(
-                f"{mark} {t.ticker}（{t.label}）",
+                f"{mark} {t.ticker}（{_ja(TRADE_LABEL, t.label, unknown='')}）",
                 f"{t.quantity:,}株 @ {_yen(t.price_sen)}円 / 損益 **{pnl:+,.0f}円**\n"
                 f"{truncate(t.reason, 140)}\n保有 {t.holding_days}営業日",
                 inline=False,
@@ -320,7 +326,7 @@ def build_performance(result: Any, cfg, *, history: list[dict[str, Any]],
         e = Embed(title="直近の負けトレード", color=COLOR_SELL)
         for t in recent_losses[:5]:
             e.add_field(
-                f"🔴 {t['ticker']}（{t.get('label', '')}）",
+                f"🔴 {t['ticker']}（{_ja(TRADE_LABEL, t.get('label'), unknown='')}）",
                 f"{t['date']} / {t['realized_pnl']:+,.0f}円 / 保有 {t['holding_days']}営業日\n"
                 f"{truncate(t.get('reason', ''), 160)}",
                 inline=False,

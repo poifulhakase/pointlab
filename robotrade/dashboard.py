@@ -30,6 +30,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from robotrade import config as config_mod  # noqa: E402
 from robotrade.dashboard_data import DashboardData  # noqa: E402
+from robotrade.labels import (  # noqa: E402
+    ACTION_LABEL, BREAKOUT_LABEL, CATALYST_LABEL, LEVEL_LABEL, POSITION_LABEL,
+    REGIME_LABEL, RUN_STATUS_LABEL, SOURCE_TIER_LABEL, STRENGTH_LABEL, SWING_FIT_LABEL,
+    TRADE_LABEL, TREND_LABEL, ja,
+)
 from robotrade.learning import outcomes as outcomes_mod  # noqa: E402
 from robotrade.notify.discord import tradingview_url  # noqa: E402
 from robotrade.portfolio.store import Store  # noqa: E402
@@ -38,10 +43,31 @@ ACTION_MARK = {"buy": "🟢 買い", "sell": "🔴 売り", "hold": "⚪ 様子�
 OUTCOME_MARK = {
     "staged": "翌寄りで発注", "rejected": "却下", "hold": "様子見", "skipped": "見送り",
 }
-REGIME_JP = {
-    "uptrend": "上昇トレンド", "downtrend": "下降トレンド",
-    "range": "レンジ", "unclear": "どっちつかず",
+
+# 🔴 DBの行をそのまま表に流すと列名も区分値も英語になる。表示のときだけ日本語にする
+#    （列名・値そのものは DB の識別子なので変えない・2026-09-20）。
+COLUMN_JP = {
+    "date": "日付", "run_date": "判断日", "ticker": "銘柄", "side": "売買",
+    "action": "判断", "quantity": "数量", "price": "価格", "fee": "手数料",
+    "realized_pnl": "損益", "holding_days": "保有日数", "label": "結果",
+    "reason": "理由", "entry": "入り", "stop": "損切", "target": "利確",
+    "confidence": "確信度", "outcome": "処理", "outcome_note": "処理メモ",
 }
+VALUE_JP = {
+    "side": ACTION_LABEL, "action": ACTION_LABEL,
+    "label": TRADE_LABEL, "outcome": OUTCOME_MARK,
+}
+
+
+def jp_table(rows: list[dict]) -> pd.DataFrame:
+    """DBの行を日本語の表にする（列名と区分値だけ差し替え、値は触らない）。"""
+    frame = pd.DataFrame(rows)
+    if frame.empty:
+        return frame
+    for column, table in VALUE_JP.items():
+        if column in frame.columns:
+            frame[column] = frame[column].map(lambda v, t=table: ja(t, v, unknown=""))
+    return frame.rename(columns=COLUMN_JP)
 
 st.set_page_config(page_title="ロボトレード", page_icon="📊", layout="wide")
 
@@ -80,7 +106,7 @@ def view_decisions(data: DashboardData, cfg) -> None:
         st.info("まだ実行の記録がない。`main.py` を1回走らせると出る。")
         return
 
-    labels = [f"{r.run_date}（{r.status}）" for r in runs]
+    labels = [f"{r.run_date}（{ja(RUN_STATUS_LABEL, r.status)}）" for r in runs]
     picked = st.selectbox("対象日", labels, index=0)
     run = runs[labels.index(picked)]
 
@@ -148,19 +174,24 @@ def _agent_table(row: dict) -> pd.DataFrame:
     event = (sd.get("event_in_horizon") or {})
 
     records = [
-        {"AI": "📈 チャート", "見立て": REGIME_JP.get(chart.get("regime", ""), "—"),
-         "詳細": f"週足{chart.get('higher_tf_trend', '—')}／勢い{chart.get('trend_strength', '—')}"
-                 f"／位置{chart.get('position', '—')}／適性{chart.get('swing_fit', '—')}",
+        {"AI": "📈 チャート", "見立て": ja(REGIME_LABEL, chart.get("regime"), unknown="—"),
+         "詳細": f"週足{ja(TREND_LABEL, chart.get('higher_tf_trend'), unknown='—')}"
+                 f"／勢い{ja(STRENGTH_LABEL, chart.get('trend_strength'), unknown='—')}"
+                 f"／位置{ja(POSITION_LABEL, chart.get('position'), unknown='—')}"
+                 f"／ブレイクの出来高{ja(BREAKOUT_LABEL, chart.get('breakout_volume'), unknown='—')}"
+                 f"／適性{ja(SWING_FIT_LABEL, chart.get('swing_fit'), unknown='—')}",
          "ひとこと": (chart.get("comment") or "")[:120]},
         {"AI": "⚖️ 需給", "見立て": f"{sd.get('supply_demand_score', 0):+.2f}" if sd else "—",
-         "詳細": f"売り圧力{sd.get('selling_pressure', '—')}／"
-                 f"踏み上げ{sd.get('short_squeeze_potential', '—')}"
+         "詳細": f"売り圧力{ja(LEVEL_LABEL, sd.get('selling_pressure'), unknown='—')}／"
+                 f"踏み上げ{ja(LEVEL_LABEL, sd.get('short_squeeze_potential'), unknown='—')}"
                  + (f"／{event.get('event')}まで{event.get('days_until')}日"
                     if event.get("has_event") else ""),
          "ひとこと": (sd.get("comment") or "")[:120]},
         {"AI": "📰 ニュース",
-         "見立て": "データなし" if news.get("_no_data") else news.get("catalyst", "—"),
-         "詳細": f"強さ{news.get('strength', '—')}／出所{news.get('source_tier', '—')}",
+         "見立て": "データなし" if news.get("_no_data")
+                   else ja(CATALYST_LABEL, news.get("catalyst"), unknown="—"),
+         "詳細": f"強さ{ja(LEVEL_LABEL, news.get('strength'), unknown='—')}"
+                 f"／出所{ja(SOURCE_TIER_LABEL, news.get('source_tier'), unknown='—')}",
          "ひとこと": (news.get("summary") or "")[:120]},
         {"AI": "🤖 予測ML", "見立て": "未導入", "詳細": "Phase 12", "ひとこと": ""},
     ]
@@ -275,7 +306,7 @@ def view_performance(data: DashboardData, cfg) -> None:
     st.markdown("**直近の負けトレード**")
     losses = data.recent_losses()
     if losses:
-        st.dataframe(pd.DataFrame(losses), hide_index=True, use_container_width=True)
+        st.dataframe(jp_table(losses), hide_index=True, use_container_width=True)
     else:
         st.caption("まだ負けトレードは無い。")
 
@@ -287,7 +318,7 @@ def view_history(data: DashboardData) -> None:
                       horizontal=True, index=0)
     trades = data.trades(limit=500, result=choice)
     if trades:
-        st.dataframe(pd.DataFrame(trades), hide_index=True, use_container_width=True)
+        st.dataframe(jp_table(trades), hide_index=True, use_container_width=True)
     else:
         st.info("手仕舞い済みのトレードがまだ無い。")
 
@@ -295,7 +326,7 @@ def view_history(data: DashboardData) -> None:
     st.markdown("**約定（買い・売りの全記録）**")
     fills = data.all_fills(limit=500)
     if fills:
-        st.dataframe(pd.DataFrame(fills), hide_index=True, use_container_width=True)
+        st.dataframe(jp_table(fills), hide_index=True, use_container_width=True)
     else:
         st.info("約定がまだ無い。")
 
@@ -313,7 +344,7 @@ def view_ticker(data: DashboardData) -> None:
 
     st.markdown("**これまでの判断**")
     if detail["decisions"]:
-        st.dataframe(pd.DataFrame(detail["decisions"]), hide_index=True,
+        st.dataframe(jp_table(detail["decisions"]), hide_index=True,
                      use_container_width=True)
     else:
         st.caption("判断の記録なし。")

@@ -67,13 +67,20 @@ market_view には、マクロ（ドル円・前夜の米国市場・VIX・TOPIX
    ダミー・プレースホルダー・架空の銘柄を要素として入れないでください。
    decisions に入れてよい ticker は、入力の候補銘柄と現在の保有銘柄だけです。
 
+🔴 **reason と market_view は日本語の文章で書いてください**（そのまま人が読む通知に載ります）。
+   入力の項目名や英語の区分値（swing_fit, entry_zone, regime, good, strong, overbought など）を
+   そのまま書かず、日本語に言い換えてください。
+   例: 「chartはswing_fit=goodだがentry_zoneの提示なし」
+     → 「チャートはスイングに向くが、買う水準の提示がない」
+   指標の略称（RSI・MACD・ATR・TOPIX・VIX）と銘柄コードはそのままで構いません。
+
 出力は必ず指定のツール形式（JSON）で返してください。
 これは実際の投資助言ではなく、疑似トレードの実験です。"""
 
 
 class DeciderAgent(LLMAgent):
     name = "decider"
-    prompt_version = "decider-v2"
+    prompt_version = "decider-v3"   # v3: reason/market_view を日本語で書かせる
     tier = "strong"
 
     def __init__(self, cfg, *args, allowed_tickers: set[str] | None = None, **kwargs):
