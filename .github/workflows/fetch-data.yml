@@ -35,6 +35,7 @@ jobs:
         run: npm ci
 
       - name: データ取得
+        id: fetch_data
         run: npm run fetch-data
         continue-on-error: true
 
@@ -45,6 +46,7 @@ jobs:
       #    🔵 全銘柄ぶんの日足は runner に残らないので、毎回取り直しになる（15〜25分）。
       #      重い日は主力だけでも埋まるように、主力は必ず先に取りに行く作りにしてある。
       - name: TARGET（歴史的サポート）の生成
+        id: build_target
         run: npm run build-target
         continue-on-error: true
 
@@ -53,6 +55,7 @@ jobs:
       #    毎日取っても中身は変わらないうえ40MBのPDFを5本読むので、**土曜だけ**にする。
       # 🔵 落ちても他は止めない（前回のJSONがそのまま残る）。
       - name: 個別銘柄の信用残（土曜のみ）
+        id: fetch_stock_margin
         if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '0 0 * * 6')
         run: npm run fetch-stock-margin
         continue-on-error: true
@@ -61,10 +64,12 @@ jobs:
       # 🔴 JPXの公開は直近5週だけで、古い週のPDFは消える＝**止まった週はあとから埋められない**。
       #    だから土曜だけにせず**毎回**走らせる（未取得の週が無ければ一覧を見るだけで数秒で終わる）。
       - name: 信用残の週次蓄積（全銘柄）
+        id: archive_margin
         run: npm run archive-margin
         continue-on-error: true
 
       - name: バックテスト再計算（土曜のみ）
+        id: backtest
         if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * 6')
         run: npm run backtest
         continue-on-error: true
@@ -123,6 +128,27 @@ jobs:
               body:  'データ鮮度チェックで古いデータを検出しました。\n\nワークフロー: ' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId,
               labels: ['data-stale'],
             });
+
+      # 🔴 上の取得系ステップは continue-on-error なので、**落ちても誰にも知らされない**
+      #    （2026-09-20 に気づいた）。データが更新されないと ロボトレード は
+      #    「7日以上古い」で止まるが、止まった理由がどこにも出ないまま1週間気づけなかった。
+      #    握り潰した例外は静かな故障になるので、最後にまとめて #エラー・異常 へ流す。
+      # 🔵 skipped は失敗にしない（土曜だけのステップは平日 skipped が正常）。
+      # 🔵 Webhook 未設定の間は黙って何もしない。通知が落ちてもワークフローは赤にしない。
+      - name: 失敗を Discord（#エラー・異常）へ通知
+        if: always()
+        env:
+          DISCORD_WEBHOOK_ERRORS: ${{ secrets.DISCORD_WEBHOOK_ERRORS }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          STEP_OUTCOMES: |
+            データ取得=${{ steps.fetch_data.outcome }}
+            TARGET（歴史的サポート）の生成=${{ steps.build_target.outcome }}
+            個別銘柄の信用残=${{ steps.fetch_stock_margin.outcome }}
+            信用残の週次蓄積=${{ steps.archive_margin.outcome }}
+            バックテスト再計算=${{ steps.backtest.outcome }}
+            変更チェック＆コミット=${{ steps.commit.outcome }}
+            データ鮮度チェック=${{ steps.freshness_check.outcome }}
+        run: node scripts/notify-workflow-failure.mjs
 
       - name: データ更新通知を送信（土曜のみ・成功時）
         if: success() && github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * 6')

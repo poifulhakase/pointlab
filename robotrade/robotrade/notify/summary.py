@@ -370,9 +370,13 @@ def poyon_milestone(result: Any, cfg) -> str | None:
 
 def build_error(*, title: str, detail: str, cfg, kind: str = "障害",
                 needs_action: bool = True, when: Any = None) -> list[Embed]:
-    """種別・発生時刻・内容・対応の要否（DISCORD.md 3.4）。"""
+    """種別・発生時刻・内容・対応の要否（DISCORD.md 3.4）。
+
+    🔵 **免責は付けない**（運用者の指示・2026-09-20「トレードではない通知の場合は不要」）。
+       ここは装置の稼働状況を伝えるだけで、相場や売買の中身を含まない。
+    """
     color = int(cfg.get("discord.channels.errors.color"))
-    embed = Embed(title=f"[{kind}] {title}", color=color, footer=DISCLAIMER)
+    embed = Embed(title=f"[{kind}] {title}", color=color)
     embed.add_field("発生", str(when or ""), inline=True)
     embed.add_field("状態", "要対応" if needs_action else "自動復帰", inline=True)
     embed.add_field("内容", truncate(detail, 1000), inline=False)

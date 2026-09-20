@@ -75,6 +75,28 @@
   囲われていることも実物で確認。
 - テスト **262件 全green**（ラベル・TDnet・決算・今週の予定・通知の分を追加）。
 
+**🆕 同日追加: データ自動更新の失敗を #エラー・異常 へ流す**（`scripts/notify-workflow-failure.mjs`）
+
+🔴 **静かな故障の穴を塞いだ**。`fetch-data.yml` の取得系5ステップは `continue-on-error: true` で、
+**落ちても誰にも知らされなかった**。データが更新されないと ロボトレード は「7日以上古い」で
+止まるが、止まった理由がどこにも出ないまま**1週間気づけない**経路だった。
+
+- 各ステップに `id` を振り、最後に `if: always()` でまとめて判定 → Discord の #エラー・異常 へ。
+- 🔴 **skipped を失敗にしない**（土曜だけのステップは平日 skipped が正常。数えると毎日赤が飛んで狼少年）。
+- 🔴 鮮度チェックだけの失敗は「[データ] データが古い」、取得の失敗は「[取得] N ステップが失敗」で
+  見出しを分ける（原因が違うので）。
+- 🔵 **Webhook 未設定の間は黙って何もしない**／通知が落ちてもワークフローは赤にしない
+  （通知の失敗でデータ更新まで赤くすると本物の故障と見分けがつかない）。
+- 🔵 送信は `?wait=true`＝message_id を実行ログに残す（Webhook は自分の投稿を一覧できない）。
+- ロジックは `scripts/workflowFailure.mjs` に切り出してテスト9件（`src/utils/__tests__/`）。
+- 🔵 **免責フッターはトレードの中身を出す通知だけ**に整理（運用者の指示
+  「トレードではない通知の場合は不要」）＝#判断サマリ・#約定・保有・#成績 のみ。
+  **#エラー・異常**（装置の稼働状況）と **#相場観測**（公表済みの日程）からは外した。
+- ✅ 本物の Webhook で着弾を確認（テスト投稿は削除済み・1通目だけ手で消す必要あり）。
+- 🔴 **残: GitHub Secrets に `DISCORD_WEBHOOK_ERRORS` を登録**（未登録のうちは通知が飛ばない）。
+  Settings → Secrets and variables → Actions → New repository secret。
+  値は `robotrade/.env` の `DISCORD_WEBHOOK_ERRORS` と同じもの。
+
 **🆕 同日追加: #相場観測（今週の予定）を新設**（`robotrade/data/week_ahead.py`）
 
 運用者の相談＝「マーケットカレンダーを通知したい。どんなチャンネルがいい？」
@@ -111,7 +133,8 @@
   `-ExtraArgs` に改名して修正。ログに `実行: python main.py --calendar-only` が
   出ることまで確認した。🔵 `--weekly` も同じ理由で今まで渡っていなかった。
 - 🔵 下書きで出した投稿は `logs/sent_messages.jsonl` の `message_id` を使って
-  Webhook の DELETE で消せる（Git Bash から流すときは id の `` を落とす）。
+  Webhook の DELETE で消せる（Git Bash から流すときは id の `
+` を落とす）。
 
 **🆕 同日追加: トークの通知に本文を載せる＋Chatwork 経路を廃止**
 

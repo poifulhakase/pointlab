@@ -479,9 +479,9 @@ def test_data_stale_skip_needs_action(cfg):
 # ------------------------------------------------------------------ 免責（15章）
 
 
-@pytest.mark.parametrize("builder", ["decisions", "fills", "performance", "errors"])
-def test_every_channel_carries_the_disclaimer(cfg, builder):
-    """🔴 通知に免責を明記する（SPEC 15 コンプライアンス）。"""
+@pytest.mark.parametrize("builder", ["decisions", "fills", "performance"])
+def test_trade_channels_carry_the_disclaimer(cfg, builder):
+    """🔴 **トレードの中身を出す通知**には免責を明記する（SPEC 15 コンプライアンス）。"""
     if builder == "decisions":
         embeds = smod.build_decisions(FakeResult(), cfg)
     elif builder == "fills":
@@ -492,8 +492,17 @@ def test_every_channel_carries_the_disclaimer(cfg, builder):
         embeds = smod.build_performance(FakeResult(), cfg, history=[], excess=None,
                                         recent_losses=[])
     else:
-        embeds = smod.build_error(title="t", detail="d", cfg=cfg)
+        raise AssertionError(f"未知の builder: {builder}")
     assert any(dmod.DISCLAIMER in (e.footer or "") for e in embeds)
+
+
+def test_non_trade_notifications_have_no_disclaimer(cfg):
+    """🔵 トレードでない通知には免責を付けない（運用者の指示・2026-09-20）。
+
+    #エラー・異常 は装置の稼働状況を伝えるだけで、相場や売買の中身を含まない。
+    """
+    for embed in smod.build_error(title="t", detail="d", cfg=cfg):
+        assert embed.footer == ""
 
 
 # ------------------------------------------------------------------ 送信記録と削除
