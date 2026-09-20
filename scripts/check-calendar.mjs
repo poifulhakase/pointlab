@@ -104,19 +104,28 @@ function checkCoverage() {
   const market = readFileSync(resolve(repo, 'src/utils/marketCalendar.mjs'), 'utf-8')
 
   // 🔵 自動導出のもの（ADP・ISM・FOMC議事要旨）は元の配列が伸びれば一緒に伸びるので見ない。
+  //
+  // 🔴 `recheckFrom` ＝「この日以降は取得元が翌年分を公表しているはず」の目安。
+  //    出どころによって公表時期が違う（FOMC・NYSEは何年も先まで出るが、
+  //    BLS/BEAは前年の秋、日銀短観は12か月先までを6月末・12月末に出す）。
+  //    **公表前は失敗にしない**。3か月赤を出し続けると狼少年になって本当の
+  //    足し忘れに気づけなくなる（DISCORD.md 4章）。
+  //    その日を過ぎても入っていなければ失敗＝人が見にいく合図になる。
   const targets = [
-    ['FOMC_DATES', macro, 'FOMC'],
-    ['BOJ_DATES', macro, '日銀 金融政策決定会合'],
-    ['CPI_DATES', macro, '米CPI'],
-    ['PCE_DATES', macro, '米PCE'],
-    ['NFP_DATES', macro, '米雇用統計'],
-    ['TANKAN_DATES', macro, '日銀短観'],
-    ['NYSE_HOLIDAYS', market, 'NYSE休場日'],
+    ['FOMC_DATES', macro, 'FOMC', null],
+    ['BOJ_DATES', macro, '日銀 金融政策決定会合', null],
+    ['NYSE_HOLIDAYS', market, 'NYSE休場日', null],
+    // 2026-09-20 に確認：BLS・BEA とも 2027年分は未公表だった
+    ['CPI_DATES', macro, '米CPI', '2026-10-15'],
+    ['NFP_DATES', macro, '米雇用統計', '2026-10-15'],
+    ['PCE_DATES', macro, '米PCE', '2026-11-15'],
+    // 短観は12か月先までしか出ない（6月末・12月末に更新）
+    ['TANKAN_DATES', macro, '日銀短観', '2027-01-15'],
   ]
 
   const today = new Date()
   console.log(`\n日程のカバレッジ（残り${WARN_DAYS}日を切ったら失敗）:`)
-  for (const [name, source, label] of targets) {
+  for (const [name, source, label, recheckFrom] of targets) {
     const last = lastDateOf(source, name)
     if (!last) {
       fail(`${label}（${name}）の配列が読めない（書き方が変わった？）`)
@@ -125,10 +134,13 @@ function checkCoverage() {
     const left = Math.floor((last - today) / 86400000)
     // 🔵 全角と半角が混ざるので桁揃えはしない（環境によってズレて逆に読みにくい）
     const line = `  ${label}: 〜${toYmd(last)}（あと${left}日）`
-    if (left < WARN_DAYS) {
-      fail(`${line}  ← 切れる前に足す（docs/maintenance/calendar-dates-check.md）`)
-    } else {
+    if (left >= WARN_DAYS) {
       console.log(line)
+    } else if (recheckFrom && today < new Date(recheckFrom)) {
+      // 🔵 取得元がまだ翌年分を出していない時期。待ちであって、足し忘れではない
+      console.log(`${line}  ← 取得元の公表待ち（${recheckFrom} から再確認）`)
+    } else {
+      fail(`${line}  ← 切れる前に足す（docs/maintenance/calendar-dates-check.md）`)
     }
   }
 }

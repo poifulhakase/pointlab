@@ -1,5 +1,13 @@
 import React from 'react'
 
+/**
+ * ぽいんとらぼ（Discord）の招待リンク。
+ * 🔴 招待リンクは Discord の画面で**有効期限を「無期限」**にして発行すること。
+ *    既定は7日で切れ、切れてもこの画面はリンクを出し続ける＝**死んだリンクを配る**ことになる。
+ * 🔵 公開するのは @everyone から見えるチャンネルだけ。プライベートのカテゴリは権限で閉じている。
+ */
+const DISCORD_INVITE = 'https://discord.gg/8QSdBAeS4'
+
 type Props = {
   theme: 'dark' | 'light'
   isMobile: boolean
@@ -442,6 +450,26 @@ export function NoteView({ theme, isMobile, isAdmin = false, isMember = false, o
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.727-8.84L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
               X
+            </a>
+            <a
+              href={DISCORD_INVITE}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => { e.preventDefault(); window.open(DISCORD_INVITE, '_blank') }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 8,
+                border: '1px solid var(--glass-border)',
+                background: 'var(--glass-bg)',
+                color: 'var(--text-sub)',
+                textDecoration: 'none',
+                fontSize: 12, fontWeight: 600,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+                <path d="M19.27 5.33A16.6 16.6 0 0 0 15.16 4l-.25.46a12.4 12.4 0 0 1 3.66 1.52 15.9 15.9 0 0 0-13.15 0A12.4 12.4 0 0 1 9.09 4.5L8.84 4a16.6 16.6 0 0 0-4.11 1.33C2.12 9.25 1.41 13.06 1.77 16.82A16.7 16.7 0 0 0 6.83 19.4l.6-.84a10.9 10.9 0 0 1-1.7-.82l.42-.33a11.9 11.9 0 0 0 10.1 0l.42.33c-.54.32-1.11.6-1.7.82l.6.84a16.7 16.7 0 0 0 5.06-2.58c.42-4.36-.71-8.13-1.36-11.49zM8.52 14.53c-.98 0-1.79-.9-1.79-2.01 0-1.11.79-2.01 1.79-2.01s1.81.9 1.79 2.01c0 1.11-.79 2.01-1.79 2.01zm6.96 0c-.98 0-1.79-.9-1.79-2.01 0-1.11.79-2.01 1.79-2.01s1.8.9 1.79 2.01c0 1.11-.79 2.01-1.79 2.01z"/>
+              </svg>
+              Discord
             </a>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 0 }}>
