@@ -210,27 +210,25 @@ def test_decisions_embed_shape(cfg):
     assert len(embeds) == 3                            # 総括 + カード2枚
 
 
-def test_decisions_show_full_funnel(cfg):
-    """🔴 候補の**前**の件数（何銘柄から絞ったか）まで出す。"""
+def test_decisions_show_universe_before_candidates(cfg):
+    """🔴 候補の**前**に、何銘柄から絞ったか（対象銘柄）を出す。"""
     result = FakeResult(
         decisions=[a_decision()], analyses=[an_analysis()],
         funnel={"入力": 3678, "第1層通過": 1014, "第2層上位15": 15, "第3層通過": 12},
     )
     value = next(f["value"] for f in smod.build_decisions(result, cfg)[0].fields
                  if f["name"] == "しぼり込み")
-    assert "対象 **3,678件**" in value      # 3桁区切りで出す
-    assert "1次 **1,014件**" in value
-    assert "上位 **15件**" in value          # 第2層のキーは top_n で変わる＝前方一致
-    assert "候補 **12件**" in value
-    assert "分析 **1件**" in value
+    assert value.startswith("対象銘柄 **3,678件** → 候補 **12件** → 分析 **1件**")
+    # 途中の段は日々の一目に出さない（詳細は logs/ とダッシュボード）
+    assert "1,014" not in value
 
 
 def test_decisions_funnel_survives_missing_steps(cfg):
-    """段が欠けていても落ちない（渡された順にそのまま出す）。"""
+    """ファネルが空でも落ちない（対象銘柄を省き、候補は分析件数で代用）。"""
     result = FakeResult(decisions=[a_decision()], analyses=[an_analysis()], funnel={})
     value = next(f["value"] for f in smod.build_decisions(result, cfg)[0].fields
                  if f["name"] == "しぼり込み")
-    assert "候補 **1件**" in value
+    assert value.startswith("候補 **1件**")
 
 
 def test_decisions_do_not_show_quantity(cfg):
