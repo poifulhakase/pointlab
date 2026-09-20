@@ -35,6 +35,7 @@ from .agents.supply_demand import SupplyDemandAgent
 from .data import fetch as fetch_mod
 from .data import indicators as ind_mod
 from .data import prefilter as prefilter_mod
+from .data import tdnet as tdnet_mod
 from .data.poirobo import DataStaleError, MarketCalendar, PoiroboData
 from .learning import outcomes as outcomes_mod
 from .logs import RunLogger
@@ -117,7 +118,7 @@ class Orchestrator:
         self.fetcher = fetch_mod.PriceFetcher(cfg)
         self.tracker = CostTracker(limit_usd=float(cfg.get("ops.daily_cost_alert_usd")))
         self.client = anthropic.Anthropic(api_key=cfg.secrets.anthropic_api_key)
-        self.headlines = headline_source or NoHeadlines()
+        self.headlines = headline_source or tdnet_mod.from_config(cfg) or NoHeadlines()
         self.run_logger: RunLogger | None = None
 
     # ================================================== 本体
@@ -477,10 +478,11 @@ class Orchestrator:
                 log.warning("需給分析を飛ばす: %s", exc)
 
         if self.cfg.get("agents.news", True):
-            headlines = self.headlines.fetch_headlines(candidate.ticker)
+            # 🔴 run_date を渡す＝判断日より後に出た開示を掴まない（先読み防止・SPEC 5.2）
+            headlines = self.headlines.fetch_headlines(candidate.ticker, as_of=run_date)
             if not headlines:
                 # 🔴 ニュースが無いのに LLM を呼ばない（無駄な課金）。明示的に「なし」を入れる。
-                out["news"] = news_none()
+                out["news"] = news_none(self._no_news_summary())
             else:
                 agent = NewsAgent(self.cfg, self.client, self.tracker)
                 try:
@@ -491,9 +493,16 @@ class Orchestrator:
                     self.run_logger.agent_call(record)
                 except AgentError as exc:
                     log.warning("ニュース分析を飛ばす: %s", exc)
-                    out["news"] = news_none()
+                    out["news"] = news_none("ニュース分析に失敗（材料は不明）")
 
         return out
+
+    def _no_news_summary(self) -> str:
+        """材料ゼロの理由を書き分ける（取得元が無い／本当に開示が無い）。"""
+        if isinstance(self.headlines, NoHeadlines):
+            return "ニュース取得元が未導入のため材料は不明（データなし）"
+        days = int(self.cfg.get("news.lookback_days", 30))
+        return f"直近{days}日の適時開示なし"
 
     def _market_flow(self) -> dict[str, Any]:
         macro = self.poirobo.macro_snapshot()

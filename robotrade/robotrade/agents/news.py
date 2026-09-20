@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, Protocol
 
 from .base import AgentError, LLMAgent, json_block, wrap_untrusted
@@ -47,8 +48,12 @@ confidence を下げ、source_tier に反映してください。
 class HeadlineSource(Protocol):
     """ニュース取得の差し替え可能なインターフェース（SPEC 5.2 実装方針）。"""
 
-    def fetch_headlines(self, ticker: str) -> list[dict[str, Any]]:
-        """[{'date','title','body','source_tier'}] を返す。無ければ空配列。"""
+    def fetch_headlines(self, ticker: str, as_of: date | None = None
+                        ) -> list[dict[str, Any]]:
+        """[{'date','title','body','source_tier'}] を返す。無ければ空配列。
+
+        🔴 `as_of`（判断日）より**後**に公表されたものを返してはいけない（先読み）。
+        """
         ...
 
 
@@ -58,7 +63,8 @@ class NoHeadlines:
     🔴 ここで適当な文字列を返すと、下流が「材料あり」と誤認する。空配列のまま返す。
     """
 
-    def fetch_headlines(self, ticker: str) -> list[dict[str, Any]]:
+    def fetch_headlines(self, ticker: str, as_of: date | None = None
+                        ) -> list[dict[str, Any]]:
         return []
 
 
@@ -128,16 +134,18 @@ class NewsAgent(LLMAgent):
         ])
 
 
-def none_result() -> dict[str, Any]:
+def none_result(summary: str | None = None) -> dict[str, Any]:
     """ニュースが取れなかったときの既定値。LLM を呼ばずに返す。
 
     🔴 「materialなし」を明示的な値として持つ。None を渡して下流に解釈させない。
+    🔴 **取得元が無い**のと**開示が1件も無かった**のは別物。summary で書き分ける
+       （前者は自分の未整備、後者はその銘柄の事実。混ぜると穴に気づけない）。
     """
     return {
         "catalyst": "none",
         "strength": "low",
         "source_tier": "primary",
-        "summary": "ニュース取得元が未導入のため材料は不明（データなし）",
+        "summary": summary or "ニュース取得元が未導入のため材料は不明（データなし）",
         "watch": [],
         "confidence": 0.0,
         "_no_data": True,

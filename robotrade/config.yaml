@@ -76,6 +76,15 @@ exec:                      # 疑似執行のリアリズム（SPEC 10.2 / 10.5�
   max_entry_gap_pct: 0.02  # 翌寄りが想定エントリーからこれ以上乖離したら見送り
   lot_size: 100            # 単元株数
 
+news:                      # ニュース/カタリストの取得元（SPEC 5.2b）
+  # tdnet = 適時開示（TDnet・無料・APIキー不要・**一次情報**）／ none = 取得しない
+  # 🔴 株探・Yahoo!ファイナンス等のスクレイピングは規約で禁止されているので足さない。
+  source: tdnet
+  lookback_days: 30        # 判断日から何日さかのぼるか（古い開示は材料として効かない）
+  max_items: 8             # 1銘柄あたりLLMに渡す開示の上限（多いほどトークンが増える）
+  timeout_sec: 15
+  endpoint: "https://webapi.yanoshin.jp/webapi/tdnet/list/{code}.json"
+
 weights:                   # LLMへの強調ヒント（掛け算ではない。SPEC 7.5）
   supply_demand: 1.3       # 2〜14日では需給をやや重めに（1.0が基準）
   news: 1.0
