@@ -32,7 +32,11 @@ screen:                    # 数値プレフィルタ（SPEC 6章）
   atr_max: 0.08            # 第2層: ATR%上限
   vol_spike_ratio: 1.5     # 第2層: 出来高が平均の何倍で注目とみなすか
   top_n: 15                # 第2層: スコア上位何件を選定AIに渡すか
-  exclude_event_within_days: 3   # 第3層: N日内に決算/権利日がある銘柄の扱い
+  exclude_event_within_days: 3   # 第3層: N日内に高インパクトの経済イベントがある場合
+  # 第3層: N日内に決算発表がある銘柄は除外（またぎを避ける）。
+  # 🔴 保有期間ぶん（14日）を全部落とすと決算シーズンに候補が全滅するので短くする。
+  #    少し先の決算は候補に残し、売買判断AIに重みを判断させる。
+  exclude_earnings_within_days: 3
   penny_stock_policy: exclude    # 低位株・ボロ株: exclude / allow
   recent_move_days: 5      # 第3層: 直近の急騰急落を見る日数
   recent_move_pct: 0.15    # 第3層: この%以上動いていたら除外（動き切った後）
@@ -75,6 +79,14 @@ exec:                      # 疑似執行のリアリズム（SPEC 10.2 / 10.5�
   max_volume_pct: 0.05     # 想定数量の上限（当該銘柄1日出来高比）
   max_entry_gap_pct: 0.02  # 翌寄りが想定エントリーからこれ以上乖離したら見送り
   lot_size: 100            # 単元株数
+
+earnings:                  # 決算発表予定日（JPX公開サイトのExcel・登録不要）
+  # 🔴 J-Quants の予定日APIは「翌営業日・3月期と9月期の会社だけ」で足りないので使わない。
+  enabled: true
+  index_url: "https://www.jpx.co.jp/listing/event-schedules/financial-announcement/index.html"
+  cache_path: "data/earnings_schedule.json"
+  cache_max_age_days: 3    # これより古ければ取り直す（予定は変わる）
+  timeout_sec: 30
 
 news:                      # ニュース/カタリストの取得元（SPEC 5.2b）
   # tdnet = 適時開示（TDnet・無料・APIキー不要・**一次情報**）／ none = 取得しない

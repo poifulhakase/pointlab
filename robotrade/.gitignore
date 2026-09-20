@@ -18,6 +18,8 @@ logs/
 *.sqlite3
 data_cache/
 eda_out/
+# JPXから取り直せる予定表（鮮度が落ちたら自動で取り直す）
+data/earnings_schedule.json
 scratch/
 note_feed_state.json
 feed_state.json

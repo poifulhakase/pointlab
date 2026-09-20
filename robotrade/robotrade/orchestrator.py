@@ -32,6 +32,7 @@ from .agents.decider import DeciderAgent
 from .agents.news import NewsAgent, NoHeadlines, none_result as news_none
 from .agents.selector import SelectorAgent
 from .agents.supply_demand import SupplyDemandAgent
+from .data import earnings as earnings_mod
 from .data import fetch as fetch_mod
 from .data import indicators as ind_mod
 from .data import prefilter as prefilter_mod
@@ -119,6 +120,7 @@ class Orchestrator:
         self.tracker = CostTracker(limit_usd=float(cfg.get("ops.daily_cost_alert_usd")))
         self.client = anthropic.Anthropic(api_key=cfg.secrets.anthropic_api_key)
         self.headlines = headline_source or tdnet_mod.from_config(cfg) or NoHeadlines()
+        self.earnings = earnings_mod.from_config(cfg)
         self.run_logger: RunLogger | None = None
 
     # ================================================== 本体
@@ -187,7 +189,11 @@ class Orchestrator:
         # --- 3. プレフィルタ -------------------------------------------------
         next_day = self.calendar.next_business_day(run_date)
         high_impact = self.calendar.high_impact_on(next_day)
-        prefilter = prefilter_mod.run(pairs, self.cfg, event_days=1 if high_impact else 0)
+        # 🔴 決算予定は「判断日」ではなく**翌営業日**（＝建てる日）からの残り日数で見る
+        earnings_days = self._earnings_days([s.ticker for s, _ in pairs], next_day)
+        prefilter = prefilter_mod.run(pairs, self.cfg,
+                                      event_days=1 if high_impact else 0,
+                                      earnings_days=earnings_days)
         result.funnel = dict(prefilter.funnel)
         log.info("プレフィルタ: %s", prefilter.funnel_text())
         self.run_logger.step("prefilter", {
@@ -469,6 +475,7 @@ class Orchestrator:
                         market_flow=self._market_flow(),
                         indicators_latest=ind.latest,
                         horizon_days=int(self.cfg.get("holding.max_days")),
+                        earnings=self._earnings_for(candidate.ticker, run_date),
                     ),
                     ticker=candidate.ticker,
                 )
@@ -495,6 +502,26 @@ class Orchestrator:
                     log.warning("ニュース分析を飛ばす: %s", exc)
                     out["news"] = news_none("ニュース分析に失敗（材料は不明）")
 
+        return out
+
+    def _earnings_for(self, ticker: str, from_day: date) -> dict[str, Any] | None:
+        """次の決算発表予定。**取れていない**＝None、**予定が無い**＝{} で返し分ける。"""
+        if self.earnings is None or not self.earnings.is_available():
+            return None
+        return self.earnings.next_announcement(ticker, from_day) or {}
+
+    def _earnings_days(self, tickers: list[str], from_day: date) -> dict[str, int]:
+        """銘柄ごとの「決算発表まであと何日」。取れていない銘柄は**入れない**。
+
+        🔴 「予定が無い」と「取れていない」を混ぜない。キーが無い＝判定材料なし。
+        """
+        if self.earnings is None or not self.earnings.is_available():
+            return {}
+        out: dict[str, int] = {}
+        for ticker in tickers:
+            found = self.earnings.next_announcement(ticker, from_day)
+            if found:
+                out[ticker] = int(found["days_until"])
         return out
 
     def _no_news_summary(self) -> str:

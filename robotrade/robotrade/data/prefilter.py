@@ -197,8 +197,12 @@ def layer2(candidate: Candidate, cfg) -> float:
 # ---------------------------------------------------------------- 第3層
 
 
-def layer3(candidate: Candidate, cfg, *, event_days: int = 0) -> bool:
-    """除外フィルタ（地雷を踏まない）。"""
+def layer3(candidate: Candidate, cfg, *, event_days: int = 0,
+           earnings_days: int | None = None) -> bool:
+    """除外フィルタ（地雷を踏まない）。
+
+    `earnings_days` = 決算発表予定日まであと何日か（取れていなければ None）。
+    """
     frame = candidate.indicators.frame
     days = int(cfg.get("screen.recent_move_days"))
     limit = float(cfg.get("screen.recent_move_pct"))
@@ -217,10 +221,17 @@ def layer3(candidate: Candidate, cfg, *, event_days: int = 0) -> bool:
     if outliers:
         candidate.reasons.append(f"異常値フラグ: {outliers}")
 
-    # イベント直前: 保有期間内に決算・権利確定日が入るか
-    # 🔴 個別銘柄の決算日は現時点で取得元が無い（J-Quants 導入＝Phase 11 待ち）。
-    #    **無いものを推測で埋めない**（SPEC 5.2/7.3）。ここでは判定せず「データなし」とし、
-    #    市場全体のマクロイベントだけを event_days として扱う。
+    # 決算直前: 発表をまたぐと数値分析の外側で窓を開ける（2026-09-20 に判定を導入）
+    # 🔴 **近すぎるものだけ落とす**。保有期間（最大14日）内の決算を全部落とすと
+    #    決算シーズンに候補が全滅する。少し先のものは売買判断AIに渡して重みを判断させる。
+    earnings_within = int(cfg.get("screen.exclude_earnings_within_days"))
+    if earnings_days is not None:
+        if 0 <= earnings_days <= earnings_within:
+            candidate.rejected_by = f"L3:{earnings_days}日後に決算発表（またぎを避ける）"
+            return False
+        candidate.reasons.append(f"{earnings_days}日後に決算発表")
+
+    # イベント直前: 市場全体のマクロイベント（FOMC・日銀・SQ 等）
     exclude_within = int(cfg.get("screen.exclude_event_within_days"))
     if event_days and 0 < event_days <= exclude_within:
         candidate.reasons.append(f"{event_days}日後に高インパクトの経済イベント")
@@ -247,6 +258,7 @@ def run(
     cfg,
     *,
     event_days: int = 0,
+    earnings_days: dict[str, int] | None = None,
 ) -> PrefilterResult:
     """プレフィルタ本体。
 
@@ -269,7 +281,10 @@ def run(
         c.rejected_by = f"L2:スコア {c.score:.2f} が上位{top_n}位圏外"
     funnel[f"第2層上位{top_n}"] = len(ranked)
 
-    selected = [c for c in ranked if layer3(c, cfg, event_days=event_days)]
+    earnings_days = earnings_days or {}
+    selected = [c for c in ranked
+                if layer3(c, cfg, event_days=event_days,
+                          earnings_days=earnings_days.get(c.ticker))]
     funnel["第3層通過"] = len(selected)
 
     if not selected:

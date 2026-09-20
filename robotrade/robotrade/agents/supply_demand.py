@@ -124,8 +124,12 @@ class SupplyDemandAgent(LLMAgent):
         market_flow: dict[str, Any],
         indicators_latest: dict[str, Any],
         horizon_days: int,
+        earnings: dict[str, Any] | None = None,
     ) -> str:
-        """取れたデータだけ渡し、**取れていない項目を明示する**。"""
+        """取れたデータだけ渡し、**取れていない項目を明示する**。
+
+        `earnings` = 次の決算発表予定（`data/earnings.py`）。取れていなければ None。
+        """
         margin_note: Any
         if margin_rows:
             margin_note = {
@@ -138,15 +142,29 @@ class SupplyDemandAgent(LLMAgent):
             margin_note = "データなし（この銘柄の週次信用残が蓄積に含まれていない）"
 
         missing = [
-            "個別銘柄の決算発表日（取得元が未導入）",
             "個別銘柄の権利確定日（取得元が未導入）",
             "個別銘柄の空売り残高（取得元が未導入）",
-            "適時開示（自社株買い・増資・分割・TOB。取得元が未導入）",
         ]
+        # 🔴 「予定が無い」と「取れていない」を書き分ける。前者は事実、後者は自分の未整備。
+        if earnings is None:
+            missing.append("次の決算発表予定日（取得できていない）")
+            earnings_note: Any = "取得できていない（判定材料なし）"
+        elif not earnings:
+            earnings_note = "公表されている予定の範囲内に、次の決算発表は無い"
+        else:
+            earnings_note = {
+                "予定日": earnings.get("date"),
+                "あと何日": earnings.get("days_until"),
+                "種別": earnings.get("kind"),
+                "予定表の基準日": earnings.get("as_of"),
+                "注意": "予定は変更されることがある（JPX公開の予定一覧）",
+            }
 
         return "\n".join([
             f"{profile['name']}（{profile['ticker']}・{profile['sector']}）の需給を評価してください。",
             f"想定保有期間: 最大{horizon_days}日",
+            "",
+            json_block("次の決算発表予定（保有期間内にまたぐかの判定に使う）", earnings_note),
             "",
             json_block("この銘柄の週次信用残", margin_note),
             "",
