@@ -9,6 +9,15 @@
 
 ## 🔵 ユーザーの残作業
 
+- [ ] 🔴 **GitHub Secrets に `DISCORD_WEBHOOK_ERRORS` を登録**（2026-09-20）：
+  これが無いうちは**データ自動更新が落ちても通知が飛ばない**（ワークフロー自体は正常に動く）。
+  GitHub → Settings → Secrets and variables → Actions → New repository secret。
+  名前 `DISCORD_WEBHOOK_ERRORS` ／ 値は `robotrade/.env` の同名の行と同じもの。
+  🔵 未設定のあいだは Actions のログに「未設定なので送らない」と落ちたステップ名が出る。
+- [ ] **#エラー・異常 のテスト投稿を1通消す**（2026-09-20）：動作確認で送ったぶん。
+  🔴 message_id を記録する前に送ったので**こちらからは消せない**（Webhook は自分の投稿を
+  一覧できない）。Discord の画面から手で削除する。以降の通知は id をログに残す。
+
 - [ ] **Resend の鍵が無効**（2026-09-17 判明）：予約確認メールが送れていない可能性。https://resend.com/api-keys で作り直し → Vercel の `RESEND_API_KEY` を差し替え
 
 - [ ] **GitHub Secrets の片付け（任意）**：ロボ口座の廃止で `ANTHROPIC_API_KEY`（ぽいロボ専用に発行した鍵）・`CHATWORK_API_TOKEN`・`CHATWORK_ROOM_ID` は Actions から使われなくなった。
@@ -93,9 +102,8 @@
   「トレードではない通知の場合は不要」）＝#判断サマリ・#約定・保有・#成績 のみ。
   **#エラー・異常**（装置の稼働状況）と **#相場観測**（公表済みの日程）からは外した。
 - ✅ 本物の Webhook で着弾を確認（テスト投稿は削除済み・1通目だけ手で消す必要あり）。
-- 🔴 **残: GitHub Secrets に `DISCORD_WEBHOOK_ERRORS` を登録**（未登録のうちは通知が飛ばない）。
-  Settings → Secrets and variables → Actions → New repository secret。
-  値は `robotrade/.env` の `DISCORD_WEBHOOK_ERRORS` と同じもの。
+- 🔴 **GitHub Secrets の登録とテスト投稿の削除は「ユーザーの残作業」に載せた**（2026-09-20）。
+  秘密が未登録のあいだは通知が飛ばない（ワークフローは正常に動く）。
 
 **🆕 同日追加: #相場観測（今週の予定）を新設**（`robotrade/data/week_ahead.py`）
 
