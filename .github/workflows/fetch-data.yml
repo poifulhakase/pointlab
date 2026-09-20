@@ -129,6 +129,17 @@ jobs:
               labels: ['data-stale'],
             });
 
+      # 🔴 カレンダーの点検（土曜のみ）。見るのは2つ:
+      #    ① 祝日の判定が内閣府の公表と一致するか（春分・秋分は近似計算・振替は自前実装）
+      #    ② 手で足した日程（FOMC・日銀・CPI・NYSE休場日）が**いつ尽きるか**
+      # 🔴 日程は尽きてもエラーにならず、ただ静かに何も出なくなる＝「イベントの無い週」と
+      #    見分けがつかない。90日前に知らせて、docs/maintenance/ の手順で足す。
+      - name: カレンダーの点検（土曜のみ）
+        id: check_calendar
+        if: github.event_name == 'workflow_dispatch' || contains(github.event.schedule, '0 0 * * 6')
+        run: npm run check-calendar
+        continue-on-error: true
+
       # 🔴 上の取得系ステップは continue-on-error なので、**落ちても誰にも知らされない**
       #    （2026-09-20 に気づいた）。データが更新されないと ロボトレード は
       #    「7日以上古い」で止まるが、止まった理由がどこにも出ないまま1週間気づけなかった。
@@ -148,6 +159,7 @@ jobs:
             バックテスト再計算=${{ steps.backtest.outcome }}
             変更チェック＆コミット=${{ steps.commit.outcome }}
             データ鮮度チェック=${{ steps.freshness_check.outcome }}
+            カレンダーの点検=${{ steps.check_calendar.outcome }}
         run: node scripts/notify-workflow-failure.mjs
 
       - name: データ更新通知を送信（土曜のみ・成功時）

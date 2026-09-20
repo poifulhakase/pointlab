@@ -20,7 +20,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e:booking": "node --env-file-if-exists=.env.e2e.local scripts/e2e-booking.mjs",
-    "check-freshness": "node scripts/check-freshness.mjs"
+    "check-freshness": "node scripts/check-freshness.mjs",
+    "check-calendar": "node scripts/check-calendar.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
