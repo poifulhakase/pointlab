@@ -35,6 +35,13 @@
 
 ### 2026-09-20(71): Discord #判断サマリ の「しぼり込み」に**対象銘柄の件数**を足した
 
+✅ **本番反映済み**（最新コミット `01df3b9` / `main` と origin は同期）。
+tsc 0 / lint 0 / テスト570件（ぽいロボ本体）・262件（ロボトレード）全green / build OK。
+本番で実物を確認: DATAフッターの Discord リンク（`NoteView-DaVdVbsW.js` に載っている）、
+2027年のFOMC日程（`index-*.js` に載っている）。
+🔵 ロボトレードはローカル実行なので Vercel のデプロイ内容には影響しない（api関数は12個のまま）。
+
+
 運用者の指摘＝「候補◯件 の前の件数も見たい」。`prefilter.funnel` に段は全部あったが、
 通知は最後の `第3層通過` しか読んでいなかった（`robotrade/robotrade/notify/summary.py`）。
 
