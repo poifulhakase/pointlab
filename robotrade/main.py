@@ -22,16 +22,21 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
+import anthropic
+
 from robotrade import config as config_mod
+from robotrade.agents.base import CostTracker
 from robotrade.data import earnings as earnings_mod
 from robotrade.data import week_ahead as week_mod
 from robotrade.data.poirobo import MarketCalendar, PoiroboData
 from robotrade.learning import outcomes as outcomes_mod
 from robotrade.logs import setup_logging
+from robotrade.notify import buffer as buffer_mod
 from robotrade.notify import chart as chart_mod
 from robotrade.notify import discord as discord_mod
 from robotrade.notify import feeds as feeds_mod
 from robotrade.notify import summary as summary_mod
+from robotrade.notify import x_runner as x_mod
 from robotrade.orchestrator import AlreadyRan, Orchestrator, SkipRun, resolve_run_date
 from robotrade.portfolio.store import Store
 
@@ -135,6 +140,33 @@ def notify_week_ahead(cfg, router, *, forced: bool = False) -> None:
         log.warning("#相場観測: 今週の予定を出せなかった: %s", exc)
 
 
+
+def notify_x(cfg, router) -> None:
+    """新着1件を X に予約する（Buffer 経由）。
+
+    🔴 ここで落ちてもトレードは止めない。X が出せないのは「おまけが1つ欠けた」だけで、
+       日次の判断とは無関係（NOTE_FEED.md と同じ扱い）。
+    """
+    try:
+        client = buffer_mod.from_config(cfg)
+        if client is None:
+            return
+        runner = x_mod.XRunner(
+            cfg,
+            buffer_client=client,
+            feed_runner=feeds_mod.FeedRunner(cfg, sent_log=router.sent_log),
+            llm_client=(anthropic.Anthropic(api_key=cfg.secrets.anthropic_api_key)
+                        if cfg.secrets.anthropic_api_key else None),
+            tracker=CostTracker(limit_usd=float(cfg.get("ops.daily_cost_alert_usd"))),
+        )
+        outcome = runner.run()
+        log.info("X: %s", outcome.summary())
+        for title in outcome.posted:
+            log.info("    %s", title[:70])
+    except Exception as exc:  # noqa: BLE001
+        log.warning("X への投稿を飛ばす: %s", exc)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="LLMスイングトレード 疑似トレードマシン")
     parser.add_argument("--date", help="対象の営業日（YYYY-MM-DD）。既定は直近の営業日")
@@ -216,6 +248,11 @@ def main(argv: list[str] | None = None) -> int:
                 log.info("    %s", article.title[:70])
             if outcome.error:
                 log.warning("お知らせ: %s", outcome.summary())
+    # --- X への予約投稿（Buffer 経由・1日1件） ---
+    # 🔴 フィードの直後に置く。お知らせと同じ「新着を配る」仕事なので、
+    #    トレードのスキップ判定より前で完結させる（連休でも止まらない）。
+    if not (args.no_feeds or args.no_notify):
+        notify_x(cfg, router)
     if args.feeds_only:
         return 0
 

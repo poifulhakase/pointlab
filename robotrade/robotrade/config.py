@@ -26,6 +26,8 @@ class Secrets:
     anthropic_api_key: str | None
     # チャンネル名 → Webhook URL（DISCORD.md 1章）。未設定のチャンネルは入らない。
     webhooks: dict[str, str] = dataclass_field(default_factory=dict)
+    # Buffer（X への投稿）。🔴 X API を直接使わないための経路（notify/buffer.py の冒頭を読む）
+    buffer_api_key: str | None = None
 
 
 class Config:
@@ -285,6 +287,7 @@ def load(config_path: str | Path | None = None, *, root: Path | None = None) -> 
     secrets = Secrets(
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,
         webhooks=webhooks,
+        buffer_api_key=os.environ.get("BUFFER_API_KEY") or None,
     )
 
     cfg = Config(raw, secrets, root)

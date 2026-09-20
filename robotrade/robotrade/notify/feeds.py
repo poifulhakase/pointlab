@@ -464,7 +464,11 @@ class FeedRunner:
             wanted = set(spec.only_categories)
             articles = [a for a in articles if wanted & set(a.categories)]
 
-        seen, first_run = self.store.load(spec.key)
+        return self._diff(spec, articles, result, state_key=spec.key)
+
+    def _diff(self, spec: SourceSpec, articles: list[Article], result: SourceResult,
+              *, state_key: str) -> tuple[list[Article], SourceResult]:
+        seen, first_run = self.store.load(state_key)
         if first_run:
             result.first_run = True
             result.held = len(articles)
@@ -474,6 +478,47 @@ class FeedRunner:
         fresh = [a for a in articles if a.guid not in seen_set]
         result.held = max(0, len(fresh) - spec.max_per_run)
         return fresh[: spec.max_per_run], result
+
+    # -------------------------------------------------- 送り先ごとの既読（X 用）
+
+    @staticmethod
+    def sink_key(spec: SourceSpec, sink: str) -> str:
+        """送り先ごとの既読キー。
+
+        🔴 Discord と X で**別々に持つ**。Discord は全件流し、X は1日1件に絞るので、
+           同じ集合を使うと「Discord に出たから X では出さない」ことになる。
+        """
+        return f"{sink}:{spec.key}"
+
+    def fresh_for_sink(self, spec: SourceSpec, *, sink: str
+                       ) -> tuple[list[Article], SourceResult]:
+        """その送り先にとっての未投稿ぶん（新しい順）。"""
+        result = SourceResult(key=spec.key, name=spec.name)
+        try:
+            feed = self.fetch(spec)
+        except Exception as exc:  # noqa: BLE001
+            result.error = str(exc)
+            return [], result
+
+        articles = parse_entries(feed, spec)
+        if not articles:
+            # 🔴 0件で既読をいじらない（取得失敗と区別できないため）
+            result.error = "RSS にエントリが無かった（取得失敗の可能性）"
+            return [], result
+
+        fresh, result = self._diff(spec, articles, result,
+                                   state_key=self.sink_key(spec, sink))
+        if result.first_run:
+            # 🔵 初回は投稿せず既読にするだけ（導入直後にタイムラインを埋めない）
+            self.store.save(self.sink_key(spec, sink), [a.guid for a in articles])
+        return sort_newest_first(fresh), result
+
+    def mark_seen_for_sink(self, spec: SourceSpec, articles: list[Article], *,
+                           sink: str) -> None:
+        """投稿したものも捨てたものも**まとめて既読**にする（持ち越さない）。"""
+        key = self.sink_key(spec, sink)
+        seen, _ = self.store.load(key)
+        self.store.save(key, list(seen) + [a.guid for a in articles])
 
     # -------------------------------------------------- 本体
 
