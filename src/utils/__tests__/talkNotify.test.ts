@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, MAX_BODY_SELF, pickNotifyRoute, pickNotifyTarget, shouldShowBody, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, buildDiscordBody, minIntervalSec, shouldSuppressStreak, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, MAX_BODY_SELF, pickNotifyRoute, pickNotifyTarget, shouldShowBody, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -68,6 +68,35 @@ describe('talk-notify', () => {
       expect(isStreakSuppressed(null)).toBe(false)
       expect(isStreakSuppressed('false')).toBe(false)
       expect(isStreakSuppressed(0)).toBe(false)
+    })
+  })
+
+  // 🔴 2026-09-21：自分あては連投も全部届く。相手が2通送って1通しか来ず、
+  //    読み落とすほうが害が大きい（当時の自分あては LINE で枠が有限だった）。
+  describe('shouldSuppressStreak（連投を止めるのは相手あてだけ）', () => {
+    it('🔴 自分あて（Discord）は連投でも全部通す', () => {
+      expect(shouldSuppressStreak('discord', false)).toBe(false)
+      expect(shouldSuppressStreak('discord', true)).toBe(false)
+    })
+
+    it('🔴 相手あて（LINE）は今までどおり1通目だけ', () => {
+      expect(shouldSuppressStreak('line', false)).toBe(true)
+      expect(shouldSuppressStreak('line', true)).toBe(false)
+    })
+
+    it('first が付いていない古い画面は相手あてでも通す（フェイルオープン）', () => {
+      expect(shouldSuppressStreak('line', undefined)).toBe(false)
+    })
+  })
+
+  describe('minIntervalSec（最短間隔）', () => {
+    it('自分あては詰めて届いてよい。ただし 0 にはしない', () => {
+      expect(minIntervalSec('discord', '90')).toBe(5)
+    })
+
+    it('相手あては設定どおり（既定90秒）', () => {
+      expect(minIntervalSec('line', '120')).toBe(120)
+      expect(minIntervalSec('line', undefined)).toBe(90)
     })
   })
 

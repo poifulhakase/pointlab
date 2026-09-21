@@ -33,7 +33,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, isStreakSuppressed, MAX_BODY, MAX_BODY_SELF, pickNotifyRoute, shouldShowBody, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, MAX_BODY, MAX_BODY_SELF, minIntervalSec, pickNotifyRoute, shouldShowBody, shouldSuppressStreak, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -88,13 +88,15 @@ async function notify(req, res) {
   // 送り先が決まらない＝この向きの通知は使っていない（自分だけのグループを作っていない等）
   if (!target) return res.status(204).end()
 
-  // 🆕 2026-09-06：**同じ人の連投は1通目だけ**（日を跨いだらまた1通目・運用者の指示）。
-  //    判定は送る側の画面（一覧を持っているので正確）。ここは受け取った答えで止めるだけ。
-  if (isStreakSuppressed(body.first)) return res.status(204).end()
+  // 🆕 2026-09-06：同じ人の連投は1通目だけ（判定は送る側の画面）。
+  // 🆕 2026-09-21：**自分あて（Discord）は全部通す**。当時の自分あては LINE で枠が
+  //    有限だったが、いまは Discord（無料・無制限）。相手が2通送って1通しか届かず
+  //    読み落とすほうが害が大きい（運用者の指摘）。相手あては今までどおり。
+  if (shouldSuppressStreak(route.via, body.first)) return res.status(204).end()
 
-  // 連投を1通にまとめる＋鳴らし過ぎを防ぐ。判定できないときは通す（通知は落ちてよいが、
+  // 鳴らし過ぎを防ぐ。判定できないときは通す（通知は落ちてよいが、
   // 落とし方で本来の1通目まで消したくない）
-  const minSec = Number(process.env.TALK_NOTIFY_MIN_SEC || 90)
+  const minSec = minIntervalSec(route.via, process.env.TALK_NOTIFY_MIN_SEC)
   const maxPerDay = Number(process.env.TALK_NOTIFY_MAX_PER_DAY || 60)
   try {
     const db = getDb()

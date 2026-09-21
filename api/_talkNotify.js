@@ -74,6 +74,35 @@ export function isStreakSuppressed(first) {
 }
 
 /**
+ * 連投を止めるのは**相手あてだけ**（2026-09-21・運用者の指摘）。
+ *
+ * 🔴 「同じ人の連投は1通目だけ」は 2026-09-06 に決めたが、当時の自分あては **LINE** で、
+ *    月200通の枠を節約する必要があった。いまの自分あては **Discord（無料・無制限）**なので、
+ *    抑える理由が無い。相手が2通送ったのに1通しか届かず、**読み落とす**ほうが害が大きい。
+ * 🔴 相手あて（LINEグループ）は**今までどおり1通目だけ**。枠が有限で、
+ *    相手のロック画面を連続で鳴らすことにもなる。
+ *
+ * @param {'line'|'discord'|''} via 送り方（pickNotifyRoute の結果）
+ * @param {unknown} first 画面から届いた「ひと続きの1通目か」
+ * @returns {boolean} true＝送らない
+ */
+export function shouldSuppressStreak(via, first) {
+  if (via === 'discord') return false
+  return isStreakSuppressed(first)
+}
+
+/**
+ * 最短間隔（秒）。自分あては**詰めて届いてよい**。
+ *
+ * 🔴 ただし 0 にはしない。画面の誤動作で連打されたときに Discord が埋まる。
+ *    1日の上限（`TALK_NOTIFY_MAX_PER_DAY`）は相手あてと同じく効かせたまま。
+ */
+export function minIntervalSec(via, envValue) {
+  if (via === 'discord') return 5
+  return Number(envValue || 90)
+}
+
+/**
  * トークの中の AI に渡す指示。
  *
  * 🔴 **だらだら書かせない**（運用者の指示）。トークの吹き出しに入る長さで、結論から。
