@@ -250,23 +250,46 @@ buffer:
   key_expires: "2027-09-20"       # 2026-09-21 に実物で確認（1年）
   expiry_warn_days: 14            # 残りがこれを切ったら警告する
 
-x_post:
+# ── SNS への投稿（Buffer 経由）──────────────────────────────────────────
+# 🔴 文面は**宛先ごとに別々に書かせる**。同じ文を複数のSNSに流すと、
+#    どこで見ても同じで読む理由がなくなるうえ、スパム的な使い方に近づく。
+#    字数も違う（X は日本語を2文字と数えて実質140字／Threads は500字）。
+sns_post:
   enabled: true
-  source_key: note_pointlab       # feeds.sources のどれを X に流すか
-  channel_id: "6aafe4d6ea19ca0bde968c54"   # Buffer の X チャンネル（Aojiru_Hakase）
+  source_key: note_pointlab       # feeds.sources のどれを流すか
   per_day: 1                      # 🔴 1日1件（運用者の判断）。Buffer の予約枠も食うので増やさない
-  post_at: "09:00"                # 投稿時刻（JST）。日次バッチは夕方に走るので翌朝に予約する
-  # 🔵 絵文字は付けない（実際の @Aojiru_Hakase の投稿に入っていない）
-  emoji: ""
-  hashtags:
-    # 🔴 **固定タグは置かない**（2026-09-20・運用者の指摘）。マガジンには副業と無関係な
-    #    記事も届く（例: AIの技術記事）。毎回 #副業 を付けると中身と食い違う。
-    #    運営者であって書き手ではない以上、内容に合わないラベルは貼らない。
-    fixed: []
-    # 🔴 AI には**この候補からだけ**選ばせる（自由に作らせると的外れなタグが混ざる）
-    choices: ["#副業", "#副業図鑑", "#在宅ワーク", "#フリーランス", "#複業",
-              "#お金の話", "#働き方", "#スキルアップ", "#note", "#AI"]
-    limit: 3                      # 固定ぶんを含めた上限
+  # 🔴 AI には**この候補からだけ**タグを選ばせる（自由に作らせると的外れなタグが混ざる）
+  # 🔴 **固定タグは置かない**（2026-09-20・運用者の指摘）。マガジンには副業と無関係な
+  #    記事も届く（例: AIの技術記事）。毎回 #副業 を付けると中身と食い違う。
+  #    運営者であって書き手ではない以上、内容に合わないラベルは貼らない。
+  hashtag_choices: ["#副業", "#副業図鑑", "#在宅ワーク", "#フリーランス", "#複業",
+                    "#お金の話", "#働き方", "#スキルアップ", "#note", "#AI"]
+
+  targets:
+    - key: x
+      name: "X（@Aojiru_Hakase）"
+      channel_id: "6aafe4d6ea19ca0bde968c54"
+      post_at: "09:00"            # 投稿時刻（JST）。日次バッチは夕方なので翌朝に予約する
+      # 🔴 X は**日本語を1文字2**として数える（実質140字）。URLは t.co の23固定。
+      max_chars: 280
+      cjk_weight: 2
+      comment_hint: "2〜3行・50文字以内"
+      hashtag_limit: 3
+      # 🔵 絵文字は付けない（実際の @Aojiru_Hakase の投稿に入っていない）
+      emoji: ""
+
+    - key: threads
+      name: "Threads（@poifulhakase）"
+      channel_id: "6ab0ce73ea19ca0bdea1ef02"
+      # 🔵 Xと同時刻に同じ記事が並ぶと機械的に見えるので少しずらす
+      post_at: "12:00"
+      # 🔵 Threads は500字。日本語も1文字1で数える
+      max_chars: 500
+      cjk_weight: 1
+      comment_hint: "4〜6行・150文字以内"
+      # 🔵 Threads はタグ文化が薄い。1つだけ
+      hashtag_limit: 1
+      emoji: ""
 
 feeds:
   # NOTE_FEED.md。トレードマシンとは**別系統のおまけ**。4チャンネルには混ぜない。

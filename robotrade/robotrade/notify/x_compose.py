@@ -15,7 +15,7 @@
 🔴 文体は **〜じゃ / 〜かもしれん / 諸君**（welcomebot の `greeting.py` と同じ人格）。
    ここを変えるなら向こうも一緒に直す。
 
-🔴 **ハッシュタグは候補から選ばせる**（`x_post.hashtags.choices`）。
+🔴 **ハッシュタグは候補から選ばせる**（`sns_post.hashtag_choices`）。
    AI に自由に作らせると、存在しない語や的外れなタグが混ざる。
    選択肢の外が返ってきたら捨てる（`enum` を弾くのと同じ考え方）。
 
@@ -41,7 +41,20 @@ log = logging.getLogger(__name__)
 MAX_CHARS = 280
 URL_WEIGHT = 23
 
-SYSTEM = """あなたは「ぽいふる博士」です。X（@Aojiru_Hakase）で、
+# 🔴 SNS によって**日本語の数え方が違う**。
+#    X は日本語を1文字2として数える（実質140字）。Threads は1文字1で500字。
+#    ここを揃えてしまうと、X で弾かれるか Threads で無駄に短くなる。
+CJK_WEIGHT_X = 2
+CJK_WEIGHT_PLAIN = 1
+
+# 🔴 note の表示名は**プロフィール文になっていることがある**
+#    （例「ハル ｜基本フォロバ100 | note×AIで資産型コンテンツの作り方発信中」）。
+#    そのまま載せると一言の余地を食い尽くし、博士の言葉が丸ごと落ちる。
+#    出典として要るのは**名前の部分**なので、区切り記号で切って詰める。
+MAX_CREDIT = 16
+_CREDIT_SPLIT = re.compile(r"[｜|/／・]")
+
+SYSTEM_TEMPLATE = """あなたは「ぽいふる博士」です。{where}で、
 共同マガジン「普通じゃない副業図鑑」に届いた記事を紹介します。
 
 🔴 **記事を書いたのはあなたではありません**。あなたはマガジンの運営者で、
@@ -54,8 +67,7 @@ SYSTEM = """あなたは「ぽいふる博士」です。X（@Aojiru_Hakase）�
 - 断定しすぎない。「〜かもしれん」と余白を残すのがこの人の語り口。
 
 書き方（必ず守る）:
-- **2〜3行・50文字以内**。1行は短く切り、読みやすく改行する。
-  🔴 X は日本語を2文字と数えるので、短めに書く必要がある。
+- **{length_hint}**。1行は短く切り、読みやすく改行する。
 - **記事に書いてあることだけ**を、題材の紹介として1つ挙げる。
 - 🔴 **評価しない**。良い/悪い、正しい/間違い、おすすめ、を言わない。
   記事の主張に賛成も反対もしない（書いたのは他の人）。
@@ -71,20 +83,40 @@ SYSTEM = """あなたは「ぽいふる博士」です。X（@Aojiru_Hakase）�
 
 出力は必ず指定のツール形式（JSON）で返してください。"""
 
+
+def system_for(*, where: str, length_hint: str) -> str:
+    """宛先ごとの指示。🔴 字数の目安は宛先で変える（X と Threads で上限が違う）。"""
+    return SYSTEM_TEMPLATE.format(where=where, length_hint=length_hint)
+
+
+# 🔵 既存の呼び出しが壊れないように、X 向けを既定として残しておく
+SYSTEM = system_for(where="X（@Aojiru_Hakase）", length_hint="2〜3行・50文字以内")
+
 # 🔴 言い切り・誇大の語。**他人の記事**を紹介する立場なので、これが入ったら
 #    一言そのものを捨てる（AI の指示だけに頼らず、コードでも止める）。
 #    運用者はマガジンの運営者であって記事の書き手ではない＝
 #    ここで断定すると、書いていない人の言葉として広まってしまう。
 BANNED = (
     "稼げ", "儲か", "必ず", "絶対", "確実", "保証", "間違いない",
-    "おすすめ", "オススメ", "すべき", "べきだ", "ぜひ",
+    "おすすめ", "オススメ", "ぜひ",
+)
+
+# 🔴 「べき」は**単語で切ると巻き込む**。「見つめ直すべきか」「どこを見るべきか」は
+#    ただの問いかけで、推奨ではない（2026-09-21 に実際に誤判定して一言が落ちた）。
+#    推奨として使われている形＝**言い切っている**ものだけを弾く。
+BANNED_PATTERNS = (
+    re.compile(r"すべき(だ|です|でしょう|である)"),
+    re.compile(r"べきだ(ろう|と思)?"),
+    re.compile(r"読んでみて"),
 )
 
 
 def is_safe(comment: str) -> bool:
     """一言として出してよいか。ひとつでも当たれば出さない。"""
     text = str(comment or "")
-    return not any(word in text for word in BANNED)
+    if any(word in text for word in BANNED):
+        return False
+    return not any(p.search(text) for p in BANNED_PATTERNS)
 
 
 def build_tool_schema(choices: list[str]) -> dict[str, Any]:
@@ -146,9 +178,12 @@ def pick_hashtags(raw: Any, *, fixed: list[str], choices: list[str], limit: int)
 
 
 def compose(*, title: str, link: str, creator: str, comment: str,
-            hashtags: list[str], emoji: str = "") -> str:
-    """投稿の本文を組み立てて、280字に収める。
+            hashtags: list[str], emoji: str = "",
+            max_chars: int = MAX_CHARS, cjk_weight: int = CJK_WEIGHT_X) -> str:
+    """投稿の本文を組み立てて、宛先の上限に収める。
 
+    🔴 `cjk_weight` は宛先ごとに変える。X は日本語を2として数える（実質140字）、
+       Threads は1で500字。ここを揃えると X で弾かれるか Threads で無駄に短くなる。
     🔴 `emoji` は既定で空。既存の投稿に絵文字が無いので付けない（引数は残してある）。
     """
     tags = " ".join(hashtags)
@@ -158,31 +193,50 @@ def compose(*, title: str, link: str, creator: str, comment: str,
         log.warning("言い切り・誇大の語が入ったので一言を落とした: %s", comment[:60])
         comment = ""
     head = f"{emoji} {title}".strip() if emoji else title
+    credit = shorten_credit(creator)
 
     def render(t: str, c: str) -> str:
         blocks: list[str] = []
         if c:
             blocks.append(c)
         # 🔴 他人の記事なので書き手を必ず添える（共同マガジンの寄稿）
-        line = f"{t}｜{creator}" if creator else t
+        line = f"{t}｜{credit}" if credit else t
         tail = [line, link]
         if tags:
             tail.append(tags)
         blocks.append("\n".join(tail))
         return "\n\n".join(blocks)
 
+    def fits(text: str) -> bool:
+        return _weigh(text, link, cjk_weight=cjk_weight) <= max_chars
+
     text = render(head, comment)
-    if _weigh(text, link) <= MAX_CHARS:
+    if fits(text):
         return text
 
     # 🔴 削る順番＝一言 → タイトル。URLと出典（｜書き手）は消さない
     text = render(head, "")
-    if _weigh(text, link) <= MAX_CHARS:
+    if fits(text):
         return text
 
-    over = _weigh(text, link) - MAX_CHARS
+    over = _weigh(text, link, cjk_weight=cjk_weight) - max_chars
     short = head[: max(10, len(head) - over - 1)] + "…"
     return render(short, "")
+
+
+def shorten_credit(creator: str) -> str:
+    """書き手の表示名を、出典として載せられる長さに詰める。
+
+    🔴 消さない。他人の記事なので**誰が書いたかは必ず残す**。
+       長いときに落とすのは肩書き・宣伝文のほうで、名前は残す。
+    """
+    raw = str(creator or "").strip()
+    if not raw:
+        return ""
+    head = _CREDIT_SPLIT.split(raw)[0].strip() or raw
+    if len(head) <= MAX_CREDIT:
+        return head
+    return head[: MAX_CREDIT - 1] + "…"
 
 
 def _clean(text: str) -> str:
@@ -212,20 +266,23 @@ _LIGHT_RANGES = (
 )
 
 
-def _char_weight(ch: str) -> int:
+def _char_weight(ch: str, cjk_weight: int) -> int:
     code = ord(ch)
-    return 1 if any(lo <= code <= hi for lo, hi in _LIGHT_RANGES) else 2
+    if any(lo <= code <= hi for lo, hi in _LIGHT_RANGES):
+        return 1
+    return cjk_weight
 
 
-def _weigh(text: str, link: str) -> int:
-    """X の数え方に寄せる。
+def _weigh(text: str, link: str, *, cjk_weight: int = CJK_WEIGHT_X) -> int:
+    """宛先の数え方に寄せる。
 
-    - 日本語は **1文字 2**（ASCII・記号は1）
-    - URL は中身の長さに関係なく **t.co の23**
+    - 日本語は **1文字 `cjk_weight`**（X は2／Threads は1）
+    - URL は中身の長さに関係なく **t.co の23**（X の仕様。他は実寸だが、
+      短い方に倒れるだけなので同じ数え方で安全側に寄せる）
     """
     body = text
     urls = 0
     if link and link in body:
         body = body.replace(link, "")
         urls = URL_WEIGHT
-    return sum(_char_weight(c) for c in body) + urls
+    return sum(_char_weight(c, cjk_weight) for c in body) + urls

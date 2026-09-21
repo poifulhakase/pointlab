@@ -217,11 +217,13 @@ def test_neutral_comment_survives():
 
 
 def test_no_fixed_hashtag_is_forced(cfg):
-    """🔴 副業と無関係な記事にも #副業 を貼らない（運用者の指摘・2026-09-20）。"""
-    fixed = list((cfg.get("x_post.hashtags", {}) or {}).get("fixed", []) or [])
-    assert fixed == []
+    """🔴 副業と無関係な記事にも #副業 を貼らない（運用者の指摘・2026-09-20）。
+
+    固定タグという設定そのものを置いていない（`sns_post` に fixed が無い）。
+    """
+    assert "fixed" not in (cfg.get("sns_post", {}) or {})
     # AI が1つも選ばなければタグ無しで出る（無理に貼らない）
-    assert xc.pick_hashtags([], fixed=fixed, choices=["#副業"], limit=3) == []
+    assert xc.pick_hashtags([], fixed=[], choices=["#副業"], limit=3) == []
 
 
 # ---------------------------------------------------------------- 鍵の期限
@@ -263,3 +265,70 @@ def test_unreadable_expiry_is_reported(cfg):
         assert "読めない" in bmod.check_key_expiry(cfg)
     finally:
         cfg.raw["buffer"] = raw
+
+
+# ---------------------------------------------------------------- 誤判定しないこと
+
+
+@pytest.mark.parametrize("text", [
+    "どこを見つめ直すべきかをめぐった話が届いた",   # 🔴 2026-09-21 に実際に誤判定した
+    "見るべきはどこか、という視点の話らしい",
+    "何を残すべきかを考える回じゃ",
+])
+def test_plain_verb_forms_are_not_blocked(text):
+    """🔴 「べき」を単語で切ると、ふつうの問いかけまで巻き込む。
+
+    「直すべきか」は推奨ではない。ここを弾くと博士の一言が丸ごと落ちる。
+    """
+    assert xc.is_safe(text) is True
+
+
+@pytest.mark.parametrize("text", [
+    "この副業はすべきだと思う",
+    "やるべきだろう",
+    "ぜひ読んでみてくれたまえ",
+])
+def test_recommendation_forms_are_blocked(text):
+    """言い切っている推奨だけを弾く。"""
+    assert xc.is_safe(text) is False
+
+
+# ---------------------------------------------------------------- 書き手の表示名
+
+
+def test_long_creator_is_shortened_but_kept():
+    """🔴 note の表示名はプロフィール文のことがある。名前だけ残して詰める。
+
+    そのまま載せると一言の余地を食い尽くす（X で 280/280 になった）。
+    """
+    got = xc.shorten_credit("ハル ｜基本フォロバ100 | note×AIで資産型コンテンツの作り方発信中")
+    assert got == "ハル"
+
+
+def test_short_creator_is_untouched():
+    assert xc.shorten_credit("ムサシ@目指せ副収入!") == "ムサシ@目指せ副収入!"
+
+
+def test_creator_is_never_dropped():
+    """🔴 他人の記事なので、誰が書いたかは必ず残す。"""
+    got = xc.shorten_credit("あ" * 40)
+    assert got and got.endswith("…") and len(got) == xc.MAX_CREDIT
+
+
+# ---------------------------------------------------------------- 宛先ごとの字数
+
+
+def test_threads_counts_japanese_as_one():
+    """🔴 X は日本語を2、Threads は1で数える。揃えると片方で壊れる。"""
+    text = "あ" * 50
+    assert xc._weigh(text, "", cjk_weight=xc.CJK_WEIGHT_X) == 100
+    assert xc._weigh(text, "", cjk_weight=xc.CJK_WEIGHT_PLAIN) == 50
+
+
+def test_compose_respects_the_target_limit():
+    long_title = "あ" * 300
+    link = "https://note.com/x/n/abc"
+    for weight, limit in ((xc.CJK_WEIGHT_X, 280), (xc.CJK_WEIGHT_PLAIN, 500)):
+        text = xc.compose(title=long_title, link=link, creator="ハル", comment="",
+                          hashtags=["#note"], max_chars=limit, cjk_weight=weight)
+        assert xc._weigh(text, link, cjk_weight=weight) <= limit
