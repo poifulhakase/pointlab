@@ -242,8 +242,12 @@ discord:
 # 🔴 Buffer 無料プランは**1チャンネル予約10件まで**。溜めないよう1日1件に絞る。
 buffer:
   enabled: true
-  # .env の BUFFER_API_KEY。🔴 期限つき。切れると投稿が黙って止まる
-  key_expires: "2027-09-20"       # 発行時に選んだ有効期限（点検で残りを見る）
+  # .env の BUFFER_API_KEY。🔴 **期限つき**。切れると投稿が黙って止まる。
+  # 🔴 期限は Buffer の API からは読めない（2026-09-21 に GraphQL のクエリ一覧で確認）。
+  #    発行時に画面で選んだ日付を**ここに手で書く**。空なら「分からない」扱いで毎回警告を出す。
+  #    🔵 見るところ: Buffer → Settings → API
+  key_expires: ""                 # 例: "2027-09-20"
+  expiry_warn_days: 14            # 残りがこれを切ったら警告する
 
 x_post:
   enabled: true

@@ -145,6 +145,32 @@ def _to_iso_utc(when: dt.datetime) -> str:
     return when.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
+def check_key_expiry(cfg, *, today: dt.date | None = None) -> str:
+    """鍵の期限が近い／分からないときに、その旨を返す（問題なければ空文字）。
+
+    🔴 期限切れは**黙った故障**になる。投稿が止まっても、止まった理由がどこにも出ない
+       （SP-API の鍵が180日で切れて定期処理が落ちたのと同じ壊れ方）。
+    🔴 期限は Buffer の API から読めないので、config に手で書いた値を見るしかない。
+       **書かれていないこと自体を警告する**（黙って「問題なし」にしない）。
+    """
+    raw = str(cfg.get("buffer.key_expires", "") or "").strip()
+    if not raw:
+        return ("Buffer の鍵の期限が config に書かれていない"
+                "（Settings → API で確認して buffer.key_expires に書く）")
+    try:
+        expires = dt.date.fromisoformat(raw)
+    except ValueError:
+        return f"Buffer の鍵の期限が日付として読めない: {raw!r}"
+
+    left = (expires - (today or dt.date.today())).days
+    warn_days = int(cfg.get("buffer.expiry_warn_days", 14))
+    if left < 0:
+        return f"Buffer の鍵は {raw} に切れている（投稿は止まっている）"
+    if left <= warn_days:
+        return f"Buffer の鍵はあと{left}日で切れる（{raw}）。発行し直して .env を差し替える"
+    return ""
+
+
 def from_config(cfg) -> BufferClient | None:
     """config の `buffer.enabled` と `.env` の `BUFFER_API_KEY` で作る。"""
     if not cfg.get("buffer.enabled", False):
@@ -154,4 +180,7 @@ def from_config(cfg) -> BufferClient | None:
     if not client.enabled:
         log.warning("Buffer: BUFFER_API_KEY が未設定なので投稿しない")
         return None
+    warning = check_key_expiry(cfg)
+    if warning:
+        log.warning("🔴 %s", warning)
     return client

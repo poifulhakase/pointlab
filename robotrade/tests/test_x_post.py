@@ -222,3 +222,44 @@ def test_no_fixed_hashtag_is_forced(cfg):
     assert fixed == []
     # AI が1つも選ばなければタグ無しで出る（無理に貼らない）
     assert xc.pick_hashtags([], fixed=fixed, choices=["#副業"], limit=3) == []
+
+
+# ---------------------------------------------------------------- 鍵の期限
+
+
+def test_missing_expiry_is_warned_not_ignored(cfg):
+    """🔴 書かれていないこと自体を警告する（黙って「問題なし」にしない）。
+
+    期限切れは黙った故障になる。投稿が止まっても理由がどこにも出ない
+    （SP-API の鍵が180日で切れて定期処理が落ちたのと同じ壊れ方）。
+    """
+    raw = dict(cfg.raw.get("buffer", {}))
+    cfg.raw["buffer"] = {**raw, "key_expires": ""}
+    try:
+        assert "書かれていない" in bmod.check_key_expiry(cfg)
+    finally:
+        cfg.raw["buffer"] = raw
+
+
+@pytest.mark.parametrize("expires,today,expect", [
+    ("2026-10-01", dt.date(2026, 9, 21), "あと10日"),      # 期限が近い
+    ("2026-09-01", dt.date(2026, 9, 21), "切れている"),     # すでに切れた
+    ("2027-09-20", dt.date(2026, 9, 21), ""),               # まだ先＝黙る
+])
+def test_expiry_warning(cfg, expires, today, expect):
+    raw = dict(cfg.raw.get("buffer", {}))
+    cfg.raw["buffer"] = {**raw, "key_expires": expires, "expiry_warn_days": 14}
+    try:
+        got = bmod.check_key_expiry(cfg, today=today)
+        assert expect in got if expect else got == ""
+    finally:
+        cfg.raw["buffer"] = raw
+
+
+def test_unreadable_expiry_is_reported(cfg):
+    raw = dict(cfg.raw.get("buffer", {}))
+    cfg.raw["buffer"] = {**raw, "key_expires": "来年くらい"}
+    try:
+        assert "読めない" in bmod.check_key_expiry(cfg)
+    finally:
+        cfg.raw["buffer"] = raw
