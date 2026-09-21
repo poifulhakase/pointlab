@@ -246,7 +246,8 @@ buffer:
   # 🔴 期限は Buffer の API からは読めない（2026-09-21 に GraphQL のクエリ一覧で確認）。
   #    発行時に画面で選んだ日付を**ここに手で書く**。空なら「分からない」扱いで毎回警告を出す。
   #    🔵 見るところ: Buffer → Settings → API
-  key_expires: ""                 # 例: "2027-09-20"
+  # Buffer の画面（Settings → API）に "Created Sep 20, 2026 · Expires Sep 20, 2027"
+  key_expires: "2027-09-20"       # 2026-09-21 に実物で確認（1年）
   expiry_warn_days: 14            # 残りがこれを切ったら警告する
 
 x_post:

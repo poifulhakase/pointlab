@@ -9,11 +9,6 @@
 
 ## 🔵 ユーザーの残作業
 
-- [ ] **Buffer の鍵の期限を `config.yaml` に書く**（2026-09-21）：
-  `robotrade/config.yaml` の `buffer.key_expires`（いまは空）。Buffer → Settings → API で確認する。
-  🔴 API からは読めない（GraphQL のクエリ一覧に無い）。空のあいだは毎回警告が出る。
-  切れると X への投稿が**黙って止まる**（SP-API の鍵と同じ壊れ方）。
-
 - [ ] 🔴 **GitHub Secrets に `DISCORD_WEBHOOK_ERRORS` を登録**（2026-09-20）：
   これが無いうちは**データ自動更新が落ちても通知が飛ばない**（ワークフロー自体は正常に動く）。
   GitHub → Settings → Secrets and variables → Actions → New repository secret。
@@ -211,8 +206,12 @@ AI の一言は Haiku 4.5 で **1件 $0.0025**（月10円）＝費用の主因�
   毎回 #副業 を貼ると中身と食い違う。候補から選ばせ、**候補の外は捨てる**。
 - ✅ 2026-09-20 に実物を1件投稿して確認（婚活カウンセラーの記事）。
 
-🔴 **`.env` の `BUFFER_API_KEY` には有効期限がある**（発行時に選ぶ）。切れると投稿が黙って止まる。
-`config.yaml` の `buffer.key_expires` に控えた。権限は `account:read`/`posts:read`/`posts:write` だけ。
+🔴 **`.env` の `BUFFER_API_KEY` は 2027-09-20 に切れる**（Buffer の画面で実物を確認・1年）。
+切れると X への投稿が**黙って止まる**ので、`buffer.key_expires` に書いて
+`check_key_expiry()` が残り14日から警告を出す。**期限が書かれていないこと自体も警告する**
+（推測の日付を置くと「管理されている」ように見えて誰も見ていない状態になる）。
+🔵 期限は Buffer の API からは読めない（GraphQL のクエリ一覧に無い・2026-09-21 確認）。
+権限は `account:read` / `posts:read` / `posts:write` だけ。
 
 **🆕 同日追加: データ自動更新の失敗を #エラー・異常 へ流す**（`scripts/notify-workflow-failure.mjs`）
 
