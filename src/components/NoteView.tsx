@@ -2,11 +2,16 @@ import React from 'react'
 
 /**
  * ぽいんとらぼ（Discord）の招待リンク。
- * 🔴 招待リンクは Discord の画面で**有効期限を「無期限」**にして発行すること。
- *    既定は7日で切れ、切れてもこの画面はリンクを出し続ける＝**死んだリンクを配る**ことになる。
+ *
+ * 🔴 **有効期限が「無期限」のものだけを置く**。期限付きのリンクは切れても
+ *    この画面は出し続ける＝**死んだリンクを配る**ことになる。
+ *    Discord の既定は7日。実際、最初に貼ったリンクは27日で切れる設定だった（2026-09-21）。
+ * 🔵 確認のしかた（認証不要の公開API）:
+ *    `curl "https://discord.com/api/v10/invites/<コード>?with_expiration=true"`
+ *    → `expires_at` が `null` なら無期限。
  * 🔵 公開するのは @everyone から見えるチャンネルだけ。プライベートのカテゴリは権限で閉じている。
  */
-const DISCORD_INVITE = 'https://discord.gg/8QSdBAeS4'
+const DISCORD_INVITE = 'https://discord.gg/TxBqbs6j38'   // 無期限（2026-09-21 に確認）
 
 type Props = {
   theme: 'dark' | 'light'
