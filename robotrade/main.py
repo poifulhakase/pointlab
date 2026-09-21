@@ -29,6 +29,7 @@ from robotrade.agents.base import CostTracker
 from robotrade.data import earnings as earnings_mod
 from robotrade.data import week_ahead as week_mod
 from robotrade.data.poirobo import MarketCalendar, PoiroboData
+from robotrade.learning import knowledge as knowledge_mod
 from robotrade.learning import outcomes as outcomes_mod
 from robotrade.logs import setup_logging
 from robotrade.notify import buffer as buffer_mod
@@ -167,6 +168,45 @@ def notify_x(cfg, router) -> None:
         log.warning("X への投稿を飛ばす: %s", exc)
 
 
+
+def run_knowledge(cfg, args) -> int:
+    """知識の一覧・承認・撤回（人が使う口）。
+
+    🔴 承認はここからしか行わない。パイプラインが自動で有効にすることはない
+       （AI に自分の判断材料を勝手に増やさせない）。
+    """
+    store = Store(cfg.path("ops.db_path"))
+    ks = knowledge_mod.KnowledgeStore(store.conn)
+
+    if args.knowledge_approve:
+        ks.approve(args.knowledge_approve)
+        log.info("承認した: id=%s", args.knowledge_approve)
+        return 0
+    if args.knowledge_retire:
+        ks.retire(args.knowledge_retire, note="手動")
+        log.info("外した: id=%s", args.knowledge_retire)
+        return 0
+
+    items = ks.all_for()
+    if not items:
+        log.info("知識はまだ1件も無い（手仕舞い済みのトレードが貯まってから作る）")
+        return 0
+    for agent in knowledge_mod.AGENTS:
+        rows = [k for k in items if k.agent == agent]
+        if not rows:
+            continue
+        log.info("── %s", agent)
+        for k in rows:
+            # 🔵 絵文字を使わない。Windows のコンソール（cp932）で出せずログが落ちる
+            mark = {"draft": "承認待ち", "active": "有効　　", "retired": "撤回済み"}
+            log.info("  [%s] %s  %s  （%s）", k.id, mark.get(k.status, k.status),
+                     k.line(), k.learned_at)
+    waiting = sum(1 for k in items if k.status == knowledge_mod.DRAFT)
+    if waiting:
+        log.info("🔵 承認待ちが %d件。`--knowledge-approve <ID>` で有効にする", waiting)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="LLMスイングトレード 疑似トレードマシン")
     parser.add_argument("--date", help="対象の営業日（YYYY-MM-DD）。既定は直近の営業日")
@@ -190,6 +230,13 @@ def main(argv: list[str] | None = None) -> int:
                         help="曜日に関係なく「今週の予定」を #相場観測 に出す")
     parser.add_argument("--calendar-only", action="store_true",
                         help="「今週の予定」だけ出して終了（トレードは走らせない）")
+    # 専門ごとの「これまでに分かったこと」（learning/knowledge.py）
+    parser.add_argument("--knowledge", action="store_true",
+                        help="貯まっている知識を一覧して終了")
+    parser.add_argument("--knowledge-approve", type=int, metavar="ID",
+                        help="🔴 その知識を承認して有効にする（人が判断する）")
+    parser.add_argument("--knowledge-retire", type=int, metavar="ID",
+                        help="効かなくなった知識を外す（記録は残る）")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -204,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
         log.warning("config: %s", w)
 
     router = discord_mod.from_config(cfg)
+
+    if args.knowledge or args.knowledge_approve or args.knowledge_retire:
+        return run_knowledge(cfg, args)
 
     if args.purge_test or args.purge_all:
         kinds = None if args.purge_all else {"test"}

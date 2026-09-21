@@ -104,6 +104,32 @@ CREATE TABLE IF NOT EXISTS analyses (
     UNIQUE(run_date, ticker, agent)
 );
 
+-- 🔴 専門ごとの「これまでに分かったこと」（SPEC 8.1 の拡張・2026-09-20）。
+--    チャート/需給/ニュース/選定/売買判断 の各AIに、自分の分野の所見を貯めて
+--    毎回のプロンプトに差し込む。LLM の重みは変えない（in-context learning）。
+--
+-- 🔴 `learned_at` は**いつ分かったか**。過去日を再生するときは
+--    「その日以前に分かっていたもの」だけを使う。これが無いと、9月に得た知識で
+--    5月を判断して「優位だ」という嘘の検証結果が出る（先読み）。
+-- 🔴 `status` は draft → active（人が承認）→ retired。**自動で active にしない**。
+--    AI に自分の判断材料を勝手に増やさせない。
+-- 🔴 `condition` / `finding` は「条件 → 結果」の形に限る。銘柄固有の記憶は貯めない
+--    （数が集まらず、相場が変わると害になる）。
+CREATE TABLE IF NOT EXISTS knowledge (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent        TEXT NOT NULL,           -- chart / supply_demand / news / selector / decider
+    condition    TEXT NOT NULL,           -- 「レンジ かつ 買われすぎ で新規買い」
+    finding      TEXT NOT NULL,           -- 「勝率が低かった。押し目を待つ方が良かった」
+    sample_n     INTEGER NOT NULL,        -- 根拠にしたトレード件数
+    win_rate     REAL,                    -- そのときの勝率（0〜1・分からなければ NULL）
+    source_trades TEXT,                   -- 根拠にしたトレードの id（JSON配列）
+    learned_at   TEXT NOT NULL,           -- 🔴 この日付以前の再生では使わない
+    status       TEXT NOT NULL,           -- draft / active / retired
+    approved_at  TEXT,                    -- 人が active にした日
+    retired_at   TEXT,
+    note         TEXT
+);
+
 -- 🔴 翌寄り約定を正しく再現するための発注待ち（SPEC 10.2）。
 --    判断した日には約定させない。翌営業日の実際の寄りを見てから約定/見送りを決める。
 --    これを持たずに当日終値で即約定すると**先読み**になる。

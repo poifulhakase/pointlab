@@ -38,6 +38,7 @@ from .data import indicators as ind_mod
 from .data import prefilter as prefilter_mod
 from .data import tdnet as tdnet_mod
 from .data.poirobo import DataStaleError, MarketCalendar, PoiroboData
+from .learning import knowledge as knowledge_mod
 from .learning import outcomes as outcomes_mod
 from .logs import RunLogger
 from .money import to_sen, to_yen, yen_int_str
@@ -121,6 +122,8 @@ class Orchestrator:
         self.client = anthropic.Anthropic(api_key=cfg.secrets.anthropic_api_key)
         self.headlines = headline_source or tdnet_mod.from_config(cfg) or NoHeadlines()
         self.earnings = earnings_mod.from_config(cfg)
+        # 🔴 専門ごとの「これまでに分かったこと」。config が off なら None＝何も足さない
+        self.knowledge = knowledge_mod.from_config(cfg, self.store)
         self.run_logger: RunLogger | None = None
 
     # ================================================== 本体
@@ -416,7 +419,8 @@ class Orchestrator:
             return selected[: int(self.cfg.get("risk.max_positions"))]
 
         agent = SelectorAgent(self.cfg, self.client, self.tracker,
-                              max_select=int(self.cfg.get("risk.max_positions")))
+                              max_select=int(self.cfg.get("risk.max_positions")),
+                              knowledge=self._knowledge("selector", run_date))
         summaries = [c.summary(self.cfg) for c in selected]
         try:
             out, record = agent.call(agent.build_user(summaries))
@@ -454,7 +458,8 @@ class Orchestrator:
         }
 
         if self.cfg.get("agents.chart", True):
-            agent = ChartAgent(self.cfg, self.client, self.tracker)
+            agent = ChartAgent(self.cfg, self.client, self.tracker,
+                               knowledge=self._knowledge("chart", run_date))
             try:
                 payload, record = agent.call(
                     agent.build_user(profile=profile, indicators=ind), ticker=candidate.ticker)
@@ -465,7 +470,8 @@ class Orchestrator:
                 log.warning("チャート分析を飛ばす: %s", exc)
 
         if self.cfg.get("agents.supply_demand", True):
-            agent = SupplyDemandAgent(self.cfg, self.client, self.tracker)
+            agent = SupplyDemandAgent(self.cfg, self.client, self.tracker,
+                                      knowledge=self._knowledge("supply_demand", run_date))
             code = candidate.stock.code
             try:
                 payload, record = agent.call(
@@ -491,7 +497,8 @@ class Orchestrator:
                 # 🔴 ニュースが無いのに LLM を呼ばない（無駄な課金）。明示的に「なし」を入れる。
                 out["news"] = news_none(self._no_news_summary())
             else:
-                agent = NewsAgent(self.cfg, self.client, self.tracker)
+                agent = NewsAgent(self.cfg, self.client, self.tracker,
+                                  knowledge=self._knowledge("news", run_date))
                 try:
                     payload, record = agent.call(
                         agent.build_user(profile=profile, headlines=headlines),
@@ -503,6 +510,22 @@ class Orchestrator:
                     out["news"] = news_none("ニュース分析に失敗（材料は不明）")
 
         return out
+
+    def _knowledge(self, agent: str, as_of: date) -> str:
+        """その日に使ってよい「これまでに分かったこと」（learning/knowledge.py）。
+
+        🔴 `as_of` を必ず渡す。過去日を再生するときに、その日より後に分かったことを
+           使うと「優位だった」という嘘の検証結果になる（先読み）。
+        🔵 config が off／まだ知識が無ければ空文字＝プロンプトに何も足さない。
+        """
+        if self.knowledge is None:
+            return ""
+        try:
+            return self.knowledge.block(agent, as_of=as_of)
+        except Exception as exc:  # noqa: BLE001
+            # 🔴 知識が読めないくらいで判断を止めない（無くても本体は成立する）
+            log.warning("知識を読めなかった（%s・無しで続ける）: %s", agent, exc)
+            return ""
 
     def _earnings_for(self, ticker: str, from_day: date) -> dict[str, Any] | None:
         """次の決算発表予定。**取れていない**＝None、**予定が無い**＝{} で返し分ける。"""
@@ -548,7 +571,8 @@ class Orchestrator:
             return {"market_view": "候補なし・保有なし", "decisions": []}
 
         allowed = {a["ticker"] for a in analyses} | {p["ticker"] for p in state["positions"]}
-        agent = DeciderAgent(self.cfg, self.client, self.tracker, allowed_tickers=allowed)
+        agent = DeciderAgent(self.cfg, self.client, self.tracker, allowed_tickers=allowed,
+                             knowledge=self._knowledge("decider", run_date))
         upcoming = [
             {"date": e["date"], "short": e["short"], "label": e["label"],
              "days_until": e["days_until"]}

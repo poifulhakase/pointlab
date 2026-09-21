@@ -152,11 +152,16 @@ class LLMAgent:
     tier: str = "cheap"  # cheap / strong
 
     def __init__(self, cfg, client: anthropic.Anthropic | None = None,
-                 tracker: CostTracker | None = None):
+                 tracker: CostTracker | None = None, *, knowledge: str = ""):
         self.cfg = cfg
         self.client = client or anthropic.Anthropic(api_key=cfg.secrets.anthropic_api_key)
         self.tracker = tracker
         self.max_retries = int(cfg.get("models.max_retries"))
+        # 🔴 専門ごとの「これまでに分かったこと」（learning/knowledge.py）。
+        #    ここで1回だけ受けて、`call()` が毎回の user 末尾に足す。
+        #    各エージェントの build_user を触らずに全員へ行き渡らせるため。
+        #    空文字＝何も足さない（config で off / まだ知識が無い）。
+        self.knowledge = str(knowledge or "")
 
     # -------------------------------------------------- サブクラスが定義
 
@@ -191,6 +196,10 @@ class LLMAgent:
 
     def call(self, user: str, *, ticker: str | None = None) -> tuple[dict[str, Any], AgentCall]:
         """LLM を呼んで JSON を返す。失敗したら AgentError（その銘柄だけスキップ）。"""
+        # 🔴 知識は**末尾**に足す。目の前のデータを先に読ませたいので、
+        #    過去の傾向が判断の出発点にならないようにする。
+        if self.knowledge:
+            user = user + "\n\n" + self.knowledge
         system = self.system_prompt()
         schema = self.tool_schema()
         tool_name = schema["name"]
