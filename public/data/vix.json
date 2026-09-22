@@ -1,11 +1,17 @@
 {
-  "updatedAt": "2026-09-21T18:17:54.114Z",
+  "updatedAt": "2026-09-22T15:07:13.809Z",
   "data": [
     {
+      "date": "2026/09/22",
+      "close": 14.44,
+      "change": -0.43,
+      "changePct": -2.89
+    },
+    {
       "date": "2026/09/21",
-      "close": 15.05,
-      "change": 0.24,
-      "changePct": 1.62
+      "close": 14.87,
+      "change": 0.06,
+      "changePct": 0.41
     },
     {
       "date": "2026/09/14",
@@ -616,12 +622,6 @@
     {
       "date": "2024/10/07",
       "close": 20.46,
-      "change": 1.25,
-      "changePct": 6.51
-    },
-    {
-      "date": "2024/09/30",
-      "close": 19.21,
       "change": null,
       "changePct": null
     }
