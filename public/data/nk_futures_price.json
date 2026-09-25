@@ -1,6 +1,18 @@
 {
-  "updatedAt": "2026-09-24T17:29:34.225Z",
+  "updatedAt": "2026-09-25T15:26:29.516Z",
   "data": [
+    {
+      "date": "2026-09-24",
+      "open": 65476,
+      "high": 66249,
+      "low": 65407,
+      "close": 65514,
+      "volume": 175000000,
+      "prev_close": 65019,
+      "change": 495,
+      "change_pct": 0.76,
+      "ma25_dev": 0.3
+    },
     {
       "date": "2026-09-18",
       "open": 64682,
@@ -168,18 +180,6 @@
       "change": -97,
       "change_pct": -0.15,
       "ma25_dev": 0.7
-    },
-    {
-      "date": "2026-08-31",
-      "open": 65669,
-      "high": 66312,
-      "low": 64832,
-      "close": 66312,
-      "volume": 185700000,
-      "prev_close": 66406,
-      "change": -94,
-      "change_pct": -0.14,
-      "ma25_dev": 0.93
     }
   ]
 }
