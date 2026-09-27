@@ -57,6 +57,9 @@ JPX の蓄積は6週しかないので、1年分は株探でしか描けない�
   認証＝**firebase-tools のログイン**（`~/.config/configstore/firebase-tools.json` のリフレッシュトークン）。uid はログイン中のメールで引く。
   🔴 Vercel の `FIREBASE_SERVICE_ACCOUNT` は機密指定で `vercel env pull` しても空＝手元にサービスアカウントの鍵は無い。
   切れたら `npx firebase-tools login --reauth`。7013 / 2432 / 6954 を貼り済み。
+- 🆕 同日追加：**毎月1日 12:00 に作り直す**（ユーザー指示「毎週はいらない・毎月ぐらい」）。タスクスケジューラ `poirobo-kijitsu-image`
+  ＝`pythonw kijitsu_image.py --pasted --log`（画像を貼ってある銘柄を全部・結果は同じフォルダの `kijitsu_image.log`）。
+  PCが切れていたら次に起動したときに動く（StartWhenAvailable）。手動実行で LastTaskResult=0・3銘柄とも貼れたことを確認。
 
 ### 2026-09-20(71): Discord #判断サマリ の「しぼり込み」に**対象銘柄の件数**を足した
 
