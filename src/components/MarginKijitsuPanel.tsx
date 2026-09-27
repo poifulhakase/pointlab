@@ -11,7 +11,7 @@ import type { User } from 'firebase/auth'
 import { cy } from '../utils/cyberTheme'
 import { PoiroboPixel } from './PoiroboPixel'
 import { MarginKijitsuChart } from './MarginKijitsuChart'
-import { restGetDoc, restSetDoc } from '../utils/firestoreRest'
+import { restDeleteDoc, restGetDoc, restSetDoc } from '../utils/firestoreRest'
 import {
   findRuns, loadMarginIndex, loadMarginNames, loadMarginSeries, loadWeeklyBars, normalizeCode, badgeOf, MIN_WEEKS,
   type MarginBadge, type MarginRun, type MarginWeek, type WeeklyBar,
@@ -54,6 +54,40 @@ const todayYmd = () => {
 }
 
 const docPath = (uid: string) => `users/${uid}/data/marginKijitsu`
+// 🔵 2026-09-28：カードに貼った画像（銘柄ごとに1枚・本人のアカウントにだけ保存）。
+//    手元で株探のデータから作った画像を貼る用＝株探はプレミアム限定なので会員には配らない（ユーザー判断）。
+//    一度貼れば更新しない（ユーザー指示「一度キャプチャ取れれば更新は不要」）。
+const imgPath = (uid: string, code: string) => `users/${uid}/data/marginKijitsuImg_${code}`
+/** Firestore の1ドキュメントは1MiBまで。data URL がこれを超えたら縮めて保存する。 */
+const MAX_IMG_CHARS = 900_000
+
+/** 貼られた画像を data URL に。大きすぎるときは幅を詰めて WebP にし直す。 */
+async function toDataUrl(file: Blob): Promise<string> {
+  const read = (b: Blob) => new Promise<string>((ok, ng) => {
+    const r = new FileReader()
+    r.onload = () => ok(String(r.result))
+    r.onerror = () => ng(r.error)
+    r.readAsDataURL(b)
+  })
+  const url = await read(file)
+  if (url.length <= MAX_IMG_CHARS) return url
+  const img = await new Promise<HTMLImageElement>((ok, ng) => {
+    const i = new Image()
+    i.onload = () => ok(i)
+    i.onerror = ng
+    i.src = url
+  })
+  for (const w of [1800, 1400, 1100]) {
+    const scale = Math.min(1, w / img.naturalWidth)
+    const cv = document.createElement('canvas')
+    cv.width = Math.round(img.naturalWidth * scale)
+    cv.height = Math.round(img.naturalHeight * scale)
+    cv.getContext('2d')!.drawImage(img, 0, 0, cv.width, cv.height)
+    const out = cv.toDataURL('image/webp', 0.85)
+    if (out.length <= MAX_IMG_CHARS) return out
+  }
+  throw new Error('画像が大きすぎて保存できません')
+}
 const nowIso = () => new Date().toISOString()
 const fmtTime = (iso: string) => {
   const d = new Date(iso)
@@ -65,6 +99,7 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   const uid = user?.uid ?? null
   const [entries, setEntries] = useState<Entry[] | null>(null)
   const [cards, setCards] = useState<Record<string, CardState>>({})
+  const [imgs, setImgs] = useState<Record<string, string>>({})
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null)
@@ -124,6 +159,12 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
         setEntries(list)
         // 🔵 4件ずつ順番に読む（読み込み中の表示は全カードに先に出しておく）
         setCards(Object.fromEntries(list.map((e) => [e.code, { status: 'loading' } as CardState])))
+        list.forEach((e) => {
+          restGetDoc(imgPath(uid, e.code)).then((d) => {
+            const src = d.exists() ? (d.data().src as string | undefined) : undefined
+            if (alive && src) setImgs((m) => ({ ...m, [e.code]: src }))
+          }).catch(() => {})
+        })
         const queue = list.map((e) => e.code)
         const worker = async () => { for (let code = queue.shift(); code && alive; code = queue.shift()) await loadCard(code) }
         Array.from({ length: CONCURRENCY }, worker)
@@ -172,7 +213,38 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
     if (!entries) return
     await save(entries.filter((x) => x.code !== code))
     setCards((m) => { const n = { ...m }; delete n[code]; return n })
+    if (imgs[code]) await clearImage(code)
   }
+
+  const putImage = useCallback(async (code: string, file: Blob) => {
+    if (!uid) { setMessage({ text: '画像を貼るにはログインしてください', error: true }); return }
+    try {
+      const src = await toDataUrl(file)
+      await restSetDoc(imgPath(uid, code), { src, savedAt: nowIso() })
+      setImgs((m) => ({ ...m, [code]: src }))
+      setMessage({ text: `${code} に画像を貼りました` })
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : '画像を保存できませんでした', error: true })
+    }
+  }, [uid])
+
+  const clearImage = async (code: string) => {
+    if (uid) await restDeleteDoc(imgPath(uid, code))
+    setImgs((m) => { const n = { ...m }; delete n[code]; return n })
+  }
+
+  // Ctrl+V で、いま見えているカードに貼る
+  useEffect(() => {
+    const onPaste = (ev: ClipboardEvent) => {
+      const file = [...(ev.clipboardData?.files ?? [])].find((f) => f.type.startsWith('image/'))
+      const code = activeCode ?? entries?.[0]?.code
+      if (!file || !code) return
+      ev.preventDefault()
+      putImage(code, file)
+    }
+    window.addEventListener('paste', onPaste)
+    return () => window.removeEventListener('paste', onPaste)
+  }, [activeCode, entries, putImage])
 
   /** 上下の入れ替え（2026-09-16 ユーザー指示）。dir=-1 で上へ、+1 で下へ。 */
   const move = async (code: string, dir: -1 | 1) => {
@@ -351,6 +423,7 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
           </div>
         ) : entries.map((e, i) => (
           <Card key={e.code} entry={e} state={cards[e.code]} c={c} theme={theme} btn={btn}
+            image={imgs[e.code]} onPickImage={(f) => putImage(e.code, f)} onClearImage={() => clearImage(e.code)}
             moveButtons={<MoveButtons c={c} first={i === 0} last={i === entries.length - 1} onMove={(d) => move(e.code, d)} />}
             height={isMobile ? undefined : Math.max(420, listSize.height)}
             innerRef={(el) => { if (el) cardEls.current.set(e.code, el); else cardEls.current.delete(e.code) }}
@@ -361,7 +434,11 @@ export function MarginKijitsuPanel({ theme, isMobile, user }: Props) {
   )
 }
 
-function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerRef, moveButtons }: {
+function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerRef, moveButtons, image, onPickImage, onClearImage }: {
+  /** 貼った画像（あればチャートの代わりに出す） */
+  image?: string
+  onPickImage: (file: File) => void
+  onClearImage: () => void
   moveButtons: React.ReactNode
   /** 一覧から飛ぶための要素の登録 */
   innerRef: (el: HTMLElement | null) => void
@@ -392,6 +469,18 @@ function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerR
         <span style={{ fontSize: 10, color: c.DIM }}>更新 {fmtTime(entry.updatedAt)}</span>
         <span style={{ flex: 1 }} />
         {moveButtons}
+        {image ? (
+          <button type="button" onClick={onClearImage} style={btn}>画像を外す</button>
+        ) : (
+          <label title="Ctrl+V でも貼れます（見えているカードに貼ります）" style={{ ...btn, display: 'inline-block' }}>
+            画像を貼る
+            <input type="file" accept="image/*" hidden onChange={(ev) => {
+              const f = ev.target.files?.[0]
+              if (f) onPickImage(f)
+              ev.target.value = ''
+            }} />
+          </label>
+        )}
         <button type="button" onClick={onRefresh} disabled={loading} style={{ ...btn, opacity: loading ? 0.5 : 1 }}>
           {loading ? '読み込み中…' : '更新'}
         </button>
@@ -410,14 +499,15 @@ function Card({ entry, state, c, theme, btn, onRefresh, onRemove, height, innerR
         flex: height ? 1 : undefined, minHeight: 0, height: height ? undefined : 380, overflow: 'hidden',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {state?.status === 'error' && <div style={{ fontSize: 12, color: '#ff8a80' }}>{state.message}</div>}
-        {loading && <div style={{ fontSize: 11, color: c.DIM }}>チャートを作っています…</div>}
-        {ready && chartSize.width > 0 && chartSize.height > 0 && (
+        {image && <img src={image} alt={`${entry.code} 信用期日`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }} />}
+        {!image && state?.status === 'error' && <div style={{ fontSize: 12, color: '#ff8a80' }}>{state.message}</div>}
+        {!image && loading && <div style={{ fontSize: 11, color: c.DIM }}>チャートを作っています…</div>}
+        {!image && ready && chartSize.width > 0 && chartSize.height > 0 && (
           <MarginKijitsuChart bars={ready.bars} margin={ready.margin} runs={ready.runs} c={c} theme={theme}
             width={Math.floor(chartSize.width)} height={Math.floor(chartSize.height)} />
         )}
       </div>
-      {ready && <Summary ready={ready} c={c} />}
+      {!image && ready && <Summary ready={ready} c={c} />}
     </section>
   )
 }
