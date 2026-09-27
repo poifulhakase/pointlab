@@ -52,6 +52,11 @@ JPX の蓄積は6週しかないので、1年分は株探でしか描けない�
 - 画像を作るスクリプトは**リポジトリの外**＝デスクトップ `TradingView/kijitsu_image.py`（`python kijitsu_image.py 7013 6954`）。
   株探3ページ（約1年半）＋Yahoo 週足 → `{コード}_{銘柄名}_信用期日.png`。🔴 株探は**制度＋一般の合計**で判定（本体の JPX＝制度だけ、とずれうる）。
   IHI で 2/23〜3/13→8/21〜9/11、3/30〜5/15→9/30〜11/13（9/16 の手元検証と一致）。
+- 🆕 同日追加：**スクリプトから自動で貼る**（ユーザー指示「自動アップロードにできない？」）。画像を作ったあと
+  `users/{自分のuid}/data/marginKijitsuImg_{code}` へ書き込み、未登録の銘柄は一覧の先頭に登録もする（`--no-upload` で作るだけ）。
+  認証＝**firebase-tools のログイン**（`~/.config/configstore/firebase-tools.json` のリフレッシュトークン）。uid はログイン中のメールで引く。
+  🔴 Vercel の `FIREBASE_SERVICE_ACCOUNT` は機密指定で `vercel env pull` しても空＝手元にサービスアカウントの鍵は無い。
+  切れたら `npx firebase-tools login --reauth`。7013 / 2432 / 6954 を貼り済み。
 
 ### 2026-09-20(71): Discord #判断サマリ の「しぼり込み」に**対象銘柄の件数**を足した
 
