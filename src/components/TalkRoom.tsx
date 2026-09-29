@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getDark, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
+  AI_NAME, AI_UID, askAi, askCoach, checkCoachKey, clearCoachKey, getCoachKey, takeCoachKeyFromUrl, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
   sameSender, sendMessage,
   getWeatherWall, setWeatherWall as saveWeatherWall,
   setDark as saveDark, setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
@@ -119,6 +119,16 @@ export function TalkRoom() {
   const [typing, setTyping] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const slim = typing && !toolsOpen
+  /*
+    🔵 本人の画面にだけ出すヒント（2026-09-29）。合言葉を持つ端末だけにボタンが出る。
+       🔴 ヒントは**トークに流さない・どこにも保存しない**（この画面に出して終わり）。
+  */
+  const [coachFromUrl] = useState(() => takeCoachKeyFromUrl())
+  const [coachKey, setCoachKey] = useState(() => coachFromUrl || getCoachKey())
+  const [coachOpen, setCoachOpen] = useState(false)
+  const [coachQ, setCoachQ] = useState('')
+  const [coachText, setCoachText] = useState('')
+  const [coachWaiting, setCoachWaiting] = useState(false)
 
   const listRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -335,6 +345,31 @@ export function TalkRoom() {
       scrollToBottom('smooth')
     }
   }, [uid, name])
+
+  // 合言葉つきのURLで開いたときだけ、サーバーと合っているかを1回確かめる
+  useEffect(() => {
+    if (!coachFromUrl) return
+    void checkCoachKey(coachFromUrl).then(ok => {
+      if (ok) { show('ヒントを有効にしました（この端末だけ）'); return }
+      clearCoachKey()
+      setCoachKey('')
+      show('合言葉が合いません')
+    })
+  }, [coachFromUrl])
+
+  /** ヒントを聞く。🔴 sendMessage しない＝相手には何も届かない */
+  const askHint = useCallback(async () => {
+    if (!coachKey || coachWaiting) return
+    setCoachWaiting(true)
+    setCoachText('')
+    try {
+      setCoachText(await askCoach(coachKey, messages, coachQ))
+    } catch (e) {
+      show(e instanceof Error ? e.message : 'ヒントを出せませんでした')
+    } finally {
+      setCoachWaiting(false)
+    }
+  }, [coachKey, coachWaiting, messages, coachQ])
 
   const doSend = useCallback(async () => {
     const body = text.trim()
@@ -573,6 +608,30 @@ export function TalkRoom() {
         </div>
       )}
 
+      {coachOpen && coachKey && (
+        <div className={styles.coach}>
+          <div className={styles.emojiHead}>
+            <span>💡 ヒント（あなたにだけ見えています・保存しません）</span>
+            <button onClick={() => setCoachOpen(false)} aria-label="ヒントを閉じる">閉じる ✕</button>
+          </div>
+          {coachText && <div className={styles.coachBubble}>{coachText}</div>}
+          {coachWaiting && <div className={styles.coachWait}>やり取りを読んでいます…（30秒ほど）</div>}
+          <div className={styles.coachAsk}>
+            <textarea
+              className={styles.coachInput}
+              value={coachQ}
+              rows={2}
+              maxLength={500}
+              placeholder="相談したいこと（空でもOK）例：次のデートにどう誘う？"
+              onChange={e => setCoachQ(e.target.value)}
+            />
+            <button className={styles.coachBtn} onClick={() => void askHint()} disabled={coachWaiting}>
+              {coachText ? 'もう一度' : 'ヒントを見る'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {aiMode && (
         <div className={styles.aiBar}>
           <span>AIに聞く（Web検索つき）・やり取りは2人に見えます</span>
@@ -611,6 +670,16 @@ export function TalkRoom() {
             aria-pressed={aiMode}
             tabIndex={slim ? -1 : 0}
           >AI</button>
+          {/* 🔵 合言葉を持つ端末にだけ出る（相手の画面には出ない） */}
+          {coachKey && (
+            <button
+              className={`${styles.iconBtn} ${coachOpen ? styles.coachOn : ''}`}
+              onClick={() => { setCoachOpen(v => !v); setEmojiOpen(false) }}
+              aria-label="ヒント"
+              aria-pressed={coachOpen}
+              tabIndex={slim ? -1 : 0}
+            >💡</button>
+          )}
           <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る" tabIndex={slim ? -1 : 0}>🖼️</button>
           <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字" tabIndex={slim ? -1 : 0}>😀</button>
         </div>
@@ -672,6 +741,11 @@ export function TalkRoom() {
             <button onClick={() => { const v = !dark; setDark(v); saveDark(v); setMenuOpen(false) }}>
               画面の色：{dark ? '暗い' : '明るい'}
             </button>
+            {coachKey && (
+              <button onClick={() => {
+                clearCoachKey(); setCoachKey(''); setCoachOpen(false); setCoachText(''); setMenuOpen(false)
+              }}>ヒントをこの端末で消す</button>
+            )}
             <button className={styles.menuClose} onClick={() => setMenuOpen(false)}>閉じる</button>
           </div>
         </>

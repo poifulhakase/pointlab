@@ -335,3 +335,75 @@ ${link}` : String(text ?? '')
   // 🔴 Discord は1メッセージ2000字まで。通知の文面は短いが、念のため切る。
   return body.length > 1900 ? `${body.slice(0, 1900)}…` : body
 }
+
+// ── ひろ側だけに出すヒント（a=coach・2026-09-29） ─────────────────────
+
+/**
+ * ヒントの指示。
+ *
+ * 🔴 **2人の名前・人格・経緯はここに書かない**。このリポジトリは公開なので、
+ *    人についての中身はサーバーの環境変数 `TALK_COACH_PROFILE` にだけ置く。
+ * 🔴 ヒントは**本人の画面にだけ出て、トークにも Firestore にも残らない**。
+ *    相手を動かす駆け引きではなく、本人が誠実に伝えるための手助けに限る（運用者と合意）。
+ */
+export const COACH_SYSTEM = [
+  'あなたは、恋愛関係の心理学（愛着理論・要求と撤退の循環・ゴットマンの研究・感情焦点化療法など）に',
+  '詳しい相談役です。2人のトークを読み、相談者本人の画面にだけ、次の関わり方のヒントを出します。',
+  '相手にはこのヒントは見えません。',
+  '',
+  '方針:',
+  '- 相談者が自分の気持ちを誠実に伝え、2人の悪い循環を止めるための手助けをする。',
+  '- 相手を思いどおりに動かす駆け引き・試す・気を引く技術は出さない。',
+  '- 相手の気持ちは断定しない（「〜かもしれない」）。トークに書かれていないことは作らない。',
+  '- 直近のやり取り（特に最後の数件）を重く見る。それより前と人物像は背景として使う。',
+  '- 相談者が人物像にある反応（身を引く・長文で説明する・謝りすぎる・大げさな言葉など）に',
+  '  陥りかけていたら、先に短く指摘する。',
+  '- 相談が書かれていれば、それに答える形にする。',
+  '',
+  '書き方（スマホの吹き出しに出る）:',
+  '- 日本語。前置き・あいさつは書かない。表・見出し記号（#）・太字（**）は使わない。',
+  '- 次の4つの見出しをこの記号で書き、それぞれ短く（全体で500字前後まで）:',
+  '  ◆いまの読み（2〜3行）',
+  '  ◆気をつけたいこと（1〜2点）',
+  '  ◆おすすめの方向（1〜3点）',
+  '  ◆言い回しの例（1〜2個・短く。そのまま送るより、自分の言葉に直して使う前提）',
+  '- 返事を急がないほうがよい場面（夜遅い・揉めている）なら、そう書く。',
+].join('\n')
+
+/** 1通の上限（極端に長い1通で指示が埋もれないように。平均は40字前後） */
+const COACH_MAX_LINE = 1500
+
+/**
+ * 画面から届いたメッセージを、AIが読むトークの全文にする。
+ * 🔵 時刻は日本時間。引用・写真・AIへの質問も、見た目どおりに書き起こす。
+ *
+ * @param {Array<{n?:string,t?:string,at?:number,img?:boolean,reName?:string,reText?:string,ai?:boolean,toAi?:boolean}>} list
+ */
+export function buildTranscript(list) {
+  if (!Array.isArray(list)) return ''
+  const fmt = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit',
+  })
+  return list
+    .filter(m => m && typeof m.at === 'number')
+    .sort((a, b) => a.at - b.at)
+    .map(m => {
+      const who = m.ai ? 'AI（案内役）' : String(m.n ?? '').slice(0, 20)
+      const parts = []
+      if (m.reName || m.reText) parts.push(`（${String(m.reName ?? '')}「${String(m.reText ?? '').slice(0, 80)}」への返信）`)
+      if (m.toAi) parts.push('（AIへの質問）')
+      if (m.img) parts.push('［写真］')
+      const t = String(m.t ?? '').slice(0, COACH_MAX_LINE)
+      if (t) parts.push(t)
+      return `[${fmt.format(new Date(m.at))}] ${who}: ${parts.join(' ')}`
+    })
+    .join('\n')
+}
+
+/** 合言葉の照合（長さの違いで早く返さない）。未設定なら常に false。 */
+export function isCoachKey(given, expected) {
+  if (typeof given !== 'string' || typeof expected !== 'string' || !expected) return false
+  let diff = given.length ^ expected.length
+  for (let i = 0; i < expected.length; i++) diff |= (given.charCodeAt(i % (given.length || 1)) || 0) ^ expected.charCodeAt(i)
+  return diff === 0
+}

@@ -1,5 +1,6 @@
 // POST /api/talk?a=notify   … 新着が出たことを LINE へ知らせる（相手のロック画面に出す）
 // POST /api/talk?a=ai       … トークの中で AI に聞く（Web検索つき・お店や周辺情報の提案）
+// POST /api/talk?a=coach    … 本人の画面にだけ出す、関わり方のヒント（合言葉つき・トークには残さない）
 // POST /api/talk?a=webhook  … LINE の webhook。送り先ID（グループなら C…）を調べるためだけ
 //
 // 🔴 ぽいロボ本体とは無関係の間借り機能。使い終わったら消す（docs/talk-notify-setup.md）。
@@ -29,11 +30,13 @@
 //                               🔴 2026-09-20 に Chatwork 経路を廃止（運用者の指示）。自分あてはここだけ
 //   ANTHROPIC_API_KEY         … AI（?a=ai）用。ぽいロボの疑似トレードと同じ残高を使う
 //   ANTHROPIC_WORKSPACE_ID    … 🔴 アカウント紐付け型の鍵では必須（`wrkspc_...`）
+//   TALK_COACH_KEY            … ヒント（?a=coach）の合言葉。本人の端末だけが持つ
+//   TALK_COACH_PROFILE        … ヒントに渡す2人の人物像。🔴 リポジトリが公開なのでコードに書かない
 
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, MAX_BODY, MAX_BODY_SELF, minIntervalSec, pickNotifyRoute, shouldShowBody, shouldSuppressStreak, splitMemory, withMemory } from './_talkNotify.js'
+import { AI_SYSTEM, COACH_SYSTEM, buildDiscordBody, buildTranscript, isCoachKey, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, MAX_BODY, MAX_BODY_SELF, minIntervalSec, pickNotifyRoute, shouldShowBody, shouldSuppressStreak, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -57,6 +60,7 @@ export default async function handler(req, res) {
   if (action === 'webhook') return webhook(req, res)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
   if (action === 'ai') return ai(req, res)
+  if (action === 'coach') return coach(req, res)
   return notify(req, res)
 }
 
@@ -258,6 +262,86 @@ async function ai(req, res) {
     // 🔵 種類（HTTPの番号）だけは返す。中身は返さない代わりに、これで切り分けができる
     //    （400=リクエストの形／401=鍵／429=上限／5xx=向こう側）
     return res.status(502).json({ error: 'AIに聞けませんでした', code: e?.status ?? 0 })
+  }
+}
+
+// ── 本人の画面にだけ出すヒント ─────────────────────────────────────
+
+/**
+ * 🔴 **本人だけ**＝トークの表示名は誰でも名乗れるので、名前では分けない。
+ *    合言葉（TALK_COACH_KEY）を持つ端末だけがボタンを出し、ここでも照合する。
+ * 🔴 **どこにも保存しない**。答えは呼んだ端末に返すだけで、トークにも Firestore にも書かない。
+ * 🔵 トークは**画面が持っている分をそのまま受け取る**（直近500件）。サーバーで読み直すと
+ *    Firestore の1日の読み取り枠を食う（9/26 に枠に当たった）。それより前は人物像で補う。
+ */
+async function coach(req, res) {
+  const room = process.env.TALK_ROOM_ID
+  const key = process.env.ANTHROPIC_API_KEY
+  const body = readBody(req)
+
+  if (!isRoomId(body.room) || (room && body.room !== room)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  if (!isCoachKey(body.key, process.env.TALK_COACH_KEY)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  // 合言葉が合っているかだけを確かめる（有効にしたときの1回）
+  if (body.check) return res.status(200).json({ ok: true })
+  if (!key) return res.status(503).json({ error: 'AIはまだ使えません（設定が要ります）' })
+
+  const transcript = buildTranscript(body.messages)
+  if (!transcript) return res.status(400).json({ error: 'トークが空です' })
+  const q = String(body.q || '').trim().slice(0, 500)
+
+  try {
+    const db = getDb()
+    const rk = `coach_${String(body.room).slice(0, 8)}`
+    if (!(await rateLimit(db, rk, 'min', 3, 60 * 1000))) {
+      return res.status(429).json({ error: '少し待ってからもう一度どうぞ' })
+    }
+    if (!(await rateLimit(db, rk, 'day', 30, 24 * 60 * 60 * 1000))) {
+      return res.status(429).json({ error: '今日はここまで（1日30回）' })
+    }
+  } catch {
+    // 回数を数えられない環境でも、ヒントそのものは出す
+  }
+
+  const profile = String(process.env.TALK_COACH_PROFILE || '').trim()
+  const now = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit',
+  }).format(new Date())
+
+  try {
+    const workspace = process.env.ANTHROPIC_WORKSPACE_ID
+    const anthropic = new Anthropic({
+      apiKey: key,
+      ...(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {}),
+    })
+    const r = await anthropic.messages.create({
+      model: AI_MODEL,
+      max_tokens: 8000,
+      // 🔵 人の気持ちを読む仕事なので、店探し（low）より深く考えさせる
+      output_config: { effort: 'medium' },
+      system: profile ? `${COACH_SYSTEM}\n\n<人物像>\n${profile}\n</人物像>` : COACH_SYSTEM,
+      messages: [{
+        role: 'user',
+        content: [
+          `<トーク>\n${transcript}\n</トーク>`,
+          `いまの時刻: ${now}`,
+          q ? `相談: ${q}` : '相談: （書かれていない。いまの流れで、次にどう関わるとよいかを出す）',
+        ].join('\n\n'),
+      }],
+    })
+
+    if (r.stop_reason === 'refusal') {
+      return res.status(200).json({ text: 'このヒントは出せませんでした。相談の書き方を変えてみてください。' })
+    }
+    const text = cleanAiText((r.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('\n')).trim()
+    if (!text) return res.status(502).json({ error: 'AIの返事が空でした' })
+    return res.status(200).json({ text })
+  } catch (e) {
+    console.error('[talk/coach] error:', e?.status, e?.message)
+    return res.status(502).json({ error: 'ヒントを出せませんでした', code: e?.status ?? 0 })
   }
 }
 

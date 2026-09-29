@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { AI_SYSTEM, buildDiscordBody, minIntervalSec, shouldSuppressStreak, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, MAX_BODY_SELF, pickNotifyRoute, pickNotifyTarget, shouldShowBody, splitMemory, withMemory } from '../../../api/_talkNotify.js'
+import { AI_SYSTEM, COACH_SYSTEM, buildDiscordBody, buildTranscript, isCoachKey, minIntervalSec, shouldSuppressStreak, buildNotifyText, buildRoomUrl, cleanAiText, isDiscordWebhook, isLineTarget, isRoomId, isStreakSuppressed, MAX_BODY_SELF, pickNotifyRoute, pickNotifyTarget, shouldShowBody, splitMemory, withMemory } from '../../../api/_talkNotify.js'
 
 /**
  * 一時トークルームの新着通知（LINE）と、トークの中のAIの、通信しない部分。
@@ -404,6 +404,48 @@ describe('自分あての Discord 通知', () => {
       const body = buildDiscordBody('あ'.repeat(3000), '')
       expect(body.length).toBeLessThanOrEqual(1901)
       expect(body.endsWith('…')).toBe(true)
+    })
+  })
+
+  describe('ヒント（a=coach）', () => {
+    // 2026-09-28 21:03 JST
+    const at = Date.UTC(2026, 8, 28, 12, 3)
+
+    it('日本時間・名前・本文の1行にする（古い順に並べ直す）', () => {
+      const t = buildTranscript([
+        { n: 'なみ', t: 'また会いたい', at: at + 60_000 },
+        { n: 'ひろ', t: 'おつかれさま', at },
+      ])
+      const lines = t.split('\n')
+      expect(lines).toHaveLength(2)
+      expect(lines[0]).toMatch(/^\[9\/28\(月\) 21:03\] ひろ: おつかれさま$/)
+      expect(lines[1]).toContain('なみ: また会いたい')
+    })
+
+    it('引用・写真・AIの発言も書き起こす', () => {
+      const t = buildTranscript([
+        { n: 'ひろ', t: 'ここどう？', at, reName: 'なみ', reText: 'カフェ行きたい', img: true },
+        { n: '🤖 AI', t: '店の候補', at: at + 1, ai: true },
+      ])
+      expect(t).toContain('（なみ「カフェ行きたい」への返信） ［写真］ ここどう？')
+      expect(t).toContain('AI（案内役）: 店の候補')
+    })
+
+    it('形の違うものは無視する', () => {
+      expect(buildTranscript('x')).toBe('')
+      expect(buildTranscript([{ n: 'ひろ', t: 'a' }])).toBe('')
+    })
+
+    it('合言葉は完全一致だけ通す・未設定なら誰も通さない', () => {
+      expect(isCoachKey('abcdefghijklmnop', 'abcdefghijklmnop')).toBe(true)
+      expect(isCoachKey('abcdefghijklmnoq', 'abcdefghijklmnop')).toBe(false)
+      expect(isCoachKey('abcdefghijklmno', 'abcdefghijklmnop')).toBe(false)
+      expect(isCoachKey('', '')).toBe(false)
+      expect(isCoachKey('abc', undefined)).toBe(false)
+    })
+
+    it('🔴 指示に人の名前を書かない（リポジトリが公開）', () => {
+      expect(COACH_SYSTEM).not.toMatch(/ひろ|なみ/)
     })
   })
 })
