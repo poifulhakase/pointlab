@@ -1034,8 +1034,9 @@
    🔵 絵文字の面と同じ置き方（入力欄の上・一覧を押し上げる）。
       AI の差し色を使い「トークの吹き出しではない」ことを見た目で分ける。 */
 .coach {
-  flex: 0 1 auto;
-  max-height: 55vh;
+  /* 🔴 0 1 auto だとトーク一覧に押しつぶされて高さ0になった（2026-09-29 実機・Android） */
+  flex: 0 0 auto;
+  max-height: 55dvh;
   overflow-y: auto;
   padding: 0 10px 10px;
   background: var(--talk-card);
