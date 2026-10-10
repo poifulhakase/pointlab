@@ -26,6 +26,9 @@ def schedule(cfg, tmp_path, monkeypatch):
                                    ensure_ascii=False), encoding="utf-8")
         es = emod.EarningsSchedule(cfg)
         es.cache_path = path
+        # 🔴 2026-09-28：キャッシュの古さは「今日」で判定するので、as_of から3日たつと
+        #    テストが本物の予定表を取りに行き、実データの 4716（9/24発表）で落ちていた。
+        es.max_age_days = 10**6
         return es
     return _make
 

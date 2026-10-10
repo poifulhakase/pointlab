@@ -265,11 +265,12 @@ def test_exit_label_is_japanese(cfg):
 
 
 def test_decisions_do_not_show_quantity(cfg):
-    """🔴 数量は翌寄りにコードが決めるので、この時点では出さない。"""
+    """🔴 数量は約定の時点（引け／翌寄り）にコードが決めるので、この時点では出さない。"""
     result = FakeResult(decisions=[a_decision()], analyses=[an_analysis()])
     text = "".join(f["value"] for e in smod.build_decisions(result, cfg) for f in e.fields)
     assert "株" not in text
-    assert "翌寄り" in text
+    # 🔵 2026-09-28 から本番は引けで約定（exec.fill_rule=next_close）
+    assert ("本日の引け" if cfg.get("exec.fill_rule") == "next_close" else "翌寄り") in text
 
 
 def test_decisions_include_each_agent_reading(cfg):

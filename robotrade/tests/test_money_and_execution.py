@@ -135,6 +135,56 @@ def _bar(o, h, l, c, v=1_000_000):
     return ex.Bar(money.to_sen(o), money.to_sen(h), money.to_sen(l), money.to_sen(c), v)
 
 
+@pytest.fixture
+def cfg(cfg, monkeypatch):
+    """🔵 この節のテストは寄り（next_open）を前提に書いてある。本番の設定（next_close）に引きずられないよう固定する。"""
+    raw = dict(cfg.raw)
+    raw["exec"] = {**raw["exec"], "fill_rule": "next_open"}
+    monkeypatch.setattr(cfg, "raw", raw)
+    return cfg
+
+
+@pytest.fixture
+def close_cfg(cfg, monkeypatch):
+    raw = dict(cfg.raw)
+    raw["exec"] = {**raw["exec"], "fill_rule": "next_close"}
+    monkeypatch.setattr(cfg, "raw", raw)
+    return cfg
+
+
+def test_entry_fills_at_close_when_rule_is_next_close(close_cfg):
+    """🆕 2026-09-28：14:30 に判断 → その日の引けで約定（寄りの値は使わない）。"""
+    result, _ = ex.simulate_entry(
+        cfg=close_cfg, next_bar=_bar(3100, 3150, 2980, 3020),   # 寄りは+3.3%でも引けは+0.7%
+        planned_entry_sen=money.to_sen(3000), stop_sen=money.to_sen(2900),
+        equity_sen=money.to_sen(10_000_000), cash_sen=money.to_sen(10_000_000),
+        avg_volume=10_000_000,
+    )
+    assert result.filled
+    assert result.price_sen == 302151            # 終値3,020円＋スリッページ5bps（高く）
+    assert "引け" in result.reason
+
+
+def test_close_fill_gap_check_uses_close(close_cfg):
+    """引けで入るときは、引けが想定から2%超離れていたら見送り。"""
+    result, _ = ex.simulate_entry(
+        cfg=close_cfg, next_bar=_bar(3000, 3150, 2980, 3100),
+        planned_entry_sen=money.to_sen(3000), stop_sen=money.to_sen(2900),
+        equity_sen=money.to_sen(10_000_000), cash_sen=money.to_sen(10_000_000),
+        avg_volume=10_000_000,
+    )
+    assert not result.filled
+    assert "引け" in result.reason and "乖離" in result.reason
+
+
+def test_unknown_fill_rule_is_not_silently_treated_as_open(cfg, monkeypatch):
+    raw = dict(cfg.raw)
+    raw["exec"] = {**raw["exec"], "fill_rule": "vwap"}
+    monkeypatch.setattr(cfg, "raw", raw)
+    with pytest.raises(ValueError):
+        ex.fill_basis(cfg, _bar(3000, 3000, 3000, 3000))
+
+
 def test_entry_fills_at_next_open_with_adverse_slippage(cfg):
     result, sizing = ex.simulate_entry(
         cfg=cfg, next_bar=_bar(3000, 3050, 2980, 3020),

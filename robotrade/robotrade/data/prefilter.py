@@ -136,6 +136,37 @@ def _triangle(value: float, low: float, high: float) -> float:
     return max(0.0, 1.0 - abs(value - mid) / half)
 
 
+def _ramp_down(value: float, start: float, end: float) -> float:
+    """start 以下で1.0、end 以上で0.0、その間は直線で下がる。"""
+    if value <= start:
+        return 1.0
+    if value >= end:
+        return 0.0
+    return 1.0 - (value - start) / (end - start)
+
+
+def not_overheated_score(rsi_value: float | None, disparity: float | None, cfg) -> float:
+    """過熱していないほど1.0（RSI と25日線からの乖離を半々）。値が無ければ中立の0.5。
+
+    - RSI: `overheat.rsi_start` 以下で満点 → `overheat.rsi_end` で0
+    - 乖離（上側）: `overheat.disparity_start`% 以下で満点 → `overheat.disparity_end`% で0
+    - 乖離（下側）: 25日線を大きく割った銘柄は押し目ではなく崩れ（`overheat.disparity_floor`% 未満は0.3）
+    """
+    o = cfg.get("screen.overheat")
+    if rsi_value is None:
+        rsi_part = 0.5
+    else:
+        rsi_part = _ramp_down(float(rsi_value), float(o["rsi_start"]), float(o["rsi_end"]))
+    if disparity is None:
+        disp_part = 0.5
+    elif disparity < float(o["disparity_floor"]):
+        disp_part = 0.3
+    else:
+        disp_part = _ramp_down(float(disparity), float(o["disparity_start"]),
+                               float(o["disparity_end"]))
+    return 0.5 * rsi_part + 0.5 * disp_part
+
+
 def layer2(candidate: Candidate, cfg) -> float:
     """スイング適性のスコアリング。0〜1 に正規化した部品を重み付きで合算する。"""
     latest = candidate.indicators.latest
@@ -187,6 +218,14 @@ def layer2(candidate: Candidate, cfg) -> float:
         width_score = abs(width - 0.08) / 0.08
         width_score = min(1.0, width_score)
     parts["clarity"] = (slope_score * 0.6) + (width_score * 0.4)
+
+    # 🆕 2026-09-28：過熱していない（押し目の位置）。
+    # 🔴 きっかけ＝売買判断AIの見送り9件中7件が「過熱（RSI67〜72・乖離+8〜16%）」。
+    #    出来高の急増と移動平均の上を高く評価する上の部品だけだと、**すでに上がった銘柄**が上位に来て、
+    #    押し目で買いたい判断AIがそれを全部見送る＝候補選びと判断が食い違っていた。
+    #    引けで入る運用（exec.fill_rule=next_close）では、当日に上げた銘柄は乖離チェックでも落ちやすい。
+    parts["not_overheated"] = not_overheated_score(
+        latest.get("rsi"), latest.get("disparity_pct"), cfg)
 
     score = sum(parts[k] * float(w.get(k, 1.0)) for k in parts)
     candidate.score_parts = parts

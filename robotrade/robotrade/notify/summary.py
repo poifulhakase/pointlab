@@ -16,6 +16,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from ..labels import ja_text
 from ..labels import (
     ACTION_LABEL, BREAKOUT_LABEL, CATALYST_LABEL, LEVEL_LABEL, POSITION_LABEL,
     REGIME_LABEL, SOURCE_TIER_LABEL, STRENGTH_LABEL, SWING_FIT_LABEL, TRADE_LABEL,
@@ -34,6 +35,11 @@ OUTCOME_LABEL = {
     "hold": "様子見",
     "skipped": "見送り",
 }
+
+
+def _fills_at_close(cfg) -> bool:
+    """判断を 14:30 に出して、その日の引けで入る運用か（exec.fill_rule=next_close）。"""
+    return str(cfg.get("exec.fill_rule", "next_open")) == "next_close"
 
 
 def _funnel_steps(funnel: dict[str, Any], analyzed: int) -> list[str]:
@@ -64,9 +70,14 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
     staged = [d for d in decisions if d["outcome"] == "staged"]
     passed = [d for d in decisions if d["outcome"] != "staged"]
 
+    trade_day = getattr(result, "trade_day", None)
+    title = f"判断サマリ {result.run_date.isoformat()}"
+    if _fills_at_close(cfg) and trade_day:
+        title = (f"判断サマリ {trade_day.month}/{trade_day.day} 引けで発注"
+                 f"（{result.run_date.month}/{result.run_date.day} までの足で判断）")
     head = Embed(
-        title=f"判断サマリ {result.run_date.isoformat()}",
-        description=truncate(result.market_view or "（地合いのコメントなし）", 900),
+        title=title,
+        description=truncate(ja_text(result.market_view) or "（地合いのコメントなし）", 900),
         color=COLOR_WARN if result.risk_off else color,
         footer=DISCLAIMER,
     )
@@ -90,6 +101,8 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
         analysis = _analysis_for(result, d["ticker"])
         name = analysis.get("name", "") if analysis else ""
         outcome = OUTCOME_LABEL.get(item["outcome"], item["outcome"])
+        if item["outcome"] == "staged" and _fills_at_close(cfg):
+            outcome = "本日の引けで発注"
 
         # 🔴 見出しそのものを TradingView へのリンクにする。
         #    「確認」という見出しの下にリンクを1本置くより、行が1つ減って読みやすい。
@@ -105,7 +118,7 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
                 "水準",
                 f"入 {d['entry']:,.0f} / 損切 {d['stop']:,.0f} / 利確 {d['target']:,.0f}\n"
                 f"想定 {d.get('planned_holding_days') or '-'}日"
-                f"（数量は翌寄りの値から算出）",
+                f"（数量は{'本日の引け' if _fills_at_close(cfg) else '翌寄り'}の値から算出）",
                 inline=True,
             )
         # 🔵 確信度（0〜1）は**通知に出さない**（運用者の指示・2026-09-20）。
@@ -114,7 +127,7 @@ def build_decisions(result: Any, cfg) -> list[Embed]:
         if analysis:
             card.add_field("各AIの読み", _analysis_line(analysis), inline=False)
 
-        card.add_field("判断の理由", truncate(d.get("reason", ""), 500), inline=False)
+        card.add_field("判断の理由", truncate(ja_text(d.get("reason", "")), 500), inline=False)
         if item.get("note") and item["outcome"] != "staged":
             card.add_field("こちらの処理", truncate(item["note"], 300), inline=False)
         embeds.append(card)
@@ -166,7 +179,9 @@ def _analysis_line(analysis: dict[str, Any]) -> str:
 
     news = analysis.get("news") or {}
     if news.get("_no_data"):
-        lines.append("📰 ニュース: 取得元が未導入（データなし）")
+        # 🔴 2026-09-28：旧は固定で「取得元が未導入」と出していた＝TDnet 導入後も、開示が0件の銘柄で
+        #    未導入に見えた。理由は orchestrator が summary に書き分けている（未導入／直近N日の開示なし／失敗）。
+        lines.append(f"📰 ニュース: {news.get('summary') or 'データなし'}")
     elif news:
         lines.append(
             f"📰 材料 {_ja(CATALYST_LABEL, news.get('catalyst'))}"
@@ -214,7 +229,7 @@ def build_fills(result: Any, cfg) -> list[Embed]:
             e.add_field(
                 f"{mark} {t.ticker}（{_ja(TRADE_LABEL, t.label, unknown='')}）",
                 f"{t.quantity:,}株 @ {_yen(t.price_sen)}円 / 損益 **{pnl:+,.0f}円**\n"
-                f"{truncate(t.reason, 140)}\n保有 {t.holding_days}営業日",
+                f"{truncate(ja_text(t.reason), 140)}\n保有 {t.holding_days}営業日",
                 inline=False,
             )
         embeds.append(e)
@@ -328,7 +343,7 @@ def build_performance(result: Any, cfg, *, history: list[dict[str, Any]],
             e.add_field(
                 f"🔴 {t['ticker']}（{_ja(TRADE_LABEL, t.get('label'), unknown='')}）",
                 f"{t['date']} / {t['realized_pnl']:+,.0f}円 / 保有 {t['holding_days']}営業日\n"
-                f"{truncate(t.get('reason', ''), 160)}",
+                f"{truncate(ja_text(t.get('reason', '')), 160)}",
                 inline=False,
             )
         embeds.append(e)

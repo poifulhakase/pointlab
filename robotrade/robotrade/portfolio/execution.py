@@ -156,17 +156,24 @@ def simulate_entry(
     cash_sen: int,
     avg_volume: float | None,
 ) -> tuple[EntryResult, SizingResult | None]:
-    """翌営業日の寄りで約定したものとして処理する（SPEC 10.2）。"""
-    gap_limit = float(cfg.get("exec.max_entry_gap_pct"))
-    open_sen = next_bar.open_sen
+    """翌営業日に約定したものとして処理する（SPEC 10.2）。
 
-    # ギャップ乖離ルール: 飛びついて高値掴みしない
+    約定の基準は `exec.fill_rule`：
+      next_open  … 翌営業日の**寄り**（始値）で約定
+      next_close … 翌営業日の**引け**（終値）で約定（🆕 2026-09-28・運用者の指示）。
+                   判断を 14:30 に出して、その日の引けで買う運用に合わせたもの。
+                   前日の確定した足で判断し、その日の引けで入る＝翌朝の寄りの値動きを取りにいく。
+    """
+    gap_limit = float(cfg.get("exec.max_entry_gap_pct"))
+    basis_sen, where = fill_basis(cfg, next_bar)
+
+    # ギャップ乖離ルール: 飛びついて高値掴みしない（引けで入る場合は、その日の引けが想定から離れていないか）
     if planned_entry_sen > 0:
-        gap = abs(open_sen - planned_entry_sen) / planned_entry_sen
+        gap = abs(basis_sen - planned_entry_sen) / planned_entry_sen
         if gap > gap_limit:
             return EntryResult(
                 False,
-                reason=f"翌寄り {to_yen(open_sen)}円 が想定 {to_yen(planned_entry_sen)}円 から"
+                reason=f"{where} {to_yen(basis_sen)}円 が想定 {to_yen(planned_entry_sen)}円 から"
                        f"{gap*100:.1f}%乖離（上限{gap_limit*100:.0f}%）→ 見送り",
             ), None
 
@@ -174,7 +181,7 @@ def simulate_entry(
     if next_bar.volume <= 0:
         return EntryResult(False, reason="翌日に出来高が無い（寄らず）→ 不成立"), None
 
-    fill_sen = slipped_price(open_sen, float(cfg.get("exec.slippage_bps")), is_buy=True)
+    fill_sen = slipped_price(basis_sen, float(cfg.get("exec.slippage_bps")), is_buy=True)
 
     # 🔴 サイジングは**実際の約定価格**で行う（想定値でやると数量がズレる）
     sizing = size_position(
@@ -193,11 +200,26 @@ def simulate_entry(
         quantity=sizing.quantity,
         price_sen=fill_sen,
         fee_sen=fee_sen(notional, float(cfg.get("exec.cost_bps"))),
-        reason=f"翌寄り約定（{to_yen(fill_sen)}円 × {sizing.quantity}株・基準={sizing.basis}）",
+        reason=f"{where}約定（{to_yen(fill_sen)}円 × {sizing.quantity}株・基準={sizing.basis}）",
     ), sizing
 
 
 # ---------------------------------------------------------------- 手仕舞い
+
+
+def fills_at_close(cfg) -> bool:
+    """翌営業日の引けで約定させる設定か。"""
+    return str(cfg.get("exec.fill_rule", "next_open")) == "next_close"
+
+
+def fill_basis(cfg, bar: Bar) -> tuple[int, str]:
+    """約定の基準にする値段と、その呼び名（寄り／引け）。未知の設定は黙って寄りにしない。"""
+    rule = str(cfg.get("exec.fill_rule", "next_open"))
+    if rule == "next_open":
+        return bar.open_sen, "翌寄り"
+    if rule == "next_close":
+        return bar.close_sen, "翌日の引け"
+    raise ValueError(f"exec.fill_rule が不正: {rule!r}（next_open / next_close）")
 
 
 def check_exit(

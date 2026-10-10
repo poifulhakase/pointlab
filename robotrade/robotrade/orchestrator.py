@@ -78,6 +78,8 @@ class RunResult:
     risk_off: list[str] = field(default_factory=list)
     cost: dict[str, Any] = field(default_factory=dict)
     note: str = ""
+    # 判断した注文を約定させる営業日（run_date の翌営業日）。引けで入る運用では「本日」にあたる
+    trade_day: date | None = None
 
 
 def resolve_run_date(calendar: MarketCalendar, now: datetime | None = None) -> date:
@@ -85,6 +87,8 @@ def resolve_run_date(calendar: MarketCalendar, now: datetime | None = None) -> d
 
     🔴 大引け前に走らせるとその日の四本値が確定していない。
        当日が営業日でも 15:30 前なら**前営業日**を対象にする（SPEC 13）。
+    🔵 2026-09-28 から日次実行は **14:30**（exec.fill_rule=next_close）。対象は前営業日の確定した足で、
+       判断した注文は**その日（実行した日）の引け**で約定させる。
     """
     now = now or datetime.now()
     today = now.date()
@@ -157,6 +161,11 @@ class Orchestrator:
         log.info("価格を取得（%d銘柄）", len(universe))
         tickers = [s.ticker for s in universe]
         frames = self.fetcher.fetch(tickers)
+        # 🔴 2026-09-28：**対象日より後の足を切り落とす**（先読み防止）。
+        #    取得した株価は「今」までの足を含む。14:30 に走ると当日の**途中までの足**が、
+        #    過去日を --date でやり直すと**その後の日の足**が指標に入っていた（9/28 に判明）。
+        frames = {t: f[f.index.date <= run_date] for t, f in frames.items()}
+        frames = {t: f for t, f in frames.items() if len(f)}
         for held in portfolio.positions:
             if held not in frames:
                 log.warning("保有中の %s の価格が取れない（簿価で評価する）", held)
@@ -191,6 +200,7 @@ class Orchestrator:
 
         # --- 3. プレフィルタ -------------------------------------------------
         next_day = self.calendar.next_business_day(run_date)
+        result.trade_day = next_day
         high_impact = self.calendar.high_impact_on(next_day)
         # 🔴 決算予定は「判断日」ではなく**翌営業日**（＝建てる日）からの残り日数で見る
         earnings_days = self._earnings_days([s.ticker for s, _ in pairs], next_day)
@@ -205,7 +215,7 @@ class Orchestrator:
         })
 
         # --- 4. 選定AI → 分析AI ---------------------------------------------
-        candidates = self._select(prefilter.selected)
+        candidates = self._select(prefilter.selected, run_date)
         analyses = self._analyze(candidates, run_date)
         result.analyses = analyses
 
@@ -222,6 +232,7 @@ class Orchestrator:
         decision_payload = self._decide(
             analyses=analyses, state=state, macro=macro,
             performance=performance, next_day=next_day, high_impact=high_impact,
+            run_date=run_date,
         )
         result.market_view = decision_payload.get("market_view", "")
         decisions = decision_payload.get("decisions", [])
@@ -326,12 +337,13 @@ class Orchestrator:
                     self.store.resolve_pending(order["id"], status="rejected", on=run_date,
                                                note="すでに保有していない")
                     continue
-                price = ex.slipped_price(bar.open_sen, float(self.cfg.get("exec.slippage_bps")),
+                basis_sen, where = ex.fill_basis(self.cfg, bar)
+                price = ex.slipped_price(basis_sen, float(self.cfg.get("exec.slippage_bps")),
                                          is_buy=False)
                 pos = portfolio.positions[ticker]
                 fee = ex.exit_fee_sen(price, pos.quantity, self.cfg)
                 trade = portfolio.sell(day=run_date, ticker=ticker, price_sen=price, fee_sen=fee,
-                                       reason=f"裁量手仕舞い（翌寄り）: {order['reason']}",
+                                       reason=f"裁量手仕舞い（{where}）: {order['reason']}",
                                        label=outcomes_mod.label_trade(
                                            (price - pos.avg_price_sen) * pos.quantity, "裁量"),
                                        calendar=self.calendar)
@@ -398,6 +410,9 @@ class Orchestrator:
             if bar is None:
                 continue
             pos = portfolio.positions[ticker]
+            if ex.fills_at_close(self.cfg) and pos.entry_date == run_date:
+                # 🔴 引けで入った銘柄を、その日の高安で手仕舞い判定しない（入る前の値動き）。
+                continue
             days_held = pos.days_held(run_date, self.calendar)
             check = ex.check_exit(cfg=self.cfg, position=pos, bar=bar, days_held=days_held)
             if not check.should_exit:
@@ -411,7 +426,7 @@ class Orchestrator:
                      to_yen(check.price_sen), check.label)
         return exits
 
-    def _select(self, selected: list[Any]) -> list[Any]:
+    def _select(self, selected: list[Any], run_date: date) -> list[Any]:
         """銘柄選定AI（SPEC 7.1）。オフなら上位をそのまま使う。"""
         if not selected:
             return []
@@ -564,7 +579,7 @@ class Orchestrator:
 
     def _decide(self, *, analyses: list[dict[str, Any]], state: dict[str, Any],
                 macro: dict[str, Any], performance: Any, next_day: date,
-                high_impact: list[dict[str, Any]]) -> dict[str, Any]:
+                high_impact: list[dict[str, Any]], run_date: date) -> dict[str, Any]:
         """売買判断AI（SPEC 7.5）。候補が無くても**保有があれば呼ぶ**（手仕舞い判断のため）。"""
         if not analyses and not state["positions"]:
             log.info("候補も保有も無いので売買判断AIは呼ばない")

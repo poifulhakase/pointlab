@@ -45,6 +45,13 @@ screen:                    # 数値プレフィルタ（SPEC 6章）
     vol_spike: 1.0         # 出来高の変化
     trend: 1.0             # 移動平均との位置関係
     clarity: 1.2           # 地合いの明確さ（曖昧を上位に残さない＝やや重め）
+    not_overheated: 1.5    # 🆕 2026-09-28 過熱していない（押し目の位置）。判断AIの見送り9件中7件が過熱だったため重め
+  overheat:                # 🆕 2026-09-28 「過熱していない」の物差し（prefilter.not_overheated_score）
+    rsi_start: 60          # RSI がこれ以下なら満点
+    rsi_end: 75            # RSI がこれ以上なら0点
+    disparity_start: 5     # 25日線からの乖離(%)がこれ以下なら満点
+    disparity_end: 12      # 乖離(%)がこれ以上なら0点（判断AIが見送った銘柄は+8〜16%）
+    disparity_floor: -8    # これを下回るほど25日線を割った銘柄は「押し目」ではなく「崩れ」（0.3点）
 
 macro:
   fx_symbol: "JPY=X"       # ドル円（為替入力）
@@ -75,9 +82,13 @@ risk:
 exec:                      # 疑似執行のリアリズム（SPEC 10.2 / 10.5）
   cost_bps: 10             # 往復取引コスト（bps）
   slippage_bps: 5          # スリッページ（bps）
-  fill_rule: next_open     # 新規の約定基準（翌寄り）
+  # 新規・裁量手仕舞いの約定基準。next_open＝翌営業日の寄り／next_close＝翌営業日の引け
+  # 🆕 2026-09-28：next_close へ（運用者の指示「値動きのメインは寄り付き。17:00に知っても買えない」）。
+  #    日次実行を **14:30** にし、前日の確定した足で判断 → **その日の引けで買う**＝翌朝の寄りの動きを取りにいく。
+  #    🔴 14:30 は大引け前なので対象日は前営業日（resolve_run_date）。当日の途中の足は使わない（先読み・再現性）。
+  fill_rule: next_close
   max_volume_pct: 0.05     # 想定数量の上限（当該銘柄1日出来高比）
-  max_entry_gap_pct: 0.02  # 翌寄りが想定エントリーからこれ以上乖離したら見送り
+  max_entry_gap_pct: 0.02  # 約定の基準（寄り／引け）が想定エントリーからこれ以上乖離したら見送り
   lot_size: 100            # 単元株数
 
 earnings:                  # 決算発表予定日（JPX公開サイトのExcel・登録不要）
@@ -199,12 +210,12 @@ discord:
   avatar_base: "https://pointlab.vercel.app/calendar/discord"
   # 🔵 静的ファイルのURLは /calendar/… （/stock-calendar/… は SPA の HTML が返る）
   channels:
-    decisions:                      # #判断サマリ（日次・引け後）＝メインの一目
+    decisions:                      # #判断サマリ（日次・14:30）＝メインの一目
       env: DISCORD_WEBHOOK_DECISIONS
       username: "ぽいロボ｜判断"
       avatar: "poirobo-avatar.png"
       color: 0x3498DB               # 青
-    fills:                          # #約定・保有（日次・引け後）＝何が動いたか
+    fills:                          # #約定・保有（日次・14:30）＝何が動いたか
       env: DISCORD_WEBHOOK_FILLS
       username: "ぽいロボ｜約定"
       avatar: "poirobo-avatar.png"

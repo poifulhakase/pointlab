@@ -97,8 +97,9 @@ def validate(cfg: Config) -> list[str]:
 
     if cfg.get("exec.lot_size") < 1:
         raise ConfigError("exec.lot_size は 1 以上")
-    if cfg.get("exec.fill_rule") != "next_open":
-        raise ConfigError("exec.fill_rule は next_open のみ対応（SPEC 10.2）")
+    # 🆕 2026-09-28：next_close（翌営業日の引けで約定・日次実行は 14:30）を追加
+    if cfg.get("exec.fill_rule") not in ("next_open", "next_close"):
+        raise ConfigError("exec.fill_rule は next_open / next_close のみ対応（SPEC 10.2）")
 
     if cfg.get("risk.risk_off_action") not in ("halt_new", "lighten"):
         raise ConfigError("risk.risk_off_action は halt_new か lighten")

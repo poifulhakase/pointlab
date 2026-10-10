@@ -3,8 +3,8 @@
 # 🔴 クラウド（GitHub Actions 等）では動かない。ロボトレード は手元の `.env` と
 #    ローカルに clone したぽいロボのデータを読むため。定期実行はこのPCで持つ。
 #
-# 🔴 大引け(15:30)より前に走らせない。その日の四本値が確定していない。
-#    Python 側も 15:30 前なら**前営業日**を対象にするが、時刻はここで余裕を見て決める。
+# 🔵 2026-09-28 から既定は 14:30。大引け前なので Python 側は**前営業日**の確定した足を対象にし、
+#    判断した注文はその日の引けで約定させる（config の exec.fill_rule=next_close）。
 #
 # 🔵 休場日でも起動してよい。Python 側が休場を判定してトレードはスキップし、
 #    お知らせフィード（note・ポイ活）だけを流す。
@@ -15,7 +15,7 @@
 #   時刻変更: ... -Time "18:30"
 
 param(
-    [string]$Time = "17:00",
+    [string]$Time = "14:30",
     [string]$TaskName = "robotrade-daily",
     [switch]$Remove,
     [switch]$Show
@@ -55,10 +55,13 @@ if (-not (Test-Path $runner)) {
     exit 2
 }
 
-# 🔴 15:30 より前には登録させない（その日の四本値が確定していないため）
+# 🆕 2026-09-28：既定を 14:30 に（config の exec.fill_rule=next_close と対）。
+#    14:30 に前営業日の確定した足で判断し、**その日の引け**で発注する運用。
+#    🔴 15:00〜15:29 は登録させない（実行に数分かかり、判断が大引けの発注に間に合わない）。
+#    17:00 などに戻すなら config の exec.fill_rule も next_open に戻すこと（寄りで約定する運用）。
 $parsed = [datetime]::ParseExact($Time, "HH:mm", $null)
-if ($parsed.TimeOfDay -lt ([timespan]"15:30")) {
-    Write-Error "大引け(15:30)より前は指定できない。指定: $Time"
+if ($parsed.TimeOfDay -ge ([timespan]"15:00") -and $parsed.TimeOfDay -lt ([timespan]"15:30")) {
+    Write-Error "15:00〜15:29 は指定できない（判断が大引けの発注に間に合わない）。指定: $Time"
     exit 2
 }
 

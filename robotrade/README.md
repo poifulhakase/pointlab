@@ -40,7 +40,7 @@ Set-Location 'C:\Project\PointLab\stock-calendar'; git pull
 # ② カレンダーを書き出す（年1回でよい。休場日・マクロイベント・SQ）
 npx tsx robotrade/scripts/export_calendar.mjs 2024 2027
 
-# ③ 大引け後（15:30以降）に1回走らせる
+# ③ 平日14:30に1回走らせる（前営業日の確定した足で判断 → その日の引けで発注・2026-09-28〜）
 Set-Location 'C:\Project\PointLab\stock-calendar\ロボトレード'
 .\.venv\Scripts\python.exe main.py
 ```
@@ -142,7 +142,7 @@ System / Light / Dark があり、`.streamlit/config.toml` の `[theme.light]` /
 ぽいロボのデータを読むため。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1            # 平日17:00で登録
+powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1            # 平日14:30で登録（exec.fill_rule=next_close と対）
 powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -Show      # 状態を見る
 powershell -ExecutionPolicy Bypass -File scripts\register_task.ps1 -Remove    # 解除
 ```
@@ -240,7 +240,7 @@ robotrade/
 | 10 | 学習ループ(1) フィードバック | ⬜ 未（成績サマリは判断AIに渡している） |
 | 11 | point-in-time ユニバース＋バックテスト | ⬜ 未（J-Quants 登録が要る） |
 | 12 | 予測MLモデル | ⬜ 未（`ml_prob` は常に null で動く） |
-| 13 | スケジュール化 | ✅ タスクスケジューラ（平日17:00） |
+| 13 | スケジュール化 | ✅ タスクスケジューラ（平日14:30・2026-09-28 に17:00から変更） |
 
 ### 未実装のために「データなし」で回しているもの
 
