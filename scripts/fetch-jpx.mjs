@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { createRequire } from 'module'
+import { execFileSync } from 'child_process'
 
 const require = createRequire(import.meta.url)
 const XLSX    = require('../node_modules/xlsx/xlsx.js')
@@ -29,6 +30,19 @@ async function fetchBinary(url) {
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`)
   return res.arrayBuffer()
+}
+
+/**
+ * CFTC の取得。🔴 2026-10 に CFTC（Akamai）が Node の fetch だけを 403 で弾くようになった
+ * （同じURLでも curl は 200＝UAではなく通信の指紋で見ている）。fetch が落ちたら curl で取り直す。
+ */
+async function fetchCftcText(url) {
+  try {
+    return await fetchHtml(url)
+  } catch (e) {
+    console.warn(`  ⚠ fetch 失敗（${e.message}）→ curl で再取得`)
+    return execFileSync('curl', ['-sSfL', '--max-time', '60', '-A', 'Mozilla/5.0 (compatible; stock-calendar/1.0)', url], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+  }
 }
 
 async function fetchHtml(url) {
@@ -1172,7 +1186,7 @@ async function buildCotNikkeiData() {
   }
 
   // 最新週ファイル取得
-  const weeklyText = await fetchHtml('https://www.cftc.gov/dea/newcot/FinFutWk.txt')
+  const weeklyText = await fetchCftcText('https://www.cftc.gov/dea/newcot/FinFutWk.txt')
   const weeklyAdded = parseTffText(weeklyText)
   console.log(`  → 週次ファイル: ${weeklyAdded}件`)
 
