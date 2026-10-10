@@ -4,6 +4,8 @@ import { isRecord, field, asArray, asNumber } from './validate'
 // 各データ取得 util が個別に `(json as any).chart.result[0]...` していた脆いパースを集約する。
 export interface YahooChart {
   timestamps: number[]
+  /** 取引所の UTC からの時差（秒）。日付にするときは timestamps に足す（為替＝ロンドン時間で夏は 3600） */
+  gmtoffset: number
   open:   (number | null)[]
   high:   (number | null)[]
   low:    (number | null)[]
@@ -26,6 +28,7 @@ export function parseYahooChart(json: unknown): YahooChart | null {
 
   return {
     timestamps,
+    gmtoffset: asNumber(field(field(r, 'meta'), 'gmtoffset')) ?? 0,
     open:   series('open'),
     high:   series('high'),
     low:    series('low'),

@@ -826,18 +826,24 @@ async function fetchUsdjpyData() {
 
   const timestamps = result.timestamp ?? []
   const closes     = result.indicators?.quote?.[0]?.close ?? []
+  // 🔴 ドル円は取引所時間がロンドン。夏時間中は日足の時刻が「前日 23:00 UTC」なので、
+  //    UTC のまま日付にすると1日前にずれる（月曜の値が日曜の行に入っていた・2026-10-10 修正）。
+  //    取引所の時差（meta.gmtoffset 秒）を足してから日付にする。
+  const gmtoffset  = Number(result.meta?.gmtoffset ?? 0)
 
   const rows = []
   for (let i = 0; i < timestamps.length; i++) {
     const close = closes[i]
     if (close == null || isNaN(close)) continue
-    const d = new Date(timestamps[i] * 1000)
-    const time = d.toISOString().slice(0, 10)  // YYYY-MM-DD
+    const d = new Date((timestamps[i] + gmtoffset) * 1000)
+    const time = d.toISOString().slice(0, 10)  // YYYY-MM-DD（取引所の日付）
     rows.push({ time, close: Math.round(close * 100) / 100 })
   }
 
   // 既存JSONとマージ（単日ホール補完）→ 昇順（MA計算）
-  const merged = mergeYahooRaw('usdjpy.json', 'time', ['close'], rows)
+  // 土日の行は捨てる（為替の日足に土日は無い＝上のずれで過去に保存された行の掃除も兼ねる）
+  const isWeekend = (t) => { const w = new Date(`${t}T00:00:00Z`).getUTCDay(); return w === 0 || w === 6 }
+  const merged = mergeYahooRaw('usdjpy.json', 'time', ['close'], rows).filter(r => !isWeekend(r.time))
 
   // 前日比・MA5・MA5乖離率を付与
   const enriched = merged.map((r, i) => {

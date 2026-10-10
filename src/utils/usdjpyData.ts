@@ -37,7 +37,10 @@ function parseYahooClose(json: unknown): Map<string, number> {
   const map = new Map<string, number>()
   for (let i = 0; i < ts.length; i++) {
     if (cl[i] == null) continue
-    const time = new Date(ts[i] * 1000).toISOString().slice(0, 10)
+    // 🔴 為替はロンドン時間＝夏時間中は「前日 23:00 UTC」の足になる。時差を足して取引所の日付にする（2026-10-10）
+    const time = new Date((ts[i] + parsed.gmtoffset) * 1000).toISOString().slice(0, 10)
+    const w = new Date(`${time}T00:00:00Z`).getUTCDay()
+    if (w === 0 || w === 6) continue
     map.set(time, Math.round(cl[i]! * 100) / 100)
   }
   return map
