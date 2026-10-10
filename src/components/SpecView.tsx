@@ -623,7 +623,7 @@ const SPEC_SECTIONS = [
           'TOPIX（NT倍率用）: stooq.com ^tpx 日足CSV（サーバー側のみ直接取得可）→ public/data/topix.json。フロントは日経ライブ(^N225)とこのJSONから NT倍率＝日経÷TOPIX を算出',
           '騰落レシオ・空売り比率・PCR: nikkei225jp.com daily2year.json（col[7]/col[11]/col[16]）を一括取得・キャッシュ共有',
           'PCR = プット/コールOI比（日次・値域0.75〜2.52）。オプション市場引け後更新のためOIより数時間遅れる場合あり',
-          '裁定買い残: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json（col[8]、Refererヘッダー必要）を週次52件',
+          '裁定買い残: nikkei225jp.com/_data/_nfsDATA/json_DAY/daily_saitei.json（col[8]、Refererヘッダー必要）を週次52件',
           'USD/JPY: Yahoo Finance USDJPY=X（日次・3ヶ月・終値/前日比/MA5/MA5乖離）→ public/data/usdjpy.json',
           '🔴 Yahoo単日nullの自己補完（★2026-06-04 mergeYahooRaw）: Yahooが直近営業日のcloseを単日nullで返すことがあり、従来「null日スキップ＋丸ごと上書き」のため欠落が固着していた（例: USD/JPYで6/2欠落）。既存JSONの良データ(raw)を土台に今回取得分を上書きマージし単日ホールを自己補完。usdjpy / nk_futures_price / vix_daily / nas100_daily に適用',
         ],

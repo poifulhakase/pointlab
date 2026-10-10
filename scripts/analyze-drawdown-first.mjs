@@ -38,7 +38,7 @@ async function yahoo(sym, years) {
 }
 
 async function fetchEvalRatio() {
-  const t = await (await fetch('https://nikkei225jp.com/_data/_nfsWEB/DAY/dailyweek2.json', { headers: NIKKEI_UA, signal: AbortSignal.timeout(30000) })).text()
+  const t = await (await fetch('https://nikkei225jp.com/_data/_nfsDATA/data_DAY/dailyweek2.json', { headers: NIKKEI_UA, signal: AbortSignal.timeout(30000) })).text()
   const m = t.match(/var DAILY\s*=\s*(\[[\s\S]*?\])\s*;/)
   let s = m[1]
   for (let i = 0; i < 3; i++) s = s.replace(/,(\s*),/g, ',null,')

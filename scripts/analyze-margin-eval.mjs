@@ -26,7 +26,7 @@ const r2 = (v) => (v == null ? null : Math.round(v * 100) / 100)
 const addDays = (iso, n) => new Date(new Date(iso + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10)
 
 async function fetchEvalRatio() {
-  const t = await (await fetch('https://nikkei225jp.com/_data/_nfsWEB/DAY/dailyweek2.json', { headers: UA, signal: AbortSignal.timeout(30000) })).text()
+  const t = await (await fetch('https://nikkei225jp.com/_data/_nfsDATA/data_DAY/dailyweek2.json', { headers: UA, signal: AbortSignal.timeout(30000) })).text()
   const m = t.match(/var DAILY\s*=\s*(\[[\s\S]*?\])\s*;/)
   if (!m) throw new Error('DAILY が見つかりません')
   // 🔴 配列の穴を null で埋めてからパースする

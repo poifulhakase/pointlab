@@ -140,26 +140,33 @@ function senToOku(senYen) {
 // ── 投資主体別売買動向 ────────────────────────
 
 async function fetchInvestorData() {
-  // 今年・昨年のアーカイブページから stock_val_ リンクを収集
-  const archivePages = [
+  // 最新ページ・今年・昨年のアーカイブページからリンクを収集
+  // 🔴 2026-09-14 の週から JPX の形式が変わった:
+  //   旧 stock_val_1_YYMMN.xls（シート「Tokyo & Nagoya」・週が列に並ぶ）
+  //   新 stock_1_w_開始日_終了日.xlsx（1ファイル1週・市場が行に並ぶ）。新形式は最新ページ(index.html)にしか無い時期がある
+  const listPages = [
+    `${BASE}/markets/statistics-equities/investor-type/index.html`,             // 最新
     `${BASE}/markets/statistics-equities/investor-type/00-00-archives-00.html`, // 今年
     `${BASE}/markets/statistics-equities/investor-type/00-00-archives-01.html`, // 昨年
   ]
 
   const urls = []
-  for (const pageUrl of archivePages) {
+  for (const pageUrl of listPages) {
     try {
-      console.log(`\n[investor] アーカイブ取得: ${pageUrl}`)
+      console.log(`\n[investor] 一覧取得: ${pageUrl}`)
       const html = await fetchHtml(pageUrl)
-      const re = /href="(\/[^"]*stock_val_[^"]*\.xls[x]?)"/gi
+      const re = /href="(\/[^"]*(?:stock_val_|stock_1_w_)[^"]*\.xls[x]?)"/gi
       let m
-      while ((m = re.exec(html)) !== null) urls.push(BASE + m[1])
+      while ((m = re.exec(html)) !== null) {
+        const url = BASE + m[1]
+        if (!urls.includes(url)) urls.push(url)
+      }
     } catch (e) {
       console.warn(`  ✗ ${pageUrl}: ${e.message}`)
     }
   }
 
-  if (urls.length === 0) throw new Error('stock_val_ リンクが見つかりません')
+  if (urls.length === 0) throw new Error('投資部門別のリンクが見つかりません')
   console.log(`[investor] ${urls.length}件のファイルを発見（最大55件処理）`)
 
   const combined = []
@@ -170,10 +177,16 @@ async function fetchInvestorData() {
     try {
       const buf  = await fetchBinary(url)
       const wb   = XLSX.read(buf, { type: 'array' })
-      const wsName = wb.SheetNames.find(n => n.includes('Tokyo & Nagoya')) ?? wb.SheetNames[0]
-      const ws   = wb.Sheets[wsName]
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' })
-      const parsed = parseInvestorSheet(rows)
+      const weekly = url.match(/stock_1_w_\d{8}_(\d{4})(\d{2})(\d{2})\.xlsx?$/)
+      let parsed
+      if (weekly) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' })
+        parsed = parseInvestorWeekly(rows, `${weekly[1]}/${weekly[2]}/${weekly[3]}`)
+      } else {
+        const wsName = wb.SheetNames.find(n => n.includes('Tokyo & Nagoya')) ?? wb.SheetNames[0]
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wsName], { header: 1, raw: true, defval: '' })
+        parsed = parseInvestorSheet(rows)
+      }
       combined.push(...parsed)
       console.log(`  → ${parsed.length}週`)
     } catch (e) {
@@ -188,6 +201,51 @@ async function fetchInvestorData() {
     if (seen.has(r.date)) return false
     seen.add(r.date); return true
   }).slice(0, 52)
+}
+
+/**
+ * 新形式（2026-09-14 週〜 stock_1_w_*.xlsx）: 1ファイル1週。
+ * 見出しが多段（自己 > 現金/信用、委託 > 個人 > 現金/信用、海外投資家 > 法人/個人、… > 信託銀行）で、
+ * 各区分の下に「売・買・差引・合計」が並ぶ。区分の範囲内にある「差引」列を合計し、「二市場」の金額行（千円）から読む。
+ */
+function parseInvestorWeekly(rows, dateStr) {
+  const head = rows.slice(0, 12)
+
+  // label で始まる見出しセルの範囲 [start, end)（同じ行で次に値のあるセルの手前まで）
+  function spanOf(label) {
+    for (const row of head) {
+      for (let ci = 0; ci < row.length; ci++) {
+        if (!String(row[ci] ?? '').trim().startsWith(label)) continue
+        let end = ci + 1
+        while (end < row.length && String(row[end] ?? '').trim() === '') end++
+        return [ci, end]
+      }
+    }
+    throw new Error(`見出し「${label}」が見つかりません`)
+  }
+
+  const balRow = head.find(r => r.some(c => String(c).startsWith('差引')))
+  if (!balRow) throw new Error('「差引」列が見つかりません')
+  const balCols = balRow.flatMap((c, i) => String(c).startsWith('差引') ? [i] : [])
+
+  const niIdx = rows.findIndex(r => String(r[1] ?? '').startsWith('二市場'))
+  if (niIdx < 0) throw new Error('「二市場」行が見つかりません')
+  const valRow = [rows[niIdx], rows[niIdx + 1]].find(r => r && String(r[2] ?? '').startsWith('金額'))
+  if (!valRow) throw new Error('「二市場」の金額行が見つかりません')
+
+  const sumBal = (label) => {
+    const [s, e] = spanOf(label)
+    return balCols.filter(c => c >= s && c < e).reduce((acc, c) => acc + parseNum(valRow[c]), 0)
+  }
+
+  return [{
+    date:       dateStr,
+    label:      dateToLabel(dateStr),
+    foreigner:  senToOku(sumBal('海外投資家')),
+    individual: senToOku(sumBal('個人')),
+    trustBank:  senToOku(sumBal('信託銀行')),
+    securities: senToOku(sumBal('自己')),
+  }]
 }
 
 function parseInvestorSheet(rows) {
@@ -328,7 +386,7 @@ let _metricsCache = null
 async function fetchNikkeiJpMetrics() {
   if (_metricsCache) return _metricsCache
   console.log('[nikkei225jp] dailyweek2.json 取得...')
-  const res = await fetch('https://nikkei225jp.com/_data/_nfsWEB/DAY/dailyweek2.json', {
+  const res = await fetch('https://nikkei225jp.com/_data/_nfsDATA/data_DAY/dailyweek2.json', {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
       'Referer':    'https://nikkei225jp.com/data/sinyou.php',
@@ -377,7 +435,7 @@ let _daily2yearCache = null
 async function fetchDaily2YearMetrics() {
   if (_daily2yearCache) return _daily2yearCache
   console.log('[nikkei225jp] daily2year.json 取得...')
-  const res = await fetch('https://nikkei225jp.com/_data/_nfsWEB/DAY/daily2year.json', {
+  const res = await fetch('https://nikkei225jp.com/_data/_nfsDATA/data_DAY/daily2year.json', {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; stock-calendar/1.0)',
       'Referer':    'https://nikkei225jp.com/data/karauri.php',
@@ -527,26 +585,44 @@ async function fetchMarginData() {
   const combined = []
 
   // 過去推移表
+  // 🔴 2026-09 末に JPX が 06.html → 05.html へ移し、形式も分けた:
+  //   *_mtgk.xls（〜9/18 の長い履歴・合計が col1〜）／*.xlsx（9/25〜・合計が col13〜）。
+  //   どちらも「合計」見出しの列から 売残 金額=+1・買残 金額=+3 で読む
   try {
-    const html = await fetchHtml(`${BASE}/markets/statistics-equities/margin/06.html`)
-    const m = /href="(\/markets\/statistics-equities\/margin\/[^"]*\.xls[x]?)"/.exec(html)
-    if (!m) throw new Error('過去推移表リンクが見つかりません')
-    const url = BASE + m[1]
-    const buf = await fetchBinary(url)
-    const wb  = XLSX.read(buf, { type: 'array' })
-    const wsName = wb.SheetNames.find(n => n.includes('信用')) ?? wb.SheetNames[0]
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wsName], { header: 1, raw: true, defval: '' })
-    for (const row of rows) {
-      if (typeof row[0] !== 'number' || row[0] < 30000) continue
-      const dateStr  = serialToDateStr(row[0])
-      if (!dateStr) continue
-      const shortBal = typeof row[2] === 'number' ? row[2] : 0   // 合計売残 金額
-      const longBal  = typeof row[4] === 'number' ? row[4] : 0   // 合計買残 金額
-      if (shortBal <= 0 && longBal <= 0) continue
-      const ratio = shortBal > 0 ? Math.round((longBal / shortBal) * 100) / 100 : 0
-      combined.push({ date: dateStr, label: dateToLabel(dateStr), longBal, shortBal, ratio })
+    const html = await fetchHtml(`${BASE}/markets/statistics-equities/margin/05.html`)
+    const urls = []
+    const re = /href="(\/markets\/statistics-equities\/margin\/[^"]*\.xls[x]?)"/gi
+    let m
+    while ((m = re.exec(html)) !== null) urls.push(BASE + m[1])
+    if (urls.length === 0) throw new Error('過去推移表リンクが見つかりません')
+    for (const url of urls) {
+      try {
+        const buf = await fetchBinary(url)
+        const wb  = XLSX.read(buf, { type: 'array' })
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' })
+        let totalCol = -1
+        for (const row of rows.slice(0, 12)) {
+          totalCol = row.findIndex(c => String(c ?? '').trim().startsWith('合計'))
+          if (totalCol >= 0) break
+        }
+        if (totalCol < 0) throw new Error('「合計」見出しが見つかりません')
+        let n = 0
+        for (const row of rows) {
+          if (typeof row[0] !== 'number' || row[0] < 30000) continue
+          const dateStr  = serialToDateStr(row[0])
+          if (!dateStr) continue
+          const shortBal = typeof row[totalCol + 1] === 'number' ? row[totalCol + 1] : 0   // 合計売残 金額
+          const longBal  = typeof row[totalCol + 3] === 'number' ? row[totalCol + 3] : 0   // 合計買残 金額
+          if (shortBal <= 0 && longBal <= 0) continue
+          const ratio = shortBal > 0 ? Math.round((longBal / shortBal) * 100) / 100 : 0
+          combined.push({ date: dateStr, label: dateToLabel(dateStr), longBal, shortBal, ratio })
+          n++
+        }
+        console.log(`  → ${n}週`)
+      } catch (e) {
+        console.warn(`  ✗ ${url}: ${e.message}`)
+      }
     }
-    console.log(`  → ${combined.length}週`)
   } catch (e) {
     console.warn(`  ✗ 過去推移表: ${e.message}`)
   }
@@ -556,7 +632,8 @@ async function fetchMarginData() {
   try {
     const html = await fetchHtml(`${BASE}/markets/statistics-equities/margin/04.html`)
     const urls = []
-    const re = /href="(\/markets\/statistics-equities\/margin\/[^"]*mtseisan[^"]*\.xls[x]?)"/gi
+    // 旧 mtseisanYYYYMMDD00.xls（〜9/18）／新 YYYYMMDD_mtcurrent.xlsx（9/25〜）
+    const re = /href="(\/markets\/statistics-equities\/margin\/[^"]*(?:mtseisan|mtcurrent)[^"]*\.xls[x]?)"/gi
     let m
     while ((m = re.exec(html)) !== null) urls.push(BASE + m[1])
 
@@ -566,6 +643,18 @@ async function fetchMarginData() {
         const wb  = XLSX.read(buf, { type: 'array' })
         const ws  = wb.Sheets[wb.SheetNames[0]]
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' })
+        if (/mtcurrent/.test(url)) {
+          // 新形式: 1行目 col1 が日付シリアル。「信用取引残高合計」の次の金額行の 二市場 売残=col4・買残=col6（百万円）
+          const dateStr = typeof rows[0]?.[1] === 'number' ? serialToDateStr(rows[0][1]) : ''
+          const ti = rows.findIndex(r => String(r[1] ?? '').startsWith('信用取引残高合計'))
+          const valRow = ti >= 0 ? rows.slice(ti, ti + 2).find(r => String(r[3] ?? '').startsWith('金額')) : null
+          if (!dateStr || !valRow) throw new Error('信用取引残高合計の金額行が見つかりません')
+          const shortBal = parseNum(valRow[4])
+          const longBal  = parseNum(valRow[6])
+          const ratio = shortBal > 0 ? Math.round((longBal / shortBal) * 100) / 100 : 0
+          combined.push({ date: dateStr, label: dateToLabel(dateStr), longBal, shortBal, ratio })
+          continue
+        }
         const header = String(rows[0]?.[0] ?? '')
         const dm = header.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/)
         if (!dm) continue
@@ -855,7 +944,7 @@ async function fetchNkFuturePriceData() {
 }
 
 // ── PCR（プット・コール・レシオ）─────────────────────
-// データソース: nikkei225jp.com/_data/_nfsWEB/DAY/daily2year.json col[16]
+// データソース: nikkei225jp.com/_data/_nfsDATA/data_DAY/daily2year.json col[16]
 // PCR = プットOI / コールOI  通常値域: 0.75〜2.52（日経225オプション）
 // fetchDaily2YearMetrics() と同一ファイルをキャッシュ共有
 
@@ -867,7 +956,7 @@ async function fetchPcrDailyMap() {
 }
 
 // ── 裁定買い残 ────────────────────────────────────
-// データソース: nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json
+// データソース: nikkei225jp.com/_data/_nfsDATA/json_DAY/daily_saitei.json
 // 確認済み列構成（2026-04-19 確認）:
 //   col[0]:  タイムスタンプ(ms)
 //   col[7]:  裁定買い残 株数（千株）
@@ -878,7 +967,7 @@ async function fetchPcrDailyMap() {
 async function buildArbitrageData() {
   console.log('\n[arbitrage] 裁定買い残取得中...')
 
-  const res = await fetch('https://nikkei225jp.com/_data/_nfsWEB/HS_DATA_DAY/daily_saitei.json', {
+  const res = await fetch('https://nikkei225jp.com/_data/_nfsDATA/json_DAY/daily_saitei.json', {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       'Referer':    'https://nikkei225jp.com/data/saitei.php',
