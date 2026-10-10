@@ -22,7 +22,35 @@ export default async function handler(req, res) {
   const src = String(req.query.src || '')
   if (src === 'youtube') return youtube(req, res)
   if (src === 'rainviewer') return rainviewer(req, res)
+  if (src === 'yahoo') return yahoo(req, res)
   return res.status(400).json({ error: 'unknown source' })
+}
+
+/**
+ * Yahoo Finance のチャートAPI（VIX・NT倍率・ドル円・NASDAQ100・日経先物の画面が使う）。
+ * 🔴 2026-10-10 に無料の CORS プロキシ（allorigins・codetabs）が全部落ちてチャートが出なくなった
+ *    → 自前で中継する。取得先は query1/query2.finance.yahoo.com の /v8/finance/chart/ だけ。
+ */
+async function yahoo(req, res) {
+  let target
+  try { target = new URL(String(req.query.url || '')) } catch { return res.status(400).json({ error: 'url parameter required' }) }
+  if (target.protocol !== 'https:'
+    || !['query1.finance.yahoo.com', 'query2.finance.yahoo.com'].includes(target.hostname)
+    || !target.pathname.startsWith('/v8/finance/chart/')) {
+    return res.status(403).json({ error: 'Only Yahoo Finance chart API is allowed' })
+  }
+  try {
+    const r = await fetch(target.toString(), {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', Accept: 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!r.ok) return res.status(502).json({ error: `Yahoo returned ${r.status}` })
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600')
+    return res.status(200).json(await r.json())
+  } catch (e) {
+    console.error('[proxy/yahoo]', e)
+    return res.status(502).json({ error: 'Yahoo Finance への接続に失敗しました' })
+  }
 }
 
 /** YouTube RSS フィード（取得先は youtube.com のフィードだけ）。 */

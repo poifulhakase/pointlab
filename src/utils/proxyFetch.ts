@@ -1,5 +1,5 @@
 // Shared proxy fetch utility — CORS bypass for Yahoo Finance and external APIs
-// Tries allorigins.win/get → allorigins.win/raw → codetabs in sequence with backoff
+// 順番: Yahoo のチャートAPIは自前 /api/proxy?src=yahoo → allorigins.win/get → allorigins.win/raw → codetabs（backoff つき）
 
 type ProxyDef = { url: (u: string) => string; parse: (res: Response) => Promise<unknown> }
 
@@ -20,11 +20,17 @@ const PROXY_DEFS: ProxyDef[] = [
   { url: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, parse: parseRaw },
 ]
 
+// 🔴 Yahoo のチャートAPIは自前の /api/proxy?src=yahoo を先に使う（2026-10-10 に無料プロキシが全滅した）。
+//    無料プロキシは自前が落ちたとき（ローカルの vite dev では /api が無い）の予備。
+const OWN_YAHOO: ProxyDef = { url: u => `/api/proxy?src=yahoo&url=${encodeURIComponent(u)}`, parse: parseRaw }
+const isYahooChart = (u: string) => /^https:\/\/query[12]\.finance\.yahoo\.com\/v8\/finance\/chart\//.test(u)
+
 export async function proxyFetch(target: string, timeoutMs = 12000): Promise<unknown> {
+  const defs = isYahooChart(target) ? [OWN_YAHOO, ...PROXY_DEFS] : PROXY_DEFS
   let lastErr = ''
-  for (let i = 0; i < PROXY_DEFS.length; i++) {
+  for (let i = 0; i < defs.length; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, 500 * i))
-    const def = PROXY_DEFS[i]
+    const def = defs[i]
     try {
       const res = await fetch(def.url(target), { signal: AbortSignal.timeout(timeoutMs) })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
