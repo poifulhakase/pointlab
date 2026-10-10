@@ -1,13 +1,29 @@
 {
-  "updatedAt": "2026-10-09T18:28:54.411Z",
+  "updatedAt": "2026-10-10T02:06:07.504Z",
   "data": [
+    {
+      "date": "2026/10/02",
+      "label": "10月第1週",
+      "longBal": 6523552,
+      "shortBal": 750725,
+      "ratio": 8.69,
+      "evalRatio": -5.56
+    },
+    {
+      "date": "2026/09/25",
+      "label": "9月第4週",
+      "longBal": 6463837,
+      "shortBal": 1047238,
+      "ratio": 6.17,
+      "evalRatio": -5.48
+    },
     {
       "date": "2026/09/18",
       "label": "9月第3週",
       "longBal": 6455988,
       "shortBal": 884462,
       "ratio": 7.3,
-      "evalRatio": null
+      "evalRatio": -5.24
     },
     {
       "date": "2026/09/11",
@@ -15,7 +31,7 @@
       "longBal": 6645605,
       "shortBal": 795907,
       "ratio": 8.35,
-      "evalRatio": null
+      "evalRatio": -6.5
     },
     {
       "date": "2026/09/04",
@@ -23,7 +39,383 @@
       "longBal": 6480275,
       "shortBal": 846121,
       "ratio": 7.66,
-      "evalRatio": null
+      "evalRatio": -5.34
+    },
+    {
+      "date": "2026/08/28",
+      "label": "8月第5週",
+      "longBal": 6529363,
+      "shortBal": 825046,
+      "ratio": 7.91,
+      "evalRatio": -4.68
+    },
+    {
+      "date": "2026/08/21",
+      "label": "8月第4週",
+      "longBal": 6482543,
+      "shortBal": 896181,
+      "ratio": 7.23,
+      "evalRatio": -5.27
+    },
+    {
+      "date": "2026/08/14",
+      "label": "8月第3週",
+      "longBal": 6200665,
+      "shortBal": 893083,
+      "ratio": 6.94,
+      "evalRatio": -3.29
+    },
+    {
+      "date": "2026/08/07",
+      "label": "8月第2週",
+      "longBal": 6268057,
+      "shortBal": 778435,
+      "ratio": 8.05,
+      "evalRatio": -6.19
+    },
+    {
+      "date": "2026/07/31",
+      "label": "7月第5週",
+      "longBal": 6202268,
+      "shortBal": 728711,
+      "ratio": 8.51,
+      "evalRatio": -8.44
+    },
+    {
+      "date": "2026/07/24",
+      "label": "7月第4週",
+      "longBal": 6476938,
+      "shortBal": 725262,
+      "ratio": 8.93,
+      "evalRatio": -8.24
+    },
+    {
+      "date": "2026/07/17",
+      "label": "7月第3週",
+      "longBal": 6709743,
+      "shortBal": 681412,
+      "ratio": 9.85,
+      "evalRatio": -10.45
+    },
+    {
+      "date": "2026/07/10",
+      "label": "7月第2週",
+      "longBal": 6732228,
+      "shortBal": 795524,
+      "ratio": 8.46,
+      "evalRatio": -4.95
+    },
+    {
+      "date": "2026/07/03",
+      "label": "7月第1週",
+      "longBal": 6745211,
+      "shortBal": 785272,
+      "ratio": 8.59,
+      "evalRatio": -2.78
+    },
+    {
+      "date": "2026/06/26",
+      "label": "6月第4週",
+      "longBal": 7016733,
+      "shortBal": 1053736,
+      "ratio": 6.66,
+      "evalRatio": -3.09
+    },
+    {
+      "date": "2026/06/19",
+      "label": "6月第3週",
+      "longBal": 6475640,
+      "shortBal": 1016129,
+      "ratio": 6.37,
+      "evalRatio": 1.47
+    },
+    {
+      "date": "2026/06/12",
+      "label": "6月第2週",
+      "longBal": 6373312,
+      "shortBal": 874200,
+      "ratio": 7.29,
+      "evalRatio": -3.86
+    },
+    {
+      "date": "2026/06/05",
+      "label": "6月第1週",
+      "longBal": 6695866,
+      "shortBal": 888275,
+      "ratio": 7.54,
+      "evalRatio": -0.68
+    },
+    {
+      "date": "2026/05/29",
+      "label": "5月第5週",
+      "longBal": 6391535,
+      "shortBal": 902824,
+      "ratio": 7.08,
+      "evalRatio": -0.36
+    },
+    {
+      "date": "2026/05/22",
+      "label": "5月第4週",
+      "longBal": 6079329,
+      "shortBal": 912756,
+      "ratio": 6.66,
+      "evalRatio": -1.38
+    },
+    {
+      "date": "2026/05/15",
+      "label": "5月第3週",
+      "longBal": 6011376,
+      "shortBal": 878954,
+      "ratio": 6.84,
+      "evalRatio": -4.47
+    },
+    {
+      "date": "2026/05/01",
+      "label": "5月第1週",
+      "longBal": 5754752,
+      "shortBal": 840675,
+      "ratio": 6.85,
+      "evalRatio": -4.82
+    },
+    {
+      "date": "2026/04/24",
+      "label": "4月第4週",
+      "longBal": 5623290,
+      "shortBal": 980144,
+      "ratio": 5.74,
+      "evalRatio": -5.45
+    },
+    {
+      "date": "2026/04/17",
+      "label": "4月第3週",
+      "longBal": 5485965,
+      "shortBal": 943439,
+      "ratio": 5.81,
+      "evalRatio": -4.46
+    },
+    {
+      "date": "2026/04/10",
+      "label": "4月第2週",
+      "longBal": 5156513,
+      "shortBal": 973312,
+      "ratio": 5.3,
+      "evalRatio": -6.59
+    },
+    {
+      "date": "2026/04/03",
+      "label": "4月第1週",
+      "longBal": 5270469,
+      "shortBal": 867952,
+      "ratio": 6.07,
+      "evalRatio": -7.67
+    },
+    {
+      "date": "2026/03/27",
+      "label": "3月第5週",
+      "longBal": 5441948,
+      "shortBal": 1542042,
+      "ratio": 3.53,
+      "evalRatio": -6.9
+    },
+    {
+      "date": "2026/03/19",
+      "label": "3月第4週",
+      "longBal": 5802582,
+      "shortBal": 1021970,
+      "ratio": 5.68,
+      "evalRatio": -5.97
+    },
+    {
+      "date": "2026/03/13",
+      "label": "3月第3週",
+      "longBal": 5719487,
+      "shortBal": 1001233,
+      "ratio": 5.71,
+      "evalRatio": -5.69
+    },
+    {
+      "date": "2026/03/06",
+      "label": "3月第2週",
+      "longBal": 5718133,
+      "shortBal": 979359,
+      "ratio": 5.84,
+      "evalRatio": -4.42
+    },
+    {
+      "date": "2026/02/27",
+      "label": "2月第5週",
+      "longBal": 5540554,
+      "shortBal": 1003420,
+      "ratio": 5.52,
+      "evalRatio": -0.13
+    },
+    {
+      "date": "2026/02/20",
+      "label": "2月第4週",
+      "longBal": 5583035,
+      "shortBal": 1062099,
+      "ratio": 5.26,
+      "evalRatio": -2.15
+    },
+    {
+      "date": "2026/02/13",
+      "label": "2月第3週",
+      "longBal": 5285335,
+      "shortBal": 1022829,
+      "ratio": 5.17,
+      "evalRatio": -2.02
+    },
+    {
+      "date": "2026/02/06",
+      "label": "2月第2週",
+      "longBal": 5355280,
+      "shortBal": 929926,
+      "ratio": 5.76,
+      "evalRatio": -3.06
+    },
+    {
+      "date": "2026/01/30",
+      "label": "1月第5週",
+      "longBal": 5386720,
+      "shortBal": 881619,
+      "ratio": 6.11,
+      "evalRatio": -3.52
+    },
+    {
+      "date": "2026/01/23",
+      "label": "1月第4週",
+      "longBal": 5116197,
+      "shortBal": 912210,
+      "ratio": 5.61,
+      "evalRatio": -1.64
+    },
+    {
+      "date": "2026/01/16",
+      "label": "1月第3週",
+      "longBal": 4854198,
+      "shortBal": 927850,
+      "ratio": 5.23,
+      "evalRatio": -1.21
+    },
+    {
+      "date": "2026/01/09",
+      "label": "1月第2週",
+      "longBal": 4804466,
+      "shortBal": 862486,
+      "ratio": 5.57,
+      "evalRatio": -3.04
+    },
+    {
+      "date": "2025/12/26",
+      "label": "12月第4週",
+      "longBal": 4797627,
+      "shortBal": 1144402,
+      "ratio": 4.19,
+      "evalRatio": -5.85
+    },
+    {
+      "date": "2025/12/19",
+      "label": "12月第3週",
+      "longBal": 4901194,
+      "shortBal": 916258,
+      "ratio": 5.35,
+      "evalRatio": -8.1
+    },
+    {
+      "date": "2025/12/12",
+      "label": "12月第2週",
+      "longBal": 4762519,
+      "shortBal": 914726,
+      "ratio": 5.21,
+      "evalRatio": -7.56
+    },
+    {
+      "date": "2025/12/05",
+      "label": "12月第1週",
+      "longBal": 4782877,
+      "shortBal": 900561,
+      "ratio": 5.31,
+      "evalRatio": -8.13
+    },
+    {
+      "date": "2025/11/28",
+      "label": "11月第5週",
+      "longBal": 4701279,
+      "shortBal": 873348,
+      "ratio": 5.38,
+      "evalRatio": -7.11
+    },
+    {
+      "date": "2025/11/21",
+      "label": "11月第4週",
+      "longBal": 4732095,
+      "shortBal": 805991,
+      "ratio": 5.87,
+      "evalRatio": -8.66
+    },
+    {
+      "date": "2025/11/14",
+      "label": "11月第3週",
+      "longBal": 4834887,
+      "shortBal": 849712,
+      "ratio": 5.69,
+      "evalRatio": -7.14
+    },
+    {
+      "date": "2025/11/07",
+      "label": "11月第2週",
+      "longBal": 4735565,
+      "shortBal": 816132,
+      "ratio": 5.8,
+      "evalRatio": -7.19
+    },
+    {
+      "date": "2025/10/31",
+      "label": "10月第5週",
+      "longBal": 4502572,
+      "shortBal": 950342,
+      "ratio": 4.74,
+      "evalRatio": -6.95
+    },
+    {
+      "date": "2025/10/24",
+      "label": "10月第4週",
+      "longBal": 4437823,
+      "shortBal": 975221,
+      "ratio": 4.55,
+      "evalRatio": -6.88
+    },
+    {
+      "date": "2025/10/17",
+      "label": "10月第3週",
+      "longBal": 4498422,
+      "shortBal": 918202,
+      "ratio": 4.9,
+      "evalRatio": -8.94
+    },
+    {
+      "date": "2025/10/10",
+      "label": "10月第2週",
+      "longBal": 4362357,
+      "shortBal": 937565,
+      "ratio": 4.65,
+      "evalRatio": -7.88
+    },
+    {
+      "date": "2025/10/03",
+      "label": "10月第1週",
+      "longBal": 4284864,
+      "shortBal": 932192,
+      "ratio": 4.6,
+      "evalRatio": -7.75
+    },
+    {
+      "date": "2025/09/26",
+      "label": "9月第4週",
+      "longBal": 4211057,
+      "shortBal": 1514772,
+      "ratio": 2.78,
+      "evalRatio": -6.68
     }
   ]
 }

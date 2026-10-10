@@ -1,6 +1,30 @@
 {
-  "updatedAt": "2026-10-09T18:28:52.757Z",
+  "updatedAt": "2026-10-10T02:06:06.242Z",
   "data": [
+    {
+      "date": "2026/10/02",
+      "label": "10月第1週",
+      "foreigner": 9559.122,
+      "individual": 2229.276,
+      "trustBank": 1764.246,
+      "securities": -12225.733
+    },
+    {
+      "date": "2026/09/25",
+      "label": "9月第4週",
+      "foreigner": -930.078,
+      "individual": -86.423,
+      "trustBank": -3673.012,
+      "securities": 6520.448
+    },
+    {
+      "date": "2026/09/18",
+      "label": "9月第3週",
+      "foreigner": -6425.088,
+      "individual": -3117.47,
+      "trustBank": -2943.03,
+      "securities": 15120.401
+    },
     {
       "date": "2026/09/11",
       "label": "9月第2週",
@@ -392,30 +416,6 @@
       "individual": -4290.197,
       "trustBank": -4882.263,
       "securities": -776.438
-    },
-    {
-      "date": "2025/10/03",
-      "label": "10月第1週",
-      "foreigner": 12398.479,
-      "individual": 4222.633,
-      "trustBank": -2136.661,
-      "securities": -16457.035
-    },
-    {
-      "date": "2025/09/26",
-      "label": "9月第4週",
-      "foreigner": -5591.813,
-      "individual": 1293.689,
-      "trustBank": -3584.182,
-      "securities": 11158.485
-    },
-    {
-      "date": "2025/09/19",
-      "label": "9月第3週",
-      "foreigner": -2943.842,
-      "individual": -326.647,
-      "trustBank": -5310.154,
-      "securities": 7540.042
     }
   ]
 }
