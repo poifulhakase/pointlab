@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import styles from './TalkRoom.module.css'
 import {
   dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getDark, getName, getSoundOn, getUid, isSameDay,
-  AI_NAME, AI_UID, askAi, askCoach, checkCoachKey, clearCoachKey, getCoachKey, takeCoachKeyFromUrl, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
+  AI_NAME, AI_UID, askAi, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
   sameSender, sendMessage,
   getWeatherWall, setWeatherWall as saveWeatherWall,
   setDark as saveDark, setName as saveName, setSoundOn, setUid, shrinkImage, timeLabel,
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
 import { TalkWeather } from './TalkWeather'
+import { TalkCalendar } from './TalkCalendar'
+import { dateKey, emptyDraft, readEventFromText, watchEvents, type EventDraft, type TalkEvent } from '../utils/talkCalendar'
 import { REFRESH_MS, fetchWeather, strengthOf, wallpaperOf, type Wallpaper } from '../utils/talkWeather'
 
 /**
@@ -119,16 +121,12 @@ export function TalkRoom() {
   const [typing, setTyping] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const slim = typing && !toolsOpen
-  /*
-    🔵 本人の画面にだけ出すヒント（2026-09-29）。合言葉を持つ端末だけにボタンが出る。
-       🔴 ヒントは**トークに流さない・どこにも保存しない**（この画面に出して終わり）。
-  */
-  const [coachFromUrl] = useState(() => takeCoachKeyFromUrl())
-  const [coachKey, setCoachKey] = useState(() => coachFromUrl || getCoachKey())
-  const [coachOpen, setCoachOpen] = useState(false)
-  const [coachQ, setCoachQ] = useState('')
-  const [coachText, setCoachText] = useState('')
-  const [coachWaiting, setCoachWaiting] = useState(false)
+  /** 2人のカレンダー（右上の📅）。予定は開いていなくても購読しておく（開いた瞬間に出す） */
+  const [calOpen, setCalOpen] = useState(false)
+  const [events, setEvents] = useState<TalkEvent[]>([])
+  /** 長押し「カレンダーに追加」から渡す入力欄の中身と、AI の読み取り中かどうか */
+  const [calIncoming, setCalIncoming] = useState<EventDraft | null>(null)
+  const [calReading, setCalReading] = useState(false)
 
   const listRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -144,6 +142,13 @@ export function TalkRoom() {
     watchMessages(rows => setMessages(rows)).then(u => { unsubM = u })
     watchMembers(rows => setMembers(rows)).then(u => { unsubP = u })
     return () => { unsubM?.(); unsubP?.() }
+  }, [name])
+
+  useEffect(() => {
+    if (!name) return
+    let unsub: (() => void) | undefined
+    watchEvents(rows => setEvents(rows)).then(u => { unsub = u })
+    return () => { unsub?.() }
   }, [name])
 
   // 🔴 端末IDが変わっていたら、同じ表示名の一番新しい行を自分の行として引き継ぐ
@@ -208,7 +213,7 @@ export function TalkRoom() {
 
   // Esc で開いているものを閉じる（PC）
   useEffect(() => {
-    if (!emojiOpen && !menuOpen && !viewer && !acting && !replyTo) return
+    if (!emojiOpen && !menuOpen && !viewer && !acting && !replyTo && !calOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       // 開いているものから順に1つずつ閉じる（返信の下書きは最後）
@@ -216,11 +221,12 @@ export function TalkRoom() {
       if (viewer) { setViewer(null); return }
       if (menuOpen) { setMenuOpen(false); return }
       if (emojiOpen) { setEmojiOpen(false); return }
+      if (calOpen) { setCalOpen(false); return }
       setReplyTo(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [emojiOpen, menuOpen, viewer, acting, replyTo])
+  }, [emojiOpen, menuOpen, viewer, acting, replyTo, calOpen])
 
   /** 引用をタップしたら、元の発言へ飛んで一瞬光らせる。 */
   const jumpTo = (id: string) => {
@@ -346,31 +352,6 @@ export function TalkRoom() {
     }
   }, [uid, name])
 
-  // 合言葉つきのURLで開いたときだけ、サーバーと合っているかを1回確かめる
-  useEffect(() => {
-    if (!coachFromUrl) return
-    void checkCoachKey(coachFromUrl).then(ok => {
-      if (ok) { show('ヒントを有効にしました（この端末だけ）'); return }
-      clearCoachKey()
-      setCoachKey('')
-      show('合言葉が合いません')
-    })
-  }, [coachFromUrl])
-
-  /** ヒントを聞く。🔴 sendMessage しない＝相手には何も届かない */
-  const askHint = useCallback(async () => {
-    if (!coachKey || coachWaiting) return
-    setCoachWaiting(true)
-    setCoachText('')
-    try {
-      setCoachText(await askCoach(coachKey, messages, coachQ))
-    } catch (e) {
-      show(e instanceof Error ? e.message : 'ヒントを出せませんでした')
-    } finally {
-      setCoachWaiting(false)
-    }
-  }, [coachKey, coachWaiting, messages, coachQ])
-
   const doSend = useCallback(async () => {
     const body = text.trim()
     if (!body && picked.length === 0) return
@@ -472,6 +453,25 @@ export function TalkRoom() {
     setTimeout(() => setToast(''), 2600)
   }
 
+  /**
+   * 長押し「カレンダーに追加」。先に送った日付だけで入力欄を開き、AI の読み取りが返ったら埋める。
+   * 🔴 保存はしない（入力欄を見て本人が保存を押す）。読み取りに失敗しても手で入れられる。
+   */
+  const addToCalendar = (m: TalkMessage) => {
+    const base = { ...emptyDraft(dateKey(m.at)), src: m.id }
+    setCalIncoming(base)
+    setCalOpen(true)
+    if (!m.text.trim()) return
+    setCalReading(true)
+    readEventFromText(m.text, m.at)
+      .then(ev => {
+        const filled = Object.fromEntries(Object.entries(ev).filter(([, v]) => typeof v === 'string' && v))
+        setCalIncoming({ ...base, ...filled })
+      })
+      .catch(() => show('AIが読み取れませんでした（手で入れてください）'))
+      .finally(() => setCalReading(false))
+  }
+
   // ── 表示のための組み立て ───────────────────────────────────────
   // 🔴 同じ人の古い記録が混ざるので「最初の1件」ではなく一番進んだものを採る（peerState 参照）
   const peer = useMemo(() => peerState(members, uid, name), [members, uid, name])
@@ -529,6 +529,7 @@ export function TalkRoom() {
           <span className={styles.barName}>{peer?.name ?? 'トーク'}</span>
           {peer && <span className={styles.barSub}>{peerOnline ? 'オンライン' : `最終 ${timeLabel(peer.at)}`}</span>}
         </div>
+        <button className={styles.barBtn} onClick={() => { setCalIncoming(null); setCalOpen(true) }} aria-label="カレンダー">📅</button>
         <button className={styles.barBtn} onClick={() => setMenuOpen(v => !v)} aria-label="メニュー">⋯</button>
       </header>
 
@@ -608,30 +609,6 @@ export function TalkRoom() {
         </div>
       )}
 
-      {coachOpen && coachKey && (
-        <div className={styles.coach}>
-          <div className={styles.emojiHead}>
-            <span>💡 ヒント（あなたにだけ見えています・保存しません）</span>
-            <button onClick={() => setCoachOpen(false)} aria-label="ヒントを閉じる">閉じる ✕</button>
-          </div>
-          {coachText && <div className={styles.coachBubble}>{coachText}</div>}
-          {coachWaiting && <div className={styles.coachWait}>やり取りを読んでいます…（30秒ほど）</div>}
-          <div className={styles.coachAsk}>
-            <textarea
-              className={styles.coachInput}
-              value={coachQ}
-              rows={2}
-              maxLength={500}
-              placeholder="相談したいこと（空でもOK）例：次のデートにどう誘う？"
-              onChange={e => setCoachQ(e.target.value)}
-            />
-            <button className={styles.coachBtn} onClick={() => void askHint()} disabled={coachWaiting}>
-              {coachText ? 'もう一度' : 'ヒントを見る'}
-            </button>
-          </div>
-        </div>
-      )}
-
       {aiMode && (
         <div className={styles.aiBar}>
           <span>AIに聞く（Web検索つき）・やり取りは2人に見えます</span>
@@ -670,16 +647,6 @@ export function TalkRoom() {
             aria-pressed={aiMode}
             tabIndex={slim ? -1 : 0}
           >AI</button>
-          {/* 🔵 合言葉を持つ端末にだけ出る（相手の画面には出ない） */}
-          {coachKey && (
-            <button
-              className={`${styles.iconBtn} ${coachOpen ? styles.coachOn : ''}`}
-              onClick={() => { setCoachOpen(v => !v); setEmojiOpen(false) }}
-              aria-label="ヒント"
-              aria-pressed={coachOpen}
-              tabIndex={slim ? -1 : 0}
-            >💡</button>
-          )}
           <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る" tabIndex={slim ? -1 : 0}>🖼️</button>
           <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字" tabIndex={slim ? -1 : 0}>😀</button>
         </div>
@@ -741,11 +708,6 @@ export function TalkRoom() {
             <button onClick={() => { const v = !dark; setDark(v); saveDark(v); setMenuOpen(false) }}>
               画面の色：{dark ? '暗い' : '明るい'}
             </button>
-            {coachKey && (
-              <button onClick={() => {
-                clearCoachKey(); setCoachKey(''); setCoachOpen(false); setCoachText(''); setMenuOpen(false)
-              }}>ヒントをこの端末で消す</button>
-            )}
             <button className={styles.menuClose} onClick={() => setMenuOpen(false)}>閉じる</button>
           </div>
         </>
@@ -770,6 +732,7 @@ export function TalkRoom() {
                 setActing(null)
               }}>文字をコピー</button>
             )}
+            <button onClick={() => { const target = acting; setActing(null); addToCalendar(target) }}>カレンダーに追加</button>
             {isMine(acting, uid, name) && (
               <button className={styles.menuDanger} onClick={async () => {
                 const target = acting
@@ -787,6 +750,17 @@ export function TalkRoom() {
           <img src={viewer} alt="" />
           <button className={styles.viewerClose} aria-label="閉じる">✕</button>
         </div>
+      )}
+
+      {calOpen && (
+        <TalkCalendar
+          events={events}
+          myName={name}
+          incoming={calIncoming}
+          reading={calReading}
+          onClose={() => { setCalOpen(false); setCalIncoming(null) }}
+          onToast={show}
+        />
       )}
 
       {toast && <div className={styles.toast}>{toast}</div>}

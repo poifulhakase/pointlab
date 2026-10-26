@@ -336,74 +336,46 @@ ${link}` : String(text ?? '')
   return body.length > 1900 ? `${body.slice(0, 1900)}…` : body
 }
 
-// ── ひろ側だけに出すヒント（a=coach・2026-09-29） ─────────────────────
+// ── カレンダー：メッセージから予定を読み取る（a=event・2026-10-26） ─────────
 
 /**
- * ヒントの指示。
- *
- * 🔴 **2人の名前・人格・経緯はここに書かない**。このリポジトリは公開なので、
- *    人についての中身はサーバーの環境変数 `TALK_COACH_PROFILE` にだけ置く。
- * 🔴 ヒントは**本人の画面にだけ出て、トークにも Firestore にも残らない**。
- *    相手を動かす駆け引きではなく、本人が誠実に伝えるための手助けに限る（運用者と合意）。
+ * 予定の読み取りの指示。
+ * 🔴 読み取った結果は**入力欄を埋めるだけ**（保存は本人が押す）。分からない項目は空にさせる。
  */
-export const COACH_SYSTEM = [
-  'あなたは、恋愛関係の心理学（愛着理論・要求と撤退の循環・ゴットマンの研究・感情焦点化療法など）に',
-  '詳しい相談役です。2人のトークを読み、相談者本人の画面にだけ、次の関わり方のヒントを出します。',
-  '相手にはこのヒントは見えません。',
+export const EVENT_SYSTEM = [
+  'あなたは、2人のトークの1通から「予定」を読み取る係です。',
+  '予約やデートの日時・場所が書かれていれば、それを取り出してJSONだけを返します（説明は書かない）。',
   '',
-  '方針:',
-  '- 相談者が自分の気持ちを誠実に伝え、2人の悪い循環を止めるための手助けをする。',
-  '- 相手を思いどおりに動かす駆け引き・試す・気を引く技術は出さない。',
-  '- 相手の気持ちは断定しない（「〜かもしれない」）。トークに書かれていないことは作らない。',
-  '- 直近のやり取り（特に最後の数件）を重く見る。それより前と人物像は背景として使う。',
-  '- 相談者が人物像にある反応（身を引く・長文で説明する・謝りすぎる・大げさな言葉など）に',
-  '  陥りかけていたら、先に短く指摘する。',
-  '- 相談が書かれていれば、それに答える形にする。',
-  '',
-  '書き方（スマホの吹き出しに出る）:',
-  '- 日本語。前置き・あいさつは書かない。表・見出し記号（#）・太字（**）は使わない。',
-  '- 次の4つの見出しをこの記号で書き、それぞれ短く（全体で500字前後まで）:',
-  '  ◆いまの読み（2〜3行）',
-  '  ◆気をつけたいこと（1〜2点）',
-  '  ◆おすすめの方向（1〜3点）',
-  '  ◆言い回しの例（1〜2個・短く。そのまま送るより、自分の言葉に直して使う前提）',
-  '- 返事を急がないほうがよい場面（夜遅い・揉めている）なら、そう書く。',
+  '形: {"date":"YYYY-MM-DD","time":"HH:MM","title":"用件","place":"お店や場所","url":"","memo":""}',
+  '- 「明日」「土曜」「来週の金曜」などは、送った日時を基準に実際の日付へ直す。年が書かれていなければ、送った日以降で一番近い日。',
+  '- 時刻が書かれていなければ time は空。午後7時半は 19:30。',
+  '- title は短く（例：「ディナー」「映画」「〇〇の予約」）。お店の名前は place に入れる。',
+  '- url は本文にあるお店のページのURLだけ。無ければ空。',
+  '- memo は人数・予約名・コースなど、予定に役立つことを短く。無ければ空。',
+  '- 書かれていないことは作らない。分からない項目は空文字にする。',
 ].join('\n')
 
-/** 1通の上限（極端に長い1通で指示が埋もれないように。平均は40字前後） */
-const COACH_MAX_LINE = 1500
-
 /**
- * 画面から届いたメッセージを、AIが読むトークの全文にする。
- * 🔵 時刻は日本時間。引用・写真・AIへの質問も、見た目どおりに書き起こす。
- *
- * @param {Array<{n?:string,t?:string,at?:number,img?:boolean,reName?:string,reText?:string,ai?:boolean,toAi?:boolean}>} list
+ * AI の返事（JSON）を入力欄の形にする。形が崩れていたら空の項目で返す。
+ * @param {string} raw
+ * @returns {{date:string,time:string,title:string,place:string,url:string,memo:string}}
  */
-export function buildTranscript(list) {
-  if (!Array.isArray(list)) return ''
-  const fmt = new Intl.DateTimeFormat('ja-JP', {
-    timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit',
-  })
-  return list
-    .filter(m => m && typeof m.at === 'number')
-    .sort((a, b) => a.at - b.at)
-    .map(m => {
-      const who = m.ai ? 'AI（案内役）' : String(m.n ?? '').slice(0, 20)
-      const parts = []
-      if (m.reName || m.reText) parts.push(`（${String(m.reName ?? '')}「${String(m.reText ?? '').slice(0, 80)}」への返信）`)
-      if (m.toAi) parts.push('（AIへの質問）')
-      if (m.img) parts.push('［写真］')
-      const t = String(m.t ?? '').slice(0, COACH_MAX_LINE)
-      if (t) parts.push(t)
-      return `[${fmt.format(new Date(m.at))}] ${who}: ${parts.join(' ')}`
-    })
-    .join('\n')
-}
-
-/** 合言葉の照合（長さの違いで早く返さない）。未設定なら常に false。 */
-export function isCoachKey(given, expected) {
-  if (typeof given !== 'string' || typeof expected !== 'string' || !expected) return false
-  let diff = given.length ^ expected.length
-  for (let i = 0; i < expected.length; i++) diff |= (given.charCodeAt(i % (given.length || 1)) || 0) ^ expected.charCodeAt(i)
-  return diff === 0
+export function parseEventJson(raw) {
+  const out = { date: '', time: '', title: '', place: '', url: '', memo: '' }
+  const m = String(raw ?? '').match(/\{[\s\S]*\}/)
+  if (!m) return out
+  let j
+  try { j = JSON.parse(m[0]) } catch { return out }
+  if (!j || typeof j !== 'object') return out
+  const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+  const date = str(j.date, 10)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) out.date = date
+  const time = str(j.time, 5)
+  if (/^([01]?\d|2[0-3]):[0-5]\d$/.test(time)) out.time = time.padStart(5, '0')
+  out.title = str(j.title, 60)
+  out.place = str(j.place, 80)
+  const url = str(j.url, 500)
+  if (/^https?:\/\//.test(url)) out.url = url
+  out.memo = str(j.memo, 300)
+  return out
 }

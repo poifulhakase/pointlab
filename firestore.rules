@@ -91,6 +91,12 @@ service cloud.firestore {
         allow read: if inTalkRoom(roomId);
         allow create, update, delete: if inTalkRoom(roomId);
       }
+
+      // 🆕 2026-10-26：2人のカレンダー（予約したデート・お店）。メッセージと同じ扱い
+      match /events/{eventId} {
+        allow read: if inTalkRoom(roomId);
+        allow create, update, delete: if inTalkRoom(roomId);
+      }
       // 画像は本文とセットで作る。送り主を書かせて、同じ顔ぶれだけに絞る
       match /images/{imgId} {
         allow read: if inTalkRoom(roomId);

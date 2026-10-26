@@ -45,6 +45,9 @@ function roomPath(): string {
   return `talkRooms/${getRoomId()}`
 }
 
+/** 部屋のドキュメントパス（カレンダーなど、ほかのファイルから使う）。 */
+export const roomDocPath = roomPath
+
 // ── 型 ──────────────────────────────────────────────────────────────
 
 export interface TalkMessage {
@@ -250,6 +253,10 @@ async function restDelete(path: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw statusError(res.status)
 }
 
+/** 認証なしの書き込み・削除（カレンダーから使う）。 */
+export const restWriteDoc = restWrite
+export const restDeleteDoc = restDelete
+
 /**
  * HTTPの番号を持たせた例外。
  * 🔴 403（ルールに載っていない端末）と、ただの通信失敗を**呼び出し側で区別する**ため。
@@ -362,85 +369,6 @@ export async function askAi(q: string): Promise<string> {
   const data = await res.json().catch(() => ({})) as { text?: string; error?: string }
   if (!res.ok || !data.text) throw new Error(data.error || 'AIに聞けませんでした')
   return data.text
-}
-
-// ── 本人の画面にだけ出すヒント（2026-09-29） ────────────────────────
-
-const KEY_COACH = 'talk.coach'
-
-/**
- * URL に付いてきた合言葉（`#/t/<部屋>/h/<合言葉>`）を端末に覚え、URL からは消す。
- *
- * 🔴 **ボタンを出すかどうかは合言葉の有無だけで決める**。表示名は誰でも名乗れるので使わない。
- * 🔵 URL から消すのは、履歴や共有で合言葉つきのURLが相手に渡らないように。
- *
- * @returns URL から取り出した合言葉（無ければ空文字）
- */
-export function takeCoachKeyFromUrl(): string {
-  if (typeof window === 'undefined') return ''
-  const m = window.location.hash.match(HASH_RE)
-  const key = m?.[2] ?? ''
-  if (!key) return ''
-  writeStore(KEY_COACH, key)
-  try {
-    history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/t/${m?.[1]}`)
-  } catch { /* 消せなくても使える */ }
-  return key
-}
-
-export function getCoachKey(): string {
-  return readStore(KEY_COACH)
-}
-
-export function clearCoachKey(): void {
-  writeStore(KEY_COACH, '')
-}
-
-/** 合言葉がサーバーと合っているか（有効にしたときの1回だけ確かめる）。 */
-export async function checkCoachKey(key: string): Promise<boolean> {
-  try {
-    const res = await fetch('/api/talk?a=coach', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room: getRoomId(), key, check: true }),
-    })
-    return res.ok
-  } catch {
-    return true // 通信できないだけなら消さない（次に使うときに分かる）
-  }
-}
-
-/**
- * 関わり方のヒントを聞く（`api/talk.js` の `a=coach`）。
- *
- * 🔴 **トークには流さない**（sendMessage しない）。答えは呼んだ画面に出して終わり。
- * 🔵 トークは画面が持っている分を**そのまま全部**渡す（切らない・並べ替えない）。
- */
-export async function askCoach(
-  key: string,
-  messages: TalkMessage[],
-  q: string,
-): Promise<string> {
-  const res = await fetch('/api/talk?a=coach', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ room: getRoomId(), key, q, messages: toCoachMessages(messages) }),
-  })
-  const data = await res.json().catch(() => ({})) as { text?: string; error?: string }
-  if (res.status === 403) throw new Error('合言葉が合いません')
-  if (!res.ok || !data.text) throw new Error(data.error || 'ヒントを出せませんでした')
-  return data.text
-}
-
-/** ヒント用に送る形（名前・本文・時刻・引用・写真の有無・AIかどうか）。 */
-export function toCoachMessages(messages: TalkMessage[]) {
-  return messages.map(m => ({
-    n: m.name, t: m.text, at: m.at,
-    ...(m.img ? { img: true } : {}),
-    ...(m.re ? { reName: m.reName ?? '', reText: m.reText ?? '' } : {}),
-    ...(m.uid === AI_UID ? { ai: true } : {}),
-    ...(m.toAi ? { toAi: true } : {}),
-  }))
 }
 
 /** AI の発言に使う識別子（吹き出しを相手側に出すため、自分のIDとは必ず別にする）。 */
