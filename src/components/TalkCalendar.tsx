@@ -31,6 +31,8 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
   /** 開いている入力欄（id があれば編集） */
   const [edit, setEdit] = useState<{ id?: string; draft: EventDraft } | null>(null)
   const [saving, setSaving] = useState(false)
+  /** 左上🏠＝通知した物件の一覧（2026-11-02・中身はまだ空。物件探しの通知を入れる場所） */
+  const [propsOpen, setPropsOpen] = useState(false)
   /** 閉じた（保存した・やめた）長押し元のメッセージ。読み取りが後から返っても開き直さない */
   const closedSrc = useRef('')
 
@@ -87,6 +89,7 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
   return (
     <div className={styles.cal}>
       <header className={styles.head}>
+        <button className={styles.nav} onClick={() => setPropsOpen(true)} aria-label="通知した物件">🏠</button>
         <button className={styles.nav} onClick={() => move(-1)} aria-label="前の月">‹</button>
         <button className={styles.month} onClick={() => {
           const d = new Date(); setView({ y: d.getFullYear(), m: d.getMonth() }); setSelected(today)
@@ -140,6 +143,19 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
           </button>
         ))}
       </section>
+
+      {propsOpen && (
+        <>
+          <div className={styles.scrim} onClick={() => setPropsOpen(false)} />
+          <div className={styles.editor}>
+            <div className={styles.edHead}>
+              <span>🏠 通知した物件</span>
+              <button className={styles.nav} onClick={() => setPropsOpen(false)} aria-label="物件の一覧を閉じる">✕</button>
+            </div>
+            <p className={styles.none}>まだ通知した物件はありません</p>
+          </div>
+        </>
+      )}
 
       {edit && (
         <>
