@@ -6,7 +6,7 @@
  *   node scripts/notify-property.mjs <物件.json> --send     … 本当に保存＋通知する
  *   node scripts/notify-property.mjs <物件.json> --send --silent … 保存だけ（LINEに送らない）
  *
- * 物件.json は1件のオブジェクトか配列：
+ * 物件.json は1件のオブジェクトか配列（その日の1〜2件をまとめる。address は地図リンクに使う）：
  *   { "title": "〇〇マンション 302", "url": "https://...", "price": "12.5万円（管理費込）",
  *     "layout": "2LDK・55㎡", "access": "〇〇駅 徒歩7分", "address": "", "memo": "条件に合う理由", "query": "検索ワード" }
  *
@@ -37,18 +37,21 @@ if (!room) { console.error('部屋IDが見つかりません（firestore.rules �
 const raw = JSON.parse(readFileSync(resolve(file), 'utf8'))
 const list = Array.isArray(raw) ? raw : [raw]
 
-let failed = 0
-for (const property of list) {
-  const r = await fetch(`${BASE}/api/talk?a=property`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ room, property, dryRun: !send, silent }),
-  })
-  const j = await r.json().catch(() => ({}))
-  const name = property?.title ?? '(名前なし)'
-  if (!r.ok) { failed++; console.log(`✗ ${name}: ${r.status} ${j.error ?? ''}`); continue }
-  if (j.dup) { console.log(`- ${name}: 通知済み（${j.by === 'name' ? '物件名＋間取りが同じ' : '同じURL'}・飛ばした）`); continue }
-  if (!send) { console.log(`○ ${name}: 未通知（--send で送る）\n${j.text}\n`); continue }
-  console.log(`✓ ${name}: 保存${j.notified ? '＋LINE通知' : (silent ? '（通知なし）' : '・LINEは送れず')}`)
+// 🔵 その日の物件はまとめて1回で送る＝LINE には「本日の物件紹介」1通で届く
+const r = await fetch(`${BASE}/api/talk?a=property`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ room, properties: list, dryRun: !send, silent }),
+})
+const j = await r.json().catch(() => ({}))
+for (const x of j.results ?? []) {
+  console.log(x.dup ? `- ${x.title}: 通知済み（${x.by === 'name' ? '物件名＋間取りが同じ' : '同じURL'}・飛ばした）` : `○ ${x.title}`)
 }
-process.exitCode = failed ? 1 : 0  // 🔵 process.exit() だと Windows の Node が fetch 直後に落ちる（UV_HANDLE_CLOSING）
+if (!r.ok) {
+  console.log(`✗ ${r.status} ${j.error ?? ''}`)
+  process.exitCode = 1
+} else if (!send) {
+  console.log(j.text ? `\n--- 送る本文（--send で送る）---\n${j.text}` : '\n新しい物件はありません')
+} else {
+  console.log(j.notified ? '✓ 保存＋LINEに「本日の物件紹介」を送った' : (silent ? '✓ 保存だけ（通知なし）' : '△ 保存した・LINEは送れず（または新しい物件なし）'))
+}

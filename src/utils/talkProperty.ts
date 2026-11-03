@@ -43,6 +43,11 @@ export function sortProperties(rows: TalkProperty[]): TalkProperty[] {
   return rows.filter(r => !r.hidden).sort((a, b) => b.at - a.at)
 }
 
+/** Googleマップの検索リンク（住所があれば住所・無ければ物件名）。`api/_talkNotify.js` の propertyMapUrl と同じ作り。 */
+export function mapUrl(p: Pick<TalkProperty, 'title' | 'address'>): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address || p.title)}`
+}
+
 /** 「11/3」。 */
 export function shortDate(ms: number): string {
   const d = new Date(ms)

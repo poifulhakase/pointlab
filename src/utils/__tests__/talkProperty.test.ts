@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 // @ts-expect-error api/ は素の JS（型定義を持たない）
-import { buildPropertyText, normalizeProperty, propertyKey, propertySameKey } from '../../../api/_talkNotify.js'
+import { buildDailyPropertyText, normalizeProperty, propertyMapUrl, propertyKey, propertySameKey } from '../../../api/_talkNotify.js'
 import { sortProperties, toProperty } from '../talkProperty'
 
 // 🔵 本番は sha1。テストでは「入力が同じなら同じ・違えば違う」が分かれば足りる（末尾の差も先頭24桁に出るよう反転）
@@ -35,10 +35,22 @@ describe('物件のお知らせ（🏠）', () => {
     expect(propertySameKey({ title: 'ハイツ', layout: '2LDK', address: '' })).toBe('')
   })
 
-  it('LINE の本文に部屋のURLは入らず、空の行は詰める', () => {
-    const t = buildPropertyText(normalizeProperty({ ...base, price: '12万円', access: '駅 徒歩5分' }))
-    expect(t).toBe('🏠 物件のお知らせ\n〇〇ハイツ 302\n12万円\n駅 徒歩5分\nhttps://example.com/b/123/')
+  it('「本日の物件紹介」1通に、物件名・立地・地図・URL をまとめる（部屋URLは入れない）', () => {
+    const at = Date.UTC(2026, 10, 3, 3) // 11/3 12:00 JST
+    const a = normalizeProperty({ ...base, price: '12万円', layout: '2LDK', access: '駅 徒歩5分', address: '東京都板橋区東新町1' })
+    const b = normalizeProperty({ title: 'もうひとつ', url: 'https://example.com/2' })
+    const t = buildDailyPropertyText([a, b], at)
+    expect(t.split('\n')[0]).toBe('🏠 本日の物件紹介（11/3(火)）')
+    expect(t).toContain('① 〇〇ハイツ 302\n💴 12万円／2LDK\n🚉 駅 徒歩5分\n📍 東京都板橋区東新町1\n🗺 地図 https://www.google.com/maps/search/?api=1&query=')
+    expect(t).toContain('🔗 https://example.com/b/123/')
+    expect(t).toContain('② もうひとつ')
     expect(t).not.toMatch(/talk|#\//)
+    expect(buildDailyPropertyText([b], at)).toContain('\n\nもうひとつ\n')
+  })
+
+  it('地図は住所で引く（無ければ物件名）', () => {
+    expect(propertyMapUrl({ title: 'x', address: '東京都 豊島区' })).toBe(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('東京都 豊島区')}`)
+    expect(propertyMapUrl({ title: 'ハイツ', address: '' })).toContain(encodeURIComponent('ハイツ'))
   })
 
   it('一覧は隠したものを除いて新しい順・足りない項目は空', () => {

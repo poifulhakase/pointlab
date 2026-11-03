@@ -3,7 +3,7 @@ import styles from './TalkCalendar.module.css'
 import {
   dateKey, dateLabel, deleteEvent, emptyDraft, groupByDate, monthCells, normalizeDraft, saveEvent,
   type EventDraft, type TalkEvent } from '../utils/talkCalendar'
-import { hideProperty, shortDate, watchProperties, type TalkProperty } from '../utils/talkProperty'
+import { hideProperty, mapUrl, shortDate, watchProperties, type TalkProperty } from '../utils/talkProperty'
 
 /**
  * 2人のカレンダー（右上の📅で開く・2026-10-26）。
@@ -220,9 +220,11 @@ function PropertyList({ onToast }: { onToast: (msg: string) => void }) {
             <b>{p.title}</b>
             {(p.price || p.layout) && <span>{[p.price, p.layout].filter(Boolean).join('・')}</span>}
             {p.access && <span>🚉 {p.access}</span>}
+            {p.address && <span>📍 {p.address}</span>}
             {p.memo && <span className={styles.memo}>{p.memo}</span>}
             <span className={styles.propDate}>{shortDate(p.at)}{p.notified ? '' : '・LINE未送信'}</span>
           </a>
+          <a className={styles.nav} href={mapUrl(p)} target="_blank" rel="noopener noreferrer" aria-label="地図で見る">🗺</a>
           <button className={styles.nav} onClick={() => void remove(p)} aria-label="この物件を消す">✕</button>
         </div>
       ))}

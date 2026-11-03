@@ -264,3 +264,5 @@
 .propBody b { font-size: 14px; overflow-wrap: anywhere; }
 .propBody span { color: var(--talk-sub); overflow-wrap: anywhere; }
 .propDate { font-size: 11px; }
+
+.prop a.nav { display: flex; align-items: center; justify-content: center; font-size: 18px; text-decoration: none; }

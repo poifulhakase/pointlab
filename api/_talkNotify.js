@@ -443,18 +443,35 @@ export function propertySameKey(p) {
 }
 
 /**
- * LINEグループに送る本文。
- * 🔴 部屋のURL（部屋ID）は載せない＝グループの人に合言葉が見えてしまう。
- * @param {ReturnType<typeof normalizeProperty> & {}} p
+ * Googleマップの検索リンク（住所があれば住所・無ければ物件名）。
+ * @param {{title:string,address:string}} p
  */
-export function buildPropertyText(p) {
-  const line2 = [p.price, p.layout].filter(Boolean).join('・')
-  return [
-    '🏠 物件のお知らせ',
-    p.title,
-    line2,
-    p.access,
-    p.memo,
-    p.url,
-  ].filter(Boolean).join('\n')
+export function propertyMapUrl(p) {
+  const q = p.address || p.title
+  return q ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}` : ''
+}
+
+/**
+ * LINEグループに送る「本日の物件紹介」（その日の物件を1通にまとめる＝LINEの枠も1通ぶん）。
+ * 🔵 物件名・家賃と間取り・立地（駅／住所）・ひとこと・地図・物件ページ（運用者の指示・2026-11-03）。
+ * 🔴 部屋のURL（部屋ID）は載せない＝グループの人に合言葉が見えてしまう。
+ * @param {Array<any>} list  normalizeProperty を通したもの
+ * @param {number} now ミリ秒（見出しの日付・日本時間）
+ */
+export function buildDailyPropertyText(list, now) {
+  const day = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short' }).format(new Date(now))
+  const nums = ['①', '②', '③', '④', '⑤']
+  const blocks = list.map((p, i) => {
+    const money = [p.price, p.layout].filter(Boolean).join('／')
+    return [
+      `${list.length > 1 ? `${nums[i] ?? `${i + 1}.`} ` : ''}${p.title}`,
+      money && `💴 ${money}`,
+      p.access && `🚉 ${p.access}`,
+      p.address && `📍 ${p.address}`,
+      p.memo && `✨ ${p.memo}`,
+      `🗺 地図 ${propertyMapUrl(p)}`,
+      `🔗 ${p.url}`,
+    ].filter(Boolean).join('\n')
+  })
+  return [`🏠 本日の物件紹介（${day}）`, ...blocks].join('\n\n')
 }
