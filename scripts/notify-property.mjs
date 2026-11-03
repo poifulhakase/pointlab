@@ -51,4 +51,4 @@ for (const property of list) {
   if (!send) { console.log(`○ ${name}: 未通知（--send で送る）\n${j.text}\n`); continue }
   console.log(`✓ ${name}: 保存${j.notified ? '＋LINE通知' : (silent ? '（通知なし）' : '・LINEは送れず')}`)
 }
-process.exit(failed ? 1 : 0)
+process.exitCode = failed ? 1 : 0  // 🔵 process.exit() だと Windows の Node が fetch 直後に落ちる（UV_HANDLE_CLOSING）
