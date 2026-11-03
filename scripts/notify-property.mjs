@@ -4,7 +4,8 @@
  *
  *   node scripts/notify-property.mjs <物件.json>            … 重複を確かめて、送る本文を出すだけ（送らない）
  *   node scripts/notify-property.mjs <物件.json> --send     … 本当に保存＋通知する
- *   node scripts/notify-property.mjs <物件.json> --send --silent … 保存だけ（LINEに送らない）
+ *   node scripts/notify-property.mjs <物件.json> --send --silent … 保存とトークだけ（LINEに送らない）
+ *   🆕 送ると同じ本文がトークルームにも「🤖 AI」の発言として出る（--no-chat で出さない）
  *
  * 物件.json は1件のオブジェクトか配列（その日の1〜2件をまとめる。address は地図リンクに使う）：
  *   { "title": "〇〇マンション 302", "url": "https://...", "price": "12.5万円（管理費込）",
@@ -25,6 +26,7 @@ const args = process.argv.slice(2)
 const file = args.find(a => !a.startsWith('--'))
 const send = args.includes('--send')
 const silent = args.includes('--silent')
+const chat = !args.includes('--no-chat')
 if (!file) {
   console.error('使い方: node scripts/notify-property.mjs <物件.json> [--send] [--silent]')
   process.exit(1)
@@ -41,7 +43,7 @@ const list = Array.isArray(raw) ? raw : [raw]
 const r = await fetch(`${BASE}/api/talk?a=property`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ room, properties: list, dryRun: !send, silent }),
+  body: JSON.stringify({ room, properties: list, dryRun: !send, silent, chat }),
 })
 const j = await r.json().catch(() => ({}))
 for (const x of j.results ?? []) {
@@ -53,5 +55,5 @@ if (!r.ok) {
 } else if (!send) {
   console.log(j.text ? `\n--- 送る本文（--send で送る）---\n${j.text}` : '\n新しい物件はありません')
 } else {
-  console.log(j.notified ? '✓ 保存＋LINEに「本日の物件紹介」を送った' : (silent ? '✓ 保存だけ（通知なし）' : '△ 保存した・LINEは送れず（または新しい物件なし）'))
+  console.log(j.notified ? `✓ 保存＋LINEに「本日の物件紹介」を送った${chat ? '＋トークにも出した' : ''}` : (silent ? '✓ 保存だけ（通知なし）' : '△ 保存した・LINEは送れず（または新しい物件なし）'))
 }

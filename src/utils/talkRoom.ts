@@ -373,7 +373,10 @@ export async function askAi(q: string): Promise<string> {
   return data.text
 }
 
-/** AI の発言に使う識別子（吹き出しを相手側に出すため、自分のIDとは必ず別にする）。 */
+/**
+ * AI の発言に使う識別子（吹き出しを相手側に出すため、自分のIDとは必ず別にする）。
+ * 🔴 `api/talk.js` の postPropertyChat（物件紹介をトークに出す）も同じ値を書く。変えるときは両方。
+ */
 export const AI_UID = 'ai-assistant'
 export const AI_NAME = '🤖 AI'
 

@@ -333,6 +333,9 @@ async function readEvent(req, res) {
  *    ② URLが違っても物件名＋間取りが同じ（別サイトに載った同じ物件・`sameKey`）
  *    一覧の✕は `hidden` を立てるだけで記録は消さない＝消した物件も二度と通知されない。
  * 🔵 `dryRun: true` なら保存も通知もせず、重複の判定と送る本文だけ返す。
+ * 🆕 同じ本文を**トークルームにも AI の発言として出す**（運用者の指示・2026-11-03「AIが送ったみたいな感じで」）。
+ *    画面の「🤖 AI／AI が調べました」と同じ uid・名前を使う（`src/utils/talkRoom.ts` の AI_UID / AI_NAME）。
+ *    🔵 LINE が落ちてもトークには出す。`chat: false` で出さない。
  * 🔴 1日の件数に上限（既定2件・運用者の指示「1日1〜2件」）。LINE は1回送るとグループ2人で2通。
  */
 async function property(req, res) {
@@ -380,6 +383,7 @@ async function property(req, res) {
 
   // 先に保存（通知が落ちても一覧には残す）
   await Promise.all(fresh.map(f => col.doc(f.id).set({ ...f.p, sameKey: f.sameKey, at: now, notified: false, hidden: false })))
+  if (body.chat !== false) await postPropertyChat(db, room, text, now).catch(e => console.error("[talk/property] chat write failed:", e?.message))
 
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
   const target = process.env.LINE_TARGET_ID
@@ -400,6 +404,16 @@ async function property(req, res) {
     return res.status(200).json({ ok: true, results, notified: false })
   }
   return res.status(200).json({ ok: true, results, notified: true })
+}
+
+/**
+ * 物件紹介をトークルームに AI の発言として書く。
+ * 🔴 uid・名前は画面側の AI_UID（'ai-assistant'）／AI_NAME（'🤖 AI'）と必ずそろえる＝吹き出しが AI の見た目になる。
+ */
+async function postPropertyChat(db, room, text, at) {
+  const id = `${at}_prop${Math.random().toString(36).slice(2, 6)}`
+  await db.collection('talkRooms').doc(room).collection('messages').doc(id)
+    .set({ uid: 'ai-assistant', name: '🤖 AI', text, at })
 }
 
 // ── 送り先IDを調べるための webhook ───────────────────────────────
