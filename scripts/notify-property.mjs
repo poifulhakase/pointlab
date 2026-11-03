@@ -12,7 +12,7 @@
  *
  * 🔵 叩く先は本番の `/api/talk?a=property`（LINE の鍵は Vercel にしか無い）。
  * 🔵 部屋IDは `firestore.rules` の `inTalkRoom` から読む（書き写さない）。
- * 🔴 LINE の無料枠は月200通（1件＝2人で2通）。サーバー側でも1日10件まで。
+ * 🔴 LINE の無料枠は月200通（1件＝2人で2通）。サーバー側でも1日2件まで。
  */
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'

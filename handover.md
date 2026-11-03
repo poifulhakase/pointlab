@@ -48,7 +48,8 @@
 - 部品：`api/talk.js`（`property`）／`api/_talkNotify.js`（`normalizeProperty`・`propertyKey`・`propertySameKey`・`buildPropertyText`）／`src/utils/talkProperty.ts`／`TalkCalendar.tsx` の `PropertyList`／`talkRoom.ts` の `restWrite` に mask 引数。テスト `talkProperty.test.ts`（6件）。全587件green・lint/tsc/build OK。
 - 🏠ボタンは**トーク上部の📅の左**へ移した（運用者の指示）。パネルは `TalkCalendar.tsx` の `TalkProperties`（カレンダーの見出しからは外した）。
 - `firestore.rules`（properties の match）もデプロイ済み。
-- 🔵 探す条件は運用者から届き待ち。
+- 条件と手順・検索ワードの記録は `docs/property-search.md`。**1日2件まで**（既定を10→2）。**実施はClaudeを起動しているときだけ**。
+- 初回送信済み（2026-11-03）：ビューネ上板橋301／ルミナス池袋本町。再送テストで2件とも「通知済み」で弾かれることを確認。
 
 ### 2026-11-03(77): 2人のカレンダーの左上に🏠（通知した物件の一覧）を追加＝中身はまだ空
 

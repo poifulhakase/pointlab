@@ -358,7 +358,7 @@ async function property(req, res) {
   }
   if (body.dryRun) return res.status(200).json({ ok: true, dup: false, id, text })
 
-  const maxPerDay = Number(process.env.TALK_PROPERTY_MAX_PER_DAY || 10)
+  const maxPerDay = Number(process.env.TALK_PROPERTY_MAX_PER_DAY || 2)
   if (!(await rateLimit(db, `talk_${room.slice(0, 8)}_prop`, 'prop_day', maxPerDay, 24 * 60 * 60 * 1000))) {
     return res.status(429).json({ error: `1日の上限（${maxPerDay}件）に達しました` })
   }
