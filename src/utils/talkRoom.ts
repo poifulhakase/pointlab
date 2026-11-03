@@ -229,11 +229,13 @@ function toFields(obj: Record<string, unknown>): Record<string, unknown> {
  */
 const WRITE_TIMEOUT_MS = 45_000
 
-async function restWrite(path: string, data: Record<string, unknown>): Promise<void> {
+async function restWrite(path: string, data: Record<string, unknown>, mask?: string[]): Promise<void> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), WRITE_TIMEOUT_MS)
   try {
-    const res = await fetch(`${BASE}/${path}`, {
+    // 🔵 mask を渡すとその項目だけ書き換える（無ければドキュメントごと置き換え）
+    const q = mask?.length ? `?${mask.map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&')}` : ''
+    const res = await fetch(`${BASE}/${path}${q}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: toFields(data) }),

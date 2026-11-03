@@ -3,6 +3,7 @@ import styles from './TalkCalendar.module.css'
 import {
   dateKey, dateLabel, deleteEvent, emptyDraft, groupByDate, monthCells, normalizeDraft, saveEvent,
   type EventDraft, type TalkEvent } from '../utils/talkCalendar'
+import { hideProperty, shortDate, watchProperties, type TalkProperty } from '../utils/talkProperty'
 
 /**
  * 2人のカレンダー（右上の📅で開く・2026-10-26）。
@@ -31,8 +32,6 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
   /** 開いている入力欄（id があれば編集） */
   const [edit, setEdit] = useState<{ id?: string; draft: EventDraft } | null>(null)
   const [saving, setSaving] = useState(false)
-  /** 左上🏠＝通知した物件の一覧（2026-11-02・中身はまだ空。物件探しの通知を入れる場所） */
-  const [propsOpen, setPropsOpen] = useState(false)
   /** 閉じた（保存した・やめた）長押し元のメッセージ。読み取りが後から返っても開き直さない */
   const closedSrc = useRef('')
 
@@ -89,7 +88,6 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
   return (
     <div className={styles.cal}>
       <header className={styles.head}>
-        <button className={styles.nav} onClick={() => setPropsOpen(true)} aria-label="通知した物件">🏠</button>
         <button className={styles.nav} onClick={() => move(-1)} aria-label="前の月">‹</button>
         <button className={styles.month} onClick={() => {
           const d = new Date(); setView({ y: d.getFullYear(), m: d.getMonth() }); setSelected(today)
@@ -144,19 +142,6 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
         ))}
       </section>
 
-      {propsOpen && (
-        <>
-          <div className={styles.scrim} onClick={() => setPropsOpen(false)} />
-          <div className={styles.editor}>
-            <div className={styles.edHead}>
-              <span>🏠 通知した物件</span>
-              <button className={styles.nav} onClick={() => setPropsOpen(false)} aria-label="物件の一覧を閉じる">✕</button>
-            </div>
-            <p className={styles.none}>まだ通知した物件はありません</p>
-          </div>
-        </>
-      )}
-
       {edit && (
         <>
           <div className={styles.scrim} onClick={() => { if (!saving) closeEdit() }} />
@@ -186,7 +171,66 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
   )
 }
 
+/**
+ * 🏠 通知した物件のパネル（トーク上部の📅の左で開く・2026-11-03）。
+ * 🔵 見た目はカレンダーの入力欄と同じ（下から出す）ので、この CSS を使い回す。
+ */
+export function TalkProperties({ onClose, onToast }: { onClose: () => void; onToast: (msg: string) => void }) {
+  return (
+    <>
+      <div className={styles.scrim} onClick={onClose} />
+      <div className={styles.editor}>
+        <div className={styles.edHead}>
+          <span>🏠 通知した物件</span>
+          <button className={styles.nav} onClick={onClose} aria-label="物件の一覧を閉じる">✕</button>
+        </div>
+        <PropertyList onToast={onToast} />
+      </div>
+    </>
+  )
+}
+
+/**
+ * 通知した物件の一覧（🏠を開いたときだけ購読する）。
+ * 🔵 タップで物件ページを開く。✕ で一覧から隠す。
+ * 🔴 隠しても「通知済み」の記録は残る＝同じ物件はもう通知されない。
+ */
+function PropertyList({ onToast }: { onToast: (msg: string) => void }) {
+  const [rows, setRows] = useState<TalkProperty[] | null>(null)
+
+  useEffect(() => {
+    let unsub: (() => void) | undefined
+    let alive = true
+    watchProperties(r => { if (alive) setRows(r) }).then(u => { if (alive) unsub = u; else u() })
+    return () => { alive = false; unsub?.() }
+  }, [])
+
+  const remove = async (p: TalkProperty) => {
+    if (!confirmDelete('この物件を一覧から消しますか？（同じ物件はもう届きません）')) return
+    try { await hideProperty(p.id); onToast('消しました') } catch { onToast('消せませんでした') }
+  }
+
+  if (!rows) return <p className={styles.none}>読み込み中…</p>
+  if (rows.length === 0) return <p className={styles.none}>まだ通知した物件はありません</p>
+  return (
+    <div className={styles.props}>
+      {rows.map(p => (
+        <div key={p.id} className={styles.prop}>
+          <a className={styles.propBody} href={p.url} target="_blank" rel="noopener noreferrer">
+            <b>{p.title}</b>
+            {(p.price || p.layout) && <span>{[p.price, p.layout].filter(Boolean).join('・')}</span>}
+            {p.access && <span>🚉 {p.access}</span>}
+            {p.memo && <span className={styles.memo}>{p.memo}</span>}
+            <span className={styles.propDate}>{shortDate(p.at)}{p.notified ? '' : '・LINE未送信'}</span>
+          </a>
+          <button className={styles.nav} onClick={() => void remove(p)} aria-label="この物件を消す">✕</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /** 消す前の確認。🔵 2人の予定なので、押し間違いで消えないように1回聞く */
-function confirmDelete(): boolean {
-  try { return window.confirm('この予定を消しますか？') } catch { return true }
+function confirmDelete(msg = 'この予定を消しますか？'): boolean {
+  try { return window.confirm(msg) } catch { return true }
 }

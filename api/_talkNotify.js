@@ -379,3 +379,82 @@ export function parseEventJson(raw) {
   out.memo = str(j.memo, 300)
   return out
 }
+
+// ── 物件のお知らせ（2026-11-03・🏠） ─────────────────────────────────
+
+/**
+ * 物件1件を保存できる形に整える。URL と名前が無いものは null（通知しない）。
+ * 🔵 中身は検索したサイトの表記のまま文字列で持つ（家賃の書き方はサイトごとに違うため数値にしない）。
+ * @param {any} p
+ */
+export function normalizeProperty(p) {
+  if (!p || typeof p !== 'object') return null
+  const str = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '')
+  const url = str(p.url, 500)
+  const title = str(p.title, 80)
+  if (!/^https?:\/\//.test(url) || !title) return null
+  return {
+    title,
+    url,
+    price: str(p.price, 40),
+    layout: str(p.layout, 40),
+    access: str(p.access, 80),
+    address: str(p.address, 80),
+    /** 条件に合うと判断した理由（短く） */
+    memo: str(p.memo, 300),
+    /** 見つけたときの検索ワード（重複を避けるための記録） */
+    query: str(p.query, 120),
+  }
+}
+
+/**
+ * 物件のドキュメントID＝URL から決める（同じ物件を2回通知しない）。
+ * 🔵 末尾の `/`・`#…`・よくある計測用パラメータは落としてから比べる。
+ * @param {string} url
+ * @param {(s:string)=>string} hash  16進の要約を返す関数（呼び出し側で crypto を渡す）
+ */
+export function propertyKey(url, hash) {
+  let u = String(url || '').trim().replace(/#.*$/, '')
+  try {
+    const x = new URL(u)
+    for (const k of [...x.searchParams.keys()]) {
+      if (/^(utm_|fbclid|gclid|ref$|from$)/i.test(k)) x.searchParams.delete(k)
+    }
+    u = `${x.host.toLowerCase()}${x.pathname.replace(/\/+$/, '')}${x.search}`
+  } catch {
+    // URL として読めなければそのまま
+  }
+  return hash(u).slice(0, 24)
+}
+
+/**
+ * 別のサイトに載った同じ物件を見分ける鍵（URL が違っても同じ物件なら同じ値）。
+ * 🔵 物件名（全角半角・空白・記号をそろえる）＋間取り。間取りが無ければ物件名＋住所。
+ * 🔵 物件名が短すぎる（4文字未満）ときは当てにならないので空＝この判定はしない。
+ * @param {{title:string,layout:string,address:string}} p
+ */
+export function propertySameKey(p) {
+  const norm = s => String(s || '').normalize('NFKC').toLowerCase()
+    .replace(/[\s　・･\-－ー―‐()（）［］\[\]「」【】、。,.\/／]/g, '')
+  const title = norm(p.title)
+  if (title.length < 4) return ''
+  const second = norm(p.layout) || norm(p.address)
+  return `${title}|${second}`
+}
+
+/**
+ * LINEグループに送る本文。
+ * 🔴 部屋のURL（部屋ID）は載せない＝グループの人に合言葉が見えてしまう。
+ * @param {ReturnType<typeof normalizeProperty> & {}} p
+ */
+export function buildPropertyText(p) {
+  const line2 = [p.price, p.layout].filter(Boolean).join('・')
+  return [
+    '🏠 物件のお知らせ',
+    p.title,
+    line2,
+    p.access,
+    p.memo,
+    p.url,
+  ].filter(Boolean).join('\n')
+}

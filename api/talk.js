@@ -1,6 +1,7 @@
 // POST /api/talk?a=notify   … 新着が出たことを LINE へ知らせる（相手のロック画面に出す）
 // POST /api/talk?a=ai       … トークの中で AI に聞く（Web検索つき・お店や周辺情報の提案）
 // POST /api/talk?a=event    … メッセージ1通から予定（日付・時刻・お店）を読み取る（カレンダーの入力欄を埋める）
+// POST /api/talk?a=property … 物件1件を部屋の properties に保存し、LINEグループへ知らせる（🏠・2026-11-03）
 // POST /api/talk?a=webhook  … LINE の webhook。送り先ID（グループなら C…）を調べるためだけ
 //
 // 🔴 ぽいロボ本体とは無関係の間借り機能。使い終わったら消す（docs/talk-notify-setup.md）。
@@ -34,7 +35,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import admin from 'firebase-admin'
 import rateLimit from './_ratelimit.js'
-import { AI_SYSTEM, EVENT_SYSTEM, parseEventJson, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, MAX_BODY, MAX_BODY_SELF, minIntervalSec, pickNotifyRoute, shouldShowBody, shouldSuppressStreak, splitMemory, withMemory } from './_talkNotify.js'
+import { createHash } from 'node:crypto'
+import { AI_SYSTEM, EVENT_SYSTEM, buildPropertyText, normalizeProperty, propertyKey, propertySameKey, parseEventJson, buildDiscordBody, buildNotifyText, buildRoomUrl, cleanAiText, isRoomId, MAX_BODY, MAX_BODY_SELF, minIntervalSec, pickNotifyRoute, shouldShowBody, shouldSuppressStreak, splitMemory, withMemory } from './_talkNotify.js'
 
 const LINE_PUSH = 'https://api.line.me/v2/bot/message/push'
 const LINE_REPLY = 'https://api.line.me/v2/bot/message/reply'
@@ -59,6 +61,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
   if (action === 'ai') return ai(req, res)
   if (action === 'event') return readEvent(req, res)
+  if (action === 'property') return property(req, res)
   return notify(req, res)
 }
 
@@ -316,6 +319,72 @@ async function readEvent(req, res) {
     console.error('[talk/event] error:', e?.status, e?.message)
     return res.status(502).json({ error: '読み取れませんでした', code: e?.status ?? 0 })
   }
+}
+
+// ── 物件のお知らせ（🏠） ─────────────────────────────────────────
+
+/**
+ * 物件1件を `talkRooms/<部屋>/properties/<URLから決めたID>` に保存し、LINEグループ（2人）へ送る。
+ *
+ * 🔵 叩くのは手元の `scripts/notify-property.mjs`（Claude が検索して見つけた物件を流す）。
+ * 🔴 **同じ物件は2回送らない**（運用者の指示・2026-11-03）。`dup: true` を返して保存も通知もしない：
+ *    ① 同じURL（ドキュメントIDがURLから決まる）
+ *    ② URLが違っても物件名＋間取りが同じ（別サイトに載った同じ物件・`sameKey`）
+ *    一覧の✕は `hidden` を立てるだけで記録は消さない＝消した物件も二度と通知されない。
+ * 🔵 `dryRun: true` なら保存も通知もせず、重複かどうかと送る本文だけ返す。
+ * 🔴 LINE の無料枠は月200通（1回送るとグループ2人で2通）。1日の上限で鳴らし過ぎを防ぐ。
+ * 🔴 部屋のURLは本文に入れない（部屋ID＝合言葉）。
+ */
+async function property(req, res) {
+  const room = process.env.TALK_ROOM_ID
+  const body = readBody(req)
+  if (!room || !isRoomId(body.room) || body.room !== room) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  const p = normalizeProperty(body.property)
+  if (!p) return res.status(400).json({ error: 'URL と物件名が要ります' })
+
+  let db
+  try { db = getDb() } catch { return res.status(503).json({ error: '保存先が使えません' }) }
+  const id = propertyKey(p.url, s => createHash('sha1').update(s).digest('hex'))
+  const ref = db.collection('talkRooms').doc(room).collection('properties').doc(id)
+  const text = buildPropertyText(p)
+
+  const sameKey = propertySameKey(p)
+  if ((await ref.get()).exists) return res.status(200).json({ ok: true, dup: true, id, by: 'url' })
+  if (sameKey) {
+    const hit = await ref.parent.where('sameKey', '==', sameKey).limit(1).get()
+    if (!hit.empty) return res.status(200).json({ ok: true, dup: true, id: hit.docs[0].id, by: 'name' })
+  }
+  if (body.dryRun) return res.status(200).json({ ok: true, dup: false, id, text })
+
+  const maxPerDay = Number(process.env.TALK_PROPERTY_MAX_PER_DAY || 10)
+  if (!(await rateLimit(db, `talk_${room.slice(0, 8)}_prop`, 'prop_day', maxPerDay, 24 * 60 * 60 * 1000))) {
+    return res.status(429).json({ error: `1日の上限（${maxPerDay}件）に達しました` })
+  }
+
+  // 先に保存（通知が落ちても一覧には残す）
+  await ref.set({ ...p, sameKey, at: Date.now(), notified: false, hidden: false })
+
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const target = process.env.LINE_TARGET_ID
+  if (!token || !target || body.silent) return res.status(200).json({ ok: true, dup: false, id, notified: false })
+  try {
+    const r = await fetch(LINE_PUSH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: target, messages: [{ type: 'text', text }] }),
+    })
+    if (!r.ok) {
+      console.error('[talk/property] LINE push failed:', r.status)
+      return res.status(200).json({ ok: true, dup: false, id, notified: false, lineStatus: r.status })
+    }
+    await ref.update({ notified: true })
+  } catch (e) {
+    console.error('[talk/property] LINE push error:', e?.message)
+    return res.status(200).json({ ok: true, dup: false, id, notified: false })
+  }
+  return res.status(200).json({ ok: true, dup: false, id, notified: true })
 }
 
 // ── 送り先IDを調べるための webhook ───────────────────────────────

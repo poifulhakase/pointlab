@@ -240,3 +240,27 @@
 .save { color: #fff; background: var(--talk-accent); }
 .cancel { color: var(--talk-ink2); background: var(--talk-aibtn-bg); }
 .danger { margin-right: auto; color: #d8483c; background: none; }
+
+/* 🏠 通知した物件の一覧（2026-11-03） */
+.props { display: flex; flex-direction: column; gap: 8px; }
+.prop {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 8px 10px 12px;
+  background: var(--talk-hover-soft);
+  border-radius: 10px;
+}
+.propBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--talk-text);
+  text-decoration: none;
+}
+.propBody b { font-size: 14px; overflow-wrap: anywhere; }
+.propBody span { color: var(--talk-sub); overflow-wrap: anywhere; }
+.propDate { font-size: 11px; }

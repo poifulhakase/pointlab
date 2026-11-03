@@ -9,7 +9,7 @@ import {
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
 import { TalkWeather } from './TalkWeather'
-import { TalkCalendar } from './TalkCalendar'
+import { TalkCalendar, TalkProperties } from './TalkCalendar'
 import { dateKey, emptyDraft, readEventFromText, watchEvents, type EventDraft, type TalkEvent } from '../utils/talkCalendar'
 import { REFRESH_MS, fetchWeather, strengthOf, wallpaperOf, type Wallpaper } from '../utils/talkWeather'
 
@@ -123,6 +123,8 @@ export function TalkRoom() {
   const slim = typing && !toolsOpen
   /** 2人のカレンダー（右上の📅）。予定は開いていなくても購読しておく（開いた瞬間に出す） */
   const [calOpen, setCalOpen] = useState(false)
+  /** 🏠 通知した物件の一覧（📅の左・2026-11-03） */
+  const [propsOpen, setPropsOpen] = useState(false)
   const [events, setEvents] = useState<TalkEvent[]>([])
   /** 長押し「カレンダーに追加」から渡す入力欄の中身と、AI の読み取り中かどうか */
   const [calIncoming, setCalIncoming] = useState<EventDraft | null>(null)
@@ -213,7 +215,7 @@ export function TalkRoom() {
 
   // Esc で開いているものを閉じる（PC）
   useEffect(() => {
-    if (!emojiOpen && !menuOpen && !viewer && !acting && !replyTo && !calOpen) return
+    if (!emojiOpen && !menuOpen && !viewer && !acting && !replyTo && !calOpen && !propsOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       // 開いているものから順に1つずつ閉じる（返信の下書きは最後）
@@ -221,12 +223,13 @@ export function TalkRoom() {
       if (viewer) { setViewer(null); return }
       if (menuOpen) { setMenuOpen(false); return }
       if (emojiOpen) { setEmojiOpen(false); return }
+      if (propsOpen) { setPropsOpen(false); return }
       if (calOpen) { setCalOpen(false); return }
       setReplyTo(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [emojiOpen, menuOpen, viewer, acting, replyTo, calOpen])
+  }, [emojiOpen, menuOpen, viewer, acting, replyTo, calOpen, propsOpen])
 
   /** 引用をタップしたら、元の発言へ飛んで一瞬光らせる。 */
   const jumpTo = (id: string) => {
@@ -529,6 +532,7 @@ export function TalkRoom() {
           <span className={styles.barName}>{peer?.name ?? 'トーク'}</span>
           {peer && <span className={styles.barSub}>{peerOnline ? 'オンライン' : `最終 ${timeLabel(peer.at)}`}</span>}
         </div>
+        <button className={styles.barBtn} onClick={() => setPropsOpen(true)} aria-label="通知した物件">🏠</button>
         <button className={styles.barBtn} onClick={() => { setCalIncoming(null); setCalOpen(true) }} aria-label="カレンダー">📅</button>
         <button className={styles.barBtn} onClick={() => setMenuOpen(v => !v)} aria-label="メニュー">⋯</button>
       </header>
@@ -762,6 +766,8 @@ export function TalkRoom() {
           onToast={show}
         />
       )}
+
+      {propsOpen && <TalkProperties onClose={() => setPropsOpen(false)} onToast={show} />}
 
       {toast && <div className={styles.toast}>{toast}</div>}
     </div>

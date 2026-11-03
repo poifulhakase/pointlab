@@ -39,6 +39,17 @@
 
 ## 🟢 現在の状態
 
+### 2026-11-03(78): 🏠の中身＝物件の保存・一覧・LINE通知（本番反映済み）
+
+- 流れ：Claude が検索 → 物件をJSONに書く → `node scripts/notify-property.mjs <json>`（確認だけ）→ `--send` で本番 `POST /api/talk?a=property` → `talkRooms/<部屋>/properties` に保存＋LINEグループ（`LINE_TARGET_ID`＝ひろ・なみ）へ送る。`--silent` は保存だけ。
+- 🔴 **同じ物件は送らない**（運用者の指示）：①同じURL（ドキュメントID＝URLのsha1・計測パラメータ/末尾/#を落とす）②物件名＋間取り（無ければ住所）が同じ＝別サイトの同じ物件（`sameKey`・全角半角/空白/記号をそろえる・物件名4文字未満は判定しない）。
+- 一覧の✕は**隠すだけ**（`hidden`）。ルールは `hidden` だけ更新可・create/delete 不可＝消して再通知されることがない。
+- LINE本文に部屋URLは入れない。1日10件まで（`TALK_PROPERTY_MAX_PER_DAY`）。LINE枠は月200通＝1件2通。
+- 部品：`api/talk.js`（`property`）／`api/_talkNotify.js`（`normalizeProperty`・`propertyKey`・`propertySameKey`・`buildPropertyText`）／`src/utils/talkProperty.ts`／`TalkCalendar.tsx` の `PropertyList`／`talkRoom.ts` の `restWrite` に mask 引数。テスト `talkProperty.test.ts`（6件）。全587件green・lint/tsc/build OK。
+- 🏠ボタンは**トーク上部の📅の左**へ移した（運用者の指示）。パネルは `TalkCalendar.tsx` の `TalkProperties`（カレンダーの見出しからは外した）。
+- `firestore.rules`（properties の match）もデプロイ済み。
+- 🔵 探す条件は運用者から届き待ち。
+
 ### 2026-11-03(77): 2人のカレンダーの左上に🏠（通知した物件の一覧）を追加＝中身はまだ空
 
 - 運用者の構想：物件探し（条件に合う物件をClaudeが検索→トークのLINEグループへリンク付きで通知）。通知した物件を🏠で一覧できるようにする。
