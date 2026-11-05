@@ -1,11 +1,19 @@
 {
-  "updatedAt": "2026-11-04T19:59:27.698Z",
+  "updatedAt": "2026-11-05T18:12:05.776Z",
   "data": [
     {
+      "time": "2026-11-05",
+      "close": 157.68,
+      "change": -0.79,
+      "changePct": -0.5,
+      "ma5": 157.91,
+      "ma5dev": -0.15
+    },
+    {
       "time": "2026-11-04",
-      "close": 158.48,
-      "change": 0.57,
-      "changePct": 0.36,
+      "close": 158.47,
+      "change": 0.56,
+      "changePct": 0.35,
       "ma5": 157.94,
       "ma5dev": 0.34
     },
