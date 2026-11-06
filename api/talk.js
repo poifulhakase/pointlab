@@ -375,8 +375,10 @@ async function property(req, res) {
   if (body.dryRun) return res.status(200).json({ ok: true, results, text })
 
   const maxPerDay = Number(process.env.TALK_PROPERTY_MAX_PER_DAY || 2)
+  // 🔵 日本時間の暦の日で数える（2026-11-07）。直近24時間だと前日の夜に送った分で翌朝止まる
+  const jstDay = new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '')
   for (let i = 0; i < fresh.length; i++) {
-    if (!(await rateLimit(db, `talk_${room.slice(0, 8)}_prop`, 'prop_day', maxPerDay, 24 * 60 * 60 * 1000))) {
+    if (!(await rateLimit(db, `talk_${room.slice(0, 8)}_prop`, `prop_day_${jstDay}`, maxPerDay, 24 * 60 * 60 * 1000))) {
       return res.status(429).json({ error: `1日の上限（${maxPerDay}件）に達しました`, results })
     }
   }

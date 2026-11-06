@@ -34,3 +34,8 @@ dist-ssr
 .tradingview-session/
 .captures/
 .cache/
+
+# 🏠 物件探しの自動実行（状態・ログ・その日の物件JSON）
+.property-auto.json
+.property-auto.log
+.property-auto-today.json
