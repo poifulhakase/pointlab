@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import styles from './TalkCalendar.module.css'
+import { IconClose, IconHome, IconLeft, IconMap, IconPlus, IconRight } from './TalkIcons'
 import {
   dateKey, dateLabel, deleteEvent, emptyDraft, groupByDate, monthCells, normalizeDraft, saveEvent,
   type EventDraft, type TalkEvent } from '../utils/talkCalendar'
@@ -8,7 +9,7 @@ import { hideProperty, mapUrl, shortDate, watchProperties, type TalkProperty } f
 /**
  * 2人のカレンダー（右上の📅で開く・2026-10-26）。
  *
- * 🔵 月のマス目＋選んだ日の予定。予定のある日に印。
+ * 🔵 月のマス目を画面いっぱいに出し、日付を押すとその日の予定が下から出る（2026-11-07）。
  * 🔵 トークの長押し「カレンダーに追加」から来たときは、AI が読み取った内容で入力欄が開く（`incoming`）。
  * 🔴 保存は必ず本人が押す（AI は入力欄を埋めるだけ）。
  * 🔵 色はトーク画面の変数（--talk-*）をそのまま使う＝明るい／暗いに追従する。
@@ -29,6 +30,8 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
     return { y: d.getFullYear(), m: d.getMonth() }
   })
   const [selected, setSelected] = useState(today)
+  /** 選んだ日の予定（下から出す）。月の表は画面いっぱいに使う（2026-11-07） */
+  const [dayOpen, setDayOpen] = useState(false)
   /** 開いている入力欄（id があれば編集） */
   const [edit, setEdit] = useState<{ id?: string; draft: EventDraft } | null>(null)
   const [saving, setSaving] = useState(false)
@@ -69,6 +72,7 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
     try {
       await saveEvent(edit.draft, myName, edit.id)
       setSelected(edit.draft.date)
+      setDayOpen(true)
       const [y, m] = edit.draft.date.split('-').map(Number)
       setView({ y, m: m - 1 })
       closeEdit()
@@ -88,12 +92,12 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
   return (
     <div className={styles.cal}>
       <header className={styles.head}>
-        <button className={styles.nav} onClick={() => move(-1)} aria-label="前の月">‹</button>
+        <button className={styles.nav} onClick={() => move(-1)} aria-label="前の月"><IconLeft /></button>
         <button className={styles.month} onClick={() => {
           const d = new Date(); setView({ y: d.getFullYear(), m: d.getMonth() }); setSelected(today)
         }}>{view.y}年{view.m + 1}月</button>
-        <button className={styles.nav} onClick={() => move(1)} aria-label="次の月">›</button>
-        <button className={styles.close} onClick={onClose} aria-label="カレンダーを閉じる">✕</button>
+        <button className={styles.nav} onClick={() => move(1)} aria-label="次の月"><IconRight /></button>
+        <button className={styles.close} onClick={onClose} aria-label="カレンダーを閉じる"><IconClose size={20} /></button>
       </header>
 
       <div className={styles.week}>
@@ -114,20 +118,23 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
                 c.key === selected ? styles.sel : '',
                 i % 7 === 0 ? styles.sun : i % 7 === 6 ? styles.sat : '',
               ].join(' ')}
-              onClick={() => setSelected(c.key)}
+              onClick={() => { setSelected(c.key); setDayOpen(true) }}
             >
               <span className={styles.num}>{c.day}</span>
-              {list.slice(0, 2).map(e => <span key={e.id} className={styles.chip}>{e.title}</span>)}
-              {list.length > 2 && <span className={styles.more}>+{list.length - 2}</span>}
+              {list.slice(0, 4).map(e => <span key={e.id} className={styles.chip}>{e.time ? `${e.time} ` : ''}{e.title}</span>)}
+              {list.length > 4 && <span className={styles.more}>+{list.length - 4}</span>}
             </button>
           )
         })}
       </div>
 
-      <section className={styles.day}>
+      {/* 🔵 月の表は画面いっぱい（2026-11-07 運用者）。選んだ日の予定は下から出す */}
+      {dayOpen && <div className={styles.dayScrim} onClick={() => setDayOpen(false)} />}
+      {dayOpen && <section className={styles.day}>
         <div className={styles.dayHead}>
           <span>{dateLabel(selected)}</span>
-          <button className={styles.add} onClick={() => setEdit({ draft: emptyDraft(selected) })}>＋ 予定を入れる</button>
+          <button className={styles.add} onClick={() => setEdit({ draft: emptyDraft(selected) })}><IconPlus size={16} /> 予定を入れる</button>
+          <button className={styles.nav} onClick={() => setDayOpen(false)} aria-label="この日を閉じる"><IconClose size={18} /></button>
         </div>
         {dayEvents.length === 0 && <p className={styles.none}>予定はありません</p>}
         {dayEvents.map(e => (
@@ -140,7 +147,7 @@ export function TalkCalendar({ events, myName, incoming, reading, onClose, onToa
             </span>
           </button>
         ))}
-      </section>
+      </section>}
 
       {edit && (
         <>
@@ -181,8 +188,8 @@ export function TalkProperties({ onClose, onToast }: { onClose: () => void; onTo
       <div className={styles.scrim} onClick={onClose} />
       <div className={styles.editor}>
         <div className={styles.edHead}>
-          <span>🏠 通知した物件</span>
-          <button className={styles.nav} onClick={onClose} aria-label="物件の一覧を閉じる">✕</button>
+          <span className={styles.edTitle}><IconHome size={18} /> 通知した物件</span>
+          <button className={styles.nav} onClick={onClose} aria-label="物件の一覧を閉じる"><IconClose size={18} /></button>
         </div>
         <PropertyList onToast={onToast} />
       </div>
@@ -224,8 +231,8 @@ function PropertyList({ onToast }: { onToast: (msg: string) => void }) {
             {p.memo && <span className={styles.memo}>{p.memo}</span>}
             <span className={styles.propDate}>{shortDate(p.at)}{p.notified ? '' : '・LINE未送信'}</span>
           </a>
-          <a className={styles.nav} href={mapUrl(p)} target="_blank" rel="noopener noreferrer" aria-label="地図で見る">🗺</a>
-          <button className={styles.nav} onClick={() => void remove(p)} aria-label="この物件を消す">✕</button>
+          <a className={styles.nav} href={mapUrl(p)} target="_blank" rel="noopener noreferrer" aria-label="地図で見る"><IconMap size={18} /></a>
+          <button className={styles.nav} onClick={() => void remove(p)} aria-label="この物件を消す"><IconClose size={16} /></button>
         </div>
       ))}
     </div>

@@ -62,12 +62,14 @@
 }
 
 .grid {
-  flex: 0 0 auto;
+  /* 🔵 画面いっぱい（2026-11-07 運用者）＝6週を残りの高さで等分する */
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: minmax(54px, 7.2vh);
+  grid-template-rows: repeat(6, minmax(54px, 1fr));
   gap: 1px;
-  padding: 0 4px;
+  padding: 0 4px max(4px, env(safe-area-inset-bottom));
 }
 
 .cell {
@@ -121,19 +123,36 @@
 
 .more { font-size: 10px; line-height: 13px; color: var(--talk-sub); text-align: center; }
 
-/* 選んだ日の予定 */
-.day {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 8px 12px max(16px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--talk-line);
+/* 選んだ日の予定（日付を押すと下から出る） */
+.dayScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #00000033;
 }
+
+.day {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  max-height: 60%;
+  overflow-y: auto;
+  padding: 10px 14px max(16px, env(safe-area-inset-bottom));
+  background: var(--talk-card);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 24px #0000002e;
+  animation: cal-up .18s ease-out;
+}
+
+@keyframes cal-up { from { transform: translateY(24px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .day { animation: none; } }
 
 .dayHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   margin-bottom: 6px;
   font-size: 15px;
   font-weight: 700;
@@ -200,6 +219,10 @@
   box-shadow: 0 12px 32px rgb(0 0 0 / 26%);
 }
 
+.dayHead > span { flex: 1; }
+.edTitle { display: inline-flex; align-items: center; gap: 6px; }
+.add { display: inline-flex; align-items: center; gap: 4px; }
+.nav, .close { display: inline-flex; align-items: center; justify-content: center; }
 .edHead { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700; }
 .reading { font-size: 12px; font-weight: 400; color: var(--talk-ai-ink); }
 

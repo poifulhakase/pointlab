@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import styles from './TalkRoom.module.css'
 import {
-  dayLabel, deleteMessage, fetchImage, fetchMembersOnce, getDark, getName, getSoundOn, getUid, isSameDay,
+  dayLabel, deleteMessage, fetchImage, fetchOlderMessages, fetchMembersOnce, getDark, getName, getSoundOn, getUid, isSameDay,
   AI_NAME, AI_UID, askAi, isFirstOfStreak, isMine, linkify, notifyPeer, peerState, pickMyMemberId, quoteText, randomId,
   sameSender, sendMessage,
   getWeatherWall, setWeatherWall as saveWeatherWall,
@@ -9,6 +9,8 @@ import {
   touchMember, watchMembers, watchMessages,
   type TalkMember, type TalkMessage } from '../utils/talkRoom'
 import { TalkWeather } from './TalkWeather'
+import { IconCalendar, IconClose, IconDown, IconHome, IconImage, IconLeft, IconMore, IconSearch, IconSend, IconUp } from './TalkIcons'
+import { searchMessages } from '../utils/talkSearch'
 import { TalkCalendar, TalkProperties } from './TalkCalendar'
 import { dateKey, emptyDraft, readEventFromText, watchEvents, type EventDraft, type TalkEvent } from '../utils/talkCalendar'
 import { REFRESH_MS, fetchWeather, strengthOf, wallpaperOf, type Wallpaper } from '../utils/talkWeather'
@@ -32,14 +34,6 @@ const ONLINE_MS = 70_000
 /** 在席を知らせる間隔。 */
 const HEARTBEAT_MS = 25_000
 
-const EMOJIS = [
-  '😀', '😂', '🥹', '😊', '😍', '🤔', '😅', '😭', '😱', '😴',
-  '👍', '🙏', '👏', '🙌', '💪', '✋', '👌', '🤝', '🫡', '✌️',
-  '❤️', '💦', '✨', '🎉', '🔥', '⭐', '🌸', '☀️', '☔', '🌙',
-  '🍺', '🍚', '☕', '🍰', '🚗', '🚃', '🏠', '💰', '📷', '⏰',
-  '⭕', '❌', '❓', '❗', '💤', '🆗', '🈵', '🉐', '🐶', '🐱',
-]
-
 interface Pending {
   id: string
   msg: TalkMessage
@@ -61,7 +55,6 @@ export function TalkRoom() {
   const [text, setText] = useState('')
   const [picked, setPicked] = useState<{ id: string; data: string; w: number; h: number }[]>([])
   const [sending, setSending] = useState(false)
-  const [emojiOpen, setEmojiOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [sound, setSound] = useState(() => getSoundOn())
   // 🔵 暗い配色。⋯メニューで切り替え、端末ごとに覚える（既定は明るいまま）
@@ -125,6 +118,19 @@ export function TalkRoom() {
   const [calOpen, setCalOpen] = useState(false)
   /** 🏠 通知した物件の一覧（📅の左・2026-11-03） */
   const [propsOpen, setPropsOpen] = useState(false)
+  /**
+   * 🔍 トーク内検索（2026-11-07 運用者「前のチャット位置に移動するイメージ・LINEにもある」）。
+   * 語を入れると一覧がその発言の位置へ動いて光る。▲で前（古い）・▼で後（新しい）の該当へ。
+   * 🔵 直近500件に無ければ、それより前を500件ずつ読み足して探す（`older`）。
+   */
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQ, setSearchQ] = useState('')
+  const [searchKey, setSearchKey] = useState('') // 打ち終わり（少し待ってから）の語
+  const [hitIdx, setHitIdx] = useState(0) // 0 = 一番新しい該当
+  const [older, setOlder] = useState<TalkMessage[]>([])
+  const [olderDone, setOlderDone] = useState(false)
+  const [olderLoading, setOlderLoading] = useState(false)
+  const wantOlderHit = useRef(false) // ▲で古いほうへ行きたくて読み足している最中
   const [events, setEvents] = useState<TalkEvent[]>([])
   /** 長押し「カレンダーに追加」から渡す入力欄の中身と、AI の読み取り中かどうか */
   const [calIncoming, setCalIncoming] = useState<EventDraft | null>(null)
@@ -215,21 +221,21 @@ export function TalkRoom() {
 
   // Esc で開いているものを閉じる（PC）
   useEffect(() => {
-    if (!emojiOpen && !menuOpen && !viewer && !acting && !replyTo && !calOpen && !propsOpen) return
+    if (!menuOpen && !viewer && !acting && !replyTo && !calOpen && !propsOpen && !searchOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       // 開いているものから順に1つずつ閉じる（返信の下書きは最後）
       if (acting) { setActing(null); return }
       if (viewer) { setViewer(null); return }
       if (menuOpen) { setMenuOpen(false); return }
-      if (emojiOpen) { setEmojiOpen(false); return }
       if (propsOpen) { setPropsOpen(false); return }
       if (calOpen) { setCalOpen(false); return }
+      if (searchOpen) { closeSearch(); return }
       setReplyTo(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [emojiOpen, menuOpen, viewer, acting, replyTo, calOpen, propsOpen])
+  }, [menuOpen, viewer, acting, replyTo, calOpen, propsOpen, searchOpen])
 
   /** 引用をタップしたら、元の発言へ飛んで一瞬光らせる。 */
   const jumpTo = (id: string) => {
@@ -483,12 +489,82 @@ export function TalkRoom() {
   const peerRead = peer?.read ?? 0
 
   const rows = useMemo(() => {
+    // 🔵 検索で読み足した古い発言を前に足す（購読している直近500件と重なった分は購読側を正にする）
+    const live = new Set(messages.map(m => m.id))
     const all: (TalkMessage & { pendingId?: string; failed?: boolean })[] = [
+      ...older.filter(m => !live.has(m.id)),
       ...messages,
       ...pending.map(p => ({ ...p.msg, pendingId: p.id, failed: p.failed })),
     ]
     return all.sort((a, b) => a.at - b.at)
-  }, [messages, pending])
+  }, [messages, pending, older])
+
+  // ── 🔍 トーク内検索 ──
+  useEffect(() => {
+    const t = setTimeout(() => setSearchKey(searchQ.trim()), 250)
+    return () => clearTimeout(t)
+  }, [searchQ])
+
+  const hits = useMemo(
+    () => (searchKey ? searchMessages(rows.filter(m => !m.pendingId), searchKey) : []),
+    [rows, searchKey],
+  )
+  const hitId = searchOpen ? hits[hitIdx]?.m.id ?? '' : ''
+
+  /** さらに前の500件を読み足す。もう無ければ olderDone */
+  const loadOlder = useCallback(async () => {
+    if (olderLoading || olderDone) return
+    const first = rows.find(m => !m.pendingId)
+    if (!first) { setOlderDone(true); return }
+    setOlderLoading(true)
+    try {
+      const got = await fetchOlderMessages(first.at, 500)
+      if (got.length < 500) setOlderDone(true)
+      if (got.length) setOlder(o => [...got, ...o])
+    } catch {
+      show('前のメッセージを読み込めませんでした')
+      setOlderDone(true)
+    } finally {
+      setOlderLoading(false)
+    }
+  }, [olderLoading, olderDone, rows])
+
+  // 語が変わったら一番新しい該当から
+  useEffect(() => { setHitIdx(0); wantOlderHit.current = false }, [searchKey])
+
+  // 読み込み済みに無い／▲で古いほうへ行きたい → 前を読み足す（見つかるか、最初まで行くまで）
+  useEffect(() => {
+    if (!searchOpen || !searchKey || olderLoading || olderDone) return
+    if (hits.length === 0 || (wantOlderHit.current && hitIdx >= hits.length - 1)) void loadOlder()
+  }, [searchOpen, searchKey, hits.length, hitIdx, olderLoading, olderDone, loadOlder])
+
+  // 読み足した結果、古い該当が増えていたら1つ進む
+  useEffect(() => {
+    if (!wantOlderHit.current) return
+    if (hitIdx < hits.length - 1) { wantOlderHit.current = false; setHitIdx(i => i + 1) }
+    else if (olderDone && !olderLoading) { wantOlderHit.current = false; show('これより前にはありません') }
+  }, [hits.length, olderDone, olderLoading]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 今の該当の位置へ動かして光らせる
+  useEffect(() => {
+    if (!hitId) return
+    requestAnimationFrame(() => {
+      const el = listRef.current?.querySelector(`[data-mid="${CSS.escape(hitId)}"]`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setFlash(hitId)
+      setTimeout(() => setFlash(f => (f === hitId ? '' : f)), 1400)
+    })
+  }, [hitId])
+
+  const searchOlder = () => {
+    if (hitIdx < hits.length - 1) { setHitIdx(i => i + 1); return }
+    if (olderDone) { show('これより前にはありません'); return }
+    wantOlderHit.current = true
+    void loadOlder()
+  }
+  const searchNewer = () => { if (hitIdx > 0) setHitIdx(i => i - 1) }
+  const closeSearch = () => { setSearchOpen(false); setSearchQ(''); setSearchKey('') }
 
   // ── 名前を入れる画面 ───────────────────────────────────────────
   if (!name) {
@@ -527,22 +603,47 @@ export function TalkRoom() {
       {weatherWall && sky && (
         <TalkWeather wallpaper={sky.wall} day={sky.day} strength={sky.power} dark={dark} />
       )}
+      {searchOpen ? (
+        <header className={styles.bar}>
+          <input
+            className={styles.searchInput}
+            type="search"
+            enterKeyHint="search"
+            placeholder="トーク内を検索"
+            value={searchQ}
+            autoFocus
+            onChange={e => setSearchQ(e.target.value)}
+            onKeyDown={e => {
+              if (e.key !== 'Enter') return
+              e.preventDefault()
+              if (e.shiftKey) searchNewer(); else searchOlder()
+            }}
+            aria-label="トーク内を検索"
+          />
+          <span className={styles.searchCount} aria-live="polite">
+            {!searchKey ? '' : hits.length ? `${hitIdx + 1}/${hits.length}${olderDone ? '' : '+'}` : olderLoading || !olderDone ? '探しています…' : 'なし'}
+          </span>
+          <button className={styles.barBtn} onClick={searchOlder} disabled={!searchKey || (!hits.length && olderDone)} aria-label="前（古い）の該当へ"><IconUp /></button>
+          <button className={styles.barBtn} onClick={searchNewer} disabled={hitIdx <= 0} aria-label="後（新しい）の該当へ"><IconDown /></button>
+          <button className={styles.searchCancel} onClick={closeSearch}>キャンセル</button>
+        </header>
+      ) : (
       <header className={styles.bar}>
         <div className={styles.barTitle}>
           <span className={styles.barName}>{peer?.name ?? 'トーク'}</span>
           {peer && <span className={styles.barSub}>{peerOnline ? 'オンライン' : `最終 ${timeLabel(peer.at)}`}</span>}
         </div>
-        <button className={styles.barBtn} onClick={() => setPropsOpen(true)} aria-label="通知した物件">🏠</button>
-        <button className={styles.barBtn} onClick={() => { setCalIncoming(null); setCalOpen(true) }} aria-label="カレンダー">📅</button>
-        <button className={styles.barBtn} onClick={() => setMenuOpen(v => !v)} aria-label="メニュー">⋯</button>
+        <button className={styles.barBtn} onClick={() => setSearchOpen(true)} aria-label="トーク内を検索"><IconSearch /></button>
+        <button className={styles.barBtn} onClick={() => setPropsOpen(true)} aria-label="通知した物件"><IconHome /></button>
+        <button className={styles.barBtn} onClick={() => { setCalIncoming(null); setCalOpen(true) }} aria-label="カレンダー"><IconCalendar /></button>
+        <button className={styles.barBtn} onClick={() => setMenuOpen(v => !v)} aria-label="メニュー"><IconMore /></button>
       </header>
+      )}
 
-      {/* 🔵 スタンプを開いたまま一覧を触ったら閉じる（入力欄は覆わないので、文字は続けて打てる） */}
       <div
         className={styles.list}
         ref={listRef}
         onScroll={onScroll}
-        onPointerDown={() => { if (emojiOpen) setEmojiOpen(false) }}
       >
         {rows.length === 0 && (
           <p className={styles.empty}>まだメッセージはありません。<br />下の欄から送ってみてください。</p>
@@ -566,6 +667,7 @@ export function TalkRoom() {
                 showName={!mine && (!prev || !sameSender(prev, m) || newDay)}
                 read={mine && !m.pendingId && peerRead >= m.at}
                 flash={flash === m.id}
+                hit={hitId === m.id}
                 isAi={m.uid === AI_UID}
                 onImageShown={() => { if (atBottom) scrollToBottom('auto') }}
                 onImage={setViewer}
@@ -591,32 +693,16 @@ export function TalkRoom() {
           {picked.map(p => (
             <div key={p.id} className={styles.pickedItem}>
               <img src={p.data} alt="" />
-              <button onClick={() => setPicked(list => list.filter(x => x.id !== p.id))} aria-label="外す">✕</button>
+              <button onClick={() => setPicked(list => list.filter(x => x.id !== p.id))} aria-label="外す"><IconClose size={14} /></button>
             </div>
           ))}
-        </div>
-      )}
-
-      {emojiOpen && (
-        <div className={styles.emoji}>
-          {/* 🔵 開きっぱなしで閉じ方が分からない、という声。閉じ方を3つ用意した：
-                 ①この「閉じる」 ②メッセージ一覧のどこかを触る ③Esc（PC） */}
-          <div className={styles.emojiHead}>
-            <span>スタンプ</span>
-            <button onClick={() => setEmojiOpen(false)} aria-label="スタンプを閉じる">閉じる ✕</button>
-          </div>
-          <div className={styles.emojiGrid}>
-            {EMOJIS.map(e => (
-              <button key={e} onClick={() => { setText(t => t + e); taRef.current?.focus() }}>{e}</button>
-            ))}
-          </div>
         </div>
       )}
 
       {aiMode && (
         <div className={styles.aiBar}>
           <span>AIに聞く（Web検索つき）・やり取りは2人に見えます</span>
-          <button onClick={() => setAiMode(false)} aria-label="やめる">✕</button>
+          <button onClick={() => setAiMode(false)} aria-label="やめる"><IconClose size={16} /></button>
         </div>
       )}
 
@@ -626,7 +712,7 @@ export function TalkRoom() {
             <span className={styles.replyName}>{replyTo.name} に返信</span>
             <span className={styles.replyText}>{replyTo.text}</span>
           </div>
-          <button onClick={() => setReplyTo(null)} aria-label="返信をやめる">✕</button>
+          <button onClick={() => setReplyTo(null)} aria-label="返信をやめる"><IconClose size={16} /></button>
         </div>
       )}
 
@@ -641,7 +727,7 @@ export function TalkRoom() {
           tabIndex={slim ? 0 : -1}
           onMouseDown={e => e.preventDefault()}
           onClick={() => { setToolsOpen(true); taRef.current?.focus() }}
-        >‹</button>
+        ><IconLeft size={20} /></button>
         <div className={styles.tools} aria-hidden={slim}>
           {/* 🔵 左下のAIボタン。押すと「AIに聞くモード」に入る（もう一度押すと戻る） */}
           <button
@@ -651,8 +737,7 @@ export function TalkRoom() {
             aria-pressed={aiMode}
             tabIndex={slim ? -1 : 0}
           >AI</button>
-          <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る" tabIndex={slim ? -1 : 0}>🖼️</button>
-          <button className={styles.iconBtn} onClick={() => setEmojiOpen(v => !v)} aria-label="絵文字" tabIndex={slim ? -1 : 0}>😀</button>
+          <button className={styles.iconBtn} onClick={openPicker} aria-label="画像を送る" tabIndex={slim ? -1 : 0}><IconImage /></button>
         </div>
         <textarea
           ref={taRef}
@@ -676,7 +761,7 @@ export function TalkRoom() {
             }
           }}
         />
-        <button className={styles.sendBtn} onClick={() => void doSend()} disabled={!canSend} aria-label="送信">➤</button>
+        <button className={styles.sendBtn} onClick={() => void doSend()} disabled={!canSend} aria-label="送信"><IconSend size={18} /></button>
         {/*
           🔴 `hidden`（display:none）にすると **iPhone(Safari) で写真の選択が開かないことがある**。
              画面の外に置いて「存在はする」状態にしておく。accept も HEIC/HEIF を明示して、
@@ -752,7 +837,7 @@ export function TalkRoom() {
       {viewer && (
         <div className={styles.viewer} onClick={() => setViewer(null)}>
           <img src={viewer} alt="" />
-          <button className={styles.viewerClose} aria-label="閉じる">✕</button>
+          <button className={styles.viewerClose} aria-label="閉じる"><IconClose size={20} /></button>
         </div>
       )}
 
@@ -780,13 +865,15 @@ const HOLD_MS = 450
 const HOLD_SLOP = 10
 
 /** 1行ぶんの吹き出し。 */
-function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onImageShown, onRetry, onHold, onJump }: {
+function Row({ m, mine, tail, showName, read, flash, hit, isAi, onImage, onImageShown, onRetry, onHold, onJump }: {
   m: TalkMessage & { pendingId?: string; failed?: boolean }
   mine: boolean
   tail: boolean
   showName: boolean
   read: boolean
   flash: boolean
+  /** 🔍 検索で今選んでいる発言（光ったあとも枠で分かるように） */
+  hit?: boolean
   /** AIの発言（人の発言と見分けが付くよう、色も名札も変える） */
   isAi: boolean
   /** 画像が実際に表示されたとき（高さが増えるので、下にいるなら追いかける） */
@@ -862,7 +949,7 @@ function Row({ m, mine, tail, showName, read, flash, isAi, onImage, onImageShown
         {isAi && <span className={styles.aiFace}>AI</span>}
         {mine && tail && meta}
         <div
-          className={`${styles.bubbleWrap} ${flash ? styles.flash : ''}`}
+          className={`${styles.bubbleWrap} ${flash ? styles.flash : ''} ${hit ? styles.hit : ''}`}
           onContextMenu={onHold ? e => { e.preventDefault(); holdCancel(); onHold() } : undefined}
           onPointerDown={holdStart}
           onPointerUp={holdCancel}

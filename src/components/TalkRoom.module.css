@@ -244,6 +244,40 @@
 
 .barBtn:hover { background: var(--talk-hover); }
 
+/* 🔵 線アイコン（TalkIcons）をボタンの真ん中に置く */
+.barBtn,
+.iconBtn,
+.sendBtn,
+.toolsBtn,
+.viewerClose { display: inline-flex; align-items: center; justify-content: center; }
+.iconBtn { color: var(--talk-ink2); }
+.sendBtn svg { margin-left: -2px; }
+.barBtn:disabled { opacity: .35; cursor: default; background: none; }
+
+/* 🔍 トーク内検索（ヘッダーが検索欄に変わる） */
+.searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 16px; /* 16px 未満だと iPhone が拡大する */
+  color: var(--talk-text);
+  background: var(--talk-field);
+  border: 1px solid var(--talk-field-line);
+  border-radius: 18px;
+}
+.searchCount { flex: 0 0 auto; min-width: 3em; font-size: 12px; text-align: center; color: var(--talk-sub); }
+.searchCancel {
+  flex: 0 0 auto;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--talk-link);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 /* ── メッセージ一覧 ───────────────────────────────────── */
 
 .list {
@@ -464,64 +498,6 @@
   border: 0;
   border-radius: 50%;
   cursor: pointer;
-}
-
-/* ── 絵文字 ───────────────────────────────────────────── */
-
-.emoji {
-  flex: 0 0 auto;
-  max-height: 208px;
-  overflow-y: auto;
-  padding: 0 8px 8px;
-  background: var(--talk-card);
-  border-top: 1px solid var(--talk-line);
-}
-
-/* 「閉じる」を上に貼り付けておく（スクロールしても押せる） */
-.emojiHead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 2px 4px;
-  font-size: 11px;
-  color: var(--talk-sub);
-  background: var(--talk-card);
-}
-
-.emojiHead button {
-  padding: 4px 10px;
-  font-size: 12px;
-  color: var(--talk-sub);
-  background: var(--talk-hover-soft);
-  border: 0;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.emojiHead button:hover { background: var(--talk-hover-strong); }
-
-.emojiGrid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 2px;
-}
-
-.emojiGrid button {
-  font-size: 22px;
-  line-height: 1.5;
-  background: none;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.emojiGrid button:hover { background: var(--talk-hover-mid); }
-
-@media (max-width: 420px) {
-  .emojiGrid { grid-template-columns: repeat(7, 1fr); }
 }
 
 /* ── 下の入力欄 ───────────────────────────────────────── */
@@ -927,6 +903,9 @@
 }
 
 /* 引用から飛んだ先を一瞬光らせる（どれを指しているか分かるように） */
+.hit .bubble,
+.hit .photo { outline: 2px solid #f5c518; outline-offset: 2px; }
+
 .flash .bubble,
 .flash .photo { animation: talk-flash 1.4s ease-out; }
 

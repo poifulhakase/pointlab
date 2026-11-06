@@ -461,6 +461,21 @@ export async function watchMessages(cb: (rows: TalkMessage[]) => void): Promise<
   }, () => { /* 通信が切れても画面は保つ（再接続はSDKに任せる） */ })
 }
 
+/**
+ * `beforeAt` より前のメッセージを新しいほうから `n` 件だけ取る（検索の「さらに前を検索」用・2026-11-07）。
+ * 🔵 1回きりの読み取り（購読しない）。返すのは時系列順。
+ */
+export async function fetchOlderMessages(beforeAt: number, n = 500): Promise<TalkMessage[]> {
+  const [{ collection, query, orderBy, where, limit, getDocs }, { getDb }] = await Promise.all([
+    import('firebase/firestore'),
+    import('./firebase'),
+  ])
+  const db = await getDb()
+  const q = query(collection(db, roomPath(), 'messages'), where('at', '<', beforeAt), orderBy('at', 'desc'), limit(n))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<TalkMessage, 'id'>) })).reverse()
+}
+
 /** 相手の在席・既読を購読する。 */
 export async function watchMembers(cb: (rows: TalkMember[]) => void): Promise<Unsub> {
   const [{ collection, onSnapshot }, { getDb }] = await Promise.all([
