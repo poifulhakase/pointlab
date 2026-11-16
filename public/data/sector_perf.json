@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T20:39:07.331Z",
+  "updatedAt": "2026-11-16T22:27:51.949Z",
   "proxy": "etf",
   "periods": {
     "chg1m": {
@@ -35,11 +35,11 @@
   "infl": {
     "symbol": "T10YIE",
     "label": "期待インフレ率（10年BEI）",
-    "time": "2026-11-13",
-    "last": 2.24,
-    "chg3m": -0.03,
-    "from": "2026-08-14",
-    "to": "2026-11-13"
+    "time": "2026-11-16",
+    "last": 2.2,
+    "chg3m": -0.08,
+    "from": "2026-08-17",
+    "to": "2026-11-16"
   },
   "macro": {
     "lastAnchor": "reverseFinancial"
