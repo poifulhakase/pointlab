@@ -1,6 +1,13 @@
 {
-  "updatedAt": "2026-11-14T04:16:30.230Z",
+  "updatedAt": "2026-11-16T20:38:50.120Z",
   "data": [
+    {
+      "date": "2026/11/16",
+      "label": "11月第4週",
+      "ratio25": 106.1,
+      "advances": null,
+      "declines": null
+    },
     {
       "date": "2026/11/13",
       "label": "11月第3週",
@@ -355,13 +362,6 @@
       "date": "2025/11/28",
       "label": "11月第5週",
       "ratio25": 124.66,
-      "advances": null,
-      "declines": null
-    },
-    {
-      "date": "2025/11/21",
-      "label": "11月第4週",
-      "ratio25": 119.24,
       "advances": null,
       "declines": null
     }
