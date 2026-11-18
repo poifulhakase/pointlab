@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-11-17T21:16:19.213Z",
+  "updatedAt": "2026-11-18T18:58:50.353Z",
   "data": [
     {
-      "date": "2026/11/17",
+      "date": "2026/11/18",
       "label": "11月第4週",
-      "ratio": 41.6
+      "ratio": 43.6
     },
     {
       "date": "2026/11/13",
@@ -263,6 +263,12 @@
     }
   ],
   "daily": [
+    {
+      "date": "2026/11/18",
+      "ratio": 43.6,
+      "unrestricted": 34.4,
+      "restricted": 9.2
+    },
     {
       "date": "2026/11/17",
       "ratio": 41.6,
@@ -3256,12 +3262,6 @@
       "ratio": 41.3,
       "unrestricted": 31,
       "restricted": 10.3
-    },
-    {
-      "date": "2024/10/28",
-      "ratio": 42.7,
-      "unrestricted": 32.2,
-      "restricted": 10.5
     }
   ]
 }
