@@ -332,3 +332,58 @@ def test_compose_respects_the_target_limit():
         text = xc.compose(title=long_title, link=link, creator="ハル", comment="",
                           hashtags=["#note"], max_chars=limit, cjk_weight=weight)
         assert xc._weigh(text, link, cjk_weight=weight) <= limit
+
+
+# ---------------------------------------------------------------- 出さない書き手
+
+
+@pytest.mark.parametrize("creator", ["白圡祥子", "白土 祥子", "白圡　祥子｜キャリアコンサルタント", "井口宏大"])
+def test_excluded_creators_are_matched(creator):
+    assert xc.is_excluded_creator(creator, ["白圡祥子", "井口宏大"])
+
+
+@pytest.mark.parametrize("creator", ["", "白圡", "山田太郎"])
+def test_other_creators_are_not_excluded(creator):
+    assert not xc.is_excluded_creator(creator, ["白圡祥子", "井口宏大"])
+
+
+def test_runner_skips_excluded_creators_and_picks_the_next(cfg):
+    """外した書き手の記事は出さず、次の記事を1件出す。外した分も既読になる。"""
+    from types import SimpleNamespace as NS
+
+    from robotrade.notify.x_runner import XRunner
+
+    spec = NS(key=cfg.get("sns_post.source_key"))
+    arts = [NS(title="A", link="https://note.com/a", summary="", creator="白圡祥子"),
+            NS(title="B", link="https://note.com/b", summary="", creator="山田太郎")]
+
+    class Feeds:
+        specs = [spec]
+        seen: list = []
+
+        def fresh_for_sink(self, s, sink):
+            return arts, NS(error=None, first_run=False)
+
+        def mark_seen_for_sink(self, s, items, sink):
+            self.seen.extend(items)
+
+    class Buf:
+        posts: list = []
+
+        def create_post(self, channel_id, text, due_at):
+            self.posts.append(text)
+            return "p"
+
+    feeds, buf = Feeds(), Buf()
+    res = XRunner(cfg, buffer_client=buf, feed_runner=feeds).run()
+    assert res.posted == ["B"]
+    assert all("note.com/a" not in t for t in buf.posts)
+    assert {a.title for a in feeds.seen} == {"A", "B"}
+
+    # 全部が外す書き手なら何も出さず、既読だけ付ける
+    arts[1].creator = "井口 宏大"
+    feeds2, buf2 = Feeds(), Buf()
+    feeds2.seen, buf2.posts = [], []
+    res2 = XRunner(cfg, buffer_client=buf2, feed_runner=feeds2).run()
+    assert res2.posted == [] and buf2.posts == []
+    assert {a.title for a in feeds2.seen} == {"A", "B"}

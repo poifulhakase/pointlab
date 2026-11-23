@@ -118,8 +118,17 @@ class XRunner:
             return result
 
         per_day = int(self.cfg.get("sns_post.per_day", 1))
-        chosen = fresh[:per_day]
+        # 🔴 出さない書き手（運用者の指定）は候補から外す。外した分も既読にする（翌日に出さない）
+        excluded = list(self.cfg.get("sns_post.exclude_creators", []) or [])
+        candidates = [a for a in fresh if not x_compose.is_excluded_creator(a.creator, excluded)]
+        if len(candidates) < len(fresh):
+            log.info("SNS に出さない書き手の記事 %d件を外した", len(fresh) - len(candidates))
+        chosen = candidates[:per_day]
         result.dropped = len(fresh) - len(chosen)
+        if not chosen:
+            if not dry_run:
+                self.feeds.mark_seen_for_sink(spec, fresh, sink="x")
+            return result
 
         posted_any = False
         for article in chosen:

@@ -224,6 +224,17 @@ def compose(*, title: str, link: str, creator: str, comment: str,
     return render(short, "")
 
 
+def _name_key(text: str) -> str:
+    """書き手名の比較用（空白・全角空白を落とし、異体字「圡」を「土」にそろえる）。"""
+    return "".join(str(text or "").split()).replace("　", "").replace("圡", "土")
+
+
+def is_excluded_creator(creator: str, names: list[str]) -> bool:
+    """SNS に出さない書き手か。肩書きつきの表示名（「名前｜肩書き」）でも名前が含まれれば外す。"""
+    key = _name_key(creator)
+    return bool(key) and any(_name_key(n) and _name_key(n) in key for n in names or [])
+
+
 def shorten_credit(creator: str) -> str:
     """書き手の表示名を、出典として載せられる長さに詰める。
 
