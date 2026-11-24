@@ -1,6 +1,12 @@
 {
-  "updatedAt": "2026-11-24T00:16:02.373Z",
+  "updatedAt": "2026-11-24T20:46:17.934Z",
   "data": [
+    {
+      "date": "2026/11/24",
+      "close": 27,
+      "change": 0.38,
+      "changePct": 1.43
+    },
     {
       "date": "2026/11/23",
       "close": 26.62,
@@ -616,12 +622,6 @@
     {
       "date": "2024/12/09",
       "close": 13.81,
-      "change": 1.04,
-      "changePct": 8.14
-    },
-    {
-      "date": "2024/12/02",
-      "close": 12.77,
       "change": null,
       "changePct": null
     }
