@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-11-24T22:42:47.736Z",
+  "updatedAt": "2026-11-25T20:02:53.412Z",
   "data": [
     {
       "date": "2026-11-24",
       "open": 57010,
-      "high": 57244,
+      "high": 59263,
       "low": 57010,
-      "close": 57244,
-      "volume": 0,
+      "close": 58645,
+      "volume": 204700000,
       "prev_close": 56437,
-      "change": 807,
-      "change_pct": 1.43,
-      "ma25_dev": -6.68
+      "change": 2208,
+      "change_pct": 3.91,
+      "ma25_dev": -4.48
     },
     {
       "date": "2026-11-20",
